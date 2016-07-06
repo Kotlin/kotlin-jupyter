@@ -24,14 +24,14 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
         inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { receiveMessage(it)?.let { body(it) } }
 
         fun send(msg: Message): Unit {
-            log.debug("[$name] snd: $msg")
+            log.debug("[$name] snd>: $msg")
             sendMessage(msg, hmac)
         }
 
         fun receiveMessage(start: ByteArray): Message? {
             try {
                 val msg = receiveMessage(start, hmac)
-                log.debug("[$name] rcv: $msg")
+                log.debug("[$name] >rcv: $msg")
                 return msg
             }
             catch (e: SignatureException) {
@@ -82,7 +82,7 @@ class HMAC(algo: String, key: String?) {
 }
 
 fun JupyterConnection.Socket.logWireMessage(msg: ByteArray) {
-    log.debug("[$name] in: ${String(msg)}")
+    log.debug("[$name] >in: ${String(msg)}")
 }
 
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })

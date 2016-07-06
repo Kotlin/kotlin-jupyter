@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 private val ISO8601DateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
-private val ISO8601DateNow: String get() = ISO8601DateFormatter.format(Date())
+internal val ISO8601DateNow: String get() = ISO8601DateFormatter.format(Date())
 
 data class Message(
         val id: List<ByteArray>,
@@ -34,7 +34,7 @@ fun makeReplyMessage(msg: Message,
                      content: Map<String, Any?>? = null) =
         Message(id = msg.id,
                 header = JsonObject(header ?: makeHeader(msgType!!, msg)),
-                parentHeader = JsonObject(parentHeader ?: mapOf()),
+                parentHeader = parentHeader?.let { JsonObject(it) } ?: msg.header,
                 metadata = JsonObject(metadata ?: mapOf()),
                 content = JsonObject(content ?: mapOf()))
 
