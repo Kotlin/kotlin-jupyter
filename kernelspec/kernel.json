@@ -1,0 +1,5 @@
+{
+  "argv": ["java", "-jar", "/usr/local/share/jupyter/kernels/kotlin/kotlin-jupyter-kernel-0.1-SNAPSHOT.jar", "{connection_file}"],
+  "display_name": "Kotlin",
+  "language": "kotlin"
+}
