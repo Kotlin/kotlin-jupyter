@@ -5,6 +5,17 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.beust.klaxon.int
 import com.beust.klaxon.string
+import com.intellij.openapi.Disposable
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
+import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
+import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
+import org.jetbrains.kotlin.cli.jvm.repl.LineResult
+import org.jetbrains.kotlin.cli.jvm.repl.ReplInterpreter
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.utils.PathUtil
 import java.util.concurrent.atomic.AtomicLong
 
 fun main(vararg args: String) {
@@ -36,15 +47,23 @@ fun kernelServer(config: ConnectionConfig) {
         log.info("start listening")
 
         val executionCount = AtomicLong(1)
+        val disposable = Disposable { }
+        val messageCollector = PrintingMessageCollector(conn.iopubErr, MessageRenderer.WITHOUT_PATHS, false)
+        val compilerConfiguration = CompilerConfiguration().apply {
+            addJvmClasspathRoots(PathUtil.getJdkClassesRoots())
+            put(CommonConfigurationKeys.MODULE_NAME, "jupyter")
+            put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+        }
+        val repl = ReplInterpreter(disposable, compilerConfiguration, ReplForJupyterConfiguration(conn))
 
         while (!Thread.currentThread().isInterrupted) {
 
             try {
                 conn.heartbeat.onData { send(it, 0) }
                 conn.stdin.onData { logWireMessage(it) }
-                conn.shell.onMessage { shellMessagesHandler(it, conn.iopub, executionCount) }
+                conn.shell.onMessage { shellMessagesHandler(it, repl, executionCount) }
                 // TODO: consider listening control on a separate thread, as recommended by the kernel protocol
-                conn.control.onMessage { shellMessagesHandler(it, conn.iopub, executionCount) }
+                conn.control.onMessage { shellMessagesHandler(it, null, executionCount) }
 
                 Thread.sleep(config.pollingIntervalMillis)
             }
@@ -58,7 +77,7 @@ fun kernelServer(config: ConnectionConfig) {
     }
 }
 
-fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, iopub: JupyterConnection.Socket, executionCount: AtomicLong) {
+fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplInterpreter?, executionCount: AtomicLong) {
     when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
             send(makeReplyMessage(msg, "kernel_info_reply",
@@ -79,28 +98,33 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, iopub: JupyterCo
         "connect_request" ->
             send(makeReplyMessage(msg, "connection_reply",
                     content = jsonObject(JupyterSockets.values()
-                                            .map { Pair("${it.name}_port", connectionConfig.ports[it.ordinal]) })))
+                                            .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
-            with (iopub) {
+            with (connection.iopub) {
                 send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
                 send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                         "execution_count" to count,
-                        "code" to msg.content!!["code"])))
-                send(makeReplyMessage(msg, "stream", content = jsonObject(
-                        "name" to "stdout",
-                        "text" to "hello, world\n")))
+                        "code" to msg.content["code"])))
+                val res = connection.evalWithIO { repl?.eval(msg.content["code"].toString()) }
+                val resStr = when (res) {
+                    is LineResult.ValueResult -> res.valueAsString
+                    is LineResult.UnitResult -> "Ok"
+                    is LineResult.Error -> "Error: ${res.errorText}"
+                    is LineResult.Incomplete -> "..."
+                    null -> "no repl"
+                }
                 send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
-                        "data" to JsonObject(jsonObject("text/plain" to "result!")),
+                        "data" to JsonObject(jsonObject("text/plain" to resStr)),
                         "metadata" to JsonObject())))
                 send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             }
             send(makeReplyMessage(msg, "execute_reply",
                     metadata = jsonObject(
                             "dependencies_met" to true,
-                            "engine" to msg.header!!["session"],
+                            "engine" to msg.header["session"],
                             "status" to "ok",
                             "started" to startedTime),
                     content = jsonObject(
@@ -111,7 +135,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, iopub: JupyterCo
                             "user_expressions" to JsonObject())
                     ))
         }
-        "is_complete_request" -> send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to "complete")))
+        "is_complete_request" -> {
+            send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to "complete")))
+        }
         else -> send(makeReplyMessage(msg, "unsupported_message_reply"))
     }
 }

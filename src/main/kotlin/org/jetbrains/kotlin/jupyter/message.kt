@@ -30,6 +30,8 @@ data class Message(
 fun jsonObject(vararg namedVals: Pair<String, Any?>): JsonObject = JsonObject(hashMapOf(*namedVals))
 fun jsonObject(namedVals: Iterable<Pair<String, Any?>>): JsonObject = JsonObject(HashMap<String, Any?>().apply { putAll(namedVals) })
 
+internal operator fun JsonObject?.get(key: String) = this?.get(key)
+
 fun makeReplyMessage(msg: Message,
                      msgType: String? = null,
                      sessionId: String? = null,

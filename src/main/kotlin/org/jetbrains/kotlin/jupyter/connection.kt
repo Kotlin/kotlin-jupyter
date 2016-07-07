@@ -43,7 +43,7 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
             }
         }
 
-        val connectionConfig: ConnectionConfig get() = config
+        val connection: JupyterConnection = this@JupyterConnection
     }
 
     private inner class IopubOutputStream(val streamName: String) : java.io.OutputStream() {
@@ -77,8 +77,8 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
     val stdin = Socket(JupyterSockets.stdin, ZMQ.ROUTER)
     val iopub = Socket(JupyterSockets.iopub, ZMQ.PUB)
 
-    val stdout = PrintStream(IopubOutputStream("stdout"))
-    val stderr = PrintStream(IopubOutputStream("stderr"))
+    val iopubOut = PrintStream(IopubOutputStream("stdout"))
+    val iopubErr = PrintStream(IopubOutputStream("stderr"))
 
     var contextMessage: Message? = null
 
