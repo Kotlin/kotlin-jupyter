@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.jupyter
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import org.zeromq.ZMQ
+import java.io.ByteArrayOutputStream
 import java.io.Closeable
+import java.io.OutputStream
+import java.io.PrintStream
 import java.security.SignatureException
 import java.util.*
 import javax.crypto.Mac
@@ -43,6 +46,28 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
         val connectionConfig: ConnectionConfig get() = config
     }
 
+    private inner class IopubOutputStream(val streamName: String) : java.io.OutputStream() {
+        fun sendToSocket(text: String) {
+            iopub.send(Message(
+                    header = makeHeader("stream", contextMessage),
+                    content = jsonObject(
+                            "name" to streamName,
+                            "text" to text)))
+        }
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            val buf = ByteArrayOutputStream()
+            buf.write(b, off, len)
+            sendToSocket(buf.toString())
+        }
+
+        override fun write(b: Int) {
+            val buf = ByteArrayOutputStream()
+            buf.write(b)
+            sendToSocket(buf.toString())
+        }
+    }
+
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
@@ -51,6 +76,11 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
     val control = Socket(JupyterSockets.control, ZMQ.ROUTER)
     val stdin = Socket(JupyterSockets.stdin, ZMQ.ROUTER)
     val iopub = Socket(JupyterSockets.iopub, ZMQ.PUB)
+
+    val stdout = PrintStream(IopubOutputStream("stdout"))
+    val stderr = PrintStream(IopubOutputStream("stderr"))
+
+    var contextMessage: Message? = null
 
     override fun close() {
         heartbeat.close()
@@ -90,12 +120,8 @@ fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".form
 fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC): Unit {
     msg.id.forEach { sendMore(it) }
     sendMore(DELIM)
-    val signableMsg = listOf(
-            msg.header.toJsonString(prettyPrint = false),
-            msg.parentHeader.toJsonString(prettyPrint = false),
-            msg.metadata.toJsonString(prettyPrint = false),
-            msg.content.toJsonString(prettyPrint = false))
-            .map { it.toByteArray() }
+    val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
+            .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
     sendMore(hmac(signableMsg) ?: "")
     signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
     send(signableMsg.last())

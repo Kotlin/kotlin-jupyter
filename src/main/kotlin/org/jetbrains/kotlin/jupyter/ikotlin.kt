@@ -59,54 +59,51 @@ fun kernelServer(config: ConnectionConfig) {
 }
 
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, iopub: JupyterConnection.Socket, executionCount: AtomicLong) {
-    when (msg.header["msg_type"]) {
+    when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
             send(makeReplyMessage(msg, "kernel_info_reply",
-                    content = mapOf(
+                    content = jsonObject(
                             "protocol_version" to protocolVersion,
                             "language" to "kotlin",
                             "language_version" to "1.1-SNAPSHOT"
                     )))
         "history_request" ->
             send(makeReplyMessage(msg, "history_reply",
-                    content = mapOf(
+                    content = jsonObject(
                             "history" to listOf<String>() // not implemented
                     )))
         "shutdown_request" -> {
-            send(makeReplyMessage(msg, "shutdown_reply",
-                    content = mapOf(
-                            "restart" to (msg.content["restart"] ?: "false")
-                    )))
+            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
             Thread.currentThread().interrupt()
         }
         "connect_request" ->
             send(makeReplyMessage(msg, "connection_reply",
-                    content = JupyterSockets.values()
-                                            .map { Pair("${it.name}_port", connectionConfig.ports[it.ordinal]) }.toMap()))
+                    content = jsonObject(JupyterSockets.values()
+                                            .map { Pair("${it.name}_port", connectionConfig.ports[it.ordinal]) })))
         "execute_request" -> {
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
             with (iopub) {
-                send(makeReplyMessage(msg, "status", content = mapOf("execution_state" to "busy")))
-                send(makeReplyMessage(msg, "execute_input", content = mapOf(
+                send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
+                send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                         "execution_count" to count,
-                        "code" to msg.content["code"])))
-                send(makeReplyMessage(msg, "stream", content = mapOf(
+                        "code" to msg.content!!["code"])))
+                send(makeReplyMessage(msg, "stream", content = jsonObject(
                         "name" to "stdout",
                         "text" to "hello, world\n")))
-                send(makeReplyMessage(msg, "execute_result", content = mapOf(
+                send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
-                        "data" to JsonObject(mapOf("text/plain" to "result!")),
+                        "data" to JsonObject(jsonObject("text/plain" to "result!")),
                         "metadata" to JsonObject())))
-                send(makeReplyMessage(msg, "status", content = mapOf("execution_state" to "idle")))
+                send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             }
             send(makeReplyMessage(msg, "execute_reply",
-                    metadata = mapOf(
+                    metadata = jsonObject(
                             "dependencies_met" to true,
-                            "engine" to msg.header["session"],
+                            "engine" to msg.header!!["session"],
                             "status" to "ok",
                             "started" to startedTime),
-                    content = mapOf(
+                    content = jsonObject(
                             "status" to "ok",
                             "execution_count" to count,
                             "user_variables" to JsonObject(),
@@ -114,7 +111,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, iopub: JupyterCo
                             "user_expressions" to JsonObject())
                     ))
         }
-        "is_complete_request" -> send(makeReplyMessage(msg, "is_complete_reply", content = mapOf("status" to "complete")))
+        "is_complete_request" -> send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to "complete")))
         else -> send(makeReplyMessage(msg, "unsupported_message_reply"))
     }
 }

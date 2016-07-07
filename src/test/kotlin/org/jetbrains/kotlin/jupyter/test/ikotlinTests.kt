@@ -70,9 +70,9 @@ class KernelServerTest {
         with (context.socket(ZMQ.REQ)) {
             try {
                 connect("${config.transport}://*:${config.ports[JupyterSockets.control.ordinal]}")
-                sendMessage(makeNewMessage(makeHeader("kernel_info_request")), hmac)
+                sendMessage(Message(header = makeHeader("kernel_info_request")), hmac)
                 val msg = receiveMessage(recv(), hmac)
-                Assert.assertEquals("kernel_info_reply", msg!!.header["msg_type"])
+                Assert.assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])
             } finally {
                 close()
                 context.term()
