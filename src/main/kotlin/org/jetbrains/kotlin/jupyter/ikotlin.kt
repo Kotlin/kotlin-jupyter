@@ -6,7 +6,6 @@ import com.beust.klaxon.Parser
 import com.beust.klaxon.int
 import com.beust.klaxon.string
 import org.jetbrains.kotlin.cli.common.KotlinVersion
-import org.jetbrains.kotlin.cli.jvm.repl.LineResult
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
@@ -136,13 +135,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                         "execution_count" to count,
                         "code" to msg.content["code"])))
-                val res = connection.evalWithIO { repl?.interpreter?.eval(msg.content["code"].toString()) }
+                val res = repl?.eval(count, msg.content["code"].toString())
                 val resStr = when (res) {
-                    is LineResult.ValueResult -> res.valueAsString
-                    is LineResult.UnitResult -> "Ok"
-                    is LineResult.Error -> "Error: ${res.errorText}"
-                    is LineResult.Incomplete -> "..."
-                    null -> "no repl"
+                    is ReplForJupyter.EvalResult.ValueResult -> res.valueAsString
+                    is ReplForJupyter.EvalResult.UnitResult -> "Ok"
+                    is ReplForJupyter.EvalResult.Error -> "${res.errorText}"
+                    is ReplForJupyter.EvalResult.Incomplete -> "error: incomplete code"
+                    null -> "error: no repl"
+                    else -> throw Exception("Unexpected result from eval call: $res")
                 }
                 send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
@@ -166,7 +166,15 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.contextMessage = null
         }
         "is_complete_request" -> {
-            send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to "complete")))
+            val res = repl?.checkComplete(executionCount.get(), msg.content["code"].toString())
+            val resStr = when (res) {
+                is ReplForJupyter.EvalResult.Error -> "invalid"
+                is ReplForJupyter.EvalResult.Incomplete -> "incomplete"
+                is ReplForJupyter.EvalResult.Ready -> "complete"
+                null -> "error: no repl"
+                else -> throw Exception("unexpected result from checkComplete call: $res")
+            }
+            send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to resStr)))
         }
         else -> send(makeReplyMessage(msg, "unsupported_message_reply"))
     }
