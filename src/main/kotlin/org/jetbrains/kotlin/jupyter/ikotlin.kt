@@ -5,9 +5,11 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.beust.klaxon.int
 import com.beust.klaxon.string
+import org.jetbrains.kotlin.cli.common.KotlinVersion
 import org.jetbrains.kotlin.cli.jvm.repl.LineResult
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.thread
 
 data class KernelArgs(val cfgFile: File,
                       val classpath: List<File>)
@@ -63,22 +65,41 @@ fun kernelServer(config: KernelConfig) {
 
         val repl = ReplForJupyter(conn)
 
-        while (!Thread.currentThread().isInterrupted) {
+        val mainThread = Thread.currentThread()
 
+        val controlThread = thread {
+            while (true) {
+                try {
+                    conn.heartbeat.onData { send(it, 0) }
+                    conn.control.onMessage { shellMessagesHandler(it, null, executionCount) }
+
+                    Thread.sleep(config.pollingIntervalMillis)
+                }
+                catch (e: InterruptedException) {
+                    log.debug("Control: Interrupted")
+                    mainThread.interrupt()
+                    break
+                }
+            }
+        }
+
+        while (true) {
             try {
-                conn.heartbeat.onData { send(it, 0) }
-                conn.stdin.onData { logWireMessage(it) }
                 conn.shell.onMessage { shellMessagesHandler(it, repl, executionCount) }
-                // TODO: consider listening control on a separate thread, as recommended by the kernel protocol
-                conn.control.onMessage { shellMessagesHandler(it, null, executionCount) }
 
                 Thread.sleep(config.pollingIntervalMillis)
             }
             catch (e: InterruptedException) {
-                log.info("Interrupted")
+                log.debug("Main: Interrupted")
+                controlThread.interrupt()
                 break
             }
         }
+
+        try {
+            controlThread.join()
+        }
+        catch (e: InterruptedException) {}
 
         log.info("Shutdown server")
     }
@@ -90,8 +111,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             send(makeReplyMessage(msg, "kernel_info_reply",
                     content = jsonObject(
                             "protocol_version" to protocolVersion,
-                            "language" to "kotlin",
-                            "language_version" to "1.1-SNAPSHOT"
+                            "language" to "Kotlin",
+                            "language_version" to KotlinVersion.VERSION
                     )))
         "history_request" ->
             send(makeReplyMessage(msg, "history_reply",
@@ -107,6 +128,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = jsonObject(JupyterSockets.values()
                                             .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
+            connection.contextMessage = msg
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
             with (connection.iopub) {
@@ -141,6 +163,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "payload" to listOf<String>(),
                             "user_expressions" to JsonObject())
                     ))
+            connection.contextMessage = null
         }
         "is_complete_request" -> {
             send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to "complete")))
