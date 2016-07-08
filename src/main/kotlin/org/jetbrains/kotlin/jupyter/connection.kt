@@ -70,6 +70,54 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         }
     }
 
+    inner class StdinInputStream : java.io.InputStream() {
+        private var currentBuf: ByteArray? = null
+        private var currentBufPos = 0
+
+        fun getInput(): String {
+            stdin.send(makeReplyMessage(contextMessage!!, "input_request",
+                    content = jsonObject("prompt" to "stdin:")))
+            val msg = stdin.receiveMessage(stdin.recv())
+            val input = msg?.content?.get("value")
+            if (msg == null || msg.header?.get("msg_type")?.equals("input_reply") != true || input == null || input !is String)
+                throw UnsupportedOperationException("Unexpected input message $msg")
+            return input
+        }
+
+        @Synchronized
+        override fun read(): Int {
+            if (currentBuf == null) {
+                currentBuf = getInput().toByteArray()
+                currentBufPos = 0
+            }
+            if (currentBufPos >= currentBuf!!.size) {
+                currentBuf = null
+                return -1
+            }
+            currentBufPos.inc()
+            return currentBuf!![currentBufPos - 1].toInt()
+        }
+
+        @Synchronized
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            if (currentBuf == null) {
+                currentBuf = getInput().toByteArray()
+                currentBufPos = 0
+            }
+            val lenLeft = currentBuf!!.size - currentBufPos
+            if (lenLeft <= 0) {
+                currentBuf = null
+                return -1
+            }
+            val lenToRead = if (lenLeft > len) len else lenLeft
+            for (i in 0 .. (lenToRead - 1)) {
+                b.set(off + i,currentBuf!![currentBufPos + i])
+            }
+            currentBufPos += lenToRead
+            return lenToRead
+        }
+    }
+
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
@@ -83,6 +131,7 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
     val iopubOut = PrintStream(IopubOutputStream("stdout"))
     val iopubErr = PrintStream(IopubOutputStream("stderr"))
+    val stdinIn = StdinInputStream()
 
     var contextMessage: Message? = null
 

@@ -84,7 +84,10 @@ fun<T> JupyterConnection.evalWithIO(body: () -> T): T {
     System.setOut(iopubOut)
     val err = System.err
     System.setErr(iopubErr)
+    val `in` = System.`in`
+    System.setIn(stdinIn)
     val res = body()
+    System.setIn(`in`)
     System.setErr(err)
     System.setOut(out)
     return res
