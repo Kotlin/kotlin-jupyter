@@ -2,6 +2,8 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import org.zeromq.ZMQ
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
@@ -12,7 +14,7 @@ import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-class JupyterConnection(val config: ConnectionConfig): Closeable {
+class JupyterConnection(val config: KernelConfig): Closeable {
 
     inner class Socket(val socket: JupyterSockets, type: Int) : ZMQ.Socket(context, type) {
         val name: String get() = socket.name
@@ -71,6 +73,8 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
+    val disposable = Disposable { }
+
     val heartbeat = Socket(JupyterSockets.hb, ZMQ.REP)
     val shell = Socket(JupyterSockets.shell, ZMQ.ROUTER)
     val control = Socket(JupyterSockets.control, ZMQ.ROUTER)
@@ -89,6 +93,7 @@ class JupyterConnection(val config: ConnectionConfig): Closeable {
         stdin.close()
         iopub.close()
         context.close()
+        Disposer.dispose(disposable)
     }
 }
 

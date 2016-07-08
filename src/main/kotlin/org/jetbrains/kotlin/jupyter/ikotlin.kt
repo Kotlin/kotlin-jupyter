@@ -5,33 +5,46 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.beust.klaxon.int
 import com.beust.klaxon.string
-import com.intellij.openapi.Disposable
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.repl.LineResult
-import org.jetbrains.kotlin.cli.jvm.repl.ReplInterpreter
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.utils.PathUtil
+import java.io.File
 import java.util.concurrent.atomic.AtomicLong
+
+data class KernelArgs(val cfgFile: File,
+                      val classpath: List<File>)
+
+private fun parseCommandLine(vararg args: String): KernelArgs {
+    var cfgFile: File? = null
+    var classpath: List<File>? = null
+    args.forEach { when {
+        it.startsWith("-cp=") || it.startsWith("-classpath=") -> {
+            if (classpath != null) throw IllegalArgumentException("classpath already set to ${classpath!!.joinToString(File.pathSeparator)}")
+            classpath = it.substringAfter('=').split(File.pathSeparator).map { File(it) }
+        }
+        else -> {
+            if (cfgFile != null) throw IllegalArgumentException("config file already set to $cfgFile")
+            cfgFile = File(it)
+        }
+    } }
+    if (cfgFile == null) throw IllegalArgumentException("config file is not provided")
+    if (!cfgFile!!.exists() || !cfgFile!!.isFile ) throw IllegalArgumentException("invalid config file $cfgFile")
+    return KernelArgs(cfgFile!!, classpath ?: emptyList())
+}
 
 fun main(vararg args: String) {
     try {
-        val cfgFile = args[0]
-        val cfgJson = Parser().parse(cfgFile) as JsonObject
+        val (cfgFile, classpath) = parseCommandLine(*args)
+        val cfgJson = Parser().parse(cfgFile.canonicalPath) as JsonObject
         fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
 
         val sigScheme = cfgJson.string("signature_scheme")
         val key = cfgJson.string("key")
 
-        kernelServer(ConnectionConfig(
+        kernelServer(KernelConfig(
                 ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }.toTypedArray(),
                 transport = cfgJson.string("transport") ?: "tcp",
                 signatureScheme = sigScheme ?: "hmac1-sha256",
-                signatureKey = if (sigScheme == null || key == null) "" else key
+                signatureKey = if (sigScheme == null || key == null) "" else key,
+                classpath = classpath
         ))
     }
     catch (e: Exception) {
@@ -39,7 +52,7 @@ fun main(vararg args: String) {
     }
 }
 
-fun kernelServer(config: ConnectionConfig) {
+fun kernelServer(config: KernelConfig) {
     log.info("Starting server: $config")
 
     JupyterConnection(config).use { conn ->
@@ -47,14 +60,8 @@ fun kernelServer(config: ConnectionConfig) {
         log.info("start listening")
 
         val executionCount = AtomicLong(1)
-        val disposable = Disposable { }
-        val messageCollector = PrintingMessageCollector(conn.iopubErr, MessageRenderer.WITHOUT_PATHS, false)
-        val compilerConfiguration = CompilerConfiguration().apply {
-            addJvmClasspathRoots(PathUtil.getJdkClassesRoots())
-            put(CommonConfigurationKeys.MODULE_NAME, "jupyter")
-            put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-        }
-        val repl = ReplInterpreter(disposable, compilerConfiguration, ReplForJupyterConfiguration(conn))
+
+        val repl = ReplForJupyter(conn)
 
         while (!Thread.currentThread().isInterrupted) {
 
@@ -77,7 +84,7 @@ fun kernelServer(config: ConnectionConfig) {
     }
 }
 
-fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplInterpreter?, executionCount: AtomicLong) {
+fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
     when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
             send(makeReplyMessage(msg, "kernel_info_reply",
@@ -107,7 +114,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplInterp
                 send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                         "execution_count" to count,
                         "code" to msg.content["code"])))
-                val res = connection.evalWithIO { repl?.eval(msg.content["code"].toString()) }
+                val res = connection.evalWithIO { repl?.interpreter?.eval(msg.content["code"].toString()) }
                 val resStr = when (res) {
                     is LineResult.ValueResult -> res.valueAsString
                     is LineResult.UnitResult -> "Ok"

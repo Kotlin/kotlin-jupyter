@@ -21,6 +21,10 @@ repositories {
     jcenter()
 }
 
+configurations {
+    deploy
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
@@ -29,6 +33,7 @@ dependencies {
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:0.24'
     testCompile 'junit:junit:4.12'
+    deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 }
 
 version = '0.1-SNAPSHOT'
@@ -48,6 +53,11 @@ task copyKernel(type: Copy) {
     from shadowJar.outputs
     from 'kernelspec/kernel.json'
     into 'build/kernel/kotlin'
+}
+
+task copyLibs(type: Copy) {
+    from configurations.deploy
+    into 'build/kernel/kotlin/libs'
 }
 
 copyKernel.dependsOn shadowJar

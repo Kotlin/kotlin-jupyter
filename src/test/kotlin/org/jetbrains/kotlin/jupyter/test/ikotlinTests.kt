@@ -11,7 +11,7 @@ import kotlin.concurrent.thread
 
 class KernelServerTest {
 
-    private val config = ConnectionConfig(
+    private val config = KernelConfig(
             ports = JupyterSockets.values().map { randomPort() }.toTypedArray(),
             transport = "tcp",
             signatureScheme = "hmac1-sha256",
