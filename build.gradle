@@ -36,7 +36,7 @@ dependencies {
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 }
 
-version = '0.1-SNAPSHOT'
+version = '0.1.0'
 
 jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
@@ -49,18 +49,25 @@ shadowJar {
     mergeServiceFiles()
 }
 
-task copyKernel(type: Copy) {
+ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
+
+task installKernel(type: Copy, dependsOn: shadowJar) {
     from shadowJar.outputs
-    from 'kernelspec/kernel.json'
-    into 'build/kernel/kotlin'
+    into installPath
 }
 
-task copyLibs(type: Copy) {
+task installLibs(type: Copy) {
     from configurations.deploy
-    into 'build/kernel/kotlin/libs'
+    into "$installPath/lib"
 }
 
-copyKernel.dependsOn shadowJar
+task createSpecs(dependsOn: [installKernel, installLibs]) {
+    String spec = new File('kernelspec/kernel.json.template').getText('UTF-8')
+    File kernelFile = files { shadowJar }.singleFile
+    spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
+    String libsCp = files { configurations.deploy }.files.collect { "$installPath/lib/${it.name}" } .join(File.pathSeparator)
+    spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
+    new File( "$installPath/kernel.json" ).write( spec, 'UTF-8' )
+}
 
-assemble.dependsOn copyKernel
-
+task install(dependsOn: [installKernel, installLibs, createSpecs])

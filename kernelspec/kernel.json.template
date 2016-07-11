@@ -1,0 +1,5 @@
+{
+  "argv": [ "java", "-jar", "${KERNEL_JAR_PATH}", "{connection_file}", "-cp=${RUNTIME_CLASSPATH}"],
+  "display_name": "Kotlin",
+  "language": "kotlin"
+}
