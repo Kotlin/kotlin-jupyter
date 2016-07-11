@@ -14,6 +14,16 @@ Use option `-PinstallPath=` to specify installation path. *(Note that jupyter lo
 
 Default installation path is `~/.ipython/kernels/kotlin/`.
 
+## Usage
+
+`jupyter-console --kernel=kotlin`
+
+or
+
+`jupyter-notebook`
+
+and the create a new notebook with `kotlin` kernel.
+
 ## Additional libraries
 
 Additional jars could be added to the REPL using `-cp=` parameter in `argv` list in the installed `kernel.json` file.
