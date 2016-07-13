@@ -27,16 +27,10 @@ import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.script.KotlinScriptDefinition
-import org.jetbrains.kotlin.script.ScriptParameter
-import org.jetbrains.kotlin.script.StandardScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.PrintWriter
 import java.net.URLClassLoader
@@ -197,15 +191,8 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
     companion object {
         private val SCRIPT_RESULT_FIELD_NAME = "\$\$result"
-        private val REPL_LINE_AS_SCRIPT_DEFINITION = object : KotlinScriptDefinition {
-            override val name = "Kotlin REPL"
+        private val REPL_LINE_AS_SCRIPT_DEFINITION = KotlinJupyterScriptDefinition()
 
-            override fun getScriptParameters(scriptDescriptor: ScriptDescriptor): List<ScriptParameter> = emptyList()
-
-            override fun <TF> isScript(file: TF): Boolean = StandardScriptDefinition.isScript(file)
-
-            override fun getScriptName(script: KtScript): Name = StandardScriptDefinition.getScriptName(script)
-        }
         private fun renderStackTrace(cause: Throwable, startFromMethodName: String): String {
             val newTrace = arrayListOf<StackTraceElement>()
             var skip = true
