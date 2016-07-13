@@ -146,8 +146,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
                 send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
-                        "data" to JsonObject(jsonObject("text/plain" to resStr)),
-                        "metadata" to JsonObject())))
+                        "data" to jsonObject("text/plain" to resStr),
+                        "metadata" to emptyJsonObject)))
                 send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             }
             send(makeReplyMessage(msg, "execute_reply",

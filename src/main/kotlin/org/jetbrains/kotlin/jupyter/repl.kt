@@ -79,7 +79,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
     }
 
     private var chunkState: ChunkState? = null
-    private var classLoader: ReplClassLoader = run {
+    private val classLoader: ReplClassLoader = run {
         val classpath = compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
         ReplClassLoader(URLClassLoader(classpath.toTypedArray(), null))
     }
@@ -156,13 +156,14 @@ class ReplForJupyter(val conn: JupyterConnection) {
                 val constructorArgs = earlierLines.map(EarlierLine::getScriptInstance).toTypedArray()
 
                 val scriptInstanceConstructor = scriptClass.getConstructor(*constructorParams)
-                val scriptInstance = try {
-                    conn.evalWithIO { scriptInstanceConstructor.newInstance(*constructorArgs) }
-                }
-                catch (e: Throwable) {
-                    // ignore everything in the stack trace until this constructor call
-                    return EvalResult.Error.Runtime(renderStackTrace(e.cause!!, startFromMethodName = "${scriptClass.name}.<init>"))
-                }
+                val scriptInstance =
+                        try {
+                            conn.evalWithIO { scriptInstanceConstructor.newInstance(*constructorArgs) }
+                        }
+                        catch (e: Throwable) {
+                            // ignore everything in the stack trace until this constructor call
+                            return EvalResult.Error.Runtime(renderStackTrace(e.cause!!, startFromMethodName = "${scriptClass.name}.<init>"))
+                        }
 
                 val rvField = scriptClass.getDeclaredField(SCRIPT_RESULT_FIELD_NAME).apply { isAccessible = true }
                 val rv: Any? = rvField.get(scriptInstance)
@@ -172,12 +173,13 @@ class ReplForJupyter(val conn: JupyterConnection) {
                 if (!state.replSpecific.hasResult) {
                     return EvalResult.UnitResult
                 }
-                val valueAsString: String = try {
-                    conn.evalWithIO  { rv.toString() }
-                }
-                catch (e: Throwable) {
-                    return EvalResult.Error.Runtime(renderStackTrace(e, startFromMethodName = "java.lang.String.valueOf"))
-                }
+                val valueAsString: String =
+                        try {
+                            conn.evalWithIO  { rv.toString() }
+                        }
+                        catch (e: Throwable) {
+                            return EvalResult.Error.Runtime(renderStackTrace(e, startFromMethodName = "java.lang.String.valueOf"))
+                        }
                 return EvalResult.ValueResult(valueAsString)
             }
             catch (e: Throwable) {
