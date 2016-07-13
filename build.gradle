@@ -13,30 +13,41 @@ buildscript {
     }
 }
 
-apply plugin: 'kotlin'
-apply plugin: 'com.github.johnrengelman.shadow'
+allprojects {
+    apply plugin: 'kotlin'
 
-repositories {
-    maven { url 'https://repo.gradle.org/gradle/repo' }
-    jcenter()
+    repositories {
+        maven { url 'https://repo.gradle.org/gradle/repo' }
+        jcenter()
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+        compile 'org.slf4j:slf4j-api:1.7.21'
+        compile 'com.beust:klaxon:0.24'
+        testCompile 'junit:junit:4.12'
+    }
+
+    version = '0.1.0'
+
+    ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 }
+
+apply plugin: 'com.github.johnrengelman.shadow'
 
 configurations {
     deploy
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
-    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile project(':jupyter-lib')
     runtime 'org.slf4j:slf4j-simple:1.7.21'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:0.24'
-    testCompile 'junit:junit:4.12'
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    deploy project(':jupyter-lib')
 }
-
-version = '0.1.0'
 
 jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
@@ -48,8 +59,6 @@ shadowJar {
     classifier = ''
     mergeServiceFiles()
 }
-
-ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 
 task installKernel(type: Copy, dependsOn: shadowJar) {
     from shadowJar.outputs
