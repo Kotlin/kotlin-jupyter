@@ -34,6 +34,9 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.PrintWriter
 import java.net.URLClassLoader
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 
 class ReplForJupyter(val conn: JupyterConnection) {
@@ -48,6 +51,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
     private val environment = run {
         compilerConfiguration.add(JVMConfigurationKeys.SCRIPT_DEFINITIONS, REPL_LINE_AS_SCRIPT_DEFINITION)
+        compilerConfiguration.put(CommonConfigurationKeys.REPL_MODE, true)
         KotlinCoreEnvironment.createForProduction(conn.disposable, compilerConfiguration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
     }
     private val psiFileFactory: PsiFileFactoryImpl = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
@@ -73,10 +77,13 @@ class ReplForJupyter(val conn: JupyterConnection) {
     }
 
     private var chunkState: ChunkState? = null
-    private val classLoader: ReplClassLoader = run {
+
+    private var classLoader: ReplClassLoader = run {
         val classpath = compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
         ReplClassLoader(URLClassLoader(classpath.toTypedArray(), null))
     }
+    private val classLoaderLock = ReentrantReadWriteLock()
+
     private val earlierLines = arrayListOf<EarlierLine>()
 
     fun createDiagnosticHolder() = ReplTerminalDiagnosticMessageHolder()
@@ -115,6 +122,15 @@ class ReplForJupyter(val conn: JupyterConnection) {
                 }
                 Pair(chunkState!!.psiFile, chunkState!!.errorHolder)
             }
+
+            REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, null)?.let {
+                if (environment.tryUpdateClasspath(it.classpath)) {
+                    classLoaderLock.write {
+                        classLoader = ReplClassLoader(URLClassLoader(it.classpath.map { it.toURI().toURL() }.toTypedArray(), classLoader))
+                    }
+                }
+            }
+
             val analysisResult = analyzerEngine.analyzeReplLine(psiFile, executionNumber.toInt())
             AnalyzerWithCompilerReport.Companion.reportDiagnostics(analysisResult.diagnostics, errorHolder, false)
             val scriptDescriptor = when (analysisResult) {
@@ -138,13 +154,15 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
             for (outputFile in state.factory.asList()) {
                 if (outputFile.relativePath.endsWith(".class")) {
-                    classLoader.addClass(JvmClassName.byInternalName(outputFile.relativePath.replaceFirst("\\.class$".toRegex(), "")),
-                            outputFile.asByteArray())
+                    classLoaderLock.read {
+                        classLoader.addClass(JvmClassName.byInternalName(outputFile.relativePath.replaceFirst("\\.class$".toRegex(), "")),
+                                outputFile.asByteArray())
+                    }
                 }
             }
 
             try {
-                val scriptClass = classLoader.loadClass("Line$executionNumber")
+                val scriptClass = classLoaderLock.read { classLoader.loadClass("Line$executionNumber") }
 
                 val constructorParams = earlierLines.map(EarlierLine::getScriptClass).toTypedArray()
                 val constructorArgs = earlierLines.map(EarlierLine::getScriptInstance).toTypedArray()

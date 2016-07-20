@@ -35,20 +35,17 @@ class KotlinJupyterScriptDependenciesResolver : ScriptDependenciesResolverEx {
             resolvers.asSequence().mapNotNull { it(dep) }.firstOrNull() ?:
                     throw Exception("Unable to resolve dependency $dep")
         }
-        if (cp.isNotEmpty()) {
-            currentClasspath.addAll(cp)
-        }
-        return object : KotlinScriptExternalDependencies {
-            override val classpath: Iterable<File> = currentClasspath
-            override val imports: Iterable<String> = listOf(DependsOn::class.java.`package`.name + ".*")
-        }
+        return if (cp.isEmpty()) null
+            else object : KotlinScriptExternalDependencies {
+                    override val classpath: Iterable<File> = cp
+                    override val imports: Iterable<String> = listOf(DependsOn::class.java.`package`.name + ".*")
+                }
     }
 
     companion object {
         // NOTE: this doesn't support multiple clients yet
         // TODO: add some id/uri to ScriptContent, fill it then creating a script VirtualFile and use it as a key to resolvers
         val resolvers: MutableList<Resolver> = arrayListOf(DirectResolver())
-        val currentClasspath = arrayListOf<File>()
     }
 }
 
@@ -62,7 +59,8 @@ class KotlinJupyterScriptDefinition : KotlinScriptDefinition {
         }
     }
 
-    private val def = KotlinScriptDefinitionFromTemplate(KotlinJupyterScriptTemplate::class, emptyMap())
+    private val def = KotlinScriptDefinitionFromTemplate(KotlinJupyterScriptTemplate::class,
+                                                         KotlinJupyterScriptDependenciesResolverProxy())
 
     override val name: String = "Kotlin Jupyter Script"
 

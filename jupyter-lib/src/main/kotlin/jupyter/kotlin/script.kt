@@ -1,14 +1,14 @@
 package jupyter.kotlin
 
-import org.jetbrains.kotlin.script.*
+import org.jetbrains.kotlin.script.AcceptedAnnotations
+import org.jetbrains.kotlin.script.KotlinScriptExternalDependencies
+import org.jetbrains.kotlin.script.ScriptContents
+import org.jetbrains.kotlin.script.ScriptDependenciesResolverEx
 import kotlin.reflect.KClass
 import kotlin.reflect.primaryConstructor
 
-@ScriptTemplateDefinition(resolver = KotlinJupyterScriptDependenciesResolverProxy::class)
 abstract class KotlinJupyterScriptTemplate
 
-// TODO: implement scripting support that allows to get resolver indirectly using template as a key
-// (to remove necessity to pull all scripting-related code into client classpath)
 class KotlinJupyterScriptDependenciesResolverProxy : ScriptDependenciesResolverEx {
 
     val resolver = actualResolverClass!!.primaryConstructor!!.call()

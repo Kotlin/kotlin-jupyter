@@ -1,8 +1,10 @@
 
 buildscript {
     ext.shadowJarVersion = "1.2.3"
-    ext.kotlinVersion = '1.1.0-dev-1514'
+//    ext.kotlinVersion = '1.1.0-dev-1514'
+    ext.kotlinVersion = '1.1-SNAPSHOT'
     repositories {
+        mavenLocal()
         maven { url 'https://repo.gradle.org/gradle/repo' }
         jcenter()
         mavenCentral()
@@ -23,15 +25,18 @@ allprojects {
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-        compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
-        compile 'org.slf4j:slf4j-api:1.7.21'
-        compile 'com.beust:klaxon:0.24'
         testCompile 'junit:junit:4.12'
     }
 
     version = '0.1.0'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'com.beust:klaxon:0.24'
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
