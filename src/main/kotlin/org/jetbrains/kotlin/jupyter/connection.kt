@@ -2,12 +2,11 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.com.intellij.openapi.Disposable
+import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.zeromq.ZMQ
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
-import java.io.OutputStream
 import java.io.PrintStream
 import java.security.SignatureException
 import java.util.*

@@ -1,7 +1,10 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.intellij.openapi.project.Project
-import jupyter.kotlin.*
+import jupyter.kotlin.DependsOn
+import jupyter.kotlin.KotlinJupyterScriptDependenciesResolverProxy
+import jupyter.kotlin.KotlinJupyterScriptTemplate
+import jupyter.kotlin.Repository
+import org.jetbrains.kotlin.com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.jupyter.resolvers.DirectResolver
 import org.jetbrains.kotlin.jupyter.resolvers.FlatLibDirectoryResolver

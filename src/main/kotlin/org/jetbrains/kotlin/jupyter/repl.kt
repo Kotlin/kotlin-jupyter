@@ -1,10 +1,5 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.google.common.base.Throwables
-import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.impl.PsiFileFactoryImpl
-import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.KotlinVersion
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
@@ -24,6 +19,11 @@ import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.CompilationErrorHandler
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.com.google.common.base.Throwables
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.CharsetToolkit
+import org.jetbrains.kotlin.com.intellij.psi.PsiFileFactory
+import org.jetbrains.kotlin.com.intellij.psi.impl.PsiFileFactoryImpl
+import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys

@@ -34,7 +34,7 @@ allprojects {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'com.beust:klaxon:0.24'
 }
