@@ -35,7 +35,7 @@ class KotlinJupyterScriptDependenciesResolver : ScriptDependenciesResolverEx {
             resolvers.asSequence().mapNotNull { it(dep) }.firstOrNull() ?:
                     throw Exception("Unable to resolve dependency $dep")
         }
-        return if (cp.isEmpty()) null
+        return if (previousDependencies != null && cp.isEmpty()) previousDependencies
             else object : KotlinScriptExternalDependencies {
                     override val classpath: Iterable<File> = cp
                     override val imports: Iterable<String> = listOf(DependsOn::class.java.`package`.name + ".*")

@@ -79,6 +79,8 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
     private var chunkState: ChunkState? = null
 
+    private var lastDependencies: KotlinScriptExternalDependencies? = null
+
     val classpath = compilerConfiguration.jvmClasspathRoots.toMutableList()
 
     private var classLoader: ReplClassLoader =
@@ -124,13 +126,17 @@ class ReplForJupyter(val conn: JupyterConnection) {
                 Pair(chunkState!!.psiFile, chunkState!!.errorHolder)
             }
 
-            REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, null)?.let {
+            val newDependencies = REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, lastDependencies)
+            newDependencies?.let {
                 if (environment.tryUpdateClasspath(it.classpath)) {
                     classLoaderLock.write {
                         classpath.addAll(it.classpath)
                         classLoader = ReplClassLoader(URLClassLoader(it.classpath.map { it.toURI().toURL() }.toTypedArray(), classLoader))
                     }
                 }
+            }
+            if (lastDependencies != newDependencies) {
+                lastDependencies = newDependencies
             }
 
             val analysisResult = analyzerEngine.analyzeReplLine(psiFile, executionNumber.toInt())
