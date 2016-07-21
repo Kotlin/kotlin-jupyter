@@ -135,18 +135,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                         "execution_count" to count,
                         "code" to msg.content["code"])))
-                val res = repl?.eval(count, msg.content["code"].toString())
-                val resStr = when (res) {
-                    is ReplForJupyter.EvalResult.ValueResult -> res.valueAsString
-                    is ReplForJupyter.EvalResult.UnitResult -> "Ok"
-                    is ReplForJupyter.EvalResult.Error -> "${res.errorText}"
-                    is ReplForJupyter.EvalResult.Incomplete -> "error: incomplete code"
-                    null -> "error: no repl"
-                    else -> throw Exception("Unexpected result from eval call: $res")
-                }
+                val res: ReplForJupyter.EvalResult = repl?.eval(count, msg.content["code"].toString()) ?: ReplForJupyter.EvalResult.Error.Runtime("no repl!")
                 send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
-                        "data" to jsonObject("text/plain" to resStr),
+                        "data" to res.asResult,
                         "metadata" to emptyJsonObject)))
                 send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             }

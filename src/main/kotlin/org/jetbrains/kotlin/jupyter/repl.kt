@@ -64,7 +64,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
             val errorHolder: DiagnosticMessageHolder)
 
     sealed class EvalResult {
-        class ValueResult(val valueAsString: String): EvalResult()
+        class ValueResult(val value: Any?): EvalResult()
 
         object UnitResult: EvalResult()
         object Ready: EvalResult()
@@ -80,7 +80,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
     private var classLoader: ReplClassLoader = run {
         val classpath = compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
-        ReplClassLoader(URLClassLoader(classpath.toTypedArray(), null))
+        ReplClassLoader(URLClassLoader(classpath.toTypedArray(), Thread.currentThread().contextClassLoader))
     }
     private val classLoaderLock = ReentrantReadWriteLock()
 
@@ -107,7 +107,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
             return when {
                 syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> EvalResult.Incomplete
-                syntaxErrorReport.isHasErrors -> EvalResult.Error.CompileTime(syntaxErrorReport.toString())
+                syntaxErrorReport.isHasErrors -> EvalResult.Error.CompileTime(errorHolder.renderedDiagnostics)
                 else -> EvalResult.Ready
             }
         }
@@ -182,17 +182,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
                 earlierLines.add(EarlierLine(code, scriptDescriptor, scriptClass, scriptInstance))
 
-                if (!state.replSpecific.hasResult) {
-                    return EvalResult.UnitResult
-                }
-                val valueAsString: String =
-                        try {
-                            conn.evalWithIO  { rv.toString() }
-                        }
-                        catch (e: Throwable) {
-                            return EvalResult.Error.Runtime(renderStackTrace(e, startFromMethodName = "java.lang.String.valueOf"))
-                        }
-                return EvalResult.ValueResult(valueAsString)
+                return if (state.replSpecific.hasResult) EvalResult.ValueResult(rv) else EvalResult.UnitResult
             }
             catch (e: Throwable) {
                 val writer = PrintWriter(System.err)
