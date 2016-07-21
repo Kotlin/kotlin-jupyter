@@ -33,12 +33,6 @@ allprojects {
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 }
 
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'com.beust:klaxon:0.24'
-}
-
 apply plugin: 'com.github.johnrengelman.shadow'
 
 configurations {
@@ -47,9 +41,14 @@ configurations {
 
 dependencies {
     compile project(':jupyter-lib')
-    runtime 'org.slf4j:slf4j-simple:1.7.21'
+    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
+    compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:0.24'
+    compile 'com.jcabi:jcabi-aether:0.10.1'
+    runtime 'org.sonatype.aether:aether-api:1.13.1'
+    runtime 'org.apache.maven:maven-core:3.0.3'
+    runtime 'org.slf4j:slf4j-simple:1.7.21'
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     deploy project(':jupyter-lib')
 }

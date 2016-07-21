@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.jupyter.resolvers.DirectResolver
 import org.jetbrains.kotlin.jupyter.resolvers.FlatLibDirectoryResolver
+import org.jetbrains.kotlin.jupyter.resolvers.MavenResolver
 import org.jetbrains.kotlin.jupyter.resolvers.Resolver
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.script.*
@@ -25,17 +26,17 @@ class KotlinJupyterScriptDependenciesResolver : ScriptDependenciesResolverEx {
         script.annotations.forEach {
             when (it) {
                 is Repository ->
-                    resolvers.add( when {
-                        File(it.value).run { exists() && isDirectory } -> FlatLibDirectoryResolver(File(it.value))
+                    when {
+                        File(it.value).run { exists() && isDirectory } -> resolvers.add( FlatLibDirectoryResolver(File(it.value)))
                         else -> throw IllegalArgumentException("Illegal argument for Repository annotation: ${it.value}")
-                    })
+                    }
                 is DependsOn -> {}
                 is InvalidScriptResolverAnnotation -> throw Exception("Invalid annotation ${it.name}", it.error)
                 else -> throw Exception("Unknown annotation ${it.javaClass}")
             }
         }
         val cp = script.annotations.filterIsInstance(DependsOn::class.java).flatMap { dep ->
-            resolvers.asSequence().mapNotNull { it(dep) }.firstOrNull() ?:
+            resolvers.asSequence().mapNotNull { it.tryResolve(dep) }.firstOrNull() ?:
                     throw Exception("Unable to resolve dependency $dep")
         }
         return if (previousDependencies != null && cp.isEmpty()) previousDependencies
@@ -49,7 +50,7 @@ class KotlinJupyterScriptDependenciesResolver : ScriptDependenciesResolverEx {
     companion object {
         // NOTE: this doesn't support multiple clients yet
         // TODO: add some id/uri to ScriptContent, fill it then creating a script VirtualFile and use it as a key to resolvers
-        val resolvers: MutableList<Resolver> = arrayListOf(DirectResolver())
+        val resolvers: MutableList<Resolver> = arrayListOf(DirectResolver(), MavenResolver())
     }
 }
 
