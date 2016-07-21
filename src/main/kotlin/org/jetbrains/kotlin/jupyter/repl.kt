@@ -128,10 +128,13 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
             val newDependencies = REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, lastDependencies)
             newDependencies?.let {
-                if (environment.tryUpdateClasspath(it.classpath)) {
+                log.debug("found deps: ${it.classpath}")
+                val newCp = environment.tryUpdateClasspath(it.classpath)
+                if (newCp != null && newCp.isNotEmpty()) {
+                    log.debug("new deps: $newCp")
                     classLoaderLock.write {
-                        classpath.addAll(it.classpath)
-                        classLoader = ReplClassLoader(URLClassLoader(it.classpath.map { it.toURI().toURL() }.toTypedArray(), classLoader))
+                        classpath.addAll(newCp)
+                        classLoader = ReplClassLoader(URLClassLoader(newCp.map { it.toURI().toURL() }.toTypedArray(), classLoader))
                     }
                 }
             }

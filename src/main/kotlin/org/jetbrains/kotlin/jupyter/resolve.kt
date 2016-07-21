@@ -38,7 +38,8 @@ class KotlinJupyterScriptDependenciesResolver : ScriptDependenciesResolverEx {
         return if (previousDependencies != null && cp.isEmpty()) previousDependencies
             else object : KotlinScriptExternalDependencies {
                     override val classpath: Iterable<File> = cp
-                    override val imports: Iterable<String> = listOf(DependsOn::class.java.`package`.name + ".*")
+                    override val imports: Iterable<String> =
+                            previousDependencies?.let { emptyList<String>() } ?: listOf(DependsOn::class.java.`package`.name + ".*")
                 }
     }
 
