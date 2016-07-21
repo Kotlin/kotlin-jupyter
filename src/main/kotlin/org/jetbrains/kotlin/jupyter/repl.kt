@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.script.KotlinScriptExternalDependencies
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.PrintWriter
 import java.net.URLClassLoader
@@ -78,10 +79,10 @@ class ReplForJupyter(val conn: JupyterConnection) {
 
     private var chunkState: ChunkState? = null
 
-    private var classLoader: ReplClassLoader = run {
-        val classpath = compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
-        ReplClassLoader(URLClassLoader(classpath.toTypedArray(), Thread.currentThread().contextClassLoader))
-    }
+    val classpath = compilerConfiguration.jvmClasspathRoots.toMutableList()
+
+    private var classLoader: ReplClassLoader =
+        ReplClassLoader(URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray(), Thread.currentThread().contextClassLoader))
     private val classLoaderLock = ReentrantReadWriteLock()
 
     private val earlierLines = arrayListOf<EarlierLine>()
@@ -126,6 +127,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
             REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, null)?.let {
                 if (environment.tryUpdateClasspath(it.classpath)) {
                     classLoaderLock.write {
+                        classpath.addAll(it.classpath)
                         classLoader = ReplClassLoader(URLClassLoader(it.classpath.map { it.toURI().toURL() }.toTypedArray(), classLoader))
                     }
                 }
