@@ -1,3 +1,6 @@
 .idea/
 .gradle/
 *.iml
+**/.ipynb*
+**/build/
+*.DS_Store
