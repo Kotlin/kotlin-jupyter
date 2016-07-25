@@ -8,7 +8,7 @@ Alpha version. Tested only with jupyter 4.1.1 on OS X so far.
 
 ## Example 
 
-Example notebook output is [here](samples/KotlinSample01.html). *(It is ported form [Gral](https://github.com/eseifert/gral)
+Example notebook output is [here](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/fix-rme/samples/KotlinSample01.html). *(It is ported form [Gral](https://github.com/eseifert/gral)
 project's `ConvolutionExample.java`).* 
 
 The notebook itself is located in the `samples` folder.
@@ -38,7 +38,11 @@ By default the return values from REPL statements are displayed in the text form
 ```kotlin
 fun resultOf(vararg mimeToData: Pair<String, Any>): Result 
 ```
-*(See sample usage in the [notebook example](samples/KotlinSample01.html)).*
+E.g.:
+```kotlin
+resultOf("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
+```
+*(See also `toSvg` function in the [example](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/fix-rme/samples/KotlinSample01.html)).*
 
 ## Installation
 
