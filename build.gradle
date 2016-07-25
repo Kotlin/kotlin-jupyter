@@ -1,10 +1,9 @@
 
 buildscript {
     ext.shadowJarVersion = "1.2.3"
-//    ext.kotlinVersion = '1.1.0-dev-1514'
-    ext.kotlinVersion = '1.1-SNAPSHOT'
+    ext.kotlinVersion = '1.1.0-dev-1920'
     repositories {
-        mavenLocal()
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url 'https://repo.gradle.org/gradle/repo' }
         jcenter()
         mavenCentral()
@@ -19,8 +18,10 @@ allprojects {
     apply plugin: 'kotlin'
 
     repositories {
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url 'https://repo.gradle.org/gradle/repo' }
         jcenter()
+        mavenCentral()
     }
 
     dependencies {
