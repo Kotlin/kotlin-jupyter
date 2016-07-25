@@ -29,7 +29,7 @@ allprojects {
         testCompile 'junit:junit:4.12'
     }
 
-    version = '0.1.0'
+    version = '0.2.0'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 }

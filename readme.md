@@ -2,9 +2,43 @@
 
 Basic kotlin REPL kernel for jupyter (http://jupyter.org).
 
-Plotting, autocompletion and other advanced features are not yet supported.
+Autocompletion, history and other advanced features are not yet supported.
 
 Alpha version. Tested only with jupyter 4.1.1 on OS X so far.
+
+## Example 
+
+Example notebook output is [here](samples/KotlinSample01.html). *(It is ported form [Gral](https://github.com/eseifert/gral)
+project's `ConvolutionExample.java`).* 
+
+The notebook itself is located in the `samples` folder.
+
+## Supported functionality
+
+### REPL commands
+
+The following REPL commands are supported:
+ - `:help` - displays REPL commands help
+ - `:classpath` - displays current classpath
+ 
+### Dependencies resolving annotations
+
+It is possible to add dynamic dependencies to the notebook using the following annotations:
+ - `@file:DependsOn(<absolute-path>)` - adds a class directory or jar to the classpath
+ - `@file:DependsOn(<colon-separated-maven-coordinates>)` - resolves artifacts using maven, downloads them if necessary, and adds to the classpath
+ 
+*Note: The repositories for maven resolving are fixed in this release - Maven Central is used as a remote repo and 
+`~/.m2/repository` as a local one.*
+  
+### MIME output
+  
+By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
+ to display graphics or html, it is possible to send MIME-encoded result to the client using the `Result` type 
+ and `resultOf` helper function. The latter has a signature: 
+```kotlin
+fun resultOf(vararg mimeToData: Pair<String, Any>): Result 
+```
+*(See sample usage in the [notebook example](samples/KotlinSample01.html)).*
 
 ## Installation
 
@@ -22,12 +56,12 @@ or
 
 `jupyter-notebook`
 
-and the create a new notebook with `kotlin` kernel.
+and then create a new notebook with `kotlin` kernel.
 
 ## Additional libraries
 
-Additional jars could be added to the REPL using `-cp=` parameter in `argv` list in the installed `kernel.json` file.
-Standard classpath format is used. *(Please make sure to use only absolute paths in the `kernel.json` file.)*
+In addition to using resolving annotations, jars could be added directly to the REPL using `-cp=` parameter in `argv` 
+list in the installed `kernel.json` file. Standard classpath format is used. *(Please make sure to use only absolute paths in the `kernel.json` file.)*
 
 ## Debugging
 
