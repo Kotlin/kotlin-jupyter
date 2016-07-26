@@ -8,7 +8,7 @@ Alpha version. Tested only with jupyter 4.1.1 on OS X so far.
 
 ## Example 
 
-Example notebook output is [here](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/fix-rme/samples/KotlinSample01.html). *(It is ported form [Gral](https://github.com/eseifert/gral)
+Example notebook output is [here](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/master/samples/KotlinSample01.html). *(It is ported form [Gral](https://github.com/eseifert/gral)
 project's `ConvolutionExample.java`).* 
 
 The notebook itself is located in the `samples` folder.
