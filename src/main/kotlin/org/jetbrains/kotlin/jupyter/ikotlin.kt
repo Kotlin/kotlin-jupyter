@@ -111,7 +111,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = jsonObject(
                             "protocol_version" to protocolVersion,
                             "language" to "Kotlin",
-                            "language_version" to KotlinVersion.VERSION
+                            "language_version" to KotlinVersion.VERSION,
+                            "language_info" to jsonObject("name" to "kotlin", "file_extension" to "kt")
                     )))
         "history_request" ->
             send(makeReplyMessage(msg, "history_reply",
