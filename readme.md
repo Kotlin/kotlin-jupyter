@@ -8,7 +8,7 @@ Alpha version. Tested only with jupyter 4.1.1 on OS X so far.
 
 ## Example 
 
-Example notebook output is [here](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/master/samples/KotlinSample01.html). *(It is ported from [Gral](https://github.com/eseifert/gral)
+Example notebook output is [here](samples/KotlinSample01.ipynb). *(It is ported from [Gral](https://github.com/eseifert/gral)
 project's `ConvolutionExample.java`).* 
 
 The notebook itself is located in the `samples` folder.
@@ -42,7 +42,7 @@ E.g.:
 ```kotlin
 resultOf("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
 ```
-*(See also `toSvg` function in the [example](http://htmlpreview.github.com/?https://github.com/ligee/kotlin-jupyter/blob/fix-rme/samples/KotlinSample01.html)).*
+*(See also `toSvg` function in the [example](samples/KotlinSample01.ipynb)).*
 
 ## Installation
 
