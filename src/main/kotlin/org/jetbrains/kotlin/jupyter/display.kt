@@ -37,6 +37,8 @@ fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ReplEvalResult {
     val out = System.out
     val err = System.err
 
+    // TODO: make configuration option of whether to pipe back stdout and stderr
+    // TODO: make a configuration option to limit the total stdout / stderr possibly returned (in case it goes wild...)
     val forkedOut = ForkingOutputStream(out, iopubOut, true)
     val forkedError = ForkingOutputStream(err, iopubErr, false)
 
@@ -47,6 +49,7 @@ fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ReplEvalResult {
     System.setIn(stdinIn)
     try {
         return body().let {
+            // TODO: make this a configuration option to pass back the stdout as the value if Unit (notebooks do not display the stdout, only console does)
             if (it is ReplEvalResult.UnitResult) {
                 ReplEvalResult.ValueResult(it.updatedHistory, String(forkedOut.capturedOutput.toByteArray()))
             } else {
