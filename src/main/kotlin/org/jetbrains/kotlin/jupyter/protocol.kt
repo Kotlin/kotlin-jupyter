@@ -10,7 +10,7 @@ import java.io.PrintStream
 import java.util.concurrent.atomic.AtomicLong
 
 enum class ResponseState {
-    OK, Error
+    Ok, OkSilent, Error
 }
 
 data class ResponseWithMessage(val state: ResponseState, val responsesByMimeType: Map<String, Any>, val stdOut: String?, val stdErr: String?) {
@@ -46,81 +46,69 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
-                connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
-                val code = msg.content["code"]
-                connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
-                        "execution_count" to count,
-                        "code" to code)))
-                val res: ResponseWithMessage = if (isCommand(code.toString())) {
-                    runCommand(code.toString(), repl)
-                } else {
-                    connection.evalWithIO {
-                        repl?.eval(count, code.toString()) ?: ReplEvalResult.Error.Runtime(emptyList(), "no repl!")
-                    }
+            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
+            val code = msg.content["code"]
+            connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
+                    "execution_count" to count,
+                    "code" to code)))
+            val res: ResponseWithMessage = if (isCommand(code.toString())) {
+                runCommand(code.toString(), repl)
+            } else {
+                connection.evalWithIO {
+                    repl?.eval(count, code.toString()) ?: ReplEvalResult.Error.Runtime(emptyList(), "no repl!")
                 }
+            }
 
-                println("RESPONSE: $res")
+            println("RESPONSE: $res")
 
-                fun sendOut(stream: String, text: String) {
-                    connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
-                            content = jsonObject(
-                                    "name" to stream,
-                                    "text" to text)))
-                }
+            fun sendOut(stream: String, text: String) {
+                connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
+                        content = jsonObject(
+                                "name" to stream,
+                                "text" to text)))
+            }
 
-                if (res.hasStdOut) {
-                    sendOut("stdout", res.stdOut!!)
-                }
-                if (res.hasStdErr) {
-                    sendOut("stderr", res.stdErr!!)
-                }
+            if (res.hasStdOut) {
+                sendOut("stdout", res.stdOut!!)
+            }
+            if (res.hasStdErr) {
+                sendOut("stderr", res.stdErr!!)
+            }
 
-                when (res.state) {
-                    ResponseState.OK -> {
+            when (res.state) {
+                ResponseState.Ok, ResponseState.OkSilent -> {
+                    if (res.state != ResponseState.OkSilent) {
                         connection.iopub.send(makeReplyMessage(msg,
                                 "execute_result",
                                 content = jsonObject(
                                         "execution_count" to count,
                                         "data" to res.responsesByMimeType,
                                         "metadata" to emptyJsonObject)))
-
-                        send(makeReplyMessage(msg, "execute_reply",
-                                metadata = jsonObject(
-                                        "dependencies_met" to true,
-                                        "engine" to msg.header["session"],
-                                        "status" to "ok",
-                                        "started" to startedTime),
-                                content = jsonObject(
-                                        "status" to "ok",
-                                        "execution_count" to count,
-                                        "user_variables" to JsonObject(),
-                                        "payload" to listOf<String>(),
-                                        "user_expressions" to JsonObject())))
                     }
-                    ResponseState.Error -> /* connection.iopub.send(makeReplyMessage(msg,
-                            "execute_result",  // TODO: make this a proper status: error response type
+                    send(makeReplyMessage(msg, "execute_reply",
+                            metadata = jsonObject(
+                                    "dependencies_met" to true,
+                                    "engine" to msg.header["session"],
+                                    "status" to "ok",
+                                    "started" to startedTime),
                             content = jsonObject(
-                            "execution_count" to count,
-                            "data" to res.responsesByMimeType,
-                            "metadata" to emptyJsonObject))) */
-                    {
-                        send(makeReplyMessage(msg, "execute_reply",
-                                metadata = jsonObject(
-                                        "dependencies_met" to true,
-                                        "engine" to msg.header["session"],
-                                        "status" to "error",
-                                        "started" to startedTime),
-                                content = jsonObject(
-                                        "status" to "error",
-                                        "execution_count" to count,
-                                        "ename" to "error ename",
-                                        "evalue" to "error evalue",
-                                        "traceback" to emptyList<String>())))
-                    }
+                                    "status" to "ok",
+                                    "execution_count" to count,
+                                    "user_variables" to JsonObject(),
+                                    "payload" to listOf<String>(),
+                                    "user_expressions" to JsonObject())))
                 }
-                connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
+                ResponseState.Error -> {
+                    val errorReply = makeReplyMessage(msg, "execute_reply",
+                            content = jsonObject(
+                                    "status" to "abort",
+                                    "execution_count" to count))
+                    System.err.println("Sending abort: $errorReply")
+                    send(errorReply)
+                }
+            }
 
-
+            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             connection.contextMessage = null
         }
         "is_complete_request" -> {
@@ -173,7 +161,7 @@ fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ResponseWithMessag
             when (resp) {
                 is ReplEvalResult.ValueResult -> {
                     try {
-                        ResponseWithMessage(ResponseState.OK, textResult(resp.value.toString()), stdOut, stdErr)
+                        ResponseWithMessage(ResponseState.Ok, textResult(resp.value.toString()), stdOut, stdErr)
                     } catch (e: Exception) {
                         ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
                                 joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
@@ -201,7 +189,7 @@ fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ResponseWithMessag
                             joinLines(stdErr, "error:  History mismatch"))
                 }
                 is ReplEvalResult.UnitResult -> {
-                    ResponseWithMessage(ResponseState.OK, textResult("OK"), stdOut, stdErr)
+                    ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
                 }
                 else -> {
                     ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
