@@ -3,8 +3,9 @@ buildscript {
     ext.shadowJarVersion = "1.2.3"
     ext.kotlinVersion = '1.1-M04'
     repositories {
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-        maven { url 'https://repo.gradle.org/gradle/repo' }
+        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
+        // only when using Kotlin DEV releases ...
+        // maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         jcenter()
         mavenCentral()
     }
@@ -18,10 +19,11 @@ allprojects {
     apply plugin: 'kotlin'
 
     repositories {
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-        maven { url 'https://repo.gradle.org/gradle/repo' }
         jcenter()
         mavenCentral()
+        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
+        // only when using Kotlin DEV releases ...
+        // maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
 
     dependencies {
@@ -41,7 +43,6 @@ configurations {
 }
 
 dependencies {
-    compile project(':jupyter-lib')
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion"
     compile 'org.slf4j:slf4j-api:1.7.21'
@@ -52,7 +53,6 @@ dependencies {
     runtime 'org.apache.maven:maven-core:3.0.3'
     runtime 'org.slf4j:slf4j-simple:1.7.21'
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    deploy project(':jupyter-lib')
 }
 
 jar.manifest.attributes(
