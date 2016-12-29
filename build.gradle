@@ -1,7 +1,7 @@
 
 buildscript {
     ext.shadowJarVersion = "1.2.3"
-    ext.kotlinVersion = '1.1.0-dev-1920'
+    ext.kotlinVersion = '1.1-M04'
     repositories {
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url 'https://repo.gradle.org/gradle/repo' }
@@ -43,6 +43,7 @@ configurations {
 dependencies {
     compile project(':jupyter-lib')
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion"
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:0.24'

@@ -5,7 +5,9 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.beust.klaxon.int
 import com.beust.klaxon.string
-import org.jetbrains.kotlin.cli.common.KotlinVersion
+import org.jetbrains.kotlin.cli.common.repl.ReplCheckResult
+import org.jetbrains.kotlin.cli.common.repl.ReplEvalResult
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
@@ -111,7 +113,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = jsonObject(
                             "protocol_version" to protocolVersion,
                             "language" to "Kotlin",
-                            "language_version" to KotlinVersion.VERSION,
+                            "language_version" to KotlinCompilerVersion.VERSION,
                             "language_info" to jsonObject("name" to "kotlin", "file_extension" to "kt")
                     )))
         "history_request" ->
@@ -126,7 +128,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         "connect_request" ->
             send(makeReplyMessage(msg, "connection_reply",
                     content = jsonObject(JupyterSockets.values()
-                                            .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
+                            .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
             connection.contextMessage = msg
             val count = executionCount.getAndIncrement()
@@ -138,7 +140,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                         "execution_count" to count,
                         "code" to code)))
                 val res = if (isCommand(code.toString())) runCommand(code.toString(), repl)
-                          else (repl?.eval(count, code.toString()) ?: ReplForJupyter.EvalResult.Error.Runtime("no repl!")).asResult
+                else (connection.evalWithIO { repl?.eval(count, code.toString()) ?: ReplEvalResult.Error.Runtime(emptyList(), "no repl!") }).asResult
                 send(makeReplyMessage(msg, "execute_result", content = jsonObject(
                         "execution_count" to count,
                         "data" to res,
@@ -157,7 +159,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "user_variables" to JsonObject(),
                             "payload" to listOf<String>(),
                             "user_expressions" to JsonObject())
-                    ))
+            ))
             connection.contextMessage = null
         }
         "is_complete_request" -> {
@@ -165,9 +167,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val resStr = if (isCommand(code)) "complete" else {
                 val res = repl?.checkComplete(executionCount.get(), code)
                 when (res) {
-                    is ReplForJupyter.EvalResult.Error -> "invalid"
-                    is ReplForJupyter.EvalResult.Incomplete -> "incomplete"
-                    is ReplForJupyter.EvalResult.Ready -> "complete"
+                    is ReplCheckResult.Error -> "invalid"
+                    is ReplCheckResult.Incomplete -> "incomplete"
+                    is ReplCheckResult.Ok -> "complete"
                     null -> "error: no repl"
                     else -> throw Exception("unexpected result from checkComplete call: $res")
                 }

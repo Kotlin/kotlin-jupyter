@@ -1,216 +1,115 @@
 package org.jetbrains.kotlin.jupyter
 
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.KotlinVersion
-import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.repl.CliReplAnalyzerEngine
-import org.jetbrains.kotlin.cli.jvm.repl.EarlierLine
-import org.jetbrains.kotlin.cli.jvm.repl.ReplClassLoader
-import org.jetbrains.kotlin.cli.jvm.repl.messages.DiagnosticMessageHolder
-import org.jetbrains.kotlin.cli.jvm.repl.messages.ReplTerminalDiagnosticMessageHolder
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.CompilationErrorHandler
-import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
-import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import org.jetbrains.kotlin.com.google.common.base.Throwables
-import org.jetbrains.kotlin.com.intellij.openapi.vfs.CharsetToolkit
-import org.jetbrains.kotlin.com.intellij.psi.PsiFileFactory
-import org.jetbrains.kotlin.com.intellij.psi.impl.PsiFileFactoryImpl
-import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.script.KotlinScriptExternalDependencies
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.script.KotlinScriptDefinitionFromAnnotatedTemplate
+import org.jetbrains.kotlin.script.util.templates.StandardArgsScriptTemplateWithMavenResolving
 import org.jetbrains.kotlin.utils.PathUtil
-import java.io.PrintWriter
+import java.io.File
 import java.net.URLClassLoader
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 
 class ReplForJupyter(val conn: JupyterConnection) {
+    private val requiredKotlinLibraries = listOf(
+            StandardArgsScriptTemplateWithMavenResolving::class.containingClasspath() ?:
+                    throw IllegalStateException("Cannot find template classpath, which is required"),
+            GenericReplCompiler::class.containingClasspath() ?:
+                    throw IllegalStateException("Cannot find repl engine classpath, which is required"),
+            KotlinCompilerVersion::class.containingClasspath() ?:
+                    throw IllegalStateException("Cannot find kotlin compiler classpath, which is required"),
+            Pair::class.containingClasspath() ?:
+                    throw IllegalStateException("Cannot find kotlin stdlib classpath, which is required"),
+            JvmName::class.containingClasspath() ?:
+                    throw IllegalStateException("Cannot find kotlin runtime classpath, which is required")
+    ).toSet().toList()
 
     private val compilerConfiguration = CompilerConfiguration().apply {
         addJvmClasspathRoots(PathUtil.getJdkClassesRoots())
+        addJvmClasspathRoots(requiredKotlinLibraries)
         addJvmClasspathRoots(conn.config.classpath)
         put(CommonConfigurationKeys.MODULE_NAME, "jupyter")
         put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, PrintingMessageCollector(conn.iopubErr, MessageRenderer.WITHOUT_PATHS, false))
         put(JVMConfigurationKeys.INCLUDE_RUNTIME, true)
     }
 
-    private val environment = run {
-        compilerConfiguration.add(JVMConfigurationKeys.SCRIPT_DEFINITIONS, REPL_LINE_AS_SCRIPT_DEFINITION)
-        compilerConfiguration.put(CommonConfigurationKeys.REPL_MODE, true)
-        KotlinCoreEnvironment.createForProduction(conn.disposable, compilerConfiguration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
-    }
-    private val psiFileFactory: PsiFileFactoryImpl = PsiFileFactory.getInstance(environment.project) as PsiFileFactoryImpl
-    private val analyzerEngine = CliReplAnalyzerEngine(environment)
-
-
-    private class ChunkState(
-            val code: String,
-            val psiFile: KtFile,
-            val errorHolder: DiagnosticMessageHolder)
-
-    sealed class EvalResult {
-        class ValueResult(val value: Any?): EvalResult()
-
-        object UnitResult: EvalResult()
-        object Ready: EvalResult()
-        object Incomplete : EvalResult()
-
-        sealed class Error(val errorText: String): EvalResult() {
-            class Runtime(errorText: String): Error(errorText)
-            class CompileTime(errorText: String): Error(errorText)
-        }
-    }
-
-    private var chunkState: ChunkState? = null
-
-    private var lastDependencies: KotlinScriptExternalDependencies? = null
-
     val classpath = compilerConfiguration.jvmClasspathRoots.toMutableList()
+    private val baseClassloader = URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray(), Thread.currentThread().contextClassLoader)
 
-    private var classLoader: ReplClassLoader =
-        ReplClassLoader(URLClassLoader(classpath.map { it.toURI().toURL() }.toTypedArray(), Thread.currentThread().contextClassLoader))
-    private val classLoaderLock = ReentrantReadWriteLock()
+    private val scriptDef = KotlinScriptDefinitionFromAnnotatedTemplate(StandardArgsScriptTemplateWithMavenResolving::class, null, null, emptyMap())
 
-    private val earlierLines = arrayListOf<EarlierLine>()
-
-    fun createDiagnosticHolder() = ReplTerminalDiagnosticMessageHolder()
-
-    fun checkComplete(executionNumber: Long, code: String): EvalResult {
-        synchronized(this) {
-            val virtualFile =
-                    LightVirtualFile("line$executionNumber${KotlinParserDefinition.STD_SCRIPT_EXT}", KotlinLanguage.INSTANCE, code).apply {
-                        charset = CharsetToolkit.UTF8_CHARSET
-                    }
-            val psiFile: KtFile = psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
-                    ?: error("Script file not analyzed at line $executionNumber: $code")
-
-            val errorHolder = createDiagnosticHolder()
-
-            val syntaxErrorReport = AnalyzerWithCompilerReport.Companion.reportSyntaxErrors(psiFile, errorHolder)
-
-            if (!syntaxErrorReport.isHasErrors) {
-                chunkState = ChunkState(code, psiFile, errorHolder)
-            }
-
-            return when {
-                syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> EvalResult.Incomplete
-                syntaxErrorReport.isHasErrors -> EvalResult.Error.CompileTime(errorHolder.renderedDiagnostics)
-                else -> EvalResult.Ready
-            }
-        }
+    val replCompiler: GenericReplCompiler by lazy {
+        GenericReplCompiler(conn.disposable, scriptDef, compilerConfiguration, PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false))
     }
 
-    fun eval(executionNumber: Long, code: String): EvalResult {
+    val compiledEvaluator: GenericReplCompiledEvaluator by lazy {
+        GenericReplCompiledEvaluator(compilerConfiguration.jvmClasspathRoots, baseClassloader, arrayOf(emptyArray<String>()))
+    }
+
+
+    private var earlierLines: List<ReplCodeLine> = arrayListOf<ReplCodeLine>()
+
+    private fun makeCodeLine(executionNumber: Long, code: String): ReplCodeLine {
+        return ReplCodeLine(executionNumber.toInt(), code) /* TODO: check this toInt() isn't deadly */
+    }
+
+    private fun findEarlierLines(codeLine: ReplCodeLine): List<ReplCodeLine> {
+        return earlierLines.filter { it.no < codeLine.no }
+    }
+
+    fun checkComplete(executionNumber: Long, code: String): ReplCheckResult {
+        val codeLine = makeCodeLine(executionNumber, code)
+        return replCompiler.check(codeLine, findEarlierLines(codeLine))
+    }
+
+    fun eval(executionNumber: Long, code: String): ReplEvalResult {
         synchronized(this) {
-            val (psiFile, errorHolder) = run {
-                if (chunkState == null || chunkState!!.code != code) {
-                    val res = checkComplete(executionNumber, code)
-                    if (res != EvalResult.Ready) return@eval res
-                }
-                Pair(chunkState!!.psiFile, chunkState!!.errorHolder)
+            val codeLine = makeCodeLine(executionNumber, code)
+            val check = replCompiler.check(codeLine, findEarlierLines(codeLine))
+            when (check) {
+                is ReplCheckResult.Ok -> {
+                } // nop
+                is ReplCheckResult.Incomplete -> return ReplEvalResult.Incomplete(check.updatedHistory)
+                is ReplCheckResult.Error -> return ReplEvalResult.Error.CompileTime(check.updatedHistory, check.message, check.location)
             }
 
-            val newDependencies = REPL_LINE_AS_SCRIPT_DEFINITION.getDependenciesFor(psiFile, environment.project, lastDependencies)
-            newDependencies?.let {
-                log.debug("found deps: ${it.classpath}")
-                val newCp = environment.tryUpdateClasspath(it.classpath)
-                if (newCp != null && newCp.isNotEmpty()) {
-                    log.debug("new deps: $newCp")
-                    classLoaderLock.write {
-                        classpath.addAll(newCp)
-                        classLoader = ReplClassLoader(URLClassLoader(newCp.map { it.toURI().toURL() }.toTypedArray(), classLoader))
-                    }
-                }
-            }
-            if (lastDependencies != newDependencies) {
-                lastDependencies = newDependencies
+            val compile = replCompiler.compile(codeLine, earlierLines)
+            when (compile) {
+                is ReplCompileResult.Incomplete -> return ReplEvalResult.Incomplete(compile.updatedHistory)
+                is ReplCompileResult.HistoryMismatch -> return ReplEvalResult.HistoryMismatch(compile.updatedHistory, compile.lineNo)
+                is ReplCompileResult.Error -> return ReplEvalResult.Error.CompileTime(compile.updatedHistory, compile.message, compile.location)
+                is ReplCompileResult.CompiledClasses -> {
+                } // nop
             }
 
-            val analysisResult = analyzerEngine.analyzeReplLine(psiFile, executionNumber.toInt())
-            AnalyzerWithCompilerReport.Companion.reportDiagnostics(analysisResult.diagnostics, errorHolder, false)
-            val scriptDescriptor = when (analysisResult) {
-                is CliReplAnalyzerEngine.ReplLineAnalysisResult.WithErrors -> return EvalResult.Error.CompileTime(errorHolder.renderedDiagnostics)
-                is CliReplAnalyzerEngine.ReplLineAnalysisResult.Successful -> analysisResult.scriptDescriptor
-                else -> error("Unexpected result ${analysisResult.javaClass}")
-            }
+            val successfulCompilation = compile as ReplCompileResult.CompiledClasses
 
-            val state = GenerationState(
-                    psiFile.project, ClassBuilderFactories.BINARIES, analyzerEngine.module,
-                    analyzerEngine.trace.bindingContext, listOf(psiFile), compilerConfiguration
-            )
-            state.replSpecific.scriptResultFieldName = SCRIPT_RESULT_FIELD_NAME
-            state.replSpecific.earlierScriptsForReplInterpreter = earlierLines.map(EarlierLine::getScriptDescriptor)
-            state.beforeCompile()
-            KotlinCodegenFacade.generatePackage(
-                    state,
-                    psiFile.script!!.getContainingKtFile().packageFqName,
-                    setOf(psiFile.script!!.getContainingKtFile()),
-                    CompilationErrorHandler.THROW_EXCEPTION)
+            val eval = compiledEvaluator.eval(codeLine, earlierLines, successfulCompilation.classes,
+                    successfulCompilation.hasResult,
+                    successfulCompilation.classpathAddendum)
 
-            for (outputFile in state.factory.asList()) {
-                if (outputFile.relativePath.endsWith(".class")) {
-                    classLoaderLock.read {
-                        classLoader.addClass(JvmClassName.byInternalName(outputFile.relativePath.replaceFirst("\\.class$".toRegex(), "")),
-                                outputFile.asByteArray())
-                    }
-                }
-            }
-
-            try {
-                val scriptClass = classLoaderLock.read { classLoader.loadClass("Line$executionNumber") }
-
-                val constructorParams = earlierLines.map(EarlierLine::getScriptClass).toTypedArray()
-                val constructorArgs = earlierLines.map(EarlierLine::getScriptInstance).toTypedArray()
-
-                val scriptInstanceConstructor = scriptClass.getConstructor(*constructorParams)
-                val scriptInstance =
-                        try {
-                            conn.evalWithIO { scriptInstanceConstructor.newInstance(*constructorArgs) }
-                        }
-                        catch (e: Throwable) {
-                            // ignore everything in the stack trace until this constructor call
-                            return EvalResult.Error.Runtime(renderStackTrace(e.cause!!, startFromMethodName = "${scriptClass.name}.<init>"))
-                        }
-
-                val rvField = scriptClass.getDeclaredField(SCRIPT_RESULT_FIELD_NAME).apply { isAccessible = true }
-                val rv: Any? = rvField.get(scriptInstance)
-
-                earlierLines.add(EarlierLine(code, scriptDescriptor, scriptClass, scriptInstance))
-
-                return if (state.replSpecific.hasResult) EvalResult.ValueResult(rv) else EvalResult.UnitResult
-            }
-            catch (e: Throwable) {
-                val writer = PrintWriter(System.err)
-                writer.flush()
-                throw e
-            }
+            earlierLines = check.updatedHistory
+            return eval
         }
     }
 
     init {
-        log.info("Starting kotlin repl ${KotlinVersion.VERSION}")
-        log.info("Using classpath:\n${compilerConfiguration.jvmClasspathRoots.joinToString("\n") { it.canonicalPath }}")
+        log.info("Starting kotlin repl ${KotlinCompilerVersion.VERSION}")
+        log.info("Using classpath:\n${classpath.joinToString("\n") { it.canonicalPath }}")
     }
 
     companion object {
         private val SCRIPT_RESULT_FIELD_NAME = "\$\$result"
-        private val REPL_LINE_AS_SCRIPT_DEFINITION = KotlinJupyterScriptDefinition()
 
         private fun renderStackTrace(cause: Throwable, startFromMethodName: String): String {
             val newTrace = arrayListOf<StackTraceElement>()
@@ -234,16 +133,4 @@ class ReplForJupyter(val conn: JupyterConnection) {
     }
 }
 
-fun<T> JupyterConnection.evalWithIO(body: () -> T): T {
-    val out = System.out
-    System.setOut(iopubOut)
-    val err = System.err
-    System.setErr(iopubErr)
-    val `in` = System.`in`
-    System.setIn(stdinIn)
-    val res = body()
-    System.setIn(`in`)
-    System.setErr(err)
-    System.setOut(out)
-    return res
-}
+
