@@ -6,6 +6,10 @@ Autocompletion, history and other advanced features are not yet supported.
 
 Alpha version. Tested only with jupyter 4.1.1 on OS X so far.
 
+## Screenshot
+
+![Screenshot in Jupyter](./samples/ScreenShotInJupyter.png)
+
 ## Example 
 
 Example notebook output is [here](samples/KotlinSample01.ipynb). *(It is ported from [Gral](https://github.com/eseifert/gral)
