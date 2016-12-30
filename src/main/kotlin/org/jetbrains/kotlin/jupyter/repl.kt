@@ -39,7 +39,8 @@ class ReplForJupyter(val conn: JupyterConnection) {
         addJvmClasspathRoots(requiredKotlinLibraries)
         addJvmClasspathRoots(conn.config.classpath)
         put(CommonConfigurationKeys.MODULE_NAME, "jupyter")
-        put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, PrintingMessageCollector(conn.iopubErr, MessageRenderer.WITHOUT_PATHS, false))
+        // TODO: how do we collect messages in context of a specific execute request
+        //put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, PrintingMessageCollector(conn.iopubErr, MessageRenderer.WITHOUT_PATHS, false))
         put(JVMConfigurationKeys.INCLUDE_RUNTIME, true)
     }
 

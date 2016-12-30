@@ -47,28 +47,6 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         val connection: JupyterConnection = this@JupyterConnection
     }
 
-    private inner class IopubOutputStream(val streamName: String) : java.io.OutputStream() {
-        fun sendToSocket(text: String) {
-            iopub.send(Message(
-                    header = makeHeader("stream", contextMessage),
-                    content = jsonObject(
-                            "name" to streamName,
-                            "text" to text)))
-        }
-
-        override fun write(b: ByteArray, off: Int, len: Int) {
-            val buf = ByteArrayOutputStream()
-            buf.write(b, off, len)
-            sendToSocket(buf.toString())
-        }
-
-        override fun write(b: Int) {
-            val buf = ByteArrayOutputStream()
-            buf.write(b)
-            sendToSocket(buf.toString())
-        }
-    }
-
     inner class StdinInputStream : java.io.InputStream() {
         private var currentBuf: ByteArray? = null
         private var currentBufPos = 0
@@ -128,8 +106,6 @@ class JupyterConnection(val config: KernelConfig): Closeable {
     val stdin = Socket(JupyterSockets.stdin, ZMQ.ROUTER)
     val iopub = Socket(JupyterSockets.iopub, ZMQ.PUB)
 
-    val iopubOut = PrintStream(IopubOutputStream("stdout"))
-    val iopubErr = PrintStream(IopubOutputStream("stderr"))
     val stdinIn = StdinInputStream()
 
     var contextMessage: Message? = null
