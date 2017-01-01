@@ -99,6 +99,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
                     successfulCompilation.hasResult,
                     successfulCompilation.classpathAddendum)
 
+            classpath.addAll(successfulCompilation.classpathAddendum)
             earlierLines = check.updatedHistory
             return eval
         }
