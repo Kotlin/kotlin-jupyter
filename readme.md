@@ -1,4 +1,4 @@
-# Kotlin kernel for iPython/Jupyter
+# Kotlin kernel for IPython/Jupyter
 
 Basic kotlin REPL kernel for jupyter (http://jupyter.org).
 
