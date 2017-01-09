@@ -82,6 +82,10 @@ task createSpecs(dependsOn: [installKernel, installLibs]) {
     spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
     String libsCp = files { configurations.deploy }.files.collect { "$installPath/lib/${it.name}" } .join(File.pathSeparator)
     spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
+    File installDir = new File("$installPath")
+    if(!installDir.exists()) {
+	installDir.mkdirs();
+    }
     new File( "$installPath/kernel.json" ).write( spec, 'UTF-8' )
 }
 
