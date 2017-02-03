@@ -25,7 +25,7 @@ class ReplForJupyter(val conn: JupyterConnection) {
             ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
             listOf(JarFileScriptDependenciesResolver(), MavenScriptDependenciesResolver())),
             additionalClasspath = conn.config.classpath + findClassJars(MimeTypedResult::class).assertNotEmpty("Must have MimeTypedResult in classpath"),
-            sharedHostClassLoader = Thread.currentThread().contextClassLoader
+            sharedHostClassLoader = null
     )
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {

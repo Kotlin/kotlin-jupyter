@@ -56,10 +56,10 @@ dependencies {
 
     shadow "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     shadow "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
-   // shadow project(":jupyter-lib")
+    shadow project(":jupyter-lib")
 
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-   // deploy project(":jupyter-lib")
+    deploy project(":jupyter-lib")
 }
 
 jar.manifest.attributes(

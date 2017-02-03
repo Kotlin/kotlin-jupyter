@@ -174,9 +174,10 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                 } else {
                     try {
                         println("result is ${exec.resultValue?.javaClass?.name} and is MimeTypedResult = ${exec.resultValue is MimeTypedResult}")
-                        if (exec.resultValue is MimeTypedResult) {
+                        if (exec.resultValue is MimeTypedResult || exec.resultValue?.javaClass?.canonicalName ?: "" == "jupyter.kotlin.MimeTypedResult") {
                             println("response type is TypedResult")
-                            val mimeTypedResponse = (exec.resultValue as MimeTypedResult)
+                            @Suppress("UNCHECKED_CAST")
+                            val mimeTypedResponse = (exec.resultValue as Map<String, Any>)
                             println("data = $mimeTypedResponse")
                             ResponseWithMessage(ResponseState.Ok, mimeTypedResponse, stdOut, stdErr)
                         } else {
