@@ -28,11 +28,12 @@ The following REPL commands are supported:
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOn(<absolute-path>)` - adds a class directory or jar to the classpath
- - `@file:DependsOn(<colon-separated-maven-coordinates>)` - resolves artifacts using maven, downloads them if necessary, and adds to the classpath
+ - `@file:DependsOnJar(<relative|absolute-path-in-dir-repo>)` - adds a class directory or jar to the classpath
+ - `@file:DirRepository(<absolute-path>)` - adds a directory as a repo
+ - `@file:DependsOnMaven(<colon-separated-maven-coordinates>)` - resolves artifacts using maven, downloads them if necessary, and adds to the classpath
+ - `@file:MavenRepository(<mavenRepoUrl>)` - adds a maven repository
  
-*Note: The repositories for maven resolving are fixed in this release - Maven Central is used as a remote repo and 
-`~/.m2/repository` as a local one.*
+*Note: The maven repositories used are defaulted to Maven Centralas a remote repo and `~/.m2/repository` as a local one.*
   
 ### MIME output
   
