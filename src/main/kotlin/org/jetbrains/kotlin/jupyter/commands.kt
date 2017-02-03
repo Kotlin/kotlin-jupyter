@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
+import jupyter.kotlin.textResult
+
 enum class ReplCommands(val desc: String) {
     help("display help"),
     classpath("show current classpath")

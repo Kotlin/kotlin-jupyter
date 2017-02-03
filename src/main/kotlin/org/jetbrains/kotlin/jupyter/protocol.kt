@@ -1,6 +1,8 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
+import jupyter.kotlin.MimeTypedResult
+import jupyter.kotlin.textResult
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import uy.kohesive.keplin.kotlin.script.EvalResult
 import uy.kohesive.keplin.kotlin.script.ReplCompilerException
@@ -167,11 +169,19 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                 val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
                 val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
 
-                if (exec.resultValue is Unit) {
+                if (exec.resultValue == Unit) {
                     ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
                 } else {
                     try {
-                        ResponseWithMessage(ResponseState.Ok, textResult(exec.resultValue.toString()), stdOut, stdErr)
+                        println("result is ${exec.resultValue?.javaClass?.name} and is MimeTypedResult = ${exec.resultValue is MimeTypedResult}")
+                        if (exec.resultValue is MimeTypedResult) {
+                            println("response type is TypedResult")
+                            val mimeTypedResponse = (exec.resultValue as MimeTypedResult)
+                            println("data = $mimeTypedResponse")
+                            ResponseWithMessage(ResponseState.Ok, mimeTypedResponse, stdOut, stdErr)
+                        } else {
+                            ResponseWithMessage(ResponseState.Ok, textResult(exec.resultValue.toString()), stdOut, stdErr)
+                        }
                     } catch (e: Exception) {
                         ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
                                 joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
@@ -219,5 +229,4 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
 fun joinLines(vararg parts: String): String = parts.filter(String::isNotBlank).joinToString("\n")
 fun String.nullWhenEmpty(): String? = if (this.isBlank()) null else this
 fun String?.emptyWhenNull(): String = if (this == null || this.isBlank()) "" else this
-fun textResult(text: String): Map<String, Any> = mapOf("text/plain" to text)
 

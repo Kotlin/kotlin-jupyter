@@ -45,6 +45,7 @@ configurations {
 }
 
 dependencies {
+    compile project(":jupyter-lib")
     compile "uy.kohesive.keplin:keplin-core:$keplinVersion"
     compile "uy.kohesive.keplin:keplin-maven-resolver:$keplinVersion"
 
@@ -55,8 +56,10 @@ dependencies {
 
     shadow "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     shadow "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+   // shadow project(":jupyter-lib")
 
     deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+   // deploy project(":jupyter-lib")
 }
 
 jar.manifest.attributes(
@@ -72,9 +75,7 @@ shadowJar {
     baseName = 'kotlin-jupyter-kernel'
     classifier = ''
     mergeServiceFiles()
-    // configurations = [project.configurations.runtime]
     dependencies {
-        // exclude(dependency("uy.kohesive.keplin:.*:.*"))
         exclude(dependency("org.jetbrains.kotlin:.*:.*"))
     }
 }

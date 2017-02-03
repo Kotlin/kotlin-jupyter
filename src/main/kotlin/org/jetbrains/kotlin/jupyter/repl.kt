@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
+import jupyter.kotlin.MimeTypedResult
+import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
@@ -9,8 +11,9 @@ import uy.kohesive.keplin.kotlin.script.SimplifiedRepl
 import uy.kohesive.keplin.kotlin.script.resolver.AnnotationTriggeredScriptDefinition
 import uy.kohesive.keplin.kotlin.script.resolver.JarFileScriptDependenciesResolver
 import uy.kohesive.keplin.kotlin.script.resolver.maven.MavenScriptDependenciesResolver
+import uy.kohesive.keplin.kotlin.script.util.assertNotEmpty
+import uy.kohesive.keplin.kotlin.script.util.findClassJars
 import kotlin.reflect.KClass
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 
 class ReplForJupyter(val conn: JupyterConnection) {
@@ -18,10 +21,11 @@ class ReplForJupyter(val conn: JupyterConnection) {
     private val EMPTY_SCRIPT_ARGS_TYPES: Array<out KClass<out Any>> = arrayOf(Array<String>::class)
     private val engine = SimplifiedRepl(scriptDefinition = AnnotationTriggeredScriptDefinition(
             "varargTemplateWithMavenResolving",
-            ScriptTemplateWithArgs::class,
+            ScriptTemplateWithDisplayHelpers::class,
             ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
             listOf(JarFileScriptDependenciesResolver(), MavenScriptDependenciesResolver())),
-            additionalClasspath = conn.config.classpath
+            additionalClasspath = conn.config.classpath + findClassJars(MimeTypedResult::class).assertNotEmpty("Must have MimeTypedResult in classpath"),
+            sharedHostClassLoader = Thread.currentThread().contextClassLoader
     )
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
@@ -46,5 +50,4 @@ class ReplForJupyter(val conn: JupyterConnection) {
         log.info("Using classpath:\n${engine.currentEvalClassPath.joinToString("\n") { it.canonicalPath }}")
     }
 }
-
 
