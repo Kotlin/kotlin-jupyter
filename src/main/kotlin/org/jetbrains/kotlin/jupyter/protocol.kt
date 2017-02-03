@@ -17,8 +17,8 @@ enum class ResponseState {
 }
 
 data class ResponseWithMessage(val state: ResponseState, val responsesByMimeType: Map<String, Any>, val stdOut: String?, val stdErr: String?) {
-    val hasStdOut: Boolean = stdOut != null
-    val hasStdErr: Boolean = stdErr != null
+    val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
+    val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
