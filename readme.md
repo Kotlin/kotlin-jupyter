@@ -1,6 +1,6 @@
 # Kotlin kernel for iPython/Jupyter
 
-Basic kotlin REPL kernel for jupyter (http://jupyter.org).
+Basic kotlin (1.1.0-beta-38) REPL kernel for jupyter (http://jupyter.org).
 
 Autocompletion, history and other advanced features are not yet supported.
 

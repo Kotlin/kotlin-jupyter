@@ -1,9 +1,10 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
-import org.jetbrains.kotlin.cli.common.repl.ReplCheckResult
-import org.jetbrains.kotlin.cli.common.repl.ReplEvalResult
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import uy.kohesive.keplin.kotlin.script.EvalResult
+import uy.kohesive.keplin.kotlin.script.ReplCompilerException
+import uy.kohesive.keplin.kotlin.script.ReplEvalRuntimeException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -55,7 +56,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO {
-                    repl?.eval(count, code.toString()) ?: ReplEvalResult.Error.Runtime(emptyList(), "no repl!")
+                    repl?.eval(count, code.toString())
                 }
             }
 
@@ -114,14 +115,19 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
             val resStr = if (isCommand(code)) "complete" else {
-                val res = repl?.checkComplete(executionCount.get(), code)
-                when (res) {
-                    is ReplCheckResult.Error -> "invalid"
-                    is ReplCheckResult.Incomplete -> "incomplete"
-                    is ReplCheckResult.Ok -> "complete"
-                    null -> "error: no repl"
-                    else -> throw Exception("unexpected result from checkComplete call: $res")
+                val result = try {
+                   val check = repl?.checkComplete(executionCount.get(), code)
+                   if (check == null) {
+                       "error: no repl"
+                   } else if (check.isComplete) {
+                       "complete"
+                   } else {
+                       "incomplete"
+                   }
+                } catch (ex: ReplCompilerException) {
+                    "invalid"
                 }
+                result
             }
             send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to resStr)))
         }
@@ -138,7 +144,7 @@ class CapturingOutputStream(val stdout: PrintStream, val captureOutput: Boolean)
     }
 }
 
-fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ResponseWithMessage {
+fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
     val out = System.out
     val err = System.err
 
@@ -153,51 +159,56 @@ fun JupyterConnection.evalWithIO(body: () -> ReplEvalResult): ResponseWithMessag
     val `in` = System.`in`
     System.setIn(stdinIn)
     try {
-        return body().let { resp ->
-            val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
-            val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
+        return try {
+            val exec = body()
+            if (exec == null) {
+                ResponseWithMessage(ResponseState.Error, textResult("Error!"), null, "NO REPL!")
+            } else {
+                val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
+                val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
 
-            // TODO: make this a configuration option to pass back the stdout as the value if Unit (notebooks do not display the stdout, only console does)
-            when (resp) {
-                is ReplEvalResult.ValueResult -> {
+                if (exec.resultValue is Unit) {
+                    ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
+                } else {
                     try {
-                        ResponseWithMessage(ResponseState.Ok, textResult(resp.value.toString()), stdOut, stdErr)
+                        ResponseWithMessage(ResponseState.Ok, textResult(exec.resultValue.toString()), stdOut, stdErr)
                     } catch (e: Exception) {
                         ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
                                 joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
                     }
                 }
-                is ReplEvalResult.Error -> {
-                    // handle runtime vs. compile time and send back correct format of response, now we just send text
-                    /*
-                        {
-                           'status' : 'error',
-                           'ename' : str,   # Exception name, as a string
-                           'evalue' : str,  # Exception value, as a string
-                           'traceback' : list(str), # traceback frames as strings
-                        }
-                     */
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                            joinLines(stdErr, resp.message))
-                }
-                is ReplEvalResult.Incomplete -> {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                            joinLines(stdErr, "error:  Incomplete code"))
-                }
-                is ReplEvalResult.HistoryMismatch -> {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                            joinLines(stdErr, "error:  History mismatch"))
-                }
-                is ReplEvalResult.UnitResult -> {
-                    ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
-                }
-                else -> {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                            joinLines(stdErr, "error:  Unexpected result from eval call: ${resp}"))
-                }
             }
-        }
+        } catch (ex: ReplCompilerException) {
+            val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
+            val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
 
+            // handle runtime vs. compile time and send back correct format of response, now we just send text
+            /*
+                {
+                   'status' : 'error',
+                   'ename' : str,   # Exception name, as a string
+                   'evalue' : str,  # Exception value, as a string
+                   'traceback' : list(str), # traceback frames as strings
+                }
+             */
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
+                    joinLines(stdErr, ex.errorResult.message))
+        } catch (ex: ReplEvalRuntimeException) {
+            val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
+            val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
+
+            // handle runtime vs. compile time and send back correct format of response, now we just send text
+            /*
+                {
+                   'status' : 'error',
+                   'ename' : str,   # Exception name, as a string
+                   'evalue' : str,  # Exception value, as a string
+                   'traceback' : list(str), # traceback frames as strings
+                }
+             */
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
+                    joinLines(stdErr, ex.errorResult.message))
+        }
     } finally {
         System.setIn(`in`)
         System.setErr(err)
