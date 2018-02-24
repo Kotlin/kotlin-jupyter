@@ -2,8 +2,6 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import com.beust.klaxon.int
-import com.beust.klaxon.string
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread

@@ -11,8 +11,8 @@ import uy.kohesive.keplin.kotlin.script.SimplifiedRepl
 import uy.kohesive.keplin.kotlin.script.resolver.AnnotationTriggeredScriptDefinition
 import uy.kohesive.keplin.kotlin.script.resolver.JarFileScriptDependenciesResolver
 import uy.kohesive.keplin.kotlin.script.resolver.maven.MavenScriptDependenciesResolver
-import uy.kohesive.keplin.kotlin.script.util.assertNotEmpty
-import uy.kohesive.keplin.kotlin.script.util.findClassJars
+import uy.kohesive.keplin.util.ClassPathUtils.findClassJars
+import uy.kohesive.keplin.util.assertNotEmpty
 import kotlin.reflect.KClass
 
 
@@ -29,18 +29,16 @@ class ReplForJupyter(val conn: JupyterConnection) {
     )
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
-        val codeLine = ReplCodeLine(executionNumber.toInt(), code)
+        val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
         return engine.check(codeLine)
     }
 
-    var lastEvalhistory: List<ReplCodeLine> = emptyList()
     val classpath: List<String> get() = engine.currentEvalClassPath.map { it.toString() }
 
     fun eval(executionNumber: Long, code: String): EvalResult {
         synchronized(this) {
-            val codeLine = ReplCodeLine(executionNumber.toInt(), code)
+            val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
             val result = engine.compileAndEval(codeLine)
-            lastEvalhistory = result.evalHistory
             return result
         }
     }

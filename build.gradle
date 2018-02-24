@@ -1,12 +1,9 @@
 
 buildscript {
     ext.shadowJarVersion = "1.2.3"
-    ext.kotlinVersion = '1.1.0-beta-38'
-    ext.keplinVersion = '1.0.0-ALPHA-40'
+    ext.kotlinVersion = '1.2.21'
+    ext.keplinVersion = '1.0.1'
     repositories {
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
-        // only when using Kotlin DEV releases ...
-        // maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         jcenter()
         mavenCentral()
     }
@@ -22,7 +19,6 @@ allprojects {
     repositories {
         jcenter()
         mavenCentral()
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
         maven { url 'http://dl.bintray.com/jaysonminard/kohesive' }
         // only when using Kotlin DEV releases ...
         // maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
@@ -33,7 +29,7 @@ allprojects {
         testCompile 'junit:junit:4.12'
     }
 
-    version = '0.4.0'
+    version = '0.6.0'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 }
@@ -49,10 +45,10 @@ dependencies {
     compile "uy.kohesive.keplin:keplin-core:$keplinVersion"
     compile "uy.kohesive.keplin:keplin-maven-resolver:$keplinVersion"
 
-    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.zeromq:jeromq:0.3.5'
-    compile 'com.beust:klaxon:0.24'
-    runtime 'org.slf4j:slf4j-simple:1.7.21'
+    compile 'com.beust:klaxon:2.1.8'
+    runtime 'org.slf4j:slf4j-simple:1.7.25'
 
     shadow "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     shadow "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
