@@ -1,5 +1,5 @@
 apply plugin: 'kotlin'
 
 dependencies {
-    compileOnly "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
 }

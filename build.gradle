@@ -50,11 +50,11 @@ dependencies {
     compile 'com.beust:klaxon:2.1.8'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
 
-    shadow "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    shadow "org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion"
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    shadow "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
     shadow project(":jupyter-lib")
 
-    deploy "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    deploy "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     deploy project(":jupyter-lib")
 }
 
