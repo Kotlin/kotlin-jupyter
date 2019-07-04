@@ -16,8 +16,7 @@ data class Message(
         val header: JsonObject? = null,
         val parentHeader: JsonObject? = null,
         val metadata: JsonObject? = null,
-        val content: JsonObject? = null,
-        val blob: ByteArray? = null
+        val content: JsonObject? = null
 ) {
     override fun toString(): String =
             "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}]" +

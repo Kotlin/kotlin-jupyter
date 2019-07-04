@@ -6,6 +6,7 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
@@ -42,8 +43,12 @@ configurations {
 
 dependencies {
     compile project(":jupyter-lib")
-    compile "uy.kohesive.keplin:keplin-core:$keplinVersion"
-    compile "uy.kohesive.keplin:keplin-maven-resolver:$keplinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-jvm-host-embeddable:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+
 
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.zeromq:jeromq:0.3.5'
@@ -80,11 +85,11 @@ task installKernel(type: Copy, dependsOn: shadowJar) {
     from shadowJar.outputs
     into installPath
 }
-
+/*
 task installDeployLibs(type: Copy) {
     from configurations.deploy
     into "$installPath"
-}
+}*/
 
 task installLibs(type: Copy) {
     from configurations.shadow

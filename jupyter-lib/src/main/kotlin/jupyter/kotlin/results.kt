@@ -2,7 +2,10 @@
 
 package jupyter.kotlin
 
-abstract class ScriptTemplateWithDisplayHelpers(val args: kotlin.Array<kotlin.String>) {
+import kotlin.script.experimental.annotations.KotlinScript
+
+@KotlinScript(fileExtension = "jupyterscript.kts")
+abstract class ScriptTemplateWithDisplayHelpers {
     fun resultOf(vararg mimeToData: Pair<String, Any>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 }
 

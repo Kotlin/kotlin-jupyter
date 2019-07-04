@@ -4,9 +4,6 @@ import com.beust.klaxon.JsonObject
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import uy.kohesive.keplin.kotlin.script.EvalResult
-import uy.kohesive.keplin.kotlin.script.ReplCompilerException
-import uy.kohesive.keplin.kotlin.script.ReplEvalRuntimeException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream

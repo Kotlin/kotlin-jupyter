@@ -2,4 +2,6 @@ apply plugin: 'kotlin'
 
 dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
+    compileOnly "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"
+    compileOnly "org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion"
 }

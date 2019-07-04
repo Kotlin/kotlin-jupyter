@@ -5,6 +5,9 @@ import com.beust.klaxon.Parser
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
+import java.lang.management.ManagementFactory
+
+
 
 data class KernelArgs(val cfgFile: File,
                       val classpath: List<File>)
@@ -59,7 +62,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(conn)
+        val repl = ReplForJupyter(conn.config.classpath)
 
         val mainThread = Thread.currentThread()
 
