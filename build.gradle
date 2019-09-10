@@ -33,6 +33,8 @@ allprojects {
     version = '0.6.0'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
+
+    ext.debugSpecs = false
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -81,32 +83,40 @@ shadowJar {
     }
 }
 
-task installKernel(type: Copy, dependsOn: shadowJar) {
+task cleanInstallDir(){
+    doLast {
+        File installDir = new File("$installPath")
+        installDir.deleteDir()
+    }
+}
+
+task installKernel(type: Copy, dependsOn: [cleanInstallDir, shadowJar]) {
     from shadowJar.outputs
     into installPath
 }
-/*
-task installDeployLibs(type: Copy) {
-    from configurations.deploy
-    into "$installPath"
-}*/
 
-task installLibs(type: Copy) {
-    from configurations.shadow
-    into "$installPath"
-}
-
-task createSpecs(dependsOn: [installKernel, installLibs]) {
-    String spec = new File('kernelspec/kernel.json.template').getText('UTF-8')
-    File kernelFile = files { shadowJar }.singleFile
-    spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
-    String libsCp = files { configurations.deploy }.files.collect { "$installPath/${it.name}" } .join(File.pathSeparator)
-    spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
-    File installDir = new File("$installPath")
-    if(!installDir.exists()) {
-	installDir.mkdirs();
+task createSpecs(dependsOn: cleanInstallDir) {
+    doLast {
+        String fileName = debugSpecs ? "kernel-debug" : "kernel"
+        String spec = new File("kernelspec/${fileName}.json.template").getText('UTF-8')
+        File kernelFile = files { shadowJar }.singleFile
+        spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
+        String libsCp = files { configurations.deploy }.files.collect {
+            "$installPath/${it.name}"
+        } .join(File.pathSeparator)
+        spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
+        File installDir = new File("$installPath")
+        if (!installDir.exists()) {
+            installDir.mkdirs();
+        }
+        new File("$installPath/kernel.json").write(spec, 'UTF-8')
     }
-    new File( "$installPath/kernel.json" ).write( spec, 'UTF-8' )
 }
 
-task install(dependsOn: [installKernel, installLibs, createSpecs])
+task installLibs(type: Copy, dependsOn: cleanInstallDir) {
+    into "$installPath"
+    from configurations.deploy
+}
+
+task install(dependsOn: [installKernel, installLibs, createSpecs]){
+}
