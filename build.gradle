@@ -6,7 +6,7 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
@@ -20,9 +20,8 @@ allprojects {
     repositories {
         jcenter()
         mavenCentral()
-        maven { url 'http://dl.bintray.com/jaysonminard/kohesive' }
-        // only when using Kotlin DEV releases ...
-        // maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+//         only when using Kotlin EAP releases ...
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
     }
 
     dependencies {
@@ -50,11 +49,13 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion"
 
-
+    compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:2.1.8'
+    compile "com.jcabi:jcabi-aether:0.10.1"
     runtime 'org.slf4j:slf4j-simple:1.7.25'
 
     shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
