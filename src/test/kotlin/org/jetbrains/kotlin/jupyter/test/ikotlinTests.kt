@@ -9,28 +9,7 @@ import java.net.ServerSocket
 import java.util.*
 import kotlin.concurrent.thread
 
-class KernelServerTest {
-
-    private val config = KernelConfig(
-            ports = JupyterSockets.values().map { randomPort() }.toTypedArray(),
-            transport = "tcp",
-            signatureScheme = "hmac1-sha256",
-            signatureKey = "")
-
-    private val hmac = HMAC(config.signatureScheme, config.signatureKey)
-
-    private var server: Thread? = null
-
-    @Before
-    fun setupServer() {
-        server = thread { kernelServer(config) }
-    }
-
-    @After
-    fun teardownServer() {
-        Thread.sleep(100)
-        server?.interrupt()
-    }
+class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testHeartbeat() {
@@ -70,7 +49,7 @@ class KernelServerTest {
         with (context.socket(ZMQ.REQ)) {
             try {
                 connect("${config.transport}://*:${config.ports[JupyterSockets.control.ordinal]}")
-                sendMessage(Message(header = makeHeader("kernel_info_request")), hmac)
+                sendMessage(Message(id = messageId, header = makeHeader("kernel_info_request")), hmac)
                 val msg = receiveMessage(recv(), hmac)
                 Assert.assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])
             } finally {

@@ -1,19 +1,17 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.MimeTypedResult
+import jupyter.kotlin.DependsOn
+import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.reflect.KClass
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.jvm.dependenciesFromClassContext
-import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
-import kotlin.script.experimental.jvmhost.createJvmCompilationConfigurationFromTemplate
+import kotlin.script.dependencies.ScriptContents
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.host.createCompilationConfigurationFromTemplate
+import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
 import kotlin.script.experimental.jvmhost.repl.JvmReplEvaluator
 
@@ -33,7 +31,7 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (historyMismatchResult: ReplEvalResult.HistoryMismatch) : this(ReplCompileResult.Error("History Mismatch", CompilerMessageLocation.create(null, historyMismatchResult.lineNo, 0, null)))
 }
 
-class ReplForJupyter(val additionalClasspath: List<File> = emptyList()) {
+class ReplForJupyter(val classpath: List<File> = emptyList()) {
 
     private fun ReplEvalResult.toResult(codeLine: LineId): EvalResult {
         return when (this) {
@@ -51,22 +49,40 @@ class ReplForJupyter(val additionalClasspath: List<File> = emptyList()) {
         }
     }
 
+    private val resolver = JupyterScriptDependenciesResolver()
+
+    private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+        val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
+                ?: return context.compilationConfiguration.asSuccess()
+        val scriptContents = object : ScriptContents {
+            override val annotations: Iterable<Annotation> = annotations
+            override val file: File? = null
+            override val text: CharSequence? = null
+        }
+        return try {
+            val resolvedClasspath = resolver.resolveFromAnnotations(scriptContents)
+            if(resolvedClasspath.isEmpty())
+                return context.compilationConfiguration.asSuccess()
+            context.compilationConfiguration.withUpdatedClasspath(resolvedClasspath).asSuccess()
+        } catch (e: Throwable) {
+            ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))
+        }
+    }
 
     private val compilerConfiguration by lazy {
-        createJvmCompilationConfigurationFromTemplate<ScriptTemplateWithDisplayHelpers> {
+        createCompilationConfigurationFromTemplate(KotlinType(ScriptTemplateWithDisplayHelpers::class),
+                defaultJvmScriptingHostConfiguration, ScriptTemplateWithDisplayHelpers::class) {
+            defaultImports(DependsOn::class, Repository::class)
             jvm {
-                dependenciesFromCurrentContext(wholeClasspath = true)
-                dependenciesFromClassContext(ScriptTemplateWithDisplayHelpers::class)
-                dependenciesFromClassContext(MimeTypedResult::class)
-                updateClasspath(additionalClasspath)
+                updateClasspath(classpath)
+            }
+            refineConfiguration {
+                onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
         }
     }
 
-    private val evaluatorConfiguration =
-        ScriptEvaluationConfiguration {
-
-        }
+    private val evaluatorConfiguration = ScriptEvaluationConfiguration { }
 
     private val compiler: ReplCompiler by lazy {
         JvmReplCompiler(compilerConfiguration)
@@ -92,9 +108,6 @@ class ReplForJupyter(val additionalClasspath: List<File> = emptyList()) {
             else -> throw IllegalStateException("Unknown check result type ${result}")
         }
     }
-
-    //TODO fix classpath
-    val classpath: String get() = System.getProperty("java.class.path")!!
 
     fun eval(executionNumber: Long, code: String): EvalResult {
         synchronized(this) {

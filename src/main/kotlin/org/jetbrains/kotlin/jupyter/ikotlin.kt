@@ -34,6 +34,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
 
 fun main(vararg args: String) {
     try {
+        log.info("Kernel args: "+ args.joinToString { it })
         val (cfgFile, classpath) = parseCommandLine(*args)
         val cfgJson = Parser().parse(cfgFile.canonicalPath) as JsonObject
         fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
