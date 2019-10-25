@@ -33,22 +33,6 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
 
 class ReplForJupyter(val classpath: List<File> = emptyList()) {
 
-    private fun ReplEvalResult.toResult(codeLine: LineId): EvalResult {
-        return when (this) {
-            is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(this)
-            is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(this)
-            is ReplEvalResult.Incomplete -> throw ReplCompilerException(this)
-            is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(this)
-            is ReplEvalResult.UnitResult -> {
-                EvalResult(codeLine, Unit)
-            }
-            is ReplEvalResult.ValueResult -> {
-                EvalResult(codeLine, this.value)
-            }
-            else -> throw IllegalStateException("Unknown eval result type ${this}")
-        }
-    }
-
     private val resolver = JupyterScriptDependenciesResolver()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
@@ -110,18 +94,30 @@ class ReplForJupyter(val classpath: List<File> = emptyList()) {
     }
 
     fun eval(executionNumber: Long, code: String): EvalResult {
-        synchronized(this) {
-            val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
-            val compileResult = compiler.compile(state, codeLine)
-            when(compileResult){
-                is ReplCompileResult.CompiledClasses -> {
-                    var result = evaluator.eval(evaluatorState, compileResult)
-                    return result.toResult(LineId(codeLine))
+            synchronized(this) {
+                val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
+                val compileResult = compiler.compile(state, codeLine)
+                when (compileResult) {
+                    is ReplCompileResult.CompiledClasses -> {
+                        var result = evaluator.eval(evaluatorState, compileResult)
+                        return when (result) {
+                            is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
+                            is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
+                            is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
+                            is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
+                            is ReplEvalResult.UnitResult -> {
+                                EvalResult(LineId(codeLine), Unit)
+                            }
+                            is ReplEvalResult.ValueResult -> {
+                                EvalResult(LineId(codeLine), result.value)
+                            }
+                            else -> throw IllegalStateException("Unknown eval result type ${this}")
+                        }
+                    }
+                    is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
+                    is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
                 }
-                is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
-                is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
             }
-        }
     }
 
     init {
