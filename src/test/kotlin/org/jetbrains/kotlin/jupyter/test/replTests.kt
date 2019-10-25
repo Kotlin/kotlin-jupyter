@@ -25,4 +25,13 @@ class ReplTest{
     fun TestDependsOnAnnotation(){
         repl.eval(1, "@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
+
+    @Test
+    fun TestDependsOnAnnotations(){
+        val sb = StringBuilder()
+        sb.appendln("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
+        sb.appendln("@file:Repository(\"https://repo.spring.io/libs-release\")")
+        sb.appendln("@file:DependsOn(\"org.jetbrains.kotlinx:kotlinx.html.jvm:0.5.12\")")
+        repl.eval(1, sb.toString())
+    }
 }
