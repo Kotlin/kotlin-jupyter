@@ -50,19 +50,18 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-dependencies:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven:$kotlinVersion"
 
     compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:2.1.8'
-    compile "com.jcabi:jcabi-aether:0.10.1"
     runtime 'org.slf4j:slf4j-simple:1.7.25'
+    runtime "org.jetbrains.kotlin:jcabi-aether:1.0-dev-3"
+    runtime "org.sonatype.aether:aether-api:1.13.1"
+    runtime "net.java.dev.jna:jna:5.4.0"
 
-    shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    shadow "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
-    shadow project(":jupyter-lib")
-
-    deploy "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     deploy project(":jupyter-lib")
 }
 
@@ -79,9 +78,6 @@ shadowJar {
     baseName = 'kotlin-jupyter-kernel'
     classifier = ''
     mergeServiceFiles()
-    dependencies {
-        exclude(dependency("org.jetbrains.kotlin:.*:.*"))
-    }
 }
 
 task cleanInstallDir(){
