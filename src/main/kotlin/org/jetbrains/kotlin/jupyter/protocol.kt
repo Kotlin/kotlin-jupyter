@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
 
 enum class ResponseState {
@@ -174,7 +175,7 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                         if (exec.resultValue is MimeTypedResult || exec.resultValue?.javaClass?.canonicalName ?: "" == "jupyter.kotlin.MimeTypedResult") {
                             println("response type is TypedResult")
                             @Suppress("UNCHECKED_CAST")
-                            val mimeTypedResponse = (exec.resultValue as Map<String, Any>)
+                            val mimeTypedResponse = (exec.resultValue as MimeTypedResult)
                             println("data = $mimeTypedResponse")
                             ResponseWithMessage(ResponseState.Ok, mimeTypedResponse, stdOut, stdErr)
                         } else {
