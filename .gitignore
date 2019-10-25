@@ -1,4 +1,6 @@
 .idea/
+out/
+build/
 .gradle/
 *.iml
 **/.ipynb*
