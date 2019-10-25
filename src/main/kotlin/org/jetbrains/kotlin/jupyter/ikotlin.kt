@@ -5,8 +5,7 @@ import com.beust.klaxon.Parser
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
-import java.lang.management.ManagementFactory
-
+import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 
 data class KernelArgs(val cfgFile: File,
@@ -30,6 +29,16 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     if (cfgFile == null) throw IllegalArgumentException("config file is not provided")
     if (!cfgFile!!.exists() || !cfgFile!!.isFile) throw IllegalArgumentException("invalid config file $cfgFile")
     return KernelArgs(cfgFile!!, classpath ?: emptyList())
+}
+
+fun printClassPath() {
+
+    val cl = ClassLoader.getSystemClassLoader()
+
+    val cp = classpathFromClassloader(cl)
+
+    if (cp != null)
+        log.info("Current classpath: " + cp.joinToString())
 }
 
 fun main(vararg args: String) {
@@ -60,6 +69,8 @@ fun kernelServer(config: KernelConfig) {
     JupyterConnection(config).use { conn ->
 
         log.info("start listening")
+
+        printClassPath()
 
         val executionCount = AtomicLong(1)
 
