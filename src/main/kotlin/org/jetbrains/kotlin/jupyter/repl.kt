@@ -10,7 +10,7 @@ import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
-import kotlin.script.experimental.host.createCompilationConfigurationFromTemplate
+import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
 import kotlin.script.experimental.jvmhost.repl.JvmReplEvaluator
@@ -44,18 +44,22 @@ class ReplForJupyter(val classpath: List<File> = emptyList()) {
             override val text: CharSequence? = null
         }
         return try {
-            val resolvedClasspath = resolver.resolveFromAnnotations(scriptContents)
-            if(resolvedClasspath.isEmpty())
-                return context.compilationConfiguration.asSuccess()
-            context.compilationConfiguration.withUpdatedClasspath(resolvedClasspath).asSuccess()
+            resolver.resolveFromAnnotations(scriptContents)
+                .onSuccess { classpath ->
+                    context.compilationConfiguration
+                            .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
+                            .asSuccess()
+                }
         } catch (e: Throwable) {
             ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))
         }
     }
 
     private val compilerConfiguration by lazy {
-        createCompilationConfigurationFromTemplate(KotlinType(ScriptTemplateWithDisplayHelpers::class),
-                defaultJvmScriptingHostConfiguration, ScriptTemplateWithDisplayHelpers::class) {
+        ScriptCompilationConfiguration {
+            hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
+            baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
+            fileExtension.put("jupyter.kts")
             defaultImports(DependsOn::class, Repository::class)
             jvm {
                 updateClasspath(classpath)
