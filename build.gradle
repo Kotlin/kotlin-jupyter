@@ -95,28 +95,38 @@ task installKernel(type: Copy, dependsOn: [cleanInstallDir, shadowJar]) {
     into installPath
 }
 
-task createSpecs(dependsOn: cleanInstallDir) {
-    doLast {
-        String fileName = debugSpecs ? "kernel-debug" : "kernel"
-        String spec = new File("kernelspec/${fileName}.json.template").getText('UTF-8')
-        File kernelFile = files { shadowJar }.singleFile
-        spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
-        String libsCp = files { configurations.deploy }.files.collect {
-            "$installPath/${it.name}"
-        } .join(File.pathSeparator)
-        spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
-        File installDir = new File("$installPath")
-        if (!installDir.exists()) {
-            installDir.mkdirs();
+void createTaskForSpecs(Boolean debug) {
+    String taskName = debug ? "createDebugSpecs" : "createSpecs"
+    task(taskName) {
+        dependsOn cleanInstallDir
+        doLast {
+            String fileName = debug ? "kernel-debug" : "kernel"
+            String spec = new File("kernelspec/${fileName}.json.template").getText('UTF-8')
+            File kernelFile = files { shadowJar }.singleFile
+            spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
+            String libsCp = files { configurations.deploy }.files.collect {
+                "$installPath/${it.name}"
+            } .join(File.pathSeparator)
+            spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
+            File installDir = new File("$installPath")
+            if (!installDir.exists()) {
+                installDir.mkdirs();
+            }
+            new File("$installPath/kernel.json").write(spec, 'UTF-8')
         }
-        new File("$installPath/kernel.json").write(spec, 'UTF-8')
     }
 }
+
+createTaskForSpecs(true)
+createTaskForSpecs(false)
 
 task installLibs(type: Copy, dependsOn: cleanInstallDir) {
     into "$installPath"
     from configurations.deploy
 }
 
-task install(dependsOn: [installKernel, installLibs, createSpecs]){
+task install(dependsOn: [installKernel, installLibs, createSpecs]) {
+}
+
+task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs]) {
 }
