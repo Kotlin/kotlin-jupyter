@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.*
@@ -12,7 +13,7 @@ import kotlin.script.experimental.api.makeFailureResult
 
 open class JupyterScriptDependenciesResolver
 {
-    private val resolver : GenericDependenciesResolver = CompoundDependenciesResolver(DirectDependenciesResolver(), FlatLibDirectoryDependenciesResolver(), MavenDependenciesResolver())
+    private val resolver : GenericDependenciesResolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
 
     fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>> {
         script.annotations.forEach { annotation ->
@@ -28,7 +29,8 @@ open class JupyterScriptDependenciesResolver
         val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
         val classpath = mutableListOf<File>()
         for(annotation in script.annotations.filterIsInstance<DependsOn>()) {
-            when (val result = resolver.resolve(annotation.value)) {
+            val result = runBlocking { resolver.resolve(annotation.value) }
+            when (result) {
                 is ResultWithDiagnostics.Failure -> scriptDiagnostics.add(ScriptDiagnostic("Failed to resolve dependencies:\n" + result.reports.joinToString("\n") { it.message }))
                 is ResultWithDiagnostics.Success -> classpath.addAll(result.value)
             }
