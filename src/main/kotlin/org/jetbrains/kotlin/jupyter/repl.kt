@@ -125,8 +125,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList()) {
     }
 
     init {
-        log.info("Starting kotlin repl ${KotlinCompilerVersion.VERSION}")
-        log.info("Using classpath:\n${classpath}")
+        log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
+        log.info("Classpath used in script: ${classpath}")
     }
 }
 

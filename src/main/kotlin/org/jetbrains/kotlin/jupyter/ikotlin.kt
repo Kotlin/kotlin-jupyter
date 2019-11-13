@@ -64,13 +64,13 @@ fun main(vararg args: String) {
 }
 
 fun kernelServer(config: KernelConfig) {
-    log.info("Starting server: $config")
+    log.info("Starting server with config: $config")
 
     JupyterConnection(config).use { conn ->
 
-        log.info("start listening")
-
         printClassPath()
+
+        log.info("Begin listening for events")
 
         val executionCount = AtomicLong(1)
 
