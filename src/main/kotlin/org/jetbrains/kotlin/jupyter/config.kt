@@ -22,4 +22,4 @@ data class KernelConfig(
         val classpath: List<File> = emptyList()
 )
 
-val protocolVersion = "5.0"
+val protocolVersion = "5.3"
