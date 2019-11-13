@@ -1,12 +1,13 @@
 
 buildscript {
-    ext.shadowJarVersion = "1.2.3"
-    ext.kotlinVersion = '1.2.21'
-    ext.keplinVersion = '1.0.1'
+    ext.shadowJarVersion = "5.1.0"
+    //ext.kotlinVersion = '1.3.60-dev-2180-83'
+    ext.kotlinVersion = '1.3-SNAPSHOT'
     repositories {
         jcenter()
         mavenCentral()
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
@@ -22,6 +23,8 @@ allprojects {
         mavenCentral()
 //         only when using Kotlin EAP releases ...
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+        maven { url 'https://kotlin.bintray.com/kotlin-dependencies' }
     }
 
     dependencies {
