@@ -20,7 +20,8 @@ data class ResponseWithMessage(val state: ResponseState, val responsesByMimeType
 }
 
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
-    when (msg.header!!["msg_type"]) {
+    val msgType = msg.header!!["msg_type"]
+    when (msgType) {
         "kernel_info_request" ->
             send(makeReplyMessage(msg, "kernel_info_reply",
                     content = jsonObject(
@@ -59,8 +60,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     repl?.eval(count, code.toString())
                 }
             }
-
-            println("RESPONSE: $res")
 
             fun sendOut(stream: String, text: String) {
                 connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
@@ -171,7 +170,6 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                     ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
                 } else {
                     try {
-                        println("result is ${exec.resultValue?.javaClass?.name} and is MimeTypedResult = ${exec.resultValue is MimeTypedResult}")
                         if (exec.resultValue is MimeTypedResult || exec.resultValue?.javaClass?.canonicalName ?: "" == "jupyter.kotlin.MimeTypedResult") {
                             println("response type is TypedResult")
                             @Suppress("UNCHECKED_CAST")
@@ -204,7 +202,6 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                     joinLines(stdErr, ex.errorResult.message))
         } catch (ex: ReplEvalRuntimeException) {
             val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
-            val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
 
             // handle runtime vs. compile time and send back correct format of response, now we just send text
             /*
