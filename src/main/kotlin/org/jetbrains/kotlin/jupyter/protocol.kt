@@ -215,8 +215,23 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                    'traceback' : list(str), # traceback frames as strings
                 }
              */
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                    joinLines(stdErr, ex.errorResult.message))
+            val stdErr = StringBuilder()
+            with(stdErr) {
+                forkedError.capturedOutput.toString("UTF-8")?.nullWhenEmpty()?.also { appendln(it) }
+                val cause = ex.errorResult.cause
+                if (cause == null) appendln(ex.errorResult.message)
+                else {
+                    when (cause) {
+                        is InvocationTargetException -> appendln(cause.targetException.toString())
+                        else -> appendln(cause.toString())
+                    }
+                    cause.stackTrace?.also {
+                        for (s in it)
+                            appendln(s)
+                    }
+                }
+            }
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut, stdErr.toString())
         }
     } finally {
         System.setIn(`in`)
