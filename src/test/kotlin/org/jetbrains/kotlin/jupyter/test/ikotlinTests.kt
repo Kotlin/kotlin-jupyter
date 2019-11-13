@@ -4,10 +4,6 @@ package org.jetbrains.kotlin.jupyter.test
 import org.jetbrains.kotlin.jupyter.*
 import org.junit.*
 import org.zeromq.ZMQ
-import java.io.IOException
-import java.net.ServerSocket
-import java.util.*
-import kotlin.concurrent.thread
 
 class KernelServerTest : KernelServerTestsBase() {
 
@@ -57,22 +53,5 @@ class KernelServerTest : KernelServerTestsBase() {
                 context.term()
             }
         }
-    }
-
-    companion object {
-        private val rng = Random()
-        private val portRangeStart = 32768
-        private val portRangeEnd = 65536
-
-        fun randomPort(): Int =
-            generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {
-                try {
-                    ServerSocket(it).close()
-                    true
-                }
-                catch (e: IOException) {
-                    false
-                }
-            }!!
     }
 }

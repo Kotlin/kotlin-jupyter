@@ -5,12 +5,15 @@ import org.jetbrains.kotlin.jupyter.*
 import org.junit.After
 import org.junit.Before
 import org.zeromq.ZMQ
+import java.io.IOException
+import java.net.ServerSocket
+import java.util.*
 import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
 
     protected val config = KernelConfig(
-            ports = JupyterSockets.values().map { KernelServerTest.randomPort() }.toTypedArray(),
+            ports = JupyterSockets.values().map { randomPort() }.toTypedArray(),
             transport = "tcp",
             signatureScheme = "hmac1-sha256",
             signatureKey = "",
@@ -38,4 +41,21 @@ open class KernelServerTestsBase {
     }
 
     fun ZMQ.Socket.receiveMessage() = receiveMessage(recv(), hmac)!!
+
+    companion object {
+        private val rng = Random()
+        private val portRangeStart = 32768
+        private val portRangeEnd = 65536
+
+        fun randomPort(): Int =
+                generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {
+                    try {
+                        ServerSocket(it).close()
+                        true
+                    }
+                    catch (e: IOException) {
+                        false
+                    }
+                }!!
+    }
 }
