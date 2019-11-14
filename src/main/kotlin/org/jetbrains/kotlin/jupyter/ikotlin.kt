@@ -5,20 +5,26 @@ import com.beust.klaxon.Parser
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
+import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 
 data class KernelArgs(val cfgFile: File,
-                      val classpath: List<File>)
+                      val scriptClasspath: List<File>,
+                      val libs: File?)
 
 private fun parseCommandLine(vararg args: String): KernelArgs {
     var cfgFile: File? = null
     var classpath: List<File>? = null
+    var libsJson: File? = null
     args.forEach {
         when {
             it.startsWith("-cp=") || it.startsWith("-classpath=") -> {
                 if (classpath != null) throw IllegalArgumentException("classpath already set to ${classpath!!.joinToString(File.pathSeparator)}")
                 classpath = it.substringAfter('=').split(File.pathSeparator).map { File(it) }
+            }
+            it.startsWith("-libs=") -> {
+                libsJson = File(it.substringAfter('='))
             }
             else -> {
                 if (cfgFile != null) throw IllegalArgumentException("config file already set to $cfgFile")
@@ -28,7 +34,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     }
     if (cfgFile == null) throw IllegalArgumentException("config file is not provided")
     if (!cfgFile!!.exists() || !cfgFile!!.isFile) throw IllegalArgumentException("invalid config file $cfgFile")
-    return KernelArgs(cfgFile!!, classpath ?: emptyList())
+    return KernelArgs(cfgFile!!, classpath ?: emptyList(), libsJson)
 }
 
 fun printClassPath() {
@@ -41,10 +47,21 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
+fun readLibrariesConfig(file: File): LibrariesConfig {
+    val json = Parser().parse(file.canonicalPath) as JsonObject
+    val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()
+    val artifacts = json.array<JsonObject>("artifacts")?.map {
+        it.string("alias")!! to ArtifactResolution(
+                coordinates = it.string("coordinates")!!,
+                imports = it.array<String>("imports")?.toList().orEmpty())
+    }?.toMap()
+    return LibrariesConfig(repos, artifacts.orEmpty())
+}
+
 fun main(vararg args: String) {
     try {
         log.info("Kernel args: "+ args.joinToString { it })
-        val (cfgFile, classpath) = parseCommandLine(*args)
+        val (cfgFile, scriptClasspath, librariesConfigFile) = parseCommandLine(*args)
         val cfgJson = Parser().parse(cfgFile.canonicalPath) as JsonObject
         fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
 
@@ -56,7 +73,8 @@ fun main(vararg args: String) {
                 transport = cfgJson.string("transport") ?: "tcp",
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
-                classpath = classpath
+                scriptClasspath = scriptClasspath,
+                librariesConfig = librariesConfigFile?.let(::readLibrariesConfig)
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -74,7 +92,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(conn.config.classpath)
+        val repl = ReplForJupyter(conn.config.scriptClasspath, conn.config.librariesConfig)
 
         val mainThread = Thread.currentThread()
 

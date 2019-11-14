@@ -1,5 +1,5 @@
 {
-  "argv": [ "java", "-jar", "${KERNEL_JAR_PATH}", "{connection_file}", "-cp=${RUNTIME_CLASSPATH}"],
+  "argv": [ "java", "-jar", "${DEBUGGER_CONFIG}", "${KERNEL_JAR_PATH}", "{connection_file}", "-cp=${RUNTIME_CLASSPATH}", "-libs=${LIBRARIES_PATH}"],
   "display_name": "Kotlin",
   "language": "kotlin"
 }

@@ -1,5 +1,0 @@
-{
-  "argv": [ "java", "-jar", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044", "${KERNEL_JAR_PATH}", "{connection_file}", "-cp=${RUNTIME_CLASSPATH}"],
-  "display_name": "Kotlin",
-  "language": "kotlin"
-}

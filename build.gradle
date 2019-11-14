@@ -5,6 +5,7 @@ buildscript {
     ext.kotlinVersion = '1.3-SNAPSHOT'
     repositories {
         jcenter()
+        mavenLocal()
         mavenCentral()
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
@@ -20,6 +21,7 @@ allprojects {
 
     repositories {
         jcenter()
+        mavenLocal()
         mavenCentral()
 //         only when using Kotlin EAP releases ...
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
@@ -29,14 +31,15 @@ allprojects {
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
         testCompile 'junit:junit:4.12'
     }
 
-    version = '0.6.0'
+    version = '0.6.3'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 
-    ext.debugSpecs = false
+    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044"
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -73,10 +76,6 @@ jar.manifest.attributes(
     'Implementation-Version': version
 )
 
-tasks.withType(AbstractCompile) {
-    classpath += configurations.shadow
-}
-
 shadowJar {
     baseName = 'kotlin-jupyter-kernel'
     classifier = ''
@@ -100,14 +99,15 @@ void createTaskForSpecs(Boolean debug) {
     task(taskName) {
         dependsOn cleanInstallDir
         doLast {
-            String fileName = debug ? "kernel-debug" : "kernel"
-            String spec = new File("kernelspec/${fileName}.json.template").getText('UTF-8')
+            String spec = new File("kernelspec/kernel.json.template").getText('UTF-8')
             File kernelFile = files { shadowJar }.singleFile
             spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
             String libsCp = files { configurations.deploy }.files.collect {
                 "$installPath/${it.name}"
             } .join(File.pathSeparator)
             spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
+                    .replace("\${DEBUGGER_CONFIG}", debug ? debuggerConfig : "")
+                    .replace("\${LIBRARIES_PATH}", "$installPath/libraries.json")
             File installDir = new File("$installPath")
             if (!installDir.exists()) {
                 installDir.mkdirs();
@@ -115,6 +115,11 @@ void createTaskForSpecs(Boolean debug) {
             new File("$installPath/kernel.json").write(spec, 'UTF-8')
         }
     }
+}
+
+task copyLibrariesConfig(type: Copy, dependsOn: cleanInstallDir) {
+    from "libraries.json"
+    into installPath
 }
 
 createTaskForSpecs(true)
@@ -125,8 +130,8 @@ task installLibs(type: Copy, dependsOn: cleanInstallDir) {
     from configurations.deploy
 }
 
-task install(dependsOn: [installKernel, installLibs, createSpecs]) {
+task install(dependsOn: [installKernel, installLibs, createSpecs, copyLibrariesConfig]) {
 }
 
-task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs]) {
+task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs, copyLibrariesConfig]) {
 }

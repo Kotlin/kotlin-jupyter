@@ -31,9 +31,9 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (historyMismatchResult: ReplEvalResult.HistoryMismatch) : this(ReplCompileResult.Error("History Mismatch", CompilerMessageLocation.create(null, historyMismatchResult.lineNo, 0, null)))
 }
 
-class ReplForJupyter(val classpath: List<File> = emptyList()) {
+class ReplForJupyter(val classpath: List<File> = emptyList(), libraries: LibrariesConfig? = null) {
 
-    private val resolver = JupyterScriptDependenciesResolver()
+    private val resolver = JupyterScriptDependenciesResolver(libraries)
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -72,6 +72,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList()) {
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration { }
 
+    private var executionCounter = 0
+
     private val compiler: ReplCompiler by lazy {
         JvmReplCompiler(compilerConfiguration)
     }
@@ -97,9 +99,20 @@ class ReplForJupyter(val classpath: List<File> = emptyList()) {
         }
     }
 
-    fun eval(executionNumber: Long, code: String): EvalResult {
+    fun eval(code: String): EvalResult {
+        val result = doEval(code)
+        val newImports = resolver.getNewImports()
+        if (!newImports.isEmpty()) {
+            val importsCode = newImports.joinToString("\n") { "import $it" }
+            doEval(importsCode)
+            return result
+        }
+        return result
+    }
+
+    private fun doEval(code: String): EvalResult {
             synchronized(this) {
-                val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
+                val codeLine = ReplCodeLine(executionCounter++, 0, code)
                 val compileResult = compiler.compile(state, codeLine)
                 when (compileResult) {
                     is ReplCompileResult.CompiledClasses -> {

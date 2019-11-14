@@ -1,0 +1,15 @@
+{
+  "repositories": [
+    "https://jcenter.bintray.com/",
+    "https://repo.maven.apache.org/maven2/"
+  ],
+  "artifacts": [
+    {
+      "alias": "klaxon",
+      "coordinates": "com.beust:klaxon:5.2",
+      "imports": [
+        "com.beust.klaxon.*"
+      ]
+    }
+  ]
+}

@@ -45,7 +45,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
             connection.contextMessage = msg
-            val count = executionCount.getAndIncrement()
+            var count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
@@ -57,7 +57,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO {
-                    repl?.eval(count, code.toString())
+                    repl?.eval(code.toString())
                 }
             }
 

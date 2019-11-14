@@ -16,14 +16,14 @@ class ReplTest{
 
     @Test
     fun TestRepl(){
-        repl.eval(1, "val x = 3")
-        var res = repl.eval(2, "x*2")
+        repl.eval("val x = 3")
+        var res = repl.eval("x*2")
         Assert.assertEquals(6, res.resultValue)
     }
 
     @Test
     fun TestDependsOnAnnotation(){
-        repl.eval(1, "@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
+        repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
     @Test
@@ -32,6 +32,12 @@ class ReplTest{
         sb.appendln("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
         sb.appendln("@file:Repository(\"https://repo.spring.io/libs-release\")")
         sb.appendln("@file:DependsOn(\"org.jetbrains.kotlinx:kotlinx.html.jvm:0.5.12\")")
-        repl.eval(1, sb.toString())
+        repl.eval(sb.toString())
+    }
+
+    @Test
+    fun TestDependsOnAlias() {
+        repl.eval("@file:DependsOn(\"klaxon\")")
+        repl.eval("val k = Klaxon()")
     }
 }
