@@ -6,6 +6,12 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.jupyter.repl.building.ReplBuilding
+import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
+import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
+import org.jetbrains.kotlin.jupyter.repl.context.KotlinReceiver
+import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.ScriptContents
@@ -59,6 +65,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         }
     }
 
+    private val receiver = KotlinReceiver()
+
     private val compilerConfiguration by lazy {
         ScriptCompilationConfiguration {
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
@@ -71,10 +79,18 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
+
+            val kt = KotlinType(receiver.javaClass.canonicalName)
+            implicitReceivers.invoke(listOf(kt))
+
+            val receiverClassPath = receiver.javaClass.protectionDomain.codeSource.location.path
+            compilerOptions.invoke(listOf("-classpath", receiverClassPath))
         }
     }
 
-    private val evaluatorConfiguration = ScriptEvaluationConfiguration { }
+    private val evaluatorConfiguration = ScriptEvaluationConfiguration {
+        implicitReceivers.invoke(receiver)
+    }
 
     private var executionCounter = 0
 
@@ -88,14 +104,19 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
 
     private val stateLock = ReentrantReadWriteLock()
 
-    private val state = compiler.createState(stateLock)
-
+    private val compilerState = compiler.createState(stateLock)
     private val evaluatorState = evaluator.createState(stateLock)
+
+    private val state = AggregatedReplStageState(compilerState, evaluatorState, stateLock)
+
+    private val ctx = KotlinContext()
+    private val contextUpdater = ContextUpdater(state, ctx.vars, ctx.functions)
+
+    private val completer = KotlinCompleter(ctx)
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
-        var result = compiler.check(state, codeLine)
-        return when(result) {
+        return when(val result = compiler.check(compilerState, codeLine)) {
             is ReplCheckResult.Error -> throw ReplCompilerException(result)
             is ReplCheckResult.Ok -> CheckResult(LineId(codeLine), true)
             is ReplCheckResult.Incomplete -> CheckResult(LineId(codeLine), false)
@@ -130,31 +151,34 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         return EvalResult(result, displays)
     }
 
+
+    fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)
+
     private fun doEval(code: String): Any? {
-            synchronized(this) {
-                val codeLine = ReplCodeLine(executionCounter++, 0, code)
-                val compileResult = compiler.compile(state, codeLine)
-                when (compileResult) {
-                    is ReplCompileResult.CompiledClasses -> {
-                        var result = evaluator.eval(evaluatorState, compileResult)
-                        return when (result) {
-                            is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
-                            is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
-                            is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
-                            is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
-                            is ReplEvalResult.UnitResult -> {
-                                Unit
-                            }
-                            is ReplEvalResult.ValueResult -> {
-                                result.value
-                            }
-                            else -> throw IllegalStateException("Unknown eval result type ${this}")
+        synchronized(this) {
+            val codeLine = ReplCodeLine(executionCounter++, 0, code)
+            when (val compileResult = compiler.compile(compilerState, codeLine)) {
+                is ReplCompileResult.CompiledClasses -> {
+                    val result = evaluator.eval(evaluatorState, compileResult)
+                    contextUpdater.update()
+                    return when (result) {
+                        is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
+                        is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
+                        is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
+                        is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
+                        is ReplEvalResult.UnitResult -> {
+                            Unit
                         }
+                        is ReplEvalResult.ValueResult -> {
+                            result.value
+                        }
+                        else -> throw IllegalStateException("Unknown eval result type ${this}")
                     }
-                    is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
-                    is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
                 }
+                is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
+                is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
             }
+        }
     }
 
     init {

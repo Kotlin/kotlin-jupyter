@@ -2,7 +2,7 @@
 buildscript {
     ext.shadowJarVersion = "5.2.0"
     //ext.kotlinVersion = '1.3.60-dev-2180-83'
-    ext.kotlinVersion = '1.3-SNAPSHOT'
+    ext.kotlinVersion = '1.3.70-dev-1590'
     repositories {
         jcenter()
         mavenLocal()
@@ -23,6 +23,7 @@ allprojects {
         jcenter()
         mavenLocal()
         mavenCentral()
+        maven { url '/home/ileasile/maven_repo/repo_1/maven' }
 //         only when using Kotlin EAP releases ...
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
@@ -50,6 +51,7 @@ configurations {
 
 dependencies {
     compile project(":jupyter-lib")
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-scripting-jvm-host-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"

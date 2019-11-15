@@ -46,7 +46,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
             connection.contextMessage = msg
-            var count = executionCount.getAndIncrement()
+            val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
@@ -122,18 +122,26 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             connection.contextMessage = null
         }
+        "complete_request" -> {
+            val code = msg.content["code"].toString()
+            val cursor = msg.content["cursor_pos"] as Int
+            val result = repl?.complete(code, cursor)?.toJson()
+            if (result == null) {
+                System.err.println("Repl is not yet initialized on complete request")
+                return
+            }
+            send(makeReplyMessage(msg, "complete_reply",  content = result))
+        }
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
             val resStr = if (isCommand(code)) "complete" else {
                 val result = try {
                    val check = repl?.checkComplete(executionCount.get(), code)
-                   if (check == null) {
-                       "error: no repl"
-                   } else if (check.isComplete) {
-                       "complete"
-                   } else {
-                       "incomplete"
-                   }
+                    when {
+                        check == null -> "error: no repl"
+                        check.isComplete -> "complete"
+                        else -> "incomplete"
+                    }
                 } catch (ex: ReplCompilerException) {
                     "invalid"
                 }
