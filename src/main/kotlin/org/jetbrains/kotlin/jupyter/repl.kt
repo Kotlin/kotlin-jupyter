@@ -37,6 +37,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
 
     private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
 
+    private val libraryMagics = config?.let { it.libraries.keys.map { "%%$it" to "@file:DependsOn(\"$it\")" } }?.toMap().orEmpty()
+
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
                 ?: return context.compilationConfiguration.asSuccess()
@@ -105,8 +107,14 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         eval("1")
     }
 
+    private fun replaceMagics(code: String) =
+            libraryMagics.asSequence().fold(code) { str, magic ->
+                str.replace(magic.key, magic.value)
+            }
+
     fun eval(code: String): EvalResult {
-        var result = doEval(code)
+        val processedCode = replaceMagics(code)
+        var result = doEval(processedCode)
         val number = executionCounter - 1
         val extraCode = resolver.getAdditionalInitializationCode()
         val displays = mutableListOf<Any>()
