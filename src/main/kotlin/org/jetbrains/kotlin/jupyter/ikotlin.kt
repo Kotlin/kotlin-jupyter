@@ -54,9 +54,9 @@ fun readLibrariesConfig(file: File): ResolverConfig {
         it.string("name")!! to ArtifactResolution(
                 artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
                 imports = it.array<String>("imports")?.toList().orEmpty(),
-                initCode = it.string("initCode"),
+                initCodes = it.array<String>("initCodes")?.toList().orEmpty(),
                 renderers = it.array<JsonObject>("renderers")?.map {
-                    TypeRenderer(it.string("class")!!, it.string("display")!!)
+                    TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
                 }?.toList().orEmpty()
         )
     }?.toMap()

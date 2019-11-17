@@ -54,7 +54,7 @@ open class JupyterScriptDependenciesResolver(val resolverConfig: ResolverConfig?
     fun getAdditionalInitializationCode(): List<String> {
         if (newArtifacts.isEmpty()) return emptyList()
         val importsCode = newArtifacts.joinToString("\n") { it.imports.joinToString("\n") { "import $it" } }
-        val initCodes = newArtifacts.mapNotNull { it.initCode }
+        val initCodes = newArtifacts.flatMap { it.initCodes }
         val result = listOf(importsCode) + initCodes
         newArtifacts.clear()
         return result

@@ -14,9 +14,9 @@ enum class JupyterSockets {
     iopub
 }
 
-data class TypeRenderer(val className: String, val code: String)
+data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
 
-class ArtifactResolution(val artifacts: List<String>, val imports: List<String>, val initCode: String?, val renderers: List<TypeRenderer>)
+class ArtifactResolution(val artifacts: List<String>, val imports: List<String>, val initCodes: List<String>, val renderers: List<TypeRenderer>)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>, val libraries: Map<String, ArtifactResolution>)
 

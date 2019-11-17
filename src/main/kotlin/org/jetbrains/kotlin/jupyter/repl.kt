@@ -35,7 +35,7 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
-    private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it.code }?.toMap().orEmpty()
+    private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -106,7 +106,7 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
     }
 
     fun eval(code: String): EvalResult {
-        val result = doEval(code)
+        var result = doEval(code)
         val number = executionCounter - 1
         val extraCode = resolver.getAdditionalInitializationCode()
         val displays = mutableListOf<Any>()
@@ -115,10 +115,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         }
         if (result != null) {
             renderers[result.javaClass.canonicalName]?.let {
-                val renderCode = it.replace("\${it}", "res$number")
-                val display = doEval(renderCode)
-                if (display != null)
-                    displays.add(display)
+                it.displayCode?.replace("\${it}", "res$number")?.let(::doEval)?.let(displays::add)
+                it.resultCode?.replace("\${it}", "res$number")?.let(::doEval)?.let { result = it }
             }
         }
         return EvalResult(result, displays)

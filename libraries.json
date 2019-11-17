@@ -2,6 +2,7 @@
   "repositories": [
     "https://jcenter.bintray.com/",
     "https://repo.maven.apache.org/maven2/",
+    "https://jitpack.io",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/plot-api/build/libs",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/frontend-api/build/libs",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/.maven_repo/org/jetbrains/datalore-plot/datalore-plot-jfx/0.0.1-SNAPSHOT"
@@ -28,13 +29,41 @@
         "jetbrains.datalorePlot.geom.*",
         "jetbrains.datalorePlot.stat.*"
       ],
-      "initCode": "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))\nDISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))",
+      "initCodes": [
+        "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))\nDISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
+      ],
       "renderers": [
         {
           "class": "jetbrains.datalorePlot.intern.Plot",
           "display": "${it}.display()"
         }
       ]
+    },
+    {
+      "name": "krangl",
+      "artifacts": [
+        "com.github.holgerbrandl:krangl:-SNAPSHOT"
+      ],
+      "imports": [
+        "krangl.*"
+      ],
+      "initCodes": [
+        "fun krangl.DataFrame.display() : jupyter.kotlin.DisplayResult\n{val sb = StringBuilder()\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th>${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.forEach {\n    sb.append(\"<tr>\")\n    it.values.forEach { sb.append(\"<td>${it}</td>\") }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nreturn DISPLAY(HTML(sb.toString()))}",
+        "fun krangl.DataFrame.result() = \"A DataFrame: ${nrow} x ${ncol}\""
+      ],
+      "renderers": [
+        {
+          "class": "krangl.SimpleDataFrame",
+          "display": "${it}.display()",
+          "result": "${it}.result()"
+        },
+        {
+          "class": "krangl.GroupedDataFrame",
+          "display": "${it}.display()",
+          "result": "${it}.result()"
+        }
+      ]
+
     }
   ]
 }
