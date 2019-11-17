@@ -123,8 +123,8 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         }
         if (result != null) {
             renderers[result.javaClass.canonicalName]?.let {
-                it.displayCode?.replace("\${it}", "res$number")?.let(::doEval)?.let(displays::add)
-                it.resultCode?.replace("\${it}", "res$number")?.let(::doEval)?.let { result = it }
+                it.displayCode?.replace("\$it", "res$number")?.let(::doEval)?.let(displays::add)
+                it.resultCode?.replace("\$it", "res$number")?.let(::doEval)?.let { result = it }
             }
         }
         return EvalResult(result, displays)

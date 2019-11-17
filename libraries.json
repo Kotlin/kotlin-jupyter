@@ -35,7 +35,7 @@
       "renderers": [
         {
           "class": "jetbrains.datalorePlot.intern.Plot",
-          "display": "${it}.display()"
+          "display": "$it.display()"
         }
       ]
     },
@@ -54,16 +54,40 @@
       "renderers": [
         {
           "class": "krangl.SimpleDataFrame",
-          "display": "${it}.display()",
-          "result": "${it}.result()"
+          "display": "$it.display()",
+          "result": "$it.result()"
         },
         {
           "class": "krangl.GroupedDataFrame",
-          "display": "${it}.display()",
-          "result": "${it}.result()"
+          "display": "$it.display()",
+          "result": "$it.result()"
         }
       ]
-
+    },
+    {
+      "name": "kotlin-statistics",
+      "artifacts": [
+        "com.github.thomasnield:kotlin-statistics:-SNAPSHOT"
+      ],
+      "imports": [
+        "org.nield.kotlinstatistics.*"
+      ]
+    },
+    {
+      "name": "kravis",
+      "artifacts": [
+        "com.github.holgerbrandl:kravis:-SNAPSHOT"
+      ],
+      "imports": [
+        "kravis.*"
+      ],
+      "renderers": [
+        {
+          "class": "kravis.GGPlot",
+          "display": "DISPLAY($it.show())",
+          "result": "\"ggplot\""
+        }
+      ]
     }
   ]
 }
