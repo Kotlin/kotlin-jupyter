@@ -1,6 +1,6 @@
 
 buildscript {
-    ext.shadowJarVersion = "5.1.0"
+    ext.shadowJarVersion = "5.2.0"
     //ext.kotlinVersion = '1.3.60-dev-2180-83'
     ext.kotlinVersion = '1.3-SNAPSHOT'
     repositories {
