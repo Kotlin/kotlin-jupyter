@@ -27,24 +27,14 @@ class AliasDependenciesResolver(private val baseResolver: ExternalDependenciesRe
             artifactsMapping.containsKey(artifactCoordinates) || baseResolver.acceptsArtifact(artifactCoordinates)
 }
 
-class RepositoriesPresetDependenciesResolver(private val baseResolver: ExternalDependenciesResolver, repositories: Iterable<RepositoryCoordinates>)
-    : ExternalDependenciesResolver by baseResolver {
-
-    init {
-        repositories.forEach {
-            baseResolver.tryAddRepository(it)
-        }
-    }
-}
-
 open class JupyterScriptDependenciesResolver(val resolverConfig: ResolverConfig?) {
     private val resolver: ExternalDependenciesResolver
 
     init {
         var r: ExternalDependenciesResolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
         if (resolverConfig != null) {
-            if (resolverConfig.repositories.isNotEmpty()) r = RepositoriesPresetDependenciesResolver(r, resolverConfig.repositories)
             if (resolverConfig.libraries.isNotEmpty()) r = AliasDependenciesResolver(r, resolverConfig.libraries.mapValues { it.value.artifacts })
+            resolverConfig.repositories.forEach { r.tryAddRepository(it) }
         }
         resolver = r
     }
