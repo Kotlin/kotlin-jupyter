@@ -39,7 +39,7 @@ allprojects {
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
 
-    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044"
+    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044"
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -106,7 +106,7 @@ void createTaskForSpecs(Boolean debug) {
                 "$installPath/${it.name}"
             } .join(File.pathSeparator)
             spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
-                    .replace("\${DEBUGGER_CONFIG}", debug ? debuggerConfig : "")
+                    .replace("\${DEBUGGER_CONFIG}", debug ? "\"$debuggerConfig\"," : "")
                     .replace("\${LIBRARIES_PATH}", "$installPath/libraries.json")
             File installDir = new File("$installPath")
             if (!installDir.exists()) {
