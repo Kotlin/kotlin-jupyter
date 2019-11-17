@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
+import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
@@ -11,10 +12,10 @@ import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
 
 enum class ResponseState {
-    Ok, OkSilent, Error
+    Ok, Error
 }
 
-data class ResponseWithMessage(val state: ResponseState, val responsesByMimeType: Map<String, Any>, val stdOut: String?, val stdErr: String?) {
+data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedResult?, val displays: List<MimeTypedResult> = emptyList(), val stdOut: String? = null, val stdErr: String? = null) {
     val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
     val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
@@ -76,15 +77,25 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
 
             when (res.state) {
-                ResponseState.Ok, ResponseState.OkSilent -> {
-                    if (res.state != ResponseState.OkSilent) {
+                ResponseState.Ok -> {
+                    if (res.result != null) {
                         connection.iopub.send(makeReplyMessage(msg,
                                 "execute_result",
                                 content = jsonObject(
                                         "execution_count" to count,
-                                        "data" to res.responsesByMimeType,
-                                        "metadata" to emptyJsonObject)))
+                                        "data" to res.result,
+                                        "metadata" to jsonObject(
+                                                "isolated" to "True"
+                                        ))))
                     }
+                    res.displays.forEach {
+                        connection.iopub.send(makeReplyMessage(msg,
+                                "display_data",
+                                content = jsonObject(
+                                        "data" to it
+                                )))
+                    }
+
                     send(makeReplyMessage(msg, "execute_reply",
                             metadata = jsonObject(
                                     "dependencies_met" to true,
@@ -143,6 +154,13 @@ class CapturingOutputStream(val stdout: PrintStream, val captureOutput: Boolean)
     }
 }
 
+fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
+    is MimeTypedResult -> this
+    is Unit -> null
+    is DisplayResult -> value.toMimeTypedResult()
+    else -> textResult(this.toString())
+}
+
 fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
     val out = System.out
     val err = System.err
@@ -161,28 +179,23 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
         return try {
             val exec = body()
             if (exec == null) {
-                ResponseWithMessage(ResponseState.Error, textResult("Error!"), null, "NO REPL!")
+                ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, "NO REPL!")
             } else {
                 val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
                 val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
 
-                if (exec.resultValue == Unit) {
-                    ResponseWithMessage(ResponseState.OkSilent, textResult("OK"), stdOut, stdErr)
-                } else {
-                    try {
-                        if (exec.resultValue is MimeTypedResult || exec.resultValue?.javaClass?.canonicalName ?: "" == "jupyter.kotlin.MimeTypedResult") {
-                            println("response type is TypedResult")
-                            @Suppress("UNCHECKED_CAST")
-                            val mimeTypedResponse = (exec.resultValue as MimeTypedResult)
-                            println("data = $mimeTypedResponse")
-                            ResponseWithMessage(ResponseState.Ok, mimeTypedResponse, stdOut, stdErr)
-                        } else {
-                            ResponseWithMessage(ResponseState.Ok, textResult(exec.resultValue.toString()), stdOut, stdErr)
-                        }
-                    } catch (e: Exception) {
-                        ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
-                                joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
-                    }
+                try {
+                    var result: MimeTypedResult? = null
+                    var displays = exec.displayValues.mapNotNull { it.toMimeTypedResult() }
+                    if (exec.resultValue is DisplayResult) {
+                        val resultDisplay = exec.resultValue.value.toMimeTypedResult()
+                        if (resultDisplay != null)
+                            displays += resultDisplay
+                    } else result = exec.resultValue?.toMimeTypedResult()
+                    ResponseWithMessage(ResponseState.Ok, result, displays, stdOut, stdErr)
+                } catch (e: Exception) {
+                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut,
+                            joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
                 }
             }
         } catch (ex: ReplCompilerException) {
@@ -198,7 +211,7 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                    'traceback' : list(str), # traceback frames as strings
                 }
              */
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut,
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut,
                     joinLines(stdErr, ex.errorResult.message))
         } catch (ex: ReplEvalRuntimeException) {
             val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
@@ -228,7 +241,7 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                     }
                 }
             }
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), stdOut, stdErr.toString())
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut, stdErr.toString())
         }
     } finally {
         System.setIn(`in`)

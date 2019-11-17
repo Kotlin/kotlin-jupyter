@@ -5,42 +5,58 @@ import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.*
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.makeFailureResult
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
-class PresetDependenciesResolver(private val baseResolver: ExternalDependenciesResolver, repositories: Iterable<RepositoryCoordinates>, private val artifactsMapping: Map<String, String>)
+class AliasDependenciesResolver(private val baseResolver: ExternalDependenciesResolver, private val artifactsMapping: Map<String, List<String>>)
+    : ExternalDependenciesResolver by baseResolver {
+
+    private operator fun <R> ResultWithDiagnostics<List<R>>.plus(result: ResultWithDiagnostics<List<R>>): ResultWithDiagnostics<List<R>> =
+            this.onSuccess { l1 -> result.onSuccess { (l1 + it).asSuccess() } }
+
+    private fun <T> ResultWithDiagnostics.Success<T>.asResult(): ResultWithDiagnostics<T> = this
+
+    override suspend fun resolve(artifactCoordinates: String): ResultWithDiagnostics<List<File>> {
+        val artifacts = artifactsMapping[artifactCoordinates]
+        return artifacts?.map { baseResolver.resolve(it) }?.fold(emptyList<File>().asSuccess().asResult()) { p, n -> p + n }
+                ?: baseResolver.resolve(artifactCoordinates)
+    }
+
+    override fun acceptsArtifact(artifactCoordinates: String) =
+            artifactsMapping.containsKey(artifactCoordinates) || baseResolver.acceptsArtifact(artifactCoordinates)
+}
+
+class RepositoriesPresetDependenciesResolver(private val baseResolver: ExternalDependenciesResolver, repositories: Iterable<RepositoryCoordinates>)
     : ExternalDependenciesResolver by baseResolver {
 
     init {
-        repositories.forEach { baseResolver.addRepository(it) }
+        repositories.forEach {
+            baseResolver.tryAddRepository(it)
+        }
     }
-
-    override suspend fun resolve(artifactCoordinates: String): ResultWithDiagnostics<List<File>> =
-            baseResolver.resolve(artifactsMapping[artifactCoordinates] ?: artifactCoordinates)
-
-    override fun acceptsArtifact(artifactCoordinates: String) = artifactsMapping.containsKey(artifactCoordinates) || baseResolver.acceptsArtifact(artifactCoordinates)
 }
 
-open class JupyterScriptDependenciesResolver(val librariesConfig: LibrariesConfig?) {
+open class JupyterScriptDependenciesResolver(val resolverConfig: ResolverConfig?) {
     private val resolver: ExternalDependenciesResolver
 
     init {
-        var mavenResolver = MavenDependenciesResolver() as ExternalDependenciesResolver
-        if (librariesConfig != null)
-            mavenResolver = PresetDependenciesResolver(mavenResolver, librariesConfig.repositories, librariesConfig.artifactsMapping.mapValues { it.value.coordinates })
-        resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), mavenResolver)
+        var r: ExternalDependenciesResolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
+        if (resolverConfig != null) {
+            if (resolverConfig.repositories.isNotEmpty()) r = RepositoriesPresetDependenciesResolver(r, resolverConfig.repositories)
+            if (resolverConfig.libraries.isNotEmpty()) r = AliasDependenciesResolver(r, resolverConfig.libraries.mapValues { it.value.artifacts })
+        }
+        resolver = r
     }
 
-    private val addedImports = mutableListOf<String>()
+    private val newArtifacts = mutableListOf<ArtifactResolution>()
 
-    fun getNewImports(): List<String> {
-        val result = addedImports.toList()
-        addedImports.clear()
+    fun getAdditionalInitializationCode(): List<String> {
+        if (newArtifacts.isEmpty()) return emptyList()
+        val importsCode = newArtifacts.joinToString("\n") { it.imports.joinToString("\n") { "import $it" } }
+        val initCodes = newArtifacts.mapNotNull { it.initCode }
+        val result = listOf(importsCode) + initCodes
+        newArtifacts.clear()
         return result
     }
 
@@ -60,8 +76,8 @@ open class JupyterScriptDependenciesResolver(val librariesConfig: LibrariesConfi
                         is ResultWithDiagnostics.Failure -> scriptDiagnostics.add(ScriptDiagnostic("Failed to resolve dependencies:\n" + result.reports.joinToString("\n") { it.message }))
                         is ResultWithDiagnostics.Success -> {
                             classpath.addAll(result.value)
-                            librariesConfig?.let {
-                                it.artifactsMapping[annotation.value]?.let { addedImports.addAll(it.imports) }
+                            resolverConfig?.let {
+                                it.libraries[annotation.value]?.let { newArtifacts.add(it) }
                             }
                         }
                     }
@@ -69,8 +85,8 @@ open class JupyterScriptDependenciesResolver(val librariesConfig: LibrariesConfi
                 else -> throw Exception("Unknown annotation ${annotation.javaClass}")
             }
         }
-        return if(scriptDiagnostics.isEmpty()) classpath.asSuccess()
-               else makeFailureResult(scriptDiagnostics)
+        return if (scriptDiagnostics.isEmpty()) classpath.asSuccess()
+        else makeFailureResult(scriptDiagnostics)
     }
 }
 

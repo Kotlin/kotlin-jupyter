@@ -15,10 +15,17 @@ annotation class DependsOn(val value: String = "")
 annotation class Repository(val value: String = "")
 
 abstract class ScriptTemplateWithDisplayHelpers {
-    fun resultOf(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
+
+    fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
+
+    fun HTML(text: String) = MIME("text/html" to text)
+
+    fun DISPLAY(value: Any) = DisplayResult(value)
 }
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
-fun textResult(text: String): Map<String, Any> = MimeTypedResult(mapOf("text/plain" to text))
+fun textResult(text: String): MimeTypedResult = MimeTypedResult(mapOf("text/plain" to text))
 
 class MimeTypedResult(mimeData: Map<String, String>): Map<String, String> by mimeData
+
+class DisplayResult(val value: Any)

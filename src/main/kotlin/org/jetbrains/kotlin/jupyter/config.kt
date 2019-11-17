@@ -14,9 +14,11 @@ enum class JupyterSockets {
     iopub
 }
 
-class ArtifactResolution(val coordinates: String, val imports: List<String>)
+data class TypeRenderer(val className: String, val code: String)
 
-data class LibrariesConfig(val repositories: List<RepositoryCoordinates>, val artifactsMapping: Map<String, ArtifactResolution>)
+class ArtifactResolution(val artifacts: List<String>, val imports: List<String>, val initCode: String?, val renderers: List<TypeRenderer>)
+
+data class ResolverConfig(val repositories: List<RepositoryCoordinates>, val libraries: Map<String, ArtifactResolution>)
 
 data class KernelConfig(
         val ports: Array<Int>,
@@ -25,7 +27,7 @@ data class KernelConfig(
         val signatureKey: String,
         val pollingIntervalMillis: Long = 100,
         val scriptClasspath: List<File> = emptyList(),
-        val librariesConfig: LibrariesConfig?
+        val resolverConfig: ResolverConfig?
 )
 
 val protocolVersion = "5.3"

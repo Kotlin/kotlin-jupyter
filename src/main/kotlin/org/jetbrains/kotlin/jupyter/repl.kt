@@ -15,7 +15,7 @@ import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
 import kotlin.script.experimental.jvmhost.repl.JvmReplEvaluator
 
-data class EvalResult(val codeLine: LineId, val resultValue: Any?)
+data class EvalResult(val resultValue: Any?, val displayValues: List<Any> = emptyList())
 
 data class CheckResult(val codeLine: LineId, val isComplete: Boolean = true)
 
@@ -31,9 +31,11 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (historyMismatchResult: ReplEvalResult.HistoryMismatch) : this(ReplCompileResult.Error("History Mismatch", CompilerMessageLocation.create(null, historyMismatchResult.lineNo, 0, null)))
 }
 
-class ReplForJupyter(val classpath: List<File> = emptyList(), libraries: LibrariesConfig? = null) {
+class ReplForJupyter(val classpath: List<File> = emptyList(), val config: ResolverConfig? = null) {
 
-    private val resolver = JupyterScriptDependenciesResolver(libraries)
+    private val resolver = JupyterScriptDependenciesResolver(config)
+
+    private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it.code }?.toMap().orEmpty()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -99,18 +101,30 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), libraries: Librari
         }
     }
 
-    fun eval(code: String): EvalResult {
-        val result = doEval(code)
-        val newImports = resolver.getNewImports()
-        if (!newImports.isEmpty()) {
-            val importsCode = newImports.joinToString("\n") { "import $it" }
-            doEval(importsCode)
-            return result
-        }
-        return result
+    init {
+        eval("1")
     }
 
-    private fun doEval(code: String): EvalResult {
+    fun eval(code: String): EvalResult {
+        val result = doEval(code)
+        val number = executionCounter - 1
+        val extraCode = resolver.getAdditionalInitializationCode()
+        val displays = mutableListOf<Any>()
+        if (extraCode.isNotEmpty()) {
+            displays.addAll(extraCode.mapNotNull(::doEval))
+        }
+        if (result != null) {
+            renderers[result.javaClass.canonicalName]?.let {
+                val renderCode = it.replace("\${it}", "res$number")
+                val display = doEval(renderCode)
+                if (display != null)
+                    displays.add(display)
+            }
+        }
+        return EvalResult(result, displays)
+    }
+
+    private fun doEval(code: String): Any? {
             synchronized(this) {
                 val codeLine = ReplCodeLine(executionCounter++, 0, code)
                 val compileResult = compiler.compile(state, codeLine)
@@ -123,10 +137,10 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), libraries: Librari
                             is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
                             is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
                             is ReplEvalResult.UnitResult -> {
-                                EvalResult(LineId(codeLine), Unit)
+                                Unit
                             }
                             is ReplEvalResult.ValueResult -> {
-                                EvalResult(LineId(codeLine), result.value)
+                                result.value
                             }
                             else -> throw IllegalStateException("Unknown eval result type ${this}")
                         }

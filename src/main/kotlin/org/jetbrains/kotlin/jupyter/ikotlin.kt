@@ -47,15 +47,20 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
-fun readLibrariesConfig(file: File): LibrariesConfig {
+fun readLibrariesConfig(file: File): ResolverConfig {
     val json = Parser().parse(file.canonicalPath) as JsonObject
     val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()
-    val artifacts = json.array<JsonObject>("artifacts")?.map {
-        it.string("alias")!! to ArtifactResolution(
-                coordinates = it.string("coordinates")!!,
-                imports = it.array<String>("imports")?.toList().orEmpty())
+    val artifacts = json.array<JsonObject>("libraries")?.map {
+        it.string("name")!! to ArtifactResolution(
+                artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
+                imports = it.array<String>("imports")?.toList().orEmpty(),
+                initCode = it.string("initCode"),
+                renderers = it.array<JsonObject>("renderers")?.map {
+                    TypeRenderer(it.string("class")!!, it.string("display")!!)
+                }?.toList().orEmpty()
+        )
     }?.toMap()
-    return LibrariesConfig(repos, artifacts.orEmpty())
+    return ResolverConfig(repos, artifacts.orEmpty())
 }
 
 fun main(vararg args: String) {
@@ -74,7 +79,7 @@ fun main(vararg args: String) {
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
                 scriptClasspath = scriptClasspath,
-                librariesConfig = librariesConfigFile?.let(::readLibrariesConfig)
+                resolverConfig = librariesConfigFile?.let(::readLibrariesConfig)
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -92,7 +97,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(conn.config.scriptClasspath, conn.config.librariesConfig)
+        val repl = ReplForJupyter(conn.config.scriptClasspath, conn.config.resolverConfig)
 
         val mainThread = Thread.currentThread()
 

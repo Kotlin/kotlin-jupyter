@@ -1,14 +1,39 @@
 {
   "repositories": [
     "https://jcenter.bintray.com/",
-    "https://repo.maven.apache.org/maven2/"
+    "https://repo.maven.apache.org/maven2/",
+    "/Users/jetbrains/Workspace/datalore-plot-kotlin/plot-api/build/libs",
+    "/Users/jetbrains/Workspace/datalore-plot-kotlin/frontend-api/build/libs",
+    "/Users/jetbrains/Workspace/datalore-plot-kotlin/.maven_repo/org/jetbrains/datalore-plot/datalore-plot-jfx/0.0.1-SNAPSHOT"
   ],
-  "artifacts": [
+  "libraries": [
     {
-      "alias": "klaxon",
-      "coordinates": "com.beust:klaxon:5.2",
+      "name": "klaxon",
+      "artifacts": [
+        "com.beust:klaxon:5.2"
+      ],
       "imports": [
         "com.beust.klaxon.*"
+      ]
+    },
+    {
+      "name": "ggplot",
+      "artifacts": [
+        "plot-api.jar",
+        "frontend-api.jar",
+        "datalore-plot-jfx-0.0.1-20191029.223549-1.jar"
+      ],
+      "imports": [
+        "jetbrains.datalorePlot.*",
+        "jetbrains.datalorePlot.geom.*",
+        "jetbrains.datalorePlot.stat.*"
+      ],
+      "initCode": "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))\nDISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))",
+      "renderers": [
+        {
+          "class": "jetbrains.datalorePlot.intern.Plot",
+          "display": "${it}.display()"
+        }
       ]
     }
   ]

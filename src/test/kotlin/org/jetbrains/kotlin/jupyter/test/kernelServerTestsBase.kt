@@ -18,7 +18,7 @@ open class KernelServerTestsBase {
             signatureScheme = "hmac1-sha256",
             signatureKey = "",
             scriptClasspath = classpath,
-            librariesConfig = null)
+            resolverConfig = null)
 
     protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
 
