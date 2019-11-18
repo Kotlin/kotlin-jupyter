@@ -23,7 +23,6 @@ allprojects {
         jcenter()
         mavenLocal()
         mavenCentral()
-        maven { url '/home/ileasile/maven_repo/repo_1/maven' }
 //         only when using Kotlin EAP releases ...
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
