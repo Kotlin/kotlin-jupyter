@@ -29,7 +29,11 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "protocol_version" to protocolVersion,
                             "language" to "Kotlin",
                             "language_version" to KotlinCompilerVersion.VERSION,
-                            "language_info" to jsonObject("name" to "kotlin", "file_extension" to "kt")
+                            "language_info" to jsonObject(
+                                    "name" to "kotlin",
+                                    "codemirror_mode" to "text/x-kotlin",
+                                    "file_extension" to "kt"
+                            )
                     )))
         "history_request" ->
             send(makeReplyMessage(msg, "history_reply",
@@ -121,6 +125,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
 
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
             connection.contextMessage = null
+        }
+        "comm_info_request" -> {
+            send(makeReplyMessage(msg, "comm_info_reply",  content = jsonObject("comms" to jsonObject())))
         }
         "complete_request" -> {
             val code = msg.content["code"].toString()
