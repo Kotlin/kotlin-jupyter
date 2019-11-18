@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ileasile/kotlin-jupyter.svg?branch=master)](https://travis-ci.org/ileasile/kotlin-jupyter) <br/>
+[![Build Status](https://travis-ci.com/ileasile/kotlin-jupyter.svg?branch=master)](https://travis-ci.com/ileasile/kotlin-jupyter) <br/>
 
 # Kotlin kernel for IPython/Jupyter
 
