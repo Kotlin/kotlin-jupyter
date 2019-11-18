@@ -6,7 +6,6 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.jupyter.repl.building.ReplBuilding
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
@@ -72,7 +71,7 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
             baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
             fileExtension.put("jupyter.kts")
-            defaultImports(DependsOn::class, Repository::class)
+            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class)
             jvm {
                 updateClasspath(classpath)
             }
@@ -83,8 +82,9 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
             val kt = KotlinType(receiver.javaClass.canonicalName)
             implicitReceivers.invoke(listOf(kt))
 
-            val receiverClassPath = receiver.javaClass.protectionDomain.codeSource.location.path
-            compilerOptions.invoke(listOf("-classpath", receiverClassPath))
+            val classes = listOf(receiver.javaClass, ScriptTemplateWithDisplayHelpers::class.java)
+            val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
+            compilerOptions.invoke(listOf("-classpath", classPath))
         }
     }
 
