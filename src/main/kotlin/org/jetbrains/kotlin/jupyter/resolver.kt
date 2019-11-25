@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
@@ -31,7 +32,7 @@ open class JupyterScriptDependenciesResolver(val resolverConfig: ResolverConfig?
     private val resolver: ExternalDependenciesResolver
 
     init {
-        var r: ExternalDependenciesResolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
+        var r: ExternalDependenciesResolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), IvyResolver())
         if (resolverConfig != null) {
             if (resolverConfig.libraries.isNotEmpty()) r = AliasDependenciesResolver(r, resolverConfig.libraries.mapValues { it.value.artifacts })
             resolverConfig.repositories.forEach { r.tryAddRepository(it) }
