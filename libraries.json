@@ -90,6 +90,30 @@
           "result": ""
         }
       ]
+    },
+    {
+      "name": "spark",
+      "artifacts": [
+        "org.apache.spark:spark-mllib_2.11:2.4.4",
+        "org.apache.spark:spark-sql_2.11:2.4.4",
+        "org.apache.spark:spark-streaming-flume-assembly_2.11:2.4.4",
+        "org.apache.spark:spark-graphx_2.11:2.4.4",
+        "org.apache.spark:spark-launcher_2.11:2.4.4",
+        "org.apache.spark:spark-catalyst_2.11:2.4.4",
+        "org.apache.spark:spark-streaming_2.11:2.4.4",
+        "org.apache.spark:spark-core_2.11:2.4.4",
+        "com.fasterxml.jackson.core:jackson-databind:2.4.4",
+        "org.scala-lang:scala-library:2.11.12",
+        "org.scala-lang:scala-reflect:2.11.12",
+        "org.scala-lang:scala-compiler:2.11.12",
+        "org.scala-lang.modules:scala-xml_2.11:1.2.0",
+        "commons-io:commons-io:2.5"
+      ],
+      "imports": [
+        "org.apache.spark.sql.*",
+        "org.apache.spark.api.java.*",
+        "org.apache.spark.ml.feature.*"
+      ]
     }
   ]
 }
