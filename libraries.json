@@ -3,6 +3,7 @@
     "https://jcenter.bintray.com/",
     "https://repo.maven.apache.org/maven2/",
     "https://jitpack.io",
+    "https://jetbrains.bintray.com/datalore-plot-maven",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/plot-api/build/libs",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/frontend-api/build/libs",
     "/Users/jetbrains/Workspace/datalore-plot-kotlin/.maven_repo/org/jetbrains/datalore-plot/datalore-plot-jfx/0.0.1-SNAPSHOT"
@@ -20,9 +21,10 @@
     {
       "name": "ggplot",
       "artifacts": [
-        "plot-api.jar",
-        "frontend-api.jar",
-        "datalore-plot-jfx-0.0.1-20191029.223549-1.jar"
+        "org.jetbrains.datalore-plot:datalore-plot-common:0.0.5-SNAPSHOT",
+        "org.jetbrains.datalore-plot:datalore-plot-kotlin-api:0.0.2-SNAPSHOT",
+        "org.jetbrains.datalore-plot:kotlin-frontend-api:0.0.2-SNAPSHOT",
+        "org.jetbrains.datalore-plot:datalore-plot-jfx:0.0.5-SNAPSHOT"
       ],
       "imports": [
         "jetbrains.datalorePlot.*",
