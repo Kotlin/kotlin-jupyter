@@ -35,7 +35,8 @@
       "renderers": [
         {
           "class": "jetbrains.datalorePlot.intern.Plot",
-          "display": "$it.display()"
+          "display": "$it.display()",
+          "result": ""
         }
       ]
     },
@@ -48,19 +49,18 @@
         "krangl.*"
       ],
       "initCodes": [
-        "fun krangl.DataFrame.display() : jupyter.kotlin.DisplayResult\n{val sb = StringBuilder()\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th>${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.forEach {\n    sb.append(\"<tr>\")\n    it.values.forEach { sb.append(\"<td>${it}</td>\") }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nreturn DISPLAY(HTML(sb.toString()))}",
-        "fun krangl.DataFrame.result() = \"A DataFrame: ${nrow} x ${ncol}\""
+        "fun krangl.DataFrame.display() : jupyter.kotlin.DisplayResult\n{val sb = StringBuilder()\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th>${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.forEach {\n    sb.append(\"<tr>\")\n    it.values.forEach { sb.append(\"<td>${it}</td>\") }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nreturn DISPLAY(HTML(sb.toString()))}"
       ],
       "renderers": [
         {
           "class": "krangl.SimpleDataFrame",
           "display": "$it.display()",
-          "result": "$it.result()"
+          "result": ""
         },
         {
           "class": "krangl.GroupedDataFrame",
           "display": "$it.display()",
-          "result": "$it.result()"
+          "result": ""
         }
       ]
     },
@@ -85,7 +85,7 @@
         {
           "class": "kravis.GGPlot",
           "display": "DISPLAY($it.show())",
-          "result": "\"ggplot\""
+          "result": ""
         }
       ]
     }
