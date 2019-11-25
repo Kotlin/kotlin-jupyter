@@ -19,7 +19,7 @@
       ]
     },
     {
-      "name": "ggplot",
+      "name": "lets-plot",
       "artifacts": [
         "org.jetbrains.datalore-plot:datalore-plot-common:0.0.5-SNAPSHOT",
         "org.jetbrains.datalore-plot:datalore-plot-kotlin-api:0.0.2-SNAPSHOT",
