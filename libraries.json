@@ -4,15 +4,12 @@
     "https://repo.maven.apache.org/maven2/",
     "https://jitpack.io",
     "https://jetbrains.bintray.com/datalore-plot-maven",
-    "/Users/jetbrains/Workspace/datalore-plot-kotlin/plot-api/build/libs",
-    "/Users/jetbrains/Workspace/datalore-plot-kotlin/frontend-api/build/libs",
-    "/Users/jetbrains/Workspace/datalore-plot-kotlin/.maven_repo/org/jetbrains/datalore-plot/datalore-plot-jfx/0.0.1-SNAPSHOT"
   ],
   "libraries": [
     {
-      "name": "klaxon",
+      "name": "klaxon(v=5.2)",
       "artifacts": [
-        "com.beust:klaxon:5.2"
+        "com.beust:klaxon:$v"
       ],
       "imports": [
         "com.beust.klaxon.*"
@@ -92,20 +89,20 @@
       ]
     },
     {
-      "name": "spark",
+      "name": "spark(scala=2.11.12,spark=2.4.4)",
       "artifacts": [
-        "org.apache.spark:spark-mllib_2.11:2.4.4",
-        "org.apache.spark:spark-sql_2.11:2.4.4",
-        "org.apache.spark:spark-streaming-flume-assembly_2.11:2.4.4",
-        "org.apache.spark:spark-graphx_2.11:2.4.4",
-        "org.apache.spark:spark-launcher_2.11:2.4.4",
-        "org.apache.spark:spark-catalyst_2.11:2.4.4",
-        "org.apache.spark:spark-streaming_2.11:2.4.4",
-        "org.apache.spark:spark-core_2.11:2.4.4",
-        "com.fasterxml.jackson.core:jackson-databind:2.4.4",
-        "org.scala-lang:scala-library:2.11.12",
-        "org.scala-lang:scala-reflect:2.11.12",
-        "org.scala-lang:scala-compiler:2.11.12",
+        "org.apache.spark:spark-mllib_2.11:$spark",
+        "org.apache.spark:spark-sql_2.11:$spark",
+        "org.apache.spark:spark-streaming-flume-assembly_2.11:$spark",
+        "org.apache.spark:spark-graphx_2.11:$spark",
+        "org.apache.spark:spark-launcher_2.11:$spark",
+        "org.apache.spark:spark-catalyst_2.11:$spark",
+        "org.apache.spark:spark-streaming_2.11:$spark",
+        "org.apache.spark:spark-core_2.11:$spark",
+        "com.fasterxml.jackson.core:jackson-databind:$spark",
+        "org.scala-lang:scala-library:$scala",
+        "org.scala-lang:scala-reflect:$scala",
+        "org.scala-lang:scala-compiler:$scala",
         "org.scala-lang.modules:scala-xml_2.11:1.2.0",
         "commons-io:commons-io:2.5"
       ],

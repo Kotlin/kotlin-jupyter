@@ -47,12 +47,28 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
-fun readLibrariesConfig(file: File): ResolverConfig {
-    val json = Parser().parse(file.canonicalPath) as JsonObject
+fun parseLibraryName(str: String): Pair<String, List<ArtifactVariable>> {
+    val pattern = """\w+(\w+)?""".toRegex().matches(str)
+    val brackets = str.indexOf('(')
+    if (brackets == -1) return str.trim() to emptyList()
+    val name = str.substring(0, brackets).trim()
+    val args = str.substring(brackets + 1, str.indexOf(')', brackets))
+            .split(',')
+            .map {
+                val eq = it.indexOf('=')
+                if (eq == -1) ArtifactVariable(it.trim(), null)
+                else ArtifactVariable(it.substring(0, eq).trim(), it.substring(eq + 1).trim())
+            }
+    return name to args
+}
+
+fun parseLibrariesConfig(json: JsonObject): ResolverConfig {
     val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()
     val artifacts = json.array<JsonObject>("libraries")?.map {
-        it.string("name")!! to ArtifactResolution(
+        val (name, variables) = parseLibraryName(it.string("name")!!)
+        name to LibraryDefinition(
                 artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
+                variables = variables,
                 imports = it.array<String>("imports")?.toList().orEmpty(),
                 initCodes = it.array<String>("initCodes")?.toList().orEmpty(),
                 renderers = it.array<JsonObject>("renderers")?.map {
@@ -79,7 +95,9 @@ fun main(vararg args: String) {
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
                 scriptClasspath = scriptClasspath,
-                resolverConfig = librariesConfigFile?.let(::readLibrariesConfig)
+                resolverConfig = librariesConfigFile?.let {
+                    parseLibrariesConfig(Parser().parse(it.canonicalPath) as JsonObject)
+                }
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)

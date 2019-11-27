@@ -6,6 +6,9 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.jupyter.magic.EnableOptionMagicHandler
+import org.jetbrains.kotlin.jupyter.magic.MagicProcessor
+import org.jetbrains.kotlin.jupyter.magic.UseMagicHandler
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
@@ -34,15 +37,21 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (checkResult: ReplEvalResult.Error.CompileTime) : this(ReplCompileResult.Error(checkResult.message, checkResult.location))
     constructor (incompleteResult: ReplEvalResult.Incomplete) : this(ReplCompileResult.Error("Incomplete Code", null))
     constructor (historyMismatchResult: ReplEvalResult.HistoryMismatch) : this(ReplCompileResult.Error("History Mismatch", CompilerMessageLocation.create(null, historyMismatchResult.lineNo, 0, null)))
+    constructor (message: String) : this(ReplCompileResult.Error(message, null))
 }
 
-class ReplForJupyter(val classpath: List<File> = emptyList(), val config: ResolverConfig? = null) {
+class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: ResolverConfig? = null) {
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
     private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
 
-    private val libraryMagics = config?.let { it.libraries.keys.map { "%%$it" to "@file:DependsOn(\"$it\")" } }?.toMap().orEmpty()
+    val magic = MagicProcessor(
+            UseMagicHandler(config?.libraries.orEmpty()),
+            EnableOptionMagicHandler("trackClasspath") { trackClasspath = true }
+    )
+
+    private val receiver = KotlinReceiver()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -54,17 +63,15 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         }
         return try {
             resolver.resolveFromAnnotations(scriptContents)
-                .onSuccess { classpath ->
-                    context.compilationConfiguration
-                            .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
-                            .asSuccess()
-                }
+                    .onSuccess { classpath ->
+                        context.compilationConfiguration
+                                .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
+                                .asSuccess()
+                    }
         } catch (e: Throwable) {
             ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))
         }
     }
-
-    private val receiver = KotlinReceiver()
 
     private val compilerConfiguration by lazy {
         ScriptCompilationConfiguration {
@@ -73,7 +80,7 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
             fileExtension.put("jupyter.kts")
             defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class)
             jvm {
-                updateClasspath(classpath)
+                updateClasspath(baseClasspath)
             }
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
@@ -87,6 +94,13 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
             compilerOptions.invoke(listOf("-classpath", classPath, "-jvm-target", "1.8"))
         }
     }
+
+    val ScriptCompilationConfiguration.classpath
+        get() = this[ScriptCompilationConfiguration.dependencies]!!
+                .filterIsInstance<JvmDependency>()
+                .flatMap { it.classpath }
+
+    val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
         implicitReceivers.invoke(receiver)
@@ -114,9 +128,11 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
 
     private val completer = KotlinCompleter(ctx)
 
+    private var trackClasspath: Boolean = false
+
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
-        return when(val result = compiler.check(compilerState, codeLine)) {
+        return when (val result = compiler.check(compilerState, codeLine)) {
             is ReplCheckResult.Error -> throw ReplCompilerException(result)
             is ReplCheckResult.Ok -> CheckResult(LineId(codeLine), true)
             is ReplCheckResult.Incomplete -> CheckResult(LineId(codeLine), false)
@@ -125,23 +141,38 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
     }
 
     init {
+        // TODO: to be removed after investigation of https://github.com/erokhins/kotlin-jupyter/issues/24
         eval("1")
     }
 
-    private fun replaceMagics(code: String) =
-            libraryMagics.asSequence().fold(code) { str, magic ->
-                str.replace(magic.key, magic.value)
-            }
-
     fun eval(code: String): EvalResult {
-        val processedCode = replaceMagics(code)
+        val processedCode = magic.replaceMagics(code)
+
         var result = doEval(processedCode)
         val number = executionCounter - 1
-        val extraCode = resolver.getAdditionalInitializationCode()
         val displays = mutableListOf<Any>()
-        if (extraCode.isNotEmpty()) {
-            displays.addAll(extraCode.mapNotNull(::doEval))
+
+        val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
+        if (resolvedClasspath.isNotEmpty()) {
+
+            val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
+            val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
+            currentClasspath.addAll(newClasspath)
+            if (trackClasspath) {
+                val sb = StringBuilder()
+                if (newClasspath.count() > 0) {
+                    sb.appendln("${newClasspath.count()} new paths were added to classpath:")
+                    newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                }
+                if (oldClasspath.count() > 0) {
+                    sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
+                    oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                }
+                sb.appendln("Current classpath size: ${currentClasspath.count()}")
+                displays.add(sb.toString())
+            }
         }
+
         if (result != null) {
             renderers[result.javaClass.canonicalName]?.let {
                 it.displayCode?.replace("\$it", "res$number")?.let(::doEval)?.let(displays::add)
@@ -153,7 +184,6 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
         }
         return EvalResult(result, displays)
     }
-
 
     fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)
 
@@ -186,7 +216,7 @@ class ReplForJupyter(val classpath: List<File> = emptyList(), val config: Resolv
 
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
-        log.info("Classpath used in script: ${classpath}")
+        log.info("Classpath used in script: ${baseClasspath}")
     }
 }
 

@@ -1,34 +1,40 @@
 package org.jetbrains.kotlin.jupyter.test
 
+import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Parser
 import org.jetbrains.kotlin.jupyter.ReplForJupyter
+import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.parseLibrariesConfig
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 
-class ReplTest{
+class ReplTest {
 
     var repl = ReplForJupyter()
 
     @Before
-    fun SetUp(){
+    fun SetUp() {
         repl = ReplForJupyter(classpath)
     }
 
     @Test
-    fun TestRepl(){
+    fun TestRepl() {
         repl.eval("val x = 3")
         var res = repl.eval("x*2")
         Assert.assertEquals(6, res.resultValue)
     }
 
     @Test
-    fun TestDependsOnAnnotation(){
+    fun TestDependsOnAnnotation() {
+        println(repl.currentClasspath)
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
     @Test
-    fun TestDependsOnAnnotations(){
+    fun TestDependsOnAnnotations() {
         val sb = StringBuilder()
         sb.appendln("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
         sb.appendln("@file:Repository(\"https://repo.spring.io/libs-release\")")
@@ -53,5 +59,52 @@ class ReplTest{
         } else {
             Assert.fail("Result should be success")
         }
+    }
+
+    @Test
+    fun TestMagic() {
+        val config = """
+            {
+                "libraries": [
+                    {
+                        "name": "mylib(v1, v2=2.3)",
+                        "artifacts": [
+                            "artifact1:""" + "\$v1" + """",
+                            "artifact2:""" + "\$v2" + """"
+                        ],
+                        "imports": [
+                            "package1",
+                            "package2"
+                        ],
+                        "initCodes": [
+                            "code1",
+                            "code2"
+                        ]
+                    },
+                    {
+                        "name": "other(a=temp, b=test)",
+                        "artifacts": [
+                            "path-""" + "\$a" + """",
+                            "path-""" + "\$b" + """"
+                        ],
+                    }
+                ]
+            }
+        """.trimIndent()
+        val json = Parser().parse(StringBuilder(config)) as JsonObject
+        val replConfig = parseLibrariesConfig(json)
+        val repl = ReplForJupyter(classpath, replConfig)
+        val res = repl.magic.replaceMagics("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
+        val expected = """
+            @file:DependsOn("artifact1:1.0")
+            @file:DependsOn("artifact2:2.3")
+            import package1
+            import package2
+            code1
+            code2
+            @file:DependsOn("path-debug")
+            @file:DependsOn("path-release")
+        """.trimIndent()
+        Assert.assertEquals(expected, res)
     }
 }
