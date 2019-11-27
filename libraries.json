@@ -28,8 +28,9 @@
         "jetbrains.datalorePlot.geom.*",
         "jetbrains.datalorePlot.stat.*"
       ],
-      "initCodes": [
-        "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))\nDISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
+      "init": [
+        "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))",
+        "DISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
       ],
       "renderers": [
         {
@@ -47,7 +48,7 @@
       "imports": [
         "krangl.*"
       ],
-      "initCodes": [
+      "init": [
         "fun krangl.DataFrame.display() : jupyter.kotlin.DisplayResult\n{val sb = StringBuilder()\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th>${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.forEach {\n    sb.append(\"<tr>\")\n    it.values.forEach { sb.append(\"<td>${it}</td>\") }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nreturn DISPLAY(HTML(sb.toString()))}"
       ],
       "renderers": [
@@ -110,6 +111,10 @@
         "org.apache.spark.sql.*",
         "org.apache.spark.api.java.*",
         "org.apache.spark.ml.feature.*"
+      ],
+      "initCell": [
+        "scala.Console.setOut(System.out)",
+        "scala.Console.setErr(System.err)"
       ]
     }
   ]

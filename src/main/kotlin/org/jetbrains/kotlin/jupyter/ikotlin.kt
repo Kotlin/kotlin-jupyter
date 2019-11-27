@@ -70,7 +70,8 @@ fun parseLibrariesConfig(json: JsonObject): ResolverConfig {
                 artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
                 variables = variables,
                 imports = it.array<String>("imports")?.toList().orEmpty(),
-                initCodes = it.array<String>("initCodes")?.toList().orEmpty(),
+                init = it.array<String>("init")?.toList().orEmpty(),
+                initCell = it.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.array<JsonObject>("renderers")?.map {
                     TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
                 }?.toList().orEmpty()

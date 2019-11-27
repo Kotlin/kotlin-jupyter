@@ -3,13 +3,11 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import org.jetbrains.kotlin.jupyter.ReplForJupyter
-import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.parseLibrariesConfig
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 
 class ReplTest {
 
@@ -76,7 +74,7 @@ class ReplTest {
                             "package1",
                             "package2"
                         ],
-                        "initCodes": [
+                        "init": [
                             "code1",
                             "code2"
                         ]
@@ -94,7 +92,7 @@ class ReplTest {
         val json = Parser().parse(StringBuilder(config)) as JsonObject
         val replConfig = parseLibrariesConfig(json)
         val repl = ReplForJupyter(classpath, replConfig)
-        val res = repl.magic.replaceMagics("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
+        val res = repl.codePreprocessor.process("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
         val expected = """
             @file:DependsOn("artifact1:1.0")
             @file:DependsOn("artifact2:2.3")

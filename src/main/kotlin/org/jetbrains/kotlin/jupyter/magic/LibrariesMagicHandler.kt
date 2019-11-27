@@ -5,9 +5,17 @@ import org.jetbrains.kotlin.jupyter.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.parseLibraryName
 
-class UseMagicHandler(val libraries: Map<String, LibraryDefinition>) : MagicHandler {
+class LibrariesMagicHandler(val libraries: Map<String, LibraryDefinition>) : MagicHandler {
 
     override val keyword: String = "use"
+
+    private val addedLibraries = mutableListOf<LibraryDefinition>()
+
+    fun popAddedLibraries(): List<LibraryDefinition> {
+        val result = addedLibraries.toList()
+        addedLibraries.clear()
+        return result
+    }
 
     private fun substituteArguments(parameters: List<ArtifactVariable>, arguments: List<ArtifactVariable>): Map<String, String> {
         val firstNamed = arguments.indexOfFirst { it.name != null }
@@ -38,7 +46,7 @@ class UseMagicHandler(val libraries: Map<String, LibraryDefinition>) : MagicHand
         val builder = StringBuilder()
         artifacts.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
         imports.forEach { builder.appendln("import $it") }
-        initCodes.forEach { builder.appendln(it) }
+        init.forEach { builder.appendln(it) }
         val code = builder.toString()
         return templates.asSequence().fold(code) { str, template ->
             str.replace("\$${template.key}", template.value)
@@ -58,6 +66,7 @@ class UseMagicHandler(val libraries: Map<String, LibraryDefinition>) : MagicHand
 
             val codeToInsert = library.generateCode(mapping)
             sb.append(codeToInsert)
+            addedLibraries.add(library)
         }
         return sb.toString()
     }

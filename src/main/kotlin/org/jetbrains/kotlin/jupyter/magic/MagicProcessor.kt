@@ -6,12 +6,12 @@ interface MagicHandler {
 
     val keyword: String
 
-    fun process(arguments: String?): String
+    fun process(arg: String?): String
 }
 
 open class DelegatedMagicHandler(override val keyword: String, val processArguments: (String?) -> String) : MagicHandler {
 
-    override fun process(arguments: String?): String = processArguments(arguments)
+    override fun process(arg: String?): String = processArguments(arg)
 }
 
 class EnableOptionMagicHandler(keyword: String, enable: () -> Unit) : DelegatedMagicHandler(keyword, {
@@ -19,7 +19,7 @@ class EnableOptionMagicHandler(keyword: String, enable: () -> Unit) : DelegatedM
     ""
 })
 
-class MagicProcessor(vararg handlers: MagicHandler) {
+class MagicProcessor(vararg handlers: MagicHandler) : CodePreprocessor {
 
     private val handlersMap = handlers.map { it.keyword to it }.toMap()
 
@@ -28,9 +28,10 @@ class MagicProcessor(vararg handlers: MagicHandler) {
         val keyword = parts[0]
         val arg = if (parts.count() > 1) parts[1] else null
         return handlersMap[keyword]?.process(arg)
+                ?: throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
     }
 
-    fun replaceMagics(code: String): String {
+    override fun process(code: String): String {
         val sb = StringBuilder()
         var lastMagicIndex = 0
         var lastCopiedIndex = 0

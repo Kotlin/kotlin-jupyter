@@ -6,9 +6,7 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.jupyter.magic.EnableOptionMagicHandler
-import org.jetbrains.kotlin.jupyter.magic.MagicProcessor
-import org.jetbrains.kotlin.jupyter.magic.UseMagicHandler
+import org.jetbrains.kotlin.jupyter.magic.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
@@ -46,9 +44,20 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
 
     private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
 
-    val magic = MagicProcessor(
-            UseMagicHandler(config?.libraries.orEmpty()),
-            EnableOptionMagicHandler("trackClasspath") { trackClasspath = true }
+    private val useMagicHandler = LibrariesMagicHandler(config?.libraries.orEmpty())
+
+    private val includedLibraries = mutableSetOf<LibraryDefinition>()
+
+    val codePreprocessor = CompoundCodePreprocessor(
+            DelegatedCodePreprocessor {
+                val initCellCode = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
+                if (initCellCode.isNotBlank()) initCellCode + "\n" + it else it
+            },
+            MagicProcessor(
+                    useMagicHandler,
+                    EnableOptionMagicHandler("trackClasspath") { trackClasspath = true },
+                    EnableOptionMagicHandler("trackCode") { trackExecutedCode = true }
+            )
     )
 
     private val receiver = KotlinReceiver()
@@ -130,6 +139,8 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
 
     private var trackClasspath: Boolean = false
 
+    private var trackExecutedCode: Boolean = false
+
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
         return when (val result = compiler.check(compilerState, codeLine)) {
@@ -146,43 +157,54 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
     }
 
     fun eval(code: String): EvalResult {
-        val processedCode = magic.replaceMagics(code)
+        try {
+            val processedCode = codePreprocessor.process(code)
 
-        var result = doEval(processedCode)
-        val number = executionCounter - 1
-        val displays = mutableListOf<Any>()
+            var result = doEval(processedCode)
 
-        val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
-        if (resolvedClasspath.isNotEmpty()) {
+            // on successful execution add all libraries, that were added via '%use' magic, to the set
+            includedLibraries.addAll(useMagicHandler.popAddedLibraries())
 
-            val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
-            val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
-            currentClasspath.addAll(newClasspath)
-            if (trackClasspath) {
-                val sb = StringBuilder()
-                if (newClasspath.count() > 0) {
-                    sb.appendln("${newClasspath.count()} new paths were added to classpath:")
-                    newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+            val number = executionCounter - 1
+            val displays = mutableListOf<Any>()
+
+            if (trackExecutedCode)
+                displays.add("Executed code:\n$processedCode")
+
+            val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
+            if (resolvedClasspath.isNotEmpty()) {
+
+                val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
+                val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
+                currentClasspath.addAll(newClasspath)
+                if (trackClasspath) {
+                    val sb = StringBuilder()
+                    if (newClasspath.count() > 0) {
+                        sb.appendln("${newClasspath.count()} new paths were added to classpath:")
+                        newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                    }
+                    if (oldClasspath.count() > 0) {
+                        sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
+                        oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                    }
+                    sb.appendln("Current classpath size: ${currentClasspath.count()}")
+                    displays.add(sb.toString())
                 }
-                if (oldClasspath.count() > 0) {
-                    sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
-                    oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
-                }
-                sb.appendln("Current classpath size: ${currentClasspath.count()}")
-                displays.add(sb.toString())
             }
-        }
 
-        if (result != null) {
-            renderers[result.javaClass.canonicalName]?.let {
-                it.displayCode?.replace("\$it", "res$number")?.let(::doEval)?.let(displays::add)
-                it.resultCode?.let {
-                    result = if (it.trim().isBlank()) ""
-                    else doEval(it.replace("\$it", "res$number"))
+            if (result != null) {
+                renderers[result.javaClass.canonicalName]?.let {
+                    it.displayCode?.replace("\$it", "res$number")?.let(::doEval)?.let(displays::add)
+                    it.resultCode?.let {
+                        result = if (it.trim().isBlank()) ""
+                        else doEval(it.replace("\$it", "res$number"))
+                    }
                 }
             }
+            return EvalResult(result, displays)
+        } finally {
+            useMagicHandler.popAddedLibraries()
         }
-        return EvalResult(result, displays)
     }
 
     fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)

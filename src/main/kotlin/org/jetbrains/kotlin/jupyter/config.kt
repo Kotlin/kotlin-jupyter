@@ -18,7 +18,7 @@ data class TypeRenderer(val className: String, val displayCode: String?, val res
 
 data class ArtifactVariable(val name: String?, val value: String?)
 
-class LibraryDefinition(val artifacts: List<String>, val variables: List<ArtifactVariable>, val imports: List<String>, val initCodes: List<String>, val renderers: List<TypeRenderer>)
+class LibraryDefinition(val artifacts: List<String>, val variables: List<ArtifactVariable>, val initCell: List<String>, val imports: List<String>, val init: List<String>, val renderers: List<TypeRenderer>)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>, val libraries: Map<String, LibraryDefinition>)
 
