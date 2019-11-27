@@ -105,9 +105,10 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
     }
 
     val ScriptCompilationConfiguration.classpath
-        get() = this[ScriptCompilationConfiguration.dependencies]!!
-                .filterIsInstance<JvmDependency>()
-                .flatMap { it.classpath }
+        get() = this[ScriptCompilationConfiguration.dependencies]
+                ?.filterIsInstance<JvmDependency>()
+                ?.flatMap { it.classpath }
+                .orEmpty()
 
     val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
 
