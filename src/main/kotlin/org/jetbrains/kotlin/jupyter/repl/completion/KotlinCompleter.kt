@@ -2,8 +2,8 @@ package org.jetbrains.kotlin.jupyter.repl.completion
 
 import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.jsonObject
-import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinReflectUtil.shorten
+import jupyter.kotlin.completion.KotlinContext
+import jupyter.kotlin.completion.KotlinReflectUtil.shorten
 import java.util.TreeMap
 import java.io.PrintWriter
 import java.io.StringWriter

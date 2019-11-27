@@ -1,8 +1,7 @@
-package org.jetbrains.kotlin.jupyter.repl.reflect
+package jupyter.kotlin.completion
 
+import jupyter.kotlin.completion.KotlinReflectUtil.shorten
 import kotlin.reflect.KProperty
-
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinReflectUtil.shorten
 
 class KotlinVariableInfo(private val value: Any?, private val descriptor: KProperty<*>) {
 

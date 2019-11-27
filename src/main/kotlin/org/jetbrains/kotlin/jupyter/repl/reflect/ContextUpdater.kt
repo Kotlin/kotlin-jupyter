@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter.repl.reflect
 
+import jupyter.kotlin.completion.KotlinFunctionInfo
+import jupyter.kotlin.completion.KotlinVariableInfo
 import org.jetbrains.kotlin.cli.common.repl.AggregatedReplStageState
 import org.jetbrains.kotlin.cli.common.repl.ReplHistoryRecord
 import org.slf4j.LoggerFactory

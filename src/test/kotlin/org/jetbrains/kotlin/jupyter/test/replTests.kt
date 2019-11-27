@@ -11,7 +11,7 @@ import org.junit.Test
 
 class ReplTest {
 
-    var repl = ReplForJupyter()
+    var repl = ReplForJupyter(classpath)
 
     @Before
     fun SetUp() {
@@ -27,7 +27,6 @@ class ReplTest {
 
     @Test
     fun TestDependsOnAnnotation() {
-        println(repl.currentClasspath)
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
@@ -38,12 +37,6 @@ class ReplTest {
         sb.appendln("@file:Repository(\"https://repo.spring.io/libs-release\")")
         sb.appendln("@file:DependsOn(\"org.jetbrains.kotlinx:kotlinx.html.jvm:0.5.12\")")
         repl.eval(sb.toString())
-    }
-
-    @Test
-    fun TestDependsOnAlias() {
-        repl.eval("@file:DependsOn(\"klaxon\")")
-        repl.eval("val k = Klaxon()")
     }
 
     @Test

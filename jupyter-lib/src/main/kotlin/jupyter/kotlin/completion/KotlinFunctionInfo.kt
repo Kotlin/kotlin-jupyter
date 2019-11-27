@@ -1,9 +1,9 @@
-package org.jetbrains.kotlin.jupyter.repl.reflect
+package jupyter.kotlin.completion
 
 import kotlin.reflect.KFunction
 
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinReflectUtil.functionSignature
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinReflectUtil.shorten
+import jupyter.kotlin.completion.KotlinReflectUtil.functionSignature
+import jupyter.kotlin.completion.KotlinReflectUtil.shorten
 
 
 class KotlinFunctionInfo(private val function: KFunction<*>) : Comparable<KotlinFunctionInfo> {

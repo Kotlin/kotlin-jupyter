@@ -1,7 +1,4 @@
-package org.jetbrains.kotlin.jupyter.repl.context
-
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinFunctionInfo
-import org.jetbrains.kotlin.jupyter.repl.reflect.KotlinVariableInfo
+package jupyter.kotlin.completion
 
 import java.util.*
 

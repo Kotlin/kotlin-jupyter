@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.jupyter.repl.reflect
+package jupyter.kotlin.completion
 
 import kotlin.reflect.KFunction
 

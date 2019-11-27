@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.magic.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import org.jetbrains.kotlin.jupyter.repl.context.KotlinContext
-import org.jetbrains.kotlin.jupyter.repl.context.KotlinReceiver
+import jupyter.kotlin.completion.KotlinContext
+import jupyter.kotlin.completion.KotlinReceiver
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import java.io.File
+import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
@@ -60,7 +61,10 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
             )
     )
 
-    private val receiver = KotlinReceiver()
+    private val scriptClassloader =
+            URLClassLoader(baseClasspath.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader().parent)
+
+    private val receiver = scriptClassloader.within { KotlinReceiver() }
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -82,12 +86,22 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
         }
     }
 
+    private fun <T> ClassLoader.within(func: () -> T): T {
+        val saveClassLoader = Thread.currentThread().contextClassLoader
+        Thread.currentThread().contextClassLoader = this
+        return try {
+            return func()
+        } finally {
+            Thread.currentThread().contextClassLoader = saveClassLoader
+        }
+    }
+
     private val compilerConfiguration by lazy {
         ScriptCompilationConfiguration {
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
             baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
             fileExtension.put("jupyter.kts")
-            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class)
+            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class, KotlinReceiver::class)
             jvm {
                 updateClasspath(baseClasspath)
             }
@@ -95,10 +109,10 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
 
-            val kt = KotlinType(receiver.javaClass.canonicalName)
-            implicitReceivers.invoke(listOf(kt))
+            //val kt = KotlinType(receiver.javaClass.canonicalName)
+            //implicitReceivers.invoke(listOf(kt))
 
-            val classes = listOf(receiver.javaClass, ScriptTemplateWithDisplayHelpers::class.java)
+            val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
             val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
             compilerOptions.invoke(listOf("-classpath", classPath, "-jvm-target", "1.8"))
         }
@@ -113,7 +127,10 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
     val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        implicitReceivers.invoke(receiver)
+        //implicitReceivers.invoke(receiver)
+        jvm {
+            baseClassLoader(scriptClassloader)
+        }
     }
 
     private var executionCounter = 0
@@ -216,7 +233,7 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
             when (val compileResult = compiler.compile(compilerState, codeLine)) {
                 is ReplCompileResult.CompiledClasses -> {
                     val result = evaluator.eval(evaluatorState, compileResult)
-                    contextUpdater.update()
+                    //contextUpdater.update()
                     return when (result) {
                         is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
                         is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
