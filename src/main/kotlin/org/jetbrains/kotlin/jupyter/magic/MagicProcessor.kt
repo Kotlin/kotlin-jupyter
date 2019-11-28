@@ -1,27 +1,26 @@
 package org.jetbrains.kotlin.jupyter.magic
 
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.ReplLineMagics
 
 interface MagicHandler {
-
-    val keyword: String
 
     fun process(arg: String?): String
 }
 
-open class DelegatedMagicHandler(override val keyword: String, val processArguments: (String?) -> String) : MagicHandler {
+open class DelegatedMagicHandler(val processArguments: (String?) -> String) : MagicHandler {
 
     override fun process(arg: String?): String = processArguments(arg)
 }
 
-class EnableOptionMagicHandler(keyword: String, enable: () -> Unit) : DelegatedMagicHandler(keyword, {
+class EnableOptionMagicHandler(enable: () -> Unit) : DelegatedMagicHandler({
     enable()
     ""
 })
 
-class MagicProcessor(vararg handlers: MagicHandler) : CodePreprocessor {
+class MagicProcessor(vararg handlers: Pair<ReplLineMagics, MagicHandler>) : CodePreprocessor {
 
-    private val handlersMap = handlers.map { it.keyword to it }.toMap()
+    private val handlersMap = handlers.map { it.first.name to it.second }.toMap()
 
     private fun processMagic(text: String): String? {
         val parts = text.split(' ', limit = 2)

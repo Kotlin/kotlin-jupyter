@@ -1,13 +1,8 @@
 package org.jetbrains.kotlin.jupyter.magic
 
-import org.jetbrains.kotlin.jupyter.LibraryDefinition
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
-import org.jetbrains.kotlin.jupyter.Variable
-import org.jetbrains.kotlin.jupyter.parseLibraryName
+import org.jetbrains.kotlin.jupyter.*
 
 class LibrariesMagicHandler(val libraries: Map<String, LibraryDefinition>) : MagicHandler {
-
-    override val keyword: String = "use"
 
     private val addedLibraries = mutableListOf<LibraryDefinition>()
 

@@ -9,6 +9,8 @@ enum class ReplCommands(val desc: String) {
 
 fun isCommand(code: String): Boolean = code.startsWith(":")
 
+fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n    ", prefix = "    ", transform = transform)
+
 fun runCommand(code: String, repl: ReplForJupyter?): ResponseWithMessage {
     val args = code.trim().substring(1).split(" ")
     val cmd =
@@ -23,6 +25,17 @@ fun runCommand(code: String, repl: ReplForJupyter?): ResponseWithMessage {
             val cp = repl!!.currentClasspath
             ResponseWithMessage(ResponseState.Ok, textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
-        ReplCommands.help -> ResponseWithMessage(ResponseState.Ok, textResult("Available commands:\n${ReplCommands.values().joinToString("\n    ", prefix = "    ") { ":${it.name} - ${it.desc}" }}"))
+        ReplCommands.help -> {
+            val commands = ReplCommands.values().asIterable().joinToStringIndented { ":${it.name} - ${it.desc}" }
+            val magics = ReplLineMagics.values().asIterable().filter { it.visibleInHelp }.joinToStringIndented {
+                var s = "%${it.name} - ${it.desc}"
+                if (it.argumentsUsage != null) s += "\n        Usage: %${it.name} ${it.argumentsUsage}"
+                s
+            }
+            val libraries = repl?.config?.libraries?.toList()?.joinToStringIndented {
+                "${it.first} ${it.second.link ?: ""}"
+            }
+            ResponseWithMessage(ResponseState.Ok, textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
+        }
     }
 }

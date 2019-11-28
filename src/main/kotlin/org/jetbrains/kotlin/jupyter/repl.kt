@@ -40,7 +40,7 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
 }
 
 class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
-                     config: ResolverConfig? = null) {
+                     val config: ResolverConfig? = null) {
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
@@ -56,9 +56,9 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 if (initCellCode.isNotBlank()) initCellCode + "\n" + it else it
             },
             MagicProcessor(
-                    useMagicHandler,
-                    EnableOptionMagicHandler("trackClasspath") { trackClasspath = true },
-                    EnableOptionMagicHandler("trackCode") { trackExecutedCode = true }
+                    ReplLineMagics.use to useMagicHandler,
+                    ReplLineMagics.trackClasspath to EnableOptionMagicHandler() { trackClasspath = true },
+                    ReplLineMagics.trackCode to EnableOptionMagicHandler { trackExecutedCode = true }
             )
     )
 

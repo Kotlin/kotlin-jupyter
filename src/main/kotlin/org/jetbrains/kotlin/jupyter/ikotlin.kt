@@ -74,7 +74,8 @@ fun parseLibrariesConfig(json: JsonObject): ResolverConfig {
                 initCell = it.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.array<JsonObject>("renderers")?.map {
                     TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
-                }?.toList().orEmpty()
+                }?.toList().orEmpty(),
+                link = it.string("link")
         )
     }?.toMap()
     return ResolverConfig(repos, artifacts.orEmpty())

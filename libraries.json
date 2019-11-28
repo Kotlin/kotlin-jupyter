@@ -13,7 +13,8 @@
       ],
       "imports": [
         "com.beust.klaxon.*"
-      ]
+      ],
+      "link": "https://github.com/cbeust/klaxon"
     },
     {
       "name": "lets-plot",
@@ -62,7 +63,8 @@
           "display": "$it.display()",
           "result": ""
         }
-      ]
+      ],
+      "link": "https://github.com/holgerbrandl/krangl"
     },
     {
       "name": "kotlin-statistics",
@@ -71,7 +73,8 @@
       ],
       "imports": [
         "org.nield.kotlinstatistics.*"
-      ]
+      ],
+      "link": "https://github.com/thomasnield/kotlin-statistics"
     },
     {
       "name": "kravis",
@@ -87,7 +90,8 @@
           "display": "DISPLAY($it.show())",
           "result": ""
         }
-      ]
+      ],
+      "link": "https://github.com/holgerbrandl/kravis"
     },
     {
       "name": "spark(scala=2.11.12,spark=2.4.4)",
