@@ -39,7 +39,8 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (message: String) : this(ReplCompileResult.Error(message, null))
 }
 
-class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: ResolverConfig? = null) {
+class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
+                     config: ResolverConfig? = null) {
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
@@ -61,10 +62,7 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
             )
     )
 
-    private val scriptClassloader =
-            URLClassLoader(baseClasspath.map { it.toURI().toURL() }.toTypedArray(), ClassLoader.getSystemClassLoader().parent)
-
-    private val receiver = scriptClassloader.within { KotlinReceiver() }
+    private val receiver = KotlinReceiver()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -86,16 +84,6 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
         }
     }
 
-    private fun <T> ClassLoader.within(func: () -> T): T {
-        val saveClassLoader = Thread.currentThread().contextClassLoader
-        Thread.currentThread().contextClassLoader = this
-        return try {
-            return func()
-        } finally {
-            Thread.currentThread().contextClassLoader = saveClassLoader
-        }
-    }
-
     private val compilerConfiguration by lazy {
         ScriptCompilationConfiguration {
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
@@ -103,14 +91,14 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
             fileExtension.put("jupyter.kts")
             defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class, KotlinReceiver::class)
             jvm {
-                updateClasspath(baseClasspath)
+                updateClasspath(scriptClasspath)
             }
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
 
-            //val kt = KotlinType(receiver.javaClass.canonicalName)
-            //implicitReceivers.invoke(listOf(kt))
+            val kt = KotlinType(receiver.javaClass.canonicalName)
+            implicitReceivers.invoke(listOf(kt))
 
             val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
             val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
@@ -126,9 +114,25 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
 
     val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
 
+    private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
+        override fun loadClass(name: String?, resolve: Boolean): Class<*> {
+            var c: Class<*>? = null
+            c = if (name != null && includeFilter(name))
+                parent.loadClass(name)
+            else parent.parent.loadClass(name)
+            if (resolve)
+                resolveClass(c)
+            return c
+        }
+    }
+
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        //implicitReceivers.invoke(receiver)
+        implicitReceivers.invoke(receiver)
         jvm {
+            val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
+                it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
+            }
+            val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
             baseClassLoader(scriptClassloader)
         }
     }
@@ -256,7 +260,7 @@ class ReplForJupyter(val baseClasspath: List<File> = emptyList(), config: Resolv
 
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
-        log.info("Classpath used in script: ${baseClasspath}")
+        log.info("Classpath used in script: ${scriptClasspath}")
     }
 }
 
