@@ -9,6 +9,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 
@@ -19,22 +20,22 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
  * so this class provides writing classes on disk.
  */
 class ClassWriter(_outputDir: String = "") {
-    var outputDir = _outputDir
-        private set
+    val outputDir  = if(_outputDir == "") {
+        val tempDir = Files.createTempDirectory("kotlin-jupyter")
+        tempDir.toFile().deleteOnExit()
+        tempDir.toAbsolutePath()
+    } else {
+        Paths.get(_outputDir)
+    }
 
     init {
-        if (outputDir == "") {
-            val tempDir = Files.createTempDirectory("kotlin-jupyter")
-            tempDir.toFile().deleteOnExit()
-            outputDir = tempDir.toAbsolutePath().toString()
-        }
+        logger.info("Created ClassWriter with path <$outputDir>")
     }
 
     fun writeClasses(classes: CompiledClasses) {
         for ((filePath, bytes) in classes.classes) {
             if (!filePath.contains(File.separator)) {
-                val classWritePath = outputDir + File.separator + filePath
-                writeClass(bytes, classWritePath)
+                writeClass(bytes, outputDir.resolve(filePath))
             }
         }
         writeModuleInMemory(classes)
@@ -42,11 +43,11 @@ class ClassWriter(_outputDir: String = "") {
 
     private fun writeModuleInMemory(classes: CompiledClasses) {
         try {
-            val compiledScript: KJvmCompiledScript<*> = classes.data as KJvmCompiledScript<*>
-            val moduleInMemory: KJvmCompiledModuleInMemory = compiledScript.compiledModule as KJvmCompiledModuleInMemory
-            moduleInMemory.compilerOutputFiles.forEach { (name: String, bytes: ByteArray) ->
+            val compiledScript = classes.data as KJvmCompiledScript<*>
+            val moduleInMemory = compiledScript.compiledModule as KJvmCompiledModuleInMemory
+            moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
                 if (name.contains("class")) {
-                    writeClass(bytes, outputDir + File.separator + name)
+                    writeClass(bytes, outputDir.resolve(name))
                 }
             }
         } catch (e: ClassCastException) {
@@ -56,9 +57,9 @@ class ClassWriter(_outputDir: String = "") {
         }
     }
 
-    private fun writeClass(classBytes: ByteArray, path: String) {
+    private fun writeClass(classBytes: ByteArray, path: Path) {
         try {
-            FileOutputStream(path).use { fos ->
+            FileOutputStream(path.toAbsolutePath().toString()).use { fos ->
                 BufferedOutputStream(fos).use { out ->
                     out.write(classBytes)
                     out.flush()

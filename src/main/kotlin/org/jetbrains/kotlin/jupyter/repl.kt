@@ -175,7 +175,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     init {
-        System.setProperty("spark.repl.class.outputDir", classWriter.outputDir)
+        System.setProperty("spark.repl.class.outputDir", classWriter.outputDir.toString())
         // TODO: to be removed after investigation of https://github.com/erokhins/kotlin-jupyter/issues/24
         eval("1")
     }
