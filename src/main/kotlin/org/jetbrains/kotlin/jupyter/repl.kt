@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import jupyter.kotlin.completion.KotlinContext
 import jupyter.kotlin.completion.KotlinReceiver
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
+import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -161,6 +162,8 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private var trackExecutedCode: Boolean = false
 
+    private val classWriter = ClassWriter()
+
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
         return when (val result = compiler.check(compilerState, codeLine)) {
@@ -172,6 +175,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     init {
+        System.setProperty("spark.repl.class.outputDir", classWriter.outputDir)
         // TODO: to be removed after investigation of https://github.com/erokhins/kotlin-jupyter/issues/24
         eval("1")
     }
@@ -244,6 +248,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         val codeLine = ReplCodeLine(id, 0, code)
         when (val compileResult = compiler.compile(compilerState, codeLine)) {
             is ReplCompileResult.CompiledClasses -> {
+                classWriter.writeClasses(compileResult)
                 val result = evaluator.eval(evaluatorState, compileResult)
                 contextUpdater.update()
                 return when (result) {

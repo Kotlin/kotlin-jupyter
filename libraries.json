@@ -98,6 +98,7 @@
       "artifacts": [
         "org.apache.spark:spark-mllib_2.11:$spark",
         "org.apache.spark:spark-sql_2.11:$spark",
+        "org.apache.spark:spark-repl_2.11:$spark",
         "org.apache.spark:spark-streaming-flume-assembly_2.11:$spark",
         "org.apache.spark:spark-graphx_2.11:$spark",
         "org.apache.spark:spark-launcher_2.11:$spark",
