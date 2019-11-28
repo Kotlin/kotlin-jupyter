@@ -53,7 +53,7 @@ class ReplTest {
     }
 
     @Test
-    fun TestMagic() {
+    fun TestUseMagic() {
         val config = """
             {
                 "libraries": [

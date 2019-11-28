@@ -16,9 +16,9 @@ enum class JupyterSockets {
 
 data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
 
-data class ArtifactVariable(val name: String?, val value: String?)
+data class Variable(val name: String?, val value: String?)
 
-class LibraryDefinition(val artifacts: List<String>, val variables: List<ArtifactVariable>, val initCell: List<String>, val imports: List<String>, val init: List<String>, val renderers: List<TypeRenderer>)
+class LibraryDefinition(val artifacts: List<String>, val variables: List<Variable>, val initCell: List<String>, val imports: List<String>, val init: List<String>, val renderers: List<TypeRenderer>)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>, val libraries: Map<String, LibraryDefinition>)
 

@@ -47,7 +47,7 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
-fun parseLibraryName(str: String): Pair<String, List<ArtifactVariable>> {
+fun parseLibraryName(str: String): Pair<String, List<Variable>> {
     val pattern = """\w+(\w+)?""".toRegex().matches(str)
     val brackets = str.indexOf('(')
     if (brackets == -1) return str.trim() to emptyList()
@@ -56,8 +56,8 @@ fun parseLibraryName(str: String): Pair<String, List<ArtifactVariable>> {
             .split(',')
             .map {
                 val eq = it.indexOf('=')
-                if (eq == -1) ArtifactVariable(it.trim(), null)
-                else ArtifactVariable(it.substring(0, eq).trim(), it.substring(eq + 1).trim())
+                if (eq == -1) Variable(it.trim(), null)
+                else Variable(it.substring(0, eq).trim(), it.substring(eq + 1).trim())
             }
     return name to args
 }

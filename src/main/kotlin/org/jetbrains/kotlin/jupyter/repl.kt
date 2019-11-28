@@ -237,7 +237,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             when (val compileResult = compiler.compile(compilerState, codeLine)) {
                 is ReplCompileResult.CompiledClasses -> {
                     val result = evaluator.eval(evaluatorState, compileResult)
-                    //contextUpdater.update()
+                    contextUpdater.update()
                     return when (result) {
                         is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
                         is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
