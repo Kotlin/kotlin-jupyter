@@ -2,9 +2,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-Basic kotlin (1.3.40) REPL kernel for jupyter (http://jupyter.org).
-
-Autocompletion, history and other advanced features are not yet supported.
+Kotlin (1.3.70) REPL kernel for jupyter (http://jupyter.org).
 
 Alpha version. Tested with jupyter 5.2.0 on OS X so far.
 
@@ -30,25 +28,48 @@ The following REPL commands are supported:
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOnJar(<relative|absolute-path-in-dir-repo>)` - adds a class directory or jar to the classpath
- - `@file:DirRepository(<absolute-path>)` - adds a directory as a repo
- - `@file:DependsOnMaven(<colon-separated-maven-coordinates>)` - resolves artifacts using maven, downloads them if necessary, and adds to the classpath
- - `@file:MavenRepository(<mavenRepoUrl>)` - adds a maven repository
+ - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven colon separated string artifacts
+ - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository
  
-*Note: The maven repositories used are defaulted to Maven Centralas a remote repo and `~/.m2/repository` as a local one.*
-  
+*Note: The maven repositories used are defaulted to Maven Central as a remote repo and `~/.m2/repository` as a local one.*
+
+### Line Magics
+
+The following line magics are supported:
+ - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
+ - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
+ - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
+ 
+### Supported Libraries
+
+The following libraries can be included by '%use' magic keyword:
+ -  [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
+ -  lets-plot - GGplot-like ineractive visualization for Kotlin
+ -  [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
+ -  [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
+ -  [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ -  [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+
+*See the list of supported libraries in [config file](config.json)*
+
 ### MIME output
   
 By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
  to display graphics or html, it is possible to send MIME-encoded result to the client using the `Result` type 
- and `resultOf` helper function. The latter has a signature: 
+ and `MIME` helper function. The latter has a signature: 
 ```kotlin
-fun resultOf(vararg mimeToData: Pair<String, Any>): Result 
+fun MIME(vararg mimeToData: Pair<String, Any>): Result 
 ```
 E.g.:
 ```kotlin
-resultOf("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
+MIME("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
+
 ```
+HTML outputs can be rendered with `HTML` helper function:
+```kotlin
+fun HTML(text: String): Result
+```
+
 *(See also `toSvg` function in the [example](samples/KotlinSample01.ipynb)).*
 
 ## Installation
