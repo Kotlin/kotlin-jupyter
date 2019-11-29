@@ -43,12 +43,13 @@ The following line magics are supported:
 ### Supported Libraries
 
 The following libraries can be included by '%use' magic keyword:
- -  [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- -  lets-plot - GGplot-like ineractive visualization for Kotlin
- -  [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
- -  [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
- -  [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
- -  [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+ - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
+ - lets-plot - ggplot-like interactive visualization for Kotlin
+ - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
+ - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
+ - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+ - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
 
 *See the list of supported libraries in [config file](config.json)*
 
@@ -69,8 +70,6 @@ HTML outputs can be rendered with `HTML` helper function:
 ```kotlin
 fun HTML(text: String): Result
 ```
-
-*(See also `toSvg` function in the [example](samples/KotlinSample01.ipynb)).*
 
 ## Installation
 
