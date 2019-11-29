@@ -21,14 +21,9 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
                      private val functions: MutableSet<KotlinFunctionInfo>) {
 
     private val lines: List<Any>
-        get() {
-            val lines = state.history.stream()
-                    .map{ this.getLineFromRecord(it) }
-                    .collect(Collectors.toList())
-
-            lines.reverse()
-            return lines.toList()
-        }
+        get() = state.history
+                .mapNotNull { this.getLineFromRecord(it) }
+                .asReversed()
 
     fun update() {
         try {
@@ -57,9 +52,9 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
         }
     }
 
-    private fun getLineFromRecord(record: ReplHistoryRecord<Pair<*, *>>): Any {
+    private fun getLineFromRecord(record: ReplHistoryRecord<Pair<*, *>>): Any? {
         val statePair = record.item.second
-        return (statePair as Pair<*, *>).second!!
+        return (statePair as Pair<*, *>).second
     }
 
     @Throws(ReflectiveOperationException::class)
