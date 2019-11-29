@@ -138,11 +138,13 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     private val stateLock = ReentrantReadWriteLock()
 
     private val compilerState = compiler.createState(stateLock)
+
     private val evaluatorState = evaluator.createState(stateLock)
 
     private val state = AggregatedReplStageState(compilerState, evaluatorState, stateLock)
 
     private val ctx = KotlinContext()
+
     private val contextUpdater = ContextUpdater(state, ctx.vars, ctx.functions)
 
     private val completer = KotlinCompleter(ctx)
@@ -171,26 +173,37 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     fun eval(code: String, jupyterId: Int = -1): EvalResult {
         synchronized(this) {
             try {
+                val displays = mutableListOf<Any>()
+
                 val initCell = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
+
                 if (initCell.isNotBlank())
-                    doEval(initCell)
+                    (doEval(initCell).value as? DisplayResult)?.let(displays::add)
 
                 val processedCode = preprocessCode(code)
 
-                var (replId, result) = doEval(processedCode)
+                val newLibraries = librariesCodeGenerator.getProcessedLibraries()
+
+                newLibraries.forEach {
+                    (doEval(it.code).value as? DisplayResult)?.let(displays::add)
+                }
+
+                var result: Any? = null
+                var replId = -1
+
+                if (processedCode.isNotBlank()) {
+                    val e = doEval(processedCode)
+                    result = e.value
+                    replId = e.replId
+                }
+
+                // on successful execution add all new libraries to the set
+                includedLibraries.addAll(newLibraries.map { it.library })
 
                 if (jupyterId >= 0) {
                     while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
                     ReplOutputs[jupyterId] = result
                 }
-
-                // on successful execution add all libraries, that were added via '%use' magic, to the set
-                includedLibraries.addAll(librariesCodeGenerator.popAddedLibraries())
-
-                val displays = mutableListOf<Any>()
-
-                if (trackExecutedCode)
-                    displays.add("Executed code:\n$processedCode")
 
                 val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
                 if (resolvedClasspath.isNotEmpty()) {
@@ -216,11 +229,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 if (result != null) {
                     renderers[result.javaClass.canonicalName]?.let {
                         it.displayCode?.let {
-                            doEval(it.replace("\$it", "res$replId")).second?.let(displays::add)
+                            doEval(it.replace("\$it", "res$replId")).value?.let(displays::add)
                         }
                         it.resultCode?.let {
                             result = if (it.trim().isBlank()) ""
-                            else doEval(it.replace("\$it", "res$replId")).second
+                            else doEval(it.replace("\$it", "res$replId")).value
                         }
                     }
                     if (result is DisplayResult) {
@@ -230,14 +243,18 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 }
                 return EvalResult(result, displays)
             } finally {
-                librariesCodeGenerator.popAddedLibraries()
+                librariesCodeGenerator.getProcessedLibraries()
             }
         }
     }
 
     fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)
 
-    private fun doEval(code: String): Pair<Int, Any?> {
+    private data class InternalEvalResult(val value: Any?, val replId: Int)
+
+    private fun doEval(code: String): InternalEvalResult {
+        if (trackExecutedCode)
+            println("Executing:\n$code\n")
         val id = executionCounter++
         val codeLine = ReplCodeLine(id, 0, code)
         when (val compileResult = compiler.compile(compilerState, codeLine)) {
@@ -251,10 +268,10 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                     is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
                     is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
                     is ReplEvalResult.UnitResult -> {
-                        id to Unit
+                        InternalEvalResult(Unit, id)
                     }
                     is ReplEvalResult.ValueResult -> {
-                        id to result.value
+                        InternalEvalResult(result.value, id)
                     }
                     else -> throw IllegalStateException("Unknown eval result type ${this}")
                 }

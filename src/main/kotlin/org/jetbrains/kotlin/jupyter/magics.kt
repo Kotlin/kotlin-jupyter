@@ -5,41 +5,8 @@ import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     use("include supported libraries", "klaxon(5.0.1), lets-plot"),
     trackClasspath("log current classpath changes"),
-    trackCode("log executed code", visibleInHelp = false),
+    trackExecution("log code that is going to be executed in repl", visibleInHelp = false),
     dumpClassesForSpark("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false)
-}
-
-/**
- * Split a command argument into a set of library calls
- * Need special processing of ',' to skip call argument delimeters in brackets
- * E.g. "use lib1(3), lib2(2, 5)" should split into "lib1(3)" and "lib(2, 5)", not into "lib1(3)", "lib(2", "5)"
- */
-private fun splitLibraryCalls(text: String): List<String> {
-    var i = 0
-    var prev = 0
-    var commaDepth = 0
-    val result = mutableListOf<String>()
-    val delim = charArrayOf(',', '(', ')')
-    while (true) {
-        i = text.indexOfAny(delim, i)
-        if (i == -1) {
-            val res = text.substring(prev, text.length).trim()
-            if (res.isNotEmpty())
-                result.add(res)
-            return result
-        }
-        when (text[i]) {
-            ',' -> if (commaDepth == 0) {
-                val res = text.substring(prev, i).trim()
-                if (res.isNotEmpty())
-                    result.add(res)
-                prev = i + 1
-            }
-            '(' -> commaDepth++
-            ')' -> commaDepth--
-        }
-        i++
-    }
 }
 
 fun processMagics(repl: ReplForJupyter, code: String): String {
@@ -50,7 +17,7 @@ fun processMagics(repl: ReplForJupyter, code: String): String {
 
     while (true) {
 
-        var magicStart = -1
+        var magicStart: Int
         do {
             magicStart = code.indexOf("%", nextSearchIndex)
             nextSearchIndex = magicStart + 1
@@ -77,7 +44,7 @@ fun processMagics(repl: ReplForJupyter, code: String): String {
             sb.append(code.substring(nextCopyIndex, magicStart))
 
             when (magic) {
-                ReplLineMagics.trackCode -> repl.trackExecutedCode = true
+                ReplLineMagics.trackExecution -> repl.trackExecutedCode = true
                 ReplLineMagics.trackClasspath -> repl.trackClasspath = true
                 ReplLineMagics.dumpClassesForSpark -> {
                     val cw = ClassWriter()
@@ -86,9 +53,7 @@ fun processMagics(repl: ReplForJupyter, code: String): String {
                 }
                 ReplLineMagics.use -> {
                     if (arg == null) throw ReplCompilerException("Need some arguments for 'use' command")
-                    splitLibraryCalls(arg).forEach {
-                        sb.append(repl.librariesCodeGenerator.generateCodeForLibrary(repl, it))
-                    }
+                    repl.librariesCodeGenerator.processNewLibraries(repl, arg)
                 }
             }
             nextCopyIndex = magicEnd

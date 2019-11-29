@@ -4,18 +4,17 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
+import org.jetbrains.kotlin.jupyter.DefaultConfigFile
 import org.jetbrains.kotlin.jupyter.ReplForJupyter
 import org.jetbrains.kotlin.jupyter.parseResolverConfig
 import org.jetbrains.kotlin.jupyter.readResolverConfig
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class ReplTest {
 
@@ -100,6 +99,9 @@ class ReplTest {
                             "path-""" + "\$a" + """",
                             "path-""" + "\$b" + """"
                         ],
+                        "imports": [
+                            "otherPackage"
+                        ]
                     }
                 ]
             }
@@ -108,23 +110,28 @@ class ReplTest {
         val replConfig = parseResolverConfig(json)
         val repl = ReplForJupyter(classpath, replConfig)
         val res = repl.preprocessCode("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
-        val expected = """
+        val libs = repl.librariesCodeGenerator.getProcessedLibraries()
+        assertEquals("", res)
+        assertEquals(2, libs.count())
+        val expected1 = """
             @file:DependsOn("artifact1:1.0")
             @file:DependsOn("artifact2:2.3")
             import package1
             import package2
             code1
-            code2
+            code2""".trimIndent()
+        val expected2 = """
             @file:DependsOn("path-debug")
             @file:DependsOn("path-release")
+            import otherPackage
         """.trimIndent()
-        Assert.assertEquals(expected, res)
+        Assert.assertEquals(expected1, libs[0].code.trimEnd())
+        Assert.assertEquals(expected2, libs[1].code.trimEnd())
     }
 
     @Test
     fun TestLetsPlot() {
-        val config = readResolverConfig(File("libraries.json"))
-        val repl = ReplForJupyter(classpath, config)
+        val repl = ReplForJupyter(classpath, readResolverConfig())
         val code1 = "%use lets-plot"
         val code2 = """ggplot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
         val res1 = repl.eval(code1)
@@ -139,5 +146,13 @@ class ReplTest {
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
         Assert.assertNotNull(res2.resultValue)
+    }
+
+    @Test
+    fun TestTwoLibrariesInUse() {
+        val repl = ReplForJupyter(classpath, readResolverConfig())
+        val code = "%use lets-plot, krangl"
+        val res = repl.eval(code)
+        assertEquals(1, res.displayValues.count())
     }
 }

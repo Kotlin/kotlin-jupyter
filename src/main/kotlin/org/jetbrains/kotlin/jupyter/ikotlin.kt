@@ -8,6 +8,7 @@ import kotlin.concurrent.thread
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
+val DefaultConfigFile = "libraries.json"
 
 data class KernelArgs(val cfgFile: File,
                       val scriptClasspath: List<File>,
@@ -62,9 +63,8 @@ fun parseLibraryName(str: String): Pair<String, List<Variable>> {
     return name to args
 }
 
-fun readResolverConfig(file: File): ResolverConfig =
+fun readResolverConfig(file: File = File(DefaultConfigFile)): ResolverConfig =
         parseResolverConfig(Parser().parse(file.canonicalPath) as JsonObject)
-
 
 fun parseResolverConfig(json: JsonObject): ResolverConfig {
     val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()

@@ -2,11 +2,13 @@ package org.jetbrains.kotlin.jupyter
 
 class LibrariesProcessor {
 
-    private val addedLibraries = mutableListOf<LibraryDefinition>()
+    data class LibraryWithCode(val library: LibraryDefinition, val code: String)
 
-    fun popAddedLibraries(): List<LibraryDefinition> {
-        val result = addedLibraries.toList()
-        addedLibraries.clear()
+    private val processedLibraries = mutableListOf<LibraryWithCode>()
+
+    fun getProcessedLibraries(): List<LibraryWithCode> {
+        val result = processedLibraries.toList()
+        processedLibraries.clear()
         return result
     }
 
@@ -42,28 +44,64 @@ class LibrariesProcessor {
         return result
     }
 
-    private fun generateCode(repl: ReplForJupyter, library: LibraryDefinition, templates: Map<String, String>): String {
+    private fun generateCode(repl: ReplForJupyter, library: LibraryDefinition, mapping: Map<String, String>): String {
         val builder = StringBuilder()
         library.repositories.forEach { builder.appendln("@file:Repository(\"$it\")") }
         library.artifacts.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
         library.imports.forEach { builder.appendln("import $it") }
         library.init.forEach { builder.appendln(repl.preprocessCode(it)) }
-        val code = builder.toString()
-        return templates.asSequence().fold(code) { str, template ->
-            str.replace("\$${template.key}", template.value)
+        return builder.toString().replaceVariables(mapping)
+    }
+
+    /**
+     * Split a command argument into a set of library calls
+     * Need special processing of ',' to skip call argument delimeters in brackets
+     * E.g. "use lib1(3), lib2(2, 5)" should split into "lib1(3)" and "lib(2, 5)", not into "lib1(3)", "lib(2", "5)"
+     */
+    private fun splitLibraryCalls(text: String): List<String> {
+        var i = 0
+        var prev = 0
+        var commaDepth = 0
+        val result = mutableListOf<String>()
+        val delim = charArrayOf(',', '(', ')')
+        while (true) {
+            i = text.indexOfAny(delim, i)
+            if (i == -1) {
+                val res = text.substring(prev, text.length).trim()
+                if (res.isNotEmpty())
+                    result.add(res)
+                return result
+            }
+            when (text[i]) {
+                ',' -> if (commaDepth == 0) {
+                    val res = text.substring(prev, i).trim()
+                    if (res.isNotEmpty())
+                        result.add(res)
+                    prev = i + 1
+                }
+                '(' -> commaDepth++
+                ')' -> commaDepth--
+            }
+            i++
         }
     }
 
-    fun generateCodeForLibrary(repl: ReplForJupyter, call: String): String {
-        val (name, vars) = parseLibraryName(call)
-        val library = repl.config?.libraries?.get(name) ?: throw ReplCompilerException("Unknown library '$name'")
+    private fun String.replaceVariables(mapping: Map<String, String>) =
+            mapping.asSequence().fold(this) { str, template ->
+                str.replace("\$${template.key}", template.value)
+            }
 
-        // treat single strings in parsed arguments as values, not names
-        val arguments = vars.map { if (it.value == null) Variable(null, it.name) else it }
-        val mapping = substituteArguments(library.variables, arguments)
+    fun processNewLibraries(repl: ReplForJupyter, arg: String) {
 
-        addedLibraries.add(library)
+        splitLibraryCalls(arg).forEach {
+            val (name, vars) = parseLibraryName(it)
+            val library = repl.config?.libraries?.get(name) ?: throw ReplCompilerException("Unknown library '$name'")
 
-        return generateCode(repl, library, mapping)
+            // treat single strings in parsed arguments as values, not names
+            val arguments = vars.map { if (it.value == null) Variable(null, it.name) else it }
+            val mapping = substituteArguments(library.variables, arguments)
+
+            processedLibraries.add(LibraryWithCode(library, generateCode(repl, library, mapping)))
+        }
     }
 }
