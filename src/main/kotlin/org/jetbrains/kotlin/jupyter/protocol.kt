@@ -33,7 +33,13 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                                     "name" to "kotlin",
                                     "codemirror_mode" to "text/x-kotlin",
                                     "file_extension" to "kt"
-                            )
+                            ),
+
+                            // Jupyter lab Console support
+                            "banner" to "Kotlin language, version ${KotlinCompilerVersion.VERSION}",
+                            "implementation" to "Kotlin",
+                            "implementation_version" to KotlinCompilerVersion.VERSION,
+                            "status" to "ok"
                     )))
         "history_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "history_reply",
