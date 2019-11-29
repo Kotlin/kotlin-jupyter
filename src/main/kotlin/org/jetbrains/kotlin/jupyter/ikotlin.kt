@@ -62,7 +62,11 @@ fun parseLibraryName(str: String): Pair<String, List<Variable>> {
     return name to args
 }
 
-fun parseLibrariesConfig(json: JsonObject): ResolverConfig {
+fun readResolverConfig(file: File): ResolverConfig =
+        parseResolverConfig(Parser().parse(file.canonicalPath) as JsonObject)
+
+
+fun parseResolverConfig(json: JsonObject): ResolverConfig {
     val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()
     val artifacts = json.array<JsonObject>("libraries")?.map {
         val (name, variables) = parseLibraryName(it.string("name")!!)
@@ -97,9 +101,7 @@ fun main(vararg args: String) {
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
                 scriptClasspath = scriptClasspath,
-                resolverConfig = librariesConfigFile?.let {
-                    parseLibrariesConfig(Parser().parse(it.canonicalPath) as JsonObject)
-                }
+                resolverConfig = librariesConfigFile?.let { readResolverConfig(it) }
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -117,7 +119,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(conn.config.scriptClasspath, conn.config.resolverConfig)
+        val repl = ReplForJupyter(config.scriptClasspath, config.resolverConfig)
 
         val mainThread = Thread.currentThread()
 
