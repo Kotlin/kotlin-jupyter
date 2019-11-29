@@ -103,7 +103,7 @@ class ReplTest {
         val json = Parser().parse(StringBuilder(config)) as JsonObject
         val replConfig = parseResolverConfig(json)
         val repl = ReplForJupyter(classpath, replConfig)
-        val res = repl.codePreprocessor.process("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
+        val res = repl.preprocessCode("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
         val expected = """
             @file:DependsOn("artifact1:1.0")
             @file:DependsOn("artifact2:2.3")

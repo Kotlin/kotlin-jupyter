@@ -4,7 +4,6 @@ import jupyter.kotlin.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.jupyter.magic.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import jupyter.kotlin.completion.KotlinContext
@@ -45,21 +44,13 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
 
-    private val useMagicHandler = LibrariesMagicHandler(config?.libraries.orEmpty())
-
     private val includedLibraries = mutableSetOf<LibraryDefinition>()
 
-    fun getInitCellCode() = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
-
-    val codePreprocessor = CompoundCodePreprocessor(
-            MagicProcessor(
-                    ReplLineMagics.use to useMagicHandler,
-                    ReplLineMagics.trackClasspath to EnableOptionMagicHandler() { trackClasspath = true },
-                    ReplLineMagics.trackCode to EnableOptionMagicHandler { trackExecutedCode = true }
-            )
-    )
+    fun preprocessCode(code: String) = processMagics(this, code)
 
     private val receiver = KotlinReceiver()
+
+    val librariesCodeGenerator = LibrariesProcessor()
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -156,11 +147,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val completer = KotlinCompleter(ctx)
 
-    private var trackClasspath: Boolean = false
+    var trackClasspath: Boolean = false
 
-    private var trackExecutedCode: Boolean = false
+    var trackExecutedCode: Boolean = false
 
-    private val classWriter = ClassWriter()
+    var classWriter: ClassWriter? = null
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
@@ -173,7 +164,6 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     init {
-        System.setProperty("spark.repl.class.outputDir", classWriter.outputDir.toString())
         // TODO: to be removed after investigation of https://github.com/erokhins/kotlin-jupyter/issues/24
         eval("1")
     }
@@ -181,11 +171,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     fun eval(code: String, jupyterId: Int = -1): EvalResult {
         synchronized(this) {
             try {
-                val initCell = getInitCellCode()
+                val initCell = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
                 if (initCell.isNotBlank())
                     doEval(initCell)
 
-                val processedCode = codePreprocessor.process(code)
+                val processedCode = preprocessCode(code)
 
                 var (replId, result) = doEval(processedCode)
 
@@ -195,7 +185,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 }
 
                 // on successful execution add all libraries, that were added via '%use' magic, to the set
-                includedLibraries.addAll(useMagicHandler.popAddedLibraries())
+                includedLibraries.addAll(librariesCodeGenerator.popAddedLibraries())
 
                 val displays = mutableListOf<Any>()
 
@@ -238,7 +228,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 }
                 return EvalResult(result, displays)
             } finally {
-                useMagicHandler.popAddedLibraries()
+                librariesCodeGenerator.popAddedLibraries()
             }
         }
     }
@@ -250,7 +240,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         val codeLine = ReplCodeLine(id, 0, code)
         when (val compileResult = compiler.compile(compilerState, codeLine)) {
             is ReplCompileResult.CompiledClasses -> {
-                classWriter.writeClasses(compileResult)
+                classWriter?.writeClasses(compileResult)
                 val result = evaluator.eval(evaluatorState, compileResult)
                 contextUpdater.update()
                 return when (result) {
