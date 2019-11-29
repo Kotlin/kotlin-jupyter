@@ -18,26 +18,26 @@
     {
       "name": "lets-plot",
       "repositories": [
-        "https://jetbrains.bintray.com/datalore-plot-maven"
+        "https://jetbrains.bintray.com/lets-plot-maven"
       ],
       "artifacts": [
-        "org.jetbrains.datalore-plot:datalore-plot-common:0.0.5-SNAPSHOT",
-        "org.jetbrains.datalore-plot:datalore-plot-kotlin-api:0.0.2-SNAPSHOT",
-        "org.jetbrains.datalore-plot:kotlin-frontend-api:0.0.2-SNAPSHOT",
-        "org.jetbrains.datalore-plot:datalore-plot-jfx:0.0.5-SNAPSHOT"
+        "org.jetbrains.lets-plot:lets-plot-common:1.0.0-SNAPSHOT",
+        "org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.4-SNAPSHOT",
+        "org.jetbrains.lets-plot:kotlin-frontend-api:0.0.4-SNAPSHOT",
+        "org.jetbrains.lets-plot:lets-plot-jfx:1.0.0-SNAPSHOT"
       ],
       "imports": [
-        "jetbrains.datalorePlot.*",
-        "jetbrains.datalorePlot.geom.*",
-        "jetbrains.datalorePlot.stat.*"
+        "jetbrains.letsPlot.*",
+        "jetbrains.letsPlot.geom.*",
+        "jetbrains.letsPlot.stat.*"
       ],
       "init": [
-        "fun jetbrains.datalorePlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.datalorePlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))",
+        "fun jetbrains.letsPlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.letsPlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))",
         "DISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
       ],
       "renderers": [
         {
-          "class": "jetbrains.datalorePlot.intern.Plot",
+          "class": "jetbrains.letsPlot.intern.Plot",
           "display": "$it.display()",
           "result": ""
         }
