@@ -33,7 +33,7 @@ class ReplTest {
     fun TestScriptIsolation() {
         val repl = ReplForJupyter(classpath)
         assertFails {
-            repl.eval("""Thread.currentThread().contextClassLoader.loadClass("org.jetbrains.kotlin.jupyter.ReplForJupyter")""")
+            repl.eval("org.jetbrains.kotlin.jupyter.ReplLineMagics.use")
         }
     }
 
