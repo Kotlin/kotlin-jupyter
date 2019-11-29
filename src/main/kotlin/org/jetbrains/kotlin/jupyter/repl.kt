@@ -1,8 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.DependsOn
-import jupyter.kotlin.Repository
-import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
+import jupyter.kotlin.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
@@ -178,83 +176,92 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         eval("1")
     }
 
-    fun eval(code: String): EvalResult {
-        try {
-            val processedCode = codePreprocessor.process(code)
+    fun eval(code: String, jupyterId: Int = -1): EvalResult {
+        synchronized(this) {
+            try {
+                val processedCode = codePreprocessor.process(code)
 
-            var result = doEval(processedCode)
+                var (replId, result) = doEval(processedCode)
 
-            // on successful execution add all libraries, that were added via '%use' magic, to the set
-            includedLibraries.addAll(useMagicHandler.popAddedLibraries())
-
-            val number = executionCounter - 1
-            val displays = mutableListOf<Any>()
-
-            if (trackExecutedCode)
-                displays.add("Executed code:\n$processedCode")
-
-            val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
-            if (resolvedClasspath.isNotEmpty()) {
-
-                val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
-                val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
-                currentClasspath.addAll(newClasspath)
-                if (trackClasspath) {
-                    val sb = StringBuilder()
-                    if (newClasspath.count() > 0) {
-                        sb.appendln("${newClasspath.count()} new paths were added to classpath:")
-                        newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
-                    }
-                    if (oldClasspath.count() > 0) {
-                        sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
-                        oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
-                    }
-                    sb.appendln("Current classpath size: ${currentClasspath.count()}")
-                    displays.add(sb.toString())
+                if (jupyterId >= 0) {
+                    while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
+                    ReplOutputs[jupyterId] = result
                 }
-            }
 
-            if (result != null) {
-                renderers[result.javaClass.canonicalName]?.let {
-                    it.displayCode?.replace("\$it", "res$number")?.let(::doEval)?.let(displays::add)
-                    it.resultCode?.let {
-                        result = if (it.trim().isBlank()) ""
-                        else doEval(it.replace("\$it", "res$number"))
+                // on successful execution add all libraries, that were added via '%use' magic, to the set
+                includedLibraries.addAll(useMagicHandler.popAddedLibraries())
+
+                val displays = mutableListOf<Any>()
+
+                if (trackExecutedCode)
+                    displays.add("Executed code:\n$processedCode")
+
+                val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
+                if (resolvedClasspath.isNotEmpty()) {
+
+                    val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
+                    val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
+                    currentClasspath.addAll(newClasspath)
+                    if (trackClasspath) {
+                        val sb = StringBuilder()
+                        if (newClasspath.count() > 0) {
+                            sb.appendln("${newClasspath.count()} new paths were added to classpath:")
+                            newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                        }
+                        if (oldClasspath.count() > 0) {
+                            sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
+                            oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                        }
+                        sb.appendln("Current classpath size: ${currentClasspath.count()}")
+                        displays.add(sb.toString())
                     }
                 }
+
+                if (result != null) {
+                    renderers[result.javaClass.canonicalName]?.let {
+                        it.displayCode?.replace("\$it", "res$replId")?.let(::doEval)?.let(displays::add)
+                        it.resultCode?.let {
+                            result = if (it.trim().isBlank()) ""
+                            else doEval(it.replace("\$it", "res$replId"))
+                        }
+                    }
+                    if (result is DisplayResult) {
+                        displays.add(result as Any)
+                        result = null
+                    }
+                }
+                return EvalResult(result, displays)
+            } finally {
+                useMagicHandler.popAddedLibraries()
             }
-            return EvalResult(result, displays)
-        } finally {
-            useMagicHandler.popAddedLibraries()
         }
     }
 
     fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)
 
-    private fun doEval(code: String): Any? {
-        synchronized(this) {
-            val codeLine = ReplCodeLine(executionCounter++, 0, code)
-            when (val compileResult = compiler.compile(compilerState, codeLine)) {
-                is ReplCompileResult.CompiledClasses -> {
-                    val result = evaluator.eval(evaluatorState, compileResult)
-                    contextUpdater.update()
-                    return when (result) {
-                        is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
-                        is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
-                        is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
-                        is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
-                        is ReplEvalResult.UnitResult -> {
-                            Unit
-                        }
-                        is ReplEvalResult.ValueResult -> {
-                            result.value
-                        }
-                        else -> throw IllegalStateException("Unknown eval result type ${this}")
+    private fun doEval(code: String): Pair<Int, Any?> {
+        val id = executionCounter++
+        val codeLine = ReplCodeLine(id, 0, code)
+        when (val compileResult = compiler.compile(compilerState, codeLine)) {
+            is ReplCompileResult.CompiledClasses -> {
+                val result = evaluator.eval(evaluatorState, compileResult)
+                contextUpdater.update()
+                return when (result) {
+                    is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
+                    is ReplEvalResult.Error.Runtime -> throw ReplEvalRuntimeException(result)
+                    is ReplEvalResult.Incomplete -> throw ReplCompilerException(result)
+                    is ReplEvalResult.HistoryMismatch -> throw ReplCompilerException(result)
+                    is ReplEvalResult.UnitResult -> {
+                        id to Unit
                     }
+                    is ReplEvalResult.ValueResult -> {
+                        id to result.value
+                    }
+                    else -> throw IllegalStateException("Unknown eval result type ${this}")
                 }
-                is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
-                is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
             }
+            is ReplCompileResult.Error -> throw ReplCompilerException(compileResult)
+            is ReplCompileResult.Incomplete -> throw ReplCompilerException(compileResult)
         }
     }
 

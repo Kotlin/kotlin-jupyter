@@ -19,8 +19,8 @@ class ReplTest {
     fun TestRepl() {
         val repl = ReplForJupyter(classpath)
         repl.eval("val x = 3")
-        var res = repl.eval("x*2")
-        Assert.assertEquals(6, res.resultValue)
+        val res = repl.eval("x*2")
+        assertEquals(6, res.resultValue)
     }
 
     @Test
@@ -59,6 +59,15 @@ class ReplTest {
         } else {
             Assert.fail("Result should be success")
         }
+    }
+
+    @Test
+    fun TestOut() {
+        val repl = ReplForJupyter(classpath)
+        repl.eval("1+1", 1)
+        val res = repl.eval("Out[1]")
+        assertEquals(2, res.resultValue)
+        assertFails { repl.eval("Out[3]") }
     }
 
     @Test

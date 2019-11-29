@@ -32,6 +32,7 @@ allprojects {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
         testCompile 'junit:junit:4.12'
+        testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
     version = '0.6.3'

@@ -21,6 +21,8 @@ abstract class ScriptTemplateWithDisplayHelpers {
     fun HTML(text: String) = MIME("text/html" to text)
 
     fun DISPLAY(value: Any) = DisplayResult(value)
+
+    val Out: List<Any?> = ReplOutputs
 }
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
@@ -29,3 +31,5 @@ fun textResult(text: String): MimeTypedResult = MimeTypedResult(mapOf("text/plai
 class MimeTypedResult(mimeData: Map<String, String>): Map<String, String> by mimeData
 
 class DisplayResult(val value: Any)
+
+val ReplOutputs = mutableListOf<Any?>()

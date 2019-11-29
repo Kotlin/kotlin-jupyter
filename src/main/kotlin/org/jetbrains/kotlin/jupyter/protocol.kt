@@ -62,7 +62,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO {
-                    repl?.eval(code.toString())
+                    repl?.eval(code.toString(), count.toInt())
                 }
             }
 
