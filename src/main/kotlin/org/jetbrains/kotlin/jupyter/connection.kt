@@ -31,7 +31,6 @@ class JupyterConnection(val config: KernelConfig): Closeable {
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to status)))
         }
 
-        //fun send
         fun sendWrapped(incomingMessage: Message, msg: Message) {
             sendStatus("busy", incomingMessage)
             send(msg)

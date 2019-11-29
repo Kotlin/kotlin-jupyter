@@ -25,16 +25,16 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
     when (msgType) {
         "kernel_info_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "kernel_info_reply",
-                content = jsonObject(
-                        "protocol_version" to protocolVersion,
-                        "language" to "Kotlin",
-                        "language_version" to KotlinCompilerVersion.VERSION,
-                        "language_info" to jsonObject(
-                                "name" to "kotlin",
-                                "codemirror_mode" to "text/x-kotlin",
-                                "file_extension" to "kt"
-                        )
-                )))
+                    content = jsonObject(
+                            "protocol_version" to protocolVersion,
+                            "language" to "Kotlin",
+                            "language_version" to KotlinCompilerVersion.VERSION,
+                            "language_info" to jsonObject(
+                                    "name" to "kotlin",
+                                    "codemirror_mode" to "text/x-kotlin",
+                                    "file_extension" to "kt"
+                            )
+                    )))
         "history_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "history_reply",
                     content = jsonObject(
