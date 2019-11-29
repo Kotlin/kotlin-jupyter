@@ -2,6 +2,8 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import jupyter.kotlin.DisplayResult
+import jupyter.kotlin.MimeTypedResult
 import org.jetbrains.kotlin.jupyter.ReplForJupyter
 import org.jetbrains.kotlin.jupyter.parseResolverConfig
 import org.jetbrains.kotlin.jupyter.readResolverConfig
@@ -12,6 +14,8 @@ import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class ReplTest {
 
@@ -128,6 +132,12 @@ class ReplTest {
         Assert.assertNull(res1.resultValue)
         val res2 = repl.eval(code2)
         Assert.assertEquals(1, res2.displayValues.count())
+        val display = res2.displayValues[0] as? DisplayResult
+        assertNotNull(display)
+        val mime = display.value as? MimeTypedResult
+        assertNotNull(mime)
+        assertEquals(1, mime.size)
+        assertEquals("text/html", mime.entries.first().key)
         Assert.assertNotNull(res2.resultValue)
     }
 }

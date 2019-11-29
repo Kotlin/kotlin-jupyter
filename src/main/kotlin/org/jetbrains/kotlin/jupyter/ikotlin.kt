@@ -74,6 +74,7 @@ fun parseResolverConfig(json: JsonObject): ResolverConfig {
                 artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
                 variables = variables,
                 imports = it.array<String>("imports")?.toList().orEmpty(),
+                repositories = it.array<String>("repositories")?.toList().orEmpty(),
                 init = it.array<String>("init")?.toList().orEmpty(),
                 initCell = it.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.array<JsonObject>("renderers")?.map {

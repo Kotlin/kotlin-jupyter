@@ -2,8 +2,7 @@
   "repositories": [
     "https://jcenter.bintray.com/",
     "https://repo.maven.apache.org/maven2/",
-    "https://jitpack.io",
-    "https://jetbrains.bintray.com/datalore-plot-maven"
+    "https://jitpack.io"
   ],
   "libraries": [
     {
@@ -18,6 +17,9 @@
     },
     {
       "name": "lets-plot",
+      "repositories": [
+        "https://jetbrains.bintray.com/datalore-plot-maven"
+      ],
       "artifacts": [
         "org.jetbrains.datalore-plot:datalore-plot-common:0.0.5-SNAPSHOT",
         "org.jetbrains.datalore-plot:datalore-plot-kotlin-api:0.0.2-SNAPSHOT",
@@ -114,7 +116,8 @@
       "imports": [
         "org.apache.spark.sql.*",
         "org.apache.spark.api.java.*",
-        "org.apache.spark.ml.feature.*"
+        "org.apache.spark.ml.feature.*",
+        "org.apache.spark.sql.functions.*"
       ],
       "init": [
         "org.apache.log4j.Logger.getLogger(\"org\").setLevel(org.apache.log4j.Level.OFF)",

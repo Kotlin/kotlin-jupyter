@@ -22,6 +22,7 @@ class LibraryDefinition(val artifacts: List<String>,
                         val variables: List<Variable>,
                         val initCell: List<String>,
                         val imports: List<String>,
+                        val repositories: List<String>,
                         val init: List<String>,
                         val renderers: List<TypeRenderer>,
                         val link: String?)

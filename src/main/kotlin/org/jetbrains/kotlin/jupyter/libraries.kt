@@ -44,6 +44,7 @@ class LibrariesProcessor {
 
     private fun generateCode(repl: ReplForJupyter, library: LibraryDefinition, templates: Map<String, String>): String {
         val builder = StringBuilder()
+        library.repositories.forEach { builder.appendln("@file:Repository(\"$it\")") }
         library.artifacts.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
         library.imports.forEach { builder.appendln("import $it") }
         library.init.forEach { builder.appendln(repl.preprocessCode(it)) }
