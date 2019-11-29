@@ -24,28 +24,28 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
     val msgType = msg.header!!["msg_type"]
     when (msgType) {
         "kernel_info_request" ->
-            send(makeReplyMessage(msg, "kernel_info_reply",
-                    content = jsonObject(
-                            "protocol_version" to protocolVersion,
-                            "language" to "Kotlin",
-                            "language_version" to KotlinCompilerVersion.VERSION,
-                            "language_info" to jsonObject(
-                                    "name" to "kotlin",
-                                    "codemirror_mode" to "text/x-kotlin",
-                                    "file_extension" to "kt"
-                            )
-                    )))
+            sendWrapped(msg, makeReplyMessage(msg, "kernel_info_reply",
+                content = jsonObject(
+                        "protocol_version" to protocolVersion,
+                        "language" to "Kotlin",
+                        "language_version" to KotlinCompilerVersion.VERSION,
+                        "language_info" to jsonObject(
+                                "name" to "kotlin",
+                                "codemirror_mode" to "text/x-kotlin",
+                                "file_extension" to "kt"
+                        )
+                )))
         "history_request" ->
-            send(makeReplyMessage(msg, "history_reply",
+            sendWrapped(msg, makeReplyMessage(msg, "history_reply",
                     content = jsonObject(
                             "history" to listOf<String>() // not implemented
                     )))
         "shutdown_request" -> {
-            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
+            sendWrapped(msg, makeReplyMessage(msg, "shutdown_reply", content = msg.content))
             Thread.currentThread().interrupt()
         }
         "connect_request" ->
-            send(makeReplyMessage(msg, "connection_reply",
+            sendWrapped(msg, makeReplyMessage(msg, "connection_reply",
                     content = jsonObject(JupyterSockets.values()
                             .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
@@ -88,9 +88,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                                 content = jsonObject(
                                         "execution_count" to count,
                                         "data" to res.result,
-                                        "metadata" to jsonObject(
-                                                "isolated" to "True"
-                                        ))))
+                                        "metadata" to jsonObject()
+                                )))
                     }
                     res.displays.forEach {
                         connection.iopub.send(makeReplyMessage(msg,
@@ -127,7 +126,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.contextMessage = null
         }
         "comm_info_request" -> {
-            send(makeReplyMessage(msg, "comm_info_reply",  content = jsonObject("comms" to jsonObject())))
+            sendWrapped(msg, makeReplyMessage(msg, "comm_info_reply",  content = jsonObject("comms" to jsonObject())))
         }
         "complete_request" -> {
             val code = msg.content["code"].toString()
@@ -137,7 +136,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 System.err.println("Repl is not yet initialized on complete request")
                 return
             }
-            send(makeReplyMessage(msg, "complete_reply",  content = result))
+            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result))
         }
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
@@ -154,7 +153,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
                 result
             }
-            send(makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to resStr)))
+            sendWrapped(msg, makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to resStr)))
         }
         else -> send(makeReplyMessage(msg, "unsupported_message_reply"))
     }

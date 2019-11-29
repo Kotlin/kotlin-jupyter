@@ -27,7 +27,18 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
         inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { receiveMessage(it)?.let { body(it) } }
 
-        fun send(msg: Message): Unit {
+        fun sendStatus(status: String, msg: Message) {
+            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to status)))
+        }
+
+        //fun send
+        fun sendWrapped(incomingMessage: Message, msg: Message) {
+            sendStatus("busy", incomingMessage)
+            send(msg)
+            sendStatus("idle", incomingMessage)
+        }
+
+        fun send(msg: Message) {
             log.debug("[$name] snd>: $msg")
             sendMessage(msg, hmac)
         }
