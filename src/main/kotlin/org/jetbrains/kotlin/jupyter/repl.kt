@@ -49,11 +49,9 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val includedLibraries = mutableSetOf<LibraryDefinition>()
 
+    fun getInitCellCode() = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
+
     val codePreprocessor = CompoundCodePreprocessor(
-            DelegatedCodePreprocessor {
-                val initCellCode = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
-                if (initCellCode.isNotBlank()) initCellCode + "\n" + it else it
-            },
             MagicProcessor(
                     ReplLineMagics.use to useMagicHandler,
                     ReplLineMagics.trackClasspath to EnableOptionMagicHandler() { trackClasspath = true },
@@ -183,6 +181,10 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     fun eval(code: String, jupyterId: Int = -1): EvalResult {
         synchronized(this) {
             try {
+                val initCell = getInitCellCode()
+                if (initCell.isNotBlank())
+                    doEval(initCell)
+
                 val processedCode = codePreprocessor.process(code)
 
                 var (replId, result) = doEval(processedCode)
@@ -273,6 +275,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
         log.info("Classpath used in script: ${scriptClasspath}")
+        receiver.kc = ctx
     }
 }
 

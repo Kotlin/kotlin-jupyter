@@ -3,7 +3,7 @@
     "https://jcenter.bintray.com/",
     "https://repo.maven.apache.org/maven2/",
     "https://jitpack.io",
-    "https://jetbrains.bintray.com/datalore-plot-maven",
+    "https://jetbrains.bintray.com/datalore-plot-maven"
   ],
   "libraries": [
     {
@@ -105,7 +105,6 @@
         "org.apache.spark:spark-catalyst_2.11:$spark",
         "org.apache.spark:spark-streaming_2.11:$spark",
         "org.apache.spark:spark-core_2.11:$spark",
-        "com.fasterxml.jackson.core:jackson-databind:$spark",
         "org.scala-lang:scala-library:$scala",
         "org.scala-lang:scala-reflect:$scala",
         "org.scala-lang:scala-compiler:$scala",
@@ -116,6 +115,11 @@
         "org.apache.spark.sql.*",
         "org.apache.spark.api.java.*",
         "org.apache.spark.ml.feature.*"
+      ],
+      "init": [
+        "val spark = SparkSession\n        .builder()\n        .appName(\"Spark example\")\n        .master(\"local\")\n        .getOrCreate()",
+        "val sc = spark.sparkContext()",
+        "spark.sparkContext().setLogLevel(\"ERROR\")"
       ],
       "initCell": [
         "scala.Console.setOut(System.out)",
