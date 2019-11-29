@@ -8,7 +8,7 @@ import kotlin.concurrent.thread
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
-val DefaultConfigFile = "libraries.json"
+val DefaultConfigFile = "config.json"
 
 data class KernelArgs(val cfgFile: File,
                       val scriptClasspath: List<File>,

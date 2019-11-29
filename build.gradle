@@ -38,7 +38,7 @@ allprojects {
     version = '0.6.3'
 
     ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
-
+    ext.configFile = "config.json"
     ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044"
 }
 
@@ -109,7 +109,7 @@ void createTaskForSpecs(Boolean debug) {
             } .join(File.pathSeparator)
             spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
                     .replace("\${DEBUGGER_CONFIG}", debug ? "\"$debuggerConfig\"," : "")
-                    .replace("\${LIBRARIES_PATH}", "$installPath/libraries.json")
+                    .replace("\${LIBRARIES_PATH}", "$installPath/$configFile")
             File installDir = new File("$installPath")
             if (!installDir.exists()) {
                 installDir.mkdirs();
@@ -120,7 +120,7 @@ void createTaskForSpecs(Boolean debug) {
 }
 
 task copyLibrariesConfig(type: Copy, dependsOn: cleanInstallDir) {
-    from "libraries.json"
+    from configFile
     into installPath
 }
 
