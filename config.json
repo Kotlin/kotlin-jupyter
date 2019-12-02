@@ -22,8 +22,8 @@
       ],
       "artifacts": [
         "org.jetbrains.lets-plot:lets-plot-common:1.0.0-SNAPSHOT",
-        "org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.4-SNAPSHOT",
-        "org.jetbrains.lets-plot:kotlin-frontend-api:0.0.4-SNAPSHOT",
+        "org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.5-SNAPSHOT",
+        "org.jetbrains.lets-plot:kotlin-frontend-api:0.0.5-SNAPSHOT",
         "org.jetbrains.lets-plot:lets-plot-jfx:1.0.0-SNAPSHOT"
       ],
       "imports": [
