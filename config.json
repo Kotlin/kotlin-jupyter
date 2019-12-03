@@ -44,9 +44,9 @@
       ]
     },
     {
-      "name": "krangl",
+      "name": "krangl(v=-SNAPSHOT)",
       "artifacts": [
-        "com.github.holgerbrandl:krangl:-SNAPSHOT"
+        "com.github.holgerbrandl:krangl:$v"
       ],
       "imports": [
         "krangl.*"
@@ -67,9 +67,9 @@
       "link": "https://github.com/holgerbrandl/krangl"
     },
     {
-      "name": "kotlin-statistics",
+      "name": "kotlin-statistics(v=-SNAPSHOT)",
       "artifacts": [
-        "com.github.thomasnield:kotlin-statistics:-SNAPSHOT"
+        "com.github.thomasnield:kotlin-statistics:$v"
       ],
       "imports": [
         "org.nield.kotlinstatistics.*"
@@ -77,9 +77,9 @@
       "link": "https://github.com/thomasnield/kotlin-statistics"
     },
     {
-      "name": "kravis",
+      "name": "kravis(v=-SNAPSHOT)",
       "artifacts": [
-        "com.github.holgerbrandl:kravis:-SNAPSHOT"
+        "com.github.holgerbrandl:kravis:$v"
       ],
       "imports": [
         "kravis.*"
@@ -137,10 +137,10 @@
       ]
     },
     {
-      "name": "gral",
+      "name": "gral(v=0.11)",
       "link": "https://github.com/eseifert/gral",
       "artifacts": [
-        "de.erichseifert.gral:gral-core:0.11"
+        "de.erichseifert.gral:gral-core:$v"
       ],
       "imports": [
         "de.erichseifert.gral.data.*",
