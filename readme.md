@@ -28,10 +28,15 @@ The following REPL commands are supported:
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven colon separated string artifacts
+ - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository
  
-*Note: The maven repositories used are defaulted to Maven Central as a remote repo and `~/.m2/repository` as a local one.*
+### Default repositories
+
+The following maven repositories are included by default:
+ - [Bintray JCenter](https://jcenter.bintray.com)
+ - [Maven Central](https://repo.maven.apache.org/maven2)
+ - [JitPack](https://jitpack.io/)*
 
 ### Line Magics
 
@@ -42,7 +47,14 @@ The following line magics are supported:
  
 ### Supported Libraries
 
-The following libraries can be included by '%use' magic keyword:
+When a library is included with `%use` keyword, the following functionality is added to the notebook:
+ - repositories to search for library artifacts
+ - artifact dependencies
+ - default imports
+ - library initialization code
+ - renderers for special types, e.g. charts and data frames 
+
+Current set of supported libraries:
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - lets-plot - ggplot-like interactive visualization for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
@@ -51,7 +63,15 @@ The following libraries can be included by '%use' magic keyword:
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
 
-*See the list of supported libraries in [config file](config.json)*
+*Note: The list of all supported libraries can be found in [config file](config.json)*
+
+A definition of supported library may have a list of optional arguments that can be overriden when library is included.
+The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
+
+Usage example:
+```
+%use krangl(0.10), lets-plot
+```
 
 ### MIME output
   
@@ -71,6 +91,10 @@ HTML outputs can be rendered with `HTML` helper function:
 fun HTML(text: String): Result
 ```
 
+### Autocompletion
+
+Press `TAB` to get the list of suggested items for completion. Currently completion suggests only names for user-defined variables and functions. 
+
 ## Installation
 
 Run `./gradlew install`
@@ -88,11 +112,6 @@ or
 `jupyter-notebook`
 
 and then create a new notebook with `kotlin` kernel.
-
-## Additional libraries
-
-In addition to using resolving annotations, jars could be added directly to the REPL using `-cp=` parameter in `argv` 
-list in the installed `kernel.json` file. Standard classpath format is used. *(Please make sure to use only absolute paths in the `kernel.json` file.)*
 
 ## Debugging
 
