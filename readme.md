@@ -2,20 +2,41 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-Kotlin (1.3.70) REPL kernel for jupyter (http://jupyter.org).
+Kotlin (1.3.70) REPL kernel for Jupyter (http://jupyter.org).
 
-Alpha version. Tested with jupyter 5.2.0 on OS X so far.
+Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
-## Screenshot
+![Screenshot in Jupyter](./samples/Screenshot.png)
 
-![Screenshot in Jupyter](./samples/ScreenShotInJupyter.png)
+To start using Kotlin kernel for Jupyter take a look at [this guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
-## Example 
+Example notebooks can be found in the [samples](samples) folder
 
-Example notebook output is [here](samples/KotlinSample01.ipynb). *(It is ported from [Gral](https://github.com/eseifert/gral)
-project's `ConvolutionExample.java`).* 
+## Installation
 
-The notebook itself is located in the `samples` folder.
+Two ways to install kernel:
+
+### Conda package
+
+If you have `conda` installed, just run:
+ 
+`conda install kotlin-jupyter-kernel -c jetbrains`
+
+### From sources
+
+Run `./gradlew install`
+
+Use option `-PinstallPath=` to specify installation path. *(Note that Jupyter looks for kernel specs files only in predefined places.)*
+
+Default installation path is `~/.ipython/kernels/kotlin/`.
+
+## Usage
+
+- `jupyter console --kernel=kotlin`
+- `jupyter notebook`
+- `jupyter lab`
+
+To start using kotlin inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
 
 ## Supported functionality
 
@@ -28,10 +49,15 @@ The following REPL commands are supported:
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven colon separated string artifacts
+ - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository
  
-*Note: The maven repositories used are defaulted to Maven Central as a remote repo and `~/.m2/repository` as a local one.*
+### Default repositories
+
+The following maven repositories are included by default:
+ - [Bintray JCenter](https://jcenter.bintray.com)
+ - [Maven Central](https://repo.maven.apache.org/maven2)
+ - [JitPack](https://jitpack.io/)
 
 ### Line Magics
 
@@ -42,61 +68,55 @@ The following line magics are supported:
  
 ### Supported Libraries
 
-The following libraries can be included by '%use' magic keyword:
- -  [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- -  lets-plot - GGplot-like ineractive visualization for Kotlin
- -  [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
- -  [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
- -  [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
- -  [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+When a library is included with `%use` keyword, the following functionality is added to the notebook:
+ - repositories to search for library artifacts
+ - artifact dependencies
+ - default imports
+ - library initialization code
+ - renderers for special types, e.g. charts and data frames 
 
-*See the list of supported libraries in [config file](config.json)*
+List of supported libraries:
+ - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
+ - lets-plot - ggplot-like interactive visualization for Kotlin
+ - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
+ - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
+ - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+ - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+
+*The list of all supported libraries can be found in [config file](config.json)*
+
+A definition of supported library may have a list of optional arguments that can be overriden when library is included.
+The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
+
+Usage example:
+```
+%use krangl(0.10), lets-plot
+```
 
 ### MIME output
   
 By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
- to display graphics or html, it is possible to send MIME-encoded result to the client using the `Result` type 
- and `MIME` helper function. The latter has a signature: 
+ to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function. The latter has a signature: 
 ```kotlin
-fun MIME(vararg mimeToData: Pair<String, Any>): Result 
+fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
 ```
 E.g.:
 ```kotlin
 MIME("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
 
 ```
-HTML outputs can be rendered with `HTML` helper function:
+HTML outputs can also be rendered with `HTML` helper function:
 ```kotlin
-fun HTML(text: String): Result
+fun HTML(text: String): MimeTypedResult
 ```
 
-*(See also `toSvg` function in the [example](samples/KotlinSample01.ipynb)).*
+### Autocompletion
 
-## Installation
-
-Run `./gradlew install`
-
-Use option `-PinstallPath=` to specify installation path. *(Note that jupyter looks for kernel specs files only in predefined places.)*
-
-Default installation path is `~/.ipython/kernels/kotlin/`.
-
-## Usage
-
-`jupyter-console --kernel=kotlin`
-
-or
-
-`jupyter-notebook`
-
-and then create a new notebook with `kotlin` kernel.
-
-## Additional libraries
-
-In addition to using resolving annotations, jars could be added directly to the REPL using `-cp=` parameter in `argv` 
-list in the installed `kernel.json` file. Standard classpath format is used. *(Please make sure to use only absolute paths in the `kernel.json` file.)*
+Press `TAB` to get the list of suggested items for completion. Currently completion suggests only names for user-defined variables and functions. 
 
 ## Debugging
 
-- run kernel jar passing some connection config file as a parameter, e.g. `testData/config.json`
-    - additional jars for the REPL could be passed using `-cp=` parameter
-- run `jupyter-console` passing the full path to the same config file as an argument to the `--existing` command line parameter
+- Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
+- Run `jupyter-notebook`
+- Attach remote debugger to JVM with specified port 
