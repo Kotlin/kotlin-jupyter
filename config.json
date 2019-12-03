@@ -84,6 +84,9 @@
       "imports": [
         "kravis.*"
       ],
+      "init": [
+        "SessionPrefs.OUTPUT_DEVICE = kravis.device.JupyterDevice()"
+      ],
       "renderers": [
         {
           "class": "kravis.GGPlot",
