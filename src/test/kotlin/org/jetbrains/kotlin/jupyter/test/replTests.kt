@@ -4,14 +4,12 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
-import org.jetbrains.kotlin.jupyter.DefaultConfigFile
 import org.jetbrains.kotlin.jupyter.ReplForJupyter
 import org.jetbrains.kotlin.jupyter.parseResolverConfig
 import org.jetbrains.kotlin.jupyter.readResolverConfig
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
@@ -154,5 +152,15 @@ class ReplTest {
         val code = "%use lets-plot, krangl"
         val res = repl.eval(code)
         assertEquals(1, res.displayValues.count())
+    }
+
+    @Test
+    //TODO: https://github.com/Kotlin/kotlin-jupyter/issues/25
+    fun TestKranglImportInfixFun() {
+        val repl = ReplForJupyter(classpath, readResolverConfig())
+        val code = """%use krangl
+                        "a" to {it["a"]}"""
+        val res = repl.eval(code)
+        assertNotNull(res.resultValue)
     }
 }

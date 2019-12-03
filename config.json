@@ -58,10 +58,6 @@
         {
           "class": "krangl.SimpleDataFrame",
           "result": "HTML($it.toHTML())"
-        },
-        {
-          "class": "krangl.GroupedDataFrame",
-          "result": "HTML($it.toHTML())"
         }
       ],
       "link": "https://github.com/holgerbrandl/krangl"

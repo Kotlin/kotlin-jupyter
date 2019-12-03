@@ -166,7 +166,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     init {
-        // TODO: to be removed after investigation of https://github.com/erokhins/kotlin-jupyter/issues/24
+        // TODO: to be removed after investigation of https://github.com/kotlin/kotlin-jupyter/issues/24
         eval("1")
     }
 
