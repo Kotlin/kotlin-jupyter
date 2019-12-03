@@ -2,15 +2,41 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-Kotlin (1.3.70) REPL kernel for jupyter (http://jupyter.org).
+Kotlin (1.3.70) REPL kernel for Jupyter (http://jupyter.org).
 
-Alpha version. Tested with jupyter 6.0.1 on OS X so far.
+Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
 ![Screenshot in Jupyter](./samples/Screenshot.png)
 
 To start using Kotlin kernel for Jupyter take a look at [this guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
 Example notebooks can be found in the [samples](samples) folder
+
+## Installation
+
+Two ways to install kernel:
+
+### Conda package
+
+If you have `conda` installed, just run:
+ 
+`conda install kotlin-jupyter-kernel -c jetbrains`
+
+### From sources
+
+Run `./gradlew install`
+
+Use option `-PinstallPath=` to specify installation path. *(Note that Jupyter looks for kernel specs files only in predefined places.)*
+
+Default installation path is `~/.ipython/kernels/kotlin/`.
+
+## Usage
+
+- `jupyter console --kernel=kotlin`
+- `jupyter notebook`
+- `jupyter lab`
+
+To start using kotlin inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
 
 ## Supported functionality
 
@@ -49,7 +75,7 @@ When a library is included with `%use` keyword, the following functionality is a
  - library initialization code
  - renderers for special types, e.g. charts and data frames 
 
-Current set of supported libraries:
+List of supported libraries:
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - lets-plot - ggplot-like interactive visualization for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
@@ -58,7 +84,7 @@ Current set of supported libraries:
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
 
-*Note: The list of all supported libraries can be found in [config file](config.json)*
+*The list of all supported libraries can be found in [config file](config.json)*
 
 A definition of supported library may have a list of optional arguments that can be overriden when library is included.
 The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
@@ -71,52 +97,23 @@ Usage example:
 ### MIME output
   
 By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
- to display graphics or html, it is possible to send MIME-encoded result to the client using the `Result` type 
- and `MIME` helper function. The latter has a signature: 
+ to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function. The latter has a signature: 
 ```kotlin
-fun MIME(vararg mimeToData: Pair<String, Any>): Result 
+fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
 ```
 E.g.:
 ```kotlin
 MIME("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
 
 ```
-HTML outputs can be rendered with `HTML` helper function:
+HTML outputs can also be rendered with `HTML` helper function:
 ```kotlin
-fun HTML(text: String): Result
+fun HTML(text: String): MimeTypedResult
 ```
 
 ### Autocompletion
 
 Press `TAB` to get the list of suggested items for completion. Currently completion suggests only names for user-defined variables and functions. 
-
-## Installation
-
-There are two ways to install Kotlin kernel for Jupyter:
-
-### Conda package
-
-If you have `conda` installed, just run:
- 
-`conda install kotlin-jupyter-kernel -c jetbrains`
-
-### From sources
-
-Run `./gradlew install`
-
-Use option `-PinstallPath=` to specify installation path. *(Note that jupyter looks for kernel specs files only in predefined places.)*
-
-Default installation path is `~/.ipython/kernels/kotlin/`.
-
-## Usage
-
-`jupyter-console --kernel=kotlin`
-
-or
-
-`jupyter-notebook`
-
-and then create a new notebook with `kotlin` kernel.
 
 ## Debugging
 
