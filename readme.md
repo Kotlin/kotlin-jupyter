@@ -4,18 +4,13 @@
 
 Kotlin (1.3.70) REPL kernel for jupyter (http://jupyter.org).
 
-Alpha version. Tested with jupyter 5.2.0 on OS X so far.
+Alpha version. Tested with jupyter 6.0.1 on OS X so far.
 
-## Screenshot
+![Screenshot in Jupyter](./samples/Screenshot.png)
 
-![Screenshot in Jupyter](./samples/ScreenShotInJupyter.png)
+To start using Kotlin kernel for Jupyter take a look at [this guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
-## Example 
-
-Example notebook output is [here](samples/KotlinSample01.ipynb). *(It is ported from [Gral](https://github.com/eseifert/gral)
-project's `ConvolutionExample.java`).* 
-
-The notebook itself is located in the `samples` folder.
+Example notebooks can be found in the [samples](samples) folder
 
 ## Supported functionality
 
@@ -36,7 +31,7 @@ It is possible to add dynamic dependencies to the notebook using the following a
 The following maven repositories are included by default:
  - [Bintray JCenter](https://jcenter.bintray.com)
  - [Maven Central](https://repo.maven.apache.org/maven2)
- - [JitPack](https://jitpack.io/)*
+ - [JitPack](https://jitpack.io/)
 
 ### Line Magics
 
@@ -97,6 +92,16 @@ Press `TAB` to get the list of suggested items for completion. Currently complet
 
 ## Installation
 
+There are two ways to install Kotlin kernel for Jupyter:
+
+### Conda package
+
+If you have `conda` installed, just run:
+ 
+`conda install kotlin-jupyter-kernel -c jetbrains`
+
+### From sources
+
 Run `./gradlew install`
 
 Use option `-PinstallPath=` to specify installation path. *(Note that jupyter looks for kernel specs files only in predefined places.)*
@@ -115,6 +120,6 @@ and then create a new notebook with `kotlin` kernel.
 
 ## Debugging
 
-- run kernel jar passing some connection config file as a parameter, e.g. `testData/config.json`
-    - additional jars for the REPL could be passed using `-cp=` parameter
-- run `jupyter-console` passing the full path to the same config file as an argument to the `--existing` command line parameter
+- Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
+- Run `jupyter-notebook`
+- Attach remote debugger to JVM with specified port 
