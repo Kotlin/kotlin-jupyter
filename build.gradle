@@ -65,7 +65,7 @@ dependencies {
     compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.zeromq:jeromq:0.3.5'
-    compile 'com.beust:klaxon:2.1.8'
+    compile 'com.beust:klaxon:5.2'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
     runtime "org.jetbrains.kotlin:jcabi-aether:1.0-dev-3"
     runtime "org.sonatype.aether:aether-api:1.13.1"
