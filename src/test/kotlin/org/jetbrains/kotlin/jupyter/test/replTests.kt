@@ -131,15 +131,13 @@ class ReplTest {
     fun TestLetsPlot() {
         val repl = ReplForJupyter(classpath, readResolverConfig())
         val code1 = "%use lets-plot"
-        val code2 = """ggplot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
+        val code2 = """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
         val res1 = repl.eval(code1)
         Assert.assertEquals(1, res1.displayValues.count())
         Assert.assertNull(res1.resultValue)
         val res2 = repl.eval(code2)
-        Assert.assertEquals(1, res2.displayValues.count())
-        val display = res2.displayValues[0] as? DisplayResult
-        assertNotNull(display)
-        val mime = display.value as? MimeTypedResult
+        Assert.assertEquals(0, res2.displayValues.count())
+        val mime = res2.resultValue as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
