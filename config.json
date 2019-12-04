@@ -32,14 +32,13 @@
         "jetbrains.letsPlot.stat.*"
       ],
       "init": [
-        "fun jetbrains.letsPlot.intern.Plot.display() = DISPLAY(HTML(jetbrains.letsPlot.intern.frontendContext.FrontendContextUtil.getHtml(this)))",
+        "fun jetbrains.letsPlot.intern.Plot.getHtml() = jetbrains.letsPlot.intern.frontendContext.FrontendContextUtil.getHtml(this)",
         "DISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
       ],
       "renderers": [
         {
           "class": "jetbrains.letsPlot.intern.Plot",
-          "display": "$it.display()",
-          "result": ""
+          "result": "HTML(($it as jetbrains.letsPlot.intern.Plot).getHtml())"
         }
       ]
     },
@@ -80,14 +79,10 @@
       "imports": [
         "kravis.*"
       ],
-      "init": [
-        "SessionPrefs.OUTPUT_DEVICE = kravis.device.JupyterDevice()"
-      ],
       "renderers": [
         {
           "class": "kravis.GGPlot",
-          "display": "DISPLAY($it.show())",
-          "result": ""
+          "result": "$it.show()"
         }
       ],
       "link": "https://github.com/holgerbrandl/kravis"

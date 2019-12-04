@@ -231,14 +231,12 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                         it.displayCode?.let {
                             doEval(it.replace("\$it", "res$replId")).value?.let(displays::add)
                         }
-                        it.resultCode?.let {
-                            result = if (it.trim().isBlank()) ""
-                            else doEval(it.replace("\$it", "res$replId")).value
-                        }
+                        result = if (it.resultCode == null || it.resultCode.trim().isBlank()) ""
+                        else doEval(it.resultCode.replace("\$it", "res$replId")).value
                     }
                     if (result is DisplayResult) {
                         displays.add(result as Any)
-                        result = null
+                        result = ""
                     }
                 }
                 return EvalResult(result, displays)
