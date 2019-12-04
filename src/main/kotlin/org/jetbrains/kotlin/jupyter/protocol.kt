@@ -101,7 +101,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                         connection.iopub.send(makeReplyMessage(msg,
                                 "display_data",
                                 content = jsonObject(
-                                        "data" to it
+                                        "data" to it,
+                                        "metadata" to jsonObject()
                                 )))
                     }
 
