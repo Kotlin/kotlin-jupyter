@@ -8,7 +8,7 @@ Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
 ![Screenshot in Jupyter](./samples/Screenshot.png)
 
-To start using Kotlin kernel for Jupyter take a look at [this guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
+To start using Kotlin kernel for Jupyter take a look at [introductory guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
 Example notebooks can be found in the [samples](samples) folder
 
@@ -16,7 +16,7 @@ Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://myb
 
 ## Installation
 
-Two ways to install kernel:
+There are two ways to install kernel:
 
 ### Conda package
 
@@ -38,7 +38,7 @@ Default installation path is `~/.ipython/kernels/kotlin/`.
 - `jupyter notebook`
 - `jupyter lab`
 
-To start using kotlin inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
+To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
 
 ## Supported functionality
 
@@ -96,10 +96,10 @@ Usage example:
 %use krangl(0.10), lets-plot
 ```
 
-### MIME output
+### Rich output
   
 By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
- to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function. The latter has a signature: 
+ to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function: 
 ```kotlin
 fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
 ```
@@ -115,10 +115,34 @@ fun HTML(text: String): MimeTypedResult
 
 ### Autocompletion
 
-Press `TAB` to get the list of suggested items for completion. Currently completion suggests only names for user-defined variables and functions. 
+Press `TAB` to get the list of suggested items for completion. 
+
+*Currently completion suggests only names for user-defined variables and functions.* 
 
 ## Debugging
 
-- Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
-- Run `jupyter-notebook`
-- Attach remote debugger to JVM with specified port 
+1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
+2. Run `jupyter-notebook`
+3. Attach remote debugger to JVM with specified port 
+
+## Contributing
+
+### Support new libraries
+
+You are welcome to add support for new `Kotlin` libraries by contributing to [config.json](config.json) file. 
+
+Library descriptor has the following fields:
+- `name`: short name of the library with optional arguments. All library arguments must have default value specified. Syntax: `<name>(<arg1>=<default1>, <arg2>=<default2>)`
+- `link`: a link to library homepage. This link will be displayed in `:help` command
+- `repositories`: a list of maven or ivy repositories to search for dependencies
+- `dependencies`: a list of library dependencies
+- `imports`: a list of default imports for library
+- `init`: a list of code snippets to be executed when library is included
+- `initCell`: a list of code snippets to be executed before execution of any cell
+- `renderers`: a list of type converters for special rendering of particular types
+
+Fields for type renderer:
+- `class`: fully-qualified class name for the type to be rendered 
+- `result`: expression to produce output value. Source object is referenced as `$it`
+
+Library arguments can be referenced in any parts of library descriptor as `$arg`
