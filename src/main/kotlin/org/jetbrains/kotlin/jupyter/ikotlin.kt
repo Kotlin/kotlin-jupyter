@@ -71,7 +71,7 @@ fun parseResolverConfig(json: JsonObject): ResolverConfig {
     val artifacts = json.array<JsonObject>("libraries")?.map {
         val (name, variables) = parseLibraryName(it.string("name")!!)
         name to LibraryDefinition(
-                artifacts = it.array<String>("artifacts")?.toList().orEmpty(),
+                dependencies = it.array<String>("dependencies")?.toList().orEmpty(),
                 variables = variables,
                 imports = it.array<String>("imports")?.toList().orEmpty(),
                 repositories = it.array<String>("repositories")?.toList().orEmpty(),

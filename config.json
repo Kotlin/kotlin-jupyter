@@ -7,7 +7,7 @@
   "libraries": [
     {
       "name": "klaxon(v=5.2)",
-      "artifacts": [
+      "dependencies": [
         "com.beust:klaxon:$v"
       ],
       "imports": [
@@ -20,7 +20,7 @@
       "repositories": [
         "https://jetbrains.bintray.com/lets-plot-maven"
       ],
-      "artifacts": [
+      "dependencies": [
         "org.jetbrains.lets-plot:lets-plot-common:1.0.1-SNAPSHOT",
         "org.jetbrains.lets-plot:lets-plot-kotlin-api:0.0.7-SNAPSHOT",
         "org.jetbrains.lets-plot:kotlin-frontend-api:0.0.7-SNAPSHOT",
@@ -45,7 +45,7 @@
     },
     {
       "name": "krangl(v=-SNAPSHOT)",
-      "artifacts": [
+      "dependencies": [
         "com.github.holgerbrandl:krangl:$v"
       ],
       "imports": [
@@ -64,7 +64,7 @@
     },
     {
       "name": "kotlin-statistics(v=-SNAPSHOT)",
-      "artifacts": [
+      "dependencies": [
         "com.github.thomasnield:kotlin-statistics:$v"
       ],
       "imports": [
@@ -74,7 +74,7 @@
     },
     {
       "name": "kravis(v=-SNAPSHOT)",
-      "artifacts": [
+      "dependencies": [
         "com.github.holgerbrandl:kravis:$v"
       ],
       "imports": [
@@ -94,7 +94,7 @@
     },
     {
       "name": "spark(scala=2.11.12,spark=2.4.4)",
-      "artifacts": [
+      "dependencies": [
         "org.apache.spark:spark-mllib_2.11:$spark",
         "org.apache.spark:spark-sql_2.11:$spark",
         "org.apache.spark:spark-repl_2.11:$spark",
@@ -138,7 +138,7 @@
     {
       "name": "gral(v=0.11)",
       "link": "https://github.com/eseifert/gral",
-      "artifacts": [
+      "dependencies": [
         "de.erichseifert.gral:gral-core:$v"
       ],
       "imports": [

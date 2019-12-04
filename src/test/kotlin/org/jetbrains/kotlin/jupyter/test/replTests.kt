@@ -78,7 +78,7 @@ class ReplTest {
                 "libraries": [
                     {
                         "name": "mylib(v1, v2=2.3)",
-                        "artifacts": [
+                        "dependencies": [
                             "artifact1:""" + "\$v1" + """",
                             "artifact2:""" + "\$v2" + """"
                         ],
@@ -93,7 +93,7 @@ class ReplTest {
                     },
                     {
                         "name": "other(a=temp, b=test)",
-                        "artifacts": [
+                        "dependencies": [
                             "path-""" + "\$a" + """",
                             "path-""" + "\$b" + """"
                         ],

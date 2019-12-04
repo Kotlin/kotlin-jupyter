@@ -18,7 +18,7 @@ data class TypeRenderer(val className: String, val displayCode: String?, val res
 
 data class Variable(val name: String?, val value: String?)
 
-class LibraryDefinition(val artifacts: List<String>,
+class LibraryDefinition(val dependencies: List<String>,
                         val variables: List<Variable>,
                         val initCell: List<String>,
                         val imports: List<String>,
