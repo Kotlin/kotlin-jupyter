@@ -12,6 +12,8 @@ To start using Kotlin kernel for Jupyter take a look at [this guide](https://git
 
 Example notebooks can be found in the [samples](samples) folder
 
+Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
+
 ## Installation
 
 Two ways to install kernel:
