@@ -148,6 +148,36 @@
       "init": [
         "fun<T: Drawable> T.show(sizeX: Double, sizeY: Double): Any {\n    val writer = de.erichseifert.gral.io.plots.DrawableWriterFactory.getInstance().get(\"image/svg+xml\")\n\n    val buf = java.io.ByteArrayOutputStream()\n\n    writer.write(this, buf, sizeX, sizeY)\n\n    return MIME(writer.mimeType to buf.toString())\n}"
       ]
+    },
+    {
+      "name": "kmath(v=0.1.3)",
+      "link": "https://github.com/mipt-npm/kmath",
+      "repositories": [
+        "https://dl.bintray.com/mipt-npm/scientifik"
+      ],
+      "dependencies": [
+        "scientifik:kmath-core-jvm:$v"
+      ],
+      "imports": [
+        "scientifik.kmath.linear.*",
+        "scientifik.kmath.operations.*",
+        "scientifik.kmath.structures.*"
+      ]
+    },
+    {
+      "name": "koma(v=0.12)",
+      "link": "http://koma.kyonifer.com/index.html",
+      "repositories": [
+        "https://dl.bintray.com/kyonifer/maven"
+      ],
+      "dependencies": [
+        "com.kyonifer:koma-core-ejml:$v",
+        "com.kyonifer:koma-plotting:$v"
+      ],
+      "imports": [
+        "koma.*",
+        "koma.extensions.*"
+      ]
     }
   ]
 }
