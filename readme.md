@@ -79,12 +79,14 @@ When a library is included with `%use` keyword, the following functionality is a
 
 List of supported libraries:
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - lets-plot - ggplot-like interactive visualization for Kotlin
+ - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [koma](http://koma.kyonifer.com/index.html) - Scientific computing library
+ - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
 
 *The list of all supported libraries can be found in [config file](config.json)*
 

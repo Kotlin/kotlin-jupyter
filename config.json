@@ -17,6 +17,7 @@
     },
     {
       "name": "lets-plot",
+      "link": "https://github.com/JetBrains/lets-plot-kotlin",
       "repositories": [
         "https://jetbrains.bintray.com/lets-plot-maven"
       ],
