@@ -37,7 +37,14 @@ class CompletionResultSuccess(
         res["matches"] = matches
         res["cursor_start"] = bounds.start
         res["cursor_end"] = bounds.end
-        res["metadata"] = metadata
+        res["metadata"] = mapOf("_jupyter_types_experimental" to metadata.map {
+            mapOf(
+                    "text" to it.key,
+                    "type" to it.value,
+                    "start" to bounds.start,
+                    "end" to bounds.end
+            )
+        })
         return res
     }
 }
