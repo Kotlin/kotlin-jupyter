@@ -6,3 +6,4 @@ build/
 **/.ipynb*
 **/build/
 *.DS_Store
+gradle.properties

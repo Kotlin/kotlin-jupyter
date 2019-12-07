@@ -1,3 +1,4 @@
+import java.nio.file.Paths
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
@@ -37,7 +38,9 @@ allprojects {
 
     version = '0.7.3'
 
-    ext.installPath = project.hasProperty('installPath') ? project.getProperty('installPath') : "${System.properties['user.home']}/.ipython/kernels/kotlin"
+    ext.installPath = project.hasProperty('installPath') ?
+            project.getProperty('installPath') :
+            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin").toAbsolutePath().toString()
     ext.debugPort = 1044
     ext.configFile = "config.json"
     ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
@@ -102,22 +105,28 @@ void createTaskForSpecs(Boolean debug) {
     task(taskName) {
         dependsOn cleanInstallDir
         doLast {
-            String spec = new File("kernelspec/kernel.json.template").getText('UTF-8')
+            String sep = File.separator
+            String spec = new File("kernelspec${sep}kernel.json.template").getText('UTF-8')
             File kernelFile = files { shadowJar }.singleFile
-            spec = spec.replace("\${KERNEL_JAR_PATH}", "$installPath/${kernelFile.name}")
+            spec = substitute(spec, "KERNEL_JAR_PATH", "$installPath${sep}${kernelFile.name}")
+
             String libsCp = files { configurations.deploy }.files.collect {
-                "$installPath/${it.name}"
+                "$installPath${sep}${it.name}"
             } .join(File.pathSeparator)
-            spec = spec.replace("\${RUNTIME_CLASSPATH}", libsCp)
-                    .replace("\${DEBUGGER_CONFIG}", debug ? "\"$debuggerConfig\"," : "")
-                    .replace("\${LIBRARIES_PATH}", "$installPath/$configFile")
+            spec = substitute(spec, "RUNTIME_CLASSPATH", libsCp)
+            spec = substitute(spec, "DEBUGGER_CONFIG", debug ? "\"$debuggerConfig\"," : "")
+            spec = substitute(spec, "LIBRARIES_PATH", "$installPath$sep$configFile")
             File installDir = new File("$installPath")
             if (!installDir.exists()) {
                 installDir.mkdirs();
             }
-            new File("$installPath/kernel.json").write(spec, 'UTF-8')
+            new File("$installPath${sep}kernel.json").write(spec, 'UTF-8')
         }
     }
+}
+
+static String substitute(String spec, String template, String val) {
+    return spec.replace("\${$template}", val.replace("\\", "\\\\"))
 }
 
 task copyLibrariesConfig(type: Copy, dependsOn: cleanInstallDir) {
