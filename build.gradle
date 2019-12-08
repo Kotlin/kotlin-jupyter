@@ -1,5 +1,6 @@
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
@@ -124,7 +125,11 @@ void createTaskForSpecs(Boolean debug) {
             new File("$installPath${sep}kernel.json").write(spec, 'UTF-8')
             Files.walk(Paths.get(projectDir.toPath().toString(), "kernelspec", "logos"))
                     .filter { Files.isRegularFile(it) }
-                    .forEach { Files.copy(it, Paths.get(installPath, it.fileName.toString())) }
+                    .forEach {
+                        Files.copy(it,
+                                Paths.get(installPath, it.fileName.toString()),
+                                StandardCopyOption.REPLACE_EXISTING)
+                    }
         }
     }
 }
