@@ -111,20 +111,23 @@ class ReplTest {
         val libs = repl.librariesCodeGenerator.getProcessedLibraries()
         assertEquals("", res)
         assertEquals(2, libs.count())
-        val expected1 = """
-            @file:DependsOn("artifact1:1.0")
-            @file:DependsOn("artifact2:2.3")
-            import package1
-            import package2
-            code1
-            code2""".trimIndent()
-        val expected2 = """
-            @file:DependsOn("path-debug")
-            @file:DependsOn("path-release")
-            import otherPackage
-        """.trimIndent()
-        Assert.assertEquals(expected1, libs[0].code.trimEnd())
-        Assert.assertEquals(expected2, libs[1].code.trimEnd())
+        arrayOf(
+                """
+                    @file:DependsOn("artifact1:1.0")
+                    @file:DependsOn("artifact2:2.3")
+                    import package1
+                    import package2
+                    code1
+                    code2
+                """,
+                """
+                    @file:DependsOn("path-debug")
+                    @file:DependsOn("path-release")
+                    import otherPackage
+                """
+        ).forEachIndexed { index, expected ->
+            Assert.assertEquals(expected.trimIndent(), libs[index].code.trimEnd().convertCRLFtoLF())
+        }
     }
 
     @Test
@@ -160,5 +163,9 @@ class ReplTest {
                         "a" to {it["a"]}"""
         val res = repl.eval(code)
         assertNotNull(res.resultValue)
+    }
+
+    private fun String.convertCRLFtoLF(): String {
+        return replace("\r\n", "\n")
     }
 }
