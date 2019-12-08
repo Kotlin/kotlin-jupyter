@@ -1,3 +1,4 @@
+import java.nio.file.Files
 import java.nio.file.Paths
 
 buildscript {
@@ -121,6 +122,9 @@ void createTaskForSpecs(Boolean debug) {
                 installDir.mkdirs();
             }
             new File("$installPath${sep}kernel.json").write(spec, 'UTF-8')
+            Files.walk(Paths.get(projectDir.toPath().toString(), "kernelspec", "logos"))
+                    .filter { Files.isRegularFile(it) }
+                    .forEach { Files.copy(it, Paths.get(installPath, it.fileName.toString())) }
         }
     }
 }
