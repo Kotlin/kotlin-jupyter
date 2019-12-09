@@ -38,11 +38,15 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    version = '0.7.3'
+    String defaultVersion = '0.7-SNAPSHOT'
+
+    ext.version = project.ext.hasProperty('version') ?
+            project.ext.getProperty('version') : defaultVersion
 
     ext.installPath = project.hasProperty('installPath') ?
-            project.getProperty('installPath') :
-            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin").toAbsolutePath().toString()
+            Paths.get(project.getProperty('installPath') as String) :
+            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
+    ext.installPathStr = installPath.toAbsolutePath().toString()
     ext.debugPort = 1044
     ext.configFile = "config.json"
     ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
@@ -92,14 +96,13 @@ shadowJar {
 
 task cleanInstallDir(){
     doLast {
-        File installDir = new File("$installPath")
-        installDir.deleteDir()
+        installPath.deleteDir()
     }
 }
 
 task installKernel(type: Copy, dependsOn: [cleanInstallDir, shadowJar]) {
     from shadowJar.outputs
-    into installPath
+    into installPathStr
 }
 
 void createTaskForSpecs(Boolean debug) {
@@ -107,31 +110,48 @@ void createTaskForSpecs(Boolean debug) {
     task(taskName) {
         dependsOn cleanInstallDir
         doLast {
-            String sep = File.separator
-            String spec = new File("kernelspec${sep}kernel.json.template").getText('UTF-8')
+            String spec = Paths.get("kernelspec", "kernel.json.template").toFile().getText('UTF-8')
             File kernelFile = files { shadowJar }.singleFile
-            spec = substitute(spec, "KERNEL_JAR_PATH", "$installPath${sep}${kernelFile.name}")
+            spec = substitute(spec, "KERNEL_JAR_PATH", getInstallDirSubdirAsString(kernelFile.name))
 
             String libsCp = files { configurations.deploy }.files.collect {
-                "$installPath${sep}${it.name}"
+                getInstallDirSubdirAsString(it.name)
             } .join(File.pathSeparator)
             spec = substitute(spec, "RUNTIME_CLASSPATH", libsCp)
             spec = substitute(spec, "DEBUGGER_CONFIG", debug ? "\"$debuggerConfig\"," : "")
-            spec = substitute(spec, "LIBRARIES_PATH", "$installPath$sep$configFile")
-            File installDir = new File("$installPath")
+            spec = substitute(spec, "LIBRARIES_PATH", getInstallDirSubdirAsString(configFile))
+
+            File installDir = installPath.toFile()
             if (!installDir.exists()) {
                 installDir.mkdirs();
             }
-            new File("$installPath${sep}kernel.json").write(spec, 'UTF-8')
-            Files.walk(Paths.get(projectDir.toPath().toString(), "kernelspec", "logos"))
+
+            getInstallDirSubdir("kernel.json").toFile().write(spec, 'UTF-8')
+            Files.walk(getSubdir(projectDir.toPath(), "kernelspec", "logos"))
                     .filter { Files.isRegularFile(it) }
                     .forEach {
                         Files.copy(it,
-                                Paths.get(installPath, it.fileName.toString()),
+                                getInstallDirSubdir(it.fileName.toString()),
                                 StandardCopyOption.REPLACE_EXISTING)
                     }
         }
     }
+}
+
+String getInstallDirSubdirAsString(String... subdir) {
+    return getInstallDirSubdir(subdir).toAbsolutePath().toString()
+}
+
+java.nio.file.Path getInstallDirSubdir(String... subdir) {
+    return getSubdir(installPath, subdir)
+}
+
+static java.nio.file.Path getSubdir(java.nio.file.Path dir, String... subdir) {
+    def newDir = dir
+    for (s in subdir) {
+        newDir = newDir.resolve(s)
+    }
+    return newDir
 }
 
 static String substitute(String spec, String template, String val) {
@@ -140,15 +160,15 @@ static String substitute(String spec, String template, String val) {
 
 task copyLibrariesConfig(type: Copy, dependsOn: cleanInstallDir) {
     from configFile
-    into installPath
+    into installPathStr
 }
 
 createTaskForSpecs(true)
 createTaskForSpecs(false)
 
 task installLibs(type: Copy, dependsOn: cleanInstallDir) {
-    into "$installPath"
     from configurations.deploy
+    into installPathStr
 }
 
 task install(dependsOn: [installKernel, installLibs, createSpecs, copyLibrariesConfig]) {
