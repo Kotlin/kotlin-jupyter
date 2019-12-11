@@ -41,10 +41,10 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    String defaultVersion = '0.7-SNAPSHOT'
+    String defaultVersion = '0.7_SNAPSHOT'
 
-    ext.version = project.ext.hasProperty('version') ?
-            project.ext.getProperty('version') : defaultVersion
+    project.ext.version = project.ext.has('build.number') ?
+            project.ext.get('build.number') : defaultVersion
 
     ext.installPath = project.hasProperty('installPath') ?
             Paths.get(project.getProperty('installPath') as String) :
@@ -107,7 +107,7 @@ dependencies {
 
 jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
-    'Implementation-Version': version
+    'Implementation-Version': project.ext.version
 )
 
 shadowJar {
@@ -244,7 +244,7 @@ void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<Stri
 void replaceVersionTemplate(java.nio.file.Path pathToFile) {
     File f = pathToFile.toFile()
     List<String> lines = f.readLines("UTF-8").stream().map {
-        def vv = it.replaceAll("%%VERSION%%", version)
+        def vv = it.replaceAll("%%VERSION%%", project.ext.version)
         return vv
     }.collect(Collectors.toList())
 
@@ -271,11 +271,7 @@ task installDebug(dependsOn: [installKernelLocal, installLibsLocal, createDebugS
 }
 
 /****** CONDA INSTALL ******/
-
 task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
-    doFirst {
-        //makeDirs(condaBuildDir)
-    }
     from distributionDir
     into condaBuildDir
     exclude '.idea/**'
