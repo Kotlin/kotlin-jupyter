@@ -217,13 +217,15 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
 
     installPath.resolve(kernelFile).toFile().write(jsonString, 'UTF-8')
 
-    Files.walk(getSubdir(projectDir.toPath(), "kernelspec", "logos"))
-            .filter { Files.isRegularFile(it) }
-            .forEach {
-                Files.copy(it,
-                        getSubdir(installPath, it.fileName.toString()),
-                        StandardCopyOption.REPLACE_EXISTING)
-            }
+    Files.walk(getSubdir(projectDir.toPath(), "kernelspec", "logos")).withCloseable {stream ->
+        stream
+                .filter { Files.isRegularFile(it) }
+                .forEach {
+                    Files.copy(it,
+                            getSubdir(installPath, it.fileName.toString()),
+                            StandardCopyOption.REPLACE_EXISTING)
+                }
+    }
 }
 
 void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<String> classPath, String librariesPath, String debuggerConfig = "") {
@@ -246,11 +248,11 @@ void replaceVersionTemplate(java.nio.file.Path pathToFile) {
         return vv
     }.collect(Collectors.toList())
 
-    FileWriter fw = new FileWriter(f);
-    lines.forEach {
-        fw.write(it + "\n")
+    new FileWriter(f).withCloseable {fw ->
+        lines.forEach {
+            fw.write(it + "\n")
+        }
     }
-    fw.close();
 }
 
 
@@ -301,8 +303,7 @@ task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
 
 task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, test]) {
     doFirst {
-        Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable {
-            def stream = it
+        Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable { stream ->
             def artifact = stream
                     .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
                     .findFirst()
