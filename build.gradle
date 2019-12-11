@@ -69,6 +69,7 @@ allprojects {
     ext.runKernelDir = "run_kotlin_kernel"
     ext.setupPy = "setup.py"
     ext.runKernelPy = "run_kernel.py"
+    ext.condaPackageDir = "package"
 
     ext.distributionDir = projectDir.toPath().resolve("distribution")
 }
@@ -270,8 +271,12 @@ task installDebug(dependsOn: [installKernelLocal, installLibsLocal, createDebugS
 /****** CONDA INSTALL ******/
 
 task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
+    doFirst {
+        //makeDirs(condaBuildDir)
+    }
     from distributionDir
     into condaBuildDir
+    exclude '.idea/**'
     doLast {
         replaceVersionTemplate(condaBuildDir.resolve(condaMetaDir).resolve(condaMetaYaml))
         replaceVersionTemplate(condaBuildDir.resolve(setupPy))
@@ -284,4 +289,28 @@ task condaBuild(dependsOn: [copyCondaFiles, installKernelConda, installLibsConda
 }
 
 task condaDebugBuild(dependsOn: [copyCondaFiles, installKernelConda, installLibsConda, createDebugSpecsConda, copyLibrariesConfigConda]) {
+}
+
+task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
+    doFirst {
+        makeDirs(condaBuildDir.resolve(condaPackageDir))
+    }
+    commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
+    workingDir condaBuildDir
+}
+
+task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, test]) {
+    doFirst {
+        Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable {
+            def stream = it
+            def artifact = stream
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
+                    .findFirst()
+            assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
+
+            println(artifact.get())
+            def artifactPath = artifact.get().toAbsolutePath().toString()
+            commandLine('anaconda', 'upload', '-c', 'jetbrains', artifactPath)
+        }
+    }
 }
