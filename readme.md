@@ -88,7 +88,7 @@ List of supported libraries:
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
 
-*The list of all supported libraries can be found in [config file](config.json)*
+*The list of all supported libraries can be found in [config file](config/config.json)*
 
 A definition of supported library may have a list of optional arguments that can be overriden when library is included.
 The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
@@ -131,7 +131,7 @@ Press `TAB` to get the list of suggested items for completion.
 
 ### Support new libraries
 
-You are welcome to add support for new `Kotlin` libraries by contributing to [config.json](config.json) file. 
+You are welcome to add support for new `Kotlin` libraries by contributing to [config.json](config/config.json) file. 
 
 Library descriptor has the following fields:
 - `name`: short name of the library with optional arguments. All library arguments must have default value specified. Syntax: `<name>(<arg1>=<default1>, <arg2>=<default2>)`

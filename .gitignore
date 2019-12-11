@@ -1,6 +1,7 @@
 .idea/
 out/
 build/
+conda-build/
 .gradle/
 *.iml
 **/.ipynb*

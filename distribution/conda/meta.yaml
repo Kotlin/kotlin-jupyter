@@ -1,0 +1,33 @@
+{% set name = "kotlin-jupyter-kernel" %}
+{% set version = "%%VERSION%%" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  - path: ..
+
+build:
+  number: 0
+  noarch: python
+  script: "{{ PYTHON }} -m pip install --no-deps --force-reinstall -vv ."
+
+requirements:
+  build:
+    - python
+    - pip
+
+
+  run:
+    - python >=3
+
+test:
+  imports:
+    - run_kotlin_kernel
+
+about:
+  home: https://github.com/ligee/kotlin-jupyter
+  license: Apache 2.0
+  license-family: Apache 2.0
+  summary: Kotlin kernel for Jupyter notebooks
