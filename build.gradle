@@ -320,10 +320,12 @@ task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, con
 task condaUploadProtected(dependsOn: cleanInstallDirConda) {
     def branchProp = 'build_branch'
     def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
+    def autoDeployProp = 'auto_deploy_enabled'
+    def masterAutoDeployEnabled = project.ext.has(autoDeployProp) && project.ext.get(autoDeployProp) == 'true'
     println("Current branch: $branch")
     if (branch != null) {
         branch = branch.substring(branch.lastIndexOf('/') + 1)
-        if(branch == 'master') {
+        if(branch == 'master' && masterAutoDeployEnabled) {
             dependsOn condaUpload
         }
     }
