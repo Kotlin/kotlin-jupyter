@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/Kotlin/kotlin-jupyter.svg?branch=master)](https://travis-ci.com/Kotlin/kotlin-jupyter) <br/>
-
 # Kotlin kernel for IPython/Jupyter
 
 Kotlin (1.3.70) REPL kernel for Jupyter (https://jupyter.org).
