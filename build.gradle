@@ -316,3 +316,15 @@ task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, con
         }
     }
 }
+
+task condaUploadProtected() {
+    def branchProp = 'teamcity.build.branch'
+    def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
+    println("Current branch: $branch")
+    if (branch != null) {
+        branch = branch.substring(branch.lastIndexOf('/') + 1)
+        if(branch == 'master') {
+            dependsOn condaUpload
+        }
+    }
+}
