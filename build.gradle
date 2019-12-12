@@ -317,8 +317,8 @@ task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, con
     }
 }
 
-task condaUploadProtected() {
-    def branchProp = 'teamcity.build.branch'
+task condaUploadProtected(dependsOn: cleanInstallDirConda) {
+    def branchProp = 'build_branch'
     def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
     println("Current branch: $branch")
     if (branch != null) {
