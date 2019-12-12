@@ -255,7 +255,6 @@ void replaceVersionTemplate(java.nio.file.Path pathToFile) {
     }
 }
 
-
 /****** LOCAL INSTALL ******/
 createInstallTasks(true, installPath, installPath)
 
