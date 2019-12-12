@@ -297,7 +297,12 @@ task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
     workingDir condaBuildDir
 }
 
-task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, test]) {
+task condaLogin(type: Exec) {
+    commandLine 'anaconda', 'login', '--username', condaUser, '--password', condaPassword
+    standardInput new ByteArrayInputStream("yes".bytes)
+}
+
+task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, condaLogin]) {
     doFirst {
         Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable { stream ->
             def artifact = stream
