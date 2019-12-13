@@ -88,7 +88,7 @@ List of supported libraries:
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
 
-*The list of all supported libraries can be found in [config file](config.json)*
+*The list of all supported libraries can be found in ['libraries' directory](libraries)*
 
 A definition of supported library may have a list of optional arguments that can be overriden when library is included.
 The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
@@ -131,10 +131,10 @@ Press `TAB` to get the list of suggested items for completion.
 
 ### Support new libraries
 
-You are welcome to add support for new `Kotlin` libraries by contributing to [config.json](config.json) file. 
+You are welcome to add support for new `Kotlin` libraries by adding `<libname>.json` file with library descriptor to ['libraries'](libraries) directory. 
 
 Library descriptor has the following fields:
-- `name`: short name of the library with optional arguments. All library arguments must have default value specified. Syntax: `<name>(<arg1>=<default1>, <arg2>=<default2>)`
+- `arguments`: an ordered list of library arguments. All arguments must have default value specified. Argument syntax: `<arg>=<default>`
 - `link`: a link to library homepage. This link will be displayed in `:help` command
 - `repositories`: a list of maven or ivy repositories to search for dependencies
 - `dependencies`: a list of library dependencies
@@ -142,6 +142,8 @@ Library descriptor has the following fields:
 - `init`: a list of code snippets to be executed when library is included
 - `initCell`: a list of code snippets to be executed before execution of any cell
 - `renderers`: a list of type converters for special rendering of particular types
+
+All fields are optional
 
 Fields for type renderer:
 - `class`: fully-qualified class name for the type to be rendered 

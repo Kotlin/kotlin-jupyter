@@ -2,11 +2,8 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
-import org.jetbrains.kotlin.jupyter.ReplForJupyter
-import org.jetbrains.kotlin.jupyter.parseResolverConfig
-import org.jetbrains.kotlin.jupyter.readResolverConfig
+import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
 import org.junit.Test
@@ -15,6 +12,8 @@ import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 class ReplTest {
+
+    fun replWithResolver() = ReplForJupyter(classpath, parseResolverConfig(readLibraries().toMap()))
 
     @Test
     fun TestRepl() {
@@ -73,14 +72,15 @@ class ReplTest {
 
     @Test
     fun TestUseMagic() {
-        val config = """
-            {
-                "libraries": [
+        val lib1 = "mylib" to """
                     {
-                        "name": "mylib(v1, v2=2.3)",
+                        "arguments": [
+                            "v1=0.2", 
+                            "v2=2.3"
+                        ],
                         "dependencies": [
-                            "artifact1:""" + "\$v1" + """",
-                            "artifact2:""" + "\$v2" + """"
+                            "artifact1:${'$'}v1",
+                            "artifact2:${'$'}v2"
                         ],
                         "imports": [
                             "package1",
@@ -90,23 +90,28 @@ class ReplTest {
                             "code1",
                             "code2"
                         ]
-                    },
-                    {
-                        "name": "other(a=temp, b=test)",
-                        "dependencies": [
-                            "path-""" + "\$a" + """",
-                            "path-""" + "\$b" + """"
-                        ],
-                        "imports": [
-                            "otherPackage"
-                        ]
-                    }
-                ]
-            }
+                    }""".trimIndent()
+        val lib2 = "other" to """
+                                {
+                                    "arguments": [
+                                        "a=temp", 
+                                        "b=test"
+                                    ],
+                                    "dependencies": [
+                                        "path-${'$'}a",
+                                        "path-${'$'}b"
+                                    ],
+                                    "imports": [
+                                        "otherPackage"
+                                    ]
+                                }
         """.trimIndent()
-        val json = Parser().parse(StringBuilder(config)) as JsonObject
-        val replConfig = parseResolverConfig(json)
-        val repl = ReplForJupyter(classpath, replConfig)
+        val parser = Parser.default()
+
+        val libJsons = arrayOf(lib1, lib2).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
+        val resolverConfig = parseResolverConfig(libJsons)
+
+        val repl = ReplForJupyter(classpath, resolverConfig)
         val res = repl.preprocessCode("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
         val libs = repl.librariesCodeGenerator.getProcessedLibraries()
         assertEquals("", res)
@@ -132,7 +137,7 @@ class ReplTest {
 
     @Test
     fun TestLetsPlot() {
-        val repl = ReplForJupyter(classpath, readResolverConfig())
+        val repl = replWithResolver()
         val code1 = "%use lets-plot"
         val code2 = """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
         val res1 = repl.eval(code1)
@@ -149,7 +154,7 @@ class ReplTest {
 
     @Test
     fun TestTwoLibrariesInUse() {
-        val repl = ReplForJupyter(classpath, readResolverConfig())
+        val repl = replWithResolver()
         val code = "%use lets-plot, krangl"
         val res = repl.eval(code)
         assertEquals(1, res.displayValues.count())
@@ -158,7 +163,7 @@ class ReplTest {
     @Test
     //TODO: https://github.com/Kotlin/kotlin-jupyter/issues/25
     fun TestKranglImportInfixFun() {
-        val repl = ReplForJupyter(classpath, readResolverConfig())
+        val repl = replWithResolver()
         val code = """%use krangl
                         "a" to {it["a"]}"""
         val res = repl.eval(code)

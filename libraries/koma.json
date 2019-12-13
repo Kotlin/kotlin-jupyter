@@ -1,0 +1,17 @@
+{
+  "arguments": [
+    "v=0.12"
+  ],
+  "link": "http://koma.kyonifer.com/index.html",
+  "repositories": [
+    "https://dl.bintray.com/kyonifer/maven"
+  ],
+  "dependencies": [
+    "com.kyonifer:koma-core-ejml:$v",
+    "com.kyonifer:koma-plotting:$v"
+  ],
+  "imports": [
+    "koma.*",
+    "koma.extensions.*"
+  ]
+}

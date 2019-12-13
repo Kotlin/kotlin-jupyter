@@ -1,0 +1,21 @@
+{
+  "arguments": [
+    "v=0.11"
+  ],
+  "link": "https://github.com/eseifert/gral",
+  "dependencies": [
+    "de.erichseifert.gral:gral-core:$v"
+  ],
+  "imports": [
+    "de.erichseifert.gral.data.*",
+    "de.erichseifert.gral.data.filters.*",
+    "de.erichseifert.gral.graphics.*",
+    "de.erichseifert.gral.plots.*",
+    "de.erichseifert.gral.plots.lines.*",
+    "de.erichseifert.gral.plots.points.*",
+    "de.erichseifert.gral.util.*"
+  ],
+  "init": [
+    "fun<T: Drawable> T.show(sizeX: Double, sizeY: Double): Any {\n    val writer = de.erichseifert.gral.io.plots.DrawableWriterFactory.getInstance().get(\"image/svg+xml\")\n\n    val buf = java.io.ByteArrayOutputStream()\n\n    writer.write(this, buf, sizeX, sizeY)\n\n    return MIME(writer.mimeType to buf.toString())\n}"
+  ]
+}

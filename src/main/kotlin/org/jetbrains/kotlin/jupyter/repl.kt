@@ -88,9 +88,10 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             val kt = KotlinType(receiver.javaClass.canonicalName)
             implicitReceivers.invoke(listOf(kt))
 
-            val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
-            val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
-            compilerOptions.invoke(listOf("-classpath", classPath, "-jvm-target", "1.8"))
+            //val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
+            //val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
+            log.info("Classpath for compiler options: none")
+            compilerOptions.invoke(listOf("-jvm-target", "1.8"))
         }
     }
 
@@ -123,7 +124,10 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
             baseClassLoader(scriptClassloader)
         }
+        constructorArgs()
     }
+
+    val newEvalConfig = evaluatorConfiguration.with { constructorArgs() }
 
     private var executionCounter = 0
 

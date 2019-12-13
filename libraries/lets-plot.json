@@ -1,0 +1,31 @@
+{
+  "arguments": [
+    "core=1.0.1-SNAPSHOT",
+    "kotlin=0.0.8-SNAPSHOT"
+  ],
+  "link": "https://github.com/JetBrains/lets-plot-kotlin",
+  "repositories": [
+    "https://jetbrains.bintray.com/lets-plot-maven"
+  ],
+  "dependencies": [
+    "org.jetbrains.lets-plot:lets-plot-common:$core",
+    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$kotlin",
+    "org.jetbrains.lets-plot:kotlin-frontend-api:$kotlin",
+    "org.jetbrains.lets-plot:lets-plot-jfx:$core"
+  ],
+  "imports": [
+    "jetbrains.letsPlot.*",
+    "jetbrains.letsPlot.geom.*",
+    "jetbrains.letsPlot.stat.*"
+  ],
+  "init": [
+    "fun jetbrains.letsPlot.intern.Plot.getHtml() = jetbrains.letsPlot.intern.frontendContext.FrontendContextUtil.getHtml(this)",
+    "DISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
+  ],
+  "renderers": [
+    {
+      "class": "jetbrains.letsPlot.intern.Plot",
+      "result": "HTML(($it as jetbrains.letsPlot.intern.Plot).getHtml())"
+    }
+  ]
+}

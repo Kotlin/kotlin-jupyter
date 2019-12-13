@@ -44,7 +44,6 @@ allprojects {
             project.getProperty('installPath') :
             Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin").toAbsolutePath().toString()
     ext.debugPort = 1044
-    ext.configFile = "config.json"
     ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
 }
 
@@ -69,6 +68,7 @@ dependencies {
 
     compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
+    compile "khttp:khttp:1.0.0"
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:5.2'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
@@ -117,7 +117,7 @@ void createTaskForSpecs(Boolean debug) {
             } .join(File.pathSeparator)
             spec = substitute(spec, "RUNTIME_CLASSPATH", libsCp)
             spec = substitute(spec, "DEBUGGER_CONFIG", debug ? "\"$debuggerConfig\"," : "")
-            spec = substitute(spec, "LIBRARIES_PATH", "$installPath$sep$configFile")
+            spec = substitute(spec, "KERNEL_HOME", "$installPath")
             File installDir = new File("$installPath")
             if (!installDir.exists()) {
                 installDir.mkdirs();
@@ -138,9 +138,9 @@ static String substitute(String spec, String template, String val) {
     return spec.replace("\${$template}", val.replace("\\", "\\\\"))
 }
 
-task copyLibrariesConfig(type: Copy, dependsOn: cleanInstallDir) {
-    from configFile
-    into installPath
+task copyLibraries(type: Copy, dependsOn: cleanInstallDir) {
+    from "libraries"
+    into Paths.get(installPath, "libraries").toString()
 }
 
 createTaskForSpecs(true)
@@ -151,8 +151,8 @@ task installLibs(type: Copy, dependsOn: cleanInstallDir) {
     from configurations.deploy
 }
 
-task install(dependsOn: [installKernel, installLibs, createSpecs, copyLibrariesConfig]) {
+task install(dependsOn: [installKernel, installLibs, createSpecs, copyLibraries]) {
 }
 
-task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs, copyLibrariesConfig]) {
+task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs, copyLibraries]) {
 }

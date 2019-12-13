@@ -1,0 +1,46 @@
+{
+  "arguments": [
+    "scala=2.11.12",
+    "spark=2.4.4"
+  ],
+  "dependencies": [
+    "org.apache.spark:spark-mllib_2.11:$spark",
+    "org.apache.spark:spark-sql_2.11:$spark",
+    "org.apache.spark:spark-repl_2.11:$spark",
+    "org.apache.spark:spark-streaming-flume-assembly_2.11:$spark",
+    "org.apache.spark:spark-graphx_2.11:$spark",
+    "org.apache.spark:spark-launcher_2.11:$spark",
+    "org.apache.spark:spark-catalyst_2.11:$spark",
+    "org.apache.spark:spark-streaming_2.11:$spark",
+    "org.apache.spark:spark-core_2.11:$spark",
+    "org.scala-lang:scala-library:$scala",
+    "org.scala-lang:scala-reflect:$scala",
+    "org.scala-lang:scala-compiler:$scala",
+    "org.scala-lang.modules:scala-xml_2.11:1.2.0",
+    "commons-io:commons-io:2.5"
+  ],
+  "imports": [
+    "org.apache.spark.sql.*",
+    "org.apache.spark.api.java.*",
+    "org.apache.spark.ml.feature.*",
+    "org.apache.spark.sql.functions.*"
+  ],
+  "init": [
+    "org.apache.log4j.Logger.getLogger(\"org\").setLevel(org.apache.log4j.Level.OFF)",
+    "org.apache.log4j.Logger.getLogger(\"akka\").setLevel(org.apache.log4j.Level.OFF)",
+    "val spark = SparkSession\n        .builder()\n        .appName(\"Spark example\")\n        .master(\"local\")\n        .getOrCreate()",
+    "val sc = spark.sparkContext()",
+    "%dumpClassesForSpark",
+    "fun Dataset<Row>.toHTML(limit: Int = 20, truncate: Int = 50): String {\n    val sb = StringBuilder()\n\n    sb.append(\"<html><body>\")\n    sb.append(\"\"\"<table><tr>\"\"\")\n    sb.append(schema().fieldNames().map { \"<th style=\\\"text-align:left\\\">${it}</th>\"}.joinToString(\"\"))\n    sb.append(\"</tr>\")\n\n    limit(limit).collectAsList().forEach { row ->\n        sb.append(\"<tr>\")\n        (0 until row.size()).map {\n            row[it].toString()\n        }.forEach {\n            val truncated = if (truncate > 0 && it.length > truncate) {\n                if (truncate < 4) it.substring(0, truncate)\n                else it.substring(0, truncate - 3) + \"...\"\n            } else {\n                it\n            }\n            sb.append(\"\"\"<td style=\"text-align:left\" title=\"$it\">$truncated</td>\"\"\")\n        }\n        sb.append(\"</tr>\")\n    }\n    sb.append(\"</table>\")\n    if(limit < count())\n        sb.append(\"<p>... only showing top $limit rows</p>\")\n    sb.append(\"</body></html>\")\n    return sb.toString()\n}"
+  ],
+  "initCell": [
+    "scala.Console.setOut(System.out)",
+    "scala.Console.setErr(System.err)"
+  ],
+  "renderers": [
+    {
+      "class": "org.apache.spark.sql.Dataset",
+      "result": "HTML($it.toHTML())"
+    }
+  ]
+}

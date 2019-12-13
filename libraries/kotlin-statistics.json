@@ -1,0 +1,12 @@
+{
+  "arguments": [
+    "v=-SNAPSHOT"
+  ],
+  "link": "https://github.com/thomasnield/kotlin-statistics",
+  "dependencies": [
+    "com.github.thomasnield:kotlin-statistics:$v"
+  ],
+  "imports": [
+    "org.nield.kotlinstatistics.*"
+  ]
+}

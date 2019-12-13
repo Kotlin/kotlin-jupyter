@@ -1,0 +1,21 @@
+{
+  "arguments": [
+    "v=-SNAPSHOT"
+  ],
+  "link": "https://github.com/holgerbrandl/krangl",
+  "dependencies": [
+    "com.github.holgerbrandl:krangl:$v"
+  ],
+  "imports": [
+    "krangl.*"
+  ],
+  "init": [
+    "fun krangl.DataFrame.toHTML(limit: Int = 20, truncate: Int = 50) : String\n{val sb = StringBuilder()\nsb.append(\"<html><body>\")\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th style=\\\"text-align:left\\\">${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.take(limit).forEach {\n    sb.append(\"<tr>\")\n    it.values.map{it.toString()}.forEach { \n        val truncated = if (truncate > 0 && it.length > truncate) {\n                if (truncate < 4) it.substring(0, truncate)\n                else it.substring(0, truncate - 3) + \"...\"\n            } else {\n                it\n            }\n        sb.append(\"\"\"<td style=\"text-align:left\" title=\"$it\">$truncated</td>\"\"\") \n    }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nif(limit < rows.count())\n  sb.append(\"<p>... only showing top $limit rows</p>\")\nsb.append(\"</body></html>\")\nreturn sb.toString()}"
+  ],
+  "renderers": [
+    {
+      "class": "krangl.SimpleDataFrame",
+      "result": "HTML($it.toHTML())"
+    }
+  ]
+}
