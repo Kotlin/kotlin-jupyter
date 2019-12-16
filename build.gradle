@@ -1,4 +1,5 @@
 import com.beust.klaxon.JsonObject
+
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -62,7 +63,7 @@ allprojects {
 
     ext.kernelFile = "kernel.json"
 
-    ext.condaBuildDir = projectDir.toPath().resolve("conda-build")
+    ext.condaBuildDir = projectDir.toPath().resolve("conda-pip-build")
     ext.condaMetaDir = "conda"
     ext.condaMetaYaml = "meta.yaml"
     ext.condaKernelDir = "kernel"
@@ -161,7 +162,7 @@ void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.fil
 void createTaskForSpecs(Boolean debug, Boolean local, Task cleanDir, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
     String taskName = makeTaskName(debug ? "createDebugSpecs" : "createSpecs", local)
     task(taskName) {
-        dependsOn cleanDir
+        dependsOn cleanDir, shadowJar
         doLast {
             File kernelFile = files { shadowJar }.singleFile
 
@@ -316,7 +317,7 @@ task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, con
     }
 }
 
-task condaUploadProtected(dependsOn: cleanInstallDirConda) {
+boolean doProductionDeploy() {
     def branchProp = 'build_branch'
     def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
     def autoDeployProp = 'auto_deploy_enabled'
@@ -325,7 +326,61 @@ task condaUploadProtected(dependsOn: cleanInstallDirConda) {
     if (branch != null) {
         branch = branch.substring(branch.lastIndexOf('/') + 1)
         if(branch == 'master' && masterAutoDeployEnabled) {
-            dependsOn condaUpload
+            return true
         }
+    }
+    return false
+}
+
+task condaUploadProtected(dependsOn: cleanInstallDirConda) {
+    if (doProductionDeploy()) {
+        dependsOn(condaUpload)
+    }
+}
+
+task pyPiPackage(type: Exec, dependsOn: condaBuild) {
+    commandLine 'python', 'setup.py', 'bdist_wheel'
+    workingDir condaBuildDir
+}
+
+class PyPiProperties {
+    String taskName
+    String repoURL
+    String username
+    String password
+}
+
+void createPyPiUploadTasks() {
+    [
+            new PyPiProperties(
+                    taskName: "pyPiUploadStable",
+                    repoURL: "https://upload.pypi.org/legacy/",
+                    username: stablePyPiUser,
+                    password: stablePyPiPassword
+            ),
+            new PyPiProperties(
+                    taskName: "pyPiUploadTest",
+                    repoURL: "https://test.pypi.org/legacy/",
+                    username: devPyPiUser,
+                    password: devPyPiPassword
+            )
+    ].forEach { taskSpec ->
+        task([type: Exec, dependsOn: [pyPiPackage]], taskSpec.taskName) {
+            commandLine "twine", "upload",
+                    "-u", taskSpec.username,
+                    "-p", taskSpec.password,
+                    "--repository-url", taskSpec.repoURL,
+                    "dist/*"
+            workingDir condaBuildDir
+        }
+    }
+}
+
+createPyPiUploadTasks()
+
+task pyPiUploadProtected() {
+    dependsOn(pyPiUploadTest)
+    if (doProductionDeploy()) {
+        dependsOn(pyPiUploadStable)
     }
 }
