@@ -314,7 +314,7 @@ class UploadTaskSpecs <T extends TaskSpec> {
         [stable, dev].forEach(action)
     }
 
-    boolean doProductionDeploy() {
+    boolean isProtectedBranch() {
         def branchProp = 'build_branch'
         def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
         def autoDeployProp = 'auto_deploy_enabled'
@@ -333,10 +333,9 @@ class UploadTaskSpecs <T extends TaskSpec> {
         forEach(taskCreationAction)
 
         project.task([dependsOn: project.cleanInstallDirConda], protectedDeployTaskName) {
-            if (doProductionDeploy()) {
-                dependsOn(stable.taskName)
+            if (isProtectedBranch()) {
+                dependsOn(dev.taskName)
             }
-            dependsOn(dev.taskName)
         }
     }
 }
