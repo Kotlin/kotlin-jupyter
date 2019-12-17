@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.function.Consumer
+import java.util.regex.Pattern
 import java.util.stream.Collectors
 
 buildscript {
@@ -43,10 +44,24 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    String defaultVersion = '0.7_SNAPSHOT'
+    String defaultVersion = '0.7.15'
+    project.ext.isProtectedBranch = isProtectedBranch()
+    String buildCounterStr = project.ext.has('build.counter') ?
+            project.ext.get('build.counter') : '100500'
+    String devAddition = project.ext.isProtectedBranch ? "" : ".dev1"
 
-    project.ext.version = project.ext.has('build.number') ?
-            project.ext.get('build.number') : defaultVersion
+    String defaultBuildNumber = "$defaultVersion.$buildCounterStr$devAddition"
+    String buildNumber = project.ext.has('build.number') ?
+            project.ext.get('build.number') : ""
+    String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
+
+    if (!Pattern.matches(buildNumberRegex, buildNumber)) {
+        buildNumber = defaultBuildNumber
+    }
+
+    project.ext.version = buildNumber
+
+    println("##teamcity[buildNumber '$buildNumber']")
 
     ext.installPath = project.hasProperty('installPath') ?
             Paths.get(project.getProperty('installPath') as String) :
@@ -128,6 +143,17 @@ task cleanInstallDirConda(){
     doLast {
         condaBuildDir.deleteDir()
     }
+}
+
+boolean isProtectedBranch() {
+    def branchProp = 'build_branch'
+    def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
+    println("Current branch: $branch")
+    if (branch != null) {
+        branch = branch.substring(branch.lastIndexOf('/') + 1)
+        return branch == 'master'
+    }
+    return false
 }
 
 void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
@@ -279,6 +305,8 @@ task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
     doLast {
         replaceVersionTemplate(condaBuildDir.resolve(condaMetaDir).resolve(condaMetaYaml))
         replaceVersionTemplate(condaBuildDir.resolve(setupPy))
+
+        condaBuildDir.resolve("VERSION").toFile().write(project.ext.version)
     }
 }
 
@@ -314,26 +342,11 @@ class UploadTaskSpecs <T extends TaskSpec> {
         [stable, dev].forEach(action)
     }
 
-    boolean isProtectedBranch() {
-        def branchProp = 'build_branch'
-        def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
-        def autoDeployProp = 'auto_deploy_enabled'
-        def masterAutoDeployEnabled = project.ext.has(autoDeployProp) && project.ext.get(autoDeployProp) == 'true'
-        println("Current branch: $branch")
-        if (branch != null) {
-            branch = branch.substring(branch.lastIndexOf('/') + 1)
-            if(branch == 'master' && masterAutoDeployEnabled) {
-                return true
-            }
-        }
-        return false
-    }
-
     void createTasks(Consumer<T> taskCreationAction) {
         forEach(taskCreationAction)
 
         project.task([dependsOn: project.cleanInstallDirConda], protectedDeployTaskName) {
-            if (isProtectedBranch()) {
+            if (project.ext.isProtectedBranch) {
                 dependsOn(dev.taskName)
             }
         }
