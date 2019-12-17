@@ -55,8 +55,17 @@ allprojects {
             project.ext.get('build.number') : ""
     String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
 
+    ext.versionFileName = "VERSION"
+
     if (!Pattern.matches(buildNumberRegex, buildNumber)) {
-        buildNumber = defaultBuildNumber
+        def versionFile = rootDir.toPath().resolve(ext.versionFileName).toFile()
+        if (versionFile.exists()) {
+            def lines = versionFile.readLines()
+            assert !lines.empty, "There should be at least one line in VERSION file"
+            buildNumber = lines.first().trim()
+        } else {
+            buildNumber = defaultBuildNumber
+        }
     }
 
     project.ext.version = buildNumber
@@ -79,7 +88,7 @@ allprojects {
 
     ext.kernelFile = "kernel.json"
 
-    ext.condaBuildDir = projectDir.toPath().resolve("conda-pip-build")
+    ext.condaBuildDir = rootDir.toPath().resolve("conda-pip-build")
     ext.condaMetaDir = "conda"
     ext.condaMetaYaml = "meta.yaml"
     ext.condaKernelDir = "kernel"
@@ -88,7 +97,7 @@ allprojects {
     ext.runKernelPy = "run_kernel.py"
     ext.condaPackageDir = "package"
 
-    ext.distributionDir = projectDir.toPath().resolve("distribution")
+    ext.distributionDir = rootDir.toPath().resolve("distribution")
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -245,7 +254,7 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
 
     installPath.resolve(kernelFile).toFile().write(jsonString, 'UTF-8')
 
-    Files.walk(getSubdir(projectDir.toPath(), "kernelspec", "logos")).withCloseable {stream ->
+    Files.walk(getSubdir(rootDir.toPath(), "kernelspec", "logos")).withCloseable {stream ->
         stream
                 .filter { Files.isRegularFile(it) }
                 .forEach {
@@ -306,7 +315,7 @@ task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
         replaceVersionTemplate(condaBuildDir.resolve(condaMetaDir).resolve(condaMetaYaml))
         replaceVersionTemplate(condaBuildDir.resolve(setupPy))
 
-        condaBuildDir.resolve("VERSION").toFile().write(project.ext.version)
+        condaBuildDir.resolve(versionFileName).toFile().write(project.ext.version)
     }
 }
 
