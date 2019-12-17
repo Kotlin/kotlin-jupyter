@@ -46,13 +46,13 @@ allprojects {
 
     String defaultVersion = '0.7.15'
     project.ext.isProtectedBranch = isProtectedBranch()
-    String buildCounterStr = project.ext.has('build.counter') ?
-            project.ext.get('build.counter') : '100500'
+    String buildCounterStr = rootProject.ext.has('build.counter') ?
+            rootProject.ext.get('build.counter') : '100500'
     String devAddition = project.ext.isProtectedBranch ? "" : ".dev1"
 
     String defaultBuildNumber = "$defaultVersion.$buildCounterStr$devAddition"
-    String buildNumber = project.ext.has('build.number') ?
-            project.ext.get('build.number') : ""
+    String buildNumber = rootProject.ext.has('build.number') ?
+            rootProject.ext.get('build.number') : ""
     String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
 
     ext.versionFileName = "VERSION"
