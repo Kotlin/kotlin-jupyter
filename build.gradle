@@ -3,6 +3,7 @@ import com.beust.klaxon.JsonObject
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.function.Consumer
 import java.util.stream.Collectors
 
 buildscript {
@@ -297,90 +298,129 @@ task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
     workingDir condaBuildDir
 }
 
-task condaLogin(type: Exec) {
-    commandLine 'anaconda', 'login', '--username', condaUser, '--password', condaPassword
-    standardInput new ByteArrayInputStream("yes".bytes)
+class TaskSpec {
+    String taskName
 }
 
-task condaUpload(type: Exec, dependsOn: [cleanInstallDirConda, condaPackage, condaLogin]) {
-    doFirst {
-        Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable { stream ->
-            def artifact = stream
-                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
-                    .findFirst()
-            assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
+class UploadTaskSpecs <T extends TaskSpec> {
+    T stable
+    T dev
 
-            println(artifact.get())
-            def artifactPath = artifact.get().toAbsolutePath().toString()
-            commandLine('anaconda', 'upload', '-c', 'jetbrains', artifactPath)
+    Project project
+
+    String protectedDeployTaskName
+
+    void forEach(Consumer<T> action) {
+        [stable, dev].forEach(action)
+    }
+
+    boolean doProductionDeploy() {
+        def branchProp = 'build_branch'
+        def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
+        def autoDeployProp = 'auto_deploy_enabled'
+        def masterAutoDeployEnabled = project.ext.has(autoDeployProp) && project.ext.get(autoDeployProp) == 'true'
+        println("Current branch: $branch")
+        if (branch != null) {
+            branch = branch.substring(branch.lastIndexOf('/') + 1)
+            if(branch == 'master' && masterAutoDeployEnabled) {
+                return true
+            }
+        }
+        return false
+    }
+
+    void createTasks(Consumer<T> taskCreationAction) {
+        forEach(taskCreationAction)
+
+        project.task([dependsOn: project.cleanInstallDirConda], protectedDeployTaskName) {
+            if (doProductionDeploy()) {
+                dependsOn(stable.taskName)
+            }
+            dependsOn(dev.taskName)
         }
     }
 }
 
-boolean doProductionDeploy() {
-    def branchProp = 'build_branch'
-    def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
-    def autoDeployProp = 'auto_deploy_enabled'
-    def masterAutoDeployEnabled = project.ext.has(autoDeployProp) && project.ext.get(autoDeployProp) == 'true'
-    println("Current branch: $branch")
-    if (branch != null) {
-        branch = branch.substring(branch.lastIndexOf('/') + 1)
-        if(branch == 'master' && masterAutoDeployEnabled) {
-            return true
+class CondaTaskSpec extends TaskSpec {
+    String username
+    String password
+}
+
+def condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
+        project: project,
+        stable: new CondaTaskSpec(
+                taskName: "condaUploadStable",
+                username: condaUserStable,
+                password: condaPasswordStable
+        ),
+        dev: new CondaTaskSpec(
+                taskName: "condaUploadDev",
+                username: condaUserDev
+        ),
+        protectedDeployTaskName: "condaUploadProtected"
+)
+
+condaTaskSpecs.createTasks { taskSpec ->
+    task([dependsOn: [cleanInstallDirConda, condaPackage]], taskSpec.taskName) {
+        doLast {
+            exec {
+                commandLine 'anaconda', 'login',
+                        '--username', condaTaskSpecs.stable.username,
+                        '--password', condaTaskSpecs.stable.password
+                standardInput new ByteArrayInputStream("yes".bytes)
+            }
+
+            Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable { stream ->
+                def artifact = stream
+                        .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
+                        .findFirst()
+                assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
+
+                def artifactPath = artifact.get().toAbsolutePath().toString()
+                exec {
+                    commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactPath)
+                }
+            }
         }
     }
-    return false
 }
 
-task condaUploadProtected(dependsOn: cleanInstallDirConda) {
-    if (doProductionDeploy()) {
-        dependsOn(condaUpload)
-    }
-}
-
+/****** PYPI UPLOAD ******/
 task pyPiPackage(type: Exec, dependsOn: condaBuild) {
     commandLine 'python', 'setup.py', 'bdist_wheel'
     workingDir condaBuildDir
 }
 
-class PyPiProperties {
-    String taskName
+class PyPiTaskSpec extends TaskSpec {
     String repoURL
     String username
     String password
 }
 
-void createPyPiUploadTasks() {
-    [
-            new PyPiProperties(
-                    taskName: "pyPiUploadStable",
-                    repoURL: "https://upload.pypi.org/legacy/",
-                    username: stablePyPiUser,
-                    password: stablePyPiPassword
-            ),
-            new PyPiProperties(
-                    taskName: "pyPiUploadTest",
-                    repoURL: "https://test.pypi.org/legacy/",
-                    username: devPyPiUser,
-                    password: devPyPiPassword
-            )
-    ].forEach { taskSpec ->
-        task([type: Exec, dependsOn: [pyPiPackage]], taskSpec.taskName) {
-            commandLine "twine", "upload",
-                    "-u", taskSpec.username,
-                    "-p", taskSpec.password,
-                    "--repository-url", taskSpec.repoURL,
-                    "dist/*"
-            workingDir condaBuildDir
-        }
-    }
-}
+def pyPiTaskSpecs = new UploadTaskSpecs<PyPiTaskSpec>(
+        project: project,
+        stable: new PyPiTaskSpec(
+                taskName: "pyPiUploadStable",
+                repoURL: "https://upload.pypi.org/legacy/",
+                username: stablePyPiUser,
+                password: stablePyPiPassword
+        ),
+        dev: new PyPiTaskSpec(
+                taskName: "pyPiUploadDev",
+                repoURL: "https://test.pypi.org/legacy/",
+                username: devPyPiUser,
+                password: devPyPiPassword
+        ),
+        protectedDeployTaskName: "pyPiUploadProtected"
+)
 
-createPyPiUploadTasks()
-
-task pyPiUploadProtected() {
-    dependsOn(pyPiUploadTest)
-    if (doProductionDeploy()) {
-        dependsOn(pyPiUploadStable)
+pyPiTaskSpecs.createTasks { taskSpec ->
+    task([type: Exec, dependsOn: [pyPiPackage]], taskSpec.taskName) {
+        commandLine "twine", "upload",
+                "-u", taskSpec.username,
+                "-p", taskSpec.password,
+                "--repository-url", taskSpec.repoURL,
+                "dist/*"
+        workingDir condaBuildDir
     }
 }
