@@ -166,6 +166,7 @@ dependencies {
     compile 'khttp:khttp:1.0.0'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:5.2'
+    compile 'com.github.ajalt:clikt:2.3.0'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
     runtime "org.jetbrains.kotlin:jcabi-aether:1.0-dev-3"
     runtime "org.sonatype.aether:aether-api:1.13.1"

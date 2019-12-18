@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
@@ -72,6 +70,28 @@ class ReplTest {
         val res = repl.eval("Out[1]")
         assertEquals(2, res.resultValue)
         assertFails { repl.eval("Out[3]") }
+    }
+
+    @Test
+    fun TestOutputMagic() {
+        val repl = ReplForJupyter(classpath)
+        repl.preprocessCode("%output --max-cell-size=100500 --no-stdout")
+        assertEquals(OutputConfig(
+                cellOutputMaxSize = 100500,
+                captureOutput = false
+        ), repl.outputConfig)
+
+        repl.preprocessCode("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
+        assertEquals(OutputConfig(
+                cellOutputMaxSize = 100500,
+                captureOutput = false,
+                captureBufferMaxSize = 42,
+                captureNewlineBufferSize = 33,
+                captureBufferTimeLimitMs = 2000
+        ), repl.outputConfig)
+
+        repl.preprocessCode("%output --reset-to-defaults")
+        assertEquals(OutputConfig(), repl.outputConfig)
     }
 
     @Test

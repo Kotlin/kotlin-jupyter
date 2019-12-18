@@ -5,9 +5,7 @@ import com.beust.klaxon.Parser
 import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.zeromq.ZMQ
-import java.io.ByteArrayOutputStream
 import java.io.Closeable
-import java.io.PrintStream
 import java.security.SignatureException
 import java.util.*
 import javax.crypto.Mac
@@ -20,6 +18,7 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         init {
             val port = config.ports[socket.ordinal]
             bind("${config.transport}://*:$port")
+            Thread.sleep(200)
             log.debug("[$name] listen: ${config.transport}://*:$port")
         }
 
@@ -150,13 +149,9 @@ class HMAC(algo: String, key: String?) {
     operator fun invoke(vararg data: ByteArray): String? = invoke(data.asIterable())
 }
 
-fun JupyterConnection.Socket.logWireMessage(msg: ByteArray) {
-    log.debug("[$name] >in: ${String(msg)}")
-}
-
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
-fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC): Unit {
+fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
     msg.id.forEach { sendMore(it) }
     sendMore(DELIM)
     val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
