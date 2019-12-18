@@ -159,7 +159,7 @@ task cleanInstallDirConda(){
 }
 
 boolean isProtectedBranch() {
-    def branchProp = 'build_branch'
+    def branchProp = 'build.branch'
     def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
     println("Current branch: $branch")
     if (branch != null) {
