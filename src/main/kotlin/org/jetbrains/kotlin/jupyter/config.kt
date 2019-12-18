@@ -5,18 +5,23 @@ import com.beust.klaxon.Parser
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.StringReader
+import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 val LibrariesDir = "libraries"
+val LocalCacheDir = "cache"
+val CachedLibrariesFootprintFile = "libsCommit"
 
 val LocalSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kotlin").toString()
 
 val GitHubApiHost = "api.github.com"
 val GitHubRepoOwner = "kotlin"
 val GitHubRepoName = "kotlin-jupyter"
-val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName/contents/"
+val GitHubBranchName = "remote_config"
+val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName"
+
+val LibraryDescriptorExt = "json"
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
@@ -40,6 +45,8 @@ data class KernelConfig(
 
 val protocolVersion = "5.3"
 
+val libraryDescriptorFormatVersion = "1.0"
+
 data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
 
 data class Variable(val name: String?, val value: String?)
@@ -55,17 +62,6 @@ class LibraryDefinition(val dependencies: List<String>,
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
                           val libraries: Map<String, LibraryDefinition>)
-
-fun readJson(path: String) =
-        Parser.default().parse(path) as JsonObject
-
-fun JSONObject.toJsonObject() = Parser.default().parse(StringReader(toString())) as JsonObject
-
-fun <T> catchAll(body: () -> T): T? = try {
-    body()
-} catch (e: Exception) {
-    null
-}
 
 fun parseLibraryArgument(str: String): Variable {
     val eq = str.indexOf('=')
@@ -86,7 +82,7 @@ fun parseLibraryName(str: String): Pair<String, List<Variable>> {
 fun readLibraries(basePath: String? = null, filter: (File) -> Boolean = { true }): List<Pair<String, JsonObject>> {
     val parser = Parser.default()
     return File(basePath, LibrariesDir)
-            .listFiles()?.filter { it.extension == "json" && filter(it) }
+            .listFiles()?.filter { it.extension == LibraryDescriptorExt && filter(it) }
             ?.map {
                 log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
                 it.nameWithoutExtension to parser.parse(it.canonicalPath) as JsonObject
@@ -94,32 +90,111 @@ fun readLibraries(basePath: String? = null, filter: (File) -> Boolean = { true }
             .orEmpty()
 }
 
-fun getLibrariesJsons(homeDir: String): Map<String, JsonObject> {
-
-    val librariesMap = readLibraries(LocalSettingsPath).toMap().orEmpty().toMutableMap()
-
-    val address = GitHubApiPrefix + LibrariesDir
-    val response = catchAll { khttp.get(address) }
-    if (response != null && response.statusCode == 200) {
-        response.jsonArray.forEach {
-            val o = it as JSONObject
-            val filename = o["name"] as String
-            if (filename.endsWith(".json")) {
-                val libName = filename.substring(0, filename.length - 5)
-                if (!librariesMap.containsKey(libName)) {
-                    val url = o["download_url"].toString()
-                    val res = catchAll { khttp.get(url) }
-                    if (res != null && res.statusCode == 200) {
-                        log.info("Loading '$libName' descriptor from '$url'")
-                        librariesMap[libName] = res.jsonObject.toJsonObject()
-                    }
+fun getLatestCommitToLibraries(sinceTimestamp: String?): Pair<String, String>? =
+        log.catchAll {
+            var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$GitHubBranchName"
+            if (sinceTimestamp != null)
+                url += "&since=$sinceTimestamp"
+            log.info("Checking for new commits to library descriptors at $url")
+            val arr = khttp.get(url).jsonArray
+            if (arr.length() == 0) {
+                if (sinceTimestamp != null)
+                    getLatestCommitToLibraries(null)
+                else {
+                    log.info("Didn't find any commits to '$LibrariesDir' at $url")
+                    null
                 }
+            } else {
+                val commit = arr[0] as JSONObject
+                val sha = commit["sha"] as String
+                val timestamp = ((commit["commit"] as JSONObject)["committer"] as JSONObject)["date"] as String
+                sha to timestamp
             }
         }
+
+/***
+ * Downloads library descriptors from GitHub to local cache if new commits in `libraries` directory were detected
+ */
+fun downloadNewLibraryDescriptors() {
+
+    // Read commit hash and timestamp for locally cached libraries.
+    // Timestamp is used as parameter for commits request to reduce output
+
+    val footprintFilePath = Paths.get(LocalSettingsPath, LocalCacheDir, CachedLibrariesFootprintFile).toString()
+    log.info("Reading commit info for which library descriptors were cached: '$footprintFilePath'")
+    val footprintFile = File(footprintFilePath)
+    val footprint = footprintFile.readIniConfig()
+    val timestampRegex = """\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z""".toRegex()
+    val syncedCommitTimestamp = footprint?.get("timestamp")?.validOrNull { timestampRegex.matches(it) }
+    val syncedCommitSha = footprint?.get("sha")
+    log.info("Local libraries are cached for commit '$syncedCommitSha' at '$syncedCommitTimestamp'")
+
+    val (latestCommitSha, latestCommitTimestamp) = getLatestCommitToLibraries(syncedCommitTimestamp) ?: return
+    if (latestCommitSha.equals(syncedCommitSha)) {
+        log.info("No new commits to library descriptors were detected")
+        return
     }
 
-    readLibraries(homeDir) { !librariesMap.containsKey(it.nameWithoutExtension) }
-            .forEach { librariesMap.put(it.first, it.second) }
+    // Download library descriptors
+
+    log.info("New commits to library descriptors were detected. Downloading library descriptors for commit $latestCommitSha")
+
+    val libraries = log.catchAll {
+        val url = "$GitHubApiPrefix/contents/$LibrariesDir?ref=$latestCommitSha"
+        log.info("Requesting the list of library descriptors at $url")
+        val response = khttp.get(url)
+        if (response.statusCode != 200)
+            throw Exception("Failed to get GitHub contents for '$LibrariesDir' from $url. Response = $response")
+
+        response.jsonArray.mapNotNull {
+            val o = it as JSONObject
+            val filename = o["name"] as String
+            if ("""[\w-]+.$LibraryDescriptorExt""".toRegex().matches(filename)) {
+                val libUrl = o["download_url"].toString()
+                log.info("Downloading '$filename' from $libUrl")
+                val res = khttp.get(libUrl)
+                if (res.statusCode != 200)
+                    throw Exception("Failed to download '$filename' from $libUrl. Response = $res")
+                val text = res.jsonObject.toString()
+                filename to text
+            } else null
+        }
+    } ?: return
+
+    // Save library descriptors to local cache
+
+    val librariesPath = Paths.get(LocalSettingsPath, LocalCacheDir, LibrariesDir)
+    val librariesDir = librariesPath.toFile()
+    log.info("Saving ${libraries.count()} library descriptors to local cache at '$librariesPath'")
+    try {
+        Files.createDirectories(librariesPath)
+        libraries.forEach {
+            File(librariesDir.toString(), it.first).writeText(it.second)
+        }
+        footprintFile.writeText("""
+            timestamp=$latestCommitTimestamp
+            sha=$latestCommitSha
+        """.trimIndent())
+    } catch (e: Exception) {
+        log.error("Failed to write downloaded library descriptors to local cache:", e)
+        log.catchAll { librariesDir.delete() }
+    }
+}
+
+fun getLibrariesJsons(homeDir: String): Map<String, JsonObject> {
+
+    downloadNewLibraryDescriptors()
+
+    val pathsToCheck = arrayOf(LocalSettingsPath,
+            Paths.get(LocalSettingsPath, LocalCacheDir).toString(),
+            homeDir)
+
+    val librariesMap = mutableMapOf<String, JsonObject>()
+
+    pathsToCheck.forEach {
+        readLibraries(it) { !librariesMap.containsKey(it.nameWithoutExtension) }
+                .forEach { librariesMap.put(it.first, it.second) }
+    }
 
     return librariesMap
 }

@@ -127,13 +127,13 @@ Press `TAB` to get the list of suggested items for completion.
 2. Run `jupyter-notebook`
 3. Attach remote debugger to JVM with specified port 
 
-## Contributing
+## Adding new libraries
 
-### Support new libraries
+To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
 
-You are welcome to add support for new `Kotlin` libraries by adding `<libname>.json` file with library descriptor to ['libraries'](libraries) directory. 
+Check ['libraries'](libraries) directory to see examples of library descriptors.
 
-Library descriptor has the following fields:
+Library descriptor is a `json` file with the following fields:
 - `arguments`: an ordered list of library arguments. All arguments must have default value specified. Argument syntax: `<arg>=<default>`
 - `link`: a link to library homepage. This link will be displayed in `:help` command
 - `repositories`: a list of maven or ivy repositories to search for dependencies
@@ -143,10 +143,24 @@ Library descriptor has the following fields:
 - `initCell`: a list of code snippets to be executed before execution of any cell
 - `renderers`: a list of type converters for special rendering of particular types
 
-All fields are optional
+*All fields are optional
 
 Fields for type renderer:
 - `class`: fully-qualified class name for the type to be rendered 
-- `result`: expression to produce output value. Source object is referenced as `$it`
+- `result`: expression that produces output value. Source object is referenced as `$it`
 
 Library arguments can be referenced in any parts of library descriptor as `$arg`
+
+There are two places where you can put new library descriptor:
+1. For private usage: into local settings folder `<UserHome>/.jupyter_kotlin/libraries`
+2. For sharing your library with community: checkout repository, put descriptor into ['libraries'](libraries) directory and create pull request.
+
+If you are maintaining some library and want to update your library descriptor, just create pull request with your update. After your request is accepted, 
+new version of your library will be available to all Kotlin Jupyter users on next kernel startup (no kernel update is needed).
+
+Kotlin Kernel collects library descriptors on startup in the following order:
+1. Local settings folder (highest priority)
+2. ['libraries'](libraries) folder at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
+3. Kernel installation directory
+
+If you don't want some library to be updated automatically, put fixed version of its library descriptor into local settings folder.

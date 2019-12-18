@@ -88,8 +88,6 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             val kt = KotlinType(receiver.javaClass.canonicalName)
             implicitReceivers.invoke(listOf(kt))
 
-            //val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
-            //val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
             log.info("Classpath for compiler options: none")
             compilerOptions.invoke(listOf("-jvm-target", "1.8"))
         }
