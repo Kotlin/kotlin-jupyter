@@ -8,4 +8,4 @@ conda-pip-build/
 **/build/
 *.DS_Store
 gradle.properties
-VERSION
+teamcity-artifacts

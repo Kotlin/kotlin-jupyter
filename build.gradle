@@ -44,6 +44,10 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
+    ext.teamcityArtifactsPath = "teamcity-artifacts"
+    ext.tcDir = rootDir.toPath().resolve(ext.teamcityArtifactsPath)
+    ext.isTeamcityBuild = ext.tcDir.toFile().exists()
+
     String defaultVersion = '0.7.15'
     project.ext.isProtectedBranch = isProtectedBranch()
     String buildCounterStr = rootProject.ext.has('build.counter') ?
@@ -58,7 +62,7 @@ allprojects {
     ext.versionFileName = "VERSION"
 
     if (!Pattern.matches(buildNumberRegex, buildNumber)) {
-        def versionFile = rootDir.toPath().resolve(ext.versionFileName).toFile()
+        def versionFile = ext.tcDir.resolve(ext.versionFileName).toFile()
         if (versionFile.exists()) {
             def lines = versionFile.readLines()
             assert !lines.empty, "There should be at least one line in VERSION file"
@@ -367,7 +371,7 @@ class CondaTaskSpec extends TaskSpec {
     String password
 }
 
-def condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
+ext.condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
         project: project,
         stable: new CondaTaskSpec(
                 taskName: "condaUploadStable",
@@ -381,27 +385,37 @@ def condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
         protectedDeployTaskName: "condaUploadProtected"
 )
 
+void doCondaUpload(CondaTaskSpec taskSpec, java.nio.file.Path artifactPath) {
+    exec {
+        commandLine 'anaconda', 'login',
+                '--username', condaTaskSpecs.stable.username,
+                '--password', condaTaskSpecs.stable.password
+        standardInput new ByteArrayInputStream("yes".bytes)
+    }
+
+    Files.walk(artifactPath).withCloseable { stream ->
+        def artifact = stream
+                .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
+                .findFirst()
+        assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
+
+        def artifactFilePath = artifact.get().toAbsolutePath().toString()
+        exec {
+            commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactFilePath)
+        }
+    }
+}
+
 condaTaskSpecs.createTasks { taskSpec ->
-    task([dependsOn: [cleanInstallDirConda, condaPackage]], taskSpec.taskName) {
+    task(taskSpec.taskName) {
+        def artifactsDir = tcDir
+        if (!isTeamcityBuild) {
+            artifactsDir = getSubdir(condaBuildDir, condaPackageDir, "noarch")
+            dependsOn([cleanInstallDirConda, condaPackage])
+        }
+
         doLast {
-            exec {
-                commandLine 'anaconda', 'login',
-                        '--username', condaTaskSpecs.stable.username,
-                        '--password', condaTaskSpecs.stable.password
-                standardInput new ByteArrayInputStream("yes".bytes)
-            }
-
-            Files.walk(getSubdir(condaBuildDir, condaPackageDir, "noarch")).withCloseable { stream ->
-                def artifact = stream
-                        .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
-                        .findFirst()
-                assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
-
-                def artifactPath = artifact.get().toAbsolutePath().toString()
-                exec {
-                    commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactPath)
-                }
-            }
+            doCondaUpload(taskSpec, artifactsDir)
         }
     }
 }
@@ -436,12 +450,18 @@ def pyPiTaskSpecs = new UploadTaskSpecs<PyPiTaskSpec>(
 )
 
 pyPiTaskSpecs.createTasks { taskSpec ->
-    task([type: Exec, dependsOn: [pyPiPackage]], taskSpec.taskName) {
+    task([type: Exec], taskSpec.taskName) {
+        if (!isTeamcityBuild) {
+            dependsOn([pyPiPackage])
+            workingDir(condaBuildDir.resolve("dist"))
+        } else {
+            workingDir(tcDir)
+        }
+
         commandLine "twine", "upload",
                 "-u", taskSpec.username,
                 "-p", taskSpec.password,
                 "--repository-url", taskSpec.repoURL,
-                "dist/*"
-        workingDir condaBuildDir
+                "*.whl"
     }
 }
