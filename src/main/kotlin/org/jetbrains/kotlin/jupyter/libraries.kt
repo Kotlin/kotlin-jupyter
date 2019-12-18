@@ -95,7 +95,8 @@ class LibrariesProcessor {
 
         splitLibraryCalls(arg).forEach {
             val (name, vars) = parseLibraryName(it)
-            val library = repl.config?.libraries?.get(name) ?: throw ReplCompilerException("Unknown library '$name'")
+            val library = repl.config?.libraries?.awaitBlocking()?.get(name)
+                    ?: throw ReplCompilerException("Unknown library '$name'")
 
             // treat single strings in parsed arguments as values, not names
             val arguments = vars.map { if (it.value == null) Variable(null, it.name) else it }

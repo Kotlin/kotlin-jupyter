@@ -42,7 +42,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
-    private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
+    private val renderers = config?.let {
+        it.libraries.asyncLet {
+            it.flatMap { it.value.renderers }.map { it.className to it }.toMap()
+        }
+    }
 
     private val includedLibraries = mutableSetOf<LibraryDefinition>()
 
@@ -125,8 +129,6 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         constructorArgs()
     }
 
-    val newEvalConfig = evaluatorConfiguration.with { constructorArgs() }
-
     private var executionCounter = 0
 
     private val compiler: ReplCompiler by lazy {
@@ -169,7 +171,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     init {
         // TODO: to be removed after investigation of https://github.com/kotlin/kotlin-jupyter/issues/24
-        eval("1")
+        doEval("1")
     }
 
     fun eval(code: String, jupyterId: Int = -1): EvalResult {
@@ -228,8 +230,9 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                     }
                 }
 
-                if (result != null) {
-                    renderers[result.javaClass.canonicalName]?.let {
+                if (result != null && renderers != null) {
+                    val resultType = result.javaClass.canonicalName
+                    renderers.awaitBlocking()[resultType]?.let {
                         it.displayCode?.let {
                             doEval(it.replace("\$it", "res$replId")).value?.let(displays::add)
                         }

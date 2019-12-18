@@ -2,6 +2,9 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -61,7 +64,7 @@ class LibraryDefinition(val dependencies: List<String>,
                         val link: String?)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
-                          val libraries: Map<String, LibraryDefinition>)
+                          val libraries: Deferred<Map<String, LibraryDefinition>>)
 
 fun parseLibraryArgument(str: String): Variable {
     val eq = str.indexOf('=')
@@ -199,17 +202,18 @@ fun getLibrariesJsons(homeDir: String): Map<String, JsonObject> {
     return librariesMap
 }
 
-fun loadResolverConfig(homeDir: String) = parseResolverConfig(getLibrariesJsons(homeDir))
+fun loadResolverConfig(homeDir: String) = ResolverConfig(defaultRepositories, GlobalScope.async {
+    parserLibraryDescriptors(getLibrariesJsons(homeDir))
+})
 
 val defaultRepositories = arrayOf(
         "https://jcenter.bintray.com/",
         "https://repo.maven.apache.org/maven2/",
         "https://jitpack.io"
-)
+).map { RepositoryCoordinates(it) }
 
-fun parseResolverConfig(libJsons: Map<String, JsonObject>): ResolverConfig {
-    val repos = defaultRepositories.map { RepositoryCoordinates(it) }.orEmpty()
-    return ResolverConfig(repos, libJsons.mapValues {
+fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDefinition> {
+    return libJsons.mapValues {
         LibraryDefinition(
                 dependencies = it.value.array<String>("dependencies")?.toList().orEmpty(),
                 variables = it.value.array<String>("arguments")?.map(::parseLibraryArgument).orEmpty(),
@@ -222,5 +226,6 @@ fun parseResolverConfig(libJsons: Map<String, JsonObject>): ResolverConfig {
                 }?.toList().orEmpty(),
                 link = it.value.string("link")
         )
-    })
+    }
 }
+

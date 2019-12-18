@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
@@ -13,7 +15,8 @@ import kotlin.test.assertNotNull
 
 class ReplTest {
 
-    fun replWithResolver() = ReplForJupyter(classpath, parseResolverConfig(readLibraries().toMap()))
+    fun replWithResolver() = ReplForJupyter(classpath, ResolverConfig(defaultRepositories,
+            parserLibraryDescriptors(readLibraries().toMap()).asDeferred()))
 
     @Test
     fun TestRepl() {
@@ -109,9 +112,8 @@ class ReplTest {
         val parser = Parser.default()
 
         val libJsons = arrayOf(lib1, lib2).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
-        val resolverConfig = parseResolverConfig(libJsons)
 
-        val repl = ReplForJupyter(classpath, resolverConfig)
+        val repl = ReplForJupyter(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()))
         val res = repl.preprocessCode("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
         val libs = repl.librariesCodeGenerator.getProcessedLibraries()
         assertEquals("", res)
