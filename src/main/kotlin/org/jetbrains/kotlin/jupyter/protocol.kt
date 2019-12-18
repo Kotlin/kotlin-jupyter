@@ -15,14 +15,25 @@ enum class ResponseState {
     Ok, Error
 }
 
+enum class JupyterOutType {
+    STDOUT, STDERR;
+    fun optionName() = name.toLowerCase()
+}
+
 data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedResult?, val displays: List<MimeTypedResult> = emptyList(), val stdOut: String? = null, val stdErr: String? = null) {
     val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
     val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
+fun JupyterConnection.Socket.sendOut(msg:Message, stream: JupyterOutType, text: String) {
+    connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
+            content = jsonObject(
+                    "name" to stream.optionName(),
+                    "text" to text)))
+}
+
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
-    val msgType = msg.header!!["msg_type"]
-    when (msgType) {
+    when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "kernel_info_reply",
                     content = jsonObject(
@@ -70,23 +81,16 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val res: ResponseWithMessage = if (isCommand(code.toString())) {
                 runCommand(code.toString(), repl)
             } else {
-                connection.evalWithIO {
+                connection.evalWithIO (repl?.outputConfig) {
                     repl?.eval(code.toString(), count.toInt())
                 }
             }
 
-            fun sendOut(stream: String, text: String) {
-                connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
-                        content = jsonObject(
-                                "name" to stream,
-                                "text" to text)))
-            }
-
             if (res.hasStdOut) {
-                sendOut("stdout", res.stdOut!!)
+                sendOut(msg, JupyterOutType.STDOUT, res.stdOut!!)
             }
             if (res.hasStdErr) {
-                sendOut("stderr", res.stdErr!!)
+                sendOut(msg, JupyterOutType.STDERR, res.stdErr!!)
             }
 
             when (res.state) {
@@ -169,12 +173,50 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
     }
 }
 
-class CapturingOutputStream(val stdout: PrintStream, val captureOutput: Boolean) : OutputStream() {
+class CapturingOutputStream(private val stdout: PrintStream,
+                            private val conf: OutputConfig,
+                            private val captureOutput: Boolean,
+                            val onCaptured: (String) -> Unit) : OutputStream() {
     val capturedOutput = ByteArrayOutputStream()
+    private var time = System.currentTimeMillis()
+    private var overallOutputSize = 0
+    private var newlineFound = false
+
+    private fun shouldSend(b: Int): Boolean {
+        val c = b.toChar()
+        newlineFound = newlineFound || c == '\n' || c == '\r'
+        if (newlineFound && capturedOutput.size() >= conf.captureNewlineBufferSize)
+            return true
+        if (capturedOutput.size() >= conf.captureBufferMaxSize)
+            return true
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - time >= conf.captureBufferTimeLimitMs) {
+            time = currentTime
+            return true
+        }
+        return false
+    }
 
     override fun write(b: Int) {
+        ++overallOutputSize
         stdout.write(b)
-        if (captureOutput) capturedOutput.write(b)
+
+        if (captureOutput && overallOutputSize <= conf.cellOutputMaxSize) {
+            capturedOutput.write(b)
+            if (shouldSend(b)) {
+                flush()
+            }
+        }
+    }
+
+    override fun flush() {
+        newlineFound = false
+        if (capturedOutput.size() > 0) {
+            val str = capturedOutput.toString("UTF-8")
+            capturedOutput.reset()
+            onCaptured(str)
+        }
     }
 }
 
@@ -185,17 +227,25 @@ fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     else -> textResult(this.toString())
 }
 
-fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
+fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalResult?): ResponseWithMessage {
     val out = System.out
     val err = System.err
+    val config = maybeConfig ?: OutputConfig()
 
-    // TODO: make configuration option of whether to pipe back stdout and stderr
-    // TODO: make a configuration option to limit the total stdout / stderr possibly returned (in case it goes wild...)
-    val forkedOut = CapturingOutputStream(out, true)
-    val forkedError = CapturingOutputStream(err, false)
+    fun getCapturingStream(stream: PrintStream, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
+        return CapturingOutputStream(
+                stream,
+                config,
+                captureOutput) { text ->
+            this.iopub.sendOut(contextMessage!!, outType, text)
+        }
+    }
 
-    System.setOut(PrintStream(forkedOut, true, "UTF-8"))
-    System.setErr(PrintStream(forkedError, true, "UTF-8"))
+    val forkedOut = getCapturingStream(out, JupyterOutType.STDOUT, config.captureOutput)
+    val forkedError = getCapturingStream(err, JupyterOutType.STDERR, false)
+
+    System.setOut(PrintStream(forkedOut, false, "UTF-8"))
+    System.setErr(PrintStream(forkedError, false, "UTF-8"))
 
     val `in` = System.`in`
     System.setIn(stdinIn)
@@ -205,26 +255,26 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
             if (exec == null) {
                 ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, "NO REPL!")
             } else {
-                val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
-                val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
+                forkedOut.flush()
+                forkedError.flush()
 
                 try {
                     var result: MimeTypedResult? = null
-                    var displays = exec.displayValues.mapNotNull { it.toMimeTypedResult() }
+                    val displays = exec.displayValues.mapNotNull { it.toMimeTypedResult() }.toMutableList()
                     if (exec.resultValue is DisplayResult) {
                         val resultDisplay = exec.resultValue.value.toMimeTypedResult()
                         if (resultDisplay != null)
                             displays += resultDisplay
                     } else result = exec.resultValue?.toMimeTypedResult()
-                    ResponseWithMessage(ResponseState.Ok, result, displays, stdOut, stdErr)
+                    ResponseWithMessage(ResponseState.Ok, result, displays, null, null)
                 } catch (e: Exception) {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut,
-                            joinLines(stdErr, "error:  Unable to convert result to a string: ${e}"))
+                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
+                            "error:  Unable to convert result to a string: $e")
                 }
             }
         } catch (ex: ReplCompilerException) {
-            val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
-            val stdErr = forkedError.capturedOutput.toString("UTF-8").emptyWhenNull()
+            forkedOut.flush()
+            forkedError.flush()
 
             // handle runtime vs. compile time and send back correct format of response, now we just send text
             /*
@@ -235,10 +285,10 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                    'traceback' : list(str), # traceback frames as strings
                 }
              */
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut,
-                    joinLines(stdErr, ex.errorResult.message))
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
+                    ex.errorResult.message)
         } catch (ex: ReplEvalRuntimeException) {
-            val stdOut = forkedOut.capturedOutput.toString("UTF-8").emptyWhenNull()
+            forkedOut.flush()
 
             // handle runtime vs. compile time and send back correct format of response, now we just send text
             /*
@@ -265,7 +315,7 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
                     }
                 }
             }
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), stdOut, stdErr.toString())
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, stdErr.toString())
         }
     } finally {
         System.setIn(`in`)
@@ -274,7 +324,4 @@ fun JupyterConnection.evalWithIO(body: () -> EvalResult?): ResponseWithMessage {
     }
 }
 
-fun joinLines(vararg parts: String): String = parts.filter(String::isNotBlank).joinToString("\n")
 fun String.nullWhenEmpty(): String? = if (this.isBlank()) null else this
-fun String?.emptyWhenNull(): String = if (this == null || this.isBlank()) "" else this
-

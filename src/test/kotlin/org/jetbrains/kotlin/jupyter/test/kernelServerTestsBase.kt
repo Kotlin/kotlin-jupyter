@@ -22,7 +22,7 @@ open class KernelServerTestsBase {
 
     protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
 
-    protected var server: Thread? = null
+    private var server: Thread? = null
 
     protected val messageId = listOf(byteArrayOf(1))
 
@@ -33,11 +33,10 @@ open class KernelServerTestsBase {
 
     @After
     fun teardownServer() {
-        Thread.sleep(100)
         server?.interrupt()
     }
 
-    fun ZMQ.Socket.sendMessage(msgType: String, content : JsonObject): Unit {
+    fun ZMQ.Socket.sendMessage(msgType: String, content : JsonObject) {
         sendMessage(Message(id = messageId, header = makeHeader(msgType), content = content), hmac)
     }
 
@@ -45,8 +44,8 @@ open class KernelServerTestsBase {
 
     companion object {
         private val rng = Random()
-        private val portRangeStart = 32768
-        private val portRangeEnd = 65536
+        private const val portRangeStart = 32768
+        private const val portRangeEnd = 65536
 
         fun randomPort(): Int =
                 generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {

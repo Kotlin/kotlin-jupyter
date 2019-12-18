@@ -40,6 +40,22 @@ enum class JupyterSockets {
     iopub
 }
 
+data class OutputConfig(
+        var captureOutput: Boolean = true,
+        var captureBufferTimeLimitMs: Int = 100,
+        var captureBufferMaxSize: Int = 1000,
+        var cellOutputMaxSize: Int = 100000,
+        var captureNewlineBufferSize: Int = 100
+) {
+    fun assign(other: OutputConfig) {
+        captureOutput = other.captureOutput
+        captureBufferTimeLimitMs = other.captureBufferTimeLimitMs
+        captureBufferMaxSize = other.captureBufferMaxSize
+        cellOutputMaxSize = other.cellOutputMaxSize
+        captureNewlineBufferSize = other.captureNewlineBufferSize
+    }
+}
+
 data class RuntimeKernelProperties(val map: Map<String, String>) {
     val version: String
         get() = map["version"] ?: "unspecified"
