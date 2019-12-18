@@ -2,7 +2,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-Kotlin (1.3.70) REPL kernel for Jupyter (http://jupyter.org).
+Kotlin (1.3.70) REPL kernel for Jupyter (https://jupyter.org).
 
 Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
@@ -85,7 +85,7 @@ List of supported libraries:
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
- - [koma](http://koma.kyonifer.com/index.html) - Scientific computing library
+ - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
 
 *The list of all supported libraries can be found in [config file](config.json)*
