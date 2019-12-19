@@ -2,10 +2,10 @@
 out/
 build/
 conda-pip-build/
+teamcity-artifacts/
 .gradle/
 *.iml
 **/.ipynb*
 **/build/
 *.DS_Store
 gradle.properties
-teamcity-artifacts
