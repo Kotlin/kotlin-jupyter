@@ -1,6 +1,5 @@
 import com.beust.klaxon.JsonObject
 
-import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -47,6 +46,7 @@ allprojects {
     ext.isTeamcityBuild = ext.tcDir.toFile().exists()
 
     String defaultVersion = '0.7.15'
+    ext.packageName = 'kotlin-jupyter-kernel'
     project.ext.isProtectedBranch = isProtectedBranch()
     String buildCounterStr = rootProject.ext.has('build.counter') ?
             rootProject.ext.get('build.counter') : '100500'
@@ -100,6 +100,9 @@ allprojects {
     ext.condaPackageDir = "conda-package"
     ext.pyPiPackageDir = "pip-package"
 
+    ext.condaPackageName = packageName
+    ext.pyPiPackageName = packageName.replaceAll("-", "_")
+
     ext.distributionDir = rootDir.toPath().resolve("distribution")
 }
 
@@ -140,7 +143,7 @@ jar.manifest.attributes(
 )
 
 shadowJar {
-    archiveBaseName.set('kotlin-jupyter-kernel')
+    archiveBaseName.set(packageName)
     archiveClassifier.set('')
     mergeServiceFiles()
 }
@@ -369,16 +372,9 @@ void doCondaUpload(CondaTaskSpec taskSpec, java.nio.file.Path artifactPath) {
         standardInput new ByteArrayInputStream("yes".bytes)
     }
 
-    Files.walk(artifactPath).withCloseable { stream ->
-        def artifact = stream
-                .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".tar.bz2") }
-                .findFirst()
-        assert artifact.isPresent(), ".tar.bz2 file should be present in package/noarch dir"
-
-        def artifactFilePath = artifact.get().toAbsolutePath().toString()
-        exec {
-            commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactFilePath)
-        }
+    def artifactFilePath = artifactPath.resolve("$condaPackageName-${project.ext.version}-py_0.tar.bz2")
+    exec {
+        commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactFilePath.toString())
     }
 }
 
@@ -436,6 +432,6 @@ pyPiTaskSpecs.createTasks { taskSpec ->
                 "-u", taskSpec.username,
                 "-p", taskSpec.password,
                 "--repository-url", taskSpec.repoURL,
-                "*.whl"
+                "$pyPiPackageName-${project.ext.version}-py3-none-any.whl"
     }
 }
