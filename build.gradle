@@ -282,20 +282,6 @@ void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<Stri
     installPath.resolve(jarArgsFile).toFile().write(jsonString, 'UTF-8')
 }
 
-void replaceVersionTemplate(java.nio.file.Path pathToFile) {
-    File f = pathToFile.toFile()
-    List<String> lines = f.readLines("UTF-8").stream().map {
-        def vv = it.replaceAll("%%VERSION%%", project.ext.version)
-        return vv
-    }.collect(Collectors.toList())
-
-    new FileWriter(f).withCloseable {fw ->
-        lines.forEach {
-            fw.write(it + "\n")
-        }
-    }
-}
-
 /****** LOCAL INSTALL ******/
 createInstallTasks(true, installPath, installPath)
 
@@ -316,9 +302,6 @@ task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
     into condaBuildDir
     exclude '.idea/**'
     doLast {
-        replaceVersionTemplate(condaBuildDir.resolve(condaMetaDir).resolve(condaMetaYaml))
-        replaceVersionTemplate(condaBuildDir.resolve(setupPy))
-
         condaBuildDir.resolve(versionFileName).toFile().write(project.ext.version)
     }
 }
