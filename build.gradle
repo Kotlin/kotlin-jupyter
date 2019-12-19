@@ -2,10 +2,8 @@ import com.beust.klaxon.JsonObject
 
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.util.function.Consumer
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
@@ -45,7 +43,7 @@ allprojects {
     }
 
     ext.teamcityArtifactsPath = "teamcity-artifacts"
-    ext.tcDir = rootDir.toPath().resolve(ext.teamcityArtifactsPath)
+    ext.tcDir = rootDir.toPath().resolve(teamcityArtifactsPath)
     ext.isTeamcityBuild = ext.tcDir.toFile().exists()
 
     String defaultVersion = '0.7.15'
@@ -81,10 +79,10 @@ allprojects {
             Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
     ext.installPathStr = installPath.toAbsolutePath().toString()
     ext.debugPort = 1044
-    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
+    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
     ext.configDir = "config"
-    //Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
+    // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
     ext.configFile = configDir + "/config.json"
     ext.jarArgsFile = configDir + "/jar_args.json"
 
@@ -99,7 +97,8 @@ allprojects {
     ext.runKernelDir = "run_kotlin_kernel"
     ext.setupPy = "setup.py"
     ext.runKernelPy = "run_kernel.py"
-    ext.condaPackageDir = "package"
+    ext.condaPackageDir = "conda-package"
+    ext.pyPiPackageDir = "pip-package"
 
     ext.distributionDir = rootDir.toPath().resolve("distribution")
 }
@@ -141,8 +140,8 @@ jar.manifest.attributes(
 )
 
 shadowJar {
-    baseName = 'kotlin-jupyter-kernel'
-    classifier = ''
+    archiveBaseName.set('kotlin-jupyter-kernel')
+    archiveClassifier.set('')
     mergeServiceFiles()
 }
 
@@ -170,14 +169,11 @@ boolean isProtectedBranch() {
 }
 
 void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
-    def cleanDirTask = local ? cleanInstallDirLocal : cleanInstallDirConda
-
+    def cleanDirTask = getTasks().getByName(makeTaskName("cleanInstallDir", local))
     createTaskForSpecs(true, local, cleanDirTask, specPath, mainInstallPath)
     createTaskForSpecs(false, local, cleanDirTask, specPath, mainInstallPath)
 
-    def args = new HashMap()
-    args.put("type", Copy)
-    args.put("dependsOn", cleanDirTask)
+    def args = [type: Copy, dependsOn: cleanDirTask]
 
     task (args, makeTaskName("copyLibrariesConfig", local)) {
         from configFile
@@ -189,11 +185,7 @@ void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.fil
         into mainInstallPath.resolve(jarsPath)
     }
 
-    def installKernelArgs = new HashMap()
-    installKernelArgs.put("type", Copy)
-    installKernelArgs.put("dependsOn", [cleanDirTask, shadowJar])
-
-    task (installKernelArgs, makeTaskName("installKernel", local)) {
+    task ([type: Copy, dependsOn: [cleanDirTask, shadowJar]], makeTaskName("installKernel", local)) {
         from shadowJar.outputs
         into mainInstallPath.resolve(jarsPath)
     }
@@ -227,7 +219,7 @@ static String makeTaskName(String prefix, Boolean local) {
 static void makeDirs(java.nio.file.Path path) {
     File dir = path.toFile()
     if (!dir.exists()) {
-        dir.mkdirs();
+        dir.mkdirs()
     }
 }
 
@@ -239,6 +231,11 @@ static java.nio.file.Path getSubdir(java.nio.file.Path dir, String... subdir) {
     return newDir
 }
 
+static void writeJson(Map<String, Object> json, java.nio.file.Path path) {
+    def jsonString = new JsonObject(json).toJsonString(true, false)
+    path.toFile().write(jsonString, 'UTF-8')
+}
+
 void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
     def argv = localInstall ?
             Arrays.asList("python",
@@ -248,41 +245,28 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
                     installPath.toString()) :
             Arrays.asList("python", "-m", "run_kotlin_kernel", "{connection_file}")
 
-    JsonObject json = new JsonObject(new HashMap<String, Object>(){{
-        put("display_name", "Kotlin")
-        put("language", "kotlin")
-        put("argv", argv)
-    }})
+    writeJson([
+            "display_name": "Kotlin",
+            "language": "kotlin",
+            "argv": argv,
+    ], installPath.resolve(kernelFile))
 
-    def jsonString = json.toJsonString(true, false)
-
-    installPath.resolve(kernelFile).toFile().write(jsonString, 'UTF-8')
-
-    Files.walk(getSubdir(rootDir.toPath(), "kernelspec", "logos")).withCloseable {stream ->
-        stream
-                .filter { Files.isRegularFile(it) }
-                .forEach {
-                    Files.copy(it,
-                            getSubdir(installPath, it.fileName.toString()),
-                            StandardCopyOption.REPLACE_EXISTING)
-                }
+    project.copy {
+        from getSubdir(rootDir.toPath(), "kernelspec", "logos")
+        into installPath
     }
 }
 
 void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<String> classPath, String librariesPath, String debuggerConfig = "") {
-    JsonObject json = new JsonObject(new HashMap<String, Object>(){{
-        put("mainJar", kernelJarPath)
-        put("classPath", classPath)
-        put("librariesPath", librariesPath)
-        put("debuggerConfig", debuggerConfig)
-    }})
-
-    def jsonString = json.toJsonString(true, false)
-
-    installPath.resolve(jarArgsFile).toFile().write(jsonString, 'UTF-8')
+    writeJson([
+            "mainJar": kernelJarPath,
+            "classPath": classPath,
+            "librariesPath": librariesPath,
+            "debuggerConfig": debuggerConfig,
+    ], installPath.resolve(project.jarArgsFile))
 }
 
-/****** LOCAL INSTALL ******/
+/****** Local install ******/
 createInstallTasks(true, installPath, installPath)
 
 task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal) {
@@ -296,13 +280,13 @@ task install(dependsOn: [installKernelLocal, installLibsLocal, createSpecsLocal,
 task installDebug(dependsOn: [installKernelLocal, installLibsLocal, createDebugSpecsLocal, copyLibrariesConfigLocal, copyRunKernelPy]) {
 }
 
-/****** CONDA INSTALL ******/
+/****** Conda upload ******/
 task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
     from distributionDir
     into condaBuildDir
     exclude '.idea/**'
     doLast {
-        condaBuildDir.resolve(versionFileName).toFile().write(project.ext.version)
+        condaBuildDir.resolve(versionFileName).toFile().write(project.ext.version as String)
     }
 }
 
@@ -331,17 +315,29 @@ class UploadTaskSpecs <T extends TaskSpec> {
     T dev
 
     Project project
+    String repoName
 
-    String protectedDeployTaskName
+    UploadTaskSpecs(Project project, String repoName, T stable, T dev) {
+        this.project = project
+        this.repoName = repoName
+        this.stable = stable
+        this.dev = dev
 
-    void forEach(Consumer<T> action) {
-        [stable, dev].forEach(action)
+        this.stable.taskName = taskName("Stable")
+        this.dev.taskName = taskName("Dev")
+    }
+
+    String taskName(String type) {
+        return repoName + "Upload" + type
     }
 
     void createTasks(Consumer<T> taskCreationAction) {
-        forEach(taskCreationAction)
+        if (project.ext.isProtectedBranch) {
+            taskCreationAction.accept(stable)
+        }
+        taskCreationAction.accept(dev)
 
-        project.task([dependsOn: project.cleanInstallDirConda], protectedDeployTaskName) {
+        project.task([dependsOn: project.cleanInstallDirConda], taskName("Protected")) {
             if (project.ext.isProtectedBranch) {
                 dependsOn(dev.taskName)
             }
@@ -355,17 +351,14 @@ class CondaTaskSpec extends TaskSpec {
 }
 
 ext.condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
-        project: project,
-        stable: new CondaTaskSpec(
-                taskName: "condaUploadStable",
+        project, "conda",
+        new CondaTaskSpec(
                 username: condaUserStable,
                 password: condaPasswordStable
         ),
-        dev: new CondaTaskSpec(
-                taskName: "condaUploadDev",
+        new CondaTaskSpec(
                 username: condaUserDev
-        ),
-        protectedDeployTaskName: "condaUploadProtected"
+        )
 )
 
 void doCondaUpload(CondaTaskSpec taskSpec, java.nio.file.Path artifactPath) {
@@ -389,7 +382,7 @@ void doCondaUpload(CondaTaskSpec taskSpec, java.nio.file.Path artifactPath) {
     }
 }
 
-condaTaskSpecs.createTasks { taskSpec ->
+condaTaskSpecs.createTasks { TaskSpec taskSpec ->
     task(taskSpec.taskName) {
         def artifactsDir = tcDir
         if (!isTeamcityBuild) {
@@ -398,14 +391,15 @@ condaTaskSpecs.createTasks { taskSpec ->
         }
 
         doLast {
-            doCondaUpload(taskSpec, artifactsDir)
+            doCondaUpload(taskSpec as CondaTaskSpec, artifactsDir)
         }
     }
 }
 
-/****** PYPI UPLOAD ******/
+/****** PyPi upload ******/
 task pyPiPackage(type: Exec, dependsOn: condaBuild) {
-    commandLine 'python', 'setup.py', 'bdist_wheel'
+    commandLine 'python', 'setup.py', 'bdist_wheel',
+            '--dist-dir', pyPiPackageDir
     workingDir condaBuildDir
 }
 
@@ -416,27 +410,24 @@ class PyPiTaskSpec extends TaskSpec {
 }
 
 def pyPiTaskSpecs = new UploadTaskSpecs<PyPiTaskSpec>(
-        project: project,
-        stable: new PyPiTaskSpec(
-                taskName: "pyPiUploadStable",
+        project, "pyPi",
+        new PyPiTaskSpec(
                 repoURL: "https://upload.pypi.org/legacy/",
                 username: stablePyPiUser,
                 password: stablePyPiPassword
         ),
-        dev: new PyPiTaskSpec(
-                taskName: "pyPiUploadDev",
+        new PyPiTaskSpec(
                 repoURL: "https://test.pypi.org/legacy/",
                 username: devPyPiUser,
                 password: devPyPiPassword
-        ),
-        protectedDeployTaskName: "pyPiUploadProtected"
+        )
 )
 
 pyPiTaskSpecs.createTasks { taskSpec ->
     task([type: Exec], taskSpec.taskName) {
         if (!isTeamcityBuild) {
             dependsOn([pyPiPackage])
-            workingDir(condaBuildDir.resolve("dist"))
+            workingDir(condaBuildDir.resolve(pyPiPackageDir))
         } else {
             workingDir(tcDir)
         }
