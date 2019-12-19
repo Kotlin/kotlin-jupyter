@@ -2,9 +2,11 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import khttp.responses.Response
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import org.jetbrains.kotlin.konan.parseKonanVersion
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -21,10 +23,12 @@ val LocalSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kot
 val GitHubApiHost = "api.github.com"
 val GitHubRepoOwner = "kotlin"
 val GitHubRepoName = "kotlin-jupyter"
-val GitHubBranchName = "remote_config"
+val GitHubBranchName = "master"
 val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName"
 
 val LibraryDescriptorExt = "json"
+val LibraryPropertiesFile = ".properties"
+val libraryDescriptorFormatVersion = 1
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
@@ -47,8 +51,6 @@ data class KernelConfig(
 )
 
 val protocolVersion = "5.3"
-
-val libraryDescriptorFormatVersion = "1.0"
 
 data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
 
@@ -99,7 +101,7 @@ fun getLatestCommitToLibraries(sinceTimestamp: String?): Pair<String, String>? =
             if (sinceTimestamp != null)
                 url += "&since=$sinceTimestamp"
             log.info("Checking for new commits to library descriptors at $url")
-            val arr = khttp.get(url).jsonArray
+            val arr = getHttp(url).jsonArray
             if (arr.length() == 0) {
                 if (sinceTimestamp != null)
                     getLatestCommitToLibraries(null)
@@ -115,6 +117,25 @@ fun getLatestCommitToLibraries(sinceTimestamp: String?): Pair<String, String>? =
             }
         }
 
+fun getHttp(url: String): Response {
+    val response = khttp.get(url)
+    if (response.statusCode != 200)
+        throw Exception("Http request failed. Url = $url. Response = $response")
+    return response
+}
+
+fun getLibraryDescriptorVersion(commitSha: String) =
+        log.catchAll {
+            val url = "$GitHubApiPrefix/contents/$LibrariesDir/$LibraryPropertiesFile?ref=$commitSha"
+            log.info("Checking current library descriptor format version from $url")
+            val response = getHttp(url)
+            val downloadUrl = response.jsonObject["download_url"].toString()
+            val downloadResult = getHttp(downloadUrl)
+            val result = downloadResult.text.parseIniConfig()["formatVersion"]!!.toInt()
+            log.info("Current library descriptor format version: $result")
+            result
+        }
+
 /***
  * Downloads library descriptors from GitHub to local cache if new commits in `libraries` directory were detected
  */
@@ -126,7 +147,7 @@ fun downloadNewLibraryDescriptors() {
     val footprintFilePath = Paths.get(LocalSettingsPath, LocalCacheDir, CachedLibrariesFootprintFile).toString()
     log.info("Reading commit info for which library descriptors were cached: '$footprintFilePath'")
     val footprintFile = File(footprintFilePath)
-    val footprint = footprintFile.readIniConfig()
+    val footprint = footprintFile.tryReadIniConfig()
     val timestampRegex = """\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z""".toRegex()
     val syncedCommitTimestamp = footprint?.get("timestamp")?.validOrNull { timestampRegex.matches(it) }
     val syncedCommitSha = footprint?.get("sha")
@@ -138,6 +159,17 @@ fun downloadNewLibraryDescriptors() {
         return
     }
 
+    // Download library descriptor version
+
+    val descriptorVersion = getLibraryDescriptorVersion(latestCommitSha) ?: return
+    if (descriptorVersion != libraryDescriptorFormatVersion) {
+        if (descriptorVersion < libraryDescriptorFormatVersion)
+            log.error("Incorrect library descriptor version in GitHub repository: $descriptorVersion")
+        else
+            log.warn("Kotlin Kernel needs to be updated to the latest version. Couldn't download new library descriptors from GitHub repository because their format was changed")
+        return
+    }
+
     // Download library descriptors
 
     log.info("New commits to library descriptors were detected. Downloading library descriptors for commit $latestCommitSha")
@@ -145,9 +177,7 @@ fun downloadNewLibraryDescriptors() {
     val libraries = log.catchAll {
         val url = "$GitHubApiPrefix/contents/$LibrariesDir?ref=$latestCommitSha"
         log.info("Requesting the list of library descriptors at $url")
-        val response = khttp.get(url)
-        if (response.statusCode != 200)
-            throw Exception("Failed to get GitHub contents for '$LibrariesDir' from $url. Response = $response")
+        val response = getHttp(url)
 
         response.jsonArray.mapNotNull {
             val o = it as JSONObject
@@ -155,9 +185,7 @@ fun downloadNewLibraryDescriptors() {
             if ("""[\w-]+.$LibraryDescriptorExt""".toRegex().matches(filename)) {
                 val libUrl = o["download_url"].toString()
                 log.info("Downloading '$filename' from $libUrl")
-                val res = khttp.get(libUrl)
-                if (res.statusCode != 200)
-                    throw Exception("Failed to download '$filename' from $libUrl. Response = $res")
+                val res = getHttp(libUrl)
                 val text = res.jsonObject.toString()
                 filename to text
             } else null
