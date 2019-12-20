@@ -1,11 +1,23 @@
 import json
 import os
 import subprocess
-from sys import argv
+import sys
 from typing import List
 
 
-def run_kernel(connection_file: str, jar_args_file: str = None, executables_dir: str = None) -> None:
+def run_kernel(*args) -> None:
+    try:
+        run_kernel_impl(*args)
+    except KeyboardInterrupt:
+        print("Kernel interrupted")
+        try:
+            sys.exit(130)
+        except SystemExit:
+            # noinspection PyProtectedMember
+            os._exit(130)
+
+
+def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables_dir: str = None) -> None:
     abspath = os.path.abspath(__file__)
     current_dir = os.path.dirname(abspath)
 
@@ -37,4 +49,4 @@ def run_kernel(connection_file: str, jar_args_file: str = None, executables_dir:
 
 
 if __name__ == "__main__":
-    run_kernel(*(argv[1:]))
+    run_kernel(*(sys.argv[1:]))
