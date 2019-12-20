@@ -16,11 +16,21 @@ Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://myb
 
 There are two ways to install kernel:
 
-### Conda package
+### Conda/PyPi packages
 
-If you have `conda` installed, just run:
+If you have `conda` installed, just run the following command to install stable package version:
  
-`conda install kotlin-jupyter-kernel -c jetbrains`
+`conda install -c jetbrains kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains/kotlin-jupyter-kernel))
+
+To install conda package from the dev channel:
+
+`conda install -c jetbrains-dev kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains-dev/kotlin-jupyter-kernel))
+
+You can also install this package through `pip` (stable and dev channels accordingly):
+ 
+`pip install kotlin-jupyter-kernel` ([package home](https://pypi.org/project/kotlin-jupyter-kernel/))
+
+`pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel` ([package home](https://test.pypi.org/project/kotlin-jupyter-kernel/))
 
 ### From sources
 
