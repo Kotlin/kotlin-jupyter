@@ -2,7 +2,7 @@
 out/
 build/
 conda-pip-build/
-teamcity-artifacts/
+artifacts/
 .gradle/
 *.iml
 **/.ipynb*

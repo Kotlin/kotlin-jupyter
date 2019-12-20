@@ -41,26 +41,23 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    ext.teamcityArtifactsPath = "teamcity-artifacts"
-    ext.tcDir = rootDir.toPath().resolve(teamcityArtifactsPath)
-    ext.isTeamcityBuild = ext.tcDir.toFile().exists()
+    ext.artifactsPathStr = project.findProperty('artifactsPath') ?: 'artifacts'
+    ext.artifactsDir = rootDir.toPath().resolve(artifactsPathStr)
 
     String defaultVersion = '0.7.15'
     ext.packageName = 'kotlin-jupyter-kernel'
     project.ext.isProtectedBranch = isProtectedBranch()
-    String buildCounterStr = rootProject.ext.has('build.counter') ?
-            rootProject.ext.get('build.counter') : '100500'
-    String devAddition = project.ext.isProtectedBranch ? "" : ".dev1"
+    String buildCounterStr = rootProject.findProperty('build.counter') ?: '100500'
+    String devAddition = project.ext.isProtectedBranch ? '' : '.dev1'
 
     String defaultBuildNumber = "$defaultVersion.$buildCounterStr$devAddition"
-    String buildNumber = rootProject.ext.has('build.number') ?
-            rootProject.ext.get('build.number') : ""
+    String buildNumber = rootProject.findProperty('build.number') ?: ''
     String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
 
     ext.versionFileName = "VERSION"
 
     if (!Pattern.matches(buildNumberRegex, buildNumber)) {
-        def versionFile = ext.tcDir.resolve(ext.versionFileName).toFile()
+        def versionFile = ext.artifactsDir.resolve(ext.versionFileName).toFile()
         if (versionFile.exists()) {
             def lines = versionFile.readLines()
             assert !lines.empty, "There should be at least one line in VERSION file"
@@ -70,9 +67,9 @@ allprojects {
         }
     }
 
-    project.ext.version = buildNumber
+    ext.buildVersion = buildNumber
 
-    println("##teamcity[buildNumber '$buildNumber']")
+    println("##teamcity[buildNumber '$buildVersion']")
 
     ext.installPath = project.hasProperty('installPath') ?
             Paths.get(project.getProperty('installPath') as String) :
@@ -101,7 +98,9 @@ allprojects {
     ext.pyPiPackageDir = "pip-package"
 
     ext.condaPackageName = packageName
+    ext.condaPackageFileName = "$condaPackageName-${buildVersion}-py_0.tar.bz2".toString()
     ext.pyPiPackageName = packageName.replaceAll("-", "_")
+    ext.pyPiPackageFileName = "$pyPiPackageName-${buildVersion}-py3-none-any.whl".toString()
 
     ext.distributionDir = rootDir.toPath().resolve("distribution")
 }
@@ -139,7 +138,7 @@ dependencies {
 
 jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
-    'Implementation-Version': project.ext.version
+    'Implementation-Version': buildVersion
 )
 
 shadowJar {
@@ -162,7 +161,7 @@ task cleanInstallDirConda(){
 
 boolean isProtectedBranch() {
     def branchProp = 'build.branch'
-    def branch = project.ext.has(branchProp) ? project.ext.get(branchProp) as String : null
+    def branch = project.findProperty(branchProp) as String
     println("Current branch: $branch")
     if (branch != null) {
         branch = branch.substring(branch.lastIndexOf('/') + 1)
@@ -288,25 +287,36 @@ task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
     from distributionDir
     into condaBuildDir
     exclude '.idea/**'
+}
+
+task prepareCondaBuildDir(dependsOn: [cleanInstallDirConda, copyCondaFiles]) {
     doLast {
-        condaBuildDir.resolve(versionFileName).toFile().write(project.ext.version as String)
+        def versionFilePath = condaBuildDir.resolve(versionFileName)
+        versionFilePath.toFile().write(buildVersion as String)
+        project.copy {
+            from versionFilePath
+            into artifactsDir
+        }
     }
 }
 
 createInstallTasks(false, condaBuildDir.resolve(condaKernelDir), condaBuildDir.resolve(runKernelDir))
 
-task condaBuild(dependsOn: [copyCondaFiles, installKernelConda, installLibsConda, createSpecsConda, copyLibrariesConfigConda]) {
+task condaBuild(dependsOn: [prepareCondaBuildDir, installKernelConda, installLibsConda, createSpecsConda, copyLibrariesConfigConda]) {
 }
 
-task condaDebugBuild(dependsOn: [copyCondaFiles, installKernelConda, installLibsConda, createDebugSpecsConda, copyLibrariesConfigConda]) {
+task condaDebugBuild(dependsOn: [prepareCondaBuildDir, installKernelConda, installLibsConda, createDebugSpecsConda, copyLibrariesConfigConda]) {
 }
 
 task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
-    doFirst {
-        makeDirs(condaBuildDir.resolve(condaPackageDir))
-    }
     commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
     workingDir condaBuildDir
+    doLast {
+        copy {
+            from condaBuildDir.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
+            into artifactsDir
+        }
+    }
 }
 
 class TaskSpec {
@@ -335,13 +345,13 @@ class UploadTaskSpecs <T extends TaskSpec> {
     }
 
     void createTasks(Consumer<T> taskCreationAction) {
-        if (project.ext.isProtectedBranch) {
+        if (project.isProtectedBranch) {
             taskCreationAction.accept(stable)
         }
         taskCreationAction.accept(dev)
 
         project.task([dependsOn: project.cleanInstallDirConda], taskName("Protected")) {
-            if (project.ext.isProtectedBranch) {
+            if (project.isProtectedBranch) {
                 dependsOn(dev.taskName)
             }
         }
@@ -364,30 +374,25 @@ ext.condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
         )
 )
 
-void doCondaUpload(CondaTaskSpec taskSpec, java.nio.file.Path artifactPath) {
-    exec {
-        commandLine 'anaconda', 'login',
-                '--username', condaTaskSpecs.stable.username,
-                '--password', condaTaskSpecs.stable.password
-        standardInput new ByteArrayInputStream("yes".bytes)
-    }
-
-    def artifactFilePath = artifactPath.resolve("$condaPackageName-${project.ext.version}-py_0.tar.bz2")
-    exec {
-        commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactFilePath.toString())
-    }
-}
-
 condaTaskSpecs.createTasks { TaskSpec taskSpec ->
     task(taskSpec.taskName) {
-        def artifactsDir = tcDir
-        if (!isTeamcityBuild) {
-            artifactsDir = getSubdir(condaBuildDir, condaPackageDir, "noarch")
+        def artifactPath = artifactsDir.resolve(condaPackageFileName)
+
+        if (!artifactPath.toFile().exists()) {
             dependsOn([cleanInstallDirConda, condaPackage])
         }
 
         doLast {
-            doCondaUpload(taskSpec as CondaTaskSpec, artifactsDir)
+            exec {
+                commandLine 'anaconda', 'login',
+                        '--username', condaTaskSpecs.stable.username,
+                        '--password', condaTaskSpecs.stable.password
+                standardInput new ByteArrayInputStream("yes".bytes)
+            }
+
+            exec {
+                commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactPath.toString())
+            }
         }
     }
 }
@@ -397,6 +402,13 @@ task pyPiPackage(type: Exec, dependsOn: condaBuild) {
     commandLine 'python', 'setup.py', 'bdist_wheel',
             '--dist-dir', pyPiPackageDir
     workingDir condaBuildDir
+
+    doLast {
+        copy {
+            from condaBuildDir.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
+            into artifactsDir
+        }
+    }
 }
 
 class PyPiTaskSpec extends TaskSpec {
@@ -421,17 +433,17 @@ def pyPiTaskSpecs = new UploadTaskSpecs<PyPiTaskSpec>(
 
 pyPiTaskSpecs.createTasks { taskSpec ->
     task([type: Exec], taskSpec.taskName) {
-        if (!isTeamcityBuild) {
+        workingDir(artifactsDir)
+        def artifactPath = artifactsDir.resolve(pyPiPackageFileName)
+
+        if (!artifactPath.toFile().exists()) {
             dependsOn([pyPiPackage])
-            workingDir(condaBuildDir.resolve(pyPiPackageDir))
-        } else {
-            workingDir(tcDir)
         }
 
         commandLine "twine", "upload",
                 "-u", taskSpec.username,
                 "-p", taskSpec.password,
                 "--repository-url", taskSpec.repoURL,
-                "$pyPiPackageName-${project.ext.version}-py3-none-any.whl"
+                pyPiPackageFileName
     }
 }
