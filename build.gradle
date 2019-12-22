@@ -75,34 +75,38 @@ allprojects {
             Paths.get(project.getProperty('installPath') as String) :
             Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
     ext.installPathStr = installPath.toAbsolutePath().toString()
+
     ext.debugPort = 1044
     ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
+    ext.jarsPath = "jars"
+    ext.kernelFile = "kernel.json"
     ext.configDir = "config"
     // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
     ext.configFile = configDir + "/config.json"
     ext.jarArgsFile = configDir + "/jar_args.json"
 
-    ext.jarsPath = "jars"
-
-    ext.kernelFile = "kernel.json"
-
-    ext.condaBuildDir = rootDir.toPath().resolve("conda-pip-build")
-    ext.condaMetaDir = "conda"
-    ext.condaMetaYaml = "meta.yaml"
-    ext.condaKernelDir = "kernel"
+    ext.distributionDir = rootDir.toPath().resolve("distribution")
+    ext.distribBuildDir = rootDir.toPath().resolve("distrib-build")
+    ext.distribKernelDir = "kernel"
     ext.runKernelDir = "run_kotlin_kernel"
     ext.setupPy = "setup.py"
     ext.runKernelPy = "run_kernel.py"
-    ext.condaPackageDir = "conda-package"
-    ext.pyPiPackageDir = "pip-package"
 
+    ext.condaMetaDir = "conda"
+    ext.condaMetaYaml = "meta.yaml"
+    ext.condaPackageDir = "conda-package"
     ext.condaPackageName = packageName
     ext.condaPackageFileName = "$condaPackageName-${buildVersion}-py_0.tar.bz2".toString()
+
+    ext.pyPiPackageDir = "pip-package"
     ext.pyPiPackageName = packageName.replaceAll("-", "_")
     ext.pyPiPackageFileName = "$pyPiPackageName-${buildVersion}-py3-none-any.whl".toString()
 
-    ext.distributionDir = rootDir.toPath().resolve("distribution")
+    ext.copyLibrariesConfigTaskPrefix = "copyLibrariesConfig"
+    ext.installLibsTaskPrefix = "installLibs"
+    ext.installKernelTaskPrefix = "installKernel"
+    ext.cleanInstallDirTaskPrefix = "cleanInstallDir"
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -147,18 +151,6 @@ shadowJar {
     mergeServiceFiles()
 }
 
-task cleanInstallDirLocal(){
-    doLast {
-        installPath.deleteDir()
-    }
-}
-
-task cleanInstallDirConda(){
-    doLast {
-        condaBuildDir.deleteDir()
-    }
-}
-
 boolean isProtectedBranch() {
     def branchProp = 'build.branch'
     def branch = project.findProperty(branchProp) as String
@@ -170,30 +162,68 @@ boolean isProtectedBranch() {
     return false
 }
 
-void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
-    def cleanDirTask = getTasks().getByName(makeTaskName("cleanInstallDir", local))
-    createTaskForSpecs(true, local, cleanDirTask, specPath, mainInstallPath)
-    createTaskForSpecs(false, local, cleanDirTask, specPath, mainInstallPath)
+static String makeTaskName(String prefix, Boolean local) {
+    return prefix + (local ? "Local" : "Distrib")
+}
 
+static void makeDirs(java.nio.file.Path path) {
+    File dir = path.toFile()
+    if (!dir.exists()) {
+        dir.mkdirs()
+    }
+}
+
+static java.nio.file.Path getSubDir(java.nio.file.Path dir, String... subDir) {
+    def newDir = dir
+    for (s in subDir) {
+        newDir = newDir.resolve(s)
+    }
+    return newDir
+}
+
+static void writeJson(Map<String, Object> json, java.nio.file.Path path) {
+    def jsonString = new JsonObject(json).toJsonString(true, false)
+    path.toFile().write(jsonString, 'UTF-8')
+}
+
+void createCleanTasks() {
+    [true, false].forEach { local ->
+        def dir = local ? installPath : distribBuildDir
+        task(makeTaskName(cleanInstallDirTaskPrefix, local)) {
+            doLast {
+                dir.deleteDir()
+            }
+        }
+    }
+}
+createCleanTasks()
+
+void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
+    def cleanDirTask = getTasks().getByName(makeTaskName(cleanInstallDirTaskPrefix, local))
     def args = [type: Copy, dependsOn: cleanDirTask]
 
-    task (args, makeTaskName("copyLibrariesConfig", local)) {
+    task (args, makeTaskName(copyLibrariesConfigTaskPrefix, local)) {
         from configFile
         into mainInstallPath.resolve(configDir)
     }
 
-    task (args, makeTaskName("installLibs", local)) {
+    task (args, makeTaskName(installLibsTaskPrefix, local)) {
         from configurations.deploy
         into mainInstallPath.resolve(jarsPath)
     }
 
-    task ([type: Copy, dependsOn: [cleanDirTask, shadowJar]], makeTaskName("installKernel", local)) {
+    task ([type: Copy, dependsOn: [cleanDirTask, shadowJar]], makeTaskName(installKernelTaskPrefix, local)) {
         from shadowJar.outputs
         into mainInstallPath.resolve(jarsPath)
     }
+
+    [true, false].forEach { debug ->
+        def specTaskName = createTaskForSpecs(debug, local, cleanDirTask, specPath, mainInstallPath)
+        createMainInstallTask(debug, local, specTaskName)
+    }
 }
 
-void createTaskForSpecs(Boolean debug, Boolean local, Task cleanDir, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
+String createTaskForSpecs(Boolean debug, Boolean local, Task cleanDir, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
     String taskName = makeTaskName(debug ? "createDebugSpecs" : "createSpecs", local)
     task(taskName) {
         dependsOn cleanDir, shadowJar
@@ -212,30 +242,26 @@ void createTaskForSpecs(Boolean debug, Boolean local, Task cleanDir, java.nio.fi
             makeKernelSpec(specPath, local)
         }
     }
+    return taskName
 }
 
-static String makeTaskName(String prefix, Boolean local) {
-    return prefix + (local ? "Local" : "Conda")
-}
+void createMainInstallTask(Boolean debug, Boolean local, String specsTaskName) {
+    def taskNamePrefix = local ? "install" : "prepare"
+    def taskNameMiddle = debug ? "Debug": ""
+    def taskNameSuffix = local ? "" : "Package"
+    def taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
 
-static void makeDirs(java.nio.file.Path path) {
-    File dir = path.toFile()
-    if (!dir.exists()) {
-        dir.mkdirs()
+    def dependencies = [
+            local ? copyRunKernelPy : prepareDistributionDir,
+            makeTaskName(installKernelTaskPrefix, local),
+            makeTaskName(installLibsTaskPrefix, local),
+            specsTaskName,
+            makeTaskName(copyLibrariesConfigTaskPrefix, local)
+    ]
+
+    task(taskName) {
+        dependsOn(dependencies)
     }
-}
-
-static java.nio.file.Path getSubdir(java.nio.file.Path dir, String... subdir) {
-    def newDir = dir
-    for (s in subdir) {
-        newDir = newDir.resolve(s)
-    }
-    return newDir
-}
-
-static void writeJson(Map<String, Object> json, java.nio.file.Path path) {
-    def jsonString = new JsonObject(json).toJsonString(true, false)
-    path.toFile().write(jsonString, 'UTF-8')
 }
 
 void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
@@ -254,7 +280,7 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
     ], installPath.resolve(kernelFile))
 
     project.copy {
-        from getSubdir(rootDir.toPath(), "kernelspec", "logos")
+        from getSubDir(rootDir.toPath(), "kernelspec", "logos")
         into installPath
     }
 }
@@ -269,29 +295,23 @@ void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<Stri
 }
 
 /****** Local install ******/
-createInstallTasks(true, installPath, installPath)
-
 task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal) {
     from distributionDir.resolve(runKernelDir).resolve(runKernelPy)
     into installPath
 }
 
-task install(dependsOn: [installKernelLocal, installLibsLocal, createSpecsLocal, copyLibrariesConfigLocal, copyRunKernelPy]) {
-}
+createInstallTasks(true, installPath, installPath)
 
-task installDebug(dependsOn: [installKernelLocal, installLibsLocal, createDebugSpecsLocal, copyLibrariesConfigLocal, copyRunKernelPy]) {
-}
-
-/****** Conda upload ******/
-task copyCondaFiles(type: Copy, dependsOn: cleanInstallDirConda) {
+/****** Prepare distribution ******/
+task copyDistribFiles(type: Copy, dependsOn: cleanInstallDirDistrib) {
     from distributionDir
-    into condaBuildDir
+    into distribBuildDir
     exclude '.idea/**'
 }
 
-task prepareCondaBuildDir(dependsOn: [cleanInstallDirConda, copyCondaFiles]) {
+task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles]) {
     doLast {
-        def versionFilePath = condaBuildDir.resolve(versionFileName)
+        def versionFilePath = distribBuildDir.resolve(versionFileName)
         versionFilePath.toFile().write(buildVersion as String)
         project.copy {
             from versionFilePath
@@ -300,20 +320,15 @@ task prepareCondaBuildDir(dependsOn: [cleanInstallDirConda, copyCondaFiles]) {
     }
 }
 
-createInstallTasks(false, condaBuildDir.resolve(condaKernelDir), condaBuildDir.resolve(runKernelDir))
+createInstallTasks(false, distribBuildDir.resolve(distribKernelDir), distribBuildDir.resolve(runKernelDir))
 
-task condaBuild(dependsOn: [prepareCondaBuildDir, installKernelConda, installLibsConda, createSpecsConda, copyLibrariesConfigConda]) {
-}
-
-task condaDebugBuild(dependsOn: [prepareCondaBuildDir, installKernelConda, installLibsConda, createDebugSpecsConda, copyLibrariesConfigConda]) {
-}
-
-task condaPackage(type: Exec, dependsOn: [cleanInstallDirConda, condaBuild]) {
+/****** Conda upload ******/
+task condaPackage(type: Exec, dependsOn: [cleanInstallDirDistrib, preparePackage]) {
     commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
-    workingDir condaBuildDir
+    workingDir distribBuildDir
     doLast {
         copy {
-            from condaBuildDir.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
+            from distribBuildDir.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
             into artifactsDir
         }
     }
@@ -350,7 +365,7 @@ class UploadTaskSpecs <T extends TaskSpec> {
         }
         taskCreationAction.accept(dev)
 
-        project.task([dependsOn: project.cleanInstallDirConda], taskName("Protected")) {
+        project.task([dependsOn: project.cleanInstallDirDistrib], taskName("Protected")) {
             if (project.isProtectedBranch) {
                 dependsOn(dev.taskName)
             }
@@ -358,19 +373,30 @@ class UploadTaskSpecs <T extends TaskSpec> {
     }
 }
 
-class CondaTaskSpec extends TaskSpec {
+class CondaCredentials {
     String username
     String password
 }
+
+class CondaTaskSpec extends TaskSpec {
+    String username
+    CondaCredentials credentials
+}
+
+ext.condaCredentials = new CondaCredentials(
+        username: condaUserStable,
+        password: condaPasswordStable
+)
 
 ext.condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
         project, "conda",
         new CondaTaskSpec(
                 username: condaUserStable,
-                password: condaPasswordStable
+                credentials: ext.condaCredentials
         ),
         new CondaTaskSpec(
-                username: condaUserDev
+                username: condaUserDev,
+                credentials: ext.condaCredentials
         )
 )
 
@@ -379,14 +405,14 @@ condaTaskSpecs.createTasks { TaskSpec taskSpec ->
         def artifactPath = artifactsDir.resolve(condaPackageFileName)
 
         if (!artifactPath.toFile().exists()) {
-            dependsOn([cleanInstallDirConda, condaPackage])
+            dependsOn([cleanInstallDirDistrib, condaPackage])
         }
 
         doLast {
             exec {
                 commandLine 'anaconda', 'login',
-                        '--username', condaTaskSpecs.stable.username,
-                        '--password', condaTaskSpecs.stable.password
+                        '--username', taskSpec.credentials.username,
+                        '--password', taskSpec.credentials.password
                 standardInput new ByteArrayInputStream("yes".bytes)
             }
 
@@ -398,14 +424,14 @@ condaTaskSpecs.createTasks { TaskSpec taskSpec ->
 }
 
 /****** PyPi upload ******/
-task pyPiPackage(type: Exec, dependsOn: condaBuild) {
+task pyPiPackage(type: Exec, dependsOn: preparePackage) {
     commandLine 'python', 'setup.py', 'bdist_wheel',
             '--dist-dir', pyPiPackageDir
-    workingDir condaBuildDir
+    workingDir distribBuildDir
 
     doLast {
         copy {
-            from condaBuildDir.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
+            from distribBuildDir.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
             into artifactsDir
         }
     }

@@ -1,7 +1,7 @@
 .idea/
 out/
 build/
-conda-pip-build/
+distrib-build/
 artifacts/
 .gradle/
 *.iml
