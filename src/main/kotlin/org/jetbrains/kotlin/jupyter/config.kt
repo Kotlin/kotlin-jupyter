@@ -6,6 +6,7 @@ import khttp.responses.Response
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import org.apache.commons.io.FileUtils
 import org.jetbrains.kotlin.konan.parseKonanVersion
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
@@ -198,6 +199,7 @@ fun downloadNewLibraryDescriptors() {
     val librariesDir = librariesPath.toFile()
     log.info("Saving ${libraries.count()} library descriptors to local cache at '$librariesPath'")
     try {
+        FileUtils.deleteDirectory(librariesDir)
         Files.createDirectories(librariesPath)
         libraries.forEach {
             File(librariesDir.toString(), it.first).writeText(it.second)
@@ -208,7 +210,7 @@ fun downloadNewLibraryDescriptors() {
         """.trimIndent())
     } catch (e: Exception) {
         log.error("Failed to write downloaded library descriptors to local cache:", e)
-        log.catchAll { librariesDir.delete() }
+        log.catchAll { FileUtils.deleteDirectory(librariesDir) }
     }
 }
 
