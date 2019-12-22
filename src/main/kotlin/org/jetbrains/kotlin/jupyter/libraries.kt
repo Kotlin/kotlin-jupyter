@@ -95,7 +95,6 @@ class LibrariesProcessor {
             val library = repl.config?.libraries?.awaitBlocking()?.get(name)
                     ?: throw ReplCompilerException("Unknown library '$name'")
 
-            // treat single strings in parsed arguments as values, not names
             val mapping = substituteArguments(library.variables, vars)
 
             processedLibraries.add(LibraryWithCode(library, generateCode(repl, library, mapping)))
