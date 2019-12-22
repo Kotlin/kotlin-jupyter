@@ -1,7 +1,7 @@
 {
-  "arguments": [
-    "v=0.12"
-  ],
+  "properties": {
+    "v": "0.13"
+  },
   "link": "https://koma.kyonifer.com/index.html",
   "repositories": [
     "https://dl.bintray.com/kyonifer/maven"

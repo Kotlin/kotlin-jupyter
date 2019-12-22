@@ -77,13 +77,12 @@ class ReplTest {
     fun TestUseMagic() {
         val lib1 = "mylib" to """
                     {
-                        "arguments": [
-                            "v1=0.2", 
-                            "v2=2.3"
-                        ],
+                        "properties": {
+                            "v1": "0.2"
+                        },
                         "dependencies": [
                             "artifact1:${'$'}v1",
-                            "artifact2:${'$'}v2"
+                            "artifact2:${'$'}v1"
                         ],
                         "imports": [
                             "package1",
@@ -96,10 +95,10 @@ class ReplTest {
                     }""".trimIndent()
         val lib2 = "other" to """
                                 {
-                                    "arguments": [
-                                        "a=temp", 
-                                        "b=test"
-                                    ],
+                                    "properties": {
+                                        "a": "temp", 
+                                        "b": "test"
+                                    },
                                     "dependencies": [
                                         "path-${'$'}a",
                                         "path-${'$'}b"
@@ -121,7 +120,7 @@ class ReplTest {
         arrayOf(
                 """
                     @file:DependsOn("artifact1:1.0")
-                    @file:DependsOn("artifact2:2.3")
+                    @file:DependsOn("artifact2:1.0")
                     import package1
                     import package2
                     code1

@@ -1,7 +1,7 @@
 {
-  "arguments": [
-    "v=-SNAPSHOT"
-  ],
+  "properties": {
+    "v": "-SNAPSHOT"
+  },
   "link": "https://github.com/holgerbrandl/krangl",
   "dependencies": [
     "com.github.holgerbrandl:krangl:$v"

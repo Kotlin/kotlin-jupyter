@@ -20,24 +20,21 @@ class LibrariesProcessor {
      * @return A name-to-value map of library arguments
      */
     private fun substituteArguments(parameters: List<Variable>, arguments: List<Variable>): Map<String, String> {
-        val firstNamed = arguments.indexOfFirst { it.name != null }
-        if (firstNamed != -1 && arguments.asSequence().drop(firstNamed).any { it.name == null })
-            throw ReplCompilerException("Mixing named and positional arguments is not allowed")
-        val parameterNames = parameters.map { it.name!! }.toSet()
         val result = mutableMapOf<String, String>()
-        for (i in 0 until arguments.count()) {
-            if (i >= parameters.count())
+        if (arguments.any { it.name.isEmpty() }) {
+            if (parameters.count() != 1)
+                throw ReplCompilerException("Unnamed argument is allowed only if library has a single property")
+            if (arguments.count() != 1)
                 throw ReplCompilerException("Too many arguments")
-            val name = arguments[i].name?.also {
-                if (!parameterNames.contains(it)) throw ReplCompilerException("Can not find parameter with name '$it'")
-            } ?: parameters[i].name!!
+            result[parameters[0].name] = arguments[0].value
+            return result
+        }
 
-            if (result.containsKey(name)) throw ReplCompilerException("An argument for parameter '$name' is already passed")
-            result[name] = arguments[i].value!!
+        arguments.forEach {
+            result[it.name] = it.value
         }
         parameters.forEach {
-            if (!result.containsKey(it.name!!)) {
-                if (it.value == null) throw ReplCompilerException("No value passed for parameter '${it.name}'")
+            if (!result.containsKey(it.name)) {
                 result[it.name] = it.value
             }
         }
@@ -99,8 +96,7 @@ class LibrariesProcessor {
                     ?: throw ReplCompilerException("Unknown library '$name'")
 
             // treat single strings in parsed arguments as values, not names
-            val arguments = vars.map { if (it.value == null) Variable(null, it.name) else it }
-            val mapping = substituteArguments(library.variables, arguments)
+            val mapping = substituteArguments(library.variables, vars)
 
             processedLibraries.add(LibraryWithCode(library, generateCode(repl, library, mapping)))
         }

@@ -1,8 +1,8 @@
 {
-  "arguments": [
-    "scala=2.11.12",
-    "spark=2.4.4"
-  ],
+  "properties": {
+    "scala": "2.11.12",
+    "spark": "2.4.4"
+  },
   "dependencies": [
     "org.apache.spark:spark-mllib_2.11:$spark",
     "org.apache.spark:spark-sql_2.11:$spark",

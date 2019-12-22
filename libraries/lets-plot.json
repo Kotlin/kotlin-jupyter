@@ -1,8 +1,8 @@
 {
-  "arguments": [
-    "core=1.0.1-SNAPSHOT",
-    "kotlin=0.0.8-SNAPSHOT"
-  ],
+  "properties": {
+    "core": "1.0.1-SNAPSHOT",
+    "kotlin": "0.0.8-SNAPSHOT"
+  },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
     "https://jetbrains.bintray.com/lets-plot-maven"

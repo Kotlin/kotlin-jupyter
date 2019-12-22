@@ -1,7 +1,7 @@
 {
-  "arguments": [
-    "v=5.2"
-  ],
+  "properties": {
+    "v": "5.2"
+  },
   "link": "https://github.com/cbeust/klaxon",
   "dependencies": [
     "com.beust:klaxon:$v"

@@ -54,7 +54,7 @@ val protocolVersion = "5.3"
 
 data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
 
-data class Variable(val name: String?, val value: String?)
+data class Variable(val name: String, val value: String)
 
 class LibraryDefinition(val dependencies: List<String>,
                         val variables: List<Variable>,
@@ -70,7 +70,7 @@ data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
 
 fun parseLibraryArgument(str: String): Variable {
     val eq = str.indexOf('=')
-    return if (eq == -1) Variable(str.trim(), null)
+    return if (eq == -1) Variable("", str.trim())
     else Variable(str.substring(0, eq).trim(), str.substring(eq + 1).trim())
 }
 
@@ -244,7 +244,7 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
     return libJsons.mapValues {
         LibraryDefinition(
                 dependencies = it.value.array<String>("dependencies")?.toList().orEmpty(),
-                variables = it.value.array<String>("arguments")?.map(::parseLibraryArgument).orEmpty(),
+                variables = it.value.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
                 imports = it.value.array<String>("imports")?.toList().orEmpty(),
                 repositories = it.value.array<String>("repositories")?.toList().orEmpty(),
                 init = it.value.array<String>("init")?.toList().orEmpty(),
