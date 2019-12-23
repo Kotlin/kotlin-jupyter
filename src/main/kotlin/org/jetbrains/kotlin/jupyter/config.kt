@@ -179,7 +179,7 @@ fun downloadNewLibraryDescriptors() {
         val url = "$GitHubApiPrefix/contents/$LibrariesDir?ref=$latestCommitSha"
         log.info("Requesting the list of library descriptors at $url")
         val response = getHttp(url)
-        val filenameRegex = """[\w-]+\.$LibraryDescriptorExt""".toRegex()
+        val filenameRegex = """[\w.-]+\.$LibraryDescriptorExt""".toRegex()
 
         response.jsonArray.mapNotNull {
             val o = it as JSONObject
