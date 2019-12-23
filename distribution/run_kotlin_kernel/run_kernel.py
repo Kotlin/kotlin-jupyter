@@ -32,7 +32,6 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         jar_args_json = json.load(fd)
 
         debug: str = jar_args_json["debuggerConfig"]
-        libs: str = jar_args_json["librariesPath"]
         cp: List[str] = jar_args_json["classPath"]
         main_jar: str = jar_args_json["mainJar"]
 
