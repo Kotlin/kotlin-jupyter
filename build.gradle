@@ -41,23 +41,30 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    ext.artifactsPathStr = project.findProperty('artifactsPath') ?: 'artifacts'
-    ext.artifactsDir = rootDir.toPath().resolve(artifactsPathStr)
-
-    String defaultVersion = '0.7.15'
-    ext.packageName = 'kotlin-jupyter-kernel'
-    project.ext.isProtectedBranch = isProtectedBranch()
+    String baseVersion = '0.7.15'
+    String artifactsPathStr = rootProject.findProperty('artifactsPath') ?: 'artifacts'
     String buildCounterStr = rootProject.findProperty('build.counter') ?: '100500'
-    String devAddition = project.ext.isProtectedBranch ? '' : '.dev1'
-
-    String defaultBuildNumber = "$defaultVersion.$buildCounterStr$devAddition"
     String buildNumber = rootProject.findProperty('build.number') ?: ''
-    String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
+    String installPath = rootProject.findProperty('installPath')
 
+    ext.rootPath = rootDir.toPath()
+    ext.packageName = 'kotlin-jupyter-kernel'
+    ext.artifactsDir = rootPath.resolve(artifactsPathStr)
+    ext.isProtectedBranch = isProtectedBranch()
     ext.versionFileName = "VERSION"
 
+    ext.installPathLocal = installPath ? Paths.get(installPath) :
+            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
+    ext.distributionPath = rootPath.resolve("distribution")
+    ext.distribBuildPath = rootPath.resolve("distrib-build")
+    ext.logosPath = getSubDir(rootPath, "kernelspec", "logos")
+
+    String devAddition = isProtectedBranch ? '' : '.dev1'
+    String defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
+    String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
+
     if (!Pattern.matches(buildNumberRegex, buildNumber)) {
-        def versionFile = ext.artifactsDir.resolve(ext.versionFileName).toFile()
+        def versionFile = artifactsDir.resolve(versionFileName).toFile()
         if (versionFile.exists()) {
             def lines = versionFile.readLines()
             assert !lines.empty, "There should be at least one line in VERSION file"
@@ -67,46 +74,40 @@ allprojects {
         }
     }
 
-    ext.buildVersion = buildNumber
+    project.version = buildNumber
+    println("##teamcity[buildNumber '$version']")
 
-    println("##teamcity[buildNumber '$buildVersion']")
+    ext {
+        debugPort = 1044
+        debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
-    ext.installPath = project.hasProperty('installPath') ?
-            Paths.get(project.getProperty('installPath') as String) :
-            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
-    ext.installPathStr = installPath.toAbsolutePath().toString()
+        jarsPath = "jars"
+        kernelFile = "kernel.json"
+        configDir = "config"
+        // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
+        configFile = configDir + "/config.json"
+        jarArgsFile = configDir + "/jar_args.json"
 
-    ext.debugPort = 1044
-    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
+        distribKernelDir = "kernel"
+        runKernelDir = "run_kotlin_kernel"
+        setupPy = "setup.py"
+        runKernelPy = "run_kernel.py"
 
-    ext.jarsPath = "jars"
-    ext.kernelFile = "kernel.json"
-    ext.configDir = "config"
-    // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
-    ext.configFile = configDir + "/config.json"
-    ext.jarArgsFile = configDir + "/jar_args.json"
+        condaMetaDir = "conda"
+        condaMetaYaml = "meta.yaml"
+        condaPackageDir = "conda-package"
+        condaPackageName = packageName
+        condaPackageFileName = "$condaPackageName-${version}-py_0.tar.bz2".toString()
 
-    ext.distributionDir = rootDir.toPath().resolve("distribution")
-    ext.distribBuildDir = rootDir.toPath().resolve("distrib-build")
-    ext.distribKernelDir = "kernel"
-    ext.runKernelDir = "run_kotlin_kernel"
-    ext.setupPy = "setup.py"
-    ext.runKernelPy = "run_kernel.py"
+        pyPiPackageDir = "pip-package"
+        pyPiPackageName = packageName.replaceAll("-", "_")
+        pyPiPackageFileName = "$pyPiPackageName-${version}-py3-none-any.whl".toString()
 
-    ext.condaMetaDir = "conda"
-    ext.condaMetaYaml = "meta.yaml"
-    ext.condaPackageDir = "conda-package"
-    ext.condaPackageName = packageName
-    ext.condaPackageFileName = "$condaPackageName-${buildVersion}-py_0.tar.bz2".toString()
-
-    ext.pyPiPackageDir = "pip-package"
-    ext.pyPiPackageName = packageName.replaceAll("-", "_")
-    ext.pyPiPackageFileName = "$pyPiPackageName-${buildVersion}-py3-none-any.whl".toString()
-
-    ext.copyLibrariesConfigTaskPrefix = "copyLibrariesConfig"
-    ext.installLibsTaskPrefix = "installLibs"
-    ext.installKernelTaskPrefix = "installKernel"
-    ext.cleanInstallDirTaskPrefix = "cleanInstallDir"
+        copyLibrariesConfigTaskPrefix = "copyLibrariesConfig"
+        installLibsTaskPrefix = "installLibs"
+        installKernelTaskPrefix = "installKernel"
+        cleanInstallDirTaskPrefix = "cleanInstallDir"
+    }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -142,7 +143,7 @@ dependencies {
 
 jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
-    'Implementation-Version': buildVersion
+    'Implementation-Version': version
 )
 
 shadowJar {
@@ -188,7 +189,7 @@ static void writeJson(Map<String, Object> json, java.nio.file.Path path) {
 
 void createCleanTasks() {
     [true, false].forEach { local ->
-        def dir = local ? installPath : distribBuildDir
+        def dir = local ? installPathLocal : distribBuildPath
         task(makeTaskName(cleanInstallDirTaskPrefix, local)) {
             doLast {
                 dir.deleteDir()
@@ -280,7 +281,7 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
     ], installPath.resolve(kernelFile))
 
     project.copy {
-        from getSubDir(rootDir.toPath(), "kernelspec", "logos")
+        from logosPath
         into installPath
     }
 }
@@ -296,23 +297,23 @@ void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<Stri
 
 /****** Local install ******/
 task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal) {
-    from distributionDir.resolve(runKernelDir).resolve(runKernelPy)
-    into installPath
+    from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
+    into installPathLocal
 }
 
-createInstallTasks(true, installPath, installPath)
+createInstallTasks(true, installPathLocal, installPathLocal)
 
 /****** Prepare distribution ******/
 task copyDistribFiles(type: Copy, dependsOn: cleanInstallDirDistrib) {
-    from distributionDir
-    into distribBuildDir
+    from distributionPath
+    into distribBuildPath
     exclude '.idea/**'
 }
 
 task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles]) {
     doLast {
-        def versionFilePath = distribBuildDir.resolve(versionFileName)
-        versionFilePath.toFile().write(buildVersion as String)
+        def versionFilePath = distribBuildPath.resolve(versionFileName)
+        versionFilePath.toFile().write(version as String)
         project.copy {
             from versionFilePath
             into artifactsDir
@@ -320,15 +321,15 @@ task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles
     }
 }
 
-createInstallTasks(false, distribBuildDir.resolve(distribKernelDir), distribBuildDir.resolve(runKernelDir))
+createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBuildPath.resolve(runKernelDir))
 
 /****** Conda upload ******/
 task condaPackage(type: Exec, dependsOn: [cleanInstallDirDistrib, preparePackage]) {
     commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
-    workingDir distribBuildDir
+    workingDir distribBuildPath
     doLast {
         copy {
-            from distribBuildDir.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
+            from distribBuildPath.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
             into artifactsDir
         }
     }
@@ -427,11 +428,11 @@ condaTaskSpecs.createTasks { TaskSpec taskSpec ->
 task pyPiPackage(type: Exec, dependsOn: preparePackage) {
     commandLine 'python', 'setup.py', 'bdist_wheel',
             '--dist-dir', pyPiPackageDir
-    workingDir distribBuildDir
+    workingDir distribBuildPath
 
     doLast {
         copy {
-            from distribBuildDir.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
+            from distribBuildPath.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
             into artifactsDir
         }
     }
