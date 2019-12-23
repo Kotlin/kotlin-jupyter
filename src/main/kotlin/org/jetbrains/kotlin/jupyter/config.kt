@@ -183,7 +183,7 @@ fun downloadNewLibraryDescriptors() {
         response.jsonArray.mapNotNull {
             val o = it as JSONObject
             val filename = o["name"] as String
-            if ("""[\w-]+.$LibraryDescriptorExt""".toRegex().matches(filename)) {
+            if ("""[\w-]+\.$LibraryDescriptorExt""".toRegex().matches(filename)) {
                 val libUrl = o["download_url"].toString()
                 log.info("Downloading '$filename' from $libUrl")
                 val res = getHttp(libUrl)
