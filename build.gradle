@@ -82,10 +82,10 @@ allprojects {
         debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
         jarsPath = "jars"
+        librariesPath = "libraries"
         kernelFile = "kernel.json"
         configDir = "config"
         // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
-        configFile = configDir + "/config.json"
         jarArgsFile = configDir + "/jar_args.json"
 
         distribKernelDir = "kernel"
@@ -103,7 +103,7 @@ allprojects {
         pyPiPackageName = packageName.replaceAll("-", "_")
         pyPiPackageFileName = "$pyPiPackageName-${version}-py3-none-any.whl".toString()
 
-        copyLibrariesConfigTaskPrefix = "copyLibrariesConfig"
+        copyLibrariesTaskPrefix = "copyLibraries"
         installLibsTaskPrefix = "installLibs"
         installKernelTaskPrefix = "installKernel"
         cleanInstallDirTaskPrefix = "cleanInstallDir"
@@ -145,6 +145,7 @@ dependencies {
 
     compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'khttp:khttp:1.0.0'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:5.2'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
@@ -220,9 +221,9 @@ void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.fil
     def cleanDirTask = getTasks().getByName(makeTaskName(cleanInstallDirTaskPrefix, local))
     def args = [type: Copy, dependsOn: cleanDirTask, group: groupName]
 
-    task (args, makeTaskName(copyLibrariesConfigTaskPrefix, local)) {
-        from configFile
-        into mainInstallPath.resolve(configDir)
+    task (args, makeTaskName(copyLibrariesTaskPrefix, local)) {
+        from librariesPath
+        into mainInstallPath.resolve(librariesPath)
     }
 
     task (args, makeTaskName(installLibsTaskPrefix, local)) {
@@ -256,7 +257,7 @@ String createTaskForSpecs(Boolean debug, Boolean local, String group, Task clean
             makeDirs(mainInstallPath.resolve(configDir))
             makeDirs(specPath)
 
-            makeJarArgs(mainInstallPath, kernelFile.name, libsCp, configFile, debug ? debuggerConfig : "")
+            makeJarArgs(mainInstallPath, kernelFile.name, libsCp, debug ? debuggerConfig : "")
             makeKernelSpec(specPath, local)
         }
     }
@@ -274,7 +275,7 @@ void createMainInstallTask(Boolean debug, Boolean local, String group, String sp
             makeTaskName(installKernelTaskPrefix, local),
             makeTaskName(installLibsTaskPrefix, local),
             specsTaskName,
-            makeTaskName(copyLibrariesConfigTaskPrefix, local)
+            makeTaskName(copyLibrariesTaskPrefix, local)
     ]
 
     task([group: group], taskName) {
@@ -303,11 +304,10 @@ void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
     }
 }
 
-void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<String> classPath, String librariesPath, String debuggerConfig = "") {
+void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<String> classPath, String debuggerConfig = "") {
     writeJson([
             "mainJar": kernelJarPath,
             "classPath": classPath,
-            "librariesPath": librariesPath,
             "debuggerConfig": debuggerConfig,
     ], installPath.resolve(project.jarArgsFile))
 }

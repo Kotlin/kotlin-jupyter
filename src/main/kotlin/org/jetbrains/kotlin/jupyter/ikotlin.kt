@@ -5,27 +5,24 @@ import com.beust.klaxon.Parser
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
-
-val DefaultConfigFile = "config/config.json"
 
 data class KernelArgs(val cfgFile: File,
                       val scriptClasspath: List<File>,
-                      val libs: File?)
+                      val homeDir: File?)
 
 private fun parseCommandLine(vararg args: String): KernelArgs {
     var cfgFile: File? = null
     var classpath: List<File>? = null
-    var libsJson: File? = null
+    var homeDir: File? = null
     args.forEach {
         when {
             it.startsWith("-cp=") || it.startsWith("-classpath=") -> {
                 if (classpath != null) throw IllegalArgumentException("classpath already set to ${classpath!!.joinToString(File.pathSeparator)}")
                 classpath = it.substringAfter('=').split(File.pathSeparator).map { File(it) }
             }
-            it.startsWith("-libs=") -> {
-                libsJson = File(it.substringAfter('='))
+            it.startsWith("-home=") -> {
+                homeDir = File(it.substringAfter('='))
             }
             else -> {
                 if (cfgFile != null) throw IllegalArgumentException("config file already set to $cfgFile")
@@ -35,7 +32,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     }
     if (cfgFile == null) throw IllegalArgumentException("config file is not provided")
     if (!cfgFile!!.exists() || !cfgFile!!.isFile) throw IllegalArgumentException("invalid config file $cfgFile")
-    return KernelArgs(cfgFile!!, classpath ?: emptyList(), libsJson)
+    return KernelArgs(cfgFile!!, classpath ?: emptyList(), homeDir)
 }
 
 fun printClassPath() {
@@ -48,49 +45,12 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
-fun parseLibraryName(str: String): Pair<String, List<Variable>> {
-    val pattern = """\w+(\w+)?""".toRegex().matches(str)
-    val brackets = str.indexOf('(')
-    if (brackets == -1) return str.trim() to emptyList()
-    val name = str.substring(0, brackets).trim()
-    val args = str.substring(brackets + 1, str.indexOf(')', brackets))
-            .split(',')
-            .map {
-                val eq = it.indexOf('=')
-                if (eq == -1) Variable(it.trim(), null)
-                else Variable(it.substring(0, eq).trim(), it.substring(eq + 1).trim())
-            }
-    return name to args
-}
-
-fun readResolverConfig(file: File = File(DefaultConfigFile)): ResolverConfig =
-        parseResolverConfig(Parser().parse(file.canonicalPath) as JsonObject)
-
-fun parseResolverConfig(json: JsonObject): ResolverConfig {
-    val repos = json.array<String>("repositories")?.map { RepositoryCoordinates(it) }.orEmpty()
-    val artifacts = json.array<JsonObject>("libraries")?.map {
-        val (name, variables) = parseLibraryName(it.string("name")!!)
-        name to LibraryDefinition(
-                dependencies = it.array<String>("dependencies")?.toList().orEmpty(),
-                variables = variables,
-                imports = it.array<String>("imports")?.toList().orEmpty(),
-                repositories = it.array<String>("repositories")?.toList().orEmpty(),
-                init = it.array<String>("init")?.toList().orEmpty(),
-                initCell = it.array<String>("initCell")?.toList().orEmpty(),
-                renderers = it.array<JsonObject>("renderers")?.map {
-                    TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
-                }?.toList().orEmpty(),
-                link = it.string("link")
-        )
-    }?.toMap()
-    return ResolverConfig(repos, artifacts.orEmpty())
-}
-
 fun main(vararg args: String) {
     try {
         log.info("Kernel args: "+ args.joinToString { it })
-        val (cfgFile, scriptClasspath, librariesConfigFile) = parseCommandLine(*args)
-        val cfgJson = Parser().parse(cfgFile.canonicalPath) as JsonObject
+        val (cfgFile, scriptClasspath, homeDir) = parseCommandLine(*args)
+        val rootPath = homeDir!!.toString()
+        val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
         fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
 
         val sigScheme = cfgJson.string("signature_scheme")
@@ -102,7 +62,7 @@ fun main(vararg args: String) {
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
                 scriptClasspath = scriptClasspath,
-                resolverConfig = librariesConfigFile?.let { readResolverConfig(it) }
+                resolverConfig = loadResolverConfig(rootPath)
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)

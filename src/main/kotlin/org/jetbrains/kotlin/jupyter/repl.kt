@@ -42,7 +42,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 
-    private val renderers = config?.let { it.libraries.flatMap { it.value.renderers } }?.map { it.className to it }?.toMap().orEmpty()
+    private val renderers = config?.let {
+        it.libraries.asyncLet {
+            it.flatMap { it.value.renderers }.map { it.className to it }.toMap()
+        }
+    }
 
     private val includedLibraries = mutableSetOf<LibraryDefinition>()
 
@@ -88,9 +92,8 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             val kt = KotlinType(receiver.javaClass.canonicalName)
             implicitReceivers.invoke(listOf(kt))
 
-            val classes = listOf(/*receiver.javaClass,*/ ScriptTemplateWithDisplayHelpers::class.java)
-            val classPath = classes.asSequence().map { it.protectionDomain.codeSource.location.path }.joinToString(":")
-            compilerOptions.invoke(listOf("-classpath", classPath, "-jvm-target", "1.8"))
+            log.info("Classpath for compiler options: none")
+            compilerOptions.invoke(listOf("-jvm-target", "1.8"))
         }
     }
 
@@ -123,6 +126,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
             baseClassLoader(scriptClassloader)
         }
+        constructorArgs()
     }
 
     private var executionCounter = 0
@@ -167,7 +171,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     init {
         // TODO: to be removed after investigation of https://github.com/kotlin/kotlin-jupyter/issues/24
-        eval("1")
+        doEval("1")
     }
 
     fun eval(code: String, jupyterId: Int = -1): EvalResult {
@@ -226,8 +230,9 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                     }
                 }
 
-                if (result != null) {
-                    renderers[result.javaClass.canonicalName]?.let {
+                if (result != null && renderers != null) {
+                    val resultType = result.javaClass.canonicalName
+                    renderers.awaitBlocking()[resultType]?.let {
                         it.displayCode?.let {
                             doEval(it.replace("\$it", "res$replId")).value?.let(displays::add)
                         }

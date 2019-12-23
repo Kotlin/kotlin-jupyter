@@ -37,7 +37,6 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         main_jar: str = jar_args_json["mainJar"]
 
         debug_list = [] if debug is None or debug == "" else [debug]
-        libs_config_path = os.path.join(executables_dir, libs.replace("/", os.sep))
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
@@ -45,7 +44,7 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
                         [main_jar_path,
                          "-classpath=" + class_path_arg,
                          connection_file,
-                         "-libs=" + libs_config_path])
+                         "-home=" + executables_dir])
 
 
 if __name__ == "__main__":
