@@ -5,7 +5,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-Kotlin (1.3.70) REPL kernel for Jupyter (https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.3.70) kernel for [Jupyter](https://jupyter.org).
 
 Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
@@ -19,9 +19,9 @@ Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://myb
 
 ## Installation
 
-There are two ways to install kernel:
+There are three ways to install kernel:
 
-### Conda/PyPi packages
+### Conda
 
 If you have `conda` installed, just run the following command to install stable package version:
  
@@ -31,19 +31,31 @@ To install conda package from the dev channel:
 
 `conda install -c jetbrains-dev kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains-dev/kotlin-jupyter-kernel))
 
-You can also install this package through `pip` (stable and dev channels accordingly):
+Uninstall: `conda remove kotlin-jupyter-kernel`
+
+### Pip
+
+You can also install this package through `pip`:
  
+Stable:
 `pip install kotlin-jupyter-kernel` ([package home](https://pypi.org/project/kotlin-jupyter-kernel/))
 
+Dev:
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel` ([package home](https://test.pypi.org/project/kotlin-jupyter-kernel/))
+
+Uninstall: `pip uninstall kotlin-jupyter-kernel`
 
 ### From sources
 
-Run `./gradlew install`
+```bash
+git clone https://github.com/Kotlin/kotlin-jupyter.git
+cd kotlin-jupyter
+./gradlew install
+```
 
-Use option `-PinstallPath=` to specify installation path. *(Note that Jupyter looks for kernel specs files only in predefined places.)*
+Default installation path is `~/.ipython/kernels/kotlin/`. To install to some other location use option `-PinstallPath=`, but note that Jupyter looks for kernel specs files only in predefined places
 
-Default installation path is `~/.ipython/kernels/kotlin/`.
+Uninstall: `./gradlew uninstall`  
 
 ## Usage
 

@@ -321,4 +321,8 @@ task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGr
 
 createInstallTasks(true, installPathLocal, installPathLocal)
 
+task uninstall(dependsOn: cleanInstallDirLocal, group: localGroup) {
+
+}
+
 apply from: 'distrib.gradle'
