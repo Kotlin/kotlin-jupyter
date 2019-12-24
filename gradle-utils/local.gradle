@@ -1,6 +1,0 @@
-task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGroup) {
-    from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
-    into installPathLocal
-}
-
-createInstallTasks(true, installPathLocal, installPathLocal)

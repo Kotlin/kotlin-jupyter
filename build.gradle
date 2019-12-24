@@ -55,9 +55,9 @@ allprojects {
 
     ext.installPathLocal = installPath ? Paths.get(installPath) :
             Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
-    ext.distributionPath = rootPath.resolve("distribution")
+    ext.distributionPath = rootPath.resolve("distrib")
     ext.distribBuildPath = rootPath.resolve("distrib-build")
-    ext.logosPath = getSubDir(rootPath, "kernelspec", "logos")
+    ext.logosPath = getSubDir(rootPath, "resources", "logos")
 
     String devAddition = isProtectedBranch ? '' : '.dev1'
     String defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
@@ -108,8 +108,8 @@ allprojects {
         installKernelTaskPrefix = "installKernel"
         cleanInstallDirTaskPrefix = "cleanInstallDir"
 
-        localGroup = "local"
-        distribGroup = "distribution"
+        localGroup = "local install"
+        distribGroup = "distrib"
         condaGroup = "conda"
         pyPiGroup = "pip"
 
@@ -312,5 +312,13 @@ void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<Stri
     ], installPath.resolve(project.jarArgsFile))
 }
 
-apply from: 'gradle-utils/local.gradle'
-apply from: 'gradle-utils/distrib.gradle'
+/****** Local install ******/
+
+task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGroup) {
+    from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
+    into installPathLocal
+}
+
+createInstallTasks(true, installPathLocal, installPathLocal)
+
+apply from: 'distrib.gradle'
