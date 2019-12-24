@@ -88,7 +88,23 @@ When a library is included with `%use` keyword, the following functionality is a
  - artifact dependencies
  - default imports
  - library initialization code
- - renderers for special types, e.g. charts and data frames 
+ - renderers for special types, e.g. charts and data frames
+
+This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](libraries) directory.
+A library descriptor may provide a set of properties with default values that can be overridden when library is included.
+The major use case for library properties is to specify particular version of library. If descriptor has only one property, it can be 
+defined without naming:
+```
+%use krangl(0.10)
+```
+If library descriptor defines more than one property, property names should be used:
+```
+%use spark(scala=2.11.10, spark=2.4.2)
+```
+Several libraries can be included in single `%use` statement, separated by `,`:
+```
+%use lets-plot, krangl, mysql(8.0.15)
+```
 
 List of supported libraries:
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
@@ -100,16 +116,9 @@ List of supported libraries:
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
-
-*The list of all supported libraries can be found in ['libraries' directory](libraries)*
-
-A definition of supported library may have a list of optional arguments that can be overriden when library is included.
-The major use case for library arguments is to specify particular version of library. Most library definitions default to `-SNAPSHOT` version that may be overriden in `%use` magic.     
-
-Usage example:
-```
-%use krangl(0.10), lets-plot
-```
+ - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
+ - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
+ - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
 
 ### Rich output
   
@@ -144,7 +153,7 @@ Press `TAB` to get the list of suggested items for completion.
 
 To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
 
-Check ['libraries'](libraries) directory to see examples of library descriptors.
+Check [libraries](libraries) directory to see examples of library descriptors.
 
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
@@ -168,14 +177,14 @@ Library properties can be used in any parts of library descriptor as `$property`
 
 To register new library descriptor:
 1. For private usage - add it to local settings folder `<UserHome>/.jupyter_kotlin/libraries`
-2. For sharing with community - commit it to ['libraries'](libraries) directory and create pull request.
+2. For sharing with community - commit it to [libraries](libraries) directory and create pull request.
 
 If you are maintaining some library and want to update your library descriptor, just create pull request with your update. After your request is accepted, 
 new version of your library will be available to all Kotlin Jupyter users immediately on next kernel startup (no kernel update is needed).
 
 If a library descriptor with the same name is found in several locations, the following resolution priority is used:
 1. Local settings folder (highest priority)
-2. ['libraries'](libraries) folder at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
+2. [libraries](libraries) directory at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
 3. Kernel installation directory
 
 If you don't want some library to be updated automatically, put fixed version of its library descriptor into local settings folder.
