@@ -7,7 +7,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import org.apache.commons.io.FileUtils
-import org.jetbrains.kotlin.konan.parseKonanVersion
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 import java.io.File
