@@ -1,3 +1,4 @@
+[![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![PyPI](https://img.shields.io/pypi/v/kotlin-jupyter-kernel?label=PyPi)](https://pypi.org/project/kotlin-jupyter-kernel/)
 [![Anaconda](https://img.shields.io/conda/v/jetbrains/kotlin-jupyter-kernel?label=Anaconda)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
