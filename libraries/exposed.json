@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "v": "0.17.3"
+  },
+  "link": "https://github.com/JetBrains/Exposed",
+  "dependencies": [
+    "org.jetbrains.exposed:exposed:$v"
+  ],
+  "imports": [
+    "org.jetbrains.exposed.sql.transactions.*",
+    "org.jetbrains.exposed.sql.*"
+  ]
+}

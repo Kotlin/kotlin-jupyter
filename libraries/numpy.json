@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "v": "0.1.0"
+  },
+  "link": "https://github.com/Kotlin/kotlin-numpy",
+  "repositories": [
+    "https://kotlin.bintray.com/kotlin-numpy"
+  ],
+  "dependencies": [
+    "org.jetbrains:kotlin-numpy:$v"
+  ],
+  "imports": [
+    "org.jetbrains.numkt.core.*",
+    "org.jetbrains.numkt.math.*",
+    "org.jetbrains.numkt.*"
+  ]
+}
