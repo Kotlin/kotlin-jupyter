@@ -1,16 +1,11 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.json.JSONObject
 import org.slf4j.Logger
 import java.io.File
-import java.io.StringReader
-import javax.xml.bind.JAXBElement
 
 fun <T> catchAll(body: () -> T): T? = try {
     body()
@@ -46,8 +41,3 @@ fun File.tryReadIniConfig() =
         existsOrNull()?.let {
             catchAll { it.readText().parseIniConfig() }
         }
-
-fun readJson(path: String) =
-        Parser.default().parse(path) as JsonObject
-
-fun JSONObject.toJsonObject() = Parser.default().parse(StringReader(toString())) as JsonObject

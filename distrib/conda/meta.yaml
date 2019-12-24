@@ -1,0 +1,31 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: kotlin-jupyter-kernel
+  version: "{{ data.version }}"
+
+source:
+  - path: ..
+
+build:
+  number: 0
+  noarch: python
+  script: "{{ PYTHON }} -m pip install --no-deps --force-reinstall -vv ."
+
+requirements:
+  build:
+    - python
+    - pip
+
+  run:
+    - python >=3
+
+test:
+  imports:
+    - run_kotlin_kernel
+
+about:
+  home: "{{ data.url }}"
+  license: "{{ data.license }}"
+  license-family: "{{ data.license }}"
+  summary: "{{ data.description }}"

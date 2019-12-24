@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -161,6 +162,7 @@ class ReplTest {
         assertEquals(1, res.displayValues.count())
     }
 
+    @Ignore
     @Test
     //TODO: https://github.com/Kotlin/kotlin-jupyter/issues/25
     fun TestKranglImportInfixFun() {

@@ -1,6 +1,8 @@
 .idea/
 out/
 build/
+distrib-build/
+artifacts/
 .gradle/
 *.iml
 **/.ipynb*

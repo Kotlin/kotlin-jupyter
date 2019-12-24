@@ -1,1 +1,16 @@
 installPath=<path-to-jupyter>/kernels/kotlin
+
+build.branch=dev
+build.number=1.0.0
+build.counter=1
+
+condaUserStable=jetbrains
+condaPasswordStable=
+condaUserDev=jetbrains-dev
+
+stablePyPiUser=jetbrains
+stablePyPiPassword=
+devPyPiUser=jetbrains
+devPyPiPassword=
+
+org.gradle.jvmargs=-Xmx2048m

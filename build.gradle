@@ -1,10 +1,12 @@
-import java.nio.file.Files
+import com.beust.klaxon.JsonObject
+
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.util.regex.Pattern
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
     ext.kotlinVersion = '1.3.70-dev-2104'
+    ext.baseVersion = '0.7.40'
     repositories {
         jcenter()
         mavenLocal()
@@ -13,8 +15,10 @@ buildscript {
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
     }
     dependencies {
+        //noinspection DifferentKotlinGradleVersion
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion"
+        classpath "com.beust:klaxon:5.2"
     }
 }
 
@@ -25,7 +29,7 @@ allprojects {
         jcenter()
         mavenLocal()
         mavenCentral()
-//         only when using Kotlin EAP releases ...
+        // only when using Kotlin EAP releases ...
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url 'https://kotlin.bintray.com/kotlin-dependencies' }
@@ -38,13 +42,86 @@ allprojects {
         testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
-    version = '0.7.3'
+    String artifactsPathStr = rootProject.findProperty('artifactsPath') ?: 'artifacts'
+    String buildCounterStr = rootProject.findProperty('build.counter') ?: '100500'
+    String buildNumber = rootProject.findProperty('build.number') ?: ''
+    String installPath = rootProject.findProperty('installPath')
 
-    ext.installPath = project.hasProperty('installPath') ?
-            project.getProperty('installPath') :
-            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin").toAbsolutePath().toString()
-    ext.debugPort = 1044
-    ext.debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
+    ext.rootPath = rootDir.toPath()
+    ext.packageName = 'kotlin-jupyter-kernel'
+    ext.artifactsDir = rootPath.resolve(artifactsPathStr)
+    ext.isProtectedBranch = isProtectedBranch()
+    ext.versionFileName = "VERSION"
+
+    ext.installPathLocal = installPath ? Paths.get(installPath) :
+            Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
+    ext.distributionPath = rootPath.resolve("distrib")
+    ext.distribBuildPath = rootPath.resolve("distrib-build")
+    ext.logosPath = getSubDir(rootPath, "resources", "logos")
+
+    String devAddition = isProtectedBranch ? '' : '.dev1'
+    String defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
+    String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
+
+    if (!Pattern.matches(buildNumberRegex, buildNumber)) {
+        def versionFile = artifactsDir.resolve(versionFileName).toFile()
+        if (versionFile.exists()) {
+            def lines = versionFile.readLines()
+            assert !lines.empty, "There should be at least one line in VERSION file"
+            buildNumber = lines.first().trim()
+        } else {
+            buildNumber = defaultBuildNumber
+        }
+    }
+
+    project.version = buildNumber
+    println("##teamcity[buildNumber '$version']")
+
+    ext {
+        debugPort = 1044
+        debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
+
+        jarsPath = "jars"
+        librariesPath = "libraries"
+        kernelFile = "kernel.json"
+        configDir = "config"
+        // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
+        jarArgsFile = configDir + "/jar_args.json"
+
+        distribKernelDir = "kernel"
+        runKernelDir = "run_kotlin_kernel"
+        setupPy = "setup.py"
+        runKernelPy = "run_kernel.py"
+
+        condaMetaDir = "conda"
+        condaMetaYaml = "meta.yaml"
+        condaPackageDir = "conda-package"
+        condaPackageName = packageName
+        condaPackageFileName = "$condaPackageName-${version}-py_0.tar.bz2".toString()
+
+        pyPiPackageDir = "pip-package"
+        pyPiPackageName = packageName.replaceAll("-", "_")
+        pyPiPackageFileName = "$pyPiPackageName-${version}-py3-none-any.whl".toString()
+
+        copyLibrariesTaskPrefix = "copyLibraries"
+        installLibsTaskPrefix = "installLibs"
+        installKernelTaskPrefix = "installKernel"
+        cleanInstallDirTaskPrefix = "cleanInstallDir"
+
+        localGroup = "local install"
+        distribGroup = "distrib"
+        condaGroup = "conda"
+        pyPiGroup = "pip"
+
+        condaUserStable = rootProject.findProperty('condaUserStable') ?: ''
+        condaPasswordStable = rootProject.findProperty('condaPasswordStable') ?: ''
+        condaUserDev = rootProject.findProperty('condaUserDev') ?: ''
+
+        stablePyPiUser = rootProject.findProperty('stablePyPiUser') ?: ''
+        stablePyPiPassword = rootProject.findProperty('stablePyPiPassword') ?: ''
+        devPyPiUser = rootProject.findProperty('devPyPiUser') ?: ''
+        devPyPiPassword = rootProject.findProperty('devPyPiPassword') ?: ''
+    }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -68,7 +145,7 @@ dependencies {
 
     compile "org.apache.maven:maven-core:3.0.3"
     compile 'org.slf4j:slf4j-api:1.7.25'
-    compile "khttp:khttp:1.0.0"
+    compile 'khttp:khttp:1.0.0'
     compile 'org.zeromq:jeromq:0.3.5'
     compile 'com.beust:klaxon:5.2'
     runtime 'org.slf4j:slf4j-simple:1.7.25'
@@ -85,74 +162,163 @@ jar.manifest.attributes(
 )
 
 shadowJar {
-    baseName = 'kotlin-jupyter-kernel'
-    classifier = ''
+    archiveBaseName.set(packageName)
+    archiveClassifier.set('')
     mergeServiceFiles()
 }
 
-task cleanInstallDir(){
-    doLast {
-        File installDir = new File("$installPath")
-        installDir.deleteDir()
+boolean isProtectedBranch() {
+    def branchProp = 'build.branch'
+    def branch = project.findProperty(branchProp) as String
+    println("Current branch: $branch")
+    if (branch != null) {
+        branch = branch.substring(branch.lastIndexOf('/') + 1)
+        return branch == 'master'
+    }
+    return false
+}
+
+static String makeTaskName(String prefix, Boolean local) {
+    return prefix + (local ? "Local" : "Distrib")
+}
+
+static void makeDirs(java.nio.file.Path path) {
+    File dir = path.toFile()
+    if (!dir.exists()) {
+        dir.mkdirs()
     }
 }
 
-task installKernel(type: Copy, dependsOn: [cleanInstallDir, shadowJar]) {
-    from shadowJar.outputs
-    into installPath
+static java.nio.file.Path getSubDir(java.nio.file.Path dir, String... subDir) {
+    def newDir = dir
+    for (s in subDir) {
+        newDir = newDir.resolve(s)
+    }
+    return newDir
 }
 
-void createTaskForSpecs(Boolean debug) {
-    String taskName = debug ? "createDebugSpecs" : "createSpecs"
-    task(taskName) {
-        dependsOn cleanInstallDir
-        doLast {
-            String sep = File.separator
-            String spec = new File("kernelspec${sep}kernel.json.template").getText('UTF-8')
-            File kernelFile = files { shadowJar }.singleFile
-            spec = substitute(spec, "KERNEL_JAR_PATH", "$installPath${sep}${kernelFile.name}")
+static void writeJson(Map<String, Object> json, java.nio.file.Path path) {
+    def jsonString = new JsonObject(json).toJsonString(true, false)
+    path.toFile().write(jsonString, 'UTF-8')
+}
 
-            String libsCp = files { configurations.deploy }.files.collect {
-                "$installPath${sep}${it.name}"
-            } .join(File.pathSeparator)
-            spec = substitute(spec, "RUNTIME_CLASSPATH", libsCp)
-            spec = substitute(spec, "DEBUGGER_CONFIG", debug ? "\"$debuggerConfig\"," : "")
-            spec = substitute(spec, "KERNEL_HOME", "$installPath")
-            File installDir = new File("$installPath")
-            if (!installDir.exists()) {
-                installDir.mkdirs();
+void createCleanTasks() {
+    [true, false].forEach { local ->
+        def dir = local ? installPathLocal : distribBuildPath
+        task(makeTaskName(cleanInstallDirTaskPrefix, local)) {
+            group(local ? localGroup : distribGroup)
+            doLast {
+                dir.deleteDir()
             }
-            new File("$installPath${sep}kernel.json").write(spec, 'UTF-8')
-            Files.walk(Paths.get(projectDir.toPath().toString(), "kernelspec", "logos"))
-                    .filter { Files.isRegularFile(it) }
-                    .forEach {
-                        Files.copy(it,
-                                Paths.get(installPath, it.fileName.toString()),
-                                StandardCopyOption.REPLACE_EXISTING)
-                    }
         }
     }
 }
+createCleanTasks()
 
-static String substitute(String spec, String template, String val) {
-    return spec.replace("\${$template}", val.replace("\\", "\\\\"))
+@SuppressWarnings("unused")
+void createInstallTasks(Boolean local, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
+    def groupName = local ? localGroup : distribGroup
+    def cleanDirTask = getTasks().getByName(makeTaskName(cleanInstallDirTaskPrefix, local))
+    def args = [type: Copy, dependsOn: cleanDirTask, group: groupName]
+
+    task (args, makeTaskName(copyLibrariesTaskPrefix, local)) {
+        from librariesPath
+        into mainInstallPath.resolve(librariesPath)
+    }
+
+    task (args, makeTaskName(installLibsTaskPrefix, local)) {
+        from configurations.deploy
+        into mainInstallPath.resolve(jarsPath)
+    }
+
+    task ([type: Copy, group: groupName, dependsOn: [cleanDirTask, shadowJar]], makeTaskName(installKernelTaskPrefix, local)) {
+        from shadowJar.outputs
+        into mainInstallPath.resolve(jarsPath)
+    }
+
+    [true, false].forEach { debug ->
+        def specTaskName = createTaskForSpecs(debug, local, groupName, cleanDirTask, specPath, mainInstallPath)
+        createMainInstallTask(debug, local, groupName, specTaskName)
+    }
 }
 
-task copyLibraries(type: Copy, dependsOn: cleanInstallDir) {
-    from "libraries"
-    into Paths.get(installPath, "libraries").toString()
+String createTaskForSpecs(Boolean debug, Boolean local, String group, Task cleanDir, java.nio.file.Path specPath, java.nio.file.Path mainInstallPath) {
+    String taskName = makeTaskName(debug ? "createDebugSpecs" : "createSpecs", local)
+    task([group: group], taskName) {
+        dependsOn cleanDir, shadowJar
+        doLast {
+            File kernelFile = files { shadowJar }.singleFile
+
+            List<String> libsCp = files { configurations.deploy }.files.collect {
+                it.name
+            }.asList()
+
+            makeDirs(mainInstallPath.resolve(jarsPath))
+            makeDirs(mainInstallPath.resolve(configDir))
+            makeDirs(specPath)
+
+            makeJarArgs(mainInstallPath, kernelFile.name, libsCp, debug ? debuggerConfig : "")
+            makeKernelSpec(specPath, local)
+        }
+    }
+    return taskName
 }
 
-createTaskForSpecs(true)
-createTaskForSpecs(false)
+void createMainInstallTask(Boolean debug, Boolean local, String group, String specsTaskName) {
+    def taskNamePrefix = local ? "install" : "prepare"
+    def taskNameMiddle = debug ? "Debug": ""
+    def taskNameSuffix = local ? "" : "Package"
+    def taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
 
-task installLibs(type: Copy, dependsOn: cleanInstallDir) {
-    into "$installPath"
-    from configurations.deploy
+    def dependencies = [
+            local ? copyRunKernelPy : prepareDistributionDir,
+            makeTaskName(installKernelTaskPrefix, local),
+            makeTaskName(installLibsTaskPrefix, local),
+            specsTaskName,
+            makeTaskName(copyLibrariesTaskPrefix, local)
+    ]
+
+    task([group: group], taskName) {
+        dependsOn(dependencies)
+    }
 }
 
-task install(dependsOn: [installKernel, installLibs, createSpecs, copyLibraries]) {
+void makeKernelSpec(java.nio.file.Path installPath, Boolean localInstall) {
+    def argv = localInstall ?
+            Arrays.asList("python",
+                    installPath.resolve(runKernelPy).toString(),
+                    "{connection_file}",
+                    installPath.resolve(jarArgsFile).toString(),
+                    installPath.toString()) :
+            Arrays.asList("python", "-m", "run_kotlin_kernel", "{connection_file}")
+
+    writeJson([
+            "display_name": "Kotlin",
+            "language": "kotlin",
+            "argv": argv,
+    ], installPath.resolve(kernelFile))
+
+    project.copy {
+        from logosPath
+        into installPath
+    }
 }
 
-task installDebug(dependsOn: [installKernel, installLibs, createDebugSpecs, copyLibraries]) {
+void makeJarArgs(java.nio.file.Path installPath, String kernelJarPath, List<String> classPath, String debuggerConfig = "") {
+    writeJson([
+            "mainJar": kernelJarPath,
+            "classPath": classPath,
+            "debuggerConfig": debuggerConfig,
+    ], installPath.resolve(project.jarArgsFile))
 }
+
+/****** Local install ******/
+
+task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGroup) {
+    from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
+    into installPathLocal
+}
+
+createInstallTasks(true, installPathLocal, installPathLocal)
+
+apply from: 'distrib.gradle'

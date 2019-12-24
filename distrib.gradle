@@ -1,0 +1,178 @@
+import java.util.function.Consumer
+
+/****** Prepare distribution ******/
+
+task copyDistribFiles(type: Copy, dependsOn: cleanInstallDirDistrib, group: distribGroup) {
+    from distributionPath
+    into distribBuildPath
+    exclude '.idea/**'
+}
+
+task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles], group: distribGroup) {
+    doLast {
+        def versionFilePath = distribBuildPath.resolve(versionFileName)
+        versionFilePath.toFile().write(version as String)
+        project.copy {
+            from versionFilePath
+            into artifactsDir
+        }
+    }
+}
+
+createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBuildPath.resolve(runKernelDir))
+
+/****** Conda upload ******/
+
+task condaPackage(type: Exec, dependsOn: [cleanInstallDirDistrib, preparePackage], group: condaGroup) {
+    commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
+    workingDir distribBuildPath
+    doLast {
+        copy {
+            from distribBuildPath.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
+            into artifactsDir
+        }
+    }
+}
+
+class TaskSpec {
+    String taskName
+}
+
+class UploadTaskSpecs <T extends TaskSpec> {
+    T stable
+    T dev
+
+    Project project
+    String repoName
+    String taskGroup
+
+    UploadTaskSpecs(Project project, String repoName, String taskGroup, T stable, T dev) {
+        this.project = project
+        this.repoName = repoName
+        this.taskGroup = taskGroup
+        this.stable = stable
+        this.dev = dev
+
+        this.stable.taskName = taskName("Stable")
+        this.dev.taskName = taskName("Dev")
+    }
+
+    String taskName(String type) {
+        return repoName + "Upload" + type
+    }
+
+    void createTasks(Consumer<T> taskCreationAction) {
+        if (project.isProtectedBranch) {
+            taskCreationAction.accept(stable)
+        }
+        taskCreationAction.accept(dev)
+
+        project.task([dependsOn: project.cleanInstallDirDistrib, group: taskGroup], taskName("Protected")) {
+            if (project.isProtectedBranch) {
+                dependsOn(dev.taskName)
+            }
+        }
+    }
+}
+
+class CondaCredentials {
+    String username
+    String password
+}
+
+class CondaTaskSpec extends TaskSpec {
+    String username
+    CondaCredentials credentials
+}
+
+ext.condaCredentials = new CondaCredentials(
+        username: condaUserStable,
+        password: condaPasswordStable
+)
+
+ext.condaTaskSpecs = new UploadTaskSpecs<CondaTaskSpec>(
+        project, "conda", condaGroup,
+        new CondaTaskSpec(
+                username: condaUserStable,
+                credentials: ext.condaCredentials
+        ),
+        new CondaTaskSpec(
+                username: condaUserDev,
+                credentials: ext.condaCredentials
+        )
+)
+
+condaTaskSpecs.createTasks { TaskSpec taskSpec ->
+    task(taskSpec.taskName, group: condaGroup) {
+        def artifactPath = artifactsDir.resolve(condaPackageFileName)
+
+        if (!artifactPath.toFile().exists()) {
+            dependsOn([cleanInstallDirDistrib, condaPackage])
+        }
+
+        doLast {
+            exec {
+                commandLine 'anaconda', 'login',
+                        '--username', taskSpec.credentials.username,
+                        '--password', taskSpec.credentials.password
+                standardInput new ByteArrayInputStream("yes".bytes)
+            }
+
+            exec {
+                commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactPath.toString())
+            }
+        }
+    }
+}
+
+/****** PyPi upload ******/
+
+task pyPiPackage(type: Exec, dependsOn: preparePackage, group: pyPiGroup) {
+    commandLine 'python', 'setup.py', 'bdist_wheel',
+            '--dist-dir', pyPiPackageDir
+    workingDir distribBuildPath
+
+    doLast {
+        copy {
+            from distribBuildPath.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
+            into artifactsDir
+        }
+    }
+}
+
+class PyPiTaskSpec extends TaskSpec {
+    String repoURL
+    String username
+    String password
+}
+
+def pyPiTaskSpecs = new UploadTaskSpecs<PyPiTaskSpec>(
+        project, "pyPi", pyPiGroup,
+        new PyPiTaskSpec(
+                repoURL: "https://upload.pypi.org/legacy/",
+                username: stablePyPiUser,
+                password: stablePyPiPassword
+        ),
+        new PyPiTaskSpec(
+                repoURL: "https://test.pypi.org/legacy/",
+                username: devPyPiUser,
+                password: devPyPiPassword
+        )
+)
+
+pyPiTaskSpecs.createTasks { taskSpec ->
+    task([type: Exec, group: pyPiGroup], taskSpec.taskName) {
+        workingDir(artifactsDir)
+        def artifactPath = artifactsDir.resolve(pyPiPackageFileName)
+
+        if (!artifactPath.toFile().exists()) {
+            dependsOn([pyPiPackage])
+        }
+
+        commandLine "twine", "upload",
+                "-u", taskSpec.username,
+                "-p", taskSpec.password,
+                "--repository-url", taskSpec.repoURL,
+                pyPiPackageFileName
+    }
+}
