@@ -32,7 +32,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "language_info" to jsonObject(
                                     "name" to "kotlin",
                                     "codemirror_mode" to "text/x-kotlin",
-                                    "file_extension" to "kt"
+                                    "file_extension" to ".kt"
                             ),
 
                             // Jupyter lab Console support
