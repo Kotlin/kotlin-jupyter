@@ -38,7 +38,8 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
 }
 
 class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
-                     val config: ResolverConfig? = null) {
+                     val config: ResolverConfig? = null,
+                     val properties: RuntimeKernelProperties = RuntimeKernelProperties()) {
 
     private val resolver = JupyterScriptDependenciesResolver(config)
 

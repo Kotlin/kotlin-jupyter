@@ -32,13 +32,16 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "language_info" to jsonObject(
                                     "name" to "kotlin",
                                     "codemirror_mode" to "text/x-kotlin",
-                                    "file_extension" to ".kt"
+                                    "file_extension" to ".kt",
+                                    "mimetype" to "text/x-kotlin",
+                                    "pygments_lexer" to "kotlin",
+                                    "version" to KotlinCompilerVersion.VERSION
                             ),
 
                             // Jupyter lab Console support
                             "banner" to "Kotlin language, version ${KotlinCompilerVersion.VERSION}",
                             "implementation" to "Kotlin",
-                            "implementation_version" to KotlinCompilerVersion.VERSION,
+                            "implementation_version" to repl!!.properties.version,
                             "status" to "ok"
                     )))
         "history_request" ->

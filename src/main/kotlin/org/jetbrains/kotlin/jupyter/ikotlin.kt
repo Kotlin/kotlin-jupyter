@@ -45,6 +45,14 @@ fun printClassPath() {
         log.info("Current classpath: " + cp.joinToString())
 }
 
+fun loadRuntimeProperties(): RuntimeKernelProperties {
+    val map = object{}.javaClass.classLoader
+            .getResource("runtime.properties")
+            ?.readText()?.parseIniConfig()
+
+    return RuntimeKernelProperties(map)
+}
+
 fun main(vararg args: String) {
     try {
         log.info("Kernel args: "+ args.joinToString { it })
@@ -62,7 +70,8 @@ fun main(vararg args: String) {
                 signatureScheme = sigScheme ?: "hmac1-sha256",
                 signatureKey = if (sigScheme == null || key == null) "" else key,
                 scriptClasspath = scriptClasspath,
-                resolverConfig = loadResolverConfig(rootPath)
+                resolverConfig = loadResolverConfig(rootPath),
+                runtimeProperties = loadRuntimeProperties()
         ))
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -80,7 +89,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(config.scriptClasspath, config.resolverConfig)
+        val repl = ReplForJupyter(config.scriptClasspath, config.resolverConfig, config.runtimeProperties)
 
         val mainThread = Thread.currentThread()
 
