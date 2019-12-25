@@ -2,11 +2,12 @@ import com.beust.klaxon.JsonObject
 
 import java.nio.file.Paths
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
     ext.kotlinVersion = '1.3.70-eap-3'
-    ext.baseVersion = '0.7.40'
+    ext.baseVersion = '0.7.41'
     repositories {
         jcenter()
         mavenLocal()
@@ -81,6 +82,10 @@ allprojects {
         debugPort = 1044
         debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
+        mainSourceSetDir = "main"
+        resourcesDir = "resources"
+        runtimePropertiesFile = "runtime.properties"
+
         jarsPath = "jars"
         librariesPath = "libraries"
         kernelFile = "kernel.json"
@@ -112,6 +117,7 @@ allprojects {
         distribGroup = "distrib"
         condaGroup = "conda"
         pyPiGroup = "pip"
+        buildGroup = "build"
 
         condaUserStable = rootProject.findProperty('condaUserStable') ?: ''
         condaPasswordStable = rootProject.findProperty('condaPasswordStable') ?: ''
@@ -160,6 +166,25 @@ jar.manifest.attributes(
     'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
     'Implementation-Version': version
 )
+
+task buildProperties(group: buildGroup) {
+    def outputDir = file(getSubDir(buildDir.toPath(), resourcesDir, mainSourceSetDir))
+
+    inputs.property "version", version
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        def propertiesFile = file(getSubDir(outputDir.toPath(), runtimePropertiesFile))
+        propertiesFile.text = inputs.properties.entrySet().stream().map {
+            "${it.key}=${it.value}\n"
+        }.collect(Collectors.joining())
+    }
+}
+
+processResources {
+    dependsOn buildProperties
+}
 
 shadowJar {
     archiveBaseName.set(packageName)
