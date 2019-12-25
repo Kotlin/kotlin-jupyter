@@ -18,7 +18,14 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         init {
             val port = config.ports[socket.ordinal]
             bind("${config.transport}://*:$port")
-            Thread.sleep(200)
+            if (type == ZMQ.PUB) {
+                // Workaround to prevent losing few first messages on kernel startup
+                // For more information on losing messages see this scheme:
+                // http://zguide.zeromq.org/page:all#Missing-Message-Problem-Solver
+                // It seems we cannot do correct sync because messaging protocol
+                // doesn't support this. Value of 500 ms was chosen experimentally.
+                Thread.sleep(500)
+            }
             log.debug("[$name] listen: ${config.transport}://*:$port")
         }
 
