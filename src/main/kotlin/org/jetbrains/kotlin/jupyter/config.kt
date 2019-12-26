@@ -47,7 +47,7 @@ data class OutputConfig(
         var cellOutputMaxSize: Int = 100000,
         var captureNewlineBufferSize: Int = 100
 ) {
-    fun assign(other: OutputConfig) {
+    fun update(other: OutputConfig) {
         captureOutput = other.captureOutput
         captureBufferTimeLimitMs = other.captureBufferTimeLimitMs
         captureBufferMaxSize = other.captureBufferMaxSize
@@ -77,21 +77,30 @@ data class KernelConfig(
 
 val protocolVersion = "5.3"
 
-data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
+data class TypeRenderer(val className: String, val resultCode: String)
 
 data class Variable(val name: String, val value: String)
 
-class LibraryDefinition(val dependencies: List<String>,
+open class LibraryDefinition(
+        val dependencies: List<String>,
+        val initCell: List<String>,
+        val imports: List<String>,
+        val repositories: List<String>,
+        val init: List<String>,
+        val renderers: List<TypeRenderer>
+)
+
+class LibraryDescriptor(dependencies: List<String>,
                         val variables: List<Variable>,
-                        val initCell: List<String>,
-                        val imports: List<String>,
-                        val repositories: List<String>,
-                        val init: List<String>,
-                        val renderers: List<TypeRenderer>,
-                        val link: String?)
+                        initCell: List<String>,
+                        imports: List<String>,
+                        repositories: List<String>,
+                        init: List<String>,
+                        renderers: List<TypeRenderer>,
+                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
-                          val libraries: Deferred<Map<String, LibraryDefinition>>)
+                          val libraries: Deferred<Map<String, LibraryDescriptor>>)
 
 fun parseLibraryArgument(str: String): Variable {
     val eq = str.indexOf('=')
@@ -267,9 +276,9 @@ val defaultRepositories = arrayOf(
         "https://jitpack.io"
 ).map { RepositoryCoordinates(it) }
 
-fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDefinition> {
+fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {
-        LibraryDefinition(
+        LibraryDescriptor(
                 dependencies = it.value.array<String>("dependencies")?.toList().orEmpty(),
                 variables = it.value.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
                 imports = it.value.array<String>("imports")?.toList().orEmpty(),
@@ -277,7 +286,7 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                 init = it.value.array<String>("init")?.toList().orEmpty(),
                 initCell = it.value.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.value.array<JsonObject>("renderers")?.map {
-                    TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
+                    TypeRenderer(it.string("class")!!, it.string("result")!!)
                 }?.toList().orEmpty(),
                 link = it.value.string("link")
         )

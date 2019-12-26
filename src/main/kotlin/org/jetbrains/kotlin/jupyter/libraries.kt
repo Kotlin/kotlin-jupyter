@@ -1,8 +1,10 @@
 package org.jetbrains.kotlin.jupyter
 
-class LibrariesProcessor {
+import kotlinx.coroutines.Deferred
 
-    data class LibraryWithCode(val library: LibraryDefinition, val code: String)
+class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDescriptor>>?) {
+
+    data class LibraryWithCode(val library: LibraryDescriptor, val code: String)
 
     private val processedLibraries = mutableListOf<LibraryWithCode>()
 
@@ -41,14 +43,14 @@ class LibrariesProcessor {
         return result
     }
 
-    private fun generateCode(repl: ReplForJupyter, library: LibraryDefinition, mapping: Map<String, String>): String {
-        val builder = StringBuilder()
-        library.repositories.forEach { builder.appendln("@file:Repository(\"$it\")") }
-        library.dependencies.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
-        library.imports.forEach { builder.appendln("import $it") }
-        library.init.forEach { builder.appendln(repl.preprocessCode(it)) }
-        return builder.toString().replaceVariables(mapping)
-    }
+    private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>) = LibraryDefinition(
+            dependencies = library.dependencies.map { replaceVariables(it, mapping) },
+            repositories = library.repositories.map { replaceVariables(it, mapping) },
+            imports = library.imports.map { replaceVariables(it, mapping) },
+            init = library.init.map { replaceVariables(it, mapping) },
+            initCell = library.initCell.map { replaceVariables(it, mapping) },
+            renderers = library.renderers.map { TypeRenderer(it.className, replaceVariables(it.resultCode, mapping)) }
+    )
 
     /**
      * Split a command argument into a set of library calls
@@ -83,21 +85,19 @@ class LibrariesProcessor {
         }
     }
 
-    private fun String.replaceVariables(mapping: Map<String, String>) =
-            mapping.asSequence().fold(this) { str, template ->
-                str.replace("\$${template.key}", template.value)
+    private fun replaceVariables(str: String, mapping: Map<String, String>) =
+            mapping.asSequence().fold(str) { s, template ->
+                s.replace("\$${template.key}", template.value)
             }
 
-    fun processNewLibraries(repl: ReplForJupyter, arg: String) {
+    fun processNewLibraries(arg: String) =
+            splitLibraryCalls(arg).map {
+                val (name, vars) = parseLibraryName(it)
+                val library = libraries?.awaitBlocking()?.get(name)
+                        ?: throw ReplCompilerException("Unknown library '$name'")
 
-        splitLibraryCalls(arg).forEach {
-            val (name, vars) = parseLibraryName(it)
-            val library = repl.config?.libraries?.awaitBlocking()?.get(name)
-                    ?: throw ReplCompilerException("Unknown library '$name'")
+                val mapping = substituteArguments(library.variables, vars)
 
-            val mapping = substituteArguments(library.variables, vars)
-
-            processedLibraries.add(LibraryWithCode(library, generateCode(repl, library, mapping)))
-        }
-    }
+                processDescriptor(library, mapping)
+            }
 }

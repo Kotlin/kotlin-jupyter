@@ -120,40 +120,68 @@ class ReplTest {
                                         "a": "temp", 
                                         "b": "test"
                                     },
+                                    "repositories": [
+                                        "repo-${'$'}a"
+                                    ],
                                     "dependencies": [
-                                        "path-${'$'}a",
                                         "path-${'$'}b"
                                     ],
                                     "imports": [
                                         "otherPackage"
+                                    ],
+                                    "init": [
+                                        "otherInit"
                                     ]
                                 }
         """.trimIndent()
+        val lib3 = "another" to """
+                                            {
+                                                "properties": {
+                                                    "v": "1" 
+                                                },
+                                                "dependencies": [
+                                                    "anotherDep"
+                                                ],
+                                                "imports": [
+                                                    "anotherPackage${'$'}v"
+                                                ],
+                                                "init": [
+                                                    "%use other(b=release, a=debug)",
+                                                    "anotherInit"
+                                                ]
+                                            }
+        """.trimIndent()
         val parser = Parser.default()
 
-        val libJsons = arrayOf(lib1, lib2).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
+        val libJsons = arrayOf(lib1, lib2, lib3).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
 
         val repl = ReplForJupyter(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()))
-        val res = repl.preprocessCode("%use mylib(1.0), other(b=release, a=debug)").trimIndent()
-        val libs = repl.librariesCodeGenerator.getProcessedLibraries()
-        assertEquals("", res)
-        assertEquals(2, libs.count())
-        arrayOf(
+        val res = repl.preprocessCode("%use mylib(1.0), another")
+        assertEquals("", res.code)
+        val inits = arrayOf(
                 """
                     @file:DependsOn("artifact1:1.0")
                     @file:DependsOn("artifact2:1.0")
                     import package1
                     import package2
-                    code1
-                    code2
-                """,
+                    """,
+                "code1",
+                "code2",
                 """
-                    @file:DependsOn("path-debug")
+                    @file:DependsOn("anotherDep")
+                    import anotherPackage1
+                    """,
+                """
+                    @file:Repository("repo-debug")
                     @file:DependsOn("path-release")
                     import otherPackage
-                """
-        ).forEachIndexed { index, expected ->
-            Assert.assertEquals(expected.trimIndent(), libs[index].code.trimEnd().convertCRLFtoLF())
+                    """,
+                "otherInit",
+                "anotherInit"
+        )
+        assertEquals(inits.count(), res.initCodes.count())
+        inits.forEachIndexed { index, expected ->
+            Assert.assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
         }
     }
 
