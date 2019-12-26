@@ -66,7 +66,7 @@ class ReplTest {
     @Test
     fun TestOut() {
         val repl = ReplForJupyter(classpath)
-        repl.eval("1+1", 1)
+        repl.eval("1+1", null, 1)
         val res = repl.eval("Out[1]")
         assertEquals(2, res.resultValue)
         assertFails { repl.eval("Out[3]") }

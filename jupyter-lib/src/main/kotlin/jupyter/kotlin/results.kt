@@ -14,13 +14,17 @@ annotation class DependsOn(val value: String = "")
 @Retention(AnnotationRetention.SOURCE)
 annotation class Repository(val value: String = "")
 
-abstract class ScriptTemplateWithDisplayHelpers {
+interface KotlinKernelHost {
+    fun display(value: Any)
+}
+
+abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
 
     fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 
     fun HTML(text: String) = MIME("text/html" to text)
 
-    fun DISPLAY(value: Any) = DisplayResult(value)
+    fun DISPLAY(value: Any) = __host!!.display(value)
 
     val Out: List<Any?> = ReplOutputs
 }

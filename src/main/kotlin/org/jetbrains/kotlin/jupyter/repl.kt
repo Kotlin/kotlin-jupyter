@@ -50,7 +50,7 @@ interface ReplOptions {
 data class PreprocessingResult(val code: String, val initCodes: List<String>, val initCellCodes: List<String>, val typeRenderers: Map<String, String>)
 
 class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
-                     val config: ResolverConfig? = null) : ReplOptions {
+                     val config: ResolverConfig? = null) : ReplOptions, KotlinKernelHost {
 
     var outputConfigImpl = OutputConfig()
 
@@ -228,25 +228,31 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         doEval("1")
     }
 
-    fun eval(code: String, jupyterId: Int = -1): EvalResult {
+    fun eval(code: String, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult {
         synchronized(this) {
             val displays = mutableListOf<Any>()
 
+            val host = object : KotlinKernelHost {
+                override fun display(value: Any) {
+                    displayHandler?.invoke(value)
+                }
+            }
+
             initCellCodes.forEach {
-                (doEval(it).value as? DisplayResult)?.let(displays::add)
+                (doEval(it, host).value as? DisplayResult)?.let(displays::add)
             }
 
             val preprocessingResult = preprocessCode(code)
 
             preprocessingResult.initCodes.forEach {
-                (doEval(it).value as? DisplayResult)?.let(displays::add)
+                (doEval(it, host).value as? DisplayResult)?.let(displays::add)
             }
 
             var result: Any? = null
             var replId = -1
 
             if (preprocessingResult.code.isNotBlank()) {
-                val e = doEval(preprocessingResult.code)
+                val e = doEval(preprocessingResult.code, host)
                 result = e.value
                 replId = e.replId
             }
@@ -285,7 +291,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             if (result != null) {
                 val resultType = result.javaClass.canonicalName
                 typeRenderers[resultType]?.let {
-                    result = doEval(it.replace("\$it", "res$replId")).value
+                    result = doEval(it.replace("\$it", "res$replId"), host).value
                 }
                 if (result is DisplayResult) {
                     displays.add(result as Any)
@@ -300,7 +306,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
 
-    private fun doEval(code: String): InternalEvalResult {
+    private fun doEval(code: String, host: KotlinKernelHost? = null): InternalEvalResult {
         if (trackExecutedCode)
             println("Executing:\n$code\n")
         val id = executionCounter++
@@ -308,7 +314,8 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         when (val compileResult = compiler.compile(compilerState, codeLine)) {
             is ReplCompileResult.CompiledClasses -> {
                 classWriter?.writeClasses(compileResult)
-                val result = evaluator.eval(evaluatorState, compileResult)
+                val scriptArgs = ScriptArgsWithTypes(arrayOf(host), arrayOf(KotlinKernelHost::class))
+                val result = evaluator.eval(evaluatorState, compileResult, scriptArgs)
                 contextUpdater.update()
                 return when (result) {
                     is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
@@ -333,6 +340,10 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
         log.info("Classpath used in script: ${scriptClasspath}")
         receiver.kc = ctx
+    }
+
+    override fun display(value: Any) {
+        println("Display: $value")
     }
 }
 

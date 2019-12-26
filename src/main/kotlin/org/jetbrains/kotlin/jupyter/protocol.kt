@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
+import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 
@@ -75,6 +76,16 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
+            fun displayHandler(value: Any) {
+                val res = value.toMimeTypedResult()
+                connection.iopub.send(makeReplyMessage(msg,
+                        "display_data",
+                        content = jsonObject(
+                                "data" to res,
+                                "metadata" to jsonObject()
+                        )))
+            }
+
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
             val code = msg.content["code"]
             connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
@@ -84,7 +95,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO(repl!!.outputConfig) {
-                    repl!!.eval(code.toString(), count.toInt())
+                    repl!!.eval(code.toString(), ::displayHandler, count.toInt())
                 }
             }
 
