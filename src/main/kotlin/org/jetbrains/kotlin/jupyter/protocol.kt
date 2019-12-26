@@ -22,7 +22,6 @@ data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedRe
 
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
     val msgType = msg.header!!["msg_type"]
-    val replProperties = repl?.properties ?: RuntimeKernelProperties()
     when (msgType) {
         "kernel_info_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "kernel_info_reply",
@@ -42,7 +41,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             // Jupyter lab Console support
                             "banner" to "Kotlin language, version ${KotlinCompilerVersion.VERSION}",
                             "implementation" to "Kotlin",
-                            "implementation_version" to replProperties.version,
+                            "implementation_version" to runtimeProperties.version,
                             "status" to "ok"
                     )))
         "history_request" ->

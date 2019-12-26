@@ -40,14 +40,13 @@ enum class JupyterSockets {
     iopub
 }
 
-data class RuntimeKernelProperties(
-        var version: String = "unspecified"
-) {
-    constructor(map: Map<String, String>?) : this() {
-        if (map == null)
-            return
-        version = map["version"] ?: version
-    }
+data class RuntimeKernelProperties(val map: Map<String, String>) {
+    val version: String
+        get() = map["version"] ?: "unspecified"
+}
+
+val runtimeProperties by lazy {
+    RuntimeKernelProperties(ClassLoader.getSystemResource("runtime.properties")?.readText()?.parseIniConfig().orEmpty())
 }
 
 data class KernelConfig(
@@ -57,8 +56,7 @@ data class KernelConfig(
         val signatureKey: String,
         val pollingIntervalMillis: Long = 100,
         val scriptClasspath: List<File> = emptyList(),
-        val resolverConfig: ResolverConfig?,
-        val runtimeProperties: RuntimeKernelProperties = RuntimeKernelProperties()
+        val resolverConfig: ResolverConfig?
 )
 
 val protocolVersion = "5.3"
