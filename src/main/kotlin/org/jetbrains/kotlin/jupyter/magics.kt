@@ -12,7 +12,7 @@ enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, 
     trackClasspath("log current classpath changes"),
     trackExecution("log code that is going to be executed in repl", visibleInHelp = false),
     dumpClassesForSpark("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false),
-    output("setup output settings", "--max 1000 --no-stdout --time-interval-ms 100 --buffer-limit 400")
+    output("setup output settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400")
 }
 
 fun processMagics(repl: ReplForJupyter, code: String): String {
