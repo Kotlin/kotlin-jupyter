@@ -195,7 +195,7 @@ class CapturingOutputStream(private val stdout: PrintStream,
         @TestOnly
         get() = capturedLines.toByteArray() + capturedNewLine.toByteArray()
 
-    private fun sendIfNeeded(b: Int) {
+    private fun flushIfNeeded(b: Int) {
         val c = b.toChar()
         if (c == '\n' || c == '\r') {
             newlineFound = true
@@ -211,25 +211,25 @@ class CapturingOutputStream(private val stdout: PrintStream,
             return flush()
     }
 
+    @Synchronized
     override fun write(b: Int) {
         ++overallOutputSize
         stdout.write(b)
 
         if (captureOutput && overallOutputSize <= conf.cellOutputMaxSize) {
             capturedNewLine.write(b)
-            sendIfNeeded(b)
+            flushIfNeeded(b)
         }
     }
 
-    private fun resetBuffer(buffer: ByteArrayOutputStream): String {
-        val str = buffer.toString("UTF-8")
-        buffer.reset()
-        return str
-    }
-
+    @Synchronized
     private fun flushBuffers(vararg buffers: ByteArrayOutputStream) {
         newlineFound = false
-        val str = buffers.map(this::resetBuffer).reduce { acc, s -> acc + s }
+        val str = buffers.map { stream ->
+            val str = stream.toString("UTF-8")
+            stream.reset()
+            str
+        }.reduce { acc, s -> acc + s }
         if (str.isNotEmpty()) {
             onCaptured(str)
         }
