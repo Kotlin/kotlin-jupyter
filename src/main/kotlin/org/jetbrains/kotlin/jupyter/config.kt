@@ -42,7 +42,7 @@ enum class JupyterSockets {
 
 data class OutputConfig(
         var captureOutput: Boolean = true,
-        var captureBufferTimeLimitMs: Int = 100,
+        var captureBufferTimeLimitMs: Long = 100,
         var captureBufferMaxSize: Int = 1000,
         var cellOutputMaxSize: Int = 100000,
         var captureNewlineBufferSize: Int = 100

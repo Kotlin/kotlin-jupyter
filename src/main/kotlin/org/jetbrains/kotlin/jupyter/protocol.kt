@@ -4,12 +4,14 @@ import com.beust.klaxon.JsonObject
 import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.timer
 
 enum class ResponseState {
     Ok, Error
@@ -177,25 +179,36 @@ class CapturingOutputStream(private val stdout: PrintStream,
                             private val conf: OutputConfig,
                             private val captureOutput: Boolean,
                             val onCaptured: (String) -> Unit) : OutputStream() {
-    val capturedOutput = ByteArrayOutputStream()
-    private var time = System.currentTimeMillis()
+    private val capturedLines = ByteArrayOutputStream()
+    private val capturedNewLine = ByteArrayOutputStream()
     private var overallOutputSize = 0
     private var newlineFound = false
 
-    private fun shouldSend(b: Int): Boolean {
-        val c = b.toChar()
-        newlineFound = newlineFound || c == '\n' || c == '\r'
-        if (newlineFound && capturedOutput.size() >= conf.captureNewlineBufferSize)
-            return true
-        if (capturedOutput.size() >= conf.captureBufferMaxSize)
-            return true
+    private val timer = timer(
+            initialDelay = conf.captureBufferTimeLimitMs,
+            period = conf.captureBufferTimeLimitMs,
+            action = {
+                flush()
+            })
 
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - time >= conf.captureBufferTimeLimitMs) {
-            time = currentTime
-            return true
+    val contents: ByteArray
+        @TestOnly
+        get() = capturedLines.toByteArray() + capturedNewLine.toByteArray()
+
+    private fun sendIfNeeded(b: Int) {
+        val c = b.toChar()
+        if (c == '\n' || c == '\r') {
+            newlineFound = true
+            capturedNewLine.writeTo(capturedLines)
+            capturedNewLine.reset()
         }
-        return false
+
+        val size = capturedLines.size() + capturedNewLine.size()
+
+        if (newlineFound && size >= conf.captureNewlineBufferSize)
+            return flushBuffers(capturedLines)
+        if (size >= conf.captureBufferMaxSize)
+            return flush()
     }
 
     override fun write(b: Int) {
@@ -203,20 +216,32 @@ class CapturingOutputStream(private val stdout: PrintStream,
         stdout.write(b)
 
         if (captureOutput && overallOutputSize <= conf.cellOutputMaxSize) {
-            capturedOutput.write(b)
-            if (shouldSend(b)) {
-                flush()
-            }
+            capturedNewLine.write(b)
+            sendIfNeeded(b)
+        }
+    }
+
+    private fun resetBuffer(buffer: ByteArrayOutputStream): String {
+        val str = buffer.toString("UTF-8")
+        buffer.reset()
+        return str
+    }
+
+    private fun flushBuffers(vararg buffers: ByteArrayOutputStream) {
+        newlineFound = false
+        val str = buffers.map(this::resetBuffer).reduce { acc, s -> acc + s }
+        if (str.isNotEmpty()) {
+            onCaptured(str)
         }
     }
 
     override fun flush() {
-        newlineFound = false
-        if (capturedOutput.size() > 0) {
-            val str = capturedOutput.toString("UTF-8")
-            capturedOutput.reset()
-            onCaptured(str)
-        }
+        flushBuffers(capturedLines, capturedNewLine)
+    }
+
+    override fun close() {
+        super.close()
+        timer.cancel()
     }
 }
 
@@ -301,7 +326,6 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
              */
             val stdErr = StringBuilder()
             with(stdErr) {
-                forkedError.capturedOutput.toString("UTF-8")?.nullWhenEmpty()?.also { appendln(it) }
                 val cause = ex.errorResult.cause
                 if (cause == null) appendln(ex.errorResult.message)
                 else {
@@ -318,10 +342,10 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
             ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, stdErr.toString())
         }
     } finally {
+        forkedOut.close()
+        forkedError.close()
         System.setIn(`in`)
         System.setErr(err)
         System.setOut(out)
     }
 }
-
-fun String.nullWhenEmpty(): String? = if (this.isBlank()) null else this
