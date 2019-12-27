@@ -44,18 +44,22 @@ open class KernelServerTestsBase {
 
     companion object {
         private val rng = Random()
+        private val usedPorts = mutableSetOf<Int>()
         private const val portRangeStart = 32768
         private const val portRangeEnd = 65536
 
-        fun randomPort(): Int =
-                generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {
-                    try {
-                        ServerSocket(it).close()
-                        true
-                    }
-                    catch (e: IOException) {
-                        false
-                    }
-                }!!
+        @Synchronized
+        fun randomPort(): Int {
+            val res = generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {
+                try {
+                    ServerSocket(it).close()
+                    !usedPorts.contains(it)
+                } catch (e: IOException) {
+                    false
+                }
+            }!!
+            usedPorts.add(res)
+            return res
+        }
     }
 }

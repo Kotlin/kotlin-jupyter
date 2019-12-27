@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.OutputStream
 import java.io.PrintStream
+import java.util.concurrent.atomic.AtomicInteger
 
 class CapturingStreamTests {
     private val nullOStream = object: OutputStream() {
@@ -58,16 +59,15 @@ class CapturingStreamTests {
         val contents = "0123456789\nfortran".toByteArray()
         val expected = arrayOf("012", "345", "678", "9\n", "for", "tra", "n")
 
-        var i = 0
+        val i = AtomicInteger()
         val s = getStream(maxBufferSize = 3) {
-            assertEquals(expected[i], it)
-            ++i
+            assertEquals(expected[i.getAndIncrement()], it)
         }
 
         s.write(contents)
         s.flush()
 
-        assertEquals(expected.size, i)
+        assertEquals(expected.size, i.get())
     }
 
     @Test
@@ -75,16 +75,15 @@ class CapturingStreamTests {
         val contents = "12345\n12\n3451234567890".toByteArray()
         val expected = arrayOf("12345\n", "12\n", "345123456", "7890")
 
-        var i = 0
+        val i = AtomicInteger()
         val s = getStream(maxBufferSize = 9, maxBufferNewlineSize = 6) {
-            assertEquals(expected[i], it)
-            ++i
+            assertEquals(expected[i.getAndIncrement()], it)
         }
 
         s.write(contents)
         s.flush()
 
-        assertEquals(expected.size, i)
+        assertEquals(expected.size, i.get())
     }
     
     @Test
@@ -92,10 +91,9 @@ class CapturingStreamTests {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")
         val expected = arrayOf("1122", "3344", "5566")
 
-        var i = 0
+        val i = AtomicInteger(0)
         val s = getStream(maxBufferLifeTimeMs = 1000) {
-            assertEquals(expected[i], it)
-            ++i
+            assertEquals(expected[i.getAndIncrement()], it)
         }
 
         strings.forEach {
@@ -105,6 +103,6 @@ class CapturingStreamTests {
 
         s.flush()
 
-        assertEquals(expected.size, i)
+        assertEquals(expected.size, i.get())
     }
 }
