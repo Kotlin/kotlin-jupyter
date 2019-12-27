@@ -37,10 +37,10 @@ allprojects {
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-        testCompile 'junit:junit:4.12'
-        testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+        testImplementation 'junit:junit:4.12'
+        testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
     }
 
     ext {
