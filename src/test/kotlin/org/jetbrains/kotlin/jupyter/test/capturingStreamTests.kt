@@ -16,7 +16,7 @@ class CapturingStreamTests {
 
     private fun getStream(stdout: OutputStream = nullOStream,
                           captureOutput: Boolean = true,
-                          maxBufferLifeTimeMs: Int = 1000,
+                          maxBufferLifeTimeMs: Long = 1000,
                           maxBufferSize: Int = 1000,
                           maxOutputSize: Int = 1000,
                           maxBufferNewlineSize: Int = 1,
@@ -37,7 +37,7 @@ class CapturingStreamTests {
     fun testMaxOutputSizeError() {
         val s = getStream(maxOutputSize = 3)
         s.write("java".toByteArray())
-        assertArrayEquals("jav".toByteArray(), s.capturedOutput.toByteArray())
+        assertArrayEquals("jav".toByteArray(), s.contents)
     }
 
     @Test
@@ -46,11 +46,11 @@ class CapturingStreamTests {
 
         val s1 = getStream(captureOutput = false)
         s1.write(contents)
-        assertEquals(0, s1.capturedOutput.size())
+        assertEquals(0, s1.contents.size)
 
         val s2 = getStream(captureOutput = true)
         s2.write(contents)
-        assertArrayEquals(contents, s2.capturedOutput.toByteArray())
+        assertArrayEquals(contents, s2.contents)
     }
 
     @Test
@@ -73,7 +73,7 @@ class CapturingStreamTests {
     @Test
     fun testNewlineBufferSize() {
         val contents = "12345\n12\n3451234567890".toByteArray()
-        val expected = arrayOf("12345\n", "12\n345", "123456789", "0")
+        val expected = arrayOf("12345\n", "12\n", "345123456", "7890")
 
         var i = 0
         val s = getStream(maxBufferSize = 9, maxBufferNewlineSize = 6) {
@@ -89,8 +89,8 @@ class CapturingStreamTests {
     
     @Test
     fun testMaxBufferLifeTime() {
-        val strings = arrayOf("c ", "a", "ada ", "b", "scala ", "c")
-        val expected = arrayOf("c a", "ada b", "scala c")
+        val strings = arrayOf("11", "22", "33", "44", "55", "66")
+        val expected = arrayOf("1122", "3344", "5566")
 
         var i = 0
         val s = getStream(maxBufferLifeTimeMs = 1000) {
@@ -99,7 +99,7 @@ class CapturingStreamTests {
         }
 
         strings.forEach {
-            Thread.sleep(600)
+            Thread.sleep(450)
             s.write(it.toByteArray())
         }
 

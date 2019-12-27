@@ -12,7 +12,6 @@ fun Message.type(): String {
 
 class ExecuteTests : KernelServerTestsBase() {
 
-    @Synchronized
     private fun doExecute(code : String, hasResult: Boolean = true, ioPubChecker : (ZMQ.Socket) -> Unit = {}) : Any? {
         val context = ZMQ.context(1)
         val shell = context.socket(ZMQ.REQ)

@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.long
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 
 enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
@@ -28,7 +29,7 @@ fun processMagics(repl: ReplForJupyter, code: String): String {
             val max: Int by option("--max-cell-size", help = "Maximum cell output").int().default(conf.cellOutputMaxSize)
             val maxBuffer: Int by option("--max-buffer", help = "Maximum buffer size").int().default(conf.captureBufferMaxSize)
             val maxBufferNewline: Int by option("--max-buffer-newline", help = "Maximum buffer size when newline got").int().default(conf.captureNewlineBufferSize)
-            val maxTimeInterval: Int by option("--max-time", help = "Maximum time wait for output to accumulate").int().default(conf.captureBufferTimeLimitMs)
+            val maxTimeInterval: Long by option("--max-time", help = "Maximum time wait for output to accumulate").long().default(conf.captureBufferTimeLimitMs)
             val dontCaptureStdout: Boolean by option("--no-stdout", help = "Don't capture output").flag(default = !conf.captureOutput)
             val reset: Boolean by option("--reset-to-defaults", help = "Reset to defaults").flag()
 
