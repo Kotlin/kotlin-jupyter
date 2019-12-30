@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "v": "-SNAPSHOT"
+  },
+  "link": "https://github.com/kittinunf/fuel",
+  "repositories": [
+    "https://www.jitpack.io"
+  ],  
+  "dependencies": [
+    "com.github.kittinunf.fuel:fuel:$v",
+    "com.github.kittinunf.fuel:fuel-gson:$v",
+    "com.github.kittinunf.fuel:fuel-rxjava:$v",
+    "com.github.kittinunf.fuel:fuel-coroutines:$v"
+  ],
+  "imports": [
+    "com.github.kittinunf.fuel.*"
+  ]
+}
