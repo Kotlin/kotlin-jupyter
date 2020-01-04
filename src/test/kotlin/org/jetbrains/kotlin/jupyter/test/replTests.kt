@@ -190,11 +190,17 @@ class ReplTest {
         val repl = replWithResolver()
         val code1 = "%use lets-plot"
         val code2 = """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
-        val res1 = repl.eval(code1)
-        Assert.assertEquals(1, res1.displayValues.count())
+        val displays = mutableListOf<Any>()
+        fun displayHandler(display: Any) {
+            displays.add(display)
+        }
+
+        val res1 = repl.eval(code1, ::displayHandler)
+        Assert.assertEquals(1, displays.count())
+        displays.clear()
         Assert.assertNull(res1.resultValue)
-        val res2 = repl.eval(code2)
-        Assert.assertEquals(0, res2.displayValues.count())
+        val res2 = repl.eval(code2, ::displayHandler)
+        Assert.assertEquals(0, displays.count())
         val mime = res2.resultValue as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
@@ -206,8 +212,12 @@ class ReplTest {
     fun TestTwoLibrariesInUse() {
         val repl = replWithResolver()
         val code = "%use lets-plot, krangl"
-        val res = repl.eval(code)
-        assertEquals(1, res.displayValues.count())
+        val displays = mutableListOf<Any>()
+        fun displayHandler(display: Any) {
+            displays.add(display)
+        }
+        repl.eval(code, ::displayHandler)
+        assertEquals(1, displays.count())
     }
 
     @Ignore

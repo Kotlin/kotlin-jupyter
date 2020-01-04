@@ -16,6 +16,8 @@ annotation class Repository(val value: String = "")
 
 interface KotlinKernelHost {
     fun display(value: Any)
+
+    fun scheduleExecution(code: String)
 }
 
 abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
@@ -25,6 +27,8 @@ abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
     fun HTML(text: String, isolated: Boolean = false) = MIME("text/html" to text).also { it.isolatedHtml = isolated }
 
     fun DISPLAY(value: Any) = __host!!.display(value)
+
+    fun EXECUTE(code: String) = __host!!.scheduleExecution(code)
 
     val Out: List<Any?> = ReplOutputs
 }

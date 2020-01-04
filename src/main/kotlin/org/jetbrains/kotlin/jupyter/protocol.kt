@@ -1,7 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
-import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
 import org.jetbrains.annotations.TestOnly
@@ -10,7 +9,6 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
-import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 
@@ -23,7 +21,7 @@ enum class JupyterOutType {
     fun optionName() = name.toLowerCase()
 }
 
-data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedResult?, val displays: List<MimeTypedResult> = emptyList(), val stdOut: String? = null, val stdErr: String? = null) {
+data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedResult?, val stdOut: String? = null, val stdErr: String? = null) {
     val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
     val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
@@ -117,14 +115,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                                         "execution_count" to count,
                                         "data" to res.result,
                                         "metadata" to metadata
-                                )))
-                    }
-                    res.displays.forEach {
-                        connection.iopub.send(makeReplyMessage(msg,
-                                "display_data",
-                                content = jsonObject(
-                                        "data" to it,
-                                        "metadata" to jsonObject()
                                 )))
                     }
 
@@ -261,7 +251,6 @@ class CapturingOutputStream(private val stdout: PrintStream,
 fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     is MimeTypedResult -> this
     is Unit -> null
-    is DisplayResult -> value.toMimeTypedResult()
     else -> textResult(this.toString())
 }
 
@@ -290,22 +279,17 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?):
         return try {
             val exec = body()
             if (exec == null) {
-                ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, "NO REPL!")
+                ResponseWithMessage(ResponseState.Error, textResult("Error!"), null, "NO REPL!")
             } else {
                 forkedOut.flush()
                 forkedError.flush()
 
                 try {
                     var result: MimeTypedResult? = null
-                    val displays = exec.displayValues.mapNotNull { it.toMimeTypedResult() }.toMutableList()
-                    if (exec.resultValue is DisplayResult) {
-                        val resultDisplay = exec.resultValue.value.toMimeTypedResult()
-                        if (resultDisplay != null)
-                            displays += resultDisplay
-                    } else result = exec.resultValue?.toMimeTypedResult()
-                    ResponseWithMessage(ResponseState.Ok, result, displays, null, null)
+                    result = exec.resultValue?.toMimeTypedResult()
+                    ResponseWithMessage(ResponseState.Ok, result, null, null)
                 } catch (e: Exception) {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
+                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), null,
                             "error:  Unable to convert result to a string: $e")
                 }
             }
@@ -322,7 +306,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?):
                    'traceback' : list(str), # traceback frames as strings
                 }
              */
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), null,
                     ex.errorResult.message)
         } catch (ex: ReplEvalRuntimeException) {
             forkedOut.flush()
@@ -351,7 +335,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?):
                     }
                 }
             }
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, stdErr.toString())
+            ResponseWithMessage(ResponseState.Error, textResult("Error!"), null, stdErr.toString())
         }
     } finally {
         forkedOut.close()

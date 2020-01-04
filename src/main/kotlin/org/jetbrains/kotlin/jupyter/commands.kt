@@ -18,7 +18,7 @@ fun runCommand(code: String, repl: ReplForJupyter?): ResponseWithMessage {
                 ReplCommands.valueOf(args[0])
             }
             catch (e: IllegalArgumentException) {
-                return ResponseWithMessage(ResponseState.Error, textResult("Failed!"), emptyList(), null, "unknown command: $code\nto see available commands, enter :help")
+                return ResponseWithMessage(ResponseState.Error, textResult("Failed!"), null, "unknown command: $code\nto see available commands, enter :help")
             }
     return when (cmd) {
         ReplCommands.classpath -> {
