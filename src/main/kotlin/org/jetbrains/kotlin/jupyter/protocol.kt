@@ -109,12 +109,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             when (res.state) {
                 ResponseState.Ok -> {
                     if (res.result != null) {
+                        val metadata = if (res.result.isolatedHtml)
+                            jsonObject("text/html" to jsonObject("isolated" to true)) else jsonObject()
                         connection.iopub.send(makeReplyMessage(msg,
                                 "execute_result",
                                 content = jsonObject(
                                         "execution_count" to count,
                                         "data" to res.result,
-                                        "metadata" to jsonObject()
+                                        "metadata" to metadata
                                 )))
                     }
                     res.displays.forEach {

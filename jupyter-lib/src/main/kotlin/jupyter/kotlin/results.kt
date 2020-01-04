@@ -22,7 +22,7 @@ abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
 
     fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 
-    fun HTML(text: String) = MIME("text/html" to text)
+    fun HTML(text: String, isolated: Boolean = false) = MIME("text/html" to text).also { it.isolatedHtml = isolated }
 
     fun DISPLAY(value: Any) = __host!!.display(value)
 
@@ -32,8 +32,6 @@ abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 fun textResult(text: String): MimeTypedResult = MimeTypedResult(mapOf("text/plain" to text))
 
-class MimeTypedResult(mimeData: Map<String, String>): Map<String, String> by mimeData
-
-class DisplayResult(val value: Any)
+class MimeTypedResult(mimeData: Map<String, String>, var isolatedHtml: Boolean = false) : Map<String, String> by mimeData
 
 val ReplOutputs = mutableListOf<Any?>()
