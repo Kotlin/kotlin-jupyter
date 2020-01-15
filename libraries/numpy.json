@@ -1,6 +1,6 @@
 {
   "properties": {
-    "v": "0.1.0"
+    "v": "0.1.1"
   },
   "link": "https://github.com/Kotlin/kotlin-numpy",
   "repositories": [

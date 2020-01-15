@@ -28,7 +28,7 @@ val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepo
 
 val LibraryDescriptorExt = "json"
 val LibraryPropertiesFile = ".properties"
-val libraryDescriptorFormatVersion = 1
+val libraryDescriptorFormatVersion = 2
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
@@ -285,8 +285,8 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                 repositories = it.value.array<String>("repositories")?.toList().orEmpty(),
                 init = it.value.array<String>("init")?.toList().orEmpty(),
                 initCell = it.value.array<String>("initCell")?.toList().orEmpty(),
-                renderers = it.value.array<JsonObject>("renderers")?.map {
-                    TypeRenderer(it.string("class")!!, it.string("result")!!)
+                renderers = it.value.obj("renderers")?.map {
+                    TypeHandler(it.key, it.value.toString())
                 }?.toList().orEmpty(),
                 link = it.value.string("link")
         )
