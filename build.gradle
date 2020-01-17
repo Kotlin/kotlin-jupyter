@@ -7,7 +7,7 @@ import java.util.stream.Collectors
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
-    ext.kotlinVersion = '1.3.70-eap-3'
+    ext.kotlinVersion = '1.3-SNAPSHOT'
     ext.baseVersion = '0.7.41'
     repositories {
         jcenter()
@@ -62,8 +62,12 @@ allprojects {
         distributionPath = rootPath.resolve("distrib")
         //noinspection GroovyAssignabilityCheck
         distribBuildPath = rootPath.resolve("distrib-build")
+
+        resourcesDir = "resources"
         //noinspection GroovyAssignabilityCheck
-        logosPath = getSubDir(rootPath, "resources", "logos")
+        logosPath = getSubDir(rootPath, resourcesDir, "logos")
+        //noinspection GroovyAssignabilityCheck
+        nbExtensionPath = getSubDir(rootPath, resourcesDir, "notebook-extension")
 
         if (project == rootProject) {
             isProtectedBranch = isProtectedBranch()
@@ -95,7 +99,6 @@ allprojects {
         debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort".toString()
 
         mainSourceSetDir = "main"
-        resourcesDir = "resources"
         runtimePropertiesFile = "runtime.properties"
 
         jarsPath = "jars"
@@ -246,7 +249,9 @@ void createCleanTasks() {
         task(makeTaskName(cleanInstallDirTaskPrefix, local)) {
             group(local ? localGroup : distribGroup)
             doLast {
-                dir.deleteDir()
+                if(!dir.deleteDir()) {
+                    throw new Exception("Cannot delete $dir")
+                }
             }
         }
     }
@@ -309,6 +314,7 @@ void createMainInstallTask(Boolean debug, Boolean local, String group, String sp
     def taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
 
     def dependencies = [
+            makeTaskName(cleanInstallDirTaskPrefix, local),
             local ? copyRunKernelPy : prepareDistributionDir,
             makeTaskName(installKernelTaskPrefix, local),
             makeTaskName(installLibsTaskPrefix, local),
@@ -338,6 +344,10 @@ void makeKernelSpec(Path installPath, Boolean localInstall) {
 
     project.copy {
         from logosPath
+        into installPath
+    }
+    project.copy {
+        from nbExtensionPath
         into installPath
     }
 }

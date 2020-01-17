@@ -1,14 +1,13 @@
 package org.jetbrains.kotlin.jupyter.repl.reflect
 
-import jupyter.kotlin.completion.KotlinFunctionInfo
-import jupyter.kotlin.completion.KotlinVariableInfo
+import jupyter.kotlin.KotlinFunctionInfo
+import jupyter.kotlin.KotlinVariableInfo
 import org.jetbrains.kotlin.cli.common.repl.AggregatedReplStageState
 import org.jetbrains.kotlin.cli.common.repl.ReplHistoryRecord
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
 import java.util.*
-import java.util.stream.Collectors
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 
