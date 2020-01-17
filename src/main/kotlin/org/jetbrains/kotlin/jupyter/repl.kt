@@ -6,8 +6,6 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import jupyter.kotlin.completion.KotlinContext
-import jupyter.kotlin.completion.KotlinReceiver
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import java.io.File
@@ -133,7 +131,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private var executionCounter = 0
 
-    private val compiler: ReplCompiler by lazy {
+    private val compiler: ReplCompilerWithCompletion by lazy {
         JvmReplCompiler(compilerConfiguration)
     }
 
@@ -149,11 +147,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val state = AggregatedReplStageState(compilerState, evaluatorState, stateLock)
 
+    private val completer = KotlinCompleter()
+
     private val ctx = KotlinContext()
 
     private val contextUpdater = ContextUpdater(state, ctx.vars, ctx.functions)
-
-    private val completer = KotlinCompleter(ctx)
 
     var trackClasspath: Boolean = false
 
@@ -253,7 +251,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    fun complete(code: String, cursor: Int): CompletionResult = completer.complete(code, cursor)
+    fun complete(code: String, cursor: Int): CompletionResult {
+        val id = executionCounter++
+        val codeLine = ReplCodeLine(id, 0, code)
+        return completer.complete(compiler, compilerState, codeLine, cursor)
+    }
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
 

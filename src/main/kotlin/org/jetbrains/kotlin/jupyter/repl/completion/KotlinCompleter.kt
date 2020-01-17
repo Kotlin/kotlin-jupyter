@@ -2,9 +2,10 @@ package org.jetbrains.kotlin.jupyter.repl.completion
 
 import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.jsonObject
-import jupyter.kotlin.completion.KotlinContext
-import jupyter.kotlin.completion.KotlinReflectUtil.shorten
-import java.util.TreeMap
+import org.jetbrains.kotlin.cli.common.repl.IReplStageState
+import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
+import org.jetbrains.kotlin.cli.common.repl.ReplCompleteAction
+import org.jetbrains.kotlin.utils.CompletionVariant
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -30,21 +31,35 @@ data class CompletionTokenBounds(val start: Int, val end: Int)
 class CompletionResultSuccess(
         val matches: List<String>,
         val bounds: CompletionTokenBounds,
-        val metadata: Map<String, String>
+        val metadata: List<CompletionVariant>
 ): CompletionResult(CompletionStatus.OK) {
+    init {
+        assert(matches.size == metadata.size)
+    }
+
     override fun toJson(): JsonObject {
         val res = super.toJson()
         res["matches"] = matches
         res["cursor_start"] = bounds.start
         res["cursor_end"] = bounds.end
-        res["metadata"] = mapOf("_jupyter_types_experimental" to metadata.map {
-            mapOf(
-                    "text" to it.key,
-                    "type" to it.value,
-                    "start" to bounds.start,
-                    "end" to bounds.end
-            )
-        })
+        res["metadata"] = mapOf(
+                "_jupyter_types_experimental" to metadata.map {
+                    mapOf(
+                            "text" to it.text,
+                            "type" to it.tail,
+                            "start" to bounds.start,
+                            "end" to bounds.end
+                    )
+                },
+                "_jupyter_extended_metadata" to metadata.map {
+                    mapOf(
+                            "text" to it.text,
+                            "displayText" to it.displayText,
+                            "icon" to it.icon,
+                            "tail" to it.tail
+                    )
+                }
+        )
         return res
     }
 }
@@ -64,35 +79,22 @@ class CompletionResultError(
 }
 
 
-class KotlinCompleter(private val ctx: KotlinContext) {
-    fun complete(buf: String, cursor: Int): CompletionResult {
-        try {
-            val bounds = getTokenBounds(buf, cursor)
-            val token = buf.substring(bounds.start, bounds.end)
+class KotlinCompleter {
+    fun complete(compiler: ReplCompleteAction, compilerState: IReplStageState<*>, codeLine: ReplCodeLine, cursor: Int): CompletionResult {
+        return try {
+            val completionList = compiler.complete(compilerState, codeLine, cursor)
 
-            val tokens = TreeMap<String, String>()
-            val tokensFilter = { t: String -> t.startsWith(token) }
-            tokens.putAll(keywords.filter { entry -> tokensFilter(entry.key) })
+            val bounds = getTokenBounds(codeLine.code, cursor)
 
-            tokens.putAll(ctx.getVarsList().asSequence()
-                    .filter { tokensFilter(it.name) }
-                    .map { it.name to shorten(it.type) })
-
-            tokens.putAll(ctx.getFunctionsList().asSequence()
-                    .filter { tokensFilter(it.name) }
-                    .map { it.name to it.toString(true) })
-
-            return CompletionResultSuccess(tokens.keys.toList(), bounds, tokens)
+            CompletionResultSuccess(completionList.map { it.text }, bounds, completionList)
         } catch (e: Exception) {
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))
-            return CompletionResultError(e.javaClass.simpleName, e.message ?: "", sw.toString())
+            CompletionResultError(e.javaClass.simpleName, e.message ?: "", sw.toString())
         }
     }
 
     companion object {
-        private val keywords = KotlinKeywords.KEYWORDS.asSequence().map { it to "keyword" }.toMap()
-
         fun getTokenBounds(buf: String, cursor: Int): CompletionTokenBounds {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
