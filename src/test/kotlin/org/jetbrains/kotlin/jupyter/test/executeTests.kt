@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.*
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.zeromq.ZMQ
 
@@ -92,6 +93,28 @@ class ExecuteTests : KernelServerTestsBase() {
                 val msg = ioPub.receiveMessage()
                 Assert.assertEquals("stream", msg.type())
                 Assert.assertEquals(el, msg.content!!["text"])
+            }
+        }
+
+        val res = doExecute(code, false, ::checker)
+        Assert.assertNull(res)
+    }
+
+    @Test
+    @Ignore
+    fun testOutputStrings() {
+        val code = """
+            for (i in 1..5) {
+                Thread.sleep(200)
+                println("text" + i)
+            }
+        """.trimIndent()
+
+        fun checker(ioPub: ZMQ.Socket) {
+            for (i in 1..5) {
+                val msg = ioPub.receiveMessage()
+                Assert.assertEquals("stream", msg.type())
+                Assert.assertEquals("text$i\n", msg.content!!["text"])
             }
         }
 

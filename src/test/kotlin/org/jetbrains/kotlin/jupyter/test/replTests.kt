@@ -2,38 +2,50 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import jupyter.kotlin.ConstReceiver
 import jupyter.kotlin.MimeTypedResult
+import jupyter.kotlin.TypeProviderReceiver
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 class ReplTest {
 
-    fun replWithResolver() = ReplForJupyter(classpath, ResolverConfig(defaultRepositories,
+    fun replWithResolver() = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories,
             parserLibraryDescriptors(readLibraries().toMap()).asDeferred()))
 
     @Test
     fun TestRepl() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         repl.eval("val x = 3")
         val res = repl.eval("x*2")
         assertEquals(6, res.resultValue)
     }
 
     @Test
+    fun TestReplWithReceiver() {
+        val value = 5
+        val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
+        val repl = ReplForJupyterImpl(cp, null, ConstReceiver(value))
+        val res = repl.eval("value")
+        assertEquals(value, res.resultValue)
+    }
+
+    @Test
     fun TestDependsOnAnnotation() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
     @Test
     fun TestScriptIsolation() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         assertFails {
             repl.eval("org.jetbrains.kotlin.jupyter.ReplLineMagics.use")
         }
@@ -41,7 +53,7 @@ class ReplTest {
 
     @Test
     fun TestDependsOnAnnotations() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         val sb = StringBuilder()
         sb.appendln("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
         sb.appendln("@file:Repository(\"https://repo.spring.io/libs-release\")")
@@ -51,7 +63,7 @@ class ReplTest {
 
     @Test
     fun TestCompletion() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         repl.eval("val foobar = 42")
         repl.eval("var foobaz = 43")
         val result = repl.complete("val t = foo", 11)
@@ -65,7 +77,7 @@ class ReplTest {
 
     @Test
     fun TestOut() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         repl.eval("1+1", null, 1)
         val res = repl.eval("Out[1]")
         assertEquals(2, res.resultValue)
@@ -74,7 +86,7 @@ class ReplTest {
 
     @Test
     fun TestOutputMagic() {
-        val repl = ReplForJupyter(classpath)
+        val repl = ReplForJupyterImpl(classpath)
         repl.preprocessCode("%output --max-cell-size=100500 --no-stdout")
         assertEquals(OutputConfig(
                 cellOutputMaxSize = 100500,
@@ -155,7 +167,7 @@ class ReplTest {
 
         val libJsons = arrayOf(lib1, lib2, lib3).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
 
-        val repl = ReplForJupyter(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()))
+        val repl = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()))
         val res = repl.preprocessCode("%use mylib(1.0), another")
         assertEquals("", res.code)
         val inits = arrayOf(
@@ -229,6 +241,16 @@ class ReplTest {
                         "a" to {it["a"]}"""
         val res = repl.eval(code)
         assertNotNull(res.resultValue)
+    }
+
+    @Test
+    fun testNullableErasure() {
+        val repl = replWithResolver()
+        val code1 = "val a: Int? = 3"
+        repl.eval(code1)
+        val code2 = "a+2"
+        val res = repl.eval(code2).resultValue
+        assertEquals(5, res)
     }
 
     private fun String.convertCRLFtoLF(): String {

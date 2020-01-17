@@ -81,7 +81,14 @@ class MagicsProcessor(val repl: ReplOptions, val libraries: LibrariesProcessor) 
                 sb.append(code.substring(nextCopyIndex, magicStart))
 
                 when (magic) {
-                    ReplLineMagics.trackExecution -> repl.trackExecutedCode = true
+                    ReplLineMagics.trackExecution -> {
+                        repl.executedCodeLogging = when (arg?.trim()) {
+                            "-all" -> ExecutedCodeLogging.All
+                            "-off" -> ExecutedCodeLogging.Off
+                            "-generated" -> ExecutedCodeLogging.Generated
+                            else -> ExecutedCodeLogging.All
+                        }
+                    }
                     ReplLineMagics.trackClasspath -> repl.trackClasspath = true
                     ReplLineMagics.dumpClassesForSpark -> repl.writeCompiledClasses = true
 

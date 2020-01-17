@@ -3,7 +3,7 @@ package jupyter.kotlin.completion
 import jupyter.kotlin.completion.KotlinReflectUtil.shorten
 import kotlin.reflect.KProperty
 
-class KotlinVariableInfo(private val value: Any?, private val descriptor: KProperty<*>) {
+class KotlinVariableInfo(val value: Any?, val descriptor: KProperty<*>, val line: Any) {
 
     val name: String
         get() = descriptor.name

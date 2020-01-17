@@ -6,7 +6,7 @@ import jupyter.kotlin.completion.KotlinReflectUtil.functionSignature
 import jupyter.kotlin.completion.KotlinReflectUtil.shorten
 
 
-class KotlinFunctionInfo(private val function: KFunction<*>) : Comparable<KotlinFunctionInfo> {
+class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable<KotlinFunctionInfo> {
 
     val name: String
         get() = function.name

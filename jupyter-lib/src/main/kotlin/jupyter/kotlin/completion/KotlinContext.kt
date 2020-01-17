@@ -8,14 +8,14 @@ import java.util.*
  * It can be accessed inside REPL by name `kc`, e.g. kc.showVars()
  */
 class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-                    val functions: MutableSet<KotlinFunctionInfo> = TreeSet()) {
+                    val functions: HashMap<String, KotlinFunctionInfo> = HashMap()) {
 
     fun getVarsList(): List<KotlinVariableInfo> {
         return ArrayList(vars.values)
     }
 
     fun getFunctionsList(): List<KotlinFunctionInfo> {
-        return ArrayList(functions)
+        return ArrayList(functions.values)
     }
 }
 
@@ -33,6 +33,4 @@ class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
  * By default, it only has KotlinContext.
  * Inherited KotlinReceivers should be in separate java file, they can't be inner or nested.
  */
-class KotlinReceiver {
-    var kc: KotlinContext? = null
-}
+class KotlinReceiver(val kc: KotlinContext)

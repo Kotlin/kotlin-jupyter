@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter.repl.reflect
 
+import jupyter.kotlin.completion.KotlinContext
 import jupyter.kotlin.completion.KotlinFunctionInfo
 import jupyter.kotlin.completion.KotlinVariableInfo
 import org.jetbrains.kotlin.cli.common.repl.AggregatedReplStageState
@@ -17,17 +18,11 @@ import kotlin.reflect.jvm.kotlinProperty
  * to use in completion and KotlinContext.
  */
 class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
-                     private val vars: MutableMap<String, KotlinVariableInfo>,
-                     private val functions: MutableSet<KotlinFunctionInfo>) {
-
-    private val lines: List<Any>
-        get() = state.history
-                .mapNotNull { this.getLineFromRecord(it) }
-                .asReversed()
+                     val context: KotlinContext) {
 
     fun update() {
         try {
-            val lines = lines
+            val lines = state.lines
             refreshVariables(lines)
             refreshMethods(lines)
         } catch (e: ReflectiveOperationException) {
@@ -39,7 +34,7 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
     }
 
     private fun refreshMethods(lines: List<Any>) {
-        functions.clear()
+        context.functions.clear()
         for (line in lines) {
             val methods = line.javaClass.methods
             for (method in methods) {
@@ -47,14 +42,9 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
                     continue
                 }
                 val function = method.kotlinFunction ?: continue
-                functions.add(KotlinFunctionInfo(function))
+                context.functions.putIfAbsent(function.name, KotlinFunctionInfo(function, line))
             }
         }
-    }
-
-    private fun getLineFromRecord(record: ReplHistoryRecord<Pair<*, *>>): Any? {
-        val statePair = record.item.second
-        return (statePair as Pair<*, *>).second
     }
 
     @Throws(ReflectiveOperationException::class)
@@ -65,7 +55,7 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
 
     @Throws(ReflectiveOperationException::class)
     private fun refreshVariables(lines: List<Any>) {
-        vars.clear()
+        context.vars.clear()
         if (lines.isNotEmpty()) {
             val receiver = getImplicitReceiver(lines[0])
             findReceiverVariables(receiver)
@@ -107,7 +97,7 @@ class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
             if (!fieldName.contains("script$")) {
                 val descriptor = field.kotlinProperty
                 if (descriptor != null) {
-                    vars.putIfAbsent(fieldName, KotlinVariableInfo(value, descriptor))
+                    context.vars.putIfAbsent(fieldName, KotlinVariableInfo(value, descriptor, o))
                 }
             }
         }

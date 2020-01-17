@@ -77,7 +77,7 @@ data class KernelConfig(
 
 val protocolVersion = "5.3"
 
-data class TypeRenderer(val className: String, val resultCode: String)
+data class TypeHandler(val className: TypeName, val code: Code)
 
 data class Variable(val name: String, val value: String)
 
@@ -87,7 +87,9 @@ open class LibraryDefinition(
         val imports: List<String>,
         val repositories: List<String>,
         val init: List<String>,
-        val renderers: List<TypeRenderer>
+        val renderers: List<TypeHandler>,
+        val converters: List<TypeHandler>,
+        val annotations: List<TypeHandler>
 )
 
 class LibraryDescriptor(dependencies: List<String>,
@@ -96,8 +98,10 @@ class LibraryDescriptor(dependencies: List<String>,
                         imports: List<String>,
                         repositories: List<String>,
                         init: List<String>,
-                        renderers: List<TypeRenderer>,
-                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers)
+                        renderers: List<TypeHandler>,
+                        converters: List<TypeHandler>,
+                        annotations: List<TypeHandler>,
+                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
                           val libraries: Deferred<Map<String, LibraryDescriptor>>)
@@ -267,7 +271,9 @@ fun getLibrariesJsons(homeDir: String): Map<String, JsonObject> {
 }
 
 fun loadResolverConfig(homeDir: String) = ResolverConfig(defaultRepositories, GlobalScope.async {
-    parserLibraryDescriptors(getLibrariesJsons(homeDir))
+    log.catchAll {
+        parserLibraryDescriptors(getLibrariesJsons(homeDir))
+    } ?: emptyMap()
 })
 
 val defaultRepositories = arrayOf(
@@ -278,6 +284,7 @@ val defaultRepositories = arrayOf(
 
 fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {
+        log.info("Parsing '${it.key}' descriptor")
         LibraryDescriptor(
                 dependencies = it.value.array<String>("dependencies")?.toList().orEmpty(),
                 variables = it.value.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
@@ -288,7 +295,9 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                 renderers = it.value.obj("renderers")?.map {
                     TypeHandler(it.key, it.value.toString())
                 }?.toList().orEmpty(),
-                link = it.value.string("link")
+                link = it.value.string("link"),
+                converters = it.value.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
+                annotations = it.value.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
         )
     }
 }
