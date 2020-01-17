@@ -17,7 +17,7 @@
   ],
   "link": "https://github.com/holgerbrandl/krangl",
   "dependencies": [
-    "com.github.nikitinas:krangl:c41cd3ac7212332070272fb2d3fd90e10ceaa148"
+    "com.github.nikitinas:krangl:2a6ae25890f6252eae2a13646265c9110b8ec5b4"
   ],
   "typeConverters": {
     "krangl.DataFrame": "CodeGenerator.generate($it, $property)",
