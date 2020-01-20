@@ -101,7 +101,6 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
-    @Ignore
     fun testOutputStrings() {
         val code = """
             for (i in 1..5) {
