@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 
 enum class ResponseState {
-    Ok, Error
+    Ok, Error, Abort
 }
 
 enum class JupyterOutType {
@@ -22,9 +22,41 @@ enum class JupyterOutType {
     fun optionName() = name.toLowerCase()
 }
 
-data class ResponseWithMessage(val state: ResponseState, val result: MimeTypedResult?, val displays: List<MimeTypedResult> = emptyList(), val stdOut: String? = null, val stdErr: String? = null) {
-    val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
-    val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+interface Response {
+    val state: ResponseState
+    val hasStdOut: Boolean
+    val hasStdErr: Boolean
+    val stdOut: String?
+    val stdErr: String?
+}
+
+data class OkResponseWithMessage(val result: MimeTypedResult?,
+                                 val displays: List<MimeTypedResult> = emptyList(),
+                                 override val stdOut: String? = null,
+                                 override val stdErr: String? = null): Response{
+    override val state: ResponseState = ResponseState.Ok
+    override val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
+    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+}
+
+data class AbortResponseWithMessage(val result: MimeTypedResult?,
+                                    override val stdErr: String? = null): Response{
+    override val state: ResponseState = ResponseState.Abort
+    override val stdOut: String? = null
+    override val hasStdOut: Boolean = false
+    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+}
+
+data class ErrorResponseWithMessage(val result: MimeTypedResult?,
+                               override val stdErr: String? = null,
+                               val errorName: String = "Unknown error",
+                               var errorValue: String = "",
+                               val traceback: List<String> = emptyList(),
+                               val additionalInfo: JsonObject = jsonObject()): Response{
+    override val state: ResponseState = ResponseState.Error
+    override val stdOut: String? = null
+    override val hasStdOut: Boolean = false
+    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
 fun JupyterConnection.Socket.sendOut(msg:Message, stream: JupyterOutType, text: String) {
@@ -80,7 +112,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                     "execution_count" to count,
                     "code" to code)))
-            val res: ResponseWithMessage = if (isCommand(code.toString())) {
+            val res: Response = if (isCommand(code.toString())) {
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO (repl?.outputConfig) {
@@ -95,8 +127,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 sendOut(msg, JupyterOutType.STDERR, res.stdErr!!)
             }
 
-            when (res.state) {
-                ResponseState.Ok -> {
+            when (res) {
+                is OkResponseWithMessage -> {
                     if (res.result != null) {
                         connection.iopub.send(makeReplyMessage(msg,
                                 "execute_result",
@@ -128,10 +160,22 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                                     "payload" to listOf<String>(),
                                     "user_expressions" to JsonObject())))
                 }
-                ResponseState.Error -> {
+                is ErrorResponseWithMessage -> {
                     val errorReply = makeReplyMessage(msg, "execute_reply",
                             content = jsonObject(
-                                    "status" to "abort",
+                                    "status" to "error",
+                                    "execution_count" to count,
+                                    "ename" to res.errorName,
+                                    "evalue" to res.errorValue,
+                                    "traceback" to res.traceback,
+                                    "additionalInfo" to res.additionalInfo))
+                    System.err.println("Sending error: $errorReply")
+                    send(errorReply)
+                }
+                is AbortResponseWithMessage -> {
+                    val errorReply = makeReplyMessage(msg, "execute_reply",
+                            content = jsonObject(
+                                    "status" to "error",
                                     "execution_count" to count))
                     System.err.println("Sending abort: $errorReply")
                     send(errorReply)
@@ -252,7 +296,7 @@ fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     else -> textResult(this.toString())
 }
 
-fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalResult?): ResponseWithMessage {
+fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalResult?): Response {
     val out = System.out
     val err = System.err
     val config = maybeConfig ?: OutputConfig()
@@ -278,7 +322,7 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
         return try {
             val exec = body()
             if (exec == null) {
-                ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, "NO REPL!")
+                AbortResponseWithMessage(textResult("Error!"), "NO REPL!")
             } else {
                 forkedOut.flush()
                 forkedError.flush()
@@ -291,39 +335,31 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
                         if (resultDisplay != null)
                             displays += resultDisplay
                     } else result = exec.resultValue?.toMimeTypedResult()
-                    ResponseWithMessage(ResponseState.Ok, result, displays, null, null)
+                    OkResponseWithMessage(result, displays, null, null)
                 } catch (e: Exception) {
-                    ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
-                            "error:  Unable to convert result to a string: $e")
+                    AbortResponseWithMessage(textResult("Error!"), "error:  Unable to convert result to a string: $e")
                 }
             }
         } catch (ex: ReplCompilerException) {
             forkedOut.flush()
             forkedError.flush()
 
-            // handle runtime vs. compile time and send back correct format of response, now we just send text
-            /*
-                {
-                   'status' : 'error',
-                   'ename' : str,   # Exception name, as a string
-                   'evalue' : str,  # Exception value, as a string
-                   'traceback' : list(str), # traceback frames as strings
-                }
-             */
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null,
-                    ex.errorResult.message)
+            val additionalInfo = ex.errorResult.location?.let {
+                jsonObject("lineStart" to it.lineStart, "colStart" to it.columnStart,
+                        "lineEnd" to it.lineEnd, "colEnd" to it.columnEnd,
+                        "path" to it.path)
+            } ?: jsonObject()
+
+            ErrorResponseWithMessage(
+                    textResult("Error!"),
+                    ex.errorResult.exceptionMessage,
+                    ex.javaClass.canonicalName,
+                    ex.message ?: "",
+                    ex.stackTrace.map { it.toString() },
+                    additionalInfo)
         } catch (ex: ReplEvalRuntimeException) {
             forkedOut.flush()
 
-            // handle runtime vs. compile time and send back correct format of response, now we just send text
-            /*
-                {
-                   'status' : 'error',
-                   'ename' : str,   # Exception name, as a string
-                   'evalue' : str,  # Exception value, as a string
-                   'traceback' : list(str), # traceback frames as strings
-                }
-             */
             val stdErr = StringBuilder()
             with(stdErr) {
                 val cause = ex.errorResult.cause
@@ -339,7 +375,12 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
                     }
                 }
             }
-            ResponseWithMessage(ResponseState.Error, textResult("Error!"), emptyList(), null, stdErr.toString())
+            ErrorResponseWithMessage(
+                    textResult("Error!"),
+                    stdErr.toString(),
+                    ex.javaClass.canonicalName,
+                    ex.message ?: "",
+                    ex.stackTrace.map { it.toString() })
         }
     } finally {
         forkedOut.close()
