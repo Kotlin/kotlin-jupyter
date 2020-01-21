@@ -26,7 +26,19 @@ open class ReplException(message: String, cause: Throwable? = null) : Exception(
 
 class ReplEvalRuntimeException(val errorResult: ReplEvalResult.Error.Runtime) : ReplException(errorResult.message, errorResult.cause)
 
-class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplException(errorResult.message) {
+val ReplCompileResult.Error.exceptionMessage: String
+    get() {
+        if (location == null)
+            return message
+        val prefix = with(location!!) {
+            val start = if (lineStart != -1 || columnStart != -1) "($lineStart:$columnStart) " else ""
+            val end = if (lineEnd != -1 || columnEnd != -1) "($lineEnd:$columnEnd) " else ""
+            start + if (end.isNotEmpty()) "- $end" else ""
+        }
+        return prefix + message
+    }
+
+class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplException(errorResult.exceptionMessage) {
     constructor (checkResult: ReplCheckResult.Error) : this(ReplCompileResult.Error(checkResult.message, checkResult.location))
     constructor (incompleteResult: ReplCompileResult.Incomplete) : this(ReplCompileResult.Error("Incomplete Code", null))
     constructor (checkResult: ReplEvalResult.Error.CompileTime) : this(ReplCompileResult.Error(checkResult.message, checkResult.location))

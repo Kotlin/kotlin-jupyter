@@ -11,19 +11,19 @@ fun isCommand(code: String): Boolean = code.startsWith(":")
 
 fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n    ", prefix = "    ", transform = transform)
 
-fun runCommand(code: String, repl: ReplForJupyter?): ResponseWithMessage {
+fun runCommand(code: String, repl: ReplForJupyter?): Response {
     val args = code.trim().substring(1).split(" ")
     val cmd =
             try {
                 ReplCommands.valueOf(args[0])
             }
             catch (e: IllegalArgumentException) {
-                return ResponseWithMessage(ResponseState.Error, textResult("Failed!"), emptyList(), null, "unknown command: $code\nto see available commands, enter :help")
+                return AbortResponseWithMessage(textResult("Failed!"), "unknown command: $code\nto see available commands, enter :help")
             }
     return when (cmd) {
         ReplCommands.classpath -> {
             val cp = repl!!.currentClasspath
-            ResponseWithMessage(ResponseState.Ok, textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
+            OkResponseWithMessage(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommands.help -> {
             val commands = ReplCommands.values().asIterable().joinToStringIndented { ":${it.name} - ${it.desc}" }
@@ -35,7 +35,7 @@ fun runCommand(code: String, repl: ReplForJupyter?): ResponseWithMessage {
             val libraries = repl?.config?.libraries?.awaitBlocking()?.toList()?.joinToStringIndented {
                 "${it.first} ${it.second.link ?: ""}"
             }
-            ResponseWithMessage(ResponseState.Ok, textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
+            OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
         }
     }
 }
