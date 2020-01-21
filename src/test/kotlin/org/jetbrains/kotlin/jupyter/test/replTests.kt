@@ -26,6 +26,18 @@ class ReplTest {
     }
 
     @Test
+    fun TestError() {
+        val repl = ReplForJupyter(classpath)
+        val res = repl.eval("""
+            val foobar = 78
+            val foobaz = "dsdsda"
+            val ddd = ppp
+            val ooo = foobar
+        """.trimIndent())
+        assertNotNull(res)
+    }
+
+    @Test
     fun TestDependsOnAnnotation() {
         val repl = ReplForJupyter(classpath)
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
