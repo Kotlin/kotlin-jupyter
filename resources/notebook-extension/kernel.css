@@ -442,3 +442,8 @@
 .jp-Completer-type[data-color-index='10'] {
     background: #17becf;
 }
+
+.cm__red_wavy_line {
+    background: url(https://try.kotlinlang.org/static/images/wavyline-red.gif) repeat-x 100% 100%;
+    padding-bottom: 2px;
+}

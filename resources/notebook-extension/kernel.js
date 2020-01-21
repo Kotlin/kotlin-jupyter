@@ -33,6 +33,8 @@ define(function(){
         var $ = require('jquery');
         var CodeMirror = require('codemirror/lib/codemirror');
         var Completer = requirejs("notebook/js/completer").Completer;
+        var Cell = requirejs("notebook/js/cell").Cell;
+        var CodeCell = requirejs("notebook/js/codecell").CodeCell;
 
         var cssUrl = require.toUrl(Jupyter.kernelselector.kernelspecs.kotlin.resources["kernel.css"]);
         $('head').append('<link rel="stylesheet" type="text/css" href="' + cssUrl + '">');
@@ -87,14 +89,14 @@ define(function(){
                 }
                 if (tem1 === "" || tem2.indexOf(tem1) !== 0) {
                     return {
-                        str:prepend_n_prc('', min_lead_prct),
+                        replaceText: prepend_n_prc('', min_lead_prct),
                         type: "computed",
                         from: B[0].from,
                         to: B[0].to
                     };
                 }
                 return {
-                    str: prepend_n_prc(tem1, min_lead_prct),
+                    replaceText: prepend_n_prc(tem1, min_lead_prct),
                     type: "computed",
                     from: B[0].from,
                     to: B[0].to
@@ -102,6 +104,18 @@ define(function(){
             }
             return null;
         }
+
+        Completer.prototype.startCompletion = function (doAutoPrint) {
+            /**
+             * call for a 'first' completion, that will set the editor and do some
+             * special behavior like autopicking if only one completion available.
+             */
+            this.do_auto_print = !!doAutoPrint;
+            if (this.editor.somethingSelected()|| this.editor.getSelections().length > 1) return;
+            this.done = false;
+            // use to get focus back on opera
+            this.carry_on_completion(true);
+        };
 
         Completer.prototype.finish_completing = function (msg) {
             /**
@@ -176,7 +190,7 @@ define(function(){
             if (!this.raw_result || !this.raw_result.length) return;
 
             // When there is only one completion, use it directly.
-            if (this.autopick && this.raw_result.length == 1) {
+            if (this.do_auto_print && this.autopick && this.raw_result.length == 1) {
                 this.insert(this.raw_result[0]);
                 return;
             }
@@ -343,12 +357,20 @@ define(function(){
                 //Check that shared start is not null which can append with prefixed completion
                 // like %pylab , pylab have no shred start, and ff will result in py<tab><tab>
                 // to erase py
+
                 var sh = shared_start(this.raw_result, true);
                 if (sh.str !== '') {
                     this.insert(sh);
                 }
                 this.close();
                 this.carry_on_completion();
+
+                // event.codemirrorIgnore = true;
+                // event._ipkmIgnore = true;
+                // event.preventDefault();
+                // this.pick();
+                // this.close();
+
             } else if (code == keycodes.up || code == keycodes.down) {
                 // need to do that to be able to move the arrow
                 // when on the first or last line ofo a code cell
@@ -410,9 +432,23 @@ define(function(){
             }, 50);
         };
 
-        Jupyter.CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+        CodeCell.prototype._isCompletionEvent = function(event) {
+            if (event.type !== 'keydown' || event.ctrlKey || !this.tooltip._hidden)
+                return false;
+            if (event.keyCode === keycodes.tab)
+                return true;
+
+            var key = event.key;
+
+            return /^[.A-Za-z0-9(]$/.test(key);
+        };
+
+        CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
 
             var that = this;
+
+            this.code_mirror.getAllMarks().filter(it => it.className === "cm__red_wavy_line").forEach(it => it.clear());
+
             // whatever key is pressed, first, cancel the tooltip request before
             // they are sent, and remove tooltip if any, except for tab again
             var tooltip_closed = null;
@@ -465,7 +501,7 @@ define(function(){
                 event.codemirrorIgnore = true;
                 event.preventDefault();
                 return true;
-            } else if (event.keyCode === keycodes.tab && event.type === 'keydown') {
+            } else if (this._isCompletionEvent(event)) {
                 // Tab completion.
                 this.tooltip.remove_and_cancel_tooltip();
 
@@ -481,16 +517,43 @@ define(function(){
                 } else {
                     event.preventDefault();
                     event.codemirrorIgnore = true;
-                    this.completer.startCompletion();
+
+                    var doAutoPrint = event.keyCode === keycodes.tab;
+
+                    if (!doAutoPrint) {
+                        editor.replaceRange(event.key, cur, cur);
+                    }
+
+                    this.completer.startCompletion(doAutoPrint);
                     return true;
                 }
             }
 
             // keyboard event wasn't one of those unique to code cells, let's see
             // if it's one of the generic ones (i.e. check edit mode shortcuts)
-            return Jupyter.Cell.prototype.handle_codemirror_keyevent.apply(this, [editor, event]);
+            return Cell.prototype.handle_codemirror_keyevent.apply(this, [editor, event]);
         };
 
+        CodeCell.prototype._handle_execute_reply = function (msg) {
+            this.set_input_prompt(msg.content.execution_count);
+            this.element.removeClass("running");
+            this.events.trigger('set_dirty.Notebook', {value: true});
+
+            if (msg.content.status === 'error') {
+                var addInfo = msg.content.additionalInfo || {};
+                var from = {line: addInfo.lineStart - 1, ch: addInfo.colStart - 1};
+                var to;
+                if (addInfo.lineEnd !== -1 && addInfo.colEnd !== -1) {
+                    to = {line: addInfo.lineEnd - 1, ch: addInfo.colEnd - 1};
+                } else {
+                    to = {line: from.line, ch: from.ch + 3};
+                }
+
+                if (from.line !== undefined && from.ch !== undefined) {
+                    this.code_mirror.markText(from, to, {className: "cm__red_wavy_line"});
+                }
+            }
+        };
 
     }
 
