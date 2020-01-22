@@ -15,7 +15,7 @@ DATA_FILES = [
 
 
 PACKAGE_DATA = {
-    'run_kotlin_kernel': ['jars/*.jar', 'config/*.json']
+    'run_kotlin_kernel': ['jars/*.jar', 'config/*.json', 'libraries/*']
 }
 
 if __name__ == "__main__":
