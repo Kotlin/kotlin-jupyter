@@ -7,7 +7,7 @@ import java.util.stream.Collectors
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
-    ext.kotlinVersion = '1.3-SNAPSHOT'
+    ext.kotlinVersion = '1.4-SNAPSHOT'
     ext.baseVersion = '0.7.41'
     repositories {
         jcenter()
@@ -365,6 +365,11 @@ void makeJarArgs(Path installPath, String kernelJarPath, List<String> classPath,
 
 task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGroup) {
     from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
+    into installPathLocal
+}
+
+task copyNbExtension(type: Copy, group: localGroup) {
+    from nbExtensionPath
     into installPathLocal
 }
 

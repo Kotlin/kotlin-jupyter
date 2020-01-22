@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultEmpty
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.reflect.lines
@@ -389,10 +390,21 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
+    private val completionQueue = CompletionLockQueue()
+
     override fun complete(code: String, cursor: Int): CompletionResult {
-        val id = executionCounter++
-        val codeLine = ReplCodeLine(id, 0, code)
-        return completer.complete(compiler, compilerState, codeLine, cursor)
+        val args = CompletionArgs(code, cursor)
+        completionQueue.add(args)
+
+        synchronized(this) {
+            val lastArgs = completionQueue.get()
+            if (lastArgs != args)
+                return CompletionResultEmpty(code, cursor)
+
+            val id = executionCounter++
+            val codeLine = ReplCodeLine(id, 0, code)
+            return completer.complete(compiler, compilerState, codeLine, cursor)
+        }
     }
 
     private fun updateOutputList(jupyterId: Int, result: Any?) {
@@ -426,6 +438,22 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
     }
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
+
+    private data class CompletionArgs(val code: String, val cursor: Int)
+
+    private class CompletionLockQueue {
+        private var args: CompletionArgs? = null
+
+        fun add(args: CompletionArgs) {
+            synchronized(this) {
+                this.args = args
+            }
+        }
+
+        fun get(): CompletionArgs {
+            return args!!
+        }
+    }
 
     private fun evalNoReturn(code: String) {
         doEval(code)

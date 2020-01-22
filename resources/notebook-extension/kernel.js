@@ -117,6 +117,55 @@ define(function(){
             this.carry_on_completion(true);
         };
 
+        Completer.prototype.carry_on_completion = function (first_invocation) {
+            /**
+             * Pass true as parameter if you want the completer to autopick when
+             * only one completion. This function is automatically reinvoked at
+             * each keystroke with first_invocation = false
+             */
+            var cur = this.editor.getCursor();
+            var line = this.editor.getLine(cur.line);
+            var pre_cursor = this.editor.getRange({
+                line: cur.line,
+                ch: cur.ch - 1
+            }, cur);
+
+            // we need to check that we are still on a word boundary
+            // because while typing the completer is still reinvoking itself
+            // so dismiss if we are on a "bad" character
+            if (!this.reinvoke(pre_cursor) && !first_invocation) {
+                this.close();
+                return;
+            }
+
+            this.autopick = false;
+            if (first_invocation) {
+                this.autopick = true;
+            }
+
+            // We want a single cursor position.
+            if (this.editor.somethingSelected()|| this.editor.getSelections().length > 1) {
+                return;
+            }
+
+            // one kernel completion came back, finish_completing will be called with the results
+            // we fork here and directly call finish completing if kernel is busy
+            var cursor_pos = this.editor.indexFromPos(cur);
+            var text = this.editor.getValue();
+            cursor_pos = utils.js_idx_to_char_idx(cursor_pos, text);
+            if (this.skip_kernel_completion) {
+                this.finish_completing({ content: {
+                        matches: [],
+                        cursor_start: cursor_pos,
+                        cursor_end: cursor_pos,
+                    }});
+            } else {
+                this.cell.kernel.complete(text, cursor_pos,
+                    $.proxy(this.finish_completing, this)
+                );
+            }
+        };
+
         Completer.prototype.finish_completing = function (msg) {
             /**
              * let's build a function that wrap all that stuff into what is needed
@@ -131,9 +180,20 @@ define(function(){
             var matches = content.matches;
             var metadata = content.metadata || {};
             var extMetadata = metadata._jupyter_extended_metadata || {};
+
             console.log(content);
 
             var cur = this.editor.getCursor();
+
+            var paragraph = content.paragraph;
+            if (paragraph) {
+                if (paragraph.cursor !== this.editor.indexFromPos(cur)
+                    || paragraph.text !== this.editor.getValue()) {
+                    // this.close();
+                    return;
+                }
+            }
+
             if (end === null) {
                 // adapted message spec replies don't have cursor position info,
                 // interpret end=null as current position,
@@ -187,7 +247,10 @@ define(function(){
             this.raw_result = filtered_results;
 
             // if empty result return
-            if (!this.raw_result || !this.raw_result.length) return;
+            if (!this.raw_result || !this.raw_result.length) {
+                this.close();
+                return;
+            }
 
             // When there is only one completion, use it directly.
             if (this.do_auto_print && this.autopick && this.raw_result.length == 1) {
@@ -406,6 +469,10 @@ define(function(){
             }
         };
 
+        function _isCompletionKey(key) {
+            return /^[.]$/.test(key);
+        }
+
         Completer.prototype.keypress = function (event) {
             /**
              * FIXME: This is a band-aid.
@@ -414,6 +481,8 @@ define(function(){
              * before events were disconnected and CodeMirror stopped
              * receiving events while the completer is focused.
              */
+
+            console.log("Pressed: " + event.key);
 
             var that = this;
             var code = event.keyCode;
@@ -425,22 +494,29 @@ define(function(){
                 code == keycodes.enter
             ) return;
 
-            this.close();
+            if (_isCompletionKey(event.key))
+                return;
+
+            // this.close();
             this.editor.focus();
+
+            console.log("Go: " + event.key);
             setTimeout(function () {
+                console.log("Inside tm callback: " + event.key);
                 that.carry_on_completion();
             }, 50);
         };
 
+        CodeCell.prototype._isCompletionKey = function(key) {
+            return /^[.]$/.test(key);
+        };
+
         CodeCell.prototype._isCompletionEvent = function(event) {
-            if (event.type !== 'keydown' || event.ctrlKey || !this.tooltip._hidden)
+            if (event.type !== 'keydown' || event.ctrlKey || event.metaKey || !this.tooltip._hidden)
                 return false;
             if (event.keyCode === keycodes.tab)
                 return true;
-
-            var key = event.key;
-
-            return /^[.A-Za-z0-9(]$/.test(key);
+            return _isCompletionKey(event.key);
         };
 
         CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {

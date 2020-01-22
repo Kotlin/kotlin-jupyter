@@ -92,9 +92,9 @@ class ReplTest {
     @Test
     fun TestCompletion() {
         val repl = ReplForJupyterImpl(classpath)
-        repl.eval("val foobar = 42")
-        repl.eval("var foobaz = 43")
-        val result = repl.complete("val t = foo", 11)
+        repl.eval("%use krangl-typed")
+        repl.eval("val df = DataFrame.readCSV(\"C:\\\\Users\\\\Ilya.Muradyan\\\\jetstat.csv\")")
+        val result = repl.complete("df.filter { D }", 13)
 
         if (result is CompletionResultSuccess) {
             Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.matches.sorted())
