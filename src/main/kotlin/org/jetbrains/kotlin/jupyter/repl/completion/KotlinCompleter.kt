@@ -28,10 +28,12 @@ abstract class CompletionResult(
 
 data class CompletionTokenBounds(val start: Int, val end: Int)
 
-class CompletionResultSuccess(
+open class CompletionResultSuccess(
         val matches: List<String>,
         val bounds: CompletionTokenBounds,
-        val metadata: List<CompletionVariant>
+        val metadata: List<CompletionVariant>,
+        val text: String,
+        val cursor: Int
 ): CompletionResult(CompletionStatus.OK) {
     init {
         assert(matches.size == metadata.size)
@@ -60,9 +62,17 @@ class CompletionResultSuccess(
                     )
                 }
         )
+        res["paragraph"] = mapOf(
+                "cursor" to cursor,
+                "text" to text
+        )
         return res
     }
 }
+
+class CompletionResultEmpty(
+        text: String, cursor: Int
+): CompletionResultSuccess(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
 
 class CompletionResultError(
         val errorName: String,
@@ -86,7 +96,7 @@ class KotlinCompleter {
 
             val bounds = getTokenBounds(codeLine.code, cursor)
 
-            CompletionResultSuccess(completionList.map { it.text }, bounds, completionList)
+            CompletionResultSuccess(completionList.map { it.text }, bounds, completionList, codeLine.code, cursor)
         } catch (e: Exception) {
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))

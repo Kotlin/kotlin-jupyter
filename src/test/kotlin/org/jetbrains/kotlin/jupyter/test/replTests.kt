@@ -79,7 +79,7 @@ class ReplTest {
     }
 
     @Test
-    fun TestCompletion() {
+    fun TestCompletionSimple() {
         val repl = ReplForJupyter(classpath)
         repl.eval("val foobar = 42")
         repl.eval("var foobaz = 43")
@@ -87,6 +87,31 @@ class ReplTest {
 
         if (result is CompletionResultSuccess) {
             Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.matches.sorted())
+        } else {
+            Assert.fail("Result should be success")
+        }
+    }
+
+    @Test
+    fun TestCompletionForImplicitReceivers() {
+        val repl = ReplForJupyter(classpath)
+        repl.eval("""
+            class AClass(val c_prop_x: Int) {
+                fun filter(xxx: (AClass).() -> Boolean): AClass {
+                    return this
+                }
+            }
+            val AClass.c_prop_y: Int
+                get() = c_prop_x * c_prop_x
+            
+            fun AClass.c_meth_z(v: Int) = v * c_prop_y
+            val df = AClass(10)
+            val c_zzz = "some string"
+        """.trimIndent())
+        val result = repl.complete("df.filter { c_ }", 14)
+
+        if (result is CompletionResultSuccess) {
+            Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.matches.sorted())
         } else {
             Assert.fail("Result should be success")
         }

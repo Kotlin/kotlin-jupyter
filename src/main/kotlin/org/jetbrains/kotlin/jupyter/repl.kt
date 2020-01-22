@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultEmpty
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
@@ -119,8 +120,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
-            var c: Class<*>? = null
-            c = if (name != null && includeFilter(name))
+            val c = if (name != null && includeFilter(name))
                 parent.loadClass(name)
             else parent.parent.loadClass(name)
             if (resolve)
@@ -263,13 +263,40 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
+    private val completionQueue = CompletionLockQueue()
+
     fun complete(code: String, cursor: Int): CompletionResult {
-        val id = executionCounter++
-        val codeLine = ReplCodeLine(id, 0, code)
-        return completer.complete(compiler, compilerState, codeLine, cursor)
+        val args = CompletionArgs(code, cursor)
+        completionQueue.add(args)
+
+        synchronized(this) {
+            val lastArgs = completionQueue.get()
+            if (lastArgs != args)
+                return CompletionResultEmpty(code, cursor)
+
+            val id = executionCounter++
+            val codeLine = ReplCodeLine(id, 0, code)
+            return completer.complete(compiler, compilerState, codeLine, cursor)
+        }
     }
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
+
+    private data class CompletionArgs(val code: String, val cursor: Int)
+
+    private class CompletionLockQueue {
+        private var args: CompletionArgs? = null
+
+        fun add(args: CompletionArgs) {
+            synchronized(this) {
+                this.args = args
+            }
+        }
+
+        fun get(): CompletionArgs {
+            return args!!
+        }
+    }
 
     private fun doEval(code: String): InternalEvalResult {
         if (trackExecutedCode)
