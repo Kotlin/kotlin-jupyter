@@ -73,7 +73,8 @@ allprojects {
             isProtectedBranch = isProtectedBranch()
             String buildCounterStr = rootProject.findProperty('build.counter') ?: '100500'
             String buildNumber = rootProject.findProperty('build.number') ?: ''
-            String devAddition = isProtectedBranch ? '' : '.dev1'
+            String devCounter = rootProject.findProperty('build.devCounter') ?: '1'
+            String devAddition = isProtectedBranch ? '' : '.dev' + devCounter
             String defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
             String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
 
