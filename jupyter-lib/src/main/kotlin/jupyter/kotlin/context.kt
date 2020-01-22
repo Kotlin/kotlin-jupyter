@@ -10,14 +10,14 @@ import kotlin.reflect.KProperty
  * It can be accessed inside REPL by name `kc`, e.g. kc.showVars()
  */
 class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-                    val functions: MutableSet<KotlinFunctionInfo> = TreeSet()) {
+                    val functions: HashMap<String, KotlinFunctionInfo> = HashMap()) {
 
     fun getVarsList(): List<KotlinVariableInfo> {
         return ArrayList(vars.values)
     }
 
     fun getFunctionsList(): List<KotlinFunctionInfo> {
-        return ArrayList(functions)
+        return ArrayList(functions.values)
     }
 }
 
@@ -35,9 +35,7 @@ class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
  * By default, it only has KotlinContext.
  * Inherited KotlinReceivers should be in separate java file, they can't be inner or nested.
  */
-class KotlinReceiver {
-    var kc: KotlinContext? = null
-}
+class KotlinReceiver(val kc: KotlinContext)
 
 fun functionSignature(function: KFunction<*>): String {
     return function.toString().replace("Line_\\d+\\.".toRegex(), "")
@@ -48,7 +46,7 @@ fun shortenType(name: String): String {
     // kotlin.collections.List<kotlin.Int> -> List<Int>
 }
 
-class KotlinFunctionInfo(private val function: KFunction<*>) : Comparable<KotlinFunctionInfo> {
+class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable<KotlinFunctionInfo> {
 
     val name: String
         get() = function.name
@@ -78,7 +76,7 @@ class KotlinFunctionInfo(private val function: KFunction<*>) : Comparable<Kotlin
     }
 }
 
-class KotlinVariableInfo(private val value: Any?, private val descriptor: KProperty<*>) {
+class KotlinVariableInfo(val value: Any?, val descriptor: KProperty<*>, val line: Any) {
 
     val name: String
         get() = descriptor.name

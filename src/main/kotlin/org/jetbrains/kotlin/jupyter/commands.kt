@@ -32,7 +32,7 @@ fun runCommand(code: String, repl: ReplForJupyter?): Response {
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.name} ${it.argumentsUsage}"
                 s
             }
-            val libraries = repl?.config?.libraries?.awaitBlocking()?.toList()?.joinToStringIndented {
+            val libraries = repl?.resolverConfig?.libraries?.awaitBlocking()?.toList()?.joinToStringIndented {
                 "${it.first} ${it.second.link ?: ""}"
             }
             OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))

@@ -28,7 +28,7 @@ val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepo
 
 val LibraryDescriptorExt = "json"
 val LibraryPropertiesFile = ".properties"
-val libraryDescriptorFormatVersion = 1
+val libraryDescriptorFormatVersion = 2
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
@@ -47,7 +47,7 @@ data class OutputConfig(
         var cellOutputMaxSize: Int = 100000,
         var captureNewlineBufferSize: Int = 100
 ) {
-    fun assign(other: OutputConfig) {
+    fun update(other: OutputConfig) {
         captureOutput = other.captureOutput
         captureBufferTimeLimitMs = other.captureBufferTimeLimitMs
         captureBufferMaxSize = other.captureBufferMaxSize
@@ -77,21 +77,34 @@ data class KernelConfig(
 
 val protocolVersion = "5.3"
 
-data class TypeRenderer(val className: String, val displayCode: String?, val resultCode: String?)
+data class TypeHandler(val className: TypeName, val code: Code)
 
 data class Variable(val name: String, val value: String)
 
-class LibraryDefinition(val dependencies: List<String>,
+open class LibraryDefinition(
+        val dependencies: List<String>,
+        val initCell: List<String>,
+        val imports: List<String>,
+        val repositories: List<String>,
+        val init: List<String>,
+        val renderers: List<TypeHandler>,
+        val converters: List<TypeHandler>,
+        val annotations: List<TypeHandler>
+)
+
+class LibraryDescriptor(dependencies: List<String>,
                         val variables: List<Variable>,
-                        val initCell: List<String>,
-                        val imports: List<String>,
-                        val repositories: List<String>,
-                        val init: List<String>,
-                        val renderers: List<TypeRenderer>,
-                        val link: String?)
+                        initCell: List<String>,
+                        imports: List<String>,
+                        repositories: List<String>,
+                        init: List<String>,
+                        renderers: List<TypeHandler>,
+                        converters: List<TypeHandler>,
+                        annotations: List<TypeHandler>,
+                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
-                          val libraries: Deferred<Map<String, LibraryDefinition>>)
+                          val libraries: Deferred<Map<String, LibraryDescriptor>>)
 
 fun parseLibraryArgument(str: String): Variable {
     val eq = str.indexOf('=')
@@ -258,7 +271,9 @@ fun getLibrariesJsons(homeDir: String): Map<String, JsonObject> {
 }
 
 fun loadResolverConfig(homeDir: String) = ResolverConfig(defaultRepositories, GlobalScope.async {
-    parserLibraryDescriptors(getLibrariesJsons(homeDir))
+    log.catchAll {
+        parserLibraryDescriptors(getLibrariesJsons(homeDir))
+    } ?: emptyMap()
 })
 
 val defaultRepositories = arrayOf(
@@ -267,19 +282,22 @@ val defaultRepositories = arrayOf(
         "https://jitpack.io"
 ).map { RepositoryCoordinates(it) }
 
-fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDefinition> {
+fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {
-        LibraryDefinition(
+        log.info("Parsing '${it.key}' descriptor")
+        LibraryDescriptor(
                 dependencies = it.value.array<String>("dependencies")?.toList().orEmpty(),
                 variables = it.value.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
                 imports = it.value.array<String>("imports")?.toList().orEmpty(),
                 repositories = it.value.array<String>("repositories")?.toList().orEmpty(),
                 init = it.value.array<String>("init")?.toList().orEmpty(),
                 initCell = it.value.array<String>("initCell")?.toList().orEmpty(),
-                renderers = it.value.array<JsonObject>("renderers")?.map {
-                    TypeRenderer(it.string("class")!!, it.string("display"), it.string("result"))
+                renderers = it.value.obj("renderers")?.map {
+                    TypeHandler(it.key, it.value.toString())
                 }?.toList().orEmpty(),
-                link = it.value.string("link")
+                link = it.value.string("link"),
+                converters = it.value.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
+                annotations = it.value.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
         )
     }
 }

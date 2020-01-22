@@ -1,7 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
-import jupyter.kotlin.DisplayResult
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
 import org.jetbrains.annotations.TestOnly
@@ -31,7 +30,6 @@ interface Response {
 }
 
 data class OkResponseWithMessage(val result: MimeTypedResult?,
-                                 val displays: List<MimeTypedResult> = emptyList(),
                                  override val stdOut: String? = null,
                                  override val stdErr: String? = null): Response{
     override val state: ResponseState = ResponseState.Ok
@@ -107,6 +105,16 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
+            fun displayHandler(value: Any) {
+                val res = value.toMimeTypedResult()
+                connection.iopub.send(makeReplyMessage(msg,
+                        "display_data",
+                        content = jsonObject(
+                                "data" to res,
+                                "metadata" to jsonObject()
+                        )))
+            }
+
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
             val code = msg.content["code"]
             connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
@@ -115,8 +123,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val res: Response = if (isCommand(code.toString())) {
                 runCommand(code.toString(), repl)
             } else {
-                connection.evalWithIO (repl?.outputConfig) {
-                    repl?.eval(code.toString(), count.toInt())
+                connection.evalWithIO(repl!!.outputConfig) {
+                    repl!!.eval(code.toString(), ::displayHandler, count.toInt())
                 }
             }
 
@@ -130,20 +138,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             when (res) {
                 is OkResponseWithMessage -> {
                     if (res.result != null) {
+                        val metadata = if (res.result.isolatedHtml)
+                            jsonObject("text/html" to jsonObject("isolated" to true)) else jsonObject()
                         connection.iopub.send(makeReplyMessage(msg,
                                 "execute_result",
                                 content = jsonObject(
                                         "execution_count" to count,
                                         "data" to res.result,
-                                        "metadata" to jsonObject()
-                                )))
-                    }
-                    res.displays.forEach {
-                        connection.iopub.send(makeReplyMessage(msg,
-                                "display_data",
-                                content = jsonObject(
-                                        "data" to it,
-                                        "metadata" to jsonObject()
+                                        "metadata" to metadata
                                 )))
                     }
 
@@ -292,14 +294,12 @@ class CapturingOutputStream(private val stdout: PrintStream,
 fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     is MimeTypedResult -> this
     is Unit -> null
-    is DisplayResult -> value.toMimeTypedResult()
     else -> textResult(this.toString())
 }
 
-fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalResult?): Response {
+fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?): Response {
     val out = System.out
     val err = System.err
-    val config = maybeConfig ?: OutputConfig()
 
     fun getCapturingStream(stream: PrintStream, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
         return CapturingOutputStream(
@@ -329,13 +329,8 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
 
                 try {
                     var result: MimeTypedResult? = null
-                    val displays = exec.displayValues.mapNotNull { it.toMimeTypedResult() }.toMutableList()
-                    if (exec.resultValue is DisplayResult) {
-                        val resultDisplay = exec.resultValue.value.toMimeTypedResult()
-                        if (resultDisplay != null)
-                            displays += resultDisplay
-                    } else result = exec.resultValue?.toMimeTypedResult()
-                    OkResponseWithMessage(result, displays, null, null)
+                    result = exec.resultValue?.toMimeTypedResult()
+                    OkResponseWithMessage(result)
                 } catch (e: Exception) {
                     AbortResponseWithMessage(textResult("Error!"), "error:  Unable to convert result to a string: $e")
                 }
@@ -343,7 +338,6 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
         } catch (ex: ReplCompilerException) {
             forkedOut.flush()
             forkedError.flush()
-
             val additionalInfo = ex.errorResult.location?.let {
                 jsonObject("lineStart" to it.lineStart, "colStart" to it.columnStart,
                         "lineEnd" to it.lineEnd, "colEnd" to it.columnEnd,
@@ -390,3 +384,5 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
         System.setOut(out)
     }
 }
+
+fun String.nullWhenEmpty(): String? = if (this.isBlank()) null else this

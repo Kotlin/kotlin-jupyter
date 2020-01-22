@@ -22,10 +22,7 @@
     "fun jetbrains.letsPlot.intern.Plot.getHtml() = jetbrains.letsPlot.intern.frontendContext.FrontendContextUtil.getHtml(this)",
     "DISPLAY(HTML(jetbrains.datalore.jupyter.configureScript()))"
   ],
-  "renderers": [
-    {
-      "class": "jetbrains.letsPlot.intern.Plot",
-      "result": "HTML(($it as jetbrains.letsPlot.intern.Plot).getHtml())"
-    }
-  ]
+  "renderers": {
+    "jetbrains.letsPlot.intern.Plot": "HTML(($it as jetbrains.letsPlot.intern.Plot).getHtml())"
+  }
 }

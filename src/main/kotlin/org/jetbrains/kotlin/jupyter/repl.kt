@@ -1,15 +1,19 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.*
+import jupyter.kotlin.KotlinContext
+import jupyter.kotlin.KotlinReceiver
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
+import org.jetbrains.kotlin.jupyter.repl.reflect.lines
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import java.io.File
 import java.net.URLClassLoader
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
@@ -18,7 +22,7 @@ import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.jvmhost.repl.JvmReplCompiler
 import kotlin.script.experimental.jvmhost.repl.JvmReplEvaluator
 
-data class EvalResult(val resultValue: Any?, val displayValues: List<Any> = emptyList())
+data class EvalResult(val resultValue: Any?)
 
 data class CheckResult(val codeLine: LineId, val isComplete: Boolean = true)
 
@@ -47,26 +51,132 @@ class ReplCompilerException(val errorResult: ReplCompileResult.Error) : ReplExce
     constructor (message: String) : this(ReplCompileResult.Error(message, null))
 }
 
-class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
-                     val config: ResolverConfig? = null) {
+enum class ExecutedCodeLogging {
+    Off,
+    All,
+    Generated
+}
 
-    val outputConfig = OutputConfig()
+interface ReplOptions {
+    var trackClasspath: Boolean
 
-    private val resolver = JupyterScriptDependenciesResolver(config)
+    var executedCodeLogging: ExecutedCodeLogging
 
-    private val renderers = config?.let {
-        it.libraries.asyncLet {
-            it.flatMap { it.value.renderers }.map { it.className to it }.toMap()
+    var writeCompiledClasses: Boolean
+
+    var outputConfig: OutputConfig
+}
+
+typealias MethodName = String
+typealias TypeName = String
+typealias Code = String
+typealias FieldName = String
+
+interface ReplForJupyter {
+    fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
+
+    fun checkComplete(executionNumber: Long, code: Code): CheckResult
+
+    fun complete(code: String, cursor: Int): CompletionResult
+
+    val currentClasspath: Collection<String> get
+
+    val resolverConfig: ResolverConfig? get
+
+    var outputConfig: OutputConfig get
+}
+
+class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
+                         override val resolverConfig: ResolverConfig? = null, vararg scriptReceivers: Any) : ReplForJupyter, ReplOptions, KotlinKernelHost {
+
+    var outputConfigImpl = OutputConfig()
+
+    override var outputConfig
+        get() = outputConfigImpl
+        set(value) {
+            // reuse output config instance, because it is already passed to CapturingOutputStream and stream parameters should be updated immediately
+            outputConfigImpl.update(value)
         }
+
+    override var trackClasspath: Boolean = false
+
+    override var executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.Off
+
+    var classWriter: ClassWriter? = null
+
+    override var writeCompiledClasses: Boolean
+        get() = classWriter != null
+        set(value) {
+            if (!value) classWriter = null
+            else {
+                val cw = ClassWriter()
+                System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
+                classWriter = cw
+            }
+        }
+
+    private val resolver = JupyterScriptDependenciesResolver(resolverConfig)
+
+    private val typeRenderers = mutableMapOf<String, String>()
+
+    private val initCellCodes = mutableListOf<String>()
+
+    private fun renderResult(value: Any?, replId: Int): Any? {
+        if (value == null) return null
+        val code = typeRenderers[value.javaClass.canonicalName]?.replace("\$it", "res$replId")
+                ?: return value
+        val result = doEval(code)
+        return renderResult(result.value, result.replId)
     }
 
-    private val includedLibraries = mutableSetOf<LibraryDefinition>()
+    data class PreprocessingResult(val code: Code, val initCodes: List<Code>, val initCellCodes: List<Code>, val typeRenderers: List<TypeHandler>)
 
-    fun preprocessCode(code: String) = processMagics(this, code)
+    fun preprocessCode(code: String): PreprocessingResult {
 
-    private val receiver = KotlinReceiver()
+        val processedMagics = magics.processMagics(code)
 
-    val librariesCodeGenerator = LibrariesProcessor()
+        val initCodes = mutableListOf<Code>()
+        val initCellCodes = mutableListOf<Code>()
+        val typeRenderers = mutableListOf<TypeHandler>()
+        val typeConverters = mutableListOf<TypeHandler>()
+        val annotations = mutableListOf<TypeHandler>()
+
+        processedMagics.libraries.forEach {
+            val builder = StringBuilder()
+            it.repositories.forEach { builder.appendln("@file:Repository(\"$it\")") }
+            it.dependencies.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
+            it.imports.forEach { builder.appendln("import $it") }
+            if (builder.isNotBlank())
+                initCodes.add(builder.toString())
+            typeRenderers.addAll(it.renderers)
+            typeConverters.addAll(it.converters)
+            annotations.addAll(it.annotations)
+            it.init.forEach {
+
+                // Library init code may contain other magics, so we process them recursively
+                val preprocessed = preprocessCode(it)
+                initCodes.addAll(preprocessed.initCodes)
+                typeRenderers.addAll(preprocessed.typeRenderers)
+                initCellCodes.addAll(preprocessed.initCellCodes)
+                if (preprocessed.code.isNotBlank())
+                    initCodes.add(preprocessed.code)
+            }
+        }
+
+        val declarations = (typeConverters.map { typeProvidersProcessor.register(it) } + annotations.map { annotationsProcessor.register(it) })
+                .joinToString("\n")
+        if (declarations.isNotBlank()) {
+            initCodes.add(declarations)
+        }
+
+        return PreprocessingResult(processedMagics.code, initCodes, initCellCodes, typeRenderers)
+    }
+
+    private val ctx = KotlinContext()
+
+    private val receivers: List<Any> = listOf<Any>(KotlinReceiver(ctx)) + scriptReceivers
+
+    val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries))
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -101,10 +211,8 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
 
-            val kt = KotlinType(receiver.javaClass.canonicalName)
-            implicitReceivers.invoke(listOf(kt))
+            implicitReceivers.invoke(receivers.map { KotlinType(it.javaClass.canonicalName) })
 
-            log.info("Classpath for compiler options: none")
             compilerOptions.invoke(listOf("-jvm-target", "1.8"))
         }
     }
@@ -115,12 +223,11 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
                 ?.flatMap { it.classpath }
                 .orEmpty()
 
-    val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
+    override val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
-            var c: Class<*>? = null
-            c = if (name != null && includeFilter(name))
+            val c = if (name != null && includeFilter(name))
                 parent.loadClass(name)
             else parent.parent.loadClass(name)
             if (resolve)
@@ -130,7 +237,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        implicitReceivers.invoke(receiver)
+        implicitReceivers.invoke(v = receivers)
         jvm {
             val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
                 it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
@@ -161,17 +268,17 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
 
     private val completer = KotlinCompleter()
 
-    private val ctx = KotlinContext()
+    private val contextUpdater = ContextUpdater(state, ctx)
 
-    private val contextUpdater = ContextUpdater(state, ctx.vars, ctx.functions)
+    private val typeProvidersProcessor: TypeProvidersProcessor = TypeProvidersProcessorImpl(contextUpdater)
 
-    var trackClasspath: Boolean = false
+    private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl(contextUpdater)
 
-    var trackExecutedCode: Boolean = false
+    private var currentDisplayHandler: ((Any) -> Unit)? = null
 
-    var classWriter: ClassWriter? = null
+    private val scheduledExecutions = LinkedList<Code>()
 
-    fun checkComplete(executionNumber: Long, code: String): CheckResult {
+    override fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = ReplCodeLine(executionNumber.toInt(), 0, code)
         return when (val result = compiler.check(compilerState, codeLine)) {
             is ReplCheckResult.Error -> throw ReplCompilerException(result)
@@ -186,100 +293,155 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         doEval("1")
     }
 
-    fun eval(code: String, jupyterId: Int = -1): EvalResult {
+    private fun executeInitCellCode() = initCellCodes.forEach(::evalNoReturn)
+
+    private fun executeInitCode(p: PreprocessingResult) = p.initCodes.forEach(::evalNoReturn)
+
+    private fun executeScheduledCode() {
+        while (scheduledExecutions.isNotEmpty()) {
+            val code = scheduledExecutions.pop()
+            if (executedCodeLogging == ExecutedCodeLogging.Generated)
+                println(code)
+            evalNoReturn(code)
+        }
+    }
+
+    private fun processVariablesConversion() {
+        var iteration = 0
+        do {
+            if (iteration++ > 10) {
+                log.error("Execution loop in type providers processing")
+                break
+            }
+            val codes = typeProvidersProcessor.process()
+            codes.forEach {
+                if (executedCodeLogging == ExecutedCodeLogging.Generated)
+                    println(it)
+                evalNoReturn(it)
+            }
+        } while (codes.isNotEmpty())
+    }
+
+    private fun processAnnotations(replLine: Any?) {
+        if (replLine == null) return
+        log.catchAll {
+            annotationsProcessor.process(replLine)
+        }?.forEach {
+            if (executedCodeLogging == ExecutedCodeLogging.Generated)
+                println(it)
+            evalNoReturn(it)
+        }
+    }
+
+    fun registerNewLibraries(p: PreprocessingResult) {
+        p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
+        typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
+    }
+
+    private fun lastReplLine() = state.lines[0]
+
+    override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
         synchronized(this) {
             try {
-                val displays = mutableListOf<Any>()
 
-                val initCell = includedLibraries.flatMap { it.initCell }.joinToString(separator = "\n")
+                currentDisplayHandler = displayHandler
 
-                if (initCell.isNotBlank())
-                    (doEval(initCell).value as? DisplayResult)?.let(displays::add)
+                executeInitCellCode()
 
-                val processedCode = preprocessCode(code)
+                val preprocessed = preprocessCode(code)
 
-                val newLibraries = librariesCodeGenerator.getProcessedLibraries()
-
-                newLibraries.forEach {
-                    (doEval(it.code).value as? DisplayResult)?.let(displays::add)
-                }
+                executeInitCode(preprocessed)
 
                 var result: Any? = null
                 var replId = -1
+                var replLine: Any? = null
 
-                if (processedCode.isNotBlank()) {
-                    val e = doEval(processedCode)
-                    result = e.value
-                    replId = e.replId
-                }
-
-                // on successful execution add all new libraries to the set
-                includedLibraries.addAll(newLibraries.map { it.library })
-
-                if (jupyterId >= 0) {
-                    while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
-                    ReplOutputs[jupyterId] = result
-                }
-
-                val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
-                if (resolvedClasspath.isNotEmpty()) {
-
-                    val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
-                    val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
-                    currentClasspath.addAll(newClasspath)
-                    if (trackClasspath) {
-                        val sb = StringBuilder()
-                        if (newClasspath.count() > 0) {
-                            sb.appendln("${newClasspath.count()} new paths were added to classpath:")
-                            newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
-                        }
-                        if (oldClasspath.count() > 0) {
-                            sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
-                            oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
-                        }
-                        sb.appendln("Current classpath size: ${currentClasspath.count()}")
-                        displays.add(sb.toString())
+                if (preprocessed.code.isNotBlank()) {
+                    doEval(preprocessed.code).let {
+                        result = it.value
+                        replId = it.replId
                     }
+                    replLine = lastReplLine()
                 }
 
-                if (result != null && renderers != null) {
-                    val resultType = result.javaClass.canonicalName
-                    renderers.awaitBlocking()[resultType]?.let {
-                        it.displayCode?.let {
-                            doEval(it.replace("\$it", "res$replId")).value?.let(displays::add)
-                        }
-                        result = if (it.resultCode == null || it.resultCode.trim().isBlank()) ""
-                        else doEval(it.resultCode.replace("\$it", "res$replId")).value
-                    }
-                    if (result is DisplayResult) {
-                        displays.add(result as Any)
-                        result = ""
-                    }
-                }
-                return EvalResult(result, displays)
+                processAnnotations(replLine)
+
+                executeScheduledCode()
+
+                registerNewLibraries(preprocessed)
+
+                processVariablesConversion()
+
+                executeScheduledCode()
+
+                updateOutputList(jupyterId, result)
+
+                updateClasspath()
+
+                result = renderResult(result, replId)
+
+                return EvalResult(result)
+
             } finally {
-                librariesCodeGenerator.getProcessedLibraries()
+                currentDisplayHandler = null
+                scheduledExecutions.clear()
             }
         }
     }
 
-    fun complete(code: String, cursor: Int): CompletionResult {
+    override fun complete(code: String, cursor: Int): CompletionResult {
         val id = executionCounter++
         val codeLine = ReplCodeLine(id, 0, code)
         return completer.complete(compiler, compilerState, codeLine, cursor)
     }
 
+    private fun updateOutputList(jupyterId: Int, result: Any?) {
+        if (jupyterId >= 0) {
+            while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
+            ReplOutputs[jupyterId] = result
+        }
+    }
+
+    private fun updateClasspath() {
+        val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
+        if (resolvedClasspath.isNotEmpty()) {
+
+            val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
+            val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
+            currentClasspath.addAll(newClasspath)
+            if (trackClasspath) {
+                val sb = StringBuilder()
+                if (newClasspath.count() > 0) {
+                    sb.appendln("${newClasspath.count()} new paths were added to classpath:")
+                    newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                }
+                if (oldClasspath.count() > 0) {
+                    sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
+                    oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                }
+                sb.appendln("Current classpath size: ${currentClasspath.count()}")
+                println(sb.toString())
+            }
+        }
+    }
+
     private data class InternalEvalResult(val value: Any?, val replId: Int)
 
+    private fun evalNoReturn(code: String) {
+        doEval(code)
+        processAnnotations(lastReplLine())
+    }
+
     private fun doEval(code: String): InternalEvalResult {
-        if (trackExecutedCode)
-            println("Executing:\n$code\n")
+        if (executedCodeLogging == ExecutedCodeLogging.All)
+            println(code)
         val id = executionCounter++
         val codeLine = ReplCodeLine(id, 0, code)
         when (val compileResult = compiler.compile(compilerState, codeLine)) {
             is ReplCompileResult.CompiledClasses -> {
                 classWriter?.writeClasses(compileResult)
-                val result = evaluator.eval(evaluatorState, compileResult)
+                val scriptArgs = ScriptArgsWithTypes(arrayOf(this), arrayOf(KotlinKernelHost::class))
+                val result = evaluator.eval(evaluatorState, compileResult, scriptArgs)
                 contextUpdater.update()
                 return when (result) {
                     is ReplEvalResult.Error.CompileTime -> throw ReplCompilerException(result)
@@ -303,7 +465,14 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
         log.info("Classpath used in script: ${scriptClasspath}")
-        receiver.kc = ctx
+    }
+
+    override fun display(value: Any) {
+        currentDisplayHandler?.invoke(value)
+    }
+
+    override fun scheduleExecution(code: String) {
+        scheduledExecutions.add(code)
     }
 }
 

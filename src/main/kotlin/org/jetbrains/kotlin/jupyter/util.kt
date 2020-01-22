@@ -1,9 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import java.io.File
 
@@ -36,6 +33,8 @@ fun <T> Deferred<T>.awaitBlocking(): T = if (isCompleted) getCompleted() else ru
 
 fun String.parseIniConfig() =
         split("\n").map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
+
+fun List<String>.joinToLines() = joinToString("\n")
 
 fun File.tryReadIniConfig() =
         existsOrNull()?.let {

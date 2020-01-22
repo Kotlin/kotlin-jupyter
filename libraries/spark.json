@@ -37,10 +37,7 @@
     "scala.Console.setOut(System.out)",
     "scala.Console.setErr(System.err)"
   ],
-  "renderers": [
-    {
-      "class": "org.apache.spark.sql.Dataset",
-      "result": "HTML($it.toHTML())"
-    }
-  ]
+  "renderers": {
+    "org.apache.spark.sql.Dataset": "HTML($it.toHTML())"
+  }
 }

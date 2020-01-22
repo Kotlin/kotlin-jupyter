@@ -80,7 +80,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyter(config.scriptClasspath, config.resolverConfig)
+        val repl = ReplForJupyterImpl(config.scriptClasspath, config.resolverConfig)
 
         val mainThread = Thread.currentThread()
 
