@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
 import org.junit.Assert
@@ -11,6 +12,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.fail
 
 class ReplTest {
 
@@ -28,13 +30,28 @@ class ReplTest {
     @Test
     fun TestError() {
         val repl = ReplForJupyter(classpath)
-        val res = repl.eval("""
-            val foobar = 78
-            val foobaz = "dsdsda"
-            val ddd = ppp
-            val ooo = foobar
-        """.trimIndent())
-        assertNotNull(res)
+        try {
+            repl.eval("""
+                val foobar = 78
+                val foobaz = "dsdsda"
+                val ddd = ppp
+                val ooo = foobar
+            """.trimIndent())
+        } catch (ex: ReplCompilerException) {
+            val res = ex.errorResult
+            val location = res.location ?: fail("Location should not be null")
+            val message = res.message
+
+            val expectedLocation = CompilerMessageLocation.create(location.path, 3, 11, 3, 14, location.lineContent)
+            val expectedMessage = "Unresolved reference: ppp"
+
+            assertEquals(expectedLocation, location)
+            assertEquals(expectedMessage, message)
+
+            return
+        }
+
+        fail("Test should fail with ReplCompilerException")
     }
 
     @Test
