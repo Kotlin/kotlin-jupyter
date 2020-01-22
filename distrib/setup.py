@@ -10,7 +10,7 @@ with open(version_file, 'r') as f:
     version = f.read().strip()
 
 DATA_FILES = [
-    ('share/jupyter/kernels/kotlin', glob.glob('kernel/*.json'))
+    ('share/jupyter/kernels/kotlin', glob.glob('kernel/*'))
 ]
 
 
