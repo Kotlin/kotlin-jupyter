@@ -390,9 +390,11 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
     }
 
     override fun complete(code: String, cursor: Int): CompletionResult {
-        val id = executionCounter++
-        val codeLine = ReplCodeLine(id, 0, code)
-        return completer.complete(compiler, compilerState, codeLine, cursor)
+        synchronized(this) {
+            val id = executionCounter++
+            val codeLine = ReplCodeLine(id, 0, code)
+            return completer.complete(compiler, compilerState, codeLine, cursor)
+        }
     }
 
     private fun updateOutputList(jupyterId: Int, result: Any?) {
