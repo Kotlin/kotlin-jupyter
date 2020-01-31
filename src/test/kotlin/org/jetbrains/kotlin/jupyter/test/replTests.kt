@@ -43,7 +43,7 @@ class ReplTest {
             val message = res.message
 
             val expectedLocation = CompilerMessageLocation.create(location.path, 3, 11, 3, 14, location.lineContent)
-            val expectedMessage = "Unresolved reference: ppp"
+            val expectedMessage = "(3:11 - 14) Unresolved reference: ppp"
 
             assertEquals(expectedLocation, location)
             assertEquals(expectedMessage, message)

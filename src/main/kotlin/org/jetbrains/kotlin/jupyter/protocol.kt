@@ -352,7 +352,7 @@ fun JupyterConnection.evalWithIO(maybeConfig: OutputConfig?, body: () -> EvalRes
 
             ErrorResponseWithMessage(
                     textResult("Error!"),
-                    ex.errorResult.exceptionMessage,
+                    ex.errorResult.message,
                     ex.javaClass.canonicalName,
                     ex.message ?: "",
                     ex.stackTrace.map { it.toString() },
