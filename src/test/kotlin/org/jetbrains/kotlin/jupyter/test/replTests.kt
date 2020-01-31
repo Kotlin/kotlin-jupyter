@@ -5,7 +5,7 @@ import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.jupyter.*
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultSuccess
+import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
@@ -85,8 +85,8 @@ class ReplTest {
         repl.eval("var foobaz = 43")
         val result = repl.complete("val t = foo", 11)
 
-        if (result is CompletionResultSuccess) {
-            Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.matches.sorted())
+        if (result is CompletionResult.Success) {
+            Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
         } else {
             Assert.fail("Result should be success")
         }
@@ -110,8 +110,8 @@ class ReplTest {
         """.trimIndent())
         val result = repl.complete("df.filter { c_ }", 14)
 
-        if (result is CompletionResultSuccess) {
-            Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.matches.sorted())
+        if (result is CompletionResult.Success) {
+            Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
         } else {
             Assert.fail("Result should be success")
         }

@@ -470,7 +470,7 @@ define(function(){
         };
 
         function _isCompletionKey(key) {
-            return /^[.]$/.test(key);
+            return /^[.a-zA-Z_]$/.test(key);
         }
 
         Completer.prototype.keypress = function (event) {
@@ -481,8 +481,6 @@ define(function(){
              * before events were disconnected and CodeMirror stopped
              * receiving events while the completer is focused.
              */
-
-            console.log("Pressed: " + event.key);
 
             var that = this;
             var code = event.keyCode;
@@ -500,15 +498,9 @@ define(function(){
             // this.close();
             this.editor.focus();
 
-            console.log("Go: " + event.key);
             setTimeout(function () {
-                console.log("Inside tm callback: " + event.key);
                 that.carry_on_completion();
-            }, 50);
-        };
-
-        CodeCell.prototype._isCompletionKey = function(key) {
-            return /^[.]$/.test(key);
+            }, 10);
         };
 
         CodeCell.prototype._isCompletionEvent = function(event) {

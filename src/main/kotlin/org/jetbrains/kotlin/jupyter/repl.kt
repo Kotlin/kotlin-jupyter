@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResultEmpty
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
@@ -272,7 +271,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         synchronized(this) {
             val lastArgs = completionQueue.get()
             if (lastArgs != args)
-                return CompletionResultEmpty(code, cursor)
+                return CompletionResult.Empty(code, cursor)
 
             val id = executionCounter++
             val codeLine = ReplCodeLine(id, 0, code)
