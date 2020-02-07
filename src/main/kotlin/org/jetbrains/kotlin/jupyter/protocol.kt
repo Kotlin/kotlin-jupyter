@@ -175,7 +175,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 is AbortResponseWithMessage -> {
                     val errorReply = makeReplyMessage(msg, "execute_reply",
                             content = jsonObject(
-                                    "status" to "error",
+                                    "status" to "abort",
                                     "execution_count" to count))
                     System.err.println("Sending abort: $errorReply")
                     send(errorReply)
@@ -191,21 +191,21 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         "complete_request" -> {
             val code = msg.content["code"].toString()
             val cursor = msg.content["cursor_pos"] as Int
-            val result = repl?.complete(code, cursor)
-            if (result == null) {
+            if (repl == null) {
                 System.err.println("Repl is not yet initialized on complete request")
                 return
             }
-            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result.toJson()))
+            val result = repl.complete(code, cursor).toJson()
+            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result))
         }
         "list_errors_request" -> {
             val code = msg.content["code"].toString()
-            val result = repl?.listErrors(code)
-            if (result == null) {
+            if (repl == null) {
                 System.err.println("Repl is not yet initialized on listErrors request")
                 return
             }
-            sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply",  content = result.toJson()))
+            val result = repl.listErrors(code).toJson()
+            sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply",  content = result))
         }
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
