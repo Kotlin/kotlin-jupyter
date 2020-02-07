@@ -444,6 +444,35 @@
 }
 
 .cm__red_wavy_line {
-    background: url(https://try.kotlinlang.org/static/images/wavyline-red.gif) repeat-x 100% 100%;
+    background: url("/kernelspecs/kotlin/wavyline-red.gif") repeat-x 100% 100%;
     padding-bottom: 2px;
+}
+
+.cm__orange_wavy_line {
+    background: url("/kernelspecs/kotlin/wavyline-orange.gif") repeat-x 100% 100%;
+    padding-bottom: 2px;
+}
+
+.kotlin-error-tooltip {
+    border: 1px solid silver;
+    border-radius: 3px;
+    color: #444;
+    padding: 2px 5px;
+    font-size: 90%;
+    font-family: monospace;
+    background-color: white;
+    white-space: pre-wrap;
+
+    max-width: 40em;
+    position: absolute;
+    z-index: 10;
+    -webkit-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+    -moz-box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+    box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+
+    transition: opacity 1s;
+    -moz-transition: opacity 1s;
+    -webkit-transition: opacity 1s;
+    -o-transition: opacity 1s;
+    -ms-transition: opacity 1s;
 }

@@ -9,10 +9,7 @@ import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertNotNull
-import kotlin.test.fail
+import kotlin.test.*
 
 class ReplTest {
 
@@ -25,6 +22,19 @@ class ReplTest {
         repl.eval("val x = 3")
         val res = repl.eval("x*2")
         assertEquals(6, res.resultValue)
+    }
+
+    @Test
+    fun TestPropertiesGeneration() {
+        val repl = ReplForJupyter(classpath)
+        // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
+        assertFailsWith(ReplEvalRuntimeException::class) {
+            repl.eval("""
+                fun stack(vararg tup: Int): Int = tup.sum()
+                val X = 1
+                val x = stack(1, X)
+            """.trimIndent())
+        }
     }
 
     @Test

@@ -35,6 +35,22 @@ define(function(){
         var Completer = requirejs("notebook/js/completer").Completer;
         var Cell = requirejs("notebook/js/cell").Cell;
         var CodeCell = requirejs("notebook/js/codecell").CodeCell;
+        var Kernel = requirejs("services/kernels/kernel").Kernel;
+
+        var error_class = "cm__red_wavy_line";
+        var warning_class = "cm__orange_wavy_line";
+        var additionalClasses = [error_class, warning_class];
+        var diag_class = {
+            "ERROR": error_class,
+            "WARNING": warning_class
+        };
+
+        var opened_completer = null;
+        $("#site").scroll((e) => {
+            if (opened_completer) {
+                opened_completer.close();
+            }
+        });
 
         var cssUrl = require.toUrl(Jupyter.kernelselector.kernelspecs.kotlin.resources["kernel.css"]);
         $('head').append('<link rel="stylesheet" type="text/css" href="' + cssUrl + '">');
@@ -138,10 +154,7 @@ define(function(){
                 return;
             }
 
-            this.autopick = false;
-            if (first_invocation) {
-                this.autopick = true;
-            }
+            this.autopick = !!first_invocation;
 
             // We want a single cursor position.
             if (this.editor.somethingSelected()|| this.editor.getSelections().length > 1) {
@@ -164,6 +177,45 @@ define(function(){
                     $.proxy(this.finish_completing, this)
                 );
             }
+        };
+
+        function convertPos(pos) {
+            return {
+                line: pos.line - 1,
+                ch: pos.col - 1
+            }
+        }
+
+        function adjustRange(start, end) {
+            var s = convertPos(start);
+            var e = convertPos(end);
+            if (s.line === e.line && s.ch === e.ch) {
+                s.ch --;
+            }
+            return {
+                start: s,
+                end: e
+            }
+        }
+
+        function highlightErrors (errors, cell) {
+            errors = errors || [];
+            errors.forEach(error => {
+                var start = error.start;
+                var end = error.end;
+                if (!start || !end)
+                    return;
+                var r = adjustRange(start, end);
+                error.range = r;
+                var cl = diag_class[error.severity];
+                cell.code_mirror.markText(r.start, r.end, {className: cl});
+            });
+
+            cell.errorsList = errors;
+        }
+
+        Cell.prototype.highlightErrors = function (errors) {
+            highlightErrors(errors, this)
         };
 
         Completer.prototype.finish_completing = function (msg) {
@@ -319,6 +371,7 @@ define(function(){
             // Clear and fill the list.
             this.sel.text('');
             this.build_gui_list(this.raw_result);
+            opened_completer = this;
             return true;
         };
 
@@ -375,6 +428,7 @@ define(function(){
 
         Completer.prototype.close = function () {
             this.done = true;
+            opened_completer = null;
             $('#complete').remove();
             this.editor.off('keydown', this._handle_keydown);
             this.editor.off('keypress', this._handle_keypress);
@@ -470,7 +524,7 @@ define(function(){
         };
 
         function _isCompletionKey(key) {
-            return /^[.a-zA-Z_]$/.test(key);
+            return key.length === 1;
         }
 
         Completer.prototype.keypress = function (event) {
@@ -503,6 +557,68 @@ define(function(){
             }, 10);
         };
 
+        CodeCell.prototype.findErrorsAtPos = function(pos) {
+            var ind = this.code_mirror.indexFromPos(pos);
+            if (!this.errorsList)
+                return [[], []];
+
+            var filter = (er) => {
+                var er_start_ind = this.code_mirror.indexFromPos(er.range.start);
+                var er_end_ind = this.code_mirror.indexFromPos(er.range.end);
+                return er_start_ind <= ind && ind <= er_end_ind;
+            };
+            var passed = [];
+            var other = [];
+            this.errorsList.forEach((er) => {
+                if (filter(er)) {
+                    passed.push(er);
+                } else {
+                    other.push(er);
+                }
+            });
+            return [passed, other];
+        };
+
+        function clearErrors(cm) {
+            cm.getAllMarks()
+                .filter(it => additionalClasses.some((cl) => it.className === cl))
+                .forEach(it => it.clear());
+        }
+
+        CodeCell.prototype._handle_change = function(cm, changes) {
+            this.notebook.get_cells().forEach((cell) =>{
+                if (cell.code_mirror) {
+                    clearErrors(cell.code_mirror);
+                }
+            });
+            this.kernel.listErrors(cm.getValue(), (msg) => {
+                var content = msg.content;
+                console.log(content);
+                var errors = content._errors;
+                this.highlightErrors(errors);
+                this.errorsList = errors;
+            });
+        };
+
+        CodeCell.prototype._handle_move = function(e) {
+            var rect = e.currentTarget.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var cursor_pos = this.code_mirror.coordsChar({left: x, top: y}, "local");
+            var res = this.findErrorsAtPos(cursor_pos);
+            var errors = res[0];
+            var otherErrors = res[1];
+            errors.forEach((error) => {
+                tempTooltip(this.code_mirror, error, cursor_pos);
+            });
+            otherErrors.forEach((error) => {
+                if (error.tip) {
+                    remove(error.tip);
+                }
+            })
+        };
+
+
         CodeCell.prototype._isCompletionEvent = function(event) {
             if (event.type !== 'keydown' || event.ctrlKey || event.metaKey || !this.tooltip._hidden)
                 return false;
@@ -511,11 +627,20 @@ define(function(){
             return _isCompletionKey(event.key);
         };
 
+        CodeCell.prototype.addEvent = function(obj, event, listener, bind_listener_name) {
+            if (this[bind_listener_name]) {
+                return;
+            }
+            var handler = this[bind_listener_name] = listener.bind(this);
+            CodeMirror.off(obj, event, handler);
+            CodeMirror.on(obj, event, handler);
+        };
+
         CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
 
             var that = this;
-
-            this.code_mirror.getAllMarks().filter(it => it.className === "cm__red_wavy_line").forEach(it => it.clear());
+            this.addEvent(this.code_mirror, 'changes', this._handle_change, "binded_handle_change");
+            this.addEvent(this.code_mirror.display.lineSpace, 'mousemove', this._handle_move, 'binded_handle_move');
 
             // whatever key is pressed, first, cancel the tooltip request before
             // they are sent, and remove tooltip if any, except for tab again
@@ -618,9 +743,95 @@ define(function(){
                 }
 
                 if (from.line !== undefined && from.ch !== undefined) {
-                    this.code_mirror.markText(from, to, {className: "cm__red_wavy_line"});
+                    this.code_mirror.markText(from, to, {className: error_class});
                 }
             }
+        };
+
+        function tempTooltip(cm, error, pos) {
+            if (cm.state.errorTip) remove(cm.state.errorTip);
+            var where = cm.charCoords(pos);
+            var tip = makeTooltip(where.right + 1, where.bottom, error.message, error.tip);
+            error.tip = cm.state.errorTip = tip;
+            fadeIn(tip);
+
+            function maybeClear() {
+                old = true;
+                if (!mouseOnTip) clear();
+            }
+            function clear() {
+                cm.state.ternTooltip = null;
+                if (tip.parentNode) fadeOut(tip);
+                clearActivity();
+            }
+            var mouseOnTip = false, old = false;
+            CodeMirror.on(tip, "mousemove", function() { mouseOnTip = true; });
+            CodeMirror.on(tip, "mouseout", function(e) {
+                var related = e.relatedTarget || e.toElement;
+                if (!related || !CodeMirror.contains(tip, related)) {
+                    if (old) clear();
+                    else mouseOnTip = false;
+                }
+            });
+            setTimeout(maybeClear, 100000);
+            var clearActivity = onEditorActivity(cm, clear)
+        }
+
+        function fadeIn(tooltip) {
+            document.body.appendChild(tooltip);
+            tooltip.style.opacity = "1";
+        }
+
+        function fadeOut(tooltip) {
+            tooltip.style.opacity = "0";
+            setTimeout(function() { remove(tooltip); }, 100);
+        }
+
+        function makeTooltip(x, y, content, element) {
+            var node = element || elt("div", "kotlin-error-tooltip", content);
+            node.style.left = x + "px";
+            node.style.top = y + "px";
+            return node;
+        }
+
+        function elt(tagname, cls /*, ... elts*/) {
+            var e = document.createElement(tagname);
+            if (cls) e.className = cls;
+            for (var i = 2; i < arguments.length; ++i) {
+                var elt = arguments[i];
+                if (typeof elt == "string") elt = document.createTextNode(elt);
+                e.appendChild(elt);
+            }
+            return e;
+        }
+
+        function remove(node) {
+            var p = node && node.parentNode;
+            if (p) p.removeChild(node);
+        }
+
+        function onEditorActivity(cm, f) {
+            cm.on("cursorActivity", f);
+            cm.on("blur", f);
+            cm.on("scroll", f);
+            cm.on("setDoc", f);
+            return function() {
+                cm.off("cursorActivity", f);
+                cm.off("blur", f);
+                cm.off("scroll", f);
+                cm.off("setDoc", f);
+            }
+        }
+
+        Kernel.prototype.listErrors = function (code, callback) {
+            var callbacks;
+            if (callback) {
+                callbacks = { shell : { reply : callback } };
+            }
+            var content = {
+                code : code
+            };
+            return this.send_shell_message("list_errors_request", content, callbacks);
         };
 
     }

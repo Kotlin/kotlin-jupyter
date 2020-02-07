@@ -5,8 +5,9 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.jupyter.jsonObject
 import org.jetbrains.kotlin.cli.common.repl.IReplStageState
 import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
-import org.jetbrains.kotlin.cli.common.repl.ReplCompleteAction
+import org.jetbrains.kotlin.cli.common.repl.ReplCompilerWithCompletion
 import org.jetbrains.kotlin.utils.CompletionVariant
+import org.jetbrains.kotlin.utils.KotlinReplError
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -92,14 +93,36 @@ abstract class CompletionResult(
     }
 }
 
+data class LightErrorsList(val errors: List<KotlinReplError> = emptyList()) {
+    fun toJson(): JsonObject {
+        return jsonObject("_errors" to errors.map {
+            val er = jsonObject(
+                    "message" to it.message,
+                    "severity" to it.severity.name
+            )
+
+            val loc = it.loc
+            if (loc != null) {
+                val start = loc.start
+                val end = loc.end
+                er["start"] = jsonObject("line" to start.line, "col" to start.col)
+                if (end != null)
+                    er["end"] = jsonObject("line" to end.line, "col" to end.col)
+            }
+            er
+        })
+    }
+}
+
 class KotlinCompleter {
-    fun complete(compiler: ReplCompleteAction, compilerState: IReplStageState<*>, codeLine: ReplCodeLine, cursor: Int): CompletionResult {
+    fun complete(compiler: ReplCompilerWithCompletion, compilerState: IReplStageState<*>, code: String, id: Int, cursor: Int): CompletionResult {
         return try {
+            val codeLine = ReplCodeLine(id, 0, code)
             val completionList = compiler.complete(compilerState, codeLine, cursor)
 
-            val bounds = getTokenBounds(codeLine.code, cursor)
+            val bounds = getTokenBounds(code, cursor)
 
-            CompletionResult.Success(completionList.map { it.text }, bounds, completionList, codeLine.code, cursor)
+            CompletionResult.Success(completionList.map { it.text }, bounds, completionList, code, cursor)
         } catch (e: Exception) {
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))

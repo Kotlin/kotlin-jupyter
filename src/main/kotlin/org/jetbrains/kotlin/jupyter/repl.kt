@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
+import org.jetbrains.kotlin.jupyter.repl.completion.LightErrorsList
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import java.io.File
@@ -250,7 +251,7 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    private val completionQueue = CompletionLockQueue()
+    private val completionQueue = LockQueue<CompletionArgs>()
 
     fun complete(code: String, cursor: Int): CompletionResult {
         val args = CompletionArgs(code, cursor)
@@ -261,26 +262,42 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
             if (lastArgs != args)
                 return CompletionResult.Empty(code, cursor)
 
-            val id = executionCounter++
-            val codeLine = ReplCodeLine(id, 0, code)
-            return completer.complete(compiler, compilerState, codeLine, cursor)
+            return completer.complete(compiler, compilerState, code, executionCounter++, cursor)
+        }
+    }
+
+    private val listErrorsQueue = LockQueue<ListErrorsArgs>()
+
+    fun listErrors(code: String): LightErrorsList {
+        val args = ListErrorsArgs(code)
+        listErrorsQueue.add(args)
+
+        synchronized(this) {
+            val lastArgs = listErrorsQueue.get()
+            if (lastArgs != args)
+                return LightErrorsList()
+
+            val codeLine = ReplCodeLine(executionCounter++, 0, code)
+            val errorsList = compiler.listErrors(compilerState, codeLine)
+            return LightErrorsList(errorsList)
         }
     }
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
 
     private data class CompletionArgs(val code: String, val cursor: Int)
+    private data class ListErrorsArgs(val code: String)
 
-    private class CompletionLockQueue {
-        private var args: CompletionArgs? = null
+    private class LockQueue<T> {
+        private var args: T? = null
 
-        fun add(args: CompletionArgs) {
+        fun add(args: T) {
             synchronized(this) {
                 this.args = args
             }
         }
 
-        fun get(): CompletionArgs {
+        fun get(): T {
             return args!!
         }
     }

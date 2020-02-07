@@ -191,12 +191,21 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         "complete_request" -> {
             val code = msg.content["code"].toString()
             val cursor = msg.content["cursor_pos"] as Int
-            val result = repl?.complete(code, cursor)?.toJson()
+            val result = repl?.complete(code, cursor)
             if (result == null) {
                 System.err.println("Repl is not yet initialized on complete request")
                 return
             }
-            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result))
+            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result.toJson()))
+        }
+        "list_errors_request" -> {
+            val code = msg.content["code"].toString()
+            val result = repl?.listErrors(code)
+            if (result == null) {
+                System.err.println("Repl is not yet initialized on listErrors request")
+                return
+            }
+            sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply",  content = result.toJson()))
         }
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
