@@ -252,34 +252,26 @@ class ReplForJupyter(val scriptClasspath: List<File> = emptyList(),
     }
 
     private val completionQueue = LockQueue<CompletionArgs>()
-
-    fun complete(code: String, cursor: Int): CompletionResult {
-        val args = CompletionArgs(code, cursor)
-        completionQueue.add(args)
-
-        synchronized(this) {
-            val lastArgs = completionQueue.get()
-            if (lastArgs != args)
-                return CompletionResult.Empty(code, cursor)
-
-            return completer.complete(compiler, compilerState, code, executionCounter++, cursor)
-        }
+    fun complete(code: String, cursor: Int): CompletionResult = doWithLock(CompletionArgs(code, cursor), completionQueue, CompletionResult.Empty(code, cursor)) {
+        completer.complete(compiler, compilerState, code, executionCounter++, cursor)
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsArgs>()
+    fun listErrors(code: String): LightErrorsList = doWithLock(ListErrorsArgs(code), listErrorsQueue, LightErrorsList()) {
+        val codeLine = ReplCodeLine(executionCounter++, 0, code)
+        val errorsList = compiler.listErrors(compilerState, codeLine)
+        LightErrorsList(errorsList)
+    }
 
-    fun listErrors(code: String): LightErrorsList {
-        val args = ListErrorsArgs(code)
-        listErrorsQueue.add(args)
+    private fun <T, R> doWithLock(args: T, queue: LockQueue<T>, default: R, action: (T) -> R): R {
+        queue.add(args)
 
         synchronized(this) {
-            val lastArgs = listErrorsQueue.get()
+            val lastArgs = queue.get()
             if (lastArgs != args)
-                return LightErrorsList()
+                return default
 
-            val codeLine = ReplCodeLine(executionCounter++, 0, code)
-            val errorsList = compiler.listErrors(compilerState, codeLine)
-            return LightErrorsList(errorsList)
+            return action(args)
         }
     }
 

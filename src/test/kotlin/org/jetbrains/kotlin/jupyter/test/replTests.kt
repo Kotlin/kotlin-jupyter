@@ -6,6 +6,7 @@ import jupyter.kotlin.MimeTypedResult
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
+import org.jetbrains.kotlin.utils.KotlinReplError
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
@@ -125,6 +126,30 @@ class ReplTest {
         } else {
             Assert.fail("Result should be success")
         }
+    }
+
+    @Test
+    fun TestErrorsList() {
+        val repl = ReplForJupyter(classpath)
+        repl.eval("""
+            data class AClass(val memx: Int, val memy: String)
+            data class BClass(val memz: String, val mema: AClass)
+            val foobar = 42
+            var foobaz = "string"
+            val v = BClass("KKK", AClass(5, "25"))
+        """.trimIndent())
+        val result = repl.listErrors("""
+            val a = AClass("42", 3.14)
+            val b: Int = "str"
+            val c = foob
+        """.trimIndent())
+
+        Assert.assertEquals(listOf(
+                KotlinReplError(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                KotlinReplError(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                KotlinReplError(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                KotlinReplError(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+        ), result.errors)
     }
 
     @Test
