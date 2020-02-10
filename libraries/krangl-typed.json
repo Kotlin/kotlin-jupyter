@@ -1,0 +1,31 @@
+{
+  "init": [
+    "fun krangl.DataFrame.toHTML(limit: Int = 20, truncate: Int = 50) : String\n{val sb = StringBuilder()\nsb.append(\"<html><body>\")\nsb.append(\"<table><tr>\")\ncols.forEach { sb.append(\"<th style=\\\"text-align:left\\\">${it.name}</th>\") }\nsb.append(\"</tr>\")\nrows.take(limit).forEach {\n    sb.append(\"<tr>\")\n    it.values.map{it.toString()}.forEach { \n        val truncated = if (truncate > 0 && it.length > truncate) {\n                if (truncate < 4) it.substring(0, truncate)\n                else it.substring(0, truncate - 3) + \"...\"\n            } else {\n                it\n            }\n        sb.append(\"\"\"<td style=\"text-align:left\" title=\"$it\">$truncated</td>\"\"\") \n    }\n    sb.append(\"</tr>\")\n}\nsb.append(\"</table>\")\nif(limit < rows.count())\n  sb.append(\"<p>... only showing top $limit rows</p>\")\nsb.append(\"</body></html>\")\nreturn sb.toString()}",
+    "fun krangl.typed.TypedDataFrame<*>.extractScheme(name: String? = null) = EXECUTE(getScheme(name))"
+  ],
+  "imports": [
+    "krangl.*",
+    "krangl.typed.*"
+  ],
+  "renderers": {
+    "krangl.SimpleDataFrame": "HTML($it.toHTML())",
+    "krangl.typed.TypedDataFrameImpl": "($it as TypedDataFrame<*>).df",
+    "krangl.typed.TypedDataFrameRowImpl": "($it as TypedDataFrameRow<*>).toDataFrame()"
+  },
+  "repositories": [
+    "https://jitpack.io"
+  ],
+  "link": "https://github.com/holgerbrandl/krangl",
+  "dependencies": [
+    "com.github.nikitinas:krangl:724fa3613b42a0e5c5d68228ca09a57078e818ba"
+  ],
+  "typeConverters": {
+    "krangl.DataFrame": "CodeGenerator.generate($it, $property)",
+    "krangl.typed.TypedDataFrame<*>": "CodeGenerator.generate($it, $property)",
+    "krangl.typed.DataFrameToListNamedStub": "CodeGenerator.generate($it)",
+    "krangl.typed.DataFrameToListTypedStub": "CodeGenerator.generate($it)"
+  },
+  "annotationHandlers": {
+    "krangl.typed.DataFrameType": "CodeGenerator.generate($kclass)"
+  }
+}

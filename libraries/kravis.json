@@ -9,10 +9,7 @@
   "imports": [
     "kravis.*"
   ],
-  "renderers": [
-    {
-      "class": "kravis.GGPlot",
-      "result": "$it.show()"
-    }
-  ]
+  "renderers": {
+    "kravis.GGPlot": "$it.show()"
+  }
 }

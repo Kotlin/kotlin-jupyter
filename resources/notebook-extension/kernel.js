@@ -620,7 +620,7 @@ define(function(){
 
 
         CodeCell.prototype._isCompletionEvent = function(event) {
-            if (event.type !== 'keydown' || event.ctrlKey || event.metaKey || !this.tooltip._hidden)
+            if (event.type !== 'keydown' || event.ctrlKey || !this.tooltip._hidden)
                 return false;
             if (event.keyCode === keycodes.tab)
                 return true;
