@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import org.jetbrains.kotlin.jupyter.repl.completion.LightErrorsList
+import org.jetbrains.kotlin.jupyter.repl.completion.ErrorsListResponse
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.reflect.lines
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
@@ -416,10 +416,10 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsArgs>()
-    override suspend fun listErrors(code: String): LightErrorsList = doWithLock(ListErrorsArgs(code), listErrorsQueue, LightErrorsList()) {
+    override suspend fun listErrors(code: String): ErrorsListResponse = doWithLock(ListErrorsArgs(code), listErrorsQueue, ErrorsListResponse(code)) {
         val codeLine = ReplCodeLine(executionCounter++, 0, code)
         val errorsList = compiler.listErrors(compilerState, codeLine)
-        LightErrorsList(errorsList)
+        ErrorsListResponse(code, errorsList)
     }
 
     private fun <T, R> doWithLock(args: T, queue: LockQueue<T>, default: R, action: (T) -> R): R {
