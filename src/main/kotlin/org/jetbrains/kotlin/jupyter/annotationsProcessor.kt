@@ -36,10 +36,13 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
     override fun process(line: Any): List<Code> {
         if (methodIdMap.isNotEmpty()) {
             contextUpdater.update()
-            handlers.putAll(methodIdMap.map {
-                it.key to contextUpdater.context.functions[getMethodName(it.value)]!!
-            })
-            methodIdMap.clear()
+            val resolvedMethods = methodIdMap.map {
+                it.key to contextUpdater.context.functions[getMethodName(it.value)]
+            }.filter { it.second != null }.map { it.first to it.second!! }
+            handlers.putAll(resolvedMethods)
+            resolvedMethods.forEach {
+                methodIdMap.remove(it.first)
+            }
         }
         val codeToExecute = mutableListOf<Code>()
         line.javaClass.kotlin.nestedClasses.forEach { kclass ->
