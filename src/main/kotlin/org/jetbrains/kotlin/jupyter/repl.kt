@@ -66,9 +66,9 @@ interface ReplForJupyter {
 
     fun checkComplete(executionNumber: Long, code: Code): CheckResult
 
-    fun complete(code: String, cursor: Int): CompletionResult
+    suspend fun complete(code: String, cursor: Int): CompletionResult
 
-    fun listErrors(code: String): LightErrorsList
+    suspend fun listErrors(code: String): LightErrorsList
 
     val currentClasspath: Collection<String> get
 
@@ -411,12 +411,12 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
     }
 
     private val completionQueue = LockQueue<CompletionArgs>()
-    override fun complete(code: String, cursor: Int): CompletionResult = doWithLock(CompletionArgs(code, cursor), completionQueue, CompletionResult.Empty(code, cursor)) {
+    override suspend fun complete(code: String, cursor: Int): CompletionResult = doWithLock(CompletionArgs(code, cursor), completionQueue, CompletionResult.Empty(code, cursor)) {
         completer.complete(compiler, compilerState, code, executionCounter++, cursor)
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsArgs>()
-    override fun listErrors(code: String): LightErrorsList = doWithLock(ListErrorsArgs(code), listErrorsQueue, LightErrorsList()) {
+    override suspend fun listErrors(code: String): LightErrorsList = doWithLock(ListErrorsArgs(code), listErrorsQueue, LightErrorsList()) {
         val codeLine = ReplCodeLine(executionCounter++, 0, code)
         val errorsList = compiler.listErrors(compilerState, codeLine)
         LightErrorsList(errorsList)

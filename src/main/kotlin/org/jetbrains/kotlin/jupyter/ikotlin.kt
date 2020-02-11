@@ -101,7 +101,7 @@ fun kernelServer(config: KernelConfig) {
 
         while (true) {
             try {
-                conn.shell.onMessage { message -> thread { shellMessagesHandler(message, repl, executionCount) } }
+                conn.shell.onMessage { message -> shellMessagesHandler(message, repl, executionCount) }
 
                 Thread.sleep(config.pollingIntervalMillis)
             } catch (e: InterruptedException) {

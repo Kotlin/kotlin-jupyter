@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.jupyter
 import com.beust.klaxon.JsonObject
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.ByteArrayOutputStream
@@ -123,7 +125,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val res: Response = if (isCommand(code.toString())) {
                 runCommand(code.toString(), repl)
             } else {
-                connection.evalWithIO(repl!!.outputConfig) {
+                connection.evalWithIO(repl!!.outputConfig, msg) {
                     repl!!.eval(code.toString(), ::displayHandler, count.toInt())
                 }
             }
@@ -197,8 +199,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 System.err.println("Repl is not yet initialized on complete request")
                 return
             }
-            val result = repl.complete(code, cursor).toJson()
-            sendWrapped(msg, makeReplyMessage(msg, "complete_reply",  content = result))
+            GlobalScope.launch {
+                val result = repl.complete(code, cursor).toJson()
+                sendWrapped(msg, makeReplyMessage(msg, "complete_reply", content = result))
+            }
         }
         "list_errors_request" -> {
             val code = msg.content["code"].toString()
@@ -206,8 +210,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 System.err.println("Repl is not yet initialized on listErrors request")
                 return
             }
-            val result = repl.listErrors(code).toJson()
-            sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply",  content = result))
+            GlobalScope.launch {
+                val result = repl.listErrors(code).toJson()
+                sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply", content = result))
+            }
         }
         "is_complete_request" -> {
             val code = msg.content["code"].toString()
@@ -306,7 +312,7 @@ fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     else -> textResult(this.toString())
 }
 
-fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?): Response {
+fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body: () -> EvalResult?): Response {
     val out = System.out
     val err = System.err
 
@@ -315,7 +321,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, body: () -> EvalResult?):
                 stream,
                 config,
                 captureOutput) { text ->
-            this.iopub.sendOut(contextMessage!!, outType, text)
+            this.iopub.sendOut(srcMessage!!, outType, text)
         }
     }
 

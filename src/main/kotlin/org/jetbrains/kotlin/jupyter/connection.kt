@@ -159,13 +159,15 @@ class HMAC(algo: String, key: String?) {
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
 fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
-    msg.id.forEach { sendMore(it) }
-    sendMore(DELIM)
-    val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
-            .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
-    sendMore(hmac(signableMsg) ?: "")
-    signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
-    send(signableMsg.last())
+    synchronized(this) {
+        msg.id.forEach { sendMore(it) }
+        sendMore(DELIM)
+        val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
+                .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
+        sendMore(hmac(signableMsg) ?: "")
+        signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
+        send(signableMsg.last())
+    }
 }
 
 fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
