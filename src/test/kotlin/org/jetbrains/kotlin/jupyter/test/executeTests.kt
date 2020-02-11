@@ -113,7 +113,7 @@ class ExecuteTests : KernelServerTestsBase() {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 Assert.assertEquals("stream", msg.type())
-                Assert.assertEquals("text$i\n", msg.content!!["text"])
+                Assert.assertEquals("text$i" + System.lineSeparator(), msg.content!!["text"])
             }
         }
 

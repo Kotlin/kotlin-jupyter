@@ -133,6 +133,47 @@ define(function(){
             this.carry_on_completion(true);
         };
 
+        function indexOf(str, filter, from, to, step) {
+            var cond = (from < to) ? (j => j <= to) : (j => j >= to);
+            for (var i = from; cond(i); i += step) {
+                if (filter(str[i]))
+                    return i;
+            }
+            return -1;
+        }
+
+        function indexOfFirst(str, filter) {
+            return indexOf(str, filter, 0, str.length - 1, 1);
+        }
+
+        function indexOfLast(str, filter) {
+            return indexOf(str, filter, str.length - 1, 0, -1);
+        }
+
+        function getTokenBounds(buf, cursor) {
+            if (cursor > buf.length) {
+                throw new Error("Position " + cursor + " does not exist in code snippet <" + buf + ">");
+            }
+
+            var filter = c => !/^[A-Z0-9_]$/i.test(c);
+
+            var start = indexOf(buf, filter, cursor, 0, -1) + 1;
+            var end = indexOf(buf, filter, cursor, buf.length - 1, 1);
+            if (end === -1) {
+                end = buf.length;
+            } else {
+                end += 1;
+            }
+
+            return {
+                before: buf.substring(0, start),
+                token: buf.substring(start, end),
+                after: buf.substring(end, buf.length),
+                start: start,
+                end: end
+            }
+        }
+
         Completer.prototype.carry_on_completion = function (first_invocation) {
             /**
              * Pass true as parameter if you want the completer to autopick when
@@ -161,11 +202,25 @@ define(function(){
                 return;
             }
 
-            // one kernel completion came back, finish_completing will be called with the results
-            // we fork here and directly call finish completing if kernel is busy
             var cursor_pos = this.editor.indexFromPos(cur);
             var text = this.editor.getValue();
             cursor_pos = utils.js_idx_to_char_idx(cursor_pos, text);
+
+            /*
+            var prevBounds = this.tokenBounds;
+            this.tokenBounds = getTokenBounds(text, cursor_pos);
+            if (prevBounds) {
+                if (bounds.before === prevBounds.before &&
+                    bounds.after === prevBounds.after &&
+                    bounds.end > prevBounds.end) {
+
+                }
+            }
+             */
+
+            // one kernel completion came back, finish_completing will be called with the results
+            // we fork here and directly call finish completing if kernel is busy
+
             if (this.skip_kernel_completion) {
                 this.finish_completing({ content: {
                         matches: [],
@@ -466,7 +521,7 @@ define(function(){
                 event.preventDefault();
                 this.pick();
                 // Escape or backspace
-            } else if (code == keycodes.esc || code == keycodes.backspace) {
+            } else if (code == keycodes.esc) {
                 event.codemirrorIgnore = true;
                 event._ipkmIgnore = true;
                 event.preventDefault();
@@ -545,7 +600,8 @@ define(function(){
             // or ENTER/TAB
             if (event.charCode === 0 ||
                 code == keycodes.tab ||
-                code == keycodes.enter
+                code == keycodes.enter ||
+                code == keycodes.backspace
             ) return;
 
             if (_isCompletionKey(event.key))
@@ -559,10 +615,15 @@ define(function(){
             }, 10);
         };
 
+        var EMPTY_ERRORS_RESULT = [[], []];
+
         CodeCell.prototype.findErrorsAtPos = function(pos) {
+            if (pos.outside || Math.abs(pos.xRel) > 50)
+                return EMPTY_ERRORS_RESULT;
+
             var ind = this.code_mirror.indexFromPos(pos);
             if (!this.errorsList)
-                return [[], []];
+                return EMPTY_ERRORS_RESULT;
 
             var filter = (er) => {
                 var er_start_ind = this.code_mirror.indexFromPos(er.range.start);
@@ -627,9 +688,9 @@ define(function(){
 
 
         CodeCell.prototype._isCompletionEvent = function(event) {
-            if (event.type !== 'keydown' || event.ctrlKey || !this.tooltip._hidden)
+            if (event.type !== 'keydown' || event.ctrlKey || event.metaKey || !this.tooltip._hidden)
                 return false;
-            if (event.keyCode === keycodes.tab)
+            if (event.keyCode === keycodes.tab || event.keyCode === keycodes.backspace)
                 return true;
             return _isCompletionKey(event.key);
         };
@@ -720,8 +781,14 @@ define(function(){
 
                     var doAutoPrint = event.keyCode === keycodes.tab;
 
-                    if (!doAutoPrint) {
+                    if (!doAutoPrint && event.key.length === 1) {
                         editor.replaceRange(event.key, cur, cur);
+                    } else if (event.keyCode === keycodes.backspace) {
+                        var fromInd = this.code_mirror.indexFromPos(cur) - 1;
+
+                        if (fromInd >= 0) {
+                            editor.replaceRange("", this.code_mirror.posFromIndex(fromInd), cur);
+                        }
                     }
 
                     this.completer.startCompletion(doAutoPrint);

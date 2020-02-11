@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
@@ -104,7 +105,7 @@ class ReplTest {
         val repl = ReplForJupyterImpl(classpath)
         repl.eval("val foobar = 42")
         repl.eval("var foobaz = 43")
-        val result = repl.complete("val t = foo", 11)
+        val result = runBlocking { repl.complete("val t = foo", 11) }
 
         if (result is CompletionResult.Success) {
             Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
@@ -129,7 +130,7 @@ class ReplTest {
             val df = AClass(10)
             val c_zzz = "some string"
         """.trimIndent())
-        val result = repl.complete("df.filter { c_ }", 14)
+        val result = runBlocking { repl.complete("df.filter { c_ }", 14) }
 
         if (result is CompletionResult.Success) {
             Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
@@ -148,11 +149,13 @@ class ReplTest {
             var foobaz = "string"
             val v = BClass("KKK", AClass(5, "25"))
         """.trimIndent())
-        val result = repl.listErrors("""
-            val a = AClass("42", 3.14)
-            val b: Int = "str"
-            val c = foob
-        """.trimIndent())
+        val result = runBlocking {
+            repl.listErrors("""
+                val a = AClass("42", 3.14)
+                val b: Int = "str"
+                val c = foob
+            """.trimIndent())
+        }
 
         Assert.assertEquals(listOf(
                 KotlinReplError(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),

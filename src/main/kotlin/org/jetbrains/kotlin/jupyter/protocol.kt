@@ -258,7 +258,7 @@ class CapturingOutputStream(private val stdout: PrintStream,
 
     private fun flushIfNeeded(b: Int) {
         val c = b.toChar()
-        if (c == '\n' || c == '\r') {
+        if (c == '\n') {
             newlineFound = true
             capturedNewLine.writeTo(capturedLines)
             capturedNewLine.reset()

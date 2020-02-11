@@ -68,7 +68,7 @@ interface ReplForJupyter {
 
     suspend fun complete(code: String, cursor: Int): CompletionResult
 
-    suspend fun listErrors(code: String): LightErrorsList
+    suspend fun listErrors(code: String): ErrorsListResponse
 
     val currentClasspath: Collection<String> get
 
