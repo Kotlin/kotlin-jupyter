@@ -270,7 +270,9 @@ define(function(){
             var i;
             for (i=0; i < results.length; i++) {
                 if (!_existing_completion(results[i].str, matches)) {
-                    filtered_results.push(results[i]);
+                    var patchedRes = results[i];
+                    patchedRes.replaceText = patchedRes.str;
+                    filtered_results.push(patchedRes);
                 }
             }
 
@@ -594,7 +596,12 @@ define(function(){
             this.kernel.listErrors(cm.getValue(), (msg) => {
                 var content = msg.content;
                 console.log(content);
-                var errors = content._errors;
+
+                if(content.code !== cm.getValue()) {
+                    return;
+                }
+
+                var errors = content.errors;
                 this.highlightErrors(errors);
                 this.errorsList = errors;
             });

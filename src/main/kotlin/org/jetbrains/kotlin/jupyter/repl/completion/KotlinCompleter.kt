@@ -93,9 +93,10 @@ abstract class CompletionResult(
     }
 }
 
-data class LightErrorsList(val errors: List<KotlinReplError> = emptyList()) {
+data class ErrorsListResponse(val code: String, val errors: List<KotlinReplError> = emptyList()) {
     fun toJson(): JsonObject {
-        return jsonObject("_errors" to errors.map {
+        return jsonObject("code" to code,
+                "errors" to errors.map {
             val er = jsonObject(
                     "message" to it.message,
                     "severity" to it.severity.name
