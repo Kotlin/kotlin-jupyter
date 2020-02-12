@@ -105,12 +105,15 @@ class ReplTest {
         val repl = ReplForJupyterImpl(classpath)
         repl.eval("val foobar = 42")
         repl.eval("var foobaz = 43")
-        val result = runBlocking { repl.complete("val t = foo", 11) }
 
-        if (result is CompletionResult.Success) {
-            Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
-        } else {
-            Assert.fail("Result should be success")
+        runBlocking { repl.complete("val t = foo", 11) {
+            result ->
+                if (result is CompletionResult.Success) {
+                    Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
+                } else {
+                    Assert.fail("Result should be success")
+                }
+            }
         }
     }
 
@@ -130,12 +133,14 @@ class ReplTest {
             val df = AClass(10)
             val c_zzz = "some string"
         """.trimIndent())
-        val result = runBlocking { repl.complete("df.filter { c_ }", 14) }
-
-        if (result is CompletionResult.Success) {
-            Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
-        } else {
-            Assert.fail("Result should be success")
+        runBlocking {
+            repl.complete("df.filter { c_ }", 14) { result ->
+                if (result is CompletionResult.Success) {
+                    Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
+                } else {
+                    Assert.fail("Result should be success")
+                }
+            }
         }
     }
 
@@ -149,20 +154,20 @@ class ReplTest {
             var foobaz = "string"
             val v = BClass("KKK", AClass(5, "25"))
         """.trimIndent())
-        val result = runBlocking {
+        runBlocking {
             repl.listErrors("""
                 val a = AClass("42", 3.14)
                 val b: Int = "str"
                 val c = foob
-            """.trimIndent())
+            """.trimIndent()) {result ->
+                Assert.assertEquals(listOf(
+                        KotlinReplError(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        KotlinReplError(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                        KotlinReplError(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        KotlinReplError(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+                ), result.errors)
+            }
         }
-
-        Assert.assertEquals(listOf(
-                KotlinReplError(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                KotlinReplError(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                KotlinReplError(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                KotlinReplError(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-        ), result.errors)
     }
 
     @Test

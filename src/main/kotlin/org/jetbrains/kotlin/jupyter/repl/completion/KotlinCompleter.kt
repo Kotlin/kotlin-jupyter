@@ -93,7 +93,7 @@ abstract class CompletionResult(
     }
 }
 
-data class ErrorsListResponse(val code: String, val errors: List<KotlinReplError> = emptyList()) {
+data class ListErrorsResult(val code: String, val errors: List<KotlinReplError> = emptyList()) {
     fun toJson(): JsonObject {
         return jsonObject("code" to code,
                 "errors" to errors.map {

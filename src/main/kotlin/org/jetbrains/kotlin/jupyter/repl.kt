@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import org.jetbrains.kotlin.jupyter.repl.completion.ErrorsListResponse
+import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.reflect.lines
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
@@ -66,9 +66,9 @@ interface ReplForJupyter {
 
     fun checkComplete(executionNumber: Long, code: Code): CheckResult
 
-    suspend fun complete(code: String, cursor: Int): CompletionResult
+    suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit)
 
-    suspend fun listErrors(code: String): ErrorsListResponse
+    suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit)
 
     val currentClasspath: Collection<String> get
 
@@ -410,28 +410,29 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    private val completionQueue = LockQueue<CompletionArgs>()
-    override suspend fun complete(code: String, cursor: Int): CompletionResult = doWithLock(CompletionArgs(code, cursor), completionQueue, CompletionResult.Empty(code, cursor)) {
+    private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
+    override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) = doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor)) {
         completer.complete(compiler, compilerState, code, executionCounter++, cursor)
     }
 
-    private val listErrorsQueue = LockQueue<ListErrorsArgs>()
-    override suspend fun listErrors(code: String): ErrorsListResponse = doWithLock(ListErrorsArgs(code), listErrorsQueue, ErrorsListResponse(code)) {
+    private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
+    override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) = doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code)) {
         val codeLine = ReplCodeLine(executionCounter++, 0, code)
         val errorsList = compiler.listErrors(compilerState, codeLine)
-        ErrorsListResponse(code, errorsList)
+        ListErrorsResult(code, errorsList)
     }
 
-    private fun <T, R> doWithLock(args: T, queue: LockQueue<T>, default: R, action: (T) -> R): R {
+    private fun <T, Args: LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {
         queue.add(args)
 
-        synchronized(this) {
+        val result = synchronized(this) {
             val lastArgs = queue.get()
             if (lastArgs != args)
-                return default
-
-            return action(args)
+                default
+            else
+                action(args)
         }
+        args.callback(result)
     }
 
     private fun evalNoReturn(code: String) {
@@ -441,19 +442,23 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private data class InternalEvalResult(val value: Any?, val replId: Int)
 
-    private data class CompletionArgs(val code: String, val cursor: Int)
-    private data class ListErrorsArgs(val code: String)
+    private interface LockQueueArgs <T> {
+        val callback: (T) -> Unit
+    }
 
-    private class LockQueue<T> {
-        private var args: T? = null
+    private data class CompletionArgs(val code: String, val cursor: Int, override val callback: (CompletionResult) -> Unit) : LockQueueArgs<CompletionResult>
+    private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) : LockQueueArgs<ListErrorsResult>
 
-        fun add(args: T) {
+    private class LockQueue<T, Args: LockQueueArgs<T>> {
+        private var args: Args? = null
+
+        fun add(args: Args) {
             synchronized(this) {
                 this.args = args
             }
         }
 
-        fun get(): T {
+        fun get(): Args {
             return args!!
         }
     }

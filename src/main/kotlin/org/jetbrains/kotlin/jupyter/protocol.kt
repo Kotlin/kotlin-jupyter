@@ -200,8 +200,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 return
             }
             GlobalScope.launch {
-                val result = repl.complete(code, cursor).toJson()
-                sendWrapped(msg, makeReplyMessage(msg, "complete_reply", content = result))
+                repl.complete(code, cursor) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, "complete_reply", content = result.toJson()))
+                }
             }
         }
         "list_errors_request" -> {
@@ -211,8 +212,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 return
             }
             GlobalScope.launch {
-                val result = repl.listErrors(code).toJson()
-                sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply", content = result))
+                repl.listErrors(code) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply", content = result.toJson()))
+                }
             }
         }
         "is_complete_request" -> {
