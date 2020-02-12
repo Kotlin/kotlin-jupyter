@@ -202,7 +202,7 @@ define(function(){
             var prevBounds = this.tokenBounds;
             var bounds = getTokenBounds(text, cursor_pos);
             this.tokenBounds = bounds;
-            if (prevBounds) {
+            if (prevBounds && this.raw_result) {
                 if (bounds.before === prevBounds.before &&
                     bounds.after === prevBounds.after &&
                     bounds.end > prevBounds.end) {
@@ -633,7 +633,7 @@ define(function(){
         var EMPTY_ERRORS_RESULT = [[], []];
 
         CodeCell.prototype.findErrorsAtPos = function(pos) {
-            if (pos.outside || Math.abs(pos.xRel) > 50)
+            if (pos.outside || Math.abs(pos.xRel) > 10)
                 return EMPTY_ERRORS_RESULT;
 
             var ind = this.code_mirror.indexFromPos(pos);
@@ -719,11 +719,14 @@ define(function(){
             CodeMirror.on(obj, event, handler);
         };
 
-        CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
-
-            var that = this;
+        CodeCell.prototype.bindEvents = function() {
             this.addEvent(this.code_mirror, 'changes', this._handle_change, "binded_handle_change");
             this.addEvent(this.code_mirror.display.lineSpace, 'mousemove', this._handle_move, 'binded_handle_move');
+        };
+
+        CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+            var that = this;
+            this.bindEvents();
 
             // whatever key is pressed, first, cancel the tooltip request before
             // they are sent, and remove tooltip if any, except for tab again
@@ -817,22 +820,35 @@ define(function(){
         };
 
         CodeCell.prototype._handle_execute_reply = function (msg) {
+            this.bindEvents();
+
             this.set_input_prompt(msg.content.execution_count);
             this.element.removeClass("running");
             this.events.trigger('set_dirty.Notebook', {value: true});
 
             if (msg.content.status === 'error') {
                 var addInfo = msg.content.additionalInfo || {};
-                var from = {line: addInfo.lineStart - 1, ch: addInfo.colStart - 1};
+                var from = {line: addInfo.lineStart, col: addInfo.colStart};
                 var to;
                 if (addInfo.lineEnd !== -1 && addInfo.colEnd !== -1) {
-                    to = {line: addInfo.lineEnd - 1, ch: addInfo.colEnd - 1};
+                    to = {line: addInfo.lineEnd, col: addInfo.colEnd};
                 } else {
-                    to = {line: from.line, ch: from.ch + 3};
+                    to = {line: from.line, col: from.col + 3};
                 }
 
-                if (from.line !== undefined && from.ch !== undefined) {
-                    this.code_mirror.markText(from, to, {className: error_class});
+                if (from.line !== undefined && from.col !== undefined) {
+                    var message = addInfo.message;
+                    message = message.replace(/^\(\d+:\d+ - \d+\) /, "");
+                    message = message.replace(/^\(\d+:\d+\) - \(\d+:\d+\) /, "");
+
+                    this.errorsList = [
+                        {
+                            start: from,
+                            end: to,
+                            message: message,
+                            severity: "ERROR"
+                        }];
+                    this.highlightErrors(this.errorsList);
                 }
             }
         };

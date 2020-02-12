@@ -126,7 +126,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code.toString(), repl)
             } else {
                 connection.evalWithIO(repl!!.outputConfig, msg) {
-                    repl!!.eval(code.toString(), ::displayHandler, count.toInt())
+                    repl.eval(code.toString(), ::displayHandler, count.toInt())
                 }
             }
 
@@ -323,7 +323,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
                 stream,
                 config,
                 captureOutput) { text ->
-            this.iopub.sendOut(srcMessage!!, outType, text)
+            this.iopub.sendOut(srcMessage, outType, text)
         }
     }
 
@@ -355,9 +355,12 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
         } catch (ex: ReplCompilerException) {
             forkedOut.flush()
             forkedError.flush()
+
             val additionalInfo = ex.errorResult.location?.let {
+                val errorMessage = ex.errorResult.message
                 jsonObject("lineStart" to it.line, "colStart" to it.column,
                         "lineEnd" to it.lineEnd, "colEnd" to it.columnEnd,
+                        "message" to errorMessage,
                         "path" to it.path)
             } ?: jsonObject()
 
