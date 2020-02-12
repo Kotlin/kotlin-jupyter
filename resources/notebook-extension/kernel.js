@@ -142,14 +142,6 @@ define(function(){
             return -1;
         }
 
-        function indexOfFirst(str, filter) {
-            return indexOf(str, filter, 0, str.length - 1, 1);
-        }
-
-        function indexOfLast(str, filter) {
-            return indexOf(str, filter, str.length - 1, 0, -1);
-        }
-
         function getTokenBounds(buf, cursor) {
             if (cursor > buf.length) {
                 throw new Error("Position " + cursor + " does not exist in code snippet <" + buf + ">");
@@ -157,7 +149,7 @@ define(function(){
 
             var filter = c => !/^[A-Z0-9_]$/i.test(c);
 
-            var start = indexOf(buf, filter, cursor, 0, -1) + 1;
+            var start = indexOf(buf, filter, cursor - 1, 0, -1) + 1;
             var end = indexOf(buf, filter, cursor, buf.length - 1, 1);
             if (end === -1) {
                 end = buf.length;
@@ -168,6 +160,7 @@ define(function(){
             return {
                 before: buf.substring(0, start),
                 token: buf.substring(start, end),
+                tokenBeforeCursor: buf.substring(start, cursor),
                 after: buf.substring(end, buf.length),
                 start: start,
                 end: end
@@ -206,17 +199,28 @@ define(function(){
             var text = this.editor.getValue();
             cursor_pos = utils.js_idx_to_char_idx(cursor_pos, text);
 
-            /*
             var prevBounds = this.tokenBounds;
-            this.tokenBounds = getTokenBounds(text, cursor_pos);
+            var bounds = getTokenBounds(text, cursor_pos);
+            this.tokenBounds = bounds;
             if (prevBounds) {
                 if (bounds.before === prevBounds.before &&
                     bounds.after === prevBounds.after &&
                     bounds.end > prevBounds.end) {
 
+                    var newResult = this.raw_result.filter((v) => {
+                        var displayName = v.str;
+                        if (displayName[0] === '`')
+                            displayName = displayName.substring(1, displayName.length - 1);
+                        return displayName.startsWith(bounds.tokenBeforeCursor)
+                    });
+
+                    if (newResult.length > 0) {
+                        this.raw_result = newResult;
+                        this.make_gui(this.prepare_cursor_pos(bounds.start, cursor_pos));
+                        return;
+                    }
                 }
             }
-             */
 
             // one kernel completion came back, finish_completing will be called with the results
             // we fork here and directly call finish completing if kernel is busy
@@ -273,87 +277,9 @@ define(function(){
             highlightErrors(errors, this)
         };
 
-        Completer.prototype.finish_completing = function (msg) {
-            /**
-             * let's build a function that wrap all that stuff into what is needed
-             * for the new completer:
-             */
-
-            // alert("WOW");
-
-            var content = msg.content;
-            var start = content.cursor_start;
-            var end = content.cursor_end;
-            var matches = content.matches;
-            var metadata = content.metadata || {};
-            var extMetadata = metadata._jupyter_extended_metadata || {};
-
-            console.log(content);
-
-            var cur = this.editor.getCursor();
-
-            var paragraph = content.paragraph;
-            if (paragraph) {
-                if (paragraph.cursor !== this.editor.indexFromPos(cur)
-                    || paragraph.text !== this.editor.getValue()) {
-                    // this.close();
-                    return;
-                }
-            }
-
-            if (end === null) {
-                // adapted message spec replies don't have cursor position info,
-                // interpret end=null as current position,
-                // and negative start relative to that
-                end = this.editor.indexFromPos(cur);
-                if (start === null) {
-                    start = end;
-                } else if (start < 0) {
-                    start = end + start;
-                }
-            } else {
-                // handle surrogate pairs
-                var text = this.editor.getValue();
-                end = utils.char_idx_to_js_idx(end, text);
-                start = utils.char_idx_to_js_idx(start, text);
-            }
-
-            var results = CodeMirror.contextHint(this.editor);
-            var filtered_results = [];
-            //remove results from context completion
-            //that are already in kernel completion
-            var i;
-            for (i=0; i < results.length; i++) {
-                if (!_existing_completion(results[i].str, matches)) {
-                    var patchedRes = results[i];
-                    patchedRes.replaceText = patchedRes.str;
-                    filtered_results.push(patchedRes);
-                }
-            }
-
-            // append the introspection result, in order, at at the beginning of
-            // the table and compute the replacement range from current cursor
-            // position and matched_text length.
-            var from = this.editor.posFromIndex(start);
-            var to = this.editor.posFromIndex(end);
-            for (i = matches.length - 1; i >= 0; --i) {
-                var info = extMetadata[i] || {};
-                var replaceText = info.text || matches[i];
-                var displayText = info.displayText || replaceText;
-
-                filtered_results.unshift({
-                    str: displayText,
-                    replaceText: replaceText,
-                    tail: info.tail,
-                    icon: info.icon,
-                    type: "introspection",
-                    from: from,
-                    to: to
-                });
-            }
-
-            // one the 2 sources results have been merge, deal with it
-            this.raw_result = filtered_results;
+        Completer.prototype.make_gui = function(cur_pos, cur) {
+            var start = cur_pos.start;
+            cur = cur || this.editor.getCursor();
 
             // if empty result return
             if (!this.raw_result || !this.raw_result.length) {
@@ -408,6 +334,10 @@ define(function(){
             }
             this.sel.attr('size', Math.min(10, this.raw_result.length));
 
+            // Clear and fill the list.
+            this.sel.text('');
+            this.build_gui_list(this.raw_result);
+
             // After everything is on the page, compute the position.
             // We put it above the code if it is too close to the bottom of the page.
             var pos = this.editor.cursorCoords(
@@ -425,11 +355,96 @@ define(function(){
             this.complete.css('left', left + 'px');
             this.complete.css('top', top + 'px');
 
-            // Clear and fill the list.
-            this.sel.text('');
-            this.build_gui_list(this.raw_result);
             opened_completer = this;
             return true;
+        };
+
+        Completer.prototype.prepare_cursor_pos = function(start, end) {
+            if (end === null) {
+                // adapted message spec replies don't have cursor position info,
+                // interpret end=null as current position,
+                // and negative start relative to that
+                end = this.editor.indexFromPos(cur);
+                if (start === null) {
+                    start = end;
+                } else if (start < 0) {
+                    start = end + start;
+                }
+            } else {
+                // handle surrogate pairs
+                var text = this.editor.getValue();
+                end = utils.char_idx_to_js_idx(end, text);
+                start = utils.char_idx_to_js_idx(start, text);
+            }
+
+            return {
+                start: start,
+                end: end
+            }
+        };
+
+        Completer.prototype.finish_completing = function (msg) {
+            /**
+             * let's build a function that wrap all that stuff into what is needed
+             * for the new completer:
+             */
+
+            // alert("WOW");
+
+            var content = msg.content;
+            var start = content.cursor_start;
+            var end = content.cursor_end;
+            var matches = content.matches;
+            var metadata = content.metadata || {};
+            var extMetadata = metadata._jupyter_extended_metadata || {};
+
+            console.log(content);
+
+            var cur = this.editor.getCursor();
+
+            var paragraph = content.paragraph;
+            if (paragraph) {
+                if (paragraph.cursor !== this.editor.indexFromPos(cur)
+                    || paragraph.text !== this.editor.getValue()) {
+                    // this.close();
+                    return;
+                }
+            }
+
+            var newPos = this.prepare_cursor_pos(start, end);
+            start = newPos.start;
+            end = newPos.end;
+
+            var filtered_results = [];
+            //remove results from context completion
+            //that are already in kernel completion
+            var i;
+
+            // append the introspection result, in order, at at the beginning of
+            // the table and compute the replacement range from current cursor
+            // position and matched_text length.
+            var from = this.editor.posFromIndex(start);
+            var to = this.editor.posFromIndex(end);
+            for (i = matches.length - 1; i >= 0; --i) {
+                var info = extMetadata[i] || {};
+                var replaceText = info.text || matches[i];
+                var displayText = info.displayText || replaceText;
+
+                filtered_results.unshift({
+                    str: displayText,
+                    replaceText: replaceText,
+                    tail: info.tail,
+                    icon: info.icon,
+                    type: "introspection",
+                    from: from,
+                    to: to
+                });
+            }
+
+            // one the 2 sources results have been merge, deal with it
+            this.raw_result = filtered_results;
+
+            this.make_gui(newPos, cur);
         };
 
         Completer.prototype.pickColor = function(iconText) {

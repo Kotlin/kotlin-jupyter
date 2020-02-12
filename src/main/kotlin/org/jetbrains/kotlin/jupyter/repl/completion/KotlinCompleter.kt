@@ -136,17 +136,11 @@ class KotlinCompleter {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
             val startSubstring = buf.substring(0, cursor)
-            val endSubstring = buf.substring(cursor)
 
             val filter = {c: Char -> !c.isLetterOrDigit() && c != '_'}
 
             val start = startSubstring.indexOfLast(filter) + 1
-            var end = endSubstring.indexOfFirst(filter)
-            end = if (end == -1) {
-                buf.length
-            } else {
-                end + startSubstring.length
-            }
+            val end = cursor
 
             return CompletionTokenBounds(start, end)
 
