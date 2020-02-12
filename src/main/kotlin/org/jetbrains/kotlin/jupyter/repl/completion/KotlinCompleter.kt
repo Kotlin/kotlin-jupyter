@@ -5,7 +5,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.jupyter.jsonObject
 import org.jetbrains.kotlin.cli.common.repl.IReplStageState
 import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
-import org.jetbrains.kotlin.cli.common.repl.ReplCompilerWithCompletion
+import org.jetbrains.kotlin.cli.common.repl.IDELikeReplCompiler
 import org.jetbrains.kotlin.utils.CompletionVariant
 import org.jetbrains.kotlin.utils.KotlinReplError
 import java.io.PrintWriter
@@ -116,7 +116,7 @@ data class ListErrorsResult(val code: String, val errors: List<KotlinReplError> 
 }
 
 class KotlinCompleter {
-    fun complete(compiler: ReplCompilerWithCompletion, compilerState: IReplStageState<*>, code: String, id: Int, cursor: Int): CompletionResult {
+    fun complete(compiler: IDELikeReplCompiler, compilerState: IReplStageState<*>, code: String, id: Int, cursor: Int): CompletionResult {
         return try {
             val codeLine = ReplCodeLine(id, 0, code)
             val completionList = compiler.complete(compilerState, codeLine, cursor)
@@ -140,10 +140,8 @@ class KotlinCompleter {
             val filter = {c: Char -> !c.isLetterOrDigit() && c != '_'}
 
             val start = startSubstring.indexOfLast(filter) + 1
-            val end = cursor
 
-            return CompletionTokenBounds(start, end)
-
+            return CompletionTokenBounds(start, cursor)
         }
     }
 }

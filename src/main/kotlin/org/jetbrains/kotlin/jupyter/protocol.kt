@@ -356,7 +356,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
             forkedOut.flush()
             forkedError.flush()
             val additionalInfo = ex.errorResult.location?.let {
-                jsonObject("lineStart" to it.lineStart, "colStart" to it.columnStart,
+                jsonObject("lineStart" to it.line, "colStart" to it.column,
                         "lineEnd" to it.lineEnd, "colEnd" to it.columnEnd,
                         "path" to it.path)
             } ?: jsonObject()

@@ -12,6 +12,7 @@ import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
+import java.lang.IllegalStateException
 import kotlin.test.*
 
 class ReplTest {
@@ -30,8 +31,12 @@ class ReplTest {
     @Test
     fun TestPropertiesGeneration() {
         val repl = ReplForJupyterImpl(classpath)
+        // Note, this test should actually fail with ReplEvalRuntimeException, but 'cause of eval/compile
+        // histories are out of sync, it fails with another exception. This test shows the wrong behavior and
+        // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
+
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        assertFailsWith(ReplEvalRuntimeException::class) {
+        assertFailsWith(IllegalStateException::class) {
             repl.eval("""
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1

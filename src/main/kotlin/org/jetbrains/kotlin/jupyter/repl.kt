@@ -241,7 +241,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private var executionCounter = 0
 
-    private val compiler: ReplCompilerWithCompletion by lazy {
+    private val compiler: IDELikeReplCompiler by lazy {
         JvmReplCompiler(compilerConfiguration)
     }
 
