@@ -312,6 +312,14 @@
     --jp-private-completer-type-offset: 2px;
 }
 
+#site {
+    position: relative !important;
+}
+
+.completions {
+    /*position: relative !important;*/
+}
+
 .jp-Completer {
     box-shadow: var(--jp-elevation-z6);
     background: var(--jp-layout-color1);

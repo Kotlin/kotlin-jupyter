@@ -45,9 +45,20 @@ define(function(){
             "WARNING": warning_class
         };
 
+        function isOnScreen(elem) {
+            var bounding = elem.getBoundingClientRect();
+            return (
+                bounding.top >= 0 &&
+                bounding.left >= 0 &&
+                bounding.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                bounding.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        }
+
         var opened_completer = null;
-        $("#site").scroll((e) => {
-            if (opened_completer) {
+        var siteEl = document.getElementById("site");
+        $(siteEl).scroll((e) => {
+            if (opened_completer && !isOnScreen(opened_completer.complete[0])) {
                 opened_completer.close();
             }
         });
@@ -319,7 +330,7 @@ define(function(){
                     .addClass('jp-Completer');
                 this.complete.append(this.sel);
                 this.visible = true;
-                $('body').append(this.complete);
+                $(siteEl).append(this.complete);
 
                 //build the container
                 var that = this;
@@ -352,8 +363,9 @@ define(function(){
             } else {
                 top = pos.bottom+1;
             }
-            this.complete.css('left', left + 'px');
-            this.complete.css('top', top + 'px');
+
+            this.complete.css('left', left + siteEl.scrollLeft - siteEl.offsetLeft + 'px');
+            this.complete.css('top', top + siteEl.scrollTop - siteEl.offsetTop + 'px');
 
             opened_completer = this;
             return true;
@@ -789,7 +801,7 @@ define(function(){
                     return false;
                 }
                 var pre_cursor = editor.getRange({line:cur.line,ch:0},cur);
-                if (pre_cursor.trim() === "") {
+                if (pre_cursor.trim() === "" && event.keyCode === keycodes.tab) {
                     // Don't autocomplete if the part of the line before the cursor
                     // is empty.  In this case, let CodeMirror handle indentation.
                     return false;
