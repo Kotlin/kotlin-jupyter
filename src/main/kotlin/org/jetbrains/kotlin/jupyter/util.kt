@@ -1,8 +1,11 @@
 package org.jetbrains.kotlin.jupyter
 
 import kotlinx.coroutines.*
+import org.jetbrains.kotlin.scripting.ide_services.evaluator.KJvmEvaluatedSnippet
 import org.slf4j.Logger
 import java.io.File
+import kotlin.script.experimental.api.ILinkedPushStack
+import kotlin.script.experimental.api.toList
 
 fun <T> catchAll(body: () -> T): T? = try {
     body()
@@ -40,3 +43,7 @@ fun File.tryReadIniConfig() =
         existsOrNull()?.let {
             catchAll { it.readText().parseIniConfig() }
         }
+
+
+
+fun ILinkedPushStack<KJvmEvaluatedSnippet>?.instances() = this.toList { it.snippetObject }.filterNotNull()

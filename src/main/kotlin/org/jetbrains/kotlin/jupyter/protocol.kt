@@ -13,6 +13,7 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
+import kotlin.script.experimental.api.ScriptDiagnostic
 
 enum class ResponseState {
     Ok, Error, Abort
@@ -356,17 +357,18 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
             forkedOut.flush()
             forkedError.flush()
 
-            val additionalInfo = ex.errorResult.location?.let {
-                val errorMessage = ex.errorResult.message
-                jsonObject("lineStart" to it.line, "colStart" to it.column,
-                        "lineEnd" to it.lineEnd, "colEnd" to it.columnEnd,
+            val firstDiagnostic = ex.firstDiagnostics
+            val additionalInfo = firstDiagnostic?.location?.let {
+                val errorMessage = firstDiagnostic.message
+                jsonObject("lineStart" to it.start.line, "colStart" to it.start.col,
+                        "lineEnd" to (it.end?.line ?: -1), "colEnd" to (it.end?.col ?: -1),
                         "message" to errorMessage,
-                        "path" to it.path)
+                        "path" to firstDiagnostic.sourcePath.orEmpty())
             } ?: jsonObject()
 
             ErrorResponseWithMessage(
                     textResult("Error!"),
-                    ex.errorResult.message,
+                    ex.message,
                     ex.javaClass.canonicalName,
                     ex.message ?: "",
                     ex.stackTrace.map { it.toString() },
@@ -376,8 +378,8 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
 
             val stdErr = StringBuilder()
             with(stdErr) {
-                val cause = ex.errorResult.cause
-                if (cause == null) appendln(ex.errorResult.message)
+                val cause = ex.cause
+                if (cause == null) appendln(ex.message)
                 else {
                     when (cause) {
                         is InvocationTargetException -> appendln(cause.targetException.toString())

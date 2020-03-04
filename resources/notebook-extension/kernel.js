@@ -153,7 +153,7 @@ define(function(){
             return -1;
         }
 
-        function getTokenBounds(buf, cursor) {
+        function getTokenBounds(buf, cursor, editor) {
             if (cursor > buf.length) {
                 throw new Error("Position " + cursor + " does not exist in code snippet <" + buf + ">");
             }
@@ -174,7 +174,9 @@ define(function(){
                 tokenBeforeCursor: buf.substring(start, cursor),
                 after: buf.substring(end, buf.length),
                 start: start,
-                end: end
+                end: end,
+                posStart: editor.posFromIndex(start),
+                posEnd: editor.posFromIndex(end)
             }
         }
 
@@ -211,7 +213,7 @@ define(function(){
             cursor_pos = utils.js_idx_to_char_idx(cursor_pos, text);
 
             var prevBounds = this.tokenBounds;
-            var bounds = getTokenBounds(text, cursor_pos);
+            var bounds = getTokenBounds(text, cursor_pos, this.editor);
             this.tokenBounds = bounds;
             if (prevBounds && this.raw_result) {
                 if (bounds.before === prevBounds.before &&
@@ -223,6 +225,10 @@ define(function(){
                         if (displayName[0] === '`')
                             displayName = displayName.substring(1, displayName.length - 1);
                         return displayName.startsWith(bounds.tokenBeforeCursor)
+                    }).map((completion) => {
+                        completion.from = bounds.posStart;
+                        completion.to = bounds.posEnd;
+                        return completion;
                     });
 
                     if (newResult.length > 0) {
@@ -542,7 +548,7 @@ define(function(){
             var optionsLen;
             var index;
             var prevIndex;
-            if (code == keycodes.enter) {
+            if (code == keycodes.enter && !event.shiftKey) {
                 event.codemirrorIgnore = true;
                 event._ipkmIgnore = true;
                 event.preventDefault();
@@ -608,7 +614,7 @@ define(function(){
         };
 
         function _isCompletionKey(key) {
-            return key.length === 1;
+            return /^[A-Z0-9.:"]$/i.test(key);
         }
 
         Completer.prototype.keypress = function (event) {
@@ -675,12 +681,16 @@ define(function(){
                 .forEach(it => it.clear());
         }
 
-        CodeCell.prototype._handle_change = function(cm, changes) {
-            this.notebook.get_cells().forEach((cell) =>{
+        function clearAllErrors(notebook) {
+            notebook.get_cells().forEach((cell) =>{
                 if (cell.code_mirror) {
                     clearErrors(cell.code_mirror);
                 }
             });
+        }
+
+        CodeCell.prototype._handle_change = function(cm, changes) {
+            clearAllErrors(this.notebook);
             this.kernel.listErrors(cm.getValue(), (msg) => {
                 var content = msg.content;
                 console.log(content);
@@ -832,6 +842,7 @@ define(function(){
         };
 
         CodeCell.prototype._handle_execute_reply = function (msg) {
+            clearAllErrors(this.notebook)
             this.bindEvents();
 
             this.set_input_prompt(msg.content.execution_count);

@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import org.jetbrains.kotlin.jupyter.TypeProviderReceiver
+import jupyter.kotlin.receivers.TypeProviderReceiver
 import org.jetbrains.kotlin.jupyter.*
 import org.junit.Test
 import java.io.File

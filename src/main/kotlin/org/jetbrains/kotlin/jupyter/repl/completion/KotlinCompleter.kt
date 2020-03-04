@@ -3,13 +3,11 @@ package org.jetbrains.kotlin.jupyter.repl.completion
 import com.beust.klaxon.JsonObject
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.jupyter.jsonObject
-import org.jetbrains.kotlin.cli.common.repl.IReplStageState
-import org.jetbrains.kotlin.cli.common.repl.ReplCodeLine
-import org.jetbrains.kotlin.cli.common.repl.IDELikeReplCompiler
-import org.jetbrains.kotlin.utils.CompletionVariant
-import org.jetbrains.kotlin.utils.KotlinReplError
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.util.ReplCompletionVariant
+import kotlin.script.experimental.util.ReplDiagnosticMessage
 
 enum class CompletionStatus(private val value: String) {
     OK("ok"),
@@ -32,7 +30,7 @@ abstract class CompletionResult(
     open class Success(
             private val matches: List<String>,
             private val bounds: CompletionTokenBounds,
-            private val metadata: List<CompletionVariant>,
+            private val metadata: List<ReplCompletionVariant>,
             private val text: String,
             private val cursor: Int
     ): CompletionResult(CompletionStatus.OK) {
@@ -93,7 +91,7 @@ abstract class CompletionResult(
     }
 }
 
-data class ListErrorsResult(val code: String, val errors: List<KotlinReplError> = emptyList()) {
+data class ListErrorsResult(val code: String, val errors: Iterable<ReplDiagnosticMessage> = emptyList()) {
     fun toJson(): JsonObject {
         return jsonObject("code" to code,
                 "errors" to errors.map {
@@ -115,15 +113,22 @@ data class ListErrorsResult(val code: String, val errors: List<KotlinReplError> 
     }
 }
 
+internal class SourceCodeImpl(number: Int, override val text: String) : SourceCode {
+    override val name: String? = "Line_$number"
+    override val locationId: String? = "location_$number"
+}
+
 class KotlinCompleter {
-    fun complete(compiler: IDELikeReplCompiler, compilerState: IReplStageState<*>, code: String, id: Int, cursor: Int): CompletionResult {
+    fun complete(compiler: ReplCompleter, configuration: ScriptCompilationConfiguration, code: String, id: Int, cursor: Int): CompletionResult {
         return try {
-            val codeLine = ReplCodeLine(id, 0, code)
-            val completionList = compiler.complete(compilerState, codeLine, cursor)
+            val codeLine = SourceCodeImpl(id, code)
+            val completionResult = compiler.complete(codeLine, cursor, configuration)
 
-            val bounds = getTokenBounds(code, cursor)
+            completionResult.valueOrNull()?.toList()?.let { completionList ->
+                val bounds = getTokenBounds(code, cursor)
+                CompletionResult.Success(completionList.map { it.text }, bounds, completionList, code, cursor)
+            } ?: CompletionResult.Empty(code, cursor)
 
-            CompletionResult.Success(completionList.map { it.text }, bounds, completionList, code, cursor)
         } catch (e: Exception) {
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))

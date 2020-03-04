@@ -155,7 +155,7 @@ configurations {
 dependencies {
     compile project(":jupyter-lib")
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-jvm-host-embeddable:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-scripting-ide-services-impl-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"

@@ -52,7 +52,7 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                         val result = runBlocking { resolver.resolve(annotation.value) }
                         when (result) {
                             is ResultWithDiagnostics.Failure -> {
-                                val diagnostics = ScriptDiagnostic("Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
+                                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
                                 log.warn(diagnostics.message, diagnostics.exception)
                                 scriptDiagnostics.add(diagnostics)
                             }
@@ -63,7 +63,7 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                             }
                         }
                     } catch (e: Exception) {
-                        val diagnostic = ScriptDiagnostic("Unhandled exception during resolve", exception = e)
+                        val diagnostic = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unhandled exception during resolve", exception = e)
                         log.error(diagnostic.message, e)
                         scriptDiagnostics.add(diagnostic)
                     }

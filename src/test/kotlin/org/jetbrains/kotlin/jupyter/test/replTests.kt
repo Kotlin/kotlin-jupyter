@@ -4,15 +4,15 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.MimeTypedResult
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
-import org.jetbrains.kotlin.utils.KotlinReplError
+import jupyter.kotlin.receivers.ConstReceiver
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
-import java.lang.IllegalStateException
+import kotlin.script.experimental.util.ReplDiagnosticMessage
+import kotlin.script.experimental.api.SourceCode
 import kotlin.test.*
 
 class ReplTest {
@@ -36,12 +36,14 @@ class ReplTest {
         // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        assertFailsWith(IllegalStateException::class) {
-            repl.eval("""
+        assertFailsWith(ReplEvalRuntimeException::class) {
+            val r = repl.eval("""
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1
                 val x = stack(1, X)
             """.trimIndent())
+
+            print("")
         }
     }
 
@@ -56,12 +58,12 @@ class ReplTest {
                 val ooo = foobar
             """.trimIndent())
         } catch (ex: ReplCompilerException) {
-            val res = ex.errorResult
-            val location = res.location ?: fail("Location should not be null")
-            val message = res.message
+            val diag = ex.firstDiagnostics
+            val location = diag?.location ?: fail("Location should not be null")
+            val message = ex.message
 
-            val expectedLocation = CompilerMessageLocation.create(location.path, 3, 11, 3, 14, location.lineContent)
-            val expectedMessage = "(3:11 - 14) Unresolved reference: ppp"
+            val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
+            val expectedMessage = "ERROR Unresolved reference: ppp (Line_1.jupyter.kts:3:11)"
 
             assertEquals(expectedLocation, location)
             assertEquals(expectedMessage, message)
@@ -85,6 +87,25 @@ class ReplTest {
     fun TestDependsOnAnnotation() {
         val repl = ReplForJupyterImpl(classpath)
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
+    }
+
+    @Test
+    fun TestDependsOnAnnotationCompletion() {
+        val repl = ReplForJupyterImpl(classpath)
+        repl.eval("""
+            @file:Repository("https://repo1.maven.org/maven2/")
+            @file:DependsOn("com.github.doyaaaaaken:kotlin-csv-jvm:0.7.3")
+        """.trimIndent())
+
+        val res = runBlocking {
+            var res2: CompletionResult? = null
+            repl.complete("import com.github.", 18) { res2 = it }
+            res2
+        }
+        when(res) {
+            is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
+            else -> fail("Completion should be successful")
+        }
     }
 
     @Test
@@ -166,10 +187,10 @@ class ReplTest {
                 val c = foob
             """.trimIndent()) {result ->
                 Assert.assertEquals(listOf(
-                        KotlinReplError(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        KotlinReplError(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                        KotlinReplError(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        KotlinReplError(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+                        ReplDiagnosticMessage(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        ReplDiagnosticMessage(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                        ReplDiagnosticMessage(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        ReplDiagnosticMessage(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
                 ), result.errors)
             }
         }

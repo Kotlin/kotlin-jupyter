@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.jupyter.repl.reflect
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
-import org.jetbrains.kotlin.cli.common.repl.AggregatedReplStageState
+import org.jetbrains.kotlin.jupyter.instances
+import org.jetbrains.kotlin.scripting.ide_services.evaluator.KJvmReplEvaluatorImpl
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
@@ -15,12 +16,12 @@ import kotlin.reflect.jvm.kotlinProperty
  * ContextUpdater updates current user-defined functions and variables
  * to use in completion and KotlinContext.
  */
-class ContextUpdater(private val state: AggregatedReplStageState<*, *>,
-                     val context: KotlinContext) {
+class ContextUpdater(val context: KotlinContext, private val evaluator: KJvmReplEvaluatorImpl) {
 
     fun update() {
         try {
-            val lines = state.lines
+            val lastSnippet = evaluator.lastEvaluatedSnippet
+            val lines = lastSnippet.instances()
             refreshVariables(lines)
             refreshMethods(lines)
         } catch (e: ReflectiveOperationException) {

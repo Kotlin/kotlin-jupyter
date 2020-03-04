@@ -32,28 +32,22 @@ class ClassWriter(_outputDir: String = "") {
         logger.info("Created ClassWriter with path <$outputDir>")
     }
 
-    fun writeClasses(classes: CompiledClasses) {
-        for ((filePath, bytes) in classes.classes) {
-            if (!filePath.contains(File.separator)) {
-                writeClass(bytes, outputDir.resolve(filePath))
-            }
-        }
+    fun writeClasses(classes: KJvmCompiledScript<*>) {
         writeModuleInMemory(classes)
     }
 
-    private fun writeModuleInMemory(classes: CompiledClasses) {
+    private fun writeModuleInMemory(classes: KJvmCompiledScript<*>) {
         try {
-            val compiledScript = classes.data as KJvmCompiledScript<*>
-            val moduleInMemory = compiledScript.compiledModule as KJvmCompiledModuleInMemory
+            val moduleInMemory = classes.compiledModule as KJvmCompiledModuleInMemory
             moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
                 if (name.contains("class")) {
                     writeClass(bytes, outputDir.resolve(name))
                 }
             }
         } catch (e: ClassCastException) {
-            logger.info("Compiled line #" + classes.lineId.no + "has no in-memory modules")
+            logger.info("Compiled line " + classes.code.name + " has no in-memory modules")
         } catch (e: NullPointerException) {
-            logger.info("Compiled line #" + classes.lineId.no + "has no in-memory modules")
+            logger.info("Compiled line " + classes.code.name + " has no in-memory modules")
         }
     }
 
