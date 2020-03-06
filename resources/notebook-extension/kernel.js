@@ -724,11 +724,15 @@ define(function(){
         };
 
 
-        CodeCell.prototype._isCompletionEvent = function(event) {
+        CodeCell.prototype._isCompletionEvent = function(event, cur, editor) {
             if (event.type !== 'keydown' || event.ctrlKey || event.metaKey || !this.tooltip._hidden)
                 return false;
-            if (event.keyCode === keycodes.tab || event.keyCode === keycodes.backspace)
+            if (event.keyCode === keycodes.tab)
                 return true;
+            if (event.keyCode === keycodes.backspace){
+                var pre_cursor = editor.getRange({line:0,ch:0},cur);
+                return pre_cursor.length > 1 && _isCompletionKey(pre_cursor[pre_cursor.length - 2]);
+            }
             return _isCompletionKey(event.key);
         };
 
@@ -802,7 +806,7 @@ define(function(){
                 event.codemirrorIgnore = true;
                 event.preventDefault();
                 return true;
-            } else if (this._isCompletionEvent(event)) {
+            } else if (this._isCompletionEvent(event, cur, editor)) {
                 // Tab completion.
                 this.tooltip.remove_and_cancel_tooltip();
 
