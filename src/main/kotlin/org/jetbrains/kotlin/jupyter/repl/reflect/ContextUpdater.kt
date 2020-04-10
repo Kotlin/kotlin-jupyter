@@ -4,13 +4,13 @@ import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
 import org.jetbrains.kotlin.jupyter.instances
-import org.jetbrains.kotlin.scripting.ide_services.evaluator.KJvmReplEvaluatorImpl
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
 import java.util.*
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
+import kotlin.script.experimental.jvm.KJvmReplEvaluatorImpl
 
 /**
  * ContextUpdater updates current user-defined functions and variables

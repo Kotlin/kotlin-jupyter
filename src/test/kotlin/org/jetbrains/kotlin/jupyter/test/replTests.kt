@@ -11,7 +11,6 @@ import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
-import kotlin.script.experimental.util.ReplDiagnosticMessage
 import kotlin.script.experimental.api.SourceCode
 import kotlin.test.*
 
@@ -186,12 +185,14 @@ class ReplTest {
                 val b: Int = "str"
                 val c = foob
             """.trimIndent()) {result ->
-                Assert.assertEquals(listOf(
-                        ReplDiagnosticMessage(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        ReplDiagnosticMessage(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                        ReplDiagnosticMessage(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        ReplDiagnosticMessage(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-                ), result.errors)
+                val actualErrors = result.errors.toList()
+                val path = actualErrors.first().sourcePath
+                Assert.assertEquals(withPath(path, listOf(
+                        generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                        generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+                )), actualErrors)
             }
         }
     }

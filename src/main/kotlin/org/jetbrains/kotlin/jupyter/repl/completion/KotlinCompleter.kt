@@ -1,13 +1,13 @@
 package org.jetbrains.kotlin.jupyter.repl.completion
 
 import com.beust.klaxon.JsonObject
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.jupyter.jsonObject
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.script.experimental.api.*
-import kotlin.script.experimental.util.ReplCompletionVariant
-import kotlin.script.experimental.util.ReplDiagnosticMessage
+import kotlin.script.experimental.util.toSourceCodePosition
 
 enum class CompletionStatus(private val value: String) {
     OK("ok"),
@@ -30,7 +30,7 @@ abstract class CompletionResult(
     open class Success(
             private val matches: List<String>,
             private val bounds: CompletionTokenBounds,
-            private val metadata: List<ReplCompletionVariant>,
+            private val metadata: List<SourceCodeCompletionVariant>,
             private val text: String,
             private val cursor: Int
     ): CompletionResult(CompletionStatus.OK) {
@@ -91,7 +91,7 @@ abstract class CompletionResult(
     }
 }
 
-data class ListErrorsResult(val code: String, val errors: Iterable<ReplDiagnosticMessage> = emptyList()) {
+data class ListErrorsResult(val code: String, val errors: Sequence<ScriptDiagnostic> = emptySequence()) {
     fun toJson(): JsonObject {
         return jsonObject("code" to code,
                 "errors" to errors.map {
@@ -100,7 +100,7 @@ data class ListErrorsResult(val code: String, val errors: Iterable<ReplDiagnosti
                     "severity" to it.severity.name
             )
 
-            val loc = it.loc
+            val loc = it.location
             if (loc != null) {
                 val start = loc.start
                 val end = loc.end
@@ -122,7 +122,7 @@ class KotlinCompleter {
     fun complete(compiler: ReplCompleter, configuration: ScriptCompilationConfiguration, code: String, id: Int, cursor: Int): CompletionResult {
         return try {
             val codeLine = SourceCodeImpl(id, code)
-            val completionResult = compiler.complete(codeLine, cursor, configuration)
+            val completionResult = runBlocking { compiler.complete(codeLine, cursor.toSourceCodePosition(codeLine), configuration) }
 
             completionResult.valueOrNull()?.toList()?.let { completionList ->
                 val bounds = getTokenBounds(code, cursor)

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter
 import jupyter.kotlin.*
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinReceiver
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerImpl
-import org.jetbrains.kotlin.scripting.ide_services.evaluator.KJvmReplEvaluatorImpl
 import java.io.File
 import java.net.URLClassLoader
 import java.util.*
@@ -19,9 +19,7 @@ import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.*
-import kotlin.script.experimental.util.hasErrors
-import kotlin.script.experimental.util.isIncomplete
-import kotlin.script.experimental.util.renderError
+import kotlin.script.experimental.util.*
 
 data class EvalResult(val resultValue: Any?)
 
@@ -264,7 +262,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     override fun checkComplete(executionNumber: Long, code: String): CheckResult {
         val codeLine = SourceCodeImpl(executionNumber.toInt(), code)
-        val result = compiler.analyze(codeLine, 0, compilerConfiguration)
+        val result = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         return when {
             result.isIncomplete() -> CheckResult(false)
             result.hasErrors() -> throw ReplException(result.renderError())
@@ -322,7 +320,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
     }
 
-    private fun lastReplLine() = evaluator.lastEvaluatedSnippet()?.snippetObject
+    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.snippetClass
 
     override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
         synchronized(this) {
@@ -413,7 +411,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
     override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) = doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code)) {
         //val preprocessed = preprocessCode(code)
         val codeLine = SourceCodeImpl(executionCounter++, code)
-        val errorsList = compiler.analyze(codeLine, 0, compilerConfiguration)
+        val errorsList = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         ListErrorsResult(code, errorsList.valueOrThrow())
     }
 
@@ -463,25 +461,25 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
             println(code)
         val id = executionCounter++
         val codeLine = SourceCodeImpl(id, code)
-        when (val compileResultWithDiagnostics = compiler.compile(codeLine, compilerConfiguration)) {
+        when (val compileResultWithDiagnostics = runBlocking { compiler.compile(codeLine, compilerConfiguration) }) {
             is ResultWithDiagnostics.Success -> {
                 val compileResult = compileResultWithDiagnostics.value
-                classWriter?.writeClasses(compileResult())
+                classWriter?.writeClasses(codeLine, compileResult.get())
                 val repl = this
                 val currentEvalConfig = ScriptEvaluationConfiguration(evaluatorConfiguration) {
                     constructorArgs.invoke(repl as KotlinKernelHost)
                 }
-                val result = evaluator.eval(compileResult, currentEvalConfig).valueOrThrow()
+                val result = runBlocking { evaluator.eval(compileResult, currentEvalConfig).valueOrThrow() }
                 contextUpdater.update()
 
-                val pureResult = result()
+                val pureResult = result.get()
                 return when {
                     pureResult.isErrorResult -> throw ReplEvalRuntimeException(pureResult.error?.message.orEmpty(), pureResult.error)
                     pureResult.isUnitResult -> {
                         InternalEvalResult(Unit, null)
                     }
                     pureResult.isValueResult -> {
-                        InternalEvalResult(pureResult.result, pureResult.compiledSnippet().resultField)
+                        InternalEvalResult(pureResult.result, pureResult.compiledSnippet.resultField)
                     }
                     else -> throw IllegalStateException("Unknown eval result type ${this}")
                 }

@@ -1,11 +1,13 @@
 package org.jetbrains.kotlin.jupyter
 
 import kotlinx.coroutines.*
-import org.jetbrains.kotlin.scripting.ide_services.evaluator.KJvmEvaluatedSnippet
 import org.slf4j.Logger
 import java.io.File
-import kotlin.script.experimental.api.ILinkedPushStack
-import kotlin.script.experimental.api.toList
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
+import kotlin.script.experimental.util.LinkedSnippet
+import kotlin.script.experimental.util.toList
 
 fun <T> catchAll(body: () -> T): T? = try {
     body()
@@ -46,4 +48,16 @@ fun File.tryReadIniConfig() =
 
 
 
-fun ILinkedPushStack<KJvmEvaluatedSnippet>?.instances() = this.toList { it.snippetObject }.filterNotNull()
+fun LinkedSnippet<KJvmEvaluatedSnippet>?.instances() = this.toList { it.snippetObject }.filterNotNull()
+
+fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, message: String, severity: String) =
+        ScriptDiagnostic(
+                ScriptDiagnostic.unspecifiedError,
+                message,
+                ScriptDiagnostic.Severity.valueOf(severity),
+                null,
+                SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol))
+        )
+
+fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =
+        diagnostics.map { it.copy(sourcePath = path) }

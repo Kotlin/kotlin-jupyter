@@ -1,15 +1,14 @@
 package org.jetbrains.kotlin.jupyter.repl.spark
 
-import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult.CompiledClasses
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmCompiledModuleInMemory
 import org.slf4j.LoggerFactory
 import java.io.BufferedOutputStream
-import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 
@@ -32,11 +31,11 @@ class ClassWriter(_outputDir: String = "") {
         logger.info("Created ClassWriter with path <$outputDir>")
     }
 
-    fun writeClasses(classes: KJvmCompiledScript<*>) {
-        writeModuleInMemory(classes)
+    fun writeClasses(code: SourceCode, classes: KJvmCompiledScript<*>) {
+        writeModuleInMemory(code, classes)
     }
 
-    private fun writeModuleInMemory(classes: KJvmCompiledScript<*>) {
+    private fun writeModuleInMemory(code: SourceCode, classes: KJvmCompiledScript<*>) {
         try {
             val moduleInMemory = classes.compiledModule as KJvmCompiledModuleInMemory
             moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
@@ -45,9 +44,9 @@ class ClassWriter(_outputDir: String = "") {
                 }
             }
         } catch (e: ClassCastException) {
-            logger.info("Compiled line " + classes.code.name + " has no in-memory modules")
+            logger.info("Compiled line " + code.name + " has no in-memory modules")
         } catch (e: NullPointerException) {
-            logger.info("Compiled line " + classes.code.name + " has no in-memory modules")
+            logger.info("Compiled line " + code.name + " has no in-memory modules")
         }
     }
 
