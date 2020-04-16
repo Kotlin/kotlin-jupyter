@@ -3,9 +3,9 @@ import java.util.function.Consumer
 /****** Prepare distribution ******/
 
 task copyDistribFiles(type: Copy, dependsOn: cleanInstallDirDistrib, group: distribGroup) {
-    from distributionPath
-    into distribBuildPath
-    exclude '.idea/**'
+    from(distributionPath)
+    into(distribBuildPath)
+    exclude(".idea/**")
 }
 
 task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles], group: distribGroup) {
@@ -13,8 +13,8 @@ task prepareDistributionDir(dependsOn: [cleanInstallDirDistrib, copyDistribFiles
         def versionFilePath = distribBuildPath.resolve(versionFileName)
         versionFilePath.toFile().write(version as String)
         project.copy {
-            from versionFilePath
-            into artifactsDir
+            from(versionFilePath)
+            into(artifactsDir)
         }
     }
 }
@@ -24,12 +24,12 @@ createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBui
 /****** Conda upload ******/
 
 task condaPackage(type: Exec, dependsOn: [cleanInstallDirDistrib, preparePackage], group: condaGroup) {
-    commandLine 'conda-build', 'conda', '--output-folder', condaPackageDir
-    workingDir distribBuildPath
+    commandLine("conda-build", "conda", "--output-folder", condaPackageDir)
+    workingDir(distribBuildPath)
     doLast {
         copy {
-            from distribBuildPath.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName)
-            into artifactsDir
+            from(distribBuildPath.resolve(condaPackageDir).resolve("noarch").resolve(condaPackageFileName))
+            into(artifactsDir)
         }
     }
 }
@@ -112,14 +112,14 @@ condaTaskSpecs.createTasks { TaskSpec taskSpec ->
 
         doLast {
             exec {
-                commandLine 'anaconda', 'login',
-                        '--username', taskSpec.credentials.username,
-                        '--password', taskSpec.credentials.password
+                commandLine "anaconda", "login",
+                        "--username", taskSpec.credentials.username,
+                        "--password", taskSpec.credentials.password
                 standardInput new ByteArrayInputStream("yes".bytes)
             }
 
             exec {
-                commandLine('anaconda', 'upload', '-u', taskSpec.username, artifactPath.toString())
+                commandLine("anaconda", "upload", "-u", taskSpec.username, artifactPath.toString())
             }
         }
     }
@@ -128,14 +128,14 @@ condaTaskSpecs.createTasks { TaskSpec taskSpec ->
 /****** PyPi upload ******/
 
 task pyPiPackage(type: Exec, dependsOn: preparePackage, group: pyPiGroup) {
-    commandLine 'python', 'setup.py', 'bdist_wheel',
-            '--dist-dir', pyPiPackageDir
-    workingDir distribBuildPath
+    commandLine("python", "setup.py", "bdist_wheel",
+            "--dist-dir", pyPiPackageDir)
+    workingDir(distribBuildPath)
 
     doLast {
         copy {
-            from distribBuildPath.resolve(pyPiPackageDir).resolve(pyPiPackageFileName)
-            into artifactsDir
+            from(distribBuildPath.resolve(pyPiPackageDir).resolve(pyPiPackageFileName))
+            into(artifactsDir)
         }
     }
 }
@@ -169,10 +169,10 @@ pyPiTaskSpecs.createTasks { taskSpec ->
             dependsOn([pyPiPackage])
         }
 
-        commandLine "twine", "upload",
+        commandLine("twine", "upload",
                 "-u", taskSpec.username,
                 "-p", taskSpec.password,
                 "--repository-url", taskSpec.repoURL,
-                pyPiPackageFileName
+                pyPiPackageFileName)
     }
 }

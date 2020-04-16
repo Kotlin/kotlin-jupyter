@@ -7,48 +7,48 @@ import java.util.stream.Collectors
 
 buildscript {
     ext.shadowJarVersion = "5.2.0"
-    ext.kotlinVersion = '1.4-SNAPSHOT'
-    ext.baseVersion = '0.7.41'
+    ext.kotlinVersion = "1.4-SNAPSHOT"
+    ext.baseVersion = "0.7.41"
     repositories {
         jcenter()
         mavenLocal()
         mavenCentral()
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+        maven { url("https://dl.bintray.com/kotlin/kotlin-eap") }
+        maven { url("https://dl.bintray.com/kotlin/kotlin-dev") }
     }
     dependencies {
         //noinspection DifferentKotlinGradleVersion
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        classpath "com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion"
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion")
     }
 }
 
 allprojects {
-    apply plugin: 'kotlin'
+    apply plugin: "kotlin"
 
     repositories {
         jcenter()
         mavenLocal()
         mavenCentral()
         // only when using Kotlin EAP releases ...
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
-        maven { url 'https://kotlin.bintray.com/kotlin-dependencies' }
+        maven { url("https://dl.bintray.com/kotlin/kotlin-eap") }
+        maven { url("https://dl.bintray.com/kotlin/kotlin-dev") }
+        maven { url("https://kotlin.bintray.com/kotlin-dependencies") }
     }
 
     dependencies {
-        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
 
-        testImplementation 'junit:junit:4.12'
-        testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+        testImplementation("junit:junit:4.12")
+        testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
     }
 
     ext {
         packageName = "kotlin-jupyter-kernel"
         versionFileName = "VERSION"
 
-        String artifactsPathStr = rootProject.findProperty('artifactsPath') ?: 'artifacts'
-        String installPath = rootProject.findProperty('installPath')
+        String artifactsPathStr = rootProject.findProperty("artifactsPath") ?: "artifacts"
+        String installPath = rootProject.findProperty("installPath")
 
         //noinspection GroovyAssignabilityCheck
         rootPath = rootDir.toPath()
@@ -57,7 +57,7 @@ allprojects {
 
         //noinspection GroovyAssignabilityCheck
         installPathLocal = installPath ? Paths.get(installPath) :
-                Paths.get(System.properties['user.home'].toString(), ".ipython", "kernels", "kotlin")
+                Paths.get(System.properties["user.home"].toString(), ".ipython", "kernels", "kotlin")
         //noinspection GroovyAssignabilityCheck
         distributionPath = rootPath.resolve("distrib")
         //noinspection GroovyAssignabilityCheck
@@ -71,10 +71,10 @@ allprojects {
 
         if (project == rootProject) {
             isProtectedBranch = isProtectedBranch()
-            String buildCounterStr = rootProject.findProperty('build.counter') ?: '100500'
-            String buildNumber = rootProject.findProperty('build.number') ?: ''
-            String devCounter = rootProject.findProperty('build.devCounter') ?: '1'
-            String devAddition = isProtectedBranch ? '' : '.dev' + devCounter
+            String buildCounterStr = rootProject.findProperty("build.counter") ?: "100500"
+            String buildNumber = rootProject.findProperty("build.number") ?: ""
+            String devCounter = rootProject.findProperty("build.devCounter") ?: "1"
+            String devAddition = isProtectedBranch ? "" : ".dev" + devCounter
             String defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
             String buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
 
@@ -135,18 +135,18 @@ allprojects {
         pyPiGroup = "pip"
         buildGroup = "build"
 
-        condaUserStable = rootProject.findProperty('condaUserStable') ?: ''
-        condaPasswordStable = rootProject.findProperty('condaPasswordStable') ?: ''
-        condaUserDev = rootProject.findProperty('condaUserDev') ?: ''
+        condaUserStable = rootProject.findProperty("condaUserStable") ?: ""
+        condaPasswordStable = rootProject.findProperty("condaPasswordStable") ?: ""
+        condaUserDev = rootProject.findProperty("condaUserDev") ?: ""
 
-        stablePyPiUser = rootProject.findProperty('stablePyPiUser') ?: ''
-        stablePyPiPassword = rootProject.findProperty('stablePyPiPassword') ?: ''
-        devPyPiUser = rootProject.findProperty('devPyPiUser') ?: ''
-        devPyPiPassword = rootProject.findProperty('devPyPiPassword') ?: ''
+        stablePyPiUser = rootProject.findProperty("stablePyPiUser") ?: ""
+        stablePyPiPassword = rootProject.findProperty("stablePyPiPassword") ?: ""
+        devPyPiUser = rootProject.findProperty("devPyPiUser") ?: ""
+        devPyPiPassword = rootProject.findProperty("devPyPiPassword") ?: ""
     }
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "com.github.johnrengelman.shadow"
 
 configurations {
     deploy
@@ -154,34 +154,34 @@ configurations {
 
 dependencies {
     compile project(":jupyter-lib")
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-ide-services-impl-embeddable:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-main-kts:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-dependencies:$kotlinVersion"
-    compile "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven:$kotlinVersion"
+    compile("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-scripting-ide-services-embeddable:$kotlinVersion") { transitive = false }
+    compile("org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-scripting-dependencies:$kotlinVersion") //{ transitive = false }
+    compile("org.jetbrains.kotlin:kotlin-scripting-dependencies-maven:$kotlinVersion") //{ transitive = false }
+    compile("org.jetbrains.kotlin:kotlin-main-kts:$kotlinVersion") //{ transitive = false }
 
-    compile "org.apache.maven:maven-core:3.0.3"
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'khttp:khttp:1.0.0'
-    compile 'org.zeromq:jeromq:0.3.5'
-    compile 'com.beust:klaxon:5.2'
-    compile 'com.github.ajalt:clikt:2.3.0'
-    runtime 'org.slf4j:slf4j-simple:1.7.25'
-    runtime "org.jetbrains.kotlin:jcabi-aether:1.0-dev-3"
-    runtime "org.sonatype.aether:aether-api:1.13.1"
-    runtime "net.java.dev.jna:jna:5.4.0"
+    compile("org.apache.maven:maven-core:3.0.3")
+    compile("org.slf4j:slf4j-api:1.7.25")
+    compile("khttp:khttp:1.0.0")
+    compile("org.zeromq:jeromq:0.3.5")
+    compile("com.beust:klaxon:5.2")
+    compile("com.github.ajalt:clikt:2.3.0")
+    runtime("org.slf4j:slf4j-simple:1.7.25")
+    runtime("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3")
+    runtime("org.sonatype.aether:aether-api:1.13.1")
+    runtime("net.java.dev.jna:jna:5.4.0")
 
-    deploy project(":jupyter-lib")
+    deploy(project(":jupyter-lib"))
 }
 
 jar.manifest.attributes(
-    'Main-class': 'org.jetbrains.kotlin.jupyter.IkotlinKt',
-    'Implementation-Version': version
+    "Main-class": "org.jetbrains.kotlin.jupyter.IkotlinKt",
+    "Implementation-Version": version
 )
 
 task buildProperties(group: buildGroup) {
@@ -200,22 +200,22 @@ task buildProperties(group: buildGroup) {
 }
 
 processResources {
-    dependsOn buildProperties
+    dependsOn(buildProperties)
 }
 
 shadowJar {
     archiveBaseName.set(packageName)
-    archiveClassifier.set('')
+    archiveClassifier.set("")
     mergeServiceFiles()
 }
 
 boolean isProtectedBranch() {
-    def branchProp = 'build.branch'
+    def branchProp = "build.branch"
     def branch = project.findProperty(branchProp) as String
     println("Current branch: $branch")
     if (branch != null) {
-        branch = branch.substring(branch.lastIndexOf('/') + 1)
-        return branch == 'master'
+        branch = branch.substring(branch.lastIndexOf("/") + 1)
+        return branch == "master"
     }
     return false
 }
@@ -241,7 +241,7 @@ static Path getSubDir(Path dir, String... subDir) {
 
 static void writeJson(Map<String, Object> json, Path path) {
     def str = JsonOutput.prettyPrint(JsonOutput.toJson(json))
-    path.toFile().write(str, 'UTF-8')
+    path.toFile().write(str, "UTF-8")
 }
 
 void createCleanTasks() {
@@ -364,17 +364,17 @@ void makeJarArgs(Path installPath, String kernelJarPath, List<String> classPath,
 /****** Local install ******/
 
 task copyRunKernelPy(type: Copy, dependsOn: cleanInstallDirLocal, group: localGroup) {
-    from distributionPath.resolve(runKernelDir).resolve(runKernelPy)
-    into installPathLocal
+    from(distributionPath.resolve(runKernelDir).resolve(runKernelPy))
+    into(installPathLocal)
 }
 
 task copyNbExtension(type: Copy, group: localGroup) {
-    from nbExtensionPath
-    into installPathLocal
+    from(nbExtensionPath)
+    into(installPathLocal)
 }
 
 createInstallTasks(true, installPathLocal, installPathLocal)
 
 task uninstall(dependsOn: cleanInstallDirLocal, group: localGroup)
 
-apply from: 'distrib.gradle'
+apply from: "distrib.gradle"
