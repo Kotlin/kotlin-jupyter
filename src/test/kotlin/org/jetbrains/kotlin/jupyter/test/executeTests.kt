@@ -1,9 +1,11 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
-import org.jetbrains.kotlin.jupyter.*
+import org.jetbrains.kotlin.jupyter.JupyterSockets
+import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.get
+import org.jetbrains.kotlin.jupyter.jsonObject
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 import org.zeromq.ZMQ
 

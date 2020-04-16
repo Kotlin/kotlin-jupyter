@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerImpl
+import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import java.io.File
 import java.net.URLClassLoader
 import java.util.*
@@ -19,7 +19,9 @@ import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.*
-import kotlin.script.experimental.util.*
+import kotlin.script.experimental.jvm.util.isError
+import kotlin.script.experimental.jvm.util.isIncomplete
+import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 data class EvalResult(val resultValue: Any?)
 
@@ -30,7 +32,7 @@ open class ReplException(message: String, cause: Throwable? = null) : Exception(
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
 class ReplCompilerException(val errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null)
-    : ReplException(message ?: errorResult?.renderError() ?: "") {
+    : ReplException(message ?: errorResult?.getErrors()?.message ?: "") {
 
     val firstDiagnostics = errorResult?.reports?.firstOrNull {
         it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
@@ -133,9 +135,9 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
         processedMagics.libraries.forEach {
             val builder = StringBuilder()
-            it.repositories.forEach { builder.appendln("@file:Repository(\"$it\")") }
-            it.dependencies.forEach { builder.appendln("@file:DependsOn(\"$it\")") }
-            it.imports.forEach { builder.appendln("import $it") }
+            it.repositories.forEach { builder.appendLine("@file:Repository(\"$it\")") }
+            it.dependencies.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
+            it.imports.forEach { builder.appendLine("import $it") }
             if (builder.isNotBlank())
                 initCodes.add(builder.toString())
             typeRenderers.addAll(it.renderers)
@@ -240,12 +242,12 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private var executionCounter = 0
 
-    private val compiler: KJvmReplCompilerImpl by lazy {
-        KJvmReplCompilerImpl()
+    private val compiler: KJvmReplCompilerWithIdeServices by lazy {
+        KJvmReplCompilerWithIdeServices()
     }
 
-    private val evaluator: KJvmReplEvaluatorImpl by lazy {
-        KJvmReplEvaluatorImpl()
+    private val evaluator: BasicJvmReplEvaluator by lazy {
+        BasicJvmReplEvaluator()
     }
 
     private val completer = KotlinCompleter()
@@ -265,7 +267,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         val result = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         return when {
             result.isIncomplete() -> CheckResult(false)
-            result.hasErrors() -> throw ReplException(result.renderError())
+            result.isError() -> throw ReplException(result.getErrors().message)
             else -> CheckResult(true)
         }
     }
@@ -320,7 +322,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
     }
 
-    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.snippetClass
+    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptClass
 
     override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
         synchronized(this) {
@@ -388,14 +390,14 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
             if (trackClasspath) {
                 val sb = StringBuilder()
                 if (newClasspath.count() > 0) {
-                    sb.appendln("${newClasspath.count()} new paths were added to classpath:")
-                    newClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                    sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
+                    newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
                 }
                 if (oldClasspath.count() > 0) {
-                    sb.appendln("${oldClasspath.count()} resolved paths were already in classpath:")
-                    oldClasspath.sortedBy { it }.forEach { sb.appendln(it) }
+                    sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
+                    oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
                 }
-                sb.appendln("Current classpath size: ${currentClasspath.count()}")
+                sb.appendLine("Current classpath size: ${currentClasspath.count()}")
                 println(sb.toString())
             }
         }
@@ -473,14 +475,16 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                 contextUpdater.update()
 
                 val pureResult = result.get()
-                return when {
-                    pureResult.isErrorResult -> throw ReplEvalRuntimeException(pureResult.error?.message.orEmpty(), pureResult.error)
-                    pureResult.isUnitResult -> {
+                val resultValue = pureResult.result
+                return when (resultValue) {
+                    is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
+                    is ResultValue.Unit -> {
                         InternalEvalResult(Unit, null)
                     }
-                    pureResult.isValueResult -> {
-                        InternalEvalResult(pureResult.result, pureResult.compiledSnippet.resultField)
+                    is ResultValue.Value -> {
+                        InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
                     }
+                    is ResultValue.NotEvaluated -> throw ReplEvalRuntimeException("This snippet was not evaluated")
                     else -> throw IllegalStateException("Unknown eval result type ${this}")
                 }
             }

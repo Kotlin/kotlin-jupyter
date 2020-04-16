@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.jupyter.jsonObject
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.script.experimental.api.*
-import kotlin.script.experimental.util.toSourceCodePosition
+import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 enum class CompletionStatus(private val value: String) {
     OK("ok"),
@@ -109,7 +109,7 @@ data class ListErrorsResult(val code: String, val errors: Sequence<ScriptDiagnos
                     er["end"] = jsonObject("line" to end.line, "col" to end.col)
             }
             er
-        })
+        }.toList())
     }
 }
 

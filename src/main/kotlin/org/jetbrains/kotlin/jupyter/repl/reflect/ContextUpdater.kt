@@ -10,13 +10,13 @@ import java.lang.reflect.Field
 import java.util.*
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
-import kotlin.script.experimental.jvm.KJvmReplEvaluatorImpl
+import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 
 /**
  * ContextUpdater updates current user-defined functions and variables
  * to use in completion and KotlinContext.
  */
-class ContextUpdater(val context: KotlinContext, private val evaluator: KJvmReplEvaluatorImpl) {
+class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvmReplEvaluator) {
 
     fun update() {
         try {

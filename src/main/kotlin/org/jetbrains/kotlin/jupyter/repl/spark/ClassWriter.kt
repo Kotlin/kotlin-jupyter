@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.jupyter.repl.spark
 
-import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmCompiledModuleInMemory
 import org.slf4j.LoggerFactory
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
@@ -9,6 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.jvm.impl.KJvmCompiledModuleInMemory
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 
@@ -31,13 +31,13 @@ class ClassWriter(_outputDir: String = "") {
         logger.info("Created ClassWriter with path <$outputDir>")
     }
 
-    fun writeClasses(code: SourceCode, classes: KJvmCompiledScript<*>) {
+    fun writeClasses(code: SourceCode, classes: KJvmCompiledScript) {
         writeModuleInMemory(code, classes)
     }
 
-    private fun writeModuleInMemory(code: SourceCode, classes: KJvmCompiledScript<*>) {
+    private fun writeModuleInMemory(code: SourceCode, classes: KJvmCompiledScript) {
         try {
-            val moduleInMemory = classes.compiledModule as KJvmCompiledModuleInMemory
+            val moduleInMemory = classes.getCompiledModule() as KJvmCompiledModuleInMemory
             moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
                 if (name.contains("class")) {
                     writeClass(bytes, outputDir.resolve(name))
