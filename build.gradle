@@ -55,6 +55,11 @@ allprojects {
         //noinspection GroovyAssignabilityCheck
         artifactsDir = rootPath.resolve(artifactsPathStr)
 
+        localBuild = (rootProject.findProperty("build.isLocal") ?: "false") == "true"
+        if (localBuild) {
+            project.delete(artifactsDir)
+        }
+
         //noinspection GroovyAssignabilityCheck
         installPathLocal = installPath ? Paths.get(installPath) :
                 Paths.get(System.properties["user.home"].toString(), ".ipython", "kernels", "kotlin")

@@ -3,6 +3,7 @@ installPath=<path-to-jupyter>/kernels/kotlin
 build.branch=dev
 build.number=1.0.0
 build.counter=1
+build.isLocal=true
 
 condaUserStable=jetbrains
 condaPasswordStable=
