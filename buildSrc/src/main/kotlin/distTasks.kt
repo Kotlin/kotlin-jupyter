@@ -31,10 +31,8 @@ fun ProjectWithOptions.prepareDistributionTasks() {
         val pythonFiles = mutableListOf<Path>()
         eachFile {
             val absPath = distribBuildPath.resolve(this.path).toAbsolutePath()
-            if(this.path.endsWith(".py")){
-                println("Python file: $absPath")
+            if(this.path.endsWith(".py"))
                 pythonFiles.add(absPath)
-            }
         }
 
         doLast {

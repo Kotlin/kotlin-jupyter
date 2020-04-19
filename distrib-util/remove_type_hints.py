@@ -16,7 +16,6 @@ class TypeHintRemover(ast.NodeTransformer):
         return node
 
     def visit_AnnAssign(self, node):
-        print("Visited: " + str(node))
         if node.value is None:
             return None
         return ast.Assign([node.target], node.value)
