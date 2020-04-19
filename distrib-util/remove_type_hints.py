@@ -6,7 +6,7 @@ import sys
 class TypeHintRemover(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node):
-        # remove the return type defintion
+        # remove the return type definition
         node.returns = None
         # remove all argument annotations
         if node.args.args:
