@@ -8,4 +8,3 @@ artifacts/
 **/.ipynb*
 **/build/
 *.DS_Store
-gradle.properties
