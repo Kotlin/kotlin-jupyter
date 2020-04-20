@@ -106,8 +106,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
         }
         "shutdown_request" -> {
-            sendWrapped(msg, makeReplyMessage(msg, "shutdown_reply", content = msg.content))
-            Thread.currentThread().interrupt()
+            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
+            exitProcess(0)
         }
 
         // TODO: This request is deprecated since messaging protocol v.5.1,
