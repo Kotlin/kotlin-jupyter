@@ -101,7 +101,7 @@ fun ProjectWithOptions.preparePyPiTasks() {
         tasks.register<Exec>("pyPiPackage") {
             dependsOn("preparePackage")
             group = pyPiGroup
-            commandLine("python", "setup.py", "bdist_wheel",
+            commandLine("python", setupPy, "bdist_wheel",
                     "--dist-dir", packageSettings.dir)
             workingDir(distribBuildPath)
 

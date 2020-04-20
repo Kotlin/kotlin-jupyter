@@ -72,7 +72,7 @@ class TaskOptions: AllOptions {
 
     override val distribKernelDir = "kernel"
     override val runKernelDir = "run_kotlin_kernel"
-    val setupPy = "setup.py"
+    override val setupPy = "setup.py"
 
     override val copyRunKernelPy: Task
         get() = tasks.getByName("copyRunKernelPy")

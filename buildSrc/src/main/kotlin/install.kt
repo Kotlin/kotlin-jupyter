@@ -29,6 +29,7 @@ interface InstallOptions {
     val jarArgsFile: String
     val runKernelDir: String
     val runKernelPy: String
+    val setupPy: String
     val kernelFile: String
 
     val installKernelTaskPrefix: String
@@ -151,6 +152,7 @@ fun ProjectWithInstallOptions.makeKernelSpec(installPath: Path, localInstall: Bo
     writeJson(mapOf(
             "display_name" to "Kotlin",
             "language" to "kotlin",
+            "interrupt_mode" to "message",
             "argv" to argv
     ), installPath.resolve(kernelFile))
 

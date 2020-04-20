@@ -13,7 +13,7 @@ import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
-import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.system.exitProcess
 
 enum class ResponseState {
     Ok, Error, Abort
@@ -32,28 +32,34 @@ interface Response {
     val stdErr: String?
 }
 
-data class OkResponseWithMessage(val result: MimeTypedResult?,
-                                 override val stdOut: String? = null,
-                                 override val stdErr: String? = null): Response{
+data class OkResponseWithMessage(
+        val result: MimeTypedResult?,
+        override val stdOut: String? = null,
+        override val stdErr: String? = null,
+): Response{
     override val state: ResponseState = ResponseState.Ok
     override val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
     override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
-data class AbortResponseWithMessage(val result: MimeTypedResult?,
-                                    override val stdErr: String? = null): Response{
+data class AbortResponseWithMessage(
+        val result: MimeTypedResult?,
+        override val stdErr: String? = null,
+): Response{
     override val state: ResponseState = ResponseState.Abort
     override val stdOut: String? = null
     override val hasStdOut: Boolean = false
     override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
-data class ErrorResponseWithMessage(val result: MimeTypedResult?,
-                               override val stdErr: String? = null,
-                               val errorName: String = "Unknown error",
-                               var errorValue: String = "",
-                               val traceback: List<String> = emptyList(),
-                               val additionalInfo: JsonObject = jsonObject()): Response{
+data class ErrorResponseWithMessage(
+        val result: MimeTypedResult?,
+        override val stdErr: String? = null,
+        val errorName: String = "Unknown error",
+        var errorValue: String = "",
+        val traceback: List<String> = emptyList(),
+        val additionalInfo: JsonObject = jsonObject(),
+): Response{
     override val state: ResponseState = ResponseState.Error
     override val stdOut: String? = null
     override val hasStdOut: Boolean = false
@@ -95,12 +101,19 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = jsonObject(
                             "history" to listOf<String>() // not implemented
                     )))
+        "interrupt_request" -> {
+            log.warn("Interruption is not yet supported!")
+            send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
+        }
         "shutdown_request" -> {
             sendWrapped(msg, makeReplyMessage(msg, "shutdown_reply", content = msg.content))
             Thread.currentThread().interrupt()
         }
+
+        // TODO: This request is deprecated since messaging protocol v.5.1,
+        // remove it in future versions of kernel
         "connect_request" ->
-            sendWrapped(msg, makeReplyMessage(msg, "connection_reply",
+            sendWrapped(msg, makeReplyMessage(msg, "connect_reply",
                     content = jsonObject(JupyterSockets.values()
                             .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) })))
         "execute_request" -> {
@@ -239,10 +252,12 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
     }
 }
 
-class CapturingOutputStream(private val stdout: PrintStream,
-                            private val conf: OutputConfig,
-                            private val captureOutput: Boolean,
-                            val onCaptured: (String) -> Unit) : OutputStream() {
+class CapturingOutputStream(
+        private val stdout: PrintStream,
+        private val conf: OutputConfig,
+        private val captureOutput: Boolean,
+        val onCaptured: (String) -> Unit,
+) : OutputStream() {
     private val capturedLines = ByteArrayOutputStream()
     private val capturedNewLine = ByteArrayOutputStream()
     private var overallOutputSize = 0
@@ -346,8 +361,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
                 forkedError.flush()
 
                 try {
-                    var result: MimeTypedResult? = null
-                    result = exec.resultValue?.toMimeTypedResult()
+                    val result = exec.resultValue?.toMimeTypedResult()
                     OkResponseWithMessage(result)
                 } catch (e: Exception) {
                     AbortResponseWithMessage(textResult("Error!"), "error:  Unable to convert result to a string: $e")
@@ -379,15 +393,15 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
             val stdErr = StringBuilder()
             with(stdErr) {
                 val cause = ex.cause
-                if (cause == null) appendln(ex.message)
+                if (cause == null) appendLine(ex.message)
                 else {
                     when (cause) {
-                        is InvocationTargetException -> appendln(cause.targetException.toString())
-                        else -> appendln(cause.toString())
+                        is InvocationTargetException -> appendLine(cause.targetException.toString())
+                        else -> appendLine(cause.toString())
                     }
                     cause.stackTrace?.also {
                         for (s in it)
-                            appendln(s)
+                            appendLine(s)
                     }
                 }
             }
@@ -406,5 +420,3 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
         System.setOut(out)
     }
 }
-
-fun String.nullWhenEmpty(): String? = if (this.isBlank()) null else this
