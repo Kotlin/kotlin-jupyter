@@ -235,7 +235,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val code = msg.content["code"].toString()
             val resStr = if (isCommand(code)) "complete" else {
                 val result = try {
-                   val check = repl?.checkComplete(executionCount.get(), code)
+                   val check = repl?.checkComplete(code)
                     when {
                         check == null -> "error: no repl"
                         check.isComplete -> "complete"

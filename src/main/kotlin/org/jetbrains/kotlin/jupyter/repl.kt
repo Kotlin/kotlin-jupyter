@@ -65,7 +65,7 @@ typealias FieldName = String
 interface ReplForJupyter {
     fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
 
-    fun checkComplete(executionNumber: Long, code: Code): CheckResult
+    fun checkComplete(code: Code): CheckResult
 
     suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit)
 
@@ -262,8 +262,9 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private val scheduledExecutions = LinkedList<Code>()
 
-    override fun checkComplete(executionNumber: Long, code: String): CheckResult {
-        val codeLine = SourceCodeImpl(executionNumber.toInt(), code)
+    override fun checkComplete(code: String): CheckResult {
+        val id = executionCounter++
+        val codeLine = SourceCodeImpl(id, code)
         val result = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         return when {
             result.isIncomplete() -> CheckResult(false)
