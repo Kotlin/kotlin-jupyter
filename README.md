@@ -5,7 +5,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.3.70) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.4.0) kernel for [Jupyter](https://jupyter.org).
 
 Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
