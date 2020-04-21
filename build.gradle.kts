@@ -13,11 +13,6 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    languageVersion = "1.4"
-}
-
 class TaskOptions: AllOptions {
     override val versionFileName = "VERSION"
     override val rootPath: Path = rootDir.toPath()
@@ -148,6 +143,16 @@ class TaskOptions: AllOptions {
 }
 
 allprojects {
+    val kotlinLanguageLevel: String by rootProject
+    val jvmTarget: String by rootProject
+
+    tasks.withType(KotlinCompile::class.java).all {
+        kotlinOptions {
+            languageVersion = kotlinLanguageLevel
+            this.jvmTarget = jvmTarget
+        }
+    }
+
     repositories {
         jcenter()
         mavenLocal()
