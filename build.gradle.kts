@@ -22,11 +22,14 @@ class TaskOptions: AllOptions {
     override val versionFileName = "VERSION"
     override val rootPath: Path = rootDir.toPath()
 
+    override val isLocalBuild = (rootProject.findProperty("build.isLocal") ?: "false") == "true"
+
     override val artifactsDir: Path = {
         val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
         val artifactsDir = rootPath.resolve(artifactsPathStr)
 
-        removeArtifactsForLocalBuild(artifactsDir)
+        if (isLocalBuild)
+            project.delete(artifactsDir)
 
         project.version = detectVersion(baseVersion, artifactsDir, versionFileName)
         println("##teamcity[buildNumber '$version']")
@@ -85,7 +88,8 @@ class TaskOptions: AllOptions {
         get() = extra["isOnProtectedBranch"] as Boolean
 
     override val distribUtilsPath: Path = rootPath.resolve("distrib-util")
-    override val distribUtilRequirementsPath: Path = distribUtilsPath.resolve("requirements.txt")
+    override val distribUtilRequirementsPath: Path = distribUtilsPath.resolve("requirements-common.txt")
+    override val distribUtilRequirementsHintsRemPath: Path = distribUtilsPath.resolve("requirements-hints-remover.txt")
     override val removeTypeHints = true
     override val typeHintsRemover: Path = distribUtilsPath.resolve("remove_type_hints.py")
 

@@ -1,5 +1,7 @@
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.InputFile
 import java.nio.file.Path
 
 interface DistribOptions {
@@ -18,6 +20,7 @@ interface DistribOptions {
 
     val distribUtilsPath: Path
     val distribUtilRequirementsPath: Path
+    val distribUtilRequirementsHintsRemPath: Path
     val removeTypeHints: Boolean
     val typeHintsRemover: Path
 }
@@ -80,3 +83,12 @@ class PyPiTaskSpec (
     val username: String,
     val password: String
 ) : TaskSpec()
+
+abstract class PipInstallReq : Exec() {
+    @get:InputFile
+    var requirementsFile: Path? = null
+    set(value) {
+        commandLine("pip", "install", "-r", value)
+        field = value
+    }
+}

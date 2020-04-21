@@ -28,13 +28,6 @@ fun Path.deleteDir() = toFile().deleteRecursively()
 
 fun Project.stringPropOrEmpty(name: String) = rootProject.findProperty(name) as String? ?: ""
 
-fun Project.removeArtifactsForLocalBuild(artifactsDir: Path) {
-    val localBuild = (rootProject.findProperty("build.isLocal") ?: "false") == "true"
-    if (localBuild) {
-        project.delete(artifactsDir)
-    }
-}
-
 interface AllOptions: BuildOptions, InstallOptions, DistribOptions
 interface ProjectWithOptions : ProjectWithBuildOptions, ProjectWithInstallOptions, ProjectWithDistribOptions
 

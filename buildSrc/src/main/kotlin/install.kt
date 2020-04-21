@@ -6,6 +6,7 @@ import org.gradle.kotlin.dsl.register
 import java.nio.file.Path
 
 interface BuildOptions {
+    val isLocalBuild: Boolean
     val mainSourceSetDir: String
     val runtimePropertiesFile: String
     val resourcesDir: String

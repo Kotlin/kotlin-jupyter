@@ -8,10 +8,6 @@ private fun ProjectWithDistribOptions.removeTypeHintsIfNeeded(files: List<Path>)
     if (!removeTypeHints)
         return
 
-    exec {
-        commandLine("pip", "install", "-r", distribUtilRequirementsPath)
-    }
-
     files.forEach {
         val fileName = it.toAbsolutePath().toString()
         exec {
@@ -21,9 +17,22 @@ private fun ProjectWithDistribOptions.removeTypeHintsIfNeeded(files: List<Path>)
 }
 
 fun ProjectWithOptions.prepareDistributionTasks() {
+    tasks.register<PipInstallReq>("installCommonRequirements") {
+        group = distribGroup
+        requirementsFile = distribUtilRequirementsPath
+    }
+
+    tasks.register<PipInstallReq>("installHintRemoverRequirements") {
+        group = distribGroup
+        requirementsFile = distribUtilRequirementsHintsRemPath
+    }
+
     tasks.register<Copy>("copyDistribFiles") {
         group = distribGroup
         dependsOn("cleanInstallDirDistrib")
+        if(removeTypeHints) {
+            dependsOn("installHintRemoverRequirements")
+        }
         from(distributionPath)
         into(distribBuildPath)
         exclude(".idea/**")
@@ -99,8 +108,13 @@ fun ProjectWithOptions.prepareCondaTasks() {
 fun ProjectWithOptions.preparePyPiTasks() {
     with(pyPiTaskSpecs) {
         tasks.register<Exec>("pyPiPackage") {
-            dependsOn("preparePackage")
             group = pyPiGroup
+
+            dependsOn("preparePackage")
+            if (isLocalBuild) {
+                dependsOn("installCommonRequirements")
+            }
+
             commandLine("python", setupPy, "bdist_wheel",
                     "--dist-dir", packageSettings.dir)
             workingDir(distribBuildPath)
@@ -119,6 +133,9 @@ fun ProjectWithOptions.preparePyPiTasks() {
                 workingDir(artifactsDir)
                 val artifactPath = artifactsDir.resolve(packageSettings.fileName)
 
+                if (isLocalBuild) {
+                    dependsOn("installCommonRequirements")
+                }
                 if (!artifactPath.toFile().exists()) {
                     dependsOn("pyPiPackage")
                 }
