@@ -472,22 +472,39 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                 val currentEvalConfig = ScriptEvaluationConfiguration(evaluatorConfiguration) {
                     constructorArgs.invoke(repl as KotlinKernelHost)
                 }
-                val result = runBlocking { evaluator.eval(compileResult, currentEvalConfig).valueOrThrow() }
+                val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, currentEvalConfig) }
                 contextUpdater.update()
 
-                val pureResult = result.get()
-                val resultValue = pureResult.result
-                return when (resultValue) {
-                    is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
-                    is ResultValue.Unit -> {
-                        InternalEvalResult(Unit, null)
+                when(resultWithDiagnostics) {
+                    is ResultWithDiagnostics.Success -> {
+                        val pureResult = resultWithDiagnostics.value.get()
+                        return when (val resultValue = pureResult.result) {
+                            is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
+                            is ResultValue.Unit -> {
+                                InternalEvalResult(Unit, null)
+                            }
+                            is ResultValue.Value -> {
+                                InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
+                            }
+                            is ResultValue.NotEvaluated -> {
+                                throw ReplEvalRuntimeException(buildString {
+                                    val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
+                                    val stackTrace = cause?.stackTrace ?: emptyArray()
+                                    append("This snippet was not evaluated: ")
+                                    appendLine(cause.toString())
+                                    for (s in stackTrace)
+                                        appendLine(s)
+                                })
+                            }
+                            else -> throw IllegalStateException("Unknown eval result type ${this}")
+                        }
                     }
-                    is ResultValue.Value -> {
-                        InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
+                    is ResultWithDiagnostics.Failure -> {
+                        throw ReplCompilerException(resultWithDiagnostics)
                     }
-                    is ResultValue.NotEvaluated -> throw ReplEvalRuntimeException("This snippet was not evaluated")
-                    else -> throw IllegalStateException("Unknown eval result type ${this}")
+                    else -> throw IllegalStateException("Unknown result")
                 }
+
             }
             is ResultWithDiagnostics.Failure -> throw ReplCompilerException(compileResultWithDiagnostics)
         }

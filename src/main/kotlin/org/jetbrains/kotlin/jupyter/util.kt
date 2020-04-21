@@ -69,40 +69,46 @@ internal data class CompilationErrors(
         val location: CompilerMessageLocation?
 )
 
-internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors =
-        CompilationErrors(
-                reports.joinToString("\n") { report ->
-                    report.location?.let { loc ->
-                        CompilerMessageLocation.create(
-                                report.sourcePath,
-                                loc.start.line,
-                                loc.start.col,
-                                loc.end?.line,
-                                loc.end?.col,
-                                null
-                        )?.toStringExt()?.let {
-                            "$it "
-                        }
-                    }.orEmpty() + report.message
-                },
-                reports.firstOrNull {
-                    when (it.severity) {
-                        ScriptDiagnostic.Severity.ERROR -> true
-                        ScriptDiagnostic.Severity.FATAL -> true
-                        else -> false
-                    }
-                }?.let {
-                    val loc = it.location ?: return@let null
+internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
+    val filteredReports = reports.filter {
+        it.code != ScriptDiagnostic.incompleteCode
+    }
+
+    return CompilationErrors(
+            filteredReports.joinToString("\n") { report ->
+                report.location?.let { loc ->
                     CompilerMessageLocation.create(
-                            it.sourcePath,
+                            report.sourcePath,
                             loc.start.line,
                             loc.start.col,
                             loc.end?.line,
                             loc.end?.col,
                             null
-                    )
+                    )?.toStringExt()?.let {
+                        "$it "
+                    }
+                }.orEmpty() + report.message
+            },
+            filteredReports.firstOrNull {
+                when (it.severity) {
+                    ScriptDiagnostic.Severity.ERROR -> true
+                    ScriptDiagnostic.Severity.FATAL -> true
+                    else -> false
                 }
-        )
+            }?.let {
+                val loc = it.location ?: return@let null
+                CompilerMessageLocation.create(
+                        it.sourcePath,
+                        loc.start.line,
+                        loc.start.col,
+                        loc.end?.line,
+                        loc.end?.col,
+                        null
+                )
+            }
+    )
+}
+
 
 /**
  * Converts its receiver to string with regard to its [CompilerMessageLocation.lineEnd] and
