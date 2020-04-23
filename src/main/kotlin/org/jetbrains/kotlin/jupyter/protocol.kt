@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter
 import com.beust.klaxon.JsonObject
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
@@ -12,6 +13,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.thread
 import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 
@@ -102,7 +104,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "history" to listOf<String>() // not implemented
                     )))
         "interrupt_request" -> {
-            log.warn("Interruption is not yet supported!")
+            connection.currentEval?.interrupt()
+            connection.currentEval = null
             send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
         }
         "shutdown_request" -> {
@@ -330,7 +333,7 @@ fun Any.toMimeTypedResult(): MimeTypedResult? = when (this) {
     else -> textResult(this.toString())
 }
 
-fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body: () -> EvalResult?): Response {
+fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body: () -> Deferred<EvalResult?>): Response {
     val out = System.out
     val err = System.err
 
@@ -353,9 +356,27 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
     System.setIn(stdinIn)
     try {
         return try {
-            val exec = body()
+            var execRes: EvalResult? = null
+            var execException: Throwable? = null
+            val execThread = thread {
+                try {
+                    execRes = body().awaitBlocking()
+                } catch (e: Throwable) {
+                    execException = e
+                }
+            }
+            currentEval = execThread
+            execThread.join()
+            currentEval = null
+
+            val exec = execRes
             if (exec == null) {
-                AbortResponseWithMessage(textResult("Error!"), "NO REPL!")
+                execException?.let {
+                    if (it !is InterruptedException)
+                        throw it
+                }
+
+                AbortResponseWithMessage(textResult("Error!"), "The execution was interrupted")
             } else {
                 forkedOut.flush()
                 forkedError.flush()

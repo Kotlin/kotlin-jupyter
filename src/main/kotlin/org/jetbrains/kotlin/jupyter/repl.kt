@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.jupyter
 import jupyter.kotlin.*
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinReceiver
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Deferred
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
@@ -63,7 +66,7 @@ typealias Code = String
 typealias FieldName = String
 
 interface ReplForJupyter {
-    fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
+    fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): Deferred<EvalResult>
 
     fun checkComplete(code: Code): CheckResult
 
@@ -113,7 +116,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private val initCellCodes = mutableListOf<String>()
 
-    private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
+    private suspend fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
         if (value == null || resultField == null) return null
         val code = typeRenderers[value.javaClass.canonicalName]?.replace("\$it", resultField.first)
                 ?: return value
@@ -275,14 +278,14 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     init {
         // TODO: to be removed after investigation of https://github.com/kotlin/kotlin-jupyter/issues/24
-        doEval("1")
+        runBlocking { doEval("1") }
     }
 
-    private fun executeInitCellCode() = initCellCodes.forEach(::evalNoReturn)
+    private suspend fun executeInitCellCode() = initCellCodes.forEach { evalNoReturn(it) }
 
-    private fun executeInitCode(p: PreprocessingResult) = p.initCodes.forEach(::evalNoReturn)
+    private suspend fun executeInitCode(p: PreprocessingResult) = p.initCodes.forEach { evalNoReturn(it) }
 
-    private fun executeScheduledCode() {
+    private suspend fun executeScheduledCode() {
         while (scheduledExecutions.isNotEmpty()) {
             val code = scheduledExecutions.pop()
             if (executedCodeLogging == ExecutedCodeLogging.Generated)
@@ -291,7 +294,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    private fun processVariablesConversion() {
+    private suspend fun processVariablesConversion() {
         var iteration = 0
         do {
             if (iteration++ > 10) {
@@ -307,7 +310,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         } while (codes.isNotEmpty())
     }
 
-    private fun processAnnotations(replLine: Any?) {
+    private suspend fun processAnnotations(replLine: Any?) {
         if (replLine == null) return
         log.catchAll {
             annotationsProcessor.process(replLine)
@@ -325,52 +328,56 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptClass
 
-    override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
+    override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): Deferred<EvalResult> {
         synchronized(this) {
-            try {
+            return GlobalScope.async { evalImpl(code, displayHandler, jupyterId) }
+        }
+    }
 
-                currentDisplayHandler = displayHandler
+    private suspend fun evalImpl(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
+        try {
 
-                executeInitCellCode()
+            currentDisplayHandler = displayHandler
 
-                val preprocessed = preprocessCode(code)
+            executeInitCellCode()
 
-                executeInitCode(preprocessed)
+            val preprocessed = preprocessCode(code)
 
-                var result: Any? = null
-                var resultField: Pair<String, KotlinType>? = null
-                var replLine: Any? = null
+            executeInitCode(preprocessed)
 
-                if (preprocessed.code.isNotBlank()) {
-                    doEval(preprocessed.code).let {
-                        result = it.value
-                        resultField = it.resultField
-                    }
-                    replLine = lastReplLine()
+            var result: Any? = null
+            var resultField: Pair<String, KotlinType>? = null
+            var replLine: Any? = null
+
+            if (preprocessed.code.isNotBlank()) {
+                doEval(preprocessed.code).let {
+                    result = it.value
+                    resultField = it.resultField
                 }
-
-                processAnnotations(replLine)
-
-                executeScheduledCode()
-
-                registerNewLibraries(preprocessed)
-
-                processVariablesConversion()
-
-                executeScheduledCode()
-
-                updateOutputList(jupyterId, result)
-
-                updateClasspath()
-
-                result = renderResult(result, resultField)
-
-                return EvalResult(result)
-
-            } finally {
-                currentDisplayHandler = null
-                scheduledExecutions.clear()
+                replLine = lastReplLine()
             }
+
+            processAnnotations(replLine)
+
+            executeScheduledCode()
+
+            registerNewLibraries(preprocessed)
+
+            processVariablesConversion()
+
+            executeScheduledCode()
+
+            updateOutputList(jupyterId, result)
+
+            updateClasspath()
+
+            result = renderResult(result, resultField)
+
+            return EvalResult(result)
+
+        } finally {
+            currentDisplayHandler = null
+            scheduledExecutions.clear()
         }
     }
 
@@ -431,7 +438,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         args.callback(result)
     }
 
-    private fun evalNoReturn(code: String) {
+    private suspend fun evalNoReturn(code: String) {
         doEval(code)
         processAnnotations(lastReplLine())
     }
@@ -459,12 +466,12 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    private fun doEval(code: String): InternalEvalResult {
+    private suspend fun doEval(code: String): InternalEvalResult {
         if (executedCodeLogging == ExecutedCodeLogging.All)
             println(code)
         val id = executionCounter++
         val codeLine = SourceCodeImpl(id, code)
-        when (val compileResultWithDiagnostics = runBlocking { compiler.compile(codeLine, compilerConfiguration) }) {
+        when (val compileResultWithDiagnostics = compiler.compile(codeLine, compilerConfiguration)) {
             is ResultWithDiagnostics.Success -> {
                 val compileResult = compileResultWithDiagnostics.value
                 classWriter?.writeClasses(codeLine, compileResult.get())
@@ -472,7 +479,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                 val currentEvalConfig = ScriptEvaluationConfiguration(evaluatorConfiguration) {
                     constructorArgs.invoke(repl as KotlinKernelHost)
                 }
-                val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, currentEvalConfig) }
+                val resultWithDiagnostics = evaluator.eval(compileResult, currentEvalConfig)
                 contextUpdater.update()
 
                 when(resultWithDiagnostics) {

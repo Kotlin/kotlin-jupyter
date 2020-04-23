@@ -126,6 +126,8 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
     var contextMessage: Message? = null
 
+    var currentEval: Thread? = null
+
     override fun close() {
         heartbeat.close()
         shell.close()
