@@ -161,12 +161,7 @@ define(function(){
             var filter = c => !/^[A-Z0-9_]$/i.test(c);
 
             var start = indexOf(buf, filter, cursor - 1, 0, -1) + 1;
-            var end = indexOf(buf, filter, cursor, buf.length - 1, 1);
-            if (end === -1) {
-                end = buf.length;
-            } else {
-                end += 1;
-            }
+            var end = cursor
 
             return {
                 before: buf.substring(0, start),
