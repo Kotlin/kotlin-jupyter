@@ -4,6 +4,7 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.receivers.TypeProviderReceiver
 import org.jetbrains.kotlin.jupyter.*
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals
@@ -13,6 +14,7 @@ import kotlin.test.assertFailsWith
 class TypeConverterTests {
 
     @Test
+    @Ignore
     fun test() {
 
         val parser = Parser.default()

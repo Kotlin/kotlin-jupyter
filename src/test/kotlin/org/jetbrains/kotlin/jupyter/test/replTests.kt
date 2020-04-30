@@ -389,6 +389,7 @@ class ReplTest {
         assertNotNull(res.resultValue)
     }
 
+    @Ignore
     @Test
     fun testNullableErasure() {
         val repl = replWithResolver()
