@@ -134,7 +134,8 @@ List of supported libraries:
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
-
+ - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
+ 
 ### Rich output
   
 By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
