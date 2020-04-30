@@ -134,6 +134,7 @@ List of supported libraries:
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
+ - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
 
 ### Rich output
   
