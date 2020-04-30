@@ -452,12 +452,12 @@
 }
 
 .cm__red_wavy_line {
-    background: url("/kernelspecs/kotlin/wavyline-red.gif") repeat-x 100% 100%;
+    background: url("./wavyline-red.gif") repeat-x 100% 100%;
     padding-bottom: 2px;
 }
 
 .cm__orange_wavy_line {
-    background: url("/kernelspecs/kotlin/wavyline-orange.gif") repeat-x 100% 100%;
+    background: url("./wavyline-orange.gif") repeat-x 100% 100%;
     padding-bottom: 2px;
 }
 
