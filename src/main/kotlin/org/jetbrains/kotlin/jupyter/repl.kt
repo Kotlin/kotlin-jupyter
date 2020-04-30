@@ -355,7 +355,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
                 registerNewLibraries(preprocessed)
 
-                processVariablesConversion()
+//                processVariablesConversion()
 
                 executeScheduledCode()
 
