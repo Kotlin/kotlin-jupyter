@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "v": "2.4.0"
+  },
+  "link": "https://github.com/haifengl/smile",
+  "dependencies": [
+    "com.github.haifengl:smile-kotlin:$v"
+  ],
+  "imports": [
+    "org.apache.commons.csv.CSVFormat",
+    "smile.*",
+    "smile.association.*",
+    "smile.classification.*",
+    "smile.clustering.*",
+    "smile.manifold.*",
+    "smile.mds.*",
+    "smile.nlp.*",
+    "smile.wavelet.*"
+  ]
+}
