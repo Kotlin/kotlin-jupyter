@@ -136,6 +136,7 @@ List of supported libraries:
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
+ - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
 
 ### Rich output
   
