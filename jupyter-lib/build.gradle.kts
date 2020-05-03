@@ -5,7 +5,7 @@ plugins {
 project.version = rootProject.version
 
 dependencies {
-    implementation(kotlinDep("kotlin-stdlib"))
+    implementation(kotlin("stdlib"))
     testImplementation("junit:junit:4.12")
-    testImplementation(kotlinDep("kotlin-test"))
+    testImplementation(kotlin("test"))
 }

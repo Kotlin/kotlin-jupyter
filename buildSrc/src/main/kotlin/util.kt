@@ -1,6 +1,5 @@
 import groovy.json.JsonOutput
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.provideDelegate
 import java.nio.file.Path
 
 fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
@@ -17,11 +16,6 @@ fun getSubDir(dir: Path, vararg subDir: String): Path  = subDir.fold(dir, Path::
 fun writeJson(json: Map<String, Any>, path: Path) {
     val str = JsonOutput.prettyPrint(JsonOutput.toJson(json))
     path.toFile().writeText(str, Charsets.UTF_8)
-}
-
-fun Project.kotlinDep(dependency: String): String {
-    val kotlinVersion: String by project
-    return "org.jetbrains.kotlin:$dependency:$kotlinVersion"
 }
 
 fun Path.deleteDir() = toFile().deleteRecursively()

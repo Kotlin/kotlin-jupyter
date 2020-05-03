@@ -167,21 +167,21 @@ allprojects {
 val deploy: Configuration by configurations.creating
 
 dependencies {
-    implementation(kotlinDep("kotlin-stdlib"))
+    implementation(kotlin("stdlib"))
     testImplementation("junit:junit:4.12")
-    testImplementation(kotlinDep("kotlin-test"))
+    testImplementation(kotlin("test"))
 
     implementation(project(":jupyter-lib"))
-    implementation(kotlinDep("kotlin-reflect"))
-    implementation(kotlinDep("kotlin-scripting-ide-services-embeddable")) { isTransitive = false }
-    implementation(kotlinDep("kotlin-scripting-common"))
-    implementation(kotlinDep("kotlin-scripting-compiler-embeddable"))
-    implementation(kotlinDep("kotlin-compiler-embeddable"))
-    implementation(kotlinDep("kotlin-stdlib-jdk8"))
-    implementation(kotlinDep("kotlin-script-util"))
-    implementation(kotlinDep("kotlin-scripting-dependencies"))
-    implementation(kotlinDep("kotlin-scripting-dependencies-maven"))
-    implementation(kotlinDep("kotlin-main-kts"))
+    implementation(kotlin("reflect"))
+    implementation(kotlin("scripting-ide-services-embeddable") as String) { isTransitive = false }
+    implementation(kotlin("scripting-common"))
+    implementation(kotlin("scripting-compiler-embeddable"))
+    implementation(kotlin("compiler-embeddable"))
+    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("script-util"))
+    implementation(kotlin("scripting-dependencies"))
+    implementation(kotlin("scripting-dependencies-maven"))
+    implementation(kotlin("main-kts"))
 
     implementation("org.apache.maven:maven-core:3.0.3")
     implementation("org.slf4j:slf4j-api:1.7.25")
