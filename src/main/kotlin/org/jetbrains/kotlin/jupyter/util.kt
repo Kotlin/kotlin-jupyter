@@ -39,7 +39,7 @@ fun <T, R> Deferred<T>.asyncLet(selector: suspend (T) -> R): Deferred<R> = this.
 fun <T> Deferred<T>.awaitBlocking(): T = if (isCompleted) getCompleted() else runBlocking { await() }
 
 fun String.parseIniConfig() =
-        split("\n").map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
+        lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
 
 fun List<String>.joinToLines() = joinToString("\n")
 

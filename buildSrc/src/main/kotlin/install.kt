@@ -25,6 +25,7 @@ interface InstallOptions {
     val nbExtensionPath: Path
 
     val librariesPath: String
+    val librariesPropertiesPath: Path
     val jarsPath: String
     val configDir: String
     val jarArgsFile: String

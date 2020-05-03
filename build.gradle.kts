@@ -34,6 +34,8 @@ class TaskOptions: AllOptions {
     private val installPath = rootProject.findProperty("installPath") as String?
 
     override val librariesPath = "libraries"
+    override val librariesPropertiesPath: Path = rootPath.resolve(librariesPath).resolve(".properties")
+
     override val installPathLocal: Path = if (installPath != null)
         Paths.get(installPath)
     else
@@ -216,17 +218,27 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
         }
     }
 
-    task("buildProperties") {
+    tasks.register("buildProperties") {
         group = buildGroup
         val outputDir = file(getSubDir(buildDir.toPath(), resourcesDir, mainSourceSetDir))
 
         inputs.property("version", version)
+        inputs.property("currentBranch", getCurrentBranch())
+        inputs.file(librariesPropertiesPath)
+
         outputs.dir(outputDir)
 
         doLast {
             outputDir.mkdirs()
             val propertiesFile = file(getSubDir(outputDir.toPath(), runtimePropertiesFile))
-            propertiesFile.writeText(inputs.properties.entries.joinToString("") { "${it.key}=${it.value}\n" })
+
+            val properties = inputs.properties.entries.map{ it.toPair() }.toMutableList()
+            properties.apply {
+                val librariesProperties = readProperties(librariesPropertiesPath)
+                add("librariesFormatVersion" to librariesProperties["formatVersion"])
+            }
+
+            propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
         }
     }
 

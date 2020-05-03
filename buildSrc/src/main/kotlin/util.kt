@@ -1,5 +1,6 @@
 import groovy.json.JsonOutput
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.extra
 import java.nio.file.Path
 
 fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
@@ -27,3 +28,18 @@ interface ProjectWithOptions : ProjectWithBuildOptions, ProjectWithInstallOption
 
 class ProjectWithOptionsImpl(private val p: Project, private val opt: AllOptions):
         Project by p, InstallOptions by opt, DistribOptions by opt, BuildOptions by opt, ProjectWithOptions
+
+fun readProperties(propertiesFile: Path): Map<String, String> =
+    propertiesFile.toFile().readText().lineSequence()
+            .map { it.split("=") }
+            .filter { it.size == 2 }
+            .map { it[0] to it[1] }.toMap()
+
+fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
+    @Suppress("UNCHECKED_CAST")
+    return (if (extra.has(name)) extra[name] as? T else null)  ?: {
+        val value = initializer()
+        extra[name] = value
+        value
+    }()
+}
