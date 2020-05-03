@@ -23,7 +23,7 @@ val LocalSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kot
 val GitHubApiHost = "api.github.com"
 val GitHubRepoOwner = "kotlin"
 val GitHubRepoName = "kotlin-jupyter"
-val GitHubBranchName = "psi_completion_with_typing"
+val GitHubBranchName = "master"
 val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName"
 
 val LibraryDescriptorExt = "json"
