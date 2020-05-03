@@ -1,18 +1,39 @@
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke
+import java.io.ByteArrayOutputStream
 import java.nio.file.Path
-import java.util.regex.Pattern
+
+fun Project.getCurrentBranch(): String =
+    // Just result caching, don't set this property explicitly
+    project.getOrInitProperty("git.currentBranch") {
+        val branchProp = "build.branch"
+        val branch = project.findProperty(branchProp) as String?
+
+        if (branch != null) {
+            return@getOrInitProperty branch
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        val result = exec {
+            commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
+            standardOutput = outputStream
+        }
+
+        val output = outputStream.toString()
+        if (result.exitValue != 0) {
+            throw RuntimeException("Unable to get current git branch!")
+        }
+
+        output.lines()[0]
+    }
+
 
 fun Project.isProtectedBranch(): Boolean {
-    val branchProp = "build.branch"
-    var branch = project.findProperty(branchProp) as String?
+    val branch = getCurrentBranch()
     println("Current branch: $branch")
-    if (branch != null) {
-        branch = branch.substring(branch.lastIndexOf("/") + 1)
-        return branch == "master"
-    }
-    return false
+
+    return branch.substring(branch.lastIndexOf("/") + 1) == "master"
 }
 
 fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileName: String): String {
@@ -22,9 +43,9 @@ fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileNa
     val devCounter = rootProject.findProperty("build.devCounter") as String? ?: "1"
     val devAddition = if(isOnProtectedBranch) "" else ".dev$devCounter"
     val defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
-    val buildNumberRegex = "[0-9]+(\\.[0-9]+){3}(\\.dev[0-9]+)?"
+    val buildNumberRegex = """\d+(\.\d+){3}(\.dev\d+)?"""
 
-    return if (!Pattern.matches(buildNumberRegex, buildNumber)) {
+    return if (!buildNumber.matches(Regex(buildNumberRegex))) {
         val versionFile = artifactsDir.resolve(versionFileName).toFile()
         if (versionFile.exists()) {
             val lines = versionFile.readLines()

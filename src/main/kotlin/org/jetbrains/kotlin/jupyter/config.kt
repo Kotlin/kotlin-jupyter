@@ -23,12 +23,10 @@ val LocalSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kot
 val GitHubApiHost = "api.github.com"
 val GitHubRepoOwner = "kotlin"
 val GitHubRepoName = "kotlin-jupyter"
-val GitHubBranchName = "master"
 val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName"
 
 val LibraryDescriptorExt = "json"
 val LibraryPropertiesFile = ".properties"
-val libraryDescriptorFormatVersion = 2
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
@@ -59,6 +57,10 @@ data class OutputConfig(
 data class RuntimeKernelProperties(val map: Map<String, String>) {
     val version: String
         get() = map["version"] ?: "unspecified"
+    val librariesFormatVersion: Int
+        get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
+    val currentBranch: String
+        get() = map["currentBranch"] ?: throw RuntimeException("Current branch is not specified!")
 }
 
 val runtimeProperties by lazy {
@@ -135,7 +137,7 @@ fun readLibraries(basePath: String? = null, filter: (File) -> Boolean = { true }
 
 fun getLatestCommitToLibraries(sinceTimestamp: String?): Pair<String, String>? =
         log.catchAll {
-            var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$GitHubBranchName"
+            var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=${runtimeProperties.currentBranch}"
             if (sinceTimestamp != null)
                 url += "&since=$sinceTimestamp"
             log.info("Checking for new commits to library descriptors at $url")
@@ -200,6 +202,8 @@ fun downloadNewLibraryDescriptors() {
     // Download library descriptor version
 
     val descriptorVersion = getLibraryDescriptorVersion(latestCommitSha) ?: return
+    val libraryDescriptorFormatVersion = runtimeProperties.librariesFormatVersion
+
     if (descriptorVersion != libraryDescriptorFormatVersion) {
         if (descriptorVersion < libraryDescriptorFormatVersion)
             log.error("Incorrect library descriptor version in GitHub repository: $descriptorVersion")
