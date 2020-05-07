@@ -157,9 +157,17 @@ fun HTML(text: String): MimeTypedResult
 
 ### Autocompletion
 
-Press `TAB` to get the list of suggested items for completion. 
+Press `TAB` to get the list of suggested items for completion. In Jupyter Notebook, you don't need to press `TAB`,
+completion is requested automatically. Completion works for all globally defined symbols and for local symbols 
+which were loaded into notebook during cells evaluation. 
 
-*Currently completion suggests only names for user-defined variables and functions.* 
+### Error analysis
+
+If you use Jupyter Notebook as Jupyter client, you will also see that compilation errors and warnings are underlined in
+red and in yellow correspondingly. This is achieved by kernel-level extension of Jupyter notebook which sends
+error-analysis requests to kernel and renders their results. If you hover the cursor over underlined text, you will get 
+an error message which can help you to fix the error. Note that for now these inspections are false-positive for kernel
+magics (such as `%use`), please don't mind it.
 
 ## Debugging
 
