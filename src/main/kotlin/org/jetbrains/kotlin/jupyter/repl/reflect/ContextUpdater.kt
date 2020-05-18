@@ -11,6 +11,8 @@ import java.util.*
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
+import kotlin.script.experimental.util.LinkedSnippet
 
 /**
  * ContextUpdater updates current user-defined functions and variables
@@ -18,22 +20,30 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
  */
 class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvmReplEvaluator) {
 
+    var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
+
     fun update() {
         try {
-            val lastSnippet = evaluator.lastEvaluatedSnippet
-            val lines = lastSnippet.instances()
-            refreshVariables(lines)
-            refreshMethods(lines)
+            var lastSnippet = evaluator.lastEvaluatedSnippet
+            val newSnippets = mutableListOf<Any>()
+            while (lastSnippet != lastProcessedSnippet && lastSnippet != null) {
+                val line = lastSnippet.get().result.scriptInstance
+                if (line != null)
+                    newSnippets.add(line)
+                lastSnippet = lastSnippet.previous
+            }
+            newSnippets.reverse()
+            refreshVariables(newSnippets)
+            refreshMethods(newSnippets)
+            lastProcessedSnippet = evaluator.lastEvaluatedSnippet
         } catch (e: ReflectiveOperationException) {
             logger.error("Exception updating current variables", e)
         } catch (e: NullPointerException) {
             logger.error("Exception updating current variables", e)
         }
-
     }
 
     private fun refreshMethods(lines: List<Any>) {
-        context.functions.clear()
         for (line in lines) {
             val methods = line.javaClass.methods
             for (method in methods) {
@@ -41,34 +51,17 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
                     continue
                 }
                 val function = method.kotlinFunction ?: continue
-                context.functions.putIfAbsent(function.name, KotlinFunctionInfo(function, line))
+                context.functions.put(function.name, KotlinFunctionInfo(function, line))
             }
         }
     }
 
     @Throws(ReflectiveOperationException::class)
-    private fun getImplicitReceiver(script: Any): Any {
-        val receiverField = script.javaClass.getDeclaredField("\$\$implicitReceiver0")
-        return receiverField.get(script)
-    }
-
-    @Throws(ReflectiveOperationException::class)
     private fun refreshVariables(lines: List<Any>) {
-        context.vars.clear()
-        if (lines.isNotEmpty()) {
-            val receiver = getImplicitReceiver(lines[0])
-            findReceiverVariables(receiver)
-        }
         for (line in lines) {
-            findLineVariables(line)
+            val fields = line.javaClass.declaredFields
+            findVariables(fields, line)
         }
-    }
-
-    // For lines, we only want fields from top level class
-    @Throws(IllegalAccessException::class)
-    private fun findLineVariables(line: Any) {
-        val fields = line.javaClass.declaredFields
-        findVariables(fields, line)
     }
 
     // For implicit receiver, we want to also get fields in parent classes
@@ -87,17 +80,15 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
     private fun findVariables(fields: Array<Field>, o: Any) {
         for (field in fields) {
             val fieldName = field.name
-            if (fieldName.contains("$\$implicitReceiver")) {
+            if (fieldName.contains("$\$implicitReceiver") || fieldName.contains("script$")) {
                 continue
             }
 
             field.isAccessible = true
             val value = field.get(o)
-            if (!fieldName.contains("script$")) {
-                val descriptor = field.kotlinProperty
-                if (descriptor != null) {
-                    context.vars.putIfAbsent(fieldName, KotlinVariableInfo(value, descriptor, o))
-                }
+            val descriptor = field.kotlinProperty
+            if (descriptor != null) {
+                context.vars.put(fieldName, KotlinVariableInfo(value, descriptor, o))
             }
         }
     }
