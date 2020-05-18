@@ -13,11 +13,11 @@
     "krangl.typed.TypedDataFrameRowImpl": "($it as TypedDataFrameRow<*>).toDataFrame()"
   },
   "repositories": [
-    "https://jitpack.io"
+    "https://kotlin.bintray.com/kotlin-datascience"
   ],
-  "link": "https://github.com/holgerbrandl/krangl",
+  "link": "https://github.com/nikitinas/krangl-typed",
   "dependencies": [
-    "com.github.nikitinas:krangl:724fa3613b42a0e5c5d68228ca09a57078e818ba"
+    "org.jetbrains.kotlin:krangl-typed:0.0.2"
   ],
   "typeConverters": {
     "krangl.DataFrame": "CodeGenerator.generate($it, $property)",
