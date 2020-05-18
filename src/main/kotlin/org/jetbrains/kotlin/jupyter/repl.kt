@@ -323,7 +323,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
     }
 
-    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptClass
+    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptInstance
 
     override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
         synchronized(this) {
