@@ -349,19 +349,33 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                     replLine = lastReplLine()
                 }
 
-                processAnnotations(replLine)
+                log.catchAll {
+                    processAnnotations(replLine)
+                }
 
-                executeScheduledCode()
+                log.catchAll {
+                    executeScheduledCode()
+                }
 
-                registerNewLibraries(preprocessed)
+                log.catchAll {
+                    registerNewLibraries(preprocessed)
+                }
 
-//                processVariablesConversion()
+                log.catchAll {
+                    processVariablesConversion()
+                }
 
-                executeScheduledCode()
+                log.catchAll {
+                    executeScheduledCode()
+                }
 
-                updateOutputList(jupyterId, result)
+                log.catchAll {
+                    updateOutputList(jupyterId, result)
+                }
 
-                updateClasspath()
+                log.catchAll {
+                    updateClasspath()
+                }
 
                 result = renderResult(result, resultField)
 
