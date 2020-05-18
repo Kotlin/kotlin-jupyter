@@ -11,10 +11,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 
-class TypeConverterTests {
+class TypeProviderTests {
 
     @Test
-    @Ignore
     fun test() {
 
         val parser = Parser.default()
