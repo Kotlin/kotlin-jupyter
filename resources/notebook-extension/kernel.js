@@ -543,7 +543,6 @@ define(function(){
 
             var active = this.sel.children()[this.selIndex];
             $(active).addClass('jp-mod-active');
-            active.scrollIntoViewIfNeeded(false);
         };
 
         Completer.prototype.keydown = function (event) {
