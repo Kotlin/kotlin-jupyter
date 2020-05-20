@@ -45,14 +45,24 @@ define(function(){
             "WARNING": warning_class
         };
 
+        function rectIntersect(a, b) {
+            return (a.left <= b.right &&
+                b.left <= a.right &&
+                a.top <= b.bottom &&
+                b.top <= a.bottom)
+        }
+
         function isOnScreen(elem) {
             var bounding = elem.getBoundingClientRect();
-            return (
-                bounding.top >= 0 &&
-                bounding.left >= 0 &&
-                bounding.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                bounding.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
+            return rectIntersect(
+                bounding,
+                {
+                    top: 0,
+                    left: 0,
+                    bottom: (window.innerHeight || document.documentElement.clientHeight),
+                    right: (window.innerWidth || document.documentElement.clientWidth)
+                }
+            )
         }
 
         var opened_completer = null;
