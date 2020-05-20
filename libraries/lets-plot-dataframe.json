@@ -20,7 +20,6 @@
     "org.jetbrains.kotlin.letsPlot.*"
   ],
   "init": [
-    "%use dataframe",
     "DISPLAY(HTML(PlotHtmlHelper.getDynamicConfigureHtml(PlotHtmlHelper.scriptUrl(\"1.1.dev2\"), false)))"
   ],
   "renderers": {
