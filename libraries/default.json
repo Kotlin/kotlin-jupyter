@@ -1,0 +1,5 @@
+{
+  "init": [
+    "%use dataframe, lets-plot-dataframe"
+  ]
+}

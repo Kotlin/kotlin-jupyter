@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "v": "0.0.10-dev3"
+  },
+  "link": "https://github.com/JetBrains/lets-plot-kotlin",
+  "repositories": [
+    "https://kotlin.bintray.com/kotlin-datascience",
+    "https://jetbrains.bintray.com/lets-plot-maven"
+  ],
+  "dependencies": [
+    "org.jetbrains.kotlin:lets-plot-dsl:$v"
+  ],
+  "imports": [
+    "jetbrains.letsPlot.*",
+    "jetbrains.letsPlot.geom.*",
+    "jetbrains.letsPlot.stat.*",
+    "jetbrains.datalore.plot.*",
+    "jetbrains.letsPlot.intern.*",
+    "jetbrains.letsPlot.scale.*",
+    "org.jetbrains.kotlin.letsPlot.*"
+  ],
+  "init": [
+    "%use dataframe",
+    "DISPLAY(HTML(PlotHtmlHelper.getDynamicConfigureHtml(PlotHtmlHelper.scriptUrl(\"1.1.dev2\"), false)))"
+  ],
+  "renderers": {
+    "jetbrains.letsPlot.intern.Plot": "HTML(PlotHtmlHelper.getStaticDisplayHtmlForRawSpec(($it as jetbrains.letsPlot.intern.Plot).toSpec()))",
+    "org.jetbrains.kotlin.letsPlot.PlotSpec": "HTML(PlotHtmlHelper.getStaticDisplayHtmlForRawSpec(($it as org.jetbrains.kotlin.letsPlot.PlotSpec).spec))"
+  }
+}
