@@ -1,3 +1,16 @@
+/*
+    This file includes code of Jupyter notebook project (https://github.com/jupyter/notebook)
+    which is licensed under the terms of the Modified BSD License
+    (also known as New or Revised or 3-Clause BSD), as follows:
+
+    - Copyright (c) 2001-2015, IPython Development Team
+    - Copyright (c) 2015-, Jupyter Development Team
+
+    All rights reserved.
+
+    Full license text is available in LICENSE_BSD_3 file
+*/
+
 define(function(){
     function onload() {
         if (!Element.prototype.scrollIntoViewIfNeeded) {
