@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
+import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import java.io.File
 import java.net.URLClassLoader
 import java.util.*
@@ -205,6 +206,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
             val receiversTypes = receivers.map { KotlinType(it.javaClass.canonicalName) }
             implicitReceivers(receiversTypes)
+            skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
             compilerOptions(listOf("-jvm-target", runtimeProperties.jvmTargetForSnippets))
         }
@@ -430,7 +432,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         //val preprocessed = preprocessCode(code)
         val codeLine = SourceCodeImpl(executionCounter++, code)
         val errorsList = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
-        ListErrorsResult(code, errorsList.valueOrThrow())
+        ListErrorsResult(code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }
 
     private fun <T, Args: LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {

@@ -3,18 +3,15 @@ package org.jetbrains.kotlin.jupyter
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.makeFailureResult
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
-import kotlin.script.experimental.dependencies.tryAddRepository
+import kotlin.script.experimental.dependencies.RepositoryCoordinates
+import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
 open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
 
@@ -23,8 +20,8 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
     private val resolver: ExternalDependenciesResolver
 
     init {
-        resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), IvyResolver())
-        resolverConfig?.repositories?.forEach { resolver.tryAddRepository(it) }
+        resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
+        resolverConfig?.repositories?.forEach { resolver.addRepository(it) }
     }
 
     private val addedClasspath: MutableList<File> = mutableListOf()
@@ -43,7 +40,7 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
             when (annotation) {
                 is Repository -> {
                     log.info("Adding repository: ${annotation.value}")
-                    if (!resolver.tryAddRepository(annotation.value))
+                    if (resolver.addRepository(RepositoryCoordinates(annotation.value)).valueOrNull() != true)
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
                 }
                 is DependsOn -> {
