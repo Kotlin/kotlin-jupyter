@@ -40,8 +40,11 @@ fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileNa
     val isOnProtectedBranch by extra(isProtectedBranch())
     val buildCounterStr = rootProject.findProperty("build.counter") as String? ?: "100500"
     val buildNumber = rootProject.findProperty("build.number") as String? ?: ""
-    val devCounter = rootProject.findProperty("build.devCounter") as String? ?: "1"
-    val devAddition = if(isOnProtectedBranch) "" else ".dev$devCounter"
+
+    val devCounterOrNull = rootProject.findProperty("build.devCounter") as String?
+    val devCounter = devCounterOrNull ?: "1"
+    val devAddition = if(isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
+
     val defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
     val buildNumberRegex = """\d+(\.\d+){3}(\.dev\d+)?"""
 

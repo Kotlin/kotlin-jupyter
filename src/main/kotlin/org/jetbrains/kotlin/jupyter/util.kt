@@ -1,9 +1,9 @@
 package org.jetbrains.kotlin.jupyter
 
 import kotlinx.coroutines.*
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.slf4j.Logger
 import java.io.File
+import java.io.Serializable
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
@@ -66,7 +66,7 @@ fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDia
 
 internal data class CompilationErrors(
         val message: String,
-        val location: CompilerMessageLocation?
+        val location: CompilerMessageLocationWithEnd?
 )
 
 internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
@@ -77,14 +77,14 @@ internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
     return CompilationErrors(
             filteredReports.joinToString("\n") { report ->
                 report.location?.let { loc ->
-                    CompilerMessageLocation.create(
+                    CompilerMessageLocationWithEnd.create(
                             report.sourcePath,
                             loc.start.line,
                             loc.start.col,
                             loc.end?.line,
                             loc.end?.col,
                             null
-                    )?.toStringExt()?.let {
+                    )?.toString()?.let {
                         "$it "
                     }
                 }.orEmpty() + report.message
@@ -97,7 +97,7 @@ internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
                 }
             }?.let {
                 val loc = it.location ?: return@let null
-                CompilerMessageLocation.create(
+                CompilerMessageLocationWithEnd.create(
                         it.sourcePath,
                         loc.start.line,
                         loc.start.col,
@@ -110,20 +110,34 @@ internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
 }
 
 
-/**
- * Converts its receiver to string with regard to its [CompilerMessageLocation.lineEnd] and
- * [CompilerMessageLocation.columnEnd] fields
- * @receiver CompilerMessageLocation
- * @return String
- */
-fun CompilerMessageLocation.toStringExt(): String {
-    val start =
-            if (line == -1 && column == -1) ""
-            else "$line:$column"
-    val end =
-            if (lineEnd == -1 && columnEnd == -1) ""
-            else if (lineEnd == line) " - $columnEnd"
-            else " - $lineEnd:$columnEnd"
-    val loc = if (start.isEmpty() && end.isEmpty()) "" else " ($start$end)"
-    return path + loc
+data class CompilerMessageLocationWithEnd (
+        val path: String,
+        val line: Int,
+        val column: Int,
+        val lineEnd: Int?,
+        val columnEnd: Int?,
+        val lineContent: String?,
+) : Serializable {
+    override fun toString(): String {
+        val start =
+                if (line == -1 && column == -1) ""
+                else "$line:$column"
+        val end =
+                if (lineEnd == -1 && columnEnd == -1) ""
+                else if (lineEnd == line) " - $columnEnd"
+                else " - $lineEnd:$columnEnd"
+        val loc = if (start.isEmpty() && end.isEmpty()) "" else " ($start$end)"
+        return path + loc
+    }
+
+    companion object {
+        fun create (path: String?,
+                    line: Int,
+                    column: Int,
+                    lineEnd: Int?,
+                    columnEnd: Int?,
+                    lineContent: String?) =
+            if (path == null) null else CompilerMessageLocationWithEnd(path, line, column, lineEnd, columnEnd, lineContent)
+
+    }
 }

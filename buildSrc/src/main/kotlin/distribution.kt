@@ -88,7 +88,7 @@ abstract class PipInstallReq : Exec() {
     @get:InputFile
     var requirementsFile: Path? = null
     set(value) {
-        commandLine("pip", "install", "-r", value)
+        commandLine("python", "-m", "pip", "install", "-r", value)
         field = value
     }
 }

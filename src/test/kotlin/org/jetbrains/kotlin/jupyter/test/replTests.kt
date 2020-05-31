@@ -378,14 +378,11 @@ class ReplTest {
         assertEquals(1, displays.count())
     }
 
-    @Ignore
     @Test
-    //TODO: https://github.com/Kotlin/kotlin-jupyter/issues/25
     fun testKranglImportInfixFun() {
         val repl = replWithResolver()
-        val code = """%use krangl
-                        "a" to {it["a"]}"""
-        val res = repl.eval(code)
+        repl.eval("""%use krangl, lets-plot""")
+        val res = repl.eval(""" "a" to {it["a"]} """)
         assertNotNull(res.resultValue)
     }
 
