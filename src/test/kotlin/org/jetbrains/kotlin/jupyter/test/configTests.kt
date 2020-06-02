@@ -11,7 +11,10 @@ class ConfigTest {
     fun testBranch() {
         val branch = runtimeProperties.currentBranch
         log.debug("Runtime git branch is: $branch")
-        assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
+
+        if (!branch.matches(Regex("pull/[1-9][0-9]*")))
+            assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
+
         assertTrue(branch.isNotBlank(), "Branch name shouldn't be blank")
     }
 
