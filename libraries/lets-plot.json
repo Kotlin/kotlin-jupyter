@@ -1,14 +1,15 @@
 {
   "properties": {
-    "library_version": "1.4.2",
-    "api_version": "0.0.14-SNAPSHOT"
+    "libraryVersion": "1.4.2",
+    "apiVersion": "0.0.17-SNAPSHOT",
+    "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
     "https://jetbrains.bintray.com/lets-plot-maven"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$api_version"
+    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$apiVersion"
   ],
   "imports": [
     "jetbrains.letsPlot.*",
@@ -17,16 +18,15 @@
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",
-    "import jetbrains.letsPlot.notebook.jupyter.KotlinJupyterFrontendContext",
-    "// Setup lets-plot frontend context",
-    "LetsPlot.frontendContext = KotlinJupyterFrontendContext {DISPLAY(HTML(it))}",
-    "LetsPlot.libraryVersion = \"$library_version\"",
-    "LetsPlot.apiVersion = \"$api_version\"",
+    "import jetbrains.letsPlot.frontend.NotebookFrontendContext",
+    "val isolatedFrameParam = if(\"$isolatedFrame\".isNotEmpty()) \"$isolatedFrame\".toBoolean() else null",
+    "val frontendContext = LetsPlot.setupNotebook(\"$libraryVersion\", isolatedFrameParam) {DISPLAY(HTML(it))}",
+    "LetsPlot.apiVersion = \"$apiVersion\"",
     "// Load library JS",
-    "DISPLAY(HTML(KotlinJupyterFrontendContext.getConfigureHtml(\"$library_version\")))"
+    "DISPLAY(HTML(frontendContext.getConfigureHtml()))"
   ],
   "renderers": {
-    "jetbrains.letsPlot.intern.Plot": "HTML(KotlinJupyterFrontendContext.getHtml($it))",
-    "jetbrains.letsPlot.GGBunch": "HTML(KotlinJupyterFrontendContext.getHtml($it))"
+    "jetbrains.letsPlot.intern.Plot": "HTML(frontendContext.getHtml($it))",
+    "jetbrains.letsPlot.GGBunch": "HTML(frontendContext.getHtml($it))"
   }
 }
