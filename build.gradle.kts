@@ -224,6 +224,8 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
 
         inputs.property("version", version)
         inputs.property("currentBranch", getCurrentBranch())
+        inputs.property("jvmTargetForSnippets",
+                rootProject.findProperty("jvmTargetForSnippets") ?: "1.8")
         inputs.file(librariesPropertiesPath)
 
         outputs.dir(outputDir)
