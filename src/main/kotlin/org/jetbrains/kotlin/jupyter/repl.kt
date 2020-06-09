@@ -203,9 +203,10 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
 
-            implicitReceivers.invoke(receivers.map { KotlinType(it.javaClass.canonicalName) })
+            val receiversTypes = receivers.map { KotlinType(it.javaClass.canonicalName) }
+            implicitReceivers(receiversTypes)
 
-            compilerOptions.invoke(listOf("-jvm-target", "1.8"))
+            compilerOptions(listOf("-jvm-target", runtimeProperties.jvmTargetForSnippets))
         }
     }
 
