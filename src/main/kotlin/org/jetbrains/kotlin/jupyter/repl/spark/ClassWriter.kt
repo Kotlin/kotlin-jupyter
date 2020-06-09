@@ -19,7 +19,7 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
  * so this class provides writing classes on disk.
  */
 class ClassWriter(_outputDir: String = "") {
-    val outputDir  = if(_outputDir == "") {
+    val outputDir: Path  = if(_outputDir == "") {
         val tempDir = Files.createTempDirectory("kotlin-jupyter")
         tempDir.toFile().deleteOnExit()
         tempDir.toAbsolutePath()
