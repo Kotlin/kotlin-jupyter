@@ -90,7 +90,7 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
         val variablePlaceholder = "\$it"
         val tempFieldPrefix = "___"
 
-        for (it in contextUpdater.context.getVarsList().filter { !it.name.startsWith(tempFieldPrefix) }) {
+        for (it in contextUpdater.context.vars.values.filter { !it.name.startsWith(tempFieldPrefix) }) {
             val property = it.descriptor
             property.isAccessible = true
             val value = it.value ?: continue

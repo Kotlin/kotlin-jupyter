@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.jupyter.repl.reflect
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
-import org.jetbrains.kotlin.jupyter.instances
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
@@ -20,7 +19,7 @@ import kotlin.script.experimental.util.LinkedSnippet
  */
 class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvmReplEvaluator) {
 
-    var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
+    private var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
 
     fun update() {
         try {
@@ -62,18 +61,6 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
             val fields = line.javaClass.declaredFields
             findVariables(fields, line)
         }
-    }
-
-    // For implicit receiver, we want to also get fields in parent classes
-    @Throws(IllegalAccessException::class)
-    private fun findReceiverVariables(receiver: Any) {
-        val fieldsList = ArrayList<Field>()
-        var cl: Class<*>? = receiver.javaClass
-        while (cl != null) {
-            fieldsList.addAll(listOf(*cl.declaredFields))
-            cl = cl.superclass
-        }
-        findVariables(fieldsList.toTypedArray(), receiver)
     }
 
     @Throws(IllegalAccessException::class)

@@ -10,41 +10,15 @@ import kotlin.reflect.KProperty
  * It can be accessed inside REPL by name `kc`, e.g. kc.showVars()
  */
 class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-                    val functions: HashMap<String, KotlinFunctionInfo> = HashMap()) {
-
-    fun getVarsList(): List<KotlinVariableInfo> {
-        return ArrayList(vars.values)
-    }
-
-    fun getFunctionsList(): List<KotlinFunctionInfo> {
-        return ArrayList(functions.values)
-    }
-}
+                    val functions: HashMap<String, KotlinFunctionInfo> = HashMap())
 
 
 
-/**
- * The implicit receiver for lines in Kotlin REPL.
- * It is passed to the script as an implicit receiver, identical to:
- * with (context) {
- * ...
- * }
- *
- * KotlinReceiver can be inherited from and passed to REPL building properties,
- * so other variables and functions can be accessed inside REPL.
- * By default, it only has KotlinContext.
- * Inherited KotlinReceivers should be in separate java file, they can't be inner or nested.
- */
-class KotlinReceiver(val kc: KotlinContext)
+private fun functionSignature(function: KFunction<*>)
+        = function.toString().replace("Line_\\d+\\.".toRegex(), "")
 
-fun functionSignature(function: KFunction<*>): String {
-    return function.toString().replace("Line_\\d+\\.".toRegex(), "")
-}
-
-fun shortenType(name: String): String {
-    return name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
-    // kotlin.collections.List<kotlin.Int> -> List<Int>
-}
+private fun shortenType(name: String)
+        = name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
 
 class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable<KotlinFunctionInfo> {
 

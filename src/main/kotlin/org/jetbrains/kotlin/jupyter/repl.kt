@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.*
 import jupyter.kotlin.KotlinContext
-import jupyter.kotlin.KotlinReceiver
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
@@ -167,7 +166,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private val ctx = KotlinContext()
 
-    private val receivers: List<Any> = listOf<Any>(KotlinReceiver(ctx)) + scriptReceivers
+    private val receivers: List<Any> = scriptReceivers.asList()
 
     val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries))
 
@@ -196,7 +195,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
             baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
             fileExtension.put("jupyter.kts")
-            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class, KotlinReceiver::class)
+            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class)
             jvm {
                 updateClasspath(scriptClasspath)
             }
