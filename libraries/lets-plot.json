@@ -1,7 +1,7 @@
 {
   "properties": {
     "libraryVersion": "1.4.2",
-    "apiVersion": "0.0.17-SNAPSHOT",
+    "apiVersion": "0.0.18-SNAPSHOT",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
