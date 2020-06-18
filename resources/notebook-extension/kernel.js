@@ -566,7 +566,7 @@ define(function(){
             var optionsLen;
             var index;
             var prevIndex;
-            if (code == keycodes.enter && !event.shiftKey) {
+            if (code == keycodes.enter && !(event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)) {
                 event.codemirrorIgnore = true;
                 event._ipkmIgnore = true;
                 event.preventDefault();
