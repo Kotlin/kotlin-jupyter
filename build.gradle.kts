@@ -183,10 +183,10 @@ dependencies {
     implementation(kotlin("script-util"))
     implementation(kotlin("scripting-dependencies"))
     implementation(kotlin("scripting-dependencies-maven"))
+    implementation(kotlin("main-kts"))
 
     compileOnly(kotlin("scripting-compiler-impl"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
     implementation("org.apache.maven:maven-core:3.0.3")
     implementation("org.slf4j:slf4j-api:1.7.25")
     implementation("khttp:khttp:1.0.0")
