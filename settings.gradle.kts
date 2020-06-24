@@ -8,6 +8,7 @@ pluginManagement {
         jcenter()
         mavenLocal()
         mavenCentral()
+        // only when using Kotlin EAP releases ...
         maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
         maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
     }
@@ -25,6 +26,12 @@ pluginManagement {
         id("com.github.johnrengelman.shadow") version shadowJarVersion
     }
 
+}
+
+gradle.projectsLoaded {
+    allprojects {
+        repositories.addAll(pluginManagement.repositories)
+    }
 }
 
 include("jupyter-lib")

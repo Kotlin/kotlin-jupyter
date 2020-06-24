@@ -156,12 +156,6 @@ allprojects {
     }
 
     repositories {
-        jcenter()
-        mavenLocal()
-        mavenCentral()
-        // only when using Kotlin EAP releases ...
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
         maven { url = uri("https://kotlin.bintray.com/kotlin-dependencies") }
     }
 }
