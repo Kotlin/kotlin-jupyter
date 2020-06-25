@@ -65,7 +65,7 @@ class ReplTest {
             val message = ex.message
 
             val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
-            val expectedMessage = "Line_1.jupyter.kts (3:11 - 14) Unresolved reference: ppp"
+            val expectedMessage = "Line_0.jupyter.kts (3:11 - 14) Unresolved reference: ppp"
 
             assertEquals(expectedLocation, location)
             assertEquals(expectedMessage, message)
@@ -108,6 +108,18 @@ class ReplTest {
             is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
             else -> fail("Completion should be successful")
         }
+    }
+
+    @Test
+    fun testExternalStaticFunctions() {
+        val repl = ReplForJupyterImpl(classpath)
+        val res = repl.eval("""
+            @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
+            import pack.*
+            func()
+        """.trimIndent())
+
+        assertEquals(42, res.resultValue)
     }
 
     @Test

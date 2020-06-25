@@ -275,11 +275,6 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    init {
-        // TODO: to be removed after investigation of https://github.com/kotlin/kotlin-jupyter/issues/24
-        doEval("1")
-    }
-
     private fun executeInitCellCode() = initCellCodes.forEach(::evalNoReturn)
 
     private fun executeInitCode(p: PreprocessingResult) = p.initCodes.forEach(::evalNoReturn)
