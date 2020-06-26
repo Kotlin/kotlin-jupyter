@@ -4,16 +4,16 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.utils.addToStdlib.min
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.security.SignatureException
-import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 class JupyterConnection(val config: KernelConfig): Closeable {
 
-    inner class Socket(val socket: JupyterSockets, type: Int) : ZMQ.Socket(context, type) {
+    inner class Socket(private val socket: JupyterSockets, type: Int) : ZMQ.Socket(context, type) {
         val name: String get() = socket.name
         init {
             val port = config.ports[socket.ordinal]
@@ -31,9 +31,9 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
         inline fun onData(body: Socket.(ByteArray) -> Unit) = recv(ZMQ.DONTWAIT)?.let { body(it) }
 
-        inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { receiveMessage(it)?.let { body(it) } }
+        inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
 
-        fun sendStatus(status: String, msg: Message) {
+        private fun sendStatus(status: String, msg: Message) {
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to status)))
         }
 
@@ -49,14 +49,13 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         }
 
         fun receiveMessage(start: ByteArray): Message? {
-            try {
+            return try {
                 val msg = receiveMessage(start, hmac)
                 log.debug("[$name] >rcv: $msg")
-                return msg
-            }
-            catch (e: SignatureException) {
+                msg
+            } catch (e: SignatureException) {
                 log.error("[$name] ${e.message}")
-                return null
+                null
             }
         }
 
@@ -67,7 +66,7 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         private var currentBuf: ByteArray? = null
         private var currentBufPos = 0
 
-        fun getInput(): String {
+        private fun getInput(): String {
             stdin.send(makeReplyMessage(contextMessage!!, "input_request",
                     content = jsonObject("prompt" to "stdin:")))
             val msg = stdin.receiveMessage(stdin.recv())
@@ -77,34 +76,40 @@ class JupyterConnection(val config: KernelConfig): Closeable {
             return input
         }
 
+        private fun initializeCurrentBuf(): ByteArray {
+            val buf = currentBuf
+            return if (buf != null) {
+                buf
+            } else {
+                val newBuf = getInput().toByteArray()
+                currentBuf = newBuf
+                currentBufPos = 0
+                newBuf
+            }
+        }
+
         @Synchronized
         override fun read(): Int {
-            if (currentBuf == null) {
-                currentBuf = getInput().toByteArray()
-                currentBufPos = 0
-            }
-            if (currentBufPos >= currentBuf!!.size) {
+            val buf = initializeCurrentBuf()
+            if (currentBufPos >= buf.size) {
                 currentBuf = null
                 return -1
             }
             currentBufPos.inc()
-            return currentBuf!![currentBufPos - 1].toInt()
+            return buf[currentBufPos - 1].toInt()
         }
 
         @Synchronized
         override fun read(b: ByteArray, off: Int, len: Int): Int {
-            if (currentBuf == null) {
-                currentBuf = getInput().toByteArray()
-                currentBufPos = 0
-            }
-            val lenLeft = currentBuf!!.size - currentBufPos
+            val buf = initializeCurrentBuf()
+            val lenLeft = buf.size - currentBufPos
             if (lenLeft <= 0) {
                 currentBuf = null
                 return -1
             }
-            val lenToRead = if (lenLeft > len) len else lenLeft
-            for (i in 0 .. (lenToRead - 1)) {
-                b.set(off + i,currentBuf!![currentBufPos + i])
+            val lenToRead = min(len, lenLeft)
+            for (i in 0 until lenToRead) {
+                b[off + i] = buf[currentBufPos + i]
             }
             currentBufPos += lenToRead
             return lenToRead
@@ -114,7 +119,7 @@ class JupyterConnection(val config: KernelConfig): Closeable {
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
-    val disposable = Disposable { }
+    private val disposable = Disposable { }
 
     val heartbeat = Socket(JupyterSockets.hb, ZMQ.REP)
     val shell = Socket(JupyterSockets.shell, ZMQ.ROUTER)
@@ -139,11 +144,11 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
 private val DELIM: ByteArray = "<IDS|MSG>".map { it.toByte() }.toByteArray()
 
-class HMAC(algo: String, key: String?) {
-    val mac = if (key?.isNotBlank() ?: false) Mac.getInstance(algo) else null
+class HMAC(algorithm: String, key: String?) {
+    private val mac = if (key?.isNotBlank() == true) Mac.getInstance(algorithm) else null
 
     init {
-        mac?.init(SecretKeySpec(key!!.toByteArray(), algo))
+        mac?.init(SecretKeySpec(key!!.toByteArray(), algorithm))
     }
 
     @Synchronized
@@ -171,7 +176,7 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
 }
 
 fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
-    val ids = listOf(start) + generateSequence { recv() }.takeWhile { !Arrays.equals(it, DELIM) }
+    val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(DELIM) }
     val sig = recvStr().toLowerCase()
     val header = recv()
     val parentHeader = recv()
@@ -183,7 +188,7 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
         throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
 
     fun ByteArray.parseJson(): JsonObject =
-            Parser().parse(this.inputStream()) as JsonObject
+            Parser.default().parse(this.inputStream()) as JsonObject
 
     return Message(ids,
             header.parseJson(),
