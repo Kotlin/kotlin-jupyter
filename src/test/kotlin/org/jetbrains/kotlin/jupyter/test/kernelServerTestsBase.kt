@@ -8,6 +8,7 @@ import org.zeromq.ZMQ
 import java.io.IOException
 import java.net.ServerSocket
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
@@ -44,22 +45,19 @@ open class KernelServerTestsBase {
 
     companion object {
         private val rng = Random()
-        private val usedPorts = mutableSetOf<Int>()
+        private val usedPorts: MutableSet<Int> = ConcurrentHashMap.newKeySet()
         private const val portRangeStart = 32768
         private const val portRangeEnd = 65536
+        private const val maxTrials = portRangeEnd - portRangeStart
 
-        @Synchronized
-        fun randomPort(): Int {
-            val res = generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.find {
+        fun randomPort()
+            = generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.take(maxTrials).find {
                 try {
                     ServerSocket(it).close()
-                    !usedPorts.contains(it)
+                    usedPorts.add(it)
                 } catch (e: IOException) {
                     false
                 }
-            }!!
-            usedPorts.add(res)
-            return res
-        }
+            } ?: throw RuntimeException("No free port found")
     }
 }
