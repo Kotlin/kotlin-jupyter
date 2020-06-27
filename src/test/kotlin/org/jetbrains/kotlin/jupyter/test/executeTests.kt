@@ -1,10 +1,7 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
-import org.jetbrains.kotlin.jupyter.JupyterSockets
-import org.jetbrains.kotlin.jupyter.Message
-import org.jetbrains.kotlin.jupyter.get
-import org.jetbrains.kotlin.jupyter.jsonObject
+import org.jetbrains.kotlin.jupyter.*
 import org.junit.Assert
 import org.junit.Test
 import org.zeromq.ZMQ
@@ -15,15 +12,27 @@ fun Message.type(): String {
 
 class ExecuteTests : KernelServerTestsBase() {
 
-    private fun doExecute(code : String, hasResult: Boolean = true, ioPubChecker : (ZMQ.Socket) -> Unit = {}) : Any? {
+    private fun doExecute(
+            code : String,
+            hasResult: Boolean = true,
+            ioPubChecker : (ZMQ.Socket) -> Unit = {},
+            inputs: List<String> = emptyList(),
+    ) : Any? {
         val context = ZMQ.context(1)
-        val shell = context.socket(ZMQ.REQ)
-        val ioPub = context.socket(ZMQ.SUB)
+        val shell = ClientSocket(context, JupyterSockets.shell)
+        val ioPub = ClientSocket(context, JupyterSockets.iopub)
+        val stdin = ClientSocket(context, JupyterSockets.stdin)
         ioPub.subscribe(byteArrayOf())
         try {
-            shell.connect("${config.transport}://*:${config.ports[JupyterSockets.shell.ordinal]}")
-            ioPub.connect("${config.transport}://*:${config.ports[JupyterSockets.iopub.ordinal]}")
+            shell.connect()
+            ioPub.connect()
+            stdin.connect()
+
             shell.sendMessage("execute_request", content = jsonObject("code" to code))
+            inputs.forEach {
+                stdin.sendMessage("input_reply", jsonObject("value" to it))
+            }
+
             var msg = shell.receiveMessage()
             Assert.assertEquals("execute_reply", msg.type())
             msg = ioPub.receiveMessage()
@@ -48,6 +57,7 @@ class ExecuteTests : KernelServerTestsBase() {
         } finally {
             shell.close()
             ioPub.close()
+            stdin.close()
             context.term()
         }
     }
