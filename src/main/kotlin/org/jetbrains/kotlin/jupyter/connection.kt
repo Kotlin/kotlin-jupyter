@@ -95,8 +95,8 @@ class JupyterConnection(val config: KernelConfig): Closeable {
                 currentBuf = null
                 return -1
             }
-            currentBufPos.inc()
-            return buf[currentBufPos - 1].toInt()
+
+            return buf[currentBufPos++].toInt()
         }
 
         @Synchronized

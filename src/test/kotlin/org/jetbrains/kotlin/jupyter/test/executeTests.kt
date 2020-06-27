@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.jupyter.*
 import org.junit.Assert
 import org.junit.Test
 import org.zeromq.ZMQ
+import kotlin.test.assertEquals
 
 fun Message.type(): String {
     return header!!["msg_type"] as String
@@ -131,5 +132,15 @@ class ExecuteTests : KernelServerTestsBase() {
 
         val res = doExecute(code, false, ::checker)
         Assert.assertNull(res)
+    }
+
+    @Test
+    fun testReadLine() {
+        val code = """
+            val answer = readLine()
+            answer
+        """.trimIndent()
+        val res = doExecute(code, inputs = listOf("42"))
+        assertEquals(jsonObject("text/plain" to "42"), res)
     }
 }
