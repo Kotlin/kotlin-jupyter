@@ -2,10 +2,10 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.*
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import org.zeromq.ZMQ
-import kotlin.test.assertEquals
 
 fun Message.type(): String {
     return header!!["msg_type"] as String
@@ -35,25 +35,25 @@ class ExecuteTests : KernelServerTestsBase() {
             }
 
             var msg = shell.receiveMessage()
-            Assert.assertEquals("execute_reply", msg.type())
+            assertEquals("execute_reply", msg.type())
             msg = ioPub.receiveMessage()
-            Assert.assertEquals("status", msg.type())
-            Assert.assertEquals("busy", msg.content["execution_state"])
+            assertEquals("status", msg.type())
+            assertEquals("busy", msg.content["execution_state"])
             msg = ioPub.receiveMessage()
-            Assert.assertEquals("execute_input", msg.type())
+            assertEquals("execute_input", msg.type())
 
             ioPubChecker(ioPub)
 
             var response: Any? = null
             if (hasResult) {
                 msg = ioPub.receiveMessage()
-                Assert.assertEquals("execute_result", msg.type())
+                assertEquals("execute_result", msg.type())
                 response = msg.content["data"]
             }
 
             msg = ioPub.receiveMessage()
-            Assert.assertEquals("status", msg.type())
-            Assert.assertEquals("idle", msg.content["execution_state"])
+            assertEquals("status", msg.type())
+            assertEquals("idle", msg.content["execution_state"])
             return response
         } finally {
             shell.close()
@@ -66,7 +66,7 @@ class ExecuteTests : KernelServerTestsBase() {
     @Test
     fun testExecute(){
         val res = doExecute("2+2") as JsonObject
-        Assert.assertEquals("4", res["text/plain"])
+        assertEquals("4", res["text/plain"])
     }
 
     @Test
@@ -81,13 +81,13 @@ class ExecuteTests : KernelServerTestsBase() {
         fun checker(ioPub: ZMQ.Socket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
-                Assert.assertEquals("stream", msg.type())
-                Assert.assertEquals(i.toString(), msg.content!!["text"])
+                assertEquals("stream", msg.type())
+                assertEquals(i.toString(), msg.content!!["text"])
             }
         }
 
         val res = doExecute(code, false, ::checker)
-        Assert.assertNull(res)
+        assertNull(res)
     }
 
     @Test
@@ -104,13 +104,13 @@ class ExecuteTests : KernelServerTestsBase() {
         fun checker(ioPub: ZMQ.Socket) {
             for (el in expected) {
                 val msg = ioPub.receiveMessage()
-                Assert.assertEquals("stream", msg.type())
-                Assert.assertEquals(el, msg.content!!["text"])
+                assertEquals("stream", msg.type())
+                assertEquals(el, msg.content!!["text"])
             }
         }
 
         val res = doExecute(code, false, ::checker)
-        Assert.assertNull(res)
+        assertNull(res)
     }
 
     @Test
@@ -125,13 +125,13 @@ class ExecuteTests : KernelServerTestsBase() {
         fun checker(ioPub: ZMQ.Socket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
-                Assert.assertEquals("stream", msg.type())
-                Assert.assertEquals("text$i" + System.lineSeparator(), msg.content!!["text"])
+                assertEquals("stream", msg.type())
+                assertEquals("text$i" + System.lineSeparator(), msg.content!!["text"])
             }
         }
 
         val res = doExecute(code, false, ::checker)
-        Assert.assertNull(res)
+        assertNull(res)
     }
 
     @Test

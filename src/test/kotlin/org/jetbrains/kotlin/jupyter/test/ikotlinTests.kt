@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.*
-import org.junit.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.zeromq.ZMQ
 
 class KernelServerTest : KernelServerTestsBase() {
@@ -15,7 +16,7 @@ class KernelServerTest : KernelServerTestsBase() {
                 connect("${config.transport}://*:${config.ports[JupyterSockets.hb.ordinal]}")
                 send("abc")
                 val msg = recvStr()
-                Assert.assertEquals("abc", msg)
+                assertEquals("abc", msg)
             } finally {
                 close()
                 context.term()
@@ -47,7 +48,7 @@ class KernelServerTest : KernelServerTestsBase() {
                 connect("${config.transport}://*:${config.ports[JupyterSockets.control.ordinal]}")
                 sendMessage(Message(id = messageId, header = makeHeader("kernel_info_request")), hmac)
                 val msg = receiveMessage(recv(), hmac)
-                Assert.assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])
+                assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])
             } finally {
                 close()
                 context.term()

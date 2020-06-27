@@ -163,11 +163,13 @@ allprojects {
 val deploy: Configuration by configurations.creating
 
 dependencies {
-    implementation(kotlin("stdlib"))
-    testImplementation("junit:junit:4.12")
+    val junitVersion = "5.6.2"
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation(kotlin("test"))
 
     implementation(project(":jupyter-lib"))
+    implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
     implementation(kotlin("scripting-ide-services") as String) { isTransitive = false }
     implementation(kotlin("scripting-common"))
@@ -195,10 +197,20 @@ dependencies {
     deploy(project(":jupyter-lib"))
 }
 
-val jar by tasks.getting(Jar::class) {
-    manifest {
-        attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
-        attributes["Implementation-Version"] = project.version
+tasks {
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+    }
+
+    @Suppress("UNUSED_VARIABLE")
+    val jar by getting(Jar::class) {
+        manifest {
+            attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
+            attributes["Implementation-Version"] = project.version
+        }
     }
 }
 

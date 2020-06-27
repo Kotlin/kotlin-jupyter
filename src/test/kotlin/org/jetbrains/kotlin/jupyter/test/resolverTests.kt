@@ -2,12 +2,12 @@ package org.jetbrains.kotlin.jupyter.test
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.addRepository
+import kotlin.test.assertTrue
 
 class ResolverTests {
 
@@ -15,10 +15,10 @@ class ResolverTests {
         this.addRepository("https://jcenter.bintray.com/")
         this.addRepository("https://repo.maven.apache.org/maven2/")
         this.addRepository("https://jitpack.io")
-        Assert.assertTrue(acceptsArtifact(artifact))
+        assertTrue(acceptsArtifact(artifact))
         val result = runBlocking { resolve(artifact) }
-        Assert.assertTrue(result is ResultWithDiagnostics.Success)
-        return (result as ResultWithDiagnostics.Success).value
+        assertTrue(result is ResultWithDiagnostics.Success)
+        return result.value
     }
 
     @Test

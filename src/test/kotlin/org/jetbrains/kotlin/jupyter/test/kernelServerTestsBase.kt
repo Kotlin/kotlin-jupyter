@@ -2,8 +2,8 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.*
-import org.junit.After
-import org.junit.Before
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.zeromq.ZMQ
 import java.io.IOException
 import java.net.ServerSocket
@@ -27,12 +27,12 @@ open class KernelServerTestsBase {
 
     protected val messageId = listOf(byteArrayOf(1))
 
-    @Before
+    @BeforeEach
     fun setupServer() {
         server = thread { kernelServer(config) }
     }
 
-    @After
+    @AfterEach
     fun teardownServer() {
         server?.interrupt()
     }

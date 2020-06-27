@@ -8,9 +8,8 @@ import org.jetbrains.kotlin.jupyter.*
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import jupyter.kotlin.receivers.ConstReceiver
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
-import org.junit.Assert
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.script.experimental.api.SourceCode
 import kotlin.test.*
@@ -38,7 +37,7 @@ class ReplTest {
         // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        assertFailsWith(ReplEvalRuntimeException::class) {
+        assertThrows<ReplEvalRuntimeException> {
             repl.eval("""
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1
@@ -149,9 +148,9 @@ class ReplTest {
         runBlocking { repl.complete("val t = foo", 11) {
             result ->
                 if (result is CompletionResult.Success) {
-                    Assert.assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
+                    assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
                 } else {
-                    Assert.fail("Result should be success")
+                    fail("Result should be success")
                 }
             }
         }
@@ -166,7 +165,7 @@ class ReplTest {
             if (result is CompletionResult.Success) {
                 assertEq(emptyList(), result.sortedMatches())
             } else {
-                Assert.fail("Result should be success")
+                fail("Result should be success")
             }
         }
         }
@@ -191,9 +190,9 @@ class ReplTest {
         runBlocking {
             repl.complete("df.filter { c_ }", 14) { result ->
                 if (result is CompletionResult.Success) {
-                    Assert.assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
+                    assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
                 } else {
-                    Assert.fail("Result should be success")
+                    fail("Result should be success")
                 }
             }
         }
@@ -217,7 +216,7 @@ class ReplTest {
             """.trimIndent()) {result ->
                 val actualErrors = result.errors.toList()
                 val path = actualErrors.first().sourcePath
-                Assert.assertEquals(withPath(path, listOf(
+                assertEquals(withPath(path, listOf(
                         generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
                         generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
                         generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
@@ -351,7 +350,7 @@ class ReplTest {
         )
         assertEquals(inits.count(), res.initCodes.count())
         inits.forEachIndexed { index, expected ->
-            Assert.assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
+            assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
         }
     }
 
@@ -366,16 +365,16 @@ class ReplTest {
         }
 
         val res1 = repl.eval(code1, ::displayHandler)
-        Assert.assertEquals(1, displays.count())
+        assertEquals(1, displays.count())
         displays.clear()
-        Assert.assertNull(res1.resultValue)
+        assertNull(res1.resultValue)
         val res2 = repl.eval(code2, ::displayHandler)
-        Assert.assertEquals(0, displays.count())
+        assertEquals(0, displays.count())
         val mime = res2.resultValue as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
-        Assert.assertNotNull(res2.resultValue)
+        assertNotNull(res2.resultValue)
     }
 
     @Test

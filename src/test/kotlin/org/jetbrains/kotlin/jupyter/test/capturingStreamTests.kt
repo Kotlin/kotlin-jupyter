@@ -2,9 +2,9 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.CapturingOutputStream
 import org.jetbrains.kotlin.jupyter.OutputConfig
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.io.OutputStream
 import java.io.PrintStream
 import java.util.concurrent.atomic.AtomicInteger

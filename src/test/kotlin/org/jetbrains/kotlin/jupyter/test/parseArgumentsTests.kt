@@ -1,35 +1,35 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.parseLibraryName
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class ParseArgumentsTests {
 
     @Test
     fun test1() {
         val (name, args) = parseLibraryName(" lib ")
-        Assert.assertEquals("lib", name)
-        Assert.assertEquals(0, args.count())
+        assertEquals("lib", name)
+        assertEquals(0, args.count())
     }
 
     @Test
     fun test2() {
         val (name, args) = parseLibraryName("lib(arg1)")
-        Assert.assertEquals("lib", name)
-        Assert.assertEquals(1, args.count())
-        Assert.assertEquals("arg1", args[0].value)
-        Assert.assertEquals("", args[0].name)
+        assertEquals("lib", name)
+        assertEquals(1, args.count())
+        assertEquals("arg1", args[0].value)
+        assertEquals("", args[0].name)
     }
 
     @Test
     fun test3() {
         val (name, args) = parseLibraryName("lib (arg1 = 1.2, arg2 = val2)")
-        Assert.assertEquals("lib", name)
-        Assert.assertEquals(2, args.count())
-        Assert.assertEquals("arg1", args[0].name)
-        Assert.assertEquals("1.2", args[0].value)
-        Assert.assertEquals("arg2", args[1].name)
-        Assert.assertEquals("val2", args[1].value)
+        assertEquals("lib", name)
+        assertEquals(2, args.count())
+        assertEquals("arg1", args[0].name)
+        assertEquals("1.2", args[0].value)
+        assertEquals("arg2", args[1].name)
+        assertEquals("val2", args[1].value)
     }
 }

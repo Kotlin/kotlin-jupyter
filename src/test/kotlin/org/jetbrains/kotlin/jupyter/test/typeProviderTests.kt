@@ -4,12 +4,10 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.receivers.TypeProviderReceiver
 import org.jetbrains.kotlin.jupyter.*
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-
 
 class TypeProviderTests {
 
@@ -51,7 +49,7 @@ class TypeProviderTests {
         assertEquals(3, repl.eval("w.value3").resultValue)
 
         // check that 'value3' is not available for list 'l'
-        assertFailsWith(ReplCompilerException::class) {
+        assertThrows<ReplCompilerException> {
             repl.eval("l.value3")
         }
     }

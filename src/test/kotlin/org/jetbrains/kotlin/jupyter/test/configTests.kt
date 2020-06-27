@@ -1,10 +1,10 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.*
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ConfigTest {
     @Test
