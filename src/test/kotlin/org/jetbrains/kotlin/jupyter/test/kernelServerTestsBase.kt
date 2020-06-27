@@ -37,6 +37,10 @@ open class KernelServerTestsBase {
         server?.interrupt()
     }
 
+    inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSockets) : ZMQ.Socket(context, socket.zmqClientType) {
+        fun connect() = connect("${config.transport}://*:${config.ports[socket.ordinal]}")
+    }
+
     fun ZMQ.Socket.sendMessage(msgType: String, content : JsonObject) {
         sendMessage(Message(id = messageId, header = makeHeader(msgType), content = content), hmac)
     }

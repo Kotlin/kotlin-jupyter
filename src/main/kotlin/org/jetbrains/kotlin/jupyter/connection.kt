@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec
 
 class JupyterConnection(val config: KernelConfig): Closeable {
 
-    inner class Socket(private val socket: JupyterSockets, type: Int) : ZMQ.Socket(context, type) {
+    inner class Socket(private val socket: JupyterSockets, type: Int = socket.zmqKernelType) : ZMQ.Socket(context, type) {
         val name: String get() = socket.name
         init {
             val port = config.ports[socket.ordinal]
@@ -121,11 +121,11 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
     private val disposable = Disposable { }
 
-    val heartbeat = Socket(JupyterSockets.hb, ZMQ.REP)
-    val shell = Socket(JupyterSockets.shell, ZMQ.ROUTER)
-    val control = Socket(JupyterSockets.control, ZMQ.ROUTER)
-    val stdin = Socket(JupyterSockets.stdin, ZMQ.ROUTER)
-    val iopub = Socket(JupyterSockets.iopub, ZMQ.PUB)
+    val heartbeat = Socket(JupyterSockets.hb)
+    val shell = Socket(JupyterSockets.shell)
+    val control = Socket(JupyterSockets.control)
+    val stdin = Socket(JupyterSockets.stdin)
+    val iopub = Socket(JupyterSockets.iopub)
 
     val stdinIn = StdinInputStream()
 
