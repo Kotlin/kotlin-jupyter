@@ -184,13 +184,15 @@ dependencies {
     compileOnly(kotlin("scripting-compiler-impl"))
 
     implementation("org.apache.maven:maven-core:3.0.3")
-    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.slf4j:slf4j-api:1.7.29")
     implementation("khttp:khttp:1.0.0")
     implementation("org.zeromq:jeromq:0.3.5")
     implementation("com.beust:klaxon:5.2")
     implementation("com.github.ajalt:clikt:2.3.0")
-    runtimeOnly("org.slf4j:slf4j-simple:1.7.25")
-    runtimeOnly("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3")
+    runtimeOnly("org.slf4j:slf4j-simple:1.7.29")
+    runtimeOnly("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3") {
+        exclude("org.slf4j", "slf4j-log4j12")
+    }
     runtimeOnly("org.sonatype.aether:aether-api:1.13.1")
     runtimeOnly("net.java.dev.jna:jna:5.4.0")
 
@@ -203,6 +205,9 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
+
+        val processorsForTests = Runtime.getRuntime().availableProcessors() / 2
+        maxParallelForks = if (processorsForTests > 1) processorsForTests else 1
     }
 
     @Suppress("UNUSED_VARIABLE")

@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.jupyter.test
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.junit.jupiter.api.Test
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
@@ -10,6 +12,7 @@ import kotlin.script.experimental.dependencies.addRepository
 import kotlin.test.assertTrue
 
 class ResolverTests {
+    private val log: Logger by lazy { LoggerFactory.getLogger("resolver") }
 
     fun ExternalDependenciesResolver.doResolve(artifact: String): List<File> {
         this.addRepository("https://jcenter.bintray.com/")
@@ -24,9 +27,9 @@ class ResolverTests {
     @Test
     fun GetGgplotTest() {
         val files = IvyResolver().doResolve("org.apache.spark:spark-mllib_2.11:2.4.4")
-        println("Downloaded files: ${files.count()}")
+        log.debug("Downloaded files: ${files.count()}")
         files.forEach {
-            println(it)
+            log.debug(it.toString())
         }
 
     }

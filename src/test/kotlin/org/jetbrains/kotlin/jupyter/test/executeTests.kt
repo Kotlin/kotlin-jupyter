@@ -5,12 +5,15 @@ import org.jetbrains.kotlin.jupyter.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.zeromq.ZMQ
+import java.util.concurrent.TimeUnit
 
 fun Message.type(): String {
     return header!!["msg_type"] as String
 }
 
+@Timeout(100, unit = TimeUnit.SECONDS)
 class ExecuteTests : KernelServerTestsBase() {
 
     private fun doExecute(
