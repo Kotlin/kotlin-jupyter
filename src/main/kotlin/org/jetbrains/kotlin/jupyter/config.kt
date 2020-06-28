@@ -32,10 +32,10 @@ val LibraryPropertiesFile = ".properties"
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
 enum class JupyterSockets(val zmqKernelType: Int, val zmqClientType: Int) {
-    hb(ZMQ.REP, ZMQ.REP),
+    hb(ZMQ.REP, ZMQ.REQ),
     shell(ZMQ.ROUTER, ZMQ.REQ),
     control(ZMQ.ROUTER, ZMQ.REQ),
-    stdin(ZMQ.ROUTER, ZMQ.DEALER),
+    stdin(ZMQ.ROUTER, ZMQ.REQ),
     iopub(ZMQ.PUB, ZMQ.SUB)
 }
 

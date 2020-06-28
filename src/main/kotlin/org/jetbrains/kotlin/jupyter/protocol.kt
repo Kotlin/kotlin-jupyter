@@ -66,13 +66,6 @@ data class ErrorResponseWithMessage(
     override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
-fun JupyterConnection.Socket.sendOut(msg:Message, stream: JupyterOutType, text: String) {
-    connection.iopub.send(makeReplyMessage(msg, header = makeHeader("stream", msg),
-            content = jsonObject(
-                    "name" to stream.optionName(),
-                    "text" to text)))
-}
-
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
     when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
@@ -131,7 +124,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                         )))
             }
 
-            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "busy")))
+            connection.iopub.sendStatus("busy", msg)
             val code = msg.content["code"]
             connection.iopub.send(makeReplyMessage(msg, "execute_input", content = jsonObject(
                     "execution_count" to count,
@@ -145,10 +138,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
 
             if (res.hasStdOut) {
-                sendOut(msg, JupyterOutType.STDOUT, res.stdOut!!)
+                connection.iopub.sendOut(msg, JupyterOutType.STDOUT, res.stdOut!!)
             }
             if (res.hasStdErr) {
-                sendOut(msg, JupyterOutType.STDERR, res.stdErr!!)
+                connection.iopub.sendOut(msg, JupyterOutType.STDERR, res.stdErr!!)
             }
 
             when (res) {
@@ -200,7 +193,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
             }
 
-            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to "idle")))
+            connection.iopub.sendStatus("idle", msg)
             connection.contextMessage = null
         }
         "comm_info_request" -> {

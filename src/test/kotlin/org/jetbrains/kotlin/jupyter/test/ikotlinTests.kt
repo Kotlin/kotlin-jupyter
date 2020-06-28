@@ -11,9 +11,9 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testHeartbeat() {
         val context = ZMQ.context(1)
-        with (context.socket(ZMQ.REQ)) {
+        with (ClientSocket(context, JupyterSockets.hb)) {
             try {
-                connect("${config.transport}://*:${config.ports[JupyterSockets.hb.ordinal]}")
+                connect()
                 send("abc")
                 val msg = recvStr()
                 assertEquals("abc", msg)
@@ -27,9 +27,9 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testStdin() {
         val context = ZMQ.context(1)
-        with (context.socket(ZMQ.REQ)) {
+        with (ClientSocket(context, JupyterSockets.stdin)) {
             try {
-                connect("${config.transport}://*:${config.ports[JupyterSockets.stdin.ordinal]}")
+                connect()
                 sendMore("abc")
                 sendMore("def")
                 send("ok")
@@ -43,9 +43,9 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testShell() {
         val context = ZMQ.context(1)
-        with (context.socket(ZMQ.REQ)) {
+        with (ClientSocket(context, JupyterSockets.control)) {
             try {
-                connect("${config.transport}://*:${config.ports[JupyterSockets.control.ordinal]}")
+                connect()
                 sendMessage(Message(id = messageId, header = makeHeader("kernel_info_request")), hmac)
                 val msg = receiveMessage(recv(), hmac)
                 assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])

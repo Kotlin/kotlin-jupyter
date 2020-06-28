@@ -33,7 +33,7 @@ class JupyterConnection(val config: KernelConfig): Closeable {
 
         inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
 
-        private fun sendStatus(status: String, msg: Message) {
+        fun sendStatus(status: String, msg: Message) {
             connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to status)))
         }
 
@@ -41,6 +41,10 @@ class JupyterConnection(val config: KernelConfig): Closeable {
             sendStatus("busy", incomingMessage)
             send(msg)
             sendStatus("idle", incomingMessage)
+        }
+
+        fun sendOut(msg:Message, stream: JupyterOutType, text: String) {
+            send(makeReplyMessage(msg, header = makeHeader("stream", msg),content = jsonObject("name" to stream.optionName(),"text" to text)))
         }
 
         fun send(msg: Message) {

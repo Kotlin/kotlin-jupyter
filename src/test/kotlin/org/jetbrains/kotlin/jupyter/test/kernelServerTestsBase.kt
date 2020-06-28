@@ -13,13 +13,15 @@ import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
 
-    protected val config = KernelConfig(
+    private val config = KernelConfig(
             ports = JupyterSockets.values().map { randomPort() }.toTypedArray(),
             transport = "tcp",
             signatureScheme = "hmac1-sha256",
             signatureKey = "",
             scriptClasspath = classpath,
             resolverConfig = null)
+
+    private val sessionId = UUID.randomUUID().toString()
 
     protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
 
@@ -42,7 +44,7 @@ open class KernelServerTestsBase {
     }
 
     fun ZMQ.Socket.sendMessage(msgType: String, content : JsonObject) {
-        sendMessage(Message(id = messageId, header = makeHeader(msgType), content = content), hmac)
+        sendMessage(Message(id = messageId, header = makeHeader(msgType, sessionId = sessionId), content = content), hmac)
     }
 
     fun ZMQ.Socket.receiveMessage() = receiveMessage(recv(), hmac)!!
