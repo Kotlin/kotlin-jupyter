@@ -4,16 +4,6 @@ import kotlinx.coroutines.Deferred
 
 class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDescriptor>>?) {
 
-    data class LibraryWithCode(val library: LibraryDescriptor, val code: String)
-
-    private val processedLibraries = mutableListOf<LibraryWithCode>()
-
-    fun getProcessedLibraries(): List<LibraryWithCode> {
-        val result = processedLibraries.toList()
-        processedLibraries.clear()
-        return result
-    }
-
     /**
      * Matches a list of actual library arguments with declared library parameters
      * Arguments can be named or not. Named arguments should be placed after unnamed
@@ -56,7 +46,7 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
 
     /**
      * Split a command argument into a set of library calls
-     * Need special processing of ',' to skip call argument delimeters in brackets
+     * Need special processing of ',' to skip call argument delimiters in brackets
      * E.g. "use lib1(3), lib2(2, 5)" should split into "lib1(3)" and "lib(2, 5)", not into "lib1(3)", "lib(2", "5)"
      */
     private fun splitLibraryCalls(text: String): List<String> {
