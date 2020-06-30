@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
-import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
 
 enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     use("include supported libraries", "klaxon(5.0.1), lets-plot"),
@@ -18,9 +17,9 @@ enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, 
 
 data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition> = emptyList())
 
-class MagicsProcessor(val repl: ReplOptions, val libraries: LibrariesProcessor) {
+class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesProcessor) {
 
-    fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
+    private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
 
         val parser = object : CliktCommand() {
             val max: Int by option("--max-cell-size", help = "Maximum cell output").int().default(conf.cellOutputMaxSize)
