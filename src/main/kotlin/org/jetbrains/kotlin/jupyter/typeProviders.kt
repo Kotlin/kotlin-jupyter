@@ -126,7 +126,7 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
             }
         }
 
-        if (!conversionCodes.isEmpty()) {
+        if (conversionCodes.isNotEmpty()) {
             val initCode = initCodes.joinToLines()
             val tempFieldsCode = conversionCodes
                     .map { "val $tempFieldPrefix${it.key.name} = ${it.key.name}" }

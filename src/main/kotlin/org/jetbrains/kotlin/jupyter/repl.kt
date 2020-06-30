@@ -31,7 +31,7 @@ open class ReplException(message: String, cause: Throwable? = null) : Exception(
 
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
-class ReplCompilerException(val errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null)
+class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null)
     : ReplException(message ?: errorResult?.getErrors() ?: "") {
 
     val firstDiagnostics = errorResult?.reports?.firstOrNull {
@@ -57,10 +57,8 @@ interface ReplOptions {
     var outputConfig: OutputConfig
 }
 
-typealias MethodName = String
 typealias TypeName = String
 typealias Code = String
-typealias FieldName = String
 
 interface ReplForJupyter {
     fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
@@ -71,17 +69,17 @@ interface ReplForJupyter {
 
     suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit)
 
-    val currentClasspath: Collection<String> get
+    val currentClasspath: Collection<String>
 
-    val resolverConfig: ResolverConfig? get
+    val resolverConfig: ResolverConfig?
 
-    var outputConfig: OutputConfig get
+    var outputConfig: OutputConfig
 }
 
-class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
+class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
                          override val resolverConfig: ResolverConfig? = null, vararg scriptReceivers: Any) : ReplForJupyter, ReplOptions, KotlinKernelHost {
 
-    var outputConfigImpl = OutputConfig()
+    private var outputConfigImpl = OutputConfig()
 
     override var outputConfig
         get() = outputConfigImpl
@@ -94,16 +92,16 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     override var executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.Off
 
-    var classWriter: ClassWriter? = null
+    private var classWriter: ClassWriter? = null
 
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
         set(value) {
-            if (!value) classWriter = null
+            classWriter = if (!value) null
             else {
                 val cw = ClassWriter()
                 System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
-                classWriter = cw
+                cw
             }
         }
 
@@ -133,17 +131,17 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         val typeConverters = mutableListOf<TypeHandler>()
         val annotations = mutableListOf<TypeHandler>()
 
-        processedMagics.libraries.forEach {
+        processedMagics.libraries.forEach { libraryDefinition ->
             val builder = StringBuilder()
-            it.repositories.forEach { builder.appendLine("@file:Repository(\"$it\")") }
-            it.dependencies.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
-            it.imports.forEach { builder.appendLine("import $it") }
+            libraryDefinition.repositories.forEach { builder.appendLine("@file:Repository(\"$it\")") }
+            libraryDefinition.dependencies.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
+            libraryDefinition.imports.forEach { builder.appendLine("import $it") }
             if (builder.isNotBlank())
                 initCodes.add(builder.toString())
-            typeRenderers.addAll(it.renderers)
-            typeConverters.addAll(it.converters)
-            annotations.addAll(it.annotations)
-            it.init.forEach {
+            typeRenderers.addAll(libraryDefinition.renderers)
+            typeConverters.addAll(libraryDefinition.converters)
+            annotations.addAll(libraryDefinition.annotations)
+            libraryDefinition.init.forEach {
 
                 // Library init code may contain other magics, so we process them recursively
                 val preprocessed = preprocessCode(it)
@@ -168,7 +166,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     private val receivers: List<Any> = scriptReceivers.asList()
 
-    val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries))
+    private val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries))
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -211,13 +209,15 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    val ScriptCompilationConfiguration.classpath
+    private val ScriptCompilationConfiguration.classpath
         get() = this[ScriptCompilationConfiguration.dependencies]
                 ?.filterIsInstance<JvmDependency>()
                 ?.flatMap { it.classpath }
                 .orEmpty()
 
-    override val currentClasspath = mutableSetOf<String>().also { it.addAll(compilerConfiguration.classpath.map { it.canonicalPath }) }
+    override val currentClasspath = mutableSetOf<String>().also { filePaths ->
+        filePaths.addAll(compilerConfiguration.classpath.map { it.canonicalPath })
+    }
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
@@ -315,7 +315,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         }
     }
 
-    fun registerNewLibraries(p: PreprocessingResult) {
+    private fun registerNewLibraries(p: PreprocessingResult) {
         p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
         typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
     }
@@ -507,7 +507,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
                                         appendLine(s)
                                 })
                             }
-                            else -> throw IllegalStateException("Unknown eval result type ${this}")
+                            else -> throw IllegalStateException("Unknown eval result type $this")
                         }
                     }
                     is ResultWithDiagnostics.Failure -> {
@@ -523,7 +523,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
 
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
-        log.info("Classpath used in script: ${scriptClasspath}")
+        log.info("Classpath used in script: $scriptClasspath")
     }
 
     override fun display(value: Any) {
