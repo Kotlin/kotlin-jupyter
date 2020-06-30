@@ -32,7 +32,7 @@ open class ReplException(message: String, cause: Throwable? = null) : Exception(
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
 class ReplCompilerException(val errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null)
-    : ReplException(message ?: errorResult?.getErrors()?.message ?: "") {
+    : ReplException(message ?: errorResult?.getErrors() ?: "") {
 
     val firstDiagnostics = errorResult?.reports?.firstOrNull {
         it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
@@ -270,7 +270,7 @@ class ReplForJupyterImpl(val scriptClasspath: List<File> = emptyList(),
         val result = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         return when {
             result.isIncomplete() -> CheckResult(false)
-            result.isError() -> throw ReplException(result.getErrors().message)
+            result.isError() -> throw ReplException(result.getErrors())
             else -> CheckResult(true)
         }
     }

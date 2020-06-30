@@ -7,9 +7,6 @@ import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
-import kotlin.script.experimental.util.LinkedSnippet
-import kotlin.script.experimental.util.toList
 
 fun <T> catchAll(body: () -> T): T? = try {
     body()
@@ -30,12 +27,6 @@ fun <T> T.asDeferred(): Deferred<T> = this.let { GlobalScope.async { it } }
 
 fun File.existsOrNull() = if (exists()) this else null
 
-fun <T, R> Deferred<T>.asyncLet(selector: suspend (T) -> R): Deferred<R> = this.let {
-    GlobalScope.async {
-        selector(it.await())
-    }
-}
-
 fun <T> Deferred<T>.awaitBlocking(): T = if (isCompleted) getCompleted() else runBlocking { await() }
 
 fun String.parseIniConfig() =
@@ -49,9 +40,6 @@ fun File.tryReadIniConfig() =
         }
 
 
-
-fun LinkedSnippet<KJvmEvaluatedSnippet>?.instances() = this.toList { it.result.scriptInstance }.filterNotNull()
-
 fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, message: String, severity: String) =
         ScriptDiagnostic(
                 ScriptDiagnostic.unspecifiedError,
@@ -64,49 +52,25 @@ fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, mes
 fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =
         diagnostics.map { it.copy(sourcePath = path) }
 
-internal data class CompilationErrors(
-        val message: String,
-        val location: CompilerMessageLocationWithRange?
-)
-
-internal fun <T> ResultWithDiagnostics<T>.getErrors(): CompilationErrors {
+internal fun <T> ResultWithDiagnostics<T>.getErrors(): String {
     val filteredReports = reports.filter {
         it.code != ScriptDiagnostic.incompleteCode
     }
 
-    return CompilationErrors(
-            filteredReports.joinToString("\n") { report ->
-                report.location?.let { loc ->
-                    CompilerMessageLocationWithRange.create(
-                            report.sourcePath,
-                            loc.start.line,
-                            loc.start.col,
-                            loc.end?.line,
-                            loc.end?.col,
-                            null
-                    )?.toExtString()?.let {
-                        "$it "
-                    }
-                }.orEmpty() + report.message
-            },
-            filteredReports.firstOrNull {
-                when (it.severity) {
-                    ScriptDiagnostic.Severity.ERROR -> true
-                    ScriptDiagnostic.Severity.FATAL -> true
-                    else -> false
-                }
-            }?.let {
-                val loc = it.location ?: return@let null
-                CompilerMessageLocationWithRange.create(
-                        it.sourcePath,
-                        loc.start.line,
-                        loc.start.col,
-                        loc.end?.line,
-                        loc.end?.col,
-                        null
-                )
+    return filteredReports.joinToString("\n") { report ->
+        report.location?.let { loc ->
+            CompilerMessageLocationWithRange.create(
+                    report.sourcePath,
+                    loc.start.line,
+                    loc.start.col,
+                    loc.end?.line,
+                    loc.end?.col,
+                    null
+            )?.toExtString()?.let {
+                "$it "
             }
-    )
+        }.orEmpty() + report.message
+    }
 }
 
 fun CompilerMessageLocationWithRange.toExtString(): String {
