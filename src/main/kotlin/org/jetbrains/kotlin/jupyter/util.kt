@@ -23,7 +23,7 @@ fun <T> Logger.catchAll(msg: String = "", body: () -> T): T? = try {
 
 fun <T> T.validOrNull(predicate: (T) -> Boolean): T? = if (predicate(this)) this else null
 
-fun <T> T.asDeferred(): Deferred<T> = this.let { GlobalScope.async { it } }
+fun <T> T.asAsync(): Deferred<T> = GlobalScope.async { this@asAsync }
 
 fun File.existsOrNull() = if (exists()) this else null
 

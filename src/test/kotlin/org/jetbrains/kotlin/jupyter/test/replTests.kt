@@ -17,7 +17,7 @@ import kotlin.test.*
 class ReplTest {
 
     private fun replWithResolver() = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories,
-            parserLibraryDescriptors(readLibraries().toMap()).asDeferred()))
+            parserLibraryDescriptors(readLibraries().toMap()).asAsync()))
 
     private fun<T> assertEq(expected: T, actual: T, message: String? = null) = assertEquals(expected, actual, message)
 
@@ -324,7 +324,7 @@ class ReplTest {
 
         val libJsons = arrayOf(lib1, lib2, lib3).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
 
-        val repl = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()))
+        val repl = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asAsync()))
         val res = repl.preprocessCode("%use mylib(1.0), another")
         assertEquals("", res.code)
         val inits = arrayOf(

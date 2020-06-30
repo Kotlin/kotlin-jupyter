@@ -24,7 +24,7 @@ class TypeProviderTests {
         """.trimIndent()
         val cp = classpath + File(TypeProviderReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
         val libJsons = mapOf("mylib" to parser.parse(StringBuilder(descriptor)) as JsonObject)
-        val repl = ReplForJupyterImpl(cp, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asDeferred()), TypeProviderReceiver())
+        val repl = ReplForJupyterImpl(cp, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asAsync()), TypeProviderReceiver())
 
         // create list 'l' of size 3
         val code1 = """
