@@ -1,7 +1,7 @@
 {
   "properties": {
-    "libraryVersion": "1.4.2",
-    "apiVersion": "0.0.18-SNAPSHOT",
+    "api": "0.0.22-SNAPSHOT",
+    "js": "1.4.2",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
@@ -9,19 +9,22 @@
     "https://jetbrains.bintray.com/lets-plot-maven"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$apiVersion"
+    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$api"
   ],
   "imports": [
     "jetbrains.letsPlot.*",
     "jetbrains.letsPlot.geom.*",
-    "jetbrains.letsPlot.stat.*"
+    "jetbrains.letsPlot.stat.*",
+    "jetbrains.letsPlot.label.*",
+    "jetbrains.letsPlot.scale.*",
+    "jetbrains.letsPlot.facet.*"
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",
     "import jetbrains.letsPlot.frontend.NotebookFrontendContext",
     "val isolatedFrameParam = if(\"$isolatedFrame\".isNotEmpty()) \"$isolatedFrame\".toBoolean() else null",
-    "val frontendContext = LetsPlot.setupNotebook(\"$libraryVersion\", isolatedFrameParam) {DISPLAY(HTML(it))}",
-    "LetsPlot.apiVersion = \"$apiVersion\"",
+    "val frontendContext = LetsPlot.setupNotebook(\"$js\", isolatedFrameParam) {DISPLAY(HTML(it))}",
+    "LetsPlot.apiVersion = \"$api\"",
     "// Load library JS",
     "DISPLAY(HTML(frontendContext.getConfigureHtml()))"
   ],
