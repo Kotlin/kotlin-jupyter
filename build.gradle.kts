@@ -17,7 +17,7 @@ class TaskOptions: AllOptions {
     override val versionFileName = "VERSION"
     override val rootPath: Path = rootDir.toPath()
 
-    override val isLocalBuild = (rootProject.findProperty("build.isLocal") ?: "false") == "true"
+    override val isLocalBuild = getFlag("build.isLocal")
 
     override val artifactsDir: Path = {
         val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
@@ -206,8 +206,13 @@ tasks {
             events("passed", "skipped", "failed")
         }
 
-        val processorsForTests = Runtime.getRuntime().availableProcessors() / 2
-        maxParallelForks = if (processorsForTests > 1) processorsForTests else 1
+        val doParallelTesting = getFlag("test.parallel")
+
+        systemProperties = mutableMapOf(
+                "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+                "junit.jupiter.execution.parallel.mode.default" to "same_thread",
+                "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+        )
     }
 
     @Suppress("UNUSED_VARIABLE")

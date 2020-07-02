@@ -500,7 +500,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
                             is ResultValue.NotEvaluated -> {
                                 throw ReplEvalRuntimeException(buildString {
                                     val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
-                                    val stackTrace = cause?.stackTrace ?: emptyArray()
+                                    val stackTrace = cause?.stackTrace.orEmpty()
                                     append("This snippet was not evaluated: ")
                                     appendLine(cause.toString())
                                     for (s in stackTrace)
