@@ -97,7 +97,42 @@ data class KernelConfig(
         val pollingIntervalMillis: Long = 100,
         val scriptClasspath: List<File> = emptyList(),
         val resolverConfig: ResolverConfig?
-)
+) {
+    fun toArgs(homeDir: File? = null): KernelArgs {
+        val cfgJson = jsonObject(
+                "transport" to transport,
+                "signature_scheme" to signatureScheme,
+                "key" to signatureKey,
+        ).also { cfg ->
+            JupyterSockets.values().forEach { cfg["${it.name}_port"] = ports[it.ordinal] }
+        }
+
+        val cfgFile = createTempFile("kotlin-kernel", ".json")
+        cfgFile.writeText(cfgJson.toJsonString(true))
+
+        return KernelArgs(cfgFile, scriptClasspath, homeDir)
+    }
+
+    companion object {
+        fun fromArgs(args: KernelArgs): KernelConfig {
+            val (cfgFile, scriptClasspath, homeDir) = args
+            val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
+            fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
+
+            val sigScheme = cfgJson.string("signature_scheme")
+            val key = cfgJson.string("key")
+
+            return KernelConfig(
+                    ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }.toTypedArray(),
+                    transport = cfgJson.string("transport") ?: "tcp",
+                    signatureScheme = sigScheme ?: "hmac1-sha256",
+                    signatureKey = if (sigScheme == null || key == null) "" else key,
+                    scriptClasspath = scriptClasspath,
+                    resolverConfig = homeDir?.let { loadResolverConfig(it.toString()) }
+            )
+        }
+    }
+}
 
 val protocolVersion = "5.3"
 
