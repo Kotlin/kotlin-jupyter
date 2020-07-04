@@ -206,7 +206,7 @@ tasks {
             events("passed", "skipped", "failed")
         }
 
-        val doParallelTesting = getFlag("test.parallel")
+        val doParallelTesting = getFlag("test.parallel", true)
 
         systemProperties = mutableMapOf(
                 "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
