@@ -210,7 +210,7 @@ tasks {
 
         systemProperties = mutableMapOf(
                 "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-                "junit.jupiter.execution.parallel.mode.default" to "same_thread",
+                "junit.jupiter.execution.parallel.mode.default" to "concurrent",
                 "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
         )
     }
