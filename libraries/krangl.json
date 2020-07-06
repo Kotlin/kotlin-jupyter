@@ -7,7 +7,7 @@
     "https://dl.bintray.com/holgerbrandl/mpicbg-scicomp"
   ],
   "dependencies": [
-    "de.mpicbg.scicomp:krangl:0.13"
+    "de.mpicbg.scicomp:krangl:$v"
   ],
   "imports": [
     "krangl.*"
