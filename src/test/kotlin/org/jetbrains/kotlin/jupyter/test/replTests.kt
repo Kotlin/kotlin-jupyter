@@ -10,17 +10,21 @@ import jupyter.kotlin.receivers.ConstReceiver
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import java.io.File
 import kotlin.script.experimental.api.SourceCode
 import kotlin.test.*
 
-class ReplTest {
+abstract class AbstractReplTest {
+    protected fun<T> assertEq(expected: T, actual: T, message: String? = null) = assertEquals(expected, actual, message)
 
-    private fun replWithResolver() = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories,
-            parserLibraryDescriptors(readLibraries().toMap()).asAsync()))
+    protected fun String.convertCRLFtoLF(): String {
+        return replace("\r\n", "\n")
+    }
+}
 
-    private fun<T> assertEq(expected: T, actual: T, message: String? = null) = assertEquals(expected, actual, message)
-
+class ReplTest : AbstractReplTest() {
     @Test
     fun testRepl() {
         val repl = ReplForJupyterImpl(classpath)
@@ -353,6 +357,12 @@ class ReplTest {
             assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
         }
     }
+}
+
+@Execution(ExecutionMode.SAME_THREAD)
+class ReplWithResolverTest : AbstractReplTest() {
+    private fun replWithResolver() = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories,
+            parserLibraryDescriptors(readLibraries().toMap()).asAsync()))
 
     @Test
     fun testLetsPlot() {
@@ -405,9 +415,5 @@ class ReplTest {
         val code2 = "a+2"
         val res = repl.eval(code2).resultValue
         assertEquals(5, res)
-    }
-
-    private fun String.convertCRLFtoLF(): String {
-        return replace("\r\n", "\n")
     }
 }
