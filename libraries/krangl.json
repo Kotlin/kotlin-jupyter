@@ -1,10 +1,13 @@
 {
   "properties": {
-    "v": "-SNAPSHOT"
+    "v": "0.13"
   },
   "link": "https://github.com/holgerbrandl/krangl",
+  "repositories": [
+    "https://dl.bintray.com/holgerbrandl/mpicbg-scicomp"
+  ],
   "dependencies": [
-    "com.github.holgerbrandl:krangl:$v"
+    "de.mpicbg.scicomp:krangl:0.13"
   ],
   "imports": [
     "krangl.*"
