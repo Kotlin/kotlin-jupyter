@@ -84,7 +84,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             ),
 
                             // Jupyter lab Console support
-                            "banner" to "Kotlin language, version ${KotlinCompilerVersion.VERSION}",
+                            "banner" to "Kotlin kernel v. ${runtimeProperties.version}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
                             "implementation" to "Kotlin",
                             "implementation_version" to runtimeProperties.version,
                             "status" to "ok"
