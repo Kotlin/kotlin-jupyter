@@ -78,7 +78,8 @@ The following REPL commands are supported:
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
  - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
- - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository
+ - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
+ To specify Maven local, use `@file:Repository("*mavenLocal")`.
  
 ### Default repositories
 
