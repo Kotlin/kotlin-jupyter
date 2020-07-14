@@ -193,7 +193,14 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
             hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
             baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
             fileExtension.put("jupyter.kts")
-            defaultImports(DependsOn::class, Repository::class, ScriptTemplateWithDisplayHelpers::class)
+
+            val classImports = listOf(
+                    DependsOn::class,
+                    Repository::class,
+                    ScriptTemplateWithDisplayHelpers::class,
+            ).map { it.java.name }
+            defaultImports(classImports + defaultGlobalImports)
+
             jvm {
                 updateClasspath(scriptClasspath)
             }

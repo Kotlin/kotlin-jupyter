@@ -323,8 +323,12 @@ fun loadResolverConfig(homeDir: String) = ResolverConfig(defaultRepositories, Gl
 val defaultRepositories = arrayOf(
         "https://jcenter.bintray.com/",
         "https://repo.maven.apache.org/maven2/",
-        "https://jitpack.io"
+        "https://jitpack.io",
 ).map { RepositoryCoordinates(it) }
+
+val defaultGlobalImports = listOf(
+        "kotlin.math.*",
+)
 
 fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {

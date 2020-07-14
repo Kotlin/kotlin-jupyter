@@ -367,6 +367,13 @@ class ReplTest : AbstractReplTest() {
         val expectedVersion = JavaRuntime.version
         assertEquals(expectedVersion, resultVersion)
     }
+
+    @Test
+    fun testKotlinMath() {
+        val repl = ReplForJupyterImpl(classpath)
+        val result = repl.eval("2.0.pow(2.0)").resultValue
+        assertEquals(4.0, result)
+    }
 }
 
 @Execution(ExecutionMode.SAME_THREAD)
