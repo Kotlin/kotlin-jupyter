@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.MimeTypedResult
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.jupyter.*
@@ -356,6 +357,15 @@ class ReplTest : AbstractReplTest() {
         inits.forEachIndexed { index, expected ->
             assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
         }
+    }
+
+    @Test
+    fun testJavaRuntimeUtils() {
+        val repl = ReplForJupyterImpl(classpath)
+        val result = repl.eval("JavaRuntimeUtils.version")
+        val resultVersion = result.resultValue
+        val expectedVersion = JavaRuntime.version
+        assertEquals(expectedVersion, resultVersion)
     }
 }
 

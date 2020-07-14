@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter.test
 
+import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlin.jupyter.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -34,5 +35,16 @@ class ConfigTest {
         log.debug("Runtime version is: $version")
 
         assertTrue(version.matches(Regex("""\d+(\.\d+){3}(\.dev\d+)?""")))
+    }
+
+    @Test
+    fun testVersionRuntimeHelpers() {
+        val minExpectedVersion = 6
+        val maxExpectedVersion = 20
+
+        assertTrue(JavaRuntime.versionAsInt >= minExpectedVersion)
+        JavaRuntime.assertVersion { it >= minExpectedVersion }
+        JavaRuntime.assertVersionAtLeast(minExpectedVersion)
+        JavaRuntime.assertVersionInRange(minExpectedVersion, maxExpectedVersion)
     }
 }

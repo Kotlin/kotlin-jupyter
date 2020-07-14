@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import jupyter.kotlin.JavaRuntime
 import khttp.responses.Response
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -63,25 +64,7 @@ data class RuntimeKernelProperties(val map: Map<String, String>) {
     val currentBranch: String
         get() = map["currentBranch"] ?: throw RuntimeException("Current branch is not specified!")
     val jvmTargetForSnippets by lazy {
-        map["jvmTargetForSnippets"] ?: currentJavaVersion
-    }
-}
-
-val currentJavaVersion by lazy {
-    val defaultVersion = "1.8"
-    val version: String? = System.getProperty("java.version")
-
-    val versionParts = version?.split('.')
-    if (versionParts.isNullOrEmpty()){
-        defaultVersion
-    } else if (versionParts[0] == "1") {
-        if (versionParts.size > 1) {
-            "1.${versionParts[1]}"
-        } else {
-            defaultVersion
-        }
-    } else {
-        versionParts[0]
+        map["jvmTargetForSnippets"] ?: JavaRuntime.version
     }
 }
 
