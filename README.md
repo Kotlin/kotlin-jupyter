@@ -81,6 +81,12 @@ It is possible to add dynamic dependencies to the notebook using the following a
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
  To specify Maven local, use `@file:Repository("*mavenLocal")`.
  
+Note that dependencies in remote repositories are resolved via Ivy resolver.
+Caches are stored in `~/.ivy2/cache` folder by default. Sometimes, due to network
+issues or running several artifacts resolutions in parallel, caches may get corrupted.
+If you have some troubles with artifacts resolution, please remove caches, restart kernel
+and try again.
+ 
 ### Default repositories
 
 The following maven repositories are included by default:
