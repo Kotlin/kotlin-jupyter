@@ -200,6 +200,7 @@ dependencies {
     runtimeOnly("net.java.dev.jna:jna:5.4.0")
 
     deploy(project(":jupyter-lib"))
+    deploy(kotlin("script-runtime"))
 }
 
 with(ProjectWithOptionsImpl(project, TaskOptions())) {

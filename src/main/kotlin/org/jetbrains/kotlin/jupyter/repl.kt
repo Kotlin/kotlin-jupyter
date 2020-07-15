@@ -212,7 +212,10 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
             implicitReceivers(receiversTypes)
             skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
-            compilerOptions(listOf("-jvm-target", runtimeProperties.jvmTargetForSnippets))
+            compilerOptions(
+                    "-jvm-target", runtimeProperties.jvmTargetForSnippets,
+                    "-no-stdlib"
+            )
         }
     }
 

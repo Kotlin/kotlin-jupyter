@@ -447,10 +447,8 @@ class ReplWithResolverTest : AbstractReplTest() {
         assertEquals(5, res)
     }
 
-    // This test reproduces https://github.com/Kotlin/kotlin-jupyter/issues/27
-    @Disabled
     @Test
-    fun testKlaxonClasspathLeaking() {
+    fun testKlaxonClasspathDoesntLeak() {
         val repl = replWithResolver()
         val res = repl.eval("""
             %use klaxon(2.1.8)
