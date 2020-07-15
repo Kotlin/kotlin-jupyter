@@ -33,8 +33,6 @@ import kotlin.test.assertNull
 import kotlin.test.fail
 
 abstract class AbstractReplTest {
-    protected fun<T> assertEq(expected: T, actual: T, message: String? = null) = assertEquals(expected, actual, message)
-
     protected fun String.convertCRLFtoLF(): String {
         return replace("\r\n", "\n")
     }
@@ -183,7 +181,7 @@ class ReplTest : AbstractReplTest() {
         runBlocking { repl.complete("val t = 42", 10) {
             result ->
             if (result is CompletionResult.Success) {
-                assertEq(emptyList(), result.sortedMatches())
+                assertEquals(emptyList(), result.sortedMatches())
             } else {
                 fail("Result should be success")
             }
@@ -449,9 +447,7 @@ class ReplWithResolverTest : AbstractReplTest() {
         assertEquals(5, res)
     }
 
-    /**
-     * This test reproduces https://github.com/Kotlin/kotlin-jupyter/issues/27
-     */
+    // This test reproduces https://github.com/Kotlin/kotlin-jupyter/issues/27
     @Disabled
     @Test
     fun testKlaxonClasspathLeaking() {
