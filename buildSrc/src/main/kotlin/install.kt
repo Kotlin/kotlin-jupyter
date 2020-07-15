@@ -33,6 +33,7 @@ interface InstallOptions {
     val runKernelPy: String
     val setupPy: String
     val kernelFile: String
+    val mainClassFQN: String
 
     val installKernelTaskPrefix: String
     val cleanInstallDirTaskPrefix: String
@@ -112,7 +113,7 @@ fun ProjectWithInstallOptions.createTaskForSpecs(debug: Boolean, local: Boolean,
             makeDirs(mainInstallPath.resolve(configDir))
             makeDirs(specPath)
 
-            makeJarArgs(mainInstallPath, kernelFile.name, libsCp, if (debug) debuggerConfig else "")
+            makeJarArgs(mainInstallPath, kernelFile.name, mainClassFQN, libsCp, if (debug) debuggerConfig else "")
             makeKernelSpec(specPath, local)
         }
     }
@@ -168,9 +169,16 @@ fun ProjectWithInstallOptions.makeKernelSpec(installPath: Path, localInstall: Bo
     }
 }
 
-fun ProjectWithInstallOptions.makeJarArgs(installPath: Path, kernelJarPath: String, classPath: List<String>, debuggerConfig: String = "") {
+fun ProjectWithInstallOptions.makeJarArgs(
+        installPath: Path,
+        kernelJarPath: String,
+        mainClassFQN: String,
+        classPath: List<String>,
+        debuggerConfig: String = ""
+) {
     writeJson(mapOf(
             "mainJar" to kernelJarPath,
+            "mainClass" to mainClassFQN,
             "classPath" to classPath,
             "debuggerConfig" to debuggerConfig
     ), installPath.resolve(jarArgsFile))

@@ -10,7 +10,7 @@ import kotlinx.coroutines.async
 import org.apache.commons.io.FileUtils
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
-import org.zeromq.ZMQ
+import org.zeromq.SocketType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -32,12 +32,12 @@ val LibraryPropertiesFile = ".properties"
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
-enum class JupyterSockets(val zmqKernelType: Int, val zmqClientType: Int) {
-    hb(ZMQ.REP, ZMQ.REQ),
-    shell(ZMQ.ROUTER, ZMQ.REQ),
-    control(ZMQ.ROUTER, ZMQ.REQ),
-    stdin(ZMQ.ROUTER, ZMQ.REQ),
-    iopub(ZMQ.PUB, ZMQ.SUB)
+enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
+    hb(SocketType.REP, SocketType.REQ),
+    shell(SocketType.ROUTER, SocketType.REQ),
+    control(SocketType.ROUTER, SocketType.REQ),
+    stdin(SocketType.ROUTER, SocketType.REQ),
+    iopub(SocketType.PUB, SocketType.SUB)
 }
 
 data class OutputConfig(

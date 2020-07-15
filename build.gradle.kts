@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -53,6 +52,7 @@ class TaskOptions: AllOptions {
     override val jarArgsFile = "$configDir/jar_args.json"
     override val runKernelPy = "run_kernel.py"
     override val kernelFile = "kernel.json"
+    override val mainClassFQN = "org.jetbrains.kotlin.jupyter.IkotlinKt"
     override val installKernelTaskPrefix = "installKernel"
     override val cleanInstallDirTaskPrefix = "cleanInstallDir"
     override val copyLibrariesTaskPrefix = "copyLibraries"
@@ -165,6 +165,7 @@ val deploy: Configuration by configurations.creating
 dependencies {
     val junitVersion = "5.6.2"
     val slf4jVersion = "1.7.29"
+    val klaxonVersion = "5.2"
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
@@ -188,8 +189,8 @@ dependencies {
     implementation("org.apache.maven:maven-core:3.0.3")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("khttp:khttp:1.0.0")
-    implementation("org.zeromq:jeromq:0.3.5")
-    implementation("com.beust:klaxon:5.2")
+    implementation("org.zeromq:jeromq:0.5.2")
+    implementation("com.beust:klaxon:$klaxonVersion")
     implementation("com.github.ajalt:clikt:2.3.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
     runtimeOnly("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3") {
@@ -201,41 +202,44 @@ dependencies {
     deploy(project(":jupyter-lib"))
 }
 
-tasks {
-    test {
+with(ProjectWithOptionsImpl(project, TaskOptions())) {
+    /****** Build tasks ******/
+    tasks.jar {
+        manifest {
+            attributes["Main-Class"] = mainClassFQN
+            attributes["Implementation-Version"] = project.version
+        }
+    }
+
+    tasks.shadowJar {
+        archiveBaseName.set(packageName)
+        archiveClassifier.set("")
+        mergeServiceFiles()
+
+        manifest {
+            attributes["Main-Class"] = mainClassFQN
+        }
+    }
+
+    tasks.test {
+        val doParallelTesting = getFlag("test.parallel", true)
+        val useShadowedJar = getFlag("test.useShadowed", true)
+
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
         }
 
-        val doParallelTesting = getFlag("test.parallel", true)
+        if (useShadowedJar) {
+            dependsOn(tasks.shadowJar.get())
+            classpath = files(tasks.shadowJar.get()) + classpath
+        }
 
         systemProperties = mutableMapOf(
                 "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
                 "junit.jupiter.execution.parallel.mode.default" to "concurrent",
                 "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
         )
-    }
-
-    @Suppress("UNUSED_VARIABLE")
-    val jar by getting(Jar::class) {
-        manifest {
-            attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
-            attributes["Implementation-Version"] = project.version
-        }
-    }
-}
-
-with(ProjectWithOptionsImpl(project, TaskOptions())) {
-    /****** Build tasks ******/
-    tasks.withType<ShadowJar> {
-        archiveBaseName.set(packageName)
-        archiveClassifier.set("")
-        mergeServiceFiles()
-
-        manifest {
-            attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
-        }
     }
 
     tasks.register("buildProperties") {

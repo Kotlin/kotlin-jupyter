@@ -4,18 +4,33 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.MimeTypedResult
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.jupyter.*
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import jupyter.kotlin.receivers.ConstReceiver
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.jupyter.OutputConfig
+import org.jetbrains.kotlin.jupyter.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
+import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.asAsync
+import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.generateDiagnostic
+import org.jetbrains.kotlin.jupyter.parserLibraryDescriptors
+import org.jetbrains.kotlin.jupyter.readLibraries
+import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
+import org.jetbrains.kotlin.jupyter.withPath
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.io.File
 import kotlin.script.experimental.api.SourceCode
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.fail
 
 abstract class AbstractReplTest {
     protected fun<T> assertEq(expected: T, actual: T, message: String? = null) = assertEquals(expected, actual, message)
@@ -432,5 +447,26 @@ class ReplWithResolverTest : AbstractReplTest() {
         val code2 = "a+2"
         val res = repl.eval(code2).resultValue
         assertEquals(5, res)
+    }
+
+    /**
+     * This test reproduces https://github.com/Kotlin/kotlin-jupyter/issues/27
+     */
+    @Disabled
+    @Test
+    fun testKlaxonClasspathLeaking() {
+        val repl = replWithResolver()
+        val res = repl.eval("""
+            %use klaxon(2.1.8)
+            class Person (val name: String, var age: Int = 23)
+            val klaxon = Klaxon()
+            val parseRes = klaxon.parse<Person>(""${'"'}
+                {
+                  "name": "John Smith"
+                }
+                ""${'"'})
+            parseRes?.age
+        """.trimIndent())
+        assertEquals(23, res.resultValue)
     }
 }
