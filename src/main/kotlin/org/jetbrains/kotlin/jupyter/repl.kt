@@ -427,14 +427,14 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
     override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) = doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor)) {
-        //val preprocessed = preprocessCode(code)
-        completer.complete(compiler, compilerConfiguration, code, executionCounter++, cursor)
+        val preprocessed = magics.processMagics(code, true).code
+        completer.complete(compiler, compilerConfiguration, code, preprocessed, executionCounter++, cursor)
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
     override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) = doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code)) {
-        //val preprocessed = preprocessCode(code)
-        val codeLine = SourceCodeImpl(executionCounter++, code)
+        val preprocessed = magics.processMagics(code, true).code
+        val codeLine = SourceCodeImpl(executionCounter++, preprocessed)
         val errorsList = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
         ListErrorsResult(code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }

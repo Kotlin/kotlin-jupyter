@@ -12,10 +12,20 @@ enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, 
     trackClasspath("log current classpath changes"),
     trackExecution("log code that is going to be executed in repl", visibleInHelp = false),
     dumpClassesForSpark("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false),
-    output("setup output settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400")
+    output("setup output settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400");
+
+    companion object {
+        fun valueOfOrNull(name: String): ReplLineMagics? {
+            return try {
+                valueOf(name)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+    }
 }
 
-data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition> = emptyList())
+data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition>)
 
 class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesProcessor) {
 
@@ -44,7 +54,7 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
             }
     }
 
-    fun processMagics(code: String): MagicProcessingResult {
+    fun processMagics(code: String, ignoreMagicsErrors: Boolean = false): MagicProcessingResult {
 
         val sb = StringBuilder()
         var nextSearchIndex = 0
@@ -71,9 +81,8 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                 val keyword = parts[0]
                 val arg = if (parts.count() > 1) parts[1] else null
 
-                val magic = try {
-                    ReplLineMagics.valueOf(keyword)
-                } catch (e: IllegalArgumentException) {
+                val magic = ReplLineMagics.valueOfOrNull(keyword)
+                if(magic == null && !ignoreMagicsErrors) {
                     throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
                 }
 
@@ -92,8 +101,12 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                     ReplLineMagics.dumpClassesForSpark -> repl.writeCompiledClasses = true
 
                     ReplLineMagics.use -> {
-                        if (arg == null) throw ReplCompilerException("Need some arguments for 'use' command")
-                        newLibraries.addAll(libraries.processNewLibraries(arg))
+                        try {
+                            if (arg == null) throw ReplCompilerException("Need some arguments for 'use' command")
+                            newLibraries.addAll(libraries.processNewLibraries(arg))
+                        } catch (e: ReplCompilerException) {
+                            if (!ignoreMagicsErrors) throw  e
+                        }
                     }
                     ReplLineMagics.output -> {
                         repl.outputConfig = updateOutputConfig(repl.outputConfig, (arg ?: "").split(" "))
