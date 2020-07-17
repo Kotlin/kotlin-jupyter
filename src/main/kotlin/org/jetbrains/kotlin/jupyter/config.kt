@@ -149,6 +149,7 @@ class LibraryDescriptor(
         converters: List<TypeHandler>,
         annotations: List<TypeHandler>,
         val link: String?,
+        val minKernelVersion: String?,
 ) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
@@ -351,6 +352,7 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                     TypeHandler(it.key, it.value.toString())
                 }?.toList().orEmpty(),
                 link = it.value.string("link"),
+                minKernelVersion = it.value.string("minKernelVersion"),
                 converters = it.value.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
                 annotations = it.value.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
         )

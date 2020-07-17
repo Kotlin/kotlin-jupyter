@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
+import jupyter.kotlin.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
@@ -13,7 +14,9 @@ import org.jetbrains.kotlin.jupyter.defaultRepositories
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
+import org.jetbrains.kotlin.jupyter.runtimeProperties
 import org.jetbrains.kotlin.jupyter.withPath
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.parallel.Execution
@@ -420,6 +423,25 @@ class ReplTest : AbstractReplTest() {
         assertNull(results[1].resultValue)
         assertEquals(43, results[2].resultValue)
         assertEquals(100, results[3].resultValue)
+    }
+
+    @Test
+    fun testLibraryKernelVersionRequirements() {
+        val minRequiredVersion = "999.42.0.1"
+        val kernelVersion = runtimeProperties.version.toMaybeUnspecifiedString()
+
+        val lib1 = "mylib" to """
+                    {
+                        "minKernelVersion": "$minRequiredVersion"
+                    }""".trimIndent()
+
+        val libs = listOf(lib1).toLibrariesAsync()
+        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
+        val exception = assertThrows<ReplCompilerException> { replWithResolver.eval("%use mylib") }
+
+        val message = exception.message!!
+        assertTrue(message.contains(minRequiredVersion))
+        assertTrue(message.contains(kernelVersion))
     }
 
     @Test

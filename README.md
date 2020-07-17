@@ -191,6 +191,7 @@ Check [libraries](libraries) directory to see examples of library descriptors.
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
 - `link`: a link to library homepage. This link will be displayed in `:help` command
+- `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
 - `repositories`: a list of maven or ivy repositories to search for dependencies
 - `dependencies`: a list of library dependencies
 - `imports`: a list of default imports for library
