@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
+import jupyter.kotlin.KotlinKernelVersion
 import khttp.responses.Response
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -57,8 +58,9 @@ data class OutputConfig(
 }
 
 data class RuntimeKernelProperties(val map: Map<String, String>) {
-    val version: String
-        get() = map["version"] ?: "unspecified"
+    val version: KotlinKernelVersion? by lazy {
+        map["version"]?.let{ KotlinKernelVersion.from(it) }
+    }
     val librariesFormatVersion: Int
         get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
     val currentBranch: String
