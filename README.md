@@ -196,6 +196,7 @@ Library descriptor is a `<libName>.json` file with the following fields:
 - `imports`: a list of default imports for library
 - `init`: a list of code snippets to be executed when library is included
 - `initCell`: a list of code snippets to be executed before execution of any cell
+- `shutdown`: a list of code snippets to be executed on kernel shutdown. Any cleanup code goes here
 - `renderers`: a list of type converters for special rendering of particular types
 
 *All fields are optional

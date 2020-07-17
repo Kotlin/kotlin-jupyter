@@ -99,6 +99,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
         }
         "shutdown_request" -> {
+            repl?.evalOnShutdown()
             send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
             exitProcess(0)
         }

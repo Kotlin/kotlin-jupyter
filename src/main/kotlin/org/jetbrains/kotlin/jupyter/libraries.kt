@@ -38,6 +38,7 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
             repositories = library.repositories.map { replaceVariables(it, mapping) },
             imports = library.imports.map { replaceVariables(it, mapping) },
             init = library.init.map { replaceVariables(it, mapping) },
+            shutdown = library.shutdown.map { replaceVariables(it, mapping) },
             initCell = library.initCell.map { replaceVariables(it, mapping) },
             renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
             converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },

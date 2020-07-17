@@ -129,6 +129,7 @@ open class LibraryDefinition(
         val imports: List<String>,
         val repositories: List<String>,
         val init: List<String>,
+        val shutdown: List<String>,
         val renderers: List<TypeHandler>,
         val converters: List<TypeHandler>,
         val annotations: List<TypeHandler>
@@ -140,10 +141,11 @@ class LibraryDescriptor(dependencies: List<String>,
                         imports: List<String>,
                         repositories: List<String>,
                         init: List<String>,
+                        shutdown: List<String>,
                         renderers: List<TypeHandler>,
                         converters: List<TypeHandler>,
                         annotations: List<TypeHandler>,
-                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers, converters, annotations)
+                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
                           val libraries: Deferred<Map<String, LibraryDescriptor>>)
@@ -339,6 +341,7 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                 imports = it.value.array<String>("imports")?.toList().orEmpty(),
                 repositories = it.value.array<String>("repositories")?.toList().orEmpty(),
                 init = it.value.array<String>("init")?.toList().orEmpty(),
+                shutdown = it.value.array<String>("shutdown")?.toList().orEmpty(),
                 initCell = it.value.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.value.obj("renderers")?.map {
                     TypeHandler(it.key, it.value.toString())

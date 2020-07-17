@@ -63,6 +63,8 @@ typealias Code = String
 interface ReplForJupyter {
     fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
 
+    fun evalOnShutdown(): List<EvalResult>
+
     fun checkComplete(code: Code): CheckResult
 
     suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit)
@@ -110,6 +112,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
     private val typeRenderers = mutableMapOf<String, String>()
 
     private val initCellCodes = mutableListOf<String>()
+    private val shutdownCodes = mutableListOf<String>()
 
     private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
         if (value == null || resultField == null) return null
@@ -119,13 +122,20 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
         return renderResult(result.value, result.resultField)
     }
 
-    data class PreprocessingResult(val code: Code, val initCodes: List<Code>, val initCellCodes: List<Code>, val typeRenderers: List<TypeHandler>)
+    data class PreprocessingResult(
+            val code: Code,
+            val initCodes: List<Code>,
+            val shutdownCodes: List<Code>,
+            val initCellCodes: List<Code>,
+            val typeRenderers: List<TypeHandler>,
+    )
 
     fun preprocessCode(code: String): PreprocessingResult {
 
         val processedMagics = magics.processMagics(code)
 
         val initCodes = mutableListOf<Code>()
+        val shutdownCodes = mutableListOf<Code>()
         val initCellCodes = mutableListOf<Code>()
         val typeRenderers = mutableListOf<TypeHandler>()
         val typeConverters = mutableListOf<TypeHandler>()
@@ -141,6 +151,8 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
             typeRenderers.addAll(libraryDefinition.renderers)
             typeConverters.addAll(libraryDefinition.converters)
             annotations.addAll(libraryDefinition.annotations)
+            initCellCodes.addAll(libraryDefinition.initCell)
+            shutdownCodes.addAll(libraryDefinition.shutdown)
             libraryDefinition.init.forEach {
 
                 // Library init code may contain other magics, so we process them recursively
@@ -148,6 +160,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
                 initCodes.addAll(preprocessed.initCodes)
                 typeRenderers.addAll(preprocessed.typeRenderers)
                 initCellCodes.addAll(preprocessed.initCellCodes)
+                shutdownCodes.addAll(preprocessed.shutdownCodes)
                 if (preprocessed.code.isNotBlank())
                     initCodes.add(preprocessed.code)
             }
@@ -159,7 +172,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
             initCodes.add(declarations)
         }
 
-        return PreprocessingResult(processedMagics.code, initCodes, initCellCodes, typeRenderers)
+        return PreprocessingResult(processedMagics.code, initCodes, shutdownCodes, initCellCodes, typeRenderers)
     }
 
     private val ctx = KotlinContext()
@@ -327,6 +340,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
 
     private fun registerNewLibraries(p: PreprocessingResult) {
         p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
+        p.shutdownCodes.filter { !shutdownCodes.contains(it) }.let(shutdownCodes::addAll)
         typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
     }
 
@@ -395,6 +409,10 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
         }
     }
 
+    override fun evalOnShutdown(): List<EvalResult> {
+        return shutdownCodes.map(::evalWithReturn)
+    }
+
     private fun updateOutputList(jupyterId: Int, result: Any?) {
         if (jupyterId >= 0) {
             while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
@@ -455,6 +473,17 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
     private fun evalNoReturn(code: String) {
         doEval(code)
         processAnnotations(lastReplLine())
+    }
+
+    // Result of this function is considered to be used for testing/debug purposes
+    private fun evalWithReturn(code: String): EvalResult {
+        val result = try {
+            doEval(code)
+        } catch (e: Exception) {
+            InternalEvalResult(null, null)
+        }
+        processAnnotations(lastReplLine())
+        return EvalResult(result.value)
     }
 
     private data class InternalEvalResult(val value: Any?, val resultField: Pair<String, KotlinType>?)

@@ -1,7 +1,5 @@
 package org.jetbrains.kotlin.jupyter.test
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.receivers.ConstReceiver
@@ -11,10 +9,8 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
-import org.jetbrains.kotlin.jupyter.asAsync
 import org.jetbrains.kotlin.jupyter.defaultRepositories
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
-import org.jetbrains.kotlin.jupyter.parserLibraryDescriptors
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.withPath
@@ -363,11 +359,10 @@ class ReplTest : AbstractReplTest() {
                                                 ]
                                             }
         """.trimIndent()
-        val parser = Parser.default()
 
-        val libJsons = arrayOf(lib1, lib2, lib3).map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
+        val libs = listOf(lib1, lib2, lib3).toLibrariesAsync()
 
-        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, parserLibraryDescriptors(libJsons).asAsync()))
+        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
         val res = replWithResolver.preprocessCode("%use mylib(1.0), another")
         assertEquals("", res.code)
         val inits = arrayOf(
@@ -395,6 +390,36 @@ class ReplTest : AbstractReplTest() {
         inits.forEachIndexed { index, expected ->
             assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
         }
+    }
+
+    @Test
+    fun testLibraryOnShutdown() {
+        val lib1 = "mylib" to """
+                    {
+                        "shutdown": [
+                            "14 * 3",
+                            "throw RuntimeException()",
+                            "21 + 22"
+                        ]
+                    }""".trimIndent()
+
+        val lib2 = "mylib2" to """
+                    {
+                        "shutdown": [
+                            "100"
+                        ]
+                    }""".trimIndent()
+
+        val libs = listOf(lib1, lib2).toLibrariesAsync()
+        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
+        replWithResolver.eval("%use mylib, mylib2")
+        val results = replWithResolver.evalOnShutdown()
+
+        assertEquals(4, results.size)
+        assertEquals(42, results[0].resultValue)
+        assertNull(results[1].resultValue)
+        assertEquals(43, results[2].resultValue)
+        assertEquals(100, results[3].resultValue)
     }
 
     @Test
