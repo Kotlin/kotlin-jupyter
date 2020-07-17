@@ -12,12 +12,17 @@ import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
+import kotlin.script.experimental.dependencies.impl.DependenciesResolverOptionsName
+import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesResolverOptions
 
 open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
 
     private val log by lazy { LoggerFactory.getLogger("resolver") }
 
     private val resolver: ExternalDependenciesResolver
+    private val resolverOptions = makeExternalDependenciesResolverOptions(mapOf(
+            DependenciesResolverOptionsName.SCOPE.key to "compile,runtime"
+    ))
 
     init {
         resolver = CompoundDependenciesResolver(
@@ -49,8 +54,7 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                 is DependsOn -> {
                     log.info("Resolving ${annotation.value}")
                     try {
-                        val result = runBlocking { resolver.resolve(annotation.value) }
-                        when (result) {
+                        when (val result = runBlocking { resolver.resolve(annotation.value, resolverOptions) }) {
                             is ResultWithDiagnostics.Failure -> {
                                 val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
                                 log.warn(diagnostics.message, diagnostics.exception)

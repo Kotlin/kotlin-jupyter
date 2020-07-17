@@ -482,6 +482,16 @@ class ReplWithResolverTest : AbstractReplTest() {
     }
 
     @Test
+    fun testRuntimeDepsResolution() {
+        val res = repl.eval("""
+            %use krangl(0.13)
+            val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
+            df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
+        """.trimIndent())
+        assertEquals("John Smith", res.resultValue)
+    }
+
+    @Test
     fun testNullableErasure() {
         val code1 = "val a: Int? = 3"
         repl.eval(code1)

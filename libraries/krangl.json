@@ -1,10 +1,11 @@
 {
   "properties": {
-    "v": "0.10.3"
+    "v": "0.13"
   },
   "link": "https://github.com/holgerbrandl/krangl",
   "repositories": [
-    "https://dl.bintray.com/holgerbrandl/mpicbg-scicomp"
+    "https://dl.bintray.com/holgerbrandl/mpicbg-scicomp",
+    "https://dl.bintray.com/cbeust/maven"
   ],
   "dependencies": [
     "de.mpicbg.scicomp:krangl:$v"
