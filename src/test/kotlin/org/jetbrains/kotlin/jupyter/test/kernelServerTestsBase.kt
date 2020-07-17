@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 open class KernelServerTestsBase {
 
     private val config = KernelConfig(
-            ports = JupyterSockets.values().map { randomPort() }.toTypedArray(),
+            ports = JupyterSockets.values().map { randomPort() },
             transport = "tcp",
             signatureScheme = "hmac1-sha256",
             signatureKey = "",

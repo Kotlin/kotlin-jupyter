@@ -1,8 +1,10 @@
 package org.jetbrains.kotlin.jupyter
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
-import org.jetbrains.kotlin.utils.addToStdlib.min
 import org.slf4j.Logger
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics

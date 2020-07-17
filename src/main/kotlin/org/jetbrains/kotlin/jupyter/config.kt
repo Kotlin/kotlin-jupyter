@@ -73,7 +73,7 @@ val runtimeProperties by lazy {
 }
 
 data class KernelConfig(
-        val ports: Array<Int>,
+        val ports: List<Int>,
         val transport: String,
         val signatureScheme: String,
         val signatureKey: String,
@@ -106,7 +106,7 @@ data class KernelConfig(
             val key = cfgJson.string("key")
 
             return KernelConfig(
-                    ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }.toTypedArray(),
+                    ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") },
                     transport = cfgJson.string("transport") ?: "tcp",
                     signatureScheme = sigScheme ?: "hmac1-sha256",
                     signatureKey = if (sigScheme == null || key == null) "" else key,
@@ -135,17 +135,19 @@ open class LibraryDefinition(
         val annotations: List<TypeHandler>
 )
 
-class LibraryDescriptor(dependencies: List<String>,
-                        val variables: List<Variable>,
-                        initCell: List<String>,
-                        imports: List<String>,
-                        repositories: List<String>,
-                        init: List<String>,
-                        shutdown: List<String>,
-                        renderers: List<TypeHandler>,
-                        converters: List<TypeHandler>,
-                        annotations: List<TypeHandler>,
-                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
+class LibraryDescriptor(
+        dependencies: List<String>,
+        val variables: List<Variable>,
+        initCell: List<String>,
+        imports: List<String>,
+        repositories: List<String>,
+        init: List<String>,
+        shutdown: List<String>,
+        renderers: List<TypeHandler>,
+        converters: List<TypeHandler>,
+        annotations: List<TypeHandler>,
+        val link: String?,
+) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
                           val libraries: Deferred<Map<String, LibraryDescriptor>>)
