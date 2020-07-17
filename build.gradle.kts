@@ -226,7 +226,7 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
         val doParallelTesting = getFlag("test.parallel", true)
 
         /**
-         *  Set to true to debug classpath/shadowing issues, see [testKlaxonClasspathDoesntLeak] test
+         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
          */
         val useShadowedJar = getFlag("test.useShadowed", false)
 
