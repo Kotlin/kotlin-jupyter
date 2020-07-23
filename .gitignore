@@ -1,11 +1,30 @@
-.idea/
-out/
-build/
-distrib-build/
-artifacts/
-.gradle/
+# IDEA folder except one project dictionary
+/.idea/*
+!/.idea/dictionaries
+/.idea/dictionaries/*
+!/.idea/dictionaries/ProjectDictionary.xml
+
+# IDEA folders in folders with python ptojects
+/distrib/.idea/**
+/distrib-util/.idea/**
+
+# IDEA ignored file formats
 *.iml
-**/.ipynb*
+
+# Folders with build files
+/distrib-build/**
+out/
 **/build/
-*.DS_Store
+artifacts/
+
+# Gradle caches and internal files
+.gradle/
+
+# Project Python virtual environments
 /venv/
+
+# Jupyter notebooks checkpoints
+**/.ipynb_checkpoints
+
+# MacOS attributes files
+*.DS_Store
