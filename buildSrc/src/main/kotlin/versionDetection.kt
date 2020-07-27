@@ -4,30 +4,44 @@ import org.gradle.kotlin.dsl.invoke
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 
+fun Project.getPropertyByCommand(propName: String, cmdArgs: Array<String>): String {
+    val prop = project.findProperty(propName) as String?
+
+    if (prop != null) {
+        return prop
+    }
+
+    val outputStream = ByteArrayOutputStream()
+    val result = exec {
+        commandLine(*cmdArgs)
+        standardOutput = outputStream
+    }
+
+    val output = outputStream.toString()
+    if (result.exitValue != 0) {
+        throw RuntimeException("Unable to get property '$propName'!")
+    }
+
+    return output.lines()[0]
+}
+
 fun Project.getCurrentBranch(): String =
     // Just result caching, don't set this property explicitly
     project.getOrInitProperty("git.currentBranch") {
-        val branchProp = "build.branch"
-        val branch = project.findProperty(branchProp) as String?
-
-        if (branch != null) {
-            return@getOrInitProperty branch
-        }
-
-        val outputStream = ByteArrayOutputStream()
-        val result = exec {
-            commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
-            standardOutput = outputStream
-        }
-
-        val output = outputStream.toString()
-        if (result.exitValue != 0) {
-            throw RuntimeException("Unable to get current git branch!")
-        }
-
-        output.lines()[0]
+        getPropertyByCommand(
+                "build.branch",
+                arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD")
+        )
     }
 
+fun Project.getCurrentCommitSha(): String =
+    // Just result caching, don't set this property explicitly
+    project.getOrInitProperty("git.currentSha") {
+        getPropertyByCommand(
+                "build.commit_sha",
+                arrayOf("git", "rev-parse", "HEAD")
+        )
+    }
 
 fun Project.isProtectedBranch(): Boolean {
     val branch = getCurrentBranch()

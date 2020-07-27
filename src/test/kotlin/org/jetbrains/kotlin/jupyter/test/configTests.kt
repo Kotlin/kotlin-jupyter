@@ -20,6 +20,9 @@ class ConfigTest {
             assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
 
         assertTrue(branch.isNotBlank(), "Branch name shouldn't be blank")
+
+        val commit = runtimeProperties.currentSha
+        assertEquals(40, commit.length)
     }
 
     @Test

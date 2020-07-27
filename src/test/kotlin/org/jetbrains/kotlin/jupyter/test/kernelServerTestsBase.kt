@@ -6,18 +6,23 @@ import org.jetbrains.kotlin.jupyter.JupyterSockets
 import org.jetbrains.kotlin.jupyter.KernelConfig
 import org.jetbrains.kotlin.jupyter.Message
 import org.jetbrains.kotlin.jupyter.iKotlinClass
+import org.jetbrains.kotlin.jupyter.kernelServer
 import org.jetbrains.kotlin.jupyter.makeHeader
 import org.jetbrains.kotlin.jupyter.receiveMessage
 import org.jetbrains.kotlin.jupyter.sendMessage
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.zeromq.ZMQ
 import java.io.File
 import java.io.IOException
+import java.net.DatagramSocket
 import java.net.ServerSocket
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
 
@@ -27,52 +32,71 @@ open class KernelServerTestsBase {
             signatureScheme = "hmac1-sha256",
             signatureKey = "",
             scriptClasspath = classpath,
-            resolverConfig = null)
-
-    private val args = config.toArgs().argsList().toTypedArray()
+            resolverConfig = null,
+    )
 
     private val sessionId = UUID.randomUUID().toString()
 
     protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
 
-    private var server: Process? = null
+    // Set to false to debug kernel execution
+    private val runInSeparateProcess = true
+    private var serverProcess: Process? = null
+    private var serverThread: Thread? = null
 
     protected val messageId = listOf(byteArrayOf(1))
 
-    private val testLogger = LoggerFactory.getLogger("testKernel")
-    private val fileOut = createTempFile("tmp-kernel-out", ".txt")
-    private val fileErr = createTempFile("tmp-kernel-out", ".txt")
+    private var testLogger: Logger? = null
+    private var fileOut: File? = null
+    private var fileErr: File? = null
 
     @BeforeEach
-    fun setupServer() {
-        val command = ArrayList<String>().apply {
-            add(javaBin)
-            add("-cp")
-            add(classpathArg)
-            add(iKotlinClass.name)
-            addAll(args)
-        }
+    fun setupServer(testInfo: TestInfo) {
+        if (runInSeparateProcess) {
+            val testName = testInfo.displayName
+            val args = config.toArgs(testName).argsList().toTypedArray()
+            val command = ArrayList<String>().apply {
+                add(javaBin)
+                add("-cp")
+                add(classpathArg)
+                add(iKotlinClass.name)
+                addAll(args)
+            }
 
-        server = ProcessBuilder(command)
-                .redirectOutput(fileOut)
-                .redirectError(fileErr)
-                .start()
+            testLogger = LoggerFactory.getLogger("testKernel_$testName")
+            fileOut = createTempFile("tmp-kernel-out-$testName", ".txt")
+            fileErr = createTempFile("tmp-kernel-err-$testName", ".txt")
+
+            serverProcess = ProcessBuilder(command)
+                    .redirectOutput(fileOut)
+                    .redirectError(fileErr)
+                    .start()
+        } else {
+            serverThread = thread { kernelServer(config) }
+        }
     }
 
     @AfterEach
     fun teardownServer() {
-        server?.run {
-            destroy()
-            waitFor()
-        }
-        with(testLogger){
-            debug("Kernel output:")
-            debug(fileOut.readText())
-            fileOut.delete()
-
-            debug("Kernel errors:")
-            debug(fileErr.readText())
-            fileErr.delete()
+        if (runInSeparateProcess) {
+            serverProcess?.run {
+                destroy()
+                waitFor()
+            }
+            testLogger?.apply {
+                fileOut?.let {
+                    debug("Kernel output:")
+                    it.forEachLine { line -> debug(line) }
+                    it.delete()
+                }
+                fileErr?.let {
+                    debug("Kernel errors:")
+                    it.forEachLine { line -> debug(line) }
+                    it.delete()
+                }
+            }
+        } else {
+            serverThread?.interrupt()
         }
     }
 
@@ -95,14 +119,27 @@ open class KernelServerTestsBase {
         private val javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java"
         private val classpathArg = System.getProperty("java.class.path")
 
+        private fun isPortAvailable(port: Int): Boolean {
+            var tcpSocket: ServerSocket? = null
+            var udpSocket: DatagramSocket? = null
+            try {
+                tcpSocket = ServerSocket(port)
+                tcpSocket.reuseAddress = true
+                udpSocket = DatagramSocket(port)
+                udpSocket.reuseAddress = true
+                return true
+            } catch (e: IOException) {
+
+            } finally {
+                tcpSocket?.close()
+                udpSocket?.close()
+            }
+            return false
+        }
+
         fun randomPort()
             = generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.take(maxTrials).find {
-                try {
-                    ServerSocket(it).close()
-                    usedPorts.add(it)
-                } catch (e: IOException) {
-                    false
-                }
+                isPortAvailable(it) && usedPorts.add(it)
             } ?: throw RuntimeException("No free port found")
     }
 }

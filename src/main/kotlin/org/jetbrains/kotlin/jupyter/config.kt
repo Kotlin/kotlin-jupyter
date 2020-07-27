@@ -65,6 +65,8 @@ data class RuntimeKernelProperties(val map: Map<String, String>) {
         get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
     val currentBranch: String
         get() = map["currentBranch"] ?: throw RuntimeException("Current branch is not specified!")
+    val currentSha: String
+        get() = map["currentSha"] ?: throw RuntimeException("Current commit SHA is not specified!")
     val jvmTargetForSnippets by lazy {
         map["jvmTargetForSnippets"] ?: JavaRuntime.version
     }
@@ -83,7 +85,7 @@ data class KernelConfig(
         val scriptClasspath: List<File> = emptyList(),
         val resolverConfig: ResolverConfig?
 ) {
-    fun toArgs(homeDir: File? = null): KernelArgs {
+    fun toArgs(prefix: String = "", homeDir: File? = null): KernelArgs {
         val cfgJson = jsonObject(
                 "transport" to transport,
                 "signature_scheme" to signatureScheme,
@@ -92,7 +94,8 @@ data class KernelConfig(
             JupyterSockets.values().forEach { cfg["${it.name}_port"] = ports[it.ordinal] }
         }
 
-        val cfgFile = createTempFile("kotlin-kernel", ".json")
+        val cfgFile = createTempFile("kotlin-kernel-config-$prefix", ".json")
+        cfgFile.deleteOnExit()
         cfgFile.writeText(cfgJson.toJsonString(true))
 
         return KernelArgs(cfgFile, scriptClasspath, homeDir)
