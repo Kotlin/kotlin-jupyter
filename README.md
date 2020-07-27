@@ -173,8 +173,7 @@ which were loaded into notebook during cells evaluation.
 If you use Jupyter Notebook as Jupyter client, you will also see that compilation errors and warnings are underlined in
 red and in yellow correspondingly. This is achieved by kernel-level extension of Jupyter notebook which sends
 error-analysis requests to kernel and renders their results. If you hover the cursor over underlined text, you will get 
-an error message which can help you to fix the error. Note that for now these inspections are false-positive for kernel
-magics (such as `%use`), please don't mind it.
+an error message which can help you to fix the error.
 
 ## Debugging
 
