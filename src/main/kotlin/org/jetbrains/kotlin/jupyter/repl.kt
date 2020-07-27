@@ -1,27 +1,63 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.*
+import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
+import jupyter.kotlin.KotlinKernelHost
+import jupyter.kotlin.KotlinKernelVersion
+import jupyter.kotlin.ReplOutputs
+import jupyter.kotlin.Repository
+import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
-import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
-import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
-import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
-import org.jetbrains.kotlin.jupyter.repl.spark.ClassWriter
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlin.jupyter.repl.ClassWriter
+import org.jetbrains.kotlin.jupyter.repl.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
+import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import java.io.File
 import java.net.URLClassLoader
 import java.util.*
 import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.ReplAnalyzerResult
+import kotlin.script.experimental.api.ResultValue
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCollectedData
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.analysisDiagnostics
+import kotlin.script.experimental.api.asDiagnostics
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.baseClass
+import kotlin.script.experimental.api.compilerOptions
+import kotlin.script.experimental.api.constructorArgs
+import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.fileExtension
+import kotlin.script.experimental.api.foundAnnotations
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.implicitReceivers
+import kotlin.script.experimental.api.onSuccess
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.host.withDefaultsFrom
-import kotlin.script.experimental.jvm.*
+import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
+import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.baseClassLoader
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.jvm.util.isError
 import kotlin.script.experimental.jvm.util.isIncomplete
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
+import kotlin.script.experimental.jvm.withUpdatedClasspath
 
 data class EvalResult(val resultValue: Any?)
 
@@ -47,13 +83,21 @@ enum class ExecutedCodeLogging {
     Generated
 }
 
+interface ReplRuntimeProperties {
+    val version: KotlinKernelVersion?
+    val librariesFormatVersion: Int
+    val currentBranch: String
+    val currentSha: String
+    val jvmTargetForSnippets: String
+}
+
 interface ReplOptions {
+    val currentBranch: String
+    val librariesDir: File
+
     var trackClasspath: Boolean
-
     var executedCodeLogging: ExecutedCodeLogging
-
     var writeCompiledClasses: Boolean
-
     var outputConfig: OutputConfig
 }
 
@@ -71,15 +115,34 @@ interface ReplForJupyter {
 
     suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit)
 
+    val homeDir: File?
+
     val currentClasspath: Collection<String>
 
     val resolverConfig: ResolverConfig?
 
+    val runtimeProperties: ReplRuntimeProperties
+
+    val libraryFactory: LibraryFactory
+
     var outputConfig: OutputConfig
 }
 
-class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
-                         override val resolverConfig: ResolverConfig? = null, vararg scriptReceivers: Any) : ReplForJupyter, ReplOptions, KotlinKernelHost {
+class ReplForJupyterImpl(
+        override val libraryFactory: LibraryFactory,
+        private val scriptClasspath: List<File> = emptyList(),
+        override val homeDir: File? = null,
+        override val resolverConfig: ResolverConfig? = null,
+        override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
+        private val scriptReceivers: List<Any> = emptyList(),
+) : ReplForJupyter, ReplOptions, KotlinKernelHost {
+
+    constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()):
+            this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers)
+
+    override val currentBranch: String
+        get() = runtimeProperties.currentBranch
+    override val librariesDir: File = homeDir?.resolve(LibrariesDir) ?: File(LibrariesDir)
 
     private var outputConfigImpl = OutputConfig()
 
@@ -177,9 +240,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
 
     private val ctx = KotlinContext()
 
-    private val receivers: List<Any> = scriptReceivers.asList()
-
-    private val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries))
+    private val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries, runtimeProperties, libraryFactory))
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
@@ -221,7 +282,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
                 onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
             }
 
-            val receiversTypes = receivers.map { KotlinType(it.javaClass.canonicalName) }
+            val receiversTypes = scriptReceivers.map { KotlinType(it.javaClass.canonicalName) }
             implicitReceivers(receiversTypes)
             skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
@@ -254,7 +315,7 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
     }
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        implicitReceivers.invoke(v = receivers)
+        implicitReceivers.invoke(v = scriptReceivers)
         jvm {
             val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
                 it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
@@ -583,4 +644,3 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
         scheduledExecutions.add(code)
     }
 }
-

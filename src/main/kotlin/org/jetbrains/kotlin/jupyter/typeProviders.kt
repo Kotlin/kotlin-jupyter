@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
-import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
+import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.withNullability

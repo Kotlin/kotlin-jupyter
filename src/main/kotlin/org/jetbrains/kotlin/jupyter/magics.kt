@@ -6,12 +6,16 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
+import org.jetbrains.kotlin.jupyter.libraries.DefaultInfoSwitch
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
 
 enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     use("include supported libraries", "klaxon(5.0.1), lets-plot"),
     trackClasspath("log current classpath changes"),
     trackExecution("log code that is going to be executed in repl", visibleInHelp = false),
     dumpClassesForSpark("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false),
+    useLatestDescriptors("Download latest versions of library descriptors for the current branch", "-[on|off]"),
     output("setup output settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400");
 
     companion object {
@@ -28,6 +32,8 @@ enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, 
 data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition>)
 
 class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesProcessor) {
+
+    private val libraryResolutionInfoSwitcher = LibraryFactoryDefaultInfoSwitcher.default(libraries.libraryFactory, repl.librariesDir, repl.currentBranch)
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
 
@@ -54,7 +60,7 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
             }
     }
 
-    fun processMagics(code: String, ignoreMagicsErrors: Boolean = false): MagicProcessingResult {
+    fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): MagicProcessingResult {
 
         val sb = StringBuilder()
         var nextSearchIndex = 0
@@ -81,8 +87,8 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                 val keyword = parts[0]
                 val arg = if (parts.count() > 1) parts[1] else null
 
-                val magic = ReplLineMagics.valueOfOrNull(keyword)
-                if(magic == null && !ignoreMagicsErrors) {
+                val magic = if (parseOnly) null else ReplLineMagics.valueOfOrNull(keyword)
+                if(magic == null && !parseOnly && !tryIgnoreErrors) {
                     throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
                 }
 
@@ -104,8 +110,15 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                         try {
                             if (arg == null) throw ReplCompilerException("Need some arguments for 'use' command")
                             newLibraries.addAll(libraries.processNewLibraries(arg))
-                        } catch (e: ReplCompilerException) {
-                            if (!ignoreMagicsErrors) throw  e
+                        } catch (e: Exception) {
+                            if (!tryIgnoreErrors) throw  e
+                        }
+                    }
+                    ReplLineMagics.useLatestDescriptors -> {
+                        libraryResolutionInfoSwitcher.switch = when(arg?.trim()) {
+                            "-on" -> DefaultInfoSwitch.GIT_REFERENCE
+                            "-off" -> DefaultInfoSwitch.DIRECTORY
+                            else -> DefaultInfoSwitch.GIT_REFERENCE
                         }
                     }
                     ReplLineMagics.output -> {

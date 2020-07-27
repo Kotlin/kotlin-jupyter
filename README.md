@@ -100,6 +100,7 @@ The following line magics are supported:
  - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
  - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
  - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
+ - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
  - `%output [options]` - output capturing settings.
  
  See detailed info about line magics [here](doc/magics.md).
@@ -127,6 +128,25 @@ If library descriptor defines more than one property, property names should be u
 Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
+```
+You can also specify the source of library descriptor. By default, it's downloaded from the latest commit on the
+branch which kernel was built from. If you want to try descriptor from another revision, use the following syntax:
+```
+// Specify tag
+%use lets-plot@0.8.2.5
+// Specify commit sha, with more verbose syntax
+%use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
+// Specify git ref along with library arguments
+%use krangl@dev(0.10)
+```
+Other options are resolving library descriptor from a local file or from remote URL:
+```
+// Load library from file
+%use mylib@file[/home/user/lib.json]
+// Load library descriptor from a remote URL
+%use herlib@url[https://site.com/lib.json]
+// You may omit library name for file and URL resolution:
+%use @file[lib.json]
 ```
 
 List of supported libraries:

@@ -5,8 +5,11 @@ import org.jetbrains.kotlin.jupyter.HMAC
 import org.jetbrains.kotlin.jupyter.JupyterSockets
 import org.jetbrains.kotlin.jupyter.KernelConfig
 import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.iKotlinClass
 import org.jetbrains.kotlin.jupyter.kernelServer
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.makeHeader
 import org.jetbrains.kotlin.jupyter.receiveMessage
 import org.jetbrains.kotlin.jupyter.sendMessage
@@ -33,6 +36,8 @@ open class KernelServerTestsBase {
             signatureKey = "",
             scriptClasspath = classpath,
             resolverConfig = null,
+            homeDir = File(""),
+            libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
     )
 
     private val sessionId = UUID.randomUUID().toString()
@@ -72,7 +77,7 @@ open class KernelServerTestsBase {
                     .redirectError(fileErr)
                     .start()
         } else {
-            serverThread = thread { kernelServer(config) }
+            serverThread = thread { kernelServer(config, defaultRuntimeProperties) }
         }
     }
 

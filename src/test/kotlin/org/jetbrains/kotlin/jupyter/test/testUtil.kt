@@ -3,14 +3,27 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.DependsOn
-import kotlinx.coroutines.Deferred
+import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
+import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
+import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlin.jupyter.ResolverConfig
-import org.jetbrains.kotlin.jupyter.asAsync
 import org.jetbrains.kotlin.jupyter.defaultRepositories
-import org.jetbrains.kotlin.jupyter.parserLibraryDescriptors
-import org.jetbrains.kotlin.jupyter.readLibraries
+import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlin.jupyter.libraries.LibraryReference
+import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptors
+import org.jetbrains.kotlin.jupyter.log
+import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
+
+const val standardResolverBranch = "master"
+
+val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaultRuntimeProperties {
+    override val currentBranch: String
+        get() = standardResolverBranch
+}
 
 val classpath = scriptCompilationClasspathFromContext(
         "jupyter-lib",
@@ -20,11 +33,52 @@ val classpath = scriptCompilationClasspathFromContext(
         classLoader = DependsOn::class.java.classLoader
 )
 
-val testResolverConfig = ResolverConfig(defaultRepositories,
-        parserLibraryDescriptors(readLibraries().toMap()).asAsync())
+val LibraryFactory.testResolverConfig: ResolverConfig
+    get() = ResolverConfig(
+            defaultRepositories,
+            getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
+    )
 
-fun Collection<Pair<String, String>>.toLibrariesAsync(): Deferred<Map<String, LibraryDescriptor>> {
+fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
     val parser = Parser.default()
     val libJsons = map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
-    return parserLibraryDescriptors(libJsons).asAsync()
+    return libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
+}
+
+fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>): LibraryResolver {
+    return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(defaultResolutionInfo, entry.key) })
+}
+
+fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
+    val parser = Parser.default()
+    return File(basePath, LibrariesDir)
+            .listFiles()?.filter { it.extension == LibraryDescriptorExt}
+            ?.map {
+                log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
+                it.nameWithoutExtension to parser.parse(it.canonicalPath) as JsonObject
+            }
+            .orEmpty()
+            .toMap()
+}
+
+class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null): LibraryResolver(parent) {
+    override val cache = hashMapOf<LibraryReference, LibraryDescriptor>()
+
+    init {
+        initialCache?.forEach { key, value ->
+            cache[key] = value
+        }
+    }
+
+    override fun shouldResolve(reference: LibraryReference): Boolean {
+        return reference.shouldBeCachedInMemory
+    }
+
+    override fun tryResolve(reference: LibraryReference): LibraryDescriptor? {
+        return cache[reference]
+    }
+
+    override fun save(reference: LibraryReference, descriptor: LibraryDescriptor) {
+        cache[reference] = descriptor
+    }
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
@@ -65,14 +66,17 @@ fun main(vararg args: String) {
     try {
         log.info("Kernel args: "+ args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val kernelConfig = KernelConfig.fromArgs(kernelArgs)
-        kernelServer(kernelConfig)
+        val runtimeProperties = defaultRuntimeProperties
+        val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
+        val libraryFactory = LibraryFactory.withDefaultDirectoryResolution(libraryPath)
+        val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryFactory)
+        kernelServer(kernelConfig, runtimeProperties)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
 }
 
-fun kernelServer(config: KernelConfig) {
+fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties) {
     log.info("Starting server with config: $config")
 
     JupyterConnection(config).use { conn ->
@@ -83,7 +87,7 @@ fun kernelServer(config: KernelConfig) {
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyterImpl(config.scriptClasspath, config.resolverConfig)
+        val repl = ReplForJupyterImpl(config, runtimeProperties)
 
         val mainThread = Thread.currentThread()
 
@@ -91,7 +95,7 @@ fun kernelServer(config: KernelConfig) {
             while (true) {
                 try {
                     conn.heartbeat.onData { send(it, 0) }
-                    conn.control.onMessage { shellMessagesHandler(it, null, executionCount) }
+                    conn.control.onMessage { controlMessagesHandler(it, repl) }
 
                     Thread.sleep(config.pollingIntervalMillis)
                 } catch (e: InterruptedException) {

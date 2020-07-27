@@ -1,9 +1,18 @@
-package org.jetbrains.kotlin.jupyter
+package org.jetbrains.kotlin.jupyter.libraries
 
 import jupyter.kotlin.KotlinKernelVersion
-import kotlinx.coroutines.Deferred
+import org.jetbrains.kotlin.jupyter.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.LibraryDescriptor
+import org.jetbrains.kotlin.jupyter.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlin.jupyter.TypeHandler
+import org.jetbrains.kotlin.jupyter.Variable
 
-class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDescriptor>>?) {
+class LibrariesProcessor(
+        private val libraries: LibraryResolver?,
+        private val runtimeProperties: ReplRuntimeProperties,
+        val libraryFactory: LibraryFactory,
+) {
 
     /**
      * Matches a list of actual library arguments with declared library parameters
@@ -98,10 +107,10 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
 
     fun processNewLibraries(arg: String) =
             splitLibraryCalls(arg).map {
-                val (name, vars) = parseLibraryName(it)
-                val library = libraries?.awaitBlocking()?.get(name)
-                        ?: throw ReplCompilerException("Unknown library '$name'")
-                checkKernelVersionRequirements(name, library)
+                val (libRef, vars) = libraryFactory.parseReferenceWithArgs(it)
+                val library = libraries?.resolve(libRef)
+                        ?: throw ReplCompilerException("Unknown library '$libRef'")
+                checkKernelVersionRequirements(libRef.toString(), library)
 
                 val mapping = substituteArguments(library.variables, vars)
 
