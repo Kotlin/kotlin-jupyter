@@ -444,17 +444,27 @@ class ReplForJupyterImpl(private val scriptClasspath: List<File> = emptyList(),
     }
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
-    override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) = doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor)) {
-        val preprocessed = magics.processMagics(code, true).code
-        completer.complete(compiler, compilerConfiguration, code, preprocessed, executionCounter++, cursor)
+    override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) =
+            doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor), ::doComplete)
+
+    private fun doComplete(args: CompletionArgs): CompletionResult {
+        if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
+
+        val preprocessed = magics.processMagics(args.code, true).code
+        return completer.complete(compiler, compilerConfiguration, args.code, preprocessed, executionCounter++, args.cursor)
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
-    override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) = doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code)) {
-        val preprocessed = magics.processMagics(code, true).code
+    override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) =
+            doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
+
+    private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
+        if (isCommand(args.code)) return reportCommandErrors(args.code)
+
+        val preprocessed = magics.processMagics(args.code, true).code
         val codeLine = SourceCodeImpl(executionCounter++, preprocessed)
         val errorsList = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
-        ListErrorsResult(code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
+        return ListErrorsResult(args.code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }
 
     private fun <T, Args: LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {

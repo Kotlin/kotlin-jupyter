@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.defaultRepositories
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
+import org.jetbrains.kotlin.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.runtimeProperties
@@ -263,6 +264,32 @@ class ReplTest : AbstractReplTest() {
             repl.complete(code, code.indexOf("foo") + 3) { result ->
                 if (result is CompletionResult.Success) {
                     assertEquals(arrayListOf("foobar"), result.sortedMatches())
+                } else {
+                    fail("Result should be success")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testCommands() {
+        val code1 = ":help"
+        val code2 = ":hex "
+
+        runBlocking {
+            repl.listErrors(code1) { result ->
+                assertEquals(code1, result.code)
+                assertEquals(0, result.errors.toList().size)
+            }
+            repl.listErrors(code2) { result ->
+                assertEquals(code2, result.code)
+                val expectedList = listOf(generateDiagnosticFromAbsolute(code2, 0, 4, "Unknown command", "ERROR"))
+                val actualList = result.errors.toList()
+                assertEquals(expectedList, actualList)
+            }
+            repl.complete(code2, 3) { result ->
+                if (result is CompletionResult.Success) {
+                    assertEquals(listOf("help"), result.sortedMatches())
                 } else {
                     fail("Result should be success")
                 }

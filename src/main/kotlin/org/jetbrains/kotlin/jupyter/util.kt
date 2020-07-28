@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
+import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
 import org.slf4j.Logger
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -53,6 +54,17 @@ fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, mes
                 null,
                 SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol))
         )
+
+fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: String): ScriptDiagnostic {
+    val snippet = SourceCodeImpl(0, code)
+    return ScriptDiagnostic(
+            ScriptDiagnostic.unspecifiedError,
+            message,
+            ScriptDiagnostic.Severity.valueOf(severity),
+            null,
+            SourceCode.Location(from.toSourceCodePosition(snippet), to.toSourceCodePosition(snippet))
+    )
+}
 
 fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =
         diagnostics.map { it.copy(sourcePath = path) }

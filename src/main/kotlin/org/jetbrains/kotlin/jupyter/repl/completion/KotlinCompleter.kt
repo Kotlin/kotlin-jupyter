@@ -129,8 +129,7 @@ class KotlinCompleter {
             val completionResult = codePos?.let { runBlocking { compiler.complete(preprocessedCodeLine, codePos, configuration) } }
 
             completionResult?.valueOrNull()?.toList()?.let { completionList ->
-                val bounds = getTokenBounds(code, cursor)
-                CompletionResult.Success(completionList.map { it.text }, bounds, completionList, code, cursor)
+                getResult(code, cursor, completionList)
             } ?: CompletionResult.Empty(code, cursor)
 
         } catch (e: Exception) {
@@ -141,6 +140,11 @@ class KotlinCompleter {
     }
 
     companion object {
+        fun getResult(code: String, cursor: Int, completions: List<SourceCodeCompletionVariant>): CompletionResult.Success {
+            val bounds = getTokenBounds(code, cursor)
+            return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)
+        }
+
         private fun getTokenBounds(buf: String, cursor: Int): CompletionTokenBounds {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
