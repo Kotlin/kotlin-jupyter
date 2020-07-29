@@ -323,7 +323,7 @@ class ReplForJupyterImpl(
             val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
             baseClassLoader(scriptClassloader)
         }
-        constructorArgs()
+        constructorArgs(this@ReplForJupyterImpl as KotlinKernelHost)
     }
 
     private var executionCounter = 0
@@ -589,11 +589,7 @@ class ReplForJupyterImpl(
             is ResultWithDiagnostics.Success -> {
                 val compileResult = compileResultWithDiagnostics.value
                 classWriter?.writeClasses(codeLine, compileResult.get())
-                val repl = this
-                val currentEvalConfig = ScriptEvaluationConfiguration(evaluatorConfiguration) {
-                    constructorArgs.invoke(repl as KotlinKernelHost)
-                }
-                val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, currentEvalConfig) }
+                val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evaluatorConfiguration) }
                 contextUpdater.update()
 
                 when(resultWithDiagnostics) {
