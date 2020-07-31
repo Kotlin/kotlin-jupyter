@@ -11,6 +11,12 @@ pluginManagement {
         // only when using Kotlin EAP releases ...
         maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
         maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
+
+        // Used for TeamCity build
+        val m2LocalPath = File(".m2/repository")
+        if (m2LocalPath.exists()) {
+            maven(m2LocalPath.toURI())
+        }
     }
 
     resolutionStrategy {
