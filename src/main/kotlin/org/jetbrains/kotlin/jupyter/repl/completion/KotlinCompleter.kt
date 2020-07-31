@@ -4,9 +4,11 @@ import com.beust.klaxon.JsonObject
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.jupyter.jsonObject
+import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.util.calcAbsolute
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 enum class CompletionStatus(private val value: String) {
@@ -119,14 +121,15 @@ internal class SourceCodeImpl(number: Int, override val text: String) : SourceCo
 }
 
 class KotlinCompleter {
-    fun complete(compiler: ReplCompleter, configuration: ScriptCompilationConfiguration, code: String, id: Int, cursor: Int): CompletionResult {
+    fun complete(compiler: ReplCompleter, configuration: ScriptCompilationConfiguration, code: String, preprocessedCode: String, id: Int, cursor: Int): CompletionResult {
         return try {
             val codeLine = SourceCodeImpl(id, code)
-            val completionResult = runBlocking { compiler.complete(codeLine, cursor.toSourceCodePosition(codeLine), configuration) }
+            val preprocessedCodeLine = SourceCodeImpl(id, preprocessedCode)
+            val codePos = cursor.toSourceCodePositionWithNewAbsolute(codeLine, preprocessedCodeLine)
+            val completionResult = codePos?.let { runBlocking { compiler.complete(preprocessedCodeLine, codePos, configuration) } }
 
-            completionResult.valueOrNull()?.toList()?.let { completionList ->
-                val bounds = getTokenBounds(code, cursor)
-                CompletionResult.Success(completionList.map { it.text }, bounds, completionList, code, cursor)
+            completionResult?.valueOrNull()?.toList()?.let { completionList ->
+                getResult(code, cursor, completionList)
             } ?: CompletionResult.Empty(code, cursor)
 
         } catch (e: Exception) {
@@ -137,7 +140,12 @@ class KotlinCompleter {
     }
 
     companion object {
-        fun getTokenBounds(buf: String, cursor: Int): CompletionTokenBounds {
+        fun getResult(code: String, cursor: Int, completions: List<SourceCodeCompletionVariant>): CompletionResult.Success {
+            val bounds = getTokenBounds(code, cursor)
+            return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)
+        }
+
+        private fun getTokenBounds(buf: String, cursor: Int): CompletionTokenBounds {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
             val startSubstring = buf.substring(0, cursor)

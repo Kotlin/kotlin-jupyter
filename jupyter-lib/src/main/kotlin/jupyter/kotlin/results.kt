@@ -31,6 +31,8 @@ abstract class ScriptTemplateWithDisplayHelpers(val __host: KotlinKernelHost?) {
     fun EXECUTE(code: String) = __host!!.scheduleExecution(code)
 
     val Out: List<Any?> = ReplOutputs
+
+    val JavaRuntimeUtils = JavaRuntime
 }
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))

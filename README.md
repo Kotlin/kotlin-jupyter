@@ -78,7 +78,14 @@ The following REPL commands are supported:
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
  - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
- - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository
+ - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
+ To specify Maven local, use `@file:Repository("*mavenLocal")`.
+ 
+Note that dependencies in remote repositories are resolved via Ivy resolver.
+Caches are stored in `~/.ivy2/cache` folder by default. Sometimes, due to network
+issues or running several artifacts resolutions in parallel, caches may get corrupted.
+If you have some troubles with artifacts resolution, please remove caches, restart kernel
+and try again.
  
 ### Default repositories
 
@@ -166,8 +173,7 @@ which were loaded into notebook during cells evaluation.
 If you use Jupyter Notebook as Jupyter client, you will also see that compilation errors and warnings are underlined in
 red and in yellow correspondingly. This is achieved by kernel-level extension of Jupyter notebook which sends
 error-analysis requests to kernel and renders their results. If you hover the cursor over underlined text, you will get 
-an error message which can help you to fix the error. Note that for now these inspections are false-positive for kernel
-magics (such as `%use`), please don't mind it.
+an error message which can help you to fix the error.
 
 ## Debugging
 
@@ -184,11 +190,13 @@ Check [libraries](libraries) directory to see examples of library descriptors.
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
 - `link`: a link to library homepage. This link will be displayed in `:help` command
+- `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
 - `repositories`: a list of maven or ivy repositories to search for dependencies
 - `dependencies`: a list of library dependencies
 - `imports`: a list of default imports for library
 - `init`: a list of code snippets to be executed when library is included
 - `initCell`: a list of code snippets to be executed before execution of any cell
+- `shutdown`: a list of code snippets to be executed on kernel shutdown. Any cleanup code goes here
 - `renderers`: a list of type converters for special rendering of particular types
 
 *All fields are optional

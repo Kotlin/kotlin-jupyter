@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
+import jupyter.kotlin.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.textResult
 import kotlinx.coroutines.GlobalScope
@@ -84,9 +85,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             ),
 
                             // Jupyter lab Console support
-                            "banner" to "Kotlin language, version ${KotlinCompilerVersion.VERSION}",
+                            "banner" to "Kotlin kernel v. ${runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
                             "implementation" to "Kotlin",
-                            "implementation_version" to runtimeProperties.version,
+                            "implementation_version" to runtimeProperties.version.toMaybeUnspecifiedString(),
                             "status" to "ok"
                     )))
         "history_request" ->
@@ -99,6 +100,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
         }
         "shutdown_request" -> {
+            repl?.evalOnShutdown()
             send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
             exitProcess(0)
         }

@@ -5,6 +5,7 @@ import com.beust.klaxon.Parser
 import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.utils.addToStdlib.min
+import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.security.SignatureException
@@ -13,12 +14,12 @@ import javax.crypto.spec.SecretKeySpec
 
 class JupyterConnection(val config: KernelConfig): Closeable {
 
-    inner class Socket(private val socket: JupyterSockets, type: Int = socket.zmqKernelType) : ZMQ.Socket(context, type) {
+    inner class Socket(private val socket: JupyterSockets, type: SocketType = socket.zmqKernelType) : ZMQ.Socket(context, type) {
         val name: String get() = socket.name
         init {
             val port = config.ports[socket.ordinal]
             bind("${config.transport}://*:$port")
-            if (type == ZMQ.PUB) {
+            if (type == SocketType.PUB) {
                 // Workaround to prevent losing few first messages on kernel startup
                 // For more information on losing messages see this scheme:
                 // http://zguide.zeromq.org/page:all#Missing-Message-Problem-Solver

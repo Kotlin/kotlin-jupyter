@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -17,7 +16,7 @@ class TaskOptions: AllOptions {
     override val versionFileName = "VERSION"
     override val rootPath: Path = rootDir.toPath()
 
-    override val isLocalBuild = (rootProject.findProperty("build.isLocal") ?: "false") == "true"
+    override val isLocalBuild = getFlag("build.isLocal")
 
     override val artifactsDir: Path = {
         val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
@@ -53,6 +52,7 @@ class TaskOptions: AllOptions {
     override val jarArgsFile = "$configDir/jar_args.json"
     override val runKernelPy = "run_kernel.py"
     override val kernelFile = "kernel.json"
+    override val mainClassFQN = "org.jetbrains.kotlin.jupyter.IkotlinKt"
     override val installKernelTaskPrefix = "installKernel"
     override val cleanInstallDirTaskPrefix = "cleanInstallDir"
     override val copyLibrariesTaskPrefix = "copyLibraries"
@@ -164,6 +164,9 @@ val deploy: Configuration by configurations.creating
 
 dependencies {
     val junitVersion = "5.6.2"
+    val slf4jVersion = "1.7.29"
+    val klaxonVersion = "5.2"
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation(kotlin("test"))
@@ -184,12 +187,12 @@ dependencies {
     compileOnly(kotlin("scripting-compiler-impl"))
 
     implementation("org.apache.maven:maven-core:3.0.3")
-    implementation("org.slf4j:slf4j-api:1.7.29")
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("khttp:khttp:1.0.0")
-    implementation("org.zeromq:jeromq:0.3.5")
-    implementation("com.beust:klaxon:5.2")
+    implementation("org.zeromq:jeromq:0.5.2")
+    implementation("com.beust:klaxon:$klaxonVersion")
     implementation("com.github.ajalt:clikt:2.3.0")
-    runtimeOnly("org.slf4j:slf4j-simple:1.7.29")
+    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
     runtimeOnly("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3") {
         exclude("org.slf4j", "slf4j-log4j12")
     }
@@ -197,38 +200,53 @@ dependencies {
     runtimeOnly("net.java.dev.jna:jna:5.4.0")
 
     deploy(project(":jupyter-lib"))
-}
-
-tasks {
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
-
-        val processorsForTests = Runtime.getRuntime().availableProcessors() / 2
-        maxParallelForks = if (processorsForTests > 1) processorsForTests else 1
-    }
-
-    @Suppress("UNUSED_VARIABLE")
-    val jar by getting(Jar::class) {
-        manifest {
-            attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
-            attributes["Implementation-Version"] = project.version
-        }
-    }
+    deploy(kotlin("script-runtime"))
 }
 
 with(ProjectWithOptionsImpl(project, TaskOptions())) {
     /****** Build tasks ******/
-    tasks.withType<ShadowJar> {
+    tasks.jar {
+        manifest {
+            attributes["Main-Class"] = mainClassFQN
+            attributes["Implementation-Version"] = project.version
+        }
+    }
+
+    tasks.shadowJar {
         archiveBaseName.set(packageName)
         archiveClassifier.set("")
         mergeServiceFiles()
 
         manifest {
-            attributes["Main-Class"] = "org.jetbrains.kotlin.jupyter.IkotlinKt"
+            attributes["Main-Class"] = mainClassFQN
         }
+    }
+
+    tasks.test {
+        val doParallelTesting = getFlag("test.parallel", true)
+
+        /**
+         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
+         */
+        val useShadowedJar = getFlag("test.useShadowed", false)
+
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+
+        if (useShadowedJar) {
+            dependsOn(tasks.shadowJar.get())
+            classpath = files(tasks.shadowJar.get()) + classpath
+        }
+
+        systemProperties = mutableMapOf(
+                "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
+
+                "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+                "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+                "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+        )
     }
 
     tasks.register("buildProperties") {
@@ -237,6 +255,7 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
 
         inputs.property("version", version)
         inputs.property("currentBranch", getCurrentBranch())
+        inputs.property("currentSha", getCurrentCommitSha())
         inputs.property("jvmTargetForSnippets",
                 rootProject.findProperty("jvmTargetForSnippets") ?: "1.8")
         inputs.file(librariesPropertiesPath)

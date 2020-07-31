@@ -1,0 +1,9 @@
+{
+  "properties": {
+    "name": "x",
+    "value": "42"
+  },
+  "init": [
+    "val $name = $value"
+  ]
+}

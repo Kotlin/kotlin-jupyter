@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
+import jupyter.kotlin.KotlinKernelVersion
 import kotlinx.coroutines.Deferred
 
 class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDescriptor>>?) {
@@ -38,6 +39,7 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
             repositories = library.repositories.map { replaceVariables(it, mapping) },
             imports = library.imports.map { replaceVariables(it, mapping) },
             init = library.init.map { replaceVariables(it, mapping) },
+            shutdown = library.shutdown.map { replaceVariables(it, mapping) },
             initCell = library.initCell.map { replaceVariables(it, mapping) },
             renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
             converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
@@ -82,11 +84,24 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
                 s.replace("\$${template.key}", template.value)
             }
 
+    private fun checkKernelVersionRequirements(name: String, library: LibraryDescriptor) {
+        library.minKernelVersion?.let { minVersionStr ->
+            val minVersion = KotlinKernelVersion.from(minVersionStr)
+                    ?: throw ReplCompilerException("Wrong format of minimal kernel version for library '$name': $minVersionStr")
+            runtimeProperties.version?.let { currentVersion ->
+                if (currentVersion < minVersion) {
+                    throw ReplCompilerException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
+                }
+            }
+        }
+    }
+
     fun processNewLibraries(arg: String) =
             splitLibraryCalls(arg).map {
                 val (name, vars) = parseLibraryName(it)
                 val library = libraries?.awaitBlocking()?.get(name)
                         ?: throw ReplCompilerException("Unknown library '$name'")
+                checkKernelVersionRequirements(name, library)
 
                 val mapping = substituteArguments(library.variables, vars)
 

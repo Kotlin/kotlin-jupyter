@@ -2,6 +2,8 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import jupyter.kotlin.JavaRuntime
+import jupyter.kotlin.KotlinKernelVersion
 import khttp.responses.Response
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -9,7 +11,7 @@ import kotlinx.coroutines.async
 import org.apache.commons.io.FileUtils
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
-import org.zeromq.ZMQ
+import org.zeromq.SocketType
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -31,12 +33,12 @@ val LibraryPropertiesFile = ".properties"
 
 internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 
-enum class JupyterSockets(val zmqKernelType: Int, val zmqClientType: Int) {
-    hb(ZMQ.REP, ZMQ.REQ),
-    shell(ZMQ.ROUTER, ZMQ.REQ),
-    control(ZMQ.ROUTER, ZMQ.REQ),
-    stdin(ZMQ.ROUTER, ZMQ.REQ),
-    iopub(ZMQ.PUB, ZMQ.SUB)
+enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
+    hb(SocketType.REP, SocketType.REQ),
+    shell(SocketType.ROUTER, SocketType.REQ),
+    control(SocketType.ROUTER, SocketType.REQ),
+    stdin(SocketType.ROUTER, SocketType.REQ),
+    iopub(SocketType.PUB, SocketType.SUB)
 }
 
 data class OutputConfig(
@@ -56,32 +58,17 @@ data class OutputConfig(
 }
 
 data class RuntimeKernelProperties(val map: Map<String, String>) {
-    val version: String
-        get() = map["version"] ?: "unspecified"
+    val version: KotlinKernelVersion? by lazy {
+        map["version"]?.let{ KotlinKernelVersion.from(it) }
+    }
     val librariesFormatVersion: Int
         get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
     val currentBranch: String
         get() = map["currentBranch"] ?: throw RuntimeException("Current branch is not specified!")
+    val currentSha: String
+        get() = map["currentSha"] ?: throw RuntimeException("Current commit SHA is not specified!")
     val jvmTargetForSnippets by lazy {
-        map["jvmTargetForSnippets"] ?: currentJavaVersion
-    }
-}
-
-val currentJavaVersion by lazy {
-    val defaultVersion = "1.8"
-    val version: String? = System.getProperty("java.version")
-
-    val versionParts = version?.split('.')
-    if (versionParts.isNullOrEmpty()){
-        defaultVersion
-    } else if (versionParts[0] == "1") {
-        if (versionParts.size > 1) {
-            "1.${versionParts[1]}"
-        } else {
-            defaultVersion
-        }
-    } else {
-        versionParts[0]
+        map["jvmTargetForSnippets"] ?: JavaRuntime.version
     }
 }
 
@@ -90,14 +77,50 @@ val runtimeProperties by lazy {
 }
 
 data class KernelConfig(
-        val ports: Array<Int>,
+        val ports: List<Int>,
         val transport: String,
         val signatureScheme: String,
         val signatureKey: String,
         val pollingIntervalMillis: Long = 100,
         val scriptClasspath: List<File> = emptyList(),
         val resolverConfig: ResolverConfig?
-)
+) {
+    fun toArgs(prefix: String = "", homeDir: File? = null): KernelArgs {
+        val cfgJson = jsonObject(
+                "transport" to transport,
+                "signature_scheme" to signatureScheme,
+                "key" to signatureKey,
+        ).also { cfg ->
+            JupyterSockets.values().forEach { cfg["${it.name}_port"] = ports[it.ordinal] }
+        }
+
+        val cfgFile = createTempFile("kotlin-kernel-config-$prefix", ".json")
+        cfgFile.deleteOnExit()
+        cfgFile.writeText(cfgJson.toJsonString(true))
+
+        return KernelArgs(cfgFile, scriptClasspath, homeDir)
+    }
+
+    companion object {
+        fun fromArgs(args: KernelArgs): KernelConfig {
+            val (cfgFile, scriptClasspath, homeDir) = args
+            val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
+            fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
+
+            val sigScheme = cfgJson.string("signature_scheme")
+            val key = cfgJson.string("key")
+
+            return KernelConfig(
+                    ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") },
+                    transport = cfgJson.string("transport") ?: "tcp",
+                    signatureScheme = sigScheme ?: "hmac1-sha256",
+                    signatureKey = if (sigScheme == null || key == null) "" else key,
+                    scriptClasspath = scriptClasspath,
+                    resolverConfig = homeDir?.let { loadResolverConfig(it.toString()) }
+            )
+        }
+    }
+}
 
 val protocolVersion = "5.3"
 
@@ -111,21 +134,26 @@ open class LibraryDefinition(
         val imports: List<String>,
         val repositories: List<String>,
         val init: List<String>,
+        val shutdown: List<String>,
         val renderers: List<TypeHandler>,
         val converters: List<TypeHandler>,
         val annotations: List<TypeHandler>
 )
 
-class LibraryDescriptor(dependencies: List<String>,
-                        val variables: List<Variable>,
-                        initCell: List<String>,
-                        imports: List<String>,
-                        repositories: List<String>,
-                        init: List<String>,
-                        renderers: List<TypeHandler>,
-                        converters: List<TypeHandler>,
-                        annotations: List<TypeHandler>,
-                        val link: String?) : LibraryDefinition(dependencies, initCell, imports, repositories, init, renderers, converters, annotations)
+class LibraryDescriptor(
+        dependencies: List<String>,
+        val variables: List<Variable>,
+        initCell: List<String>,
+        imports: List<String>,
+        repositories: List<String>,
+        init: List<String>,
+        shutdown: List<String>,
+        renderers: List<TypeHandler>,
+        converters: List<TypeHandler>,
+        annotations: List<TypeHandler>,
+        val link: String?,
+        val minKernelVersion: String?,
+) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
                           val libraries: Deferred<Map<String, LibraryDescriptor>>)
@@ -305,8 +333,12 @@ fun loadResolverConfig(homeDir: String) = ResolverConfig(defaultRepositories, Gl
 val defaultRepositories = arrayOf(
         "https://jcenter.bintray.com/",
         "https://repo.maven.apache.org/maven2/",
-        "https://jitpack.io"
+        "https://jitpack.io",
 ).map { RepositoryCoordinates(it) }
+
+val defaultGlobalImports = listOf(
+        "kotlin.math.*",
+)
 
 fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {
@@ -317,11 +349,13 @@ fun parserLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Lib
                 imports = it.value.array<String>("imports")?.toList().orEmpty(),
                 repositories = it.value.array<String>("repositories")?.toList().orEmpty(),
                 init = it.value.array<String>("init")?.toList().orEmpty(),
+                shutdown = it.value.array<String>("shutdown")?.toList().orEmpty(),
                 initCell = it.value.array<String>("initCell")?.toList().orEmpty(),
                 renderers = it.value.obj("renderers")?.map {
                     TypeHandler(it.key, it.value.toString())
                 }?.toList().orEmpty(),
                 link = it.value.string("link"),
+                minKernelVersion = it.value.string("minKernelVersion"),
                 converters = it.value.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
                 annotations = it.value.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
         )
