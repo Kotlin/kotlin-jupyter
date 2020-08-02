@@ -46,7 +46,7 @@ fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory)
 }
 
 fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>): LibraryResolver {
-    return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(defaultResolutionInfo, entry.key) })
+    return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(resolutionInfoProvider.get(), entry.key) })
 }
 
 fun readLibraries(basePath: String? = null): Map<String, JsonObject> {

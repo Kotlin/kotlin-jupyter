@@ -7,7 +7,7 @@ import java.net.URL
 import java.nio.file.Paths
 
 class LibraryFactory(
-        var defaultResolutionInfo: LibraryResolutionInfo,
+        val resolutionInfoProvider: ResolutionInfoProvider,
         private val parsers: Map<String, LibraryResolutionInfoParser> = defaultParsers,
 ) {
     fun parseReferenceWithArgs(str: String): Pair<LibraryReference, List<Variable>> {
@@ -25,16 +25,16 @@ class LibraryFactory(
 
     private fun parseResolutionInfo(string: String): LibraryResolutionInfo {
         // In case of empty string after `@`: %use lib@
-        if(string.isBlank()) return defaultResolutionInfo
+        if(string.isBlank()) return resolutionInfoProvider.get()
 
         val (type, vars) = parseCall(string, Brackets.SQUARE)
-        val parser = parsers[type] ?: return LibraryResolutionInfo.getInfoByRef(type)
+        val parser = parsers[type] ?: return resolutionInfoProvider.get(type)
         return parser.getInfo(vars)
     }
 
     private fun parseReference(string: String): LibraryReference {
         val sepIndex = string.indexOf('@')
-        if (sepIndex == -1) return LibraryReference(defaultResolutionInfo, string)
+        if (sepIndex == -1) return LibraryReference(resolutionInfoProvider.get(), string)
 
         val nameString = string.substring(0, sepIndex)
         val infoString = string.substring(sepIndex + 1)
@@ -43,8 +43,6 @@ class LibraryFactory(
     }
 
     companion object {
-        fun withDefaultDirectoryResolution(dir: File) = LibraryFactory(LibraryResolutionInfo.ByDir(dir))
-
         private val defaultParsers = listOf(
                 LibraryResolutionInfoParser.make("ref", listOf(Parameter.Required("ref"))) { args ->
                     LibraryResolutionInfo.getInfoByRef(args["ref"] ?: error("Argument 'ref' should be specified"))
@@ -59,5 +57,9 @@ class LibraryFactory(
                     LibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
                 },
         ).map { it.name to it }.toMap()
+
+        val EMPTY = LibraryFactory(EmptyResolutionInfoProvider)
+
+        fun withDefaultDirectoryResolution(dir: File) = LibraryFactory(StandardResolutionInfoProvider(LibraryResolutionInfo.ByDir(dir)))
     }
 }

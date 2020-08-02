@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ class TypeProviderTests {
         """.trimIndent()
         val cp = classpath + File(TypeProviderReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
         val libJsons = mapOf("mylib" to parser.parse(StringBuilder(descriptor)) as JsonObject)
-        val libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
+        val libraryFactory = LibraryFactory.EMPTY
         val config = ResolverConfig(defaultRepositories, libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons)))
         val repl = ReplForJupyterImpl(libraryFactory, cp, null, config, scriptReceivers = listOf(TypeProviderReceiver()))
 

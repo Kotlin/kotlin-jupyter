@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.jupyter.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
@@ -19,7 +20,7 @@ import java.io.File
 import kotlin.test.assertTrue
 
 class ParseArgumentsTests {
-    private val libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
+    private val libraryFactory = LibraryFactory.EMPTY
 
     @Test
     fun test1() {
@@ -101,7 +102,7 @@ class ParseMagicsTests {
     private val options = TestReplOptions()
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
-        val libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
+        val libraryFactory = LibraryFactory.EMPTY
         val processor = MagicsProcessor(options, LibrariesProcessor(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties, libraryFactory))
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)

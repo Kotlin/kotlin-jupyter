@@ -43,7 +43,7 @@ abstract class AbstractReplTest {
 
     companion object {
         @JvmStatic
-        protected val libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
+        protected val libraryFactory = LibraryFactory.EMPTY
 
         @JvmStatic
         protected val homeDir = File("")
@@ -569,15 +569,16 @@ class ReplWithResolverTest : AbstractReplTest() {
     @Test
     fun testDefaultInfoSwitcher() {
         val repl = getReplWithStandardResolver()
+        val infoProvider = repl.libraryFactory.resolutionInfoProvider
 
-        val initialDefaultResolutionInfo = repl.libraryFactory.defaultResolutionInfo
+        val initialDefaultResolutionInfo = infoProvider.fallback
         assertTrue(initialDefaultResolutionInfo is LibraryResolutionInfo.ByDir)
 
         repl.eval("%useLatestDescriptors")
-        assertTrue(repl.libraryFactory.defaultResolutionInfo is LibraryResolutionInfo.ByGitRef)
+        assertTrue(infoProvider.fallback is LibraryResolutionInfo.ByGitRef)
 
         repl.eval("%useLatestDescriptors -off")
-        assertTrue(repl.libraryFactory.defaultResolutionInfo === initialDefaultResolutionInfo)
+        assertTrue(infoProvider.fallback === initialDefaultResolutionInfo)
     }
 
     @Test
@@ -604,6 +605,12 @@ class ReplWithResolverTest : AbstractReplTest() {
         assertEquals(1, displays.count())
         assertNull(res3.resultValue)
         displays.clear()
+
+        val res4 = repl.eval("""
+            %use @$libraryPath(name=z, value=44)
+            z
+        """.trimIndent())
+        assertEquals(44, res4.resultValue)
     }
 
     @Test

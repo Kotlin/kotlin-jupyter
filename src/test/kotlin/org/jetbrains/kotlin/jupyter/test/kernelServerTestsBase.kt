@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.jupyter.Message
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.iKotlinClass
 import org.jetbrains.kotlin.jupyter.kernelServer
+import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.makeHeader
@@ -37,7 +38,7 @@ open class KernelServerTestsBase {
             scriptClasspath = classpath,
             resolverConfig = null,
             homeDir = File(""),
-            libraryFactory = LibraryFactory(LibraryResolutionInfo.ByNothing())
+            libraryFactory = LibraryFactory.EMPTY
     )
 
     private val sessionId = UUID.randomUUID().toString()

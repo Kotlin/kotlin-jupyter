@@ -33,7 +33,7 @@ data class MagicProcessingResult(val code: String, val libraries: List<LibraryDe
 
 class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesProcessor) {
 
-    private val libraryResolutionInfoSwitcher = LibraryFactoryDefaultInfoSwitcher.default(libraries.libraryFactory, repl.librariesDir, repl.currentBranch)
+    private val libraryResolutionInfoSwitcher = LibraryFactoryDefaultInfoSwitcher.default(libraries.libraryFactory.resolutionInfoProvider, repl.librariesDir, repl.currentBranch)
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
 

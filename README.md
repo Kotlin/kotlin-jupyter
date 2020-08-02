@@ -143,8 +143,15 @@ Other options are resolving library descriptor from a local file or from remote 
 ```
 // Load library from file
 %use mylib@file[/home/user/lib.json]
+// Load library from file: kernel will guess it's a file actually
+%use @/home/user/libs/lib.json
+// Or use another approach: specify a directory and file name without 
+// extension (it should be JSON in such case) before it
+%use lib@/home/user/libs
 // Load library descriptor from a remote URL
 %use herlib@url[https://site.com/lib.json]
+// If your URL responds with 200(OK), you may skip `url[]` part:
+%use @https://site.com/lib.json
 // You may omit library name for file and URL resolution:
 %use @file[lib.json]
 ```

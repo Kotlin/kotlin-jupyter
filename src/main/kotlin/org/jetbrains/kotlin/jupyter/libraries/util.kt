@@ -32,21 +32,21 @@ enum class DefaultInfoSwitch {
     GIT_REFERENCE, DIRECTORY
 }
 
-class LibraryFactoryDefaultInfoSwitcher<T>(private val libraryFactory: LibraryFactory, initialSwitchVal: T, private val switcher: (T) -> LibraryResolutionInfo) {
+class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionInfoProvider, initialSwitchVal: T, private val switcher: (T) -> LibraryResolutionInfo) {
     private val defaultInfoCache = hashMapOf<T, LibraryResolutionInfo>()
 
     var switch: T = initialSwitchVal
         set(value) {
-            libraryFactory.defaultResolutionInfo = defaultInfoCache.getOrPut(value) { switcher(value) }
+            infoProvider.fallback = defaultInfoCache.getOrPut(value) { switcher(value) }
             field = value
         }
 
     companion object {
-        fun default(factory: LibraryFactory, defaultDir: File, defaultRef: String): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
-            val initialInfo = factory.defaultResolutionInfo
+        fun default(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
+            val initialInfo = provider.fallback
             val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) initialInfo else LibraryResolutionInfo.ByDir(defaultDir)
             val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) initialInfo else LibraryResolutionInfo.getInfoByRef(defaultRef)
-            return LibraryFactoryDefaultInfoSwitcher(factory, DefaultInfoSwitch.DIRECTORY) { switch ->
+            return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
                 when(switch) {
                     DefaultInfoSwitch.DIRECTORY -> dirInfo
                     DefaultInfoSwitch.GIT_REFERENCE -> refInfo
