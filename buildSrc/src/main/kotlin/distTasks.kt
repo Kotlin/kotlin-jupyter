@@ -34,6 +34,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
             dependsOn("installHintRemoverRequirements")
         }
         from(distributionPath)
+        from("README.md")
         into(distribBuildPath)
         exclude(".idea/**")
 
