@@ -55,6 +55,7 @@ class KotlinVariableInfo(val value: Any?, val descriptor: KProperty<*>, val line
     val name: String
         get() = descriptor.name
 
+    @Suppress("MemberVisibilityCanBePrivate")
     val type: String
         get() = descriptor.returnType.toString()
 
