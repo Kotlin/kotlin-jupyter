@@ -1,7 +1,8 @@
 {
   "properties": {
-    "api": "0.0.22-SNAPSHOT",
-    "js": "1.4.2",
+    "api": "0.0.26-SNAPSHOT",
+    "lib": "1.5.1-SNAPSHOT",
+    "js": "1.5.0",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
@@ -9,7 +10,9 @@
     "https://jetbrains.bintray.com/lets-plot-maven"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot:lets-plot-kotlin-api:$api"
+    "org.jetbrains.lets-plot:lets-plot-kotlin-api-kernel:$api",
+    "org.jetbrains.lets-plot:lets-plot-common:$lib",
+    "org.jetbrains.lets-plot:lets-plot-image-export:$lib"
   ],
   "imports": [
     "jetbrains.letsPlot.*",
@@ -17,7 +20,9 @@
     "jetbrains.letsPlot.stat.*",
     "jetbrains.letsPlot.label.*",
     "jetbrains.letsPlot.scale.*",
-    "jetbrains.letsPlot.facet.*"
+    "jetbrains.letsPlot.facet.*",
+    "jetbrains.letsPlot.sampling.*",
+    "jetbrains.letsPlot.export.*"
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",
