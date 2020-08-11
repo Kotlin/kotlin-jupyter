@@ -1,8 +1,8 @@
 {
   "properties": {
-    "api": "0.0.26-SNAPSHOT",
-    "lib": "1.5.1-SNAPSHOT",
-    "js": "1.5.0",
+    "api": "1.0.0-rc1",
+    "lib": "1.5.2",
+    "js": "1.5.2",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
