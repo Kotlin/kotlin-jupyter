@@ -1,6 +1,6 @@
 {
   "properties": {
-    "api": "1.0.0-rc1",
+    "api": "1.0.0",
     "lib": "1.5.2",
     "js": "1.5.2",
     "isolatedFrame": ""
@@ -10,7 +10,7 @@
     "https://jetbrains.bintray.com/lets-plot-maven"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot:lets-plot-kotlin-api-kernel:$api",
+    "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api-kernel:$api",
     "org.jetbrains.lets-plot:lets-plot-common:$lib",
     "org.jetbrains.lets-plot:lets-plot-image-export:$lib"
   ],
