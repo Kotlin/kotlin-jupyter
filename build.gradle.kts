@@ -42,7 +42,7 @@ class TaskOptions: AllOptions {
         Paths.get(System.getProperty("user.home").toString(), ".ipython", "kernels", "kotlin")
 
     override val resourcesDir = "resources"
-    override val distribBuildPath: Path = rootPath.resolve("distrib-build")
+    override val distribBuildPath: Path = rootPath.resolve("build").resolve("distrib-build")
     override val logosPath = getSubDir(rootPath, resourcesDir, "logos")
     override val nbExtensionPath = getSubDir(rootPath, resourcesDir, "notebook-extension")
     override val distributionPath: Path by extra(rootPath.resolve("distrib"))
