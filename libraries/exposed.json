@@ -1,4 +1,5 @@
 {
+  "description": "Kotlin SQL framework",
   "properties": {
     "v": "0.17.3"
   },

@@ -1,4 +1,5 @@
 {
+  "description": "Kotlin mathematical library analogous to NumPy",
   "properties": {
     "v": "0.1.3"
   },

@@ -1,4 +1,5 @@
 {
+  "description": "Deep learning library for the JVM",
   "properties": {
     "v": "1.0.0-beta6",
     "slf4j": "1.7.25",

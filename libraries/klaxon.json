@@ -1,4 +1,5 @@
 {
+  "description": "JSON parser for Kotlin",
   "properties": {
     "v": "5.2"
   },

@@ -1,4 +1,5 @@
 {
+  "description": "Kotlin DSL for data wrangling",
   "properties": {
     "v": "0.13"
   },

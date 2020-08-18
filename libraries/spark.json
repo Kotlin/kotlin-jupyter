@@ -1,8 +1,10 @@
 {
+  "description": "Unified analytics engine for large-scale data processing",
   "properties": {
     "scala": "2.11.12",
     "spark": "2.4.4"
   },
+  "link": "https://github.com/apache/spark",
   "dependencies": [
     "org.apache.spark:spark-mllib_2.11:$spark",
     "org.apache.spark:spark-sql_2.11:$spark",

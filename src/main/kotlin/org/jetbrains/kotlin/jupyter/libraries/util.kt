@@ -122,6 +122,7 @@ fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
             initCell = json.array<String>("initCell")?.toList().orEmpty(),
             renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
             link = json.string("link"),
+            description = json.string("description"),
             minKernelVersion = json.string("minKernelVersion"),
             converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
             annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
