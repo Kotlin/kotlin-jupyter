@@ -1,4 +1,5 @@
 {
+  "description": "Scientific computing library",
   "properties": {
     "v": "0.13"
   },

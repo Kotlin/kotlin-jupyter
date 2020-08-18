@@ -1,4 +1,5 @@
 {
+  "description": "ggplot-like interactive visualization for Kotlin",
   "properties": {
     "api": "1.0.0",
     "lib": "1.5.2",

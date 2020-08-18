@@ -1,4 +1,5 @@
 {
+  "description": "HTTP networking library",
   "properties": {
     "v": "-SNAPSHOT"
   },

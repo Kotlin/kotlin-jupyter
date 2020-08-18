@@ -75,7 +75,14 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 val descriptor = log.catchAll("Parsing descriptor for library '$libraryName' failed") {
                     parseLibraryDescriptor(file.readText())
                 }
-                if (descriptor != null) "$libraryName ${descriptor.link ?: ""}" else null
+
+                if (descriptor != null) {
+                    val link  = if (descriptor.link != null) " (${descriptor.link})" else ""
+                    val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
+                    "$libraryName$link$description"
+                } else  {
+                    null
+                }
             }.joinToStringIndented()
             OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
         }

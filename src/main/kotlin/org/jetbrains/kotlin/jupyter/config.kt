@@ -162,6 +162,7 @@ class LibraryDescriptor(
         converters: List<TypeHandler>,
         annotations: List<TypeHandler>,
         val link: String?,
+        val description: String?,
         val minKernelVersion: String?,
 ) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 

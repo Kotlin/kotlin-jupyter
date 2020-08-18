@@ -1,4 +1,5 @@
 {
+  "description": "MySql JDBC Connector",
   "properties": {
     "v": "8.0.17"
   },

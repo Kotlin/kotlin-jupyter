@@ -10,11 +10,11 @@
 
 Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
 
-![Screenshot in Jupyter](./samples/Screenshot.png)
+![Screenshot in Jupyter](Screenshot.png)
 
 To start using Kotlin kernel for Jupyter take a look at [introductory guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
-Example notebooks can be found in the [samples](samples) folder
+Example notebooks can be found in the [samples](../samples) folder
 
 Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
@@ -103,7 +103,7 @@ The following line magics are supported:
  - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
  - `%output [options]` - output capturing settings.
  
- See detailed info about line magics [here](doc/magics.md).
+ See detailed info about line magics [here](magics.md).
  
 ### Supported Libraries
 
@@ -114,7 +114,7 @@ When a library is included with `%use` keyword, the following functionality is a
  - library initialization code
  - renderers for special types, e.g. charts and data frames
 
-This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](libraries) directory.
+This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](../libraries) directory.
 A library descriptor may provide a set of properties with default values that can be overridden when library is included.
 The major use case for library properties is to specify particular version of library. If descriptor has only one property, it can be 
 defined without naming:
@@ -157,20 +157,7 @@ Other options are resolving library descriptor from a local file or from remote 
 ```
 
 List of supported libraries:
- - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
- - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
- - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
- - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
- - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
- - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
- - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
- - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
- - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
- - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
- - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
- - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
- - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
+[[supported_libraries]]
 
 ### Rich output
   
@@ -212,10 +199,11 @@ an error message which can help you to fix the error.
 
 To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
 
-Check [libraries](libraries) directory to see examples of library descriptors.
+Check [libraries](../libraries) directory to see examples of library descriptors.
 
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
+- `description`: a short library description which is used for generating libraries list in README
 - `link`: a link to library homepage. This link will be displayed in `:help` command
 - `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
 - `repositories`: a list of maven or ivy repositories to search for dependencies
@@ -238,14 +226,14 @@ Library properties can be used in any parts of library descriptor as `$property`
 
 To register new library descriptor:
 1. For private usage - add it to local settings folder `<UserHome>/.jupyter_kotlin/libraries`
-2. For sharing with community - commit it to [libraries](libraries) directory and create pull request.
+2. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
 
 If you are maintaining some library and want to update your library descriptor, just create pull request with your update. After your request is accepted, 
 new version of your library will be available to all Kotlin Jupyter users immediately on next kernel startup (no kernel update is needed).
 
 If a library descriptor with the same name is found in several locations, the following resolution priority is used:
 1. Local settings folder (highest priority)
-2. [libraries](libraries) directory at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
+2. [libraries](../libraries) directory at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
 3. Kernel installation directory
 
 If you don't want some library to be updated automatically, put fixed version of its library descriptor into local settings folder.

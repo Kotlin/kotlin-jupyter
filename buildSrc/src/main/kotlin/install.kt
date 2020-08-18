@@ -14,6 +14,7 @@ interface BuildOptions {
     val rootPath: Path
 
     val artifactsDir: Path
+    val readmePath: Path
 }
 
 interface ProjectWithBuildOptions: Project, BuildOptions

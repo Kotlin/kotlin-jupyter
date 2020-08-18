@@ -1,4 +1,5 @@
 {
+  "description": "Java library for displaying plots",
   "properties": {
     "v": "0.11"
   },

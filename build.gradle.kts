@@ -29,6 +29,7 @@ class TaskOptions: AllOptions {
         println("##teamcity[buildNumber '$version']")
         artifactsDir
     }()
+    override val readmePath: Path = rootPath.resolve("docs").resolve("README.md")
 
     private val installPath = rootProject.findProperty("installPath") as String?
 
@@ -249,7 +250,7 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
         )
     }
 
-    tasks.register("buildProperties") {
+    val buildProperties by tasks.registering {
         group = buildGroup
         val outputDir = file(getSubDir(buildDir.toPath(), resourcesDir, mainSourceSetDir))
 
@@ -277,7 +278,47 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
     }
 
     tasks.processResources {
-        dependsOn("buildProperties")
+        dependsOn(buildProperties)
+    }
+
+    val readmeFile = readmePath.toFile()
+    val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
+    val librariesDir = File(librariesPath)
+    val readmeGenerator = ReadmeGenerator(librariesDir)
+
+    val generateReadme by tasks.registering {
+        group = buildGroup
+
+        readmeFile.parentFile.mkdirs()
+
+        inputs.file(readmeStubFile)
+        inputs.dir(librariesDir)
+        outputs.file(readmeFile)
+
+        doLast {
+            readmeGenerator.generate(readmeStubFile, readmeFile)
+        }
+    }
+
+    val checkReadme by tasks.registering {
+        group = "verification"
+
+        inputs.file(readmeStubFile)
+        inputs.dir(librariesDir)
+        inputs.file(readmeFile)
+
+        doLast {
+            val tempFile = createTempFile("kotlin-jupyter-readme")
+            tempFile.deleteOnExit()
+            readmeGenerator.generate(readmeStubFile, tempFile)
+            if(tempFile.readText() != readmeFile.readText()) {
+                throw AssertionError("Readme is not regenerated. Regenerate it using `./gradlew ${generateReadme.name}` command")
+            }
+        }
+    }
+
+    tasks.check {
+        dependsOn(checkReadme)
     }
 
     createCleanTasks()
