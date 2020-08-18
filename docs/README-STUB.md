@@ -193,7 +193,7 @@ an error message which can help you to fix the error.
 
 1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
 2. Run `jupyter-notebook`
-3. Attach remote debugger to JVM with specified port 
+3. Attach a remote debugger to JVM with specified port 
 
 ## Adding new libraries
 
@@ -225,15 +225,10 @@ Name of the file is a library name that is passed to '%use' command
 Library properties can be used in any parts of library descriptor as `$property`
 
 To register new library descriptor:
-1. For private usage - add it to local settings folder `<UserHome>/.jupyter_kotlin/libraries`
+1. For private usage - create it anywhere on your computer and reference it using file syntax.
 2. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
 
-If you are maintaining some library and want to update your library descriptor, just create pull request with your update. After your request is accepted, 
-new version of your library will be available to all Kotlin Jupyter users immediately on next kernel startup (no kernel update is needed).
-
-If a library descriptor with the same name is found in several locations, the following resolution priority is used:
-1. Local settings folder (highest priority)
-2. [libraries](../libraries) directory at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
-3. Kernel installation directory
-
-If you don't want some library to be updated automatically, put fixed version of its library descriptor into local settings folder.
+If you are maintaining some library and want to update your library descriptor, create pull request with your update. 
+After your request is accepted, new version of your library will be available to all Kotlin Jupyter users 
+immediately on next kernel startup (no kernel update is needed) - but only if they use `useLatestDescriptors` magic.
+If not, kernel update is needed.
