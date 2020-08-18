@@ -3,6 +3,7 @@ The following line magics are supported:
  - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
  - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
  - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
+ - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
  - `%output [--max-cell-size=N] [--max-buffer=N] [--max-buffer-newline=N] [--max-time=N] [--no-stdout] [--reset-to-defaults]` - 
  output capturing settings.
      - `max-cell-size` specifies the characters count which may be printed to stdout. Default is 100000.
