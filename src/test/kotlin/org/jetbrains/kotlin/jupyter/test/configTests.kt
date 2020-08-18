@@ -2,7 +2,11 @@ package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.KotlinKernelVersion
-import org.jetbrains.kotlin.jupyter.*
+import org.jetbrains.kotlin.jupyter.LibrariesDir
+import org.jetbrains.kotlin.jupyter.LibraryPropertiesFile
+import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlin.jupyter.log
+import org.jetbrains.kotlin.jupyter.parseIniConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,7 +17,7 @@ import kotlin.test.assertNotNull
 class ConfigTest {
     @Test
     fun testBranch() {
-        val branch = runtimeProperties.currentBranch
+        val branch = defaultRuntimeProperties.currentBranch
         log.debug("Runtime git branch is: $branch")
 
         if (!branch.matches(Regex("pull/[1-9][0-9]*")))
@@ -21,13 +25,13 @@ class ConfigTest {
 
         assertTrue(branch.isNotBlank(), "Branch name shouldn't be blank")
 
-        val commit = runtimeProperties.currentSha
+        val commit = defaultRuntimeProperties.currentSha
         assertEquals(40, commit.length)
     }
 
     @Test
     fun testLibrariesProperties() {
-        val format = runtimeProperties.librariesFormatVersion
+        val format = defaultRuntimeProperties.librariesFormatVersion
         log.debug("Runtime libs format is: $format")
 
         assertTrue(format in 2..1000)
@@ -37,7 +41,7 @@ class ConfigTest {
 
     @Test
     fun testVersion() {
-        val version = runtimeProperties.version
+        val version = defaultRuntimeProperties.version
         log.debug("Runtime version is: $version")
 
         assertNotNull(version)

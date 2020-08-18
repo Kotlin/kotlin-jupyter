@@ -46,9 +46,9 @@ class KernelServerTest : KernelServerTestsBase() {
         with (ClientSocket(context, JupyterSockets.control)) {
             try {
                 connect()
-                sendMessage(Message(id = messageId, header = makeHeader("kernel_info_request")), hmac)
+                sendMessage(Message(id = messageId, header = makeHeader("interrupt_request")), hmac)
                 val msg = receiveMessage(recv(), hmac)
-                assertEquals("kernel_info_reply", msg!!.header!!["msg_type"])
+                assertEquals("interrupt_reply", msg!!.header!!["msg_type"])
             } finally {
                 close()
                 context.term()

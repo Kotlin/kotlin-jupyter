@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.jupyter.repl.reflect
+package org.jetbrains.kotlin.jupyter.repl
 
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo

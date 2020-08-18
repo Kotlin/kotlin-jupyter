@@ -1,10 +1,11 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.textResult
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
-import org.jetbrains.kotlin.jupyter.repl.completion.KotlinCompleter
-import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
-import org.jetbrains.kotlin.jupyter.repl.completion.SourceCodeImpl
+import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlin.jupyter.repl.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
+import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
@@ -51,12 +52,12 @@ fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
     return KotlinCompleter.getResult(code, cursor, completions)
 }
 
-fun runCommand(code: String, repl: ReplForJupyter?): Response {
+fun runCommand(code: String, repl: ReplForJupyter): Response {
     val args = code.trim().substring(1).split(" ")
     val cmd = getCommand(args[0]) ?: return AbortResponseWithMessage(textResult("Failed!"), "unknown command: $code\nto see available commands, enter :help")
     return when (cmd) {
         ReplCommands.classpath -> {
-            val cp = repl!!.currentClasspath
+            val cp = repl.currentClasspath
             OkResponseWithMessage(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommands.help -> {
@@ -66,9 +67,16 @@ fun runCommand(code: String, repl: ReplForJupyter?): Response {
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.name} ${it.argumentsUsage}"
                 s
             }
-            val libraries = repl?.resolverConfig?.libraries?.awaitBlocking()?.toList()?.joinToStringIndented {
-                "${it.first} ${it.second.link ?: ""}"
-            }
+            val libraryFiles =
+                    repl.homeDir?.resolve(LibrariesDir)?.listFiles { file -> file.isFile && file.name.endsWith(".$LibraryDescriptorExt") } ?: emptyArray()
+            val libraries = libraryFiles.toList().mapNotNull { file ->
+                val libraryName = file.nameWithoutExtension
+                log.info("Parsing descriptor for library '$libraryName'")
+                val descriptor = log.catchAll("Parsing descriptor for library '$libraryName' failed") {
+                    parseLibraryDescriptor(file.readText())
+                }
+                if (descriptor != null) "$libraryName ${descriptor.link ?: ""}" else null
+            }.joinToStringIndented()
             OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
         }
     }

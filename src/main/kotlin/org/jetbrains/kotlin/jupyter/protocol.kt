@@ -67,7 +67,21 @@ data class ErrorResponseWithMessage(
     override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
 }
 
-fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter?, executionCount: AtomicLong) {
+fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
+    when(msg.header!!["msg_type"]) {
+        "interrupt_request" -> {
+            log.warn("Interruption is not yet supported!")
+            send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
+        }
+        "shutdown_request" -> {
+            repl?.evalOnShutdown()
+            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
+            exitProcess(0)
+        }
+    }
+}
+
+fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter, executionCount: AtomicLong) {
     when (msg.header!!["msg_type"]) {
         "kernel_info_request" ->
             sendWrapped(msg, makeReplyMessage(msg, "kernel_info_reply",
@@ -85,9 +99,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             ),
 
                             // Jupyter lab Console support
-                            "banner" to "Kotlin kernel v. ${runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
+                            "banner" to "Kotlin kernel v. ${repl.runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
                             "implementation" to "Kotlin",
-                            "implementation_version" to runtimeProperties.version.toMaybeUnspecifiedString(),
+                            "implementation_version" to repl.runtimeProperties.version.toMaybeUnspecifiedString(),
                             "status" to "ok"
                     )))
         "history_request" ->
@@ -95,15 +109,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = jsonObject(
                             "history" to listOf<String>() // not implemented
                     )))
-        "interrupt_request" -> {
-            log.warn("Interruption is not yet supported!")
-            send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
-        }
-        "shutdown_request" -> {
-            repl?.evalOnShutdown()
-            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
-            exitProcess(0)
-        }
 
         // TODO: This request is deprecated since messaging protocol v.5.1,
         // remove it in future versions of kernel
@@ -134,7 +139,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val res: Response = if (isCommand(code.toString())) {
                 runCommand(code.toString(), repl)
             } else {
-                connection.evalWithIO(repl!!.outputConfig, msg) {
+                connection.evalWithIO(repl.outputConfig, msg) {
                     repl.eval(code.toString(), ::displayHandler, count.toInt())
                 }
             }
@@ -204,10 +209,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         "complete_request" -> {
             val code = msg.content["code"].toString()
             val cursor = msg.content["cursor_pos"] as Int
-            if (repl == null) {
-                System.err.println("Repl is not yet initialized on complete request")
-                return
-            }
             GlobalScope.launch {
                 repl.complete(code, cursor) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, "complete_reply", content = result.toJson()))
@@ -216,10 +217,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         }
         "list_errors_request" -> {
             val code = msg.content["code"].toString()
-            if (repl == null) {
-                System.err.println("Repl is not yet initialized on listErrors request")
-                return
-            }
             GlobalScope.launch {
                 repl.listErrors(code) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply", content = result.toJson()))
@@ -230,9 +227,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             val code = msg.content["code"].toString()
             val resStr = if (isCommand(code)) "complete" else {
                 val result = try {
-                   val check = repl?.checkComplete(code)
+                    val check = repl.checkComplete(code)
                     when {
-                        check == null -> "error: no repl"
                         check.isComplete -> "complete"
                         else -> "incomplete"
                     }

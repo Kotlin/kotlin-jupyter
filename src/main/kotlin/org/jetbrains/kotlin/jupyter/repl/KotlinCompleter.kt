@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.jupyter.repl.completion
+package org.jetbrains.kotlin.jupyter.repl
 
 import com.beust.klaxon.JsonObject
 import kotlinx.coroutines.runBlocking
@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.script.experimental.api.*
-import kotlin.script.experimental.jvm.util.calcAbsolute
-import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 enum class CompletionStatus(private val value: String) {
     OK("ok"),
@@ -76,7 +74,7 @@ abstract class CompletionResult(
 
     class Empty(
             text: String, cursor: Int
-    ): CompletionResult.Success(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
+    ): Success(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
 
     class Error(
             private val errorName: String,
