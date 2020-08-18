@@ -585,7 +585,7 @@ class ReplWithResolverTest : AbstractReplTest() {
     fun testUseFileUrlRef() {
         val repl = getReplWithStandardResolver()
 
-        val commit = "1f56d74a88f6fb78306d685d0b3aaf07113a8abf"
+        val commit = "561ce1a324a9434d3481456b11678851b48a3132"
         val libraryPath = "src/test/testData/test-init.json"
 
         val res1 = repl.eval("""
