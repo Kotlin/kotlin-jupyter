@@ -1,7 +1,7 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.0.6-dev-12"
+    "v": "0.0.6-dev-13"
   },
   "init": [
     "fun krangl.typed.TypedDataFrame<*>.extractSchema(name: String? = null) = EXECUTE(getScheme(name))",
