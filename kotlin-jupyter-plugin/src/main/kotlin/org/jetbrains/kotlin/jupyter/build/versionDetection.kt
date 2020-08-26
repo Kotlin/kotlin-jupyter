@@ -1,3 +1,5 @@
+package org.jetbrains.kotlin.jupyter.build
+
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke

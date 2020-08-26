@@ -1,4 +1,8 @@
+package org.jetbrains.kotlin.jupyter.build
+
 import groovy.json.JsonSlurper
+import org.jetbrains.kotlin.jupyter.common.ReplCommands
+import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import java.io.File
 
 class ReadmeGenerator(
@@ -13,7 +17,9 @@ class ReadmeGenerator(
     }
 
     private val processors: Map<String, () -> String> = mapOf(
-        "supported_libraries" to ::processSupportedLibraries
+        "supported_libraries" to ::processSupportedLibraries,
+        "supported_commands" to ::processCommands,
+        "magics" to ::processMagics
     )
 
     private fun processSupportedLibraries(): String {
@@ -32,5 +38,21 @@ class ReadmeGenerator(
             val descriptionPart = if (description == null) "" else " - $description"
             libraryName to " - $namePart$descriptionPart"
         }.toMap(sortedMap).values.joinToString("\n")
+    }
+
+    private fun processCommands(): String {
+        return ReplCommands.values().joinToString("\n") {
+            " - `:${it.name}` - ${it.desc}"
+        }
+    }
+
+    private fun processMagics(): String {
+        return ReplLineMagics.values().filter { it.visibleInHelp }.joinToString ("\n") {
+            val description = " - `%${it.name}` - ${it.desc}"
+            val usage = if (it.argumentsUsage == null) ""
+            else "\n\tUsage example: %${it.name} ${it.argumentsUsage}"
+
+            description + usage
+        }
     }
 }

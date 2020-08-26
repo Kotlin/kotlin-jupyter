@@ -101,7 +101,7 @@ class ParseArgumentsTests {
 
         val info = ref.info
         assertTrue(info is LibraryResolutionInfo.ByGitRef)
-        assertEquals(40, info.sha.length)
+        assertEquals(40, info.sha.length, "Expected commit SHA, but was `${info.sha}`")
         assertEquals(0, args.size)
     }
 }

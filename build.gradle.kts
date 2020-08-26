@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.jupyter.build.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -11,6 +12,7 @@ plugins {
     kotlin("jvm")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
+    id("org.jetbrains.kotlin.jupyter.dependencies")
 }
 
 class TaskOptions : AllOptions {
@@ -176,6 +178,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation(kotlin("test"))
 
+    implementation(project(":kotlin-jupyter-deps"))
     implementation(project(":jupyter-lib"))
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))

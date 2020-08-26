@@ -6,28 +6,10 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
+import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import org.jetbrains.kotlin.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
-
-enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
-    use("include supported libraries", "klaxon(5.0.1), lets-plot"),
-    trackClasspath("log current classpath changes"),
-    trackExecution("log code that is going to be executed in repl", visibleInHelp = false),
-    dumpClassesForSpark("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false),
-    useLatestDescriptors("Download latest versions of library descriptors for the current branch", "-[on|off]"),
-    output("setup output settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400");
-
-    companion object {
-        fun valueOfOrNull(name: String): ReplLineMagics? {
-            return try {
-                valueOf(name)
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-        }
-    }
-}
 
 data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition>)
 

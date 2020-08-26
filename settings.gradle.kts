@@ -37,6 +37,7 @@ pluginManagement {
         kotlin("jvm") version kotlinVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
+        id("org.jetbrains.kotlin.jupyter.dependencies")
     }
 }
 
@@ -45,5 +46,12 @@ gradle.projectsLoaded {
         repositories.addAll(pluginManagement.repositories)
     }
 }
+
+val pluginProject = "kotlin-jupyter-plugin"
+val depsProject = "kotlin-jupyter-deps"
+
+includeBuild(pluginProject)
+include(depsProject)
+project(":$depsProject").projectDir = file("$pluginProject/$depsProject")
 
 include("jupyter-lib")
