@@ -13,7 +13,10 @@
 
 # Folders with build files
 out/
-**/build/
+/build/
+/jupyter-lib/build/
+/kotlin-jupyter-plugin/build/
+/kotlin-jupyter-plugin/kotlin-jupyter-deps/build/
 artifacts/
 
 # Gradle caches and internal files

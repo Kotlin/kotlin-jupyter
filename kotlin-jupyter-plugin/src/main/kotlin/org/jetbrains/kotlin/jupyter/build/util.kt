@@ -1,3 +1,5 @@
+package org.jetbrains.kotlin.jupyter.build
+
 import groovy.json.JsonOutput
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra

@@ -73,8 +73,7 @@ To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a ne
 ### REPL commands
 
 The following REPL commands are supported:
- - `:help` - displays REPL commands help
- - `:classpath` - displays current classpath
+[[supported_commands]]
  
 ### Dependencies resolving annotations
 
@@ -99,11 +98,7 @@ The following maven repositories are included by default:
 ### Line Magics
 
 The following line magics are supported:
- - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
- - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
- - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
- - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
- - `%output [options]` - output capturing settings.
+[[magics]]
  
  See detailed info about line magics [here](magics.md).
  

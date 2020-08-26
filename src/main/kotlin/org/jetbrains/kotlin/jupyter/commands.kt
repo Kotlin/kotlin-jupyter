@@ -1,6 +1,8 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.textResult
+import org.jetbrains.kotlin.jupyter.common.ReplCommands
+import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
@@ -10,11 +12,6 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
-
-enum class ReplCommands(val desc: String) {
-    help("display help"),
-    classpath("show current classpath")
-}
 
 fun isCommand(code: String): Boolean = code.startsWith(":")
 
