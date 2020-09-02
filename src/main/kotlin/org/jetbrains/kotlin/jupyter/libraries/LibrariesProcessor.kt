@@ -1,12 +1,13 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import jupyter.kotlin.KotlinKernelVersion
-import org.jetbrains.kotlin.jupyter.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
-import org.jetbrains.kotlin.jupyter.TypeHandler
 import org.jetbrains.kotlin.jupyter.Variable
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
 
 class LibrariesProcessor(
     private val libraries: LibraryResolver?,
@@ -43,17 +44,25 @@ class LibrariesProcessor(
         return result
     }
 
-    private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>) = LibraryDefinition(
-        dependencies = library.dependencies.map { replaceVariables(it, mapping) },
-        repositories = library.repositories.map { replaceVariables(it, mapping) },
-        imports = library.imports.map { replaceVariables(it, mapping) },
-        init = library.init.map { replaceVariables(it, mapping) },
-        shutdown = library.shutdown.map { replaceVariables(it, mapping) },
-        initCell = library.initCell.map { replaceVariables(it, mapping) },
-        renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-        converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-        annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
-    )
+    private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>): LibraryDefinitionProducer {
+        val definitionCodes = library.libraryDefinitions
+        return if (definitionCodes.isEmpty()) {
+            TrivialLibraryDefinitionProducer(LibraryDefinition(
+                    dependencies = library.dependencies.replaceVariables(mapping),
+                    repositories = library.repositories.replaceVariables(mapping),
+                    imports = library.imports.replaceVariables(mapping),
+                    init = library.init.replaceVariables(mapping),
+                    shutdown = library.shutdown.replaceVariables(mapping),
+                    initCell = library.initCell.replaceVariables(mapping),
+                    renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
+                    converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
+                    annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
+            ))
+        } else {
+            val initCodes = library.buildDependenciesInitCode(mapping)?.let { listOf(it) } ?: emptyList()
+            ResolvingLibraryDefinitionProducer(initCodes, definitionCodes)
+        }
+    }
 
     /**
      * Split a command argument into a set of library calls
@@ -87,11 +96,6 @@ class LibrariesProcessor(
             i++
         }
     }
-
-    private fun replaceVariables(str: String, mapping: Map<String, String>) =
-        mapping.asSequence().fold(str) { s, template ->
-            s.replace("\$${template.key}", template.value)
-        }
 
     private fun checkKernelVersionRequirements(name: String, library: LibraryDescriptor) {
         library.minKernelVersion?.let { minVersionStr ->

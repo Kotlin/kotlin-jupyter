@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.jupyter.test
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.DependsOn
+import org.jetbrains.kotlin.jupyter.DisplayHandler
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
@@ -27,6 +28,7 @@ val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaul
 
 val classpath = scriptCompilationClasspathFromContext(
     "jupyter-lib",
+    "kotlin-jupyter-api",
     "kotlin-stdlib",
     "kotlin-reflect",
     "kotlin-script-runtime",
@@ -80,5 +82,15 @@ class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<Librar
 
     override fun save(reference: LibraryReference, descriptor: LibraryDescriptor) {
         cache[reference] = descriptor
+    }
+}
+
+class TestDisplayHandler(private val list: MutableList<Any> = mutableListOf()): DisplayHandler {
+    override fun handleDisplay(value: Any) {
+        list.add(value)
+    }
+
+    override fun handleUpdate(value: Any, id: String?) {
+        // TODO: Implement correct updating
     }
 }

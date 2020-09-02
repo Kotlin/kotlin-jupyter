@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.jupyter
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
-import jupyter.kotlin.KotlinKernelVersion
 import khttp.responses.Response
+import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
 import org.slf4j.LoggerFactory
@@ -42,6 +45,7 @@ val defaultRepositories = arrayOf(
 
 val defaultGlobalImports = listOf(
     "kotlin.math.*",
+    "org.jetbrains.kotlin.jupyter.api.*",
 )
 
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
@@ -156,37 +160,35 @@ data class KernelConfig(
     }
 }
 
-data class TypeHandler(val className: TypeName, val code: Code)
-
 data class Variable(val name: String, val value: String, val required: Boolean = false)
 
 open class LibraryDefinition(
-    val dependencies: List<String>,
-    val initCell: List<String>,
-    val imports: List<String>,
-    val repositories: List<String>,
-    val init: List<String>,
-    val shutdown: List<String>,
-    val renderers: List<TypeHandler>,
-    val converters: List<TypeHandler>,
-    val annotations: List<TypeHandler>
+        val dependencies: List<String>,
+        val initCell: List<String>,
+        val imports: List<String>,
+        val repositories: List<String>,
+        val init: List<String>,
+        val shutdown: List<String>,
+        val renderers: List<TypeHandler>,
+        val converters: List<TypeHandler>,
+        val annotations: List<TypeHandler>
 )
 
 class LibraryDescriptor(
-    val originalJson: JsonObject,
-    dependencies: List<String>,
-    val variables: List<Variable>,
-    initCell: List<String>,
-    imports: List<String>,
-    repositories: List<String>,
-    init: List<String>,
-    shutdown: List<String>,
-    renderers: List<TypeHandler>,
-    converters: List<TypeHandler>,
-    annotations: List<TypeHandler>,
-    val link: String?,
-    val description: String?,
-    val minKernelVersion: String?,
+        val originalJson: JsonObject,
+        dependencies: List<String>,
+        val variables: List<Variable>,
+        initCell: List<String>,
+        imports: List<String>,
+        repositories: List<String>,
+        init: List<String>,
+        shutdown: List<String>,
+        renderers: List<TypeHandler>,
+        converters: List<TypeHandler>,
+        annotations: List<TypeHandler>,
+        val link: String?,
+        val description: String?,
+        val minKernelVersion: String?,
 ) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(

@@ -179,6 +179,7 @@ dependencies {
     testImplementation(kotlin("test"))
 
     implementation(project(":kotlin-jupyter-deps"))
+    implementation(project(":kotlin-jupyter-api"))
     implementation(project(":jupyter-lib"))
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
@@ -203,6 +204,7 @@ dependencies {
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 
     deploy(project(":jupyter-lib"))
+    deploy(project(":kotlin-jupyter-api"))
     deploy(kotlin("script-runtime"))
 }
 

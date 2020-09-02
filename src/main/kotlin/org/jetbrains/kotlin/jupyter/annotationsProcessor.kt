@@ -1,6 +1,9 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
+import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 
 interface AnnotationsProcessor {

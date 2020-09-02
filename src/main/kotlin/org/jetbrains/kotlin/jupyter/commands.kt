@@ -1,6 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.textResult
+import org.jetbrains.kotlin.jupyter.api.textResult
 import org.jetbrains.kotlin.jupyter.common.ReplCommands
 import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptor
@@ -54,7 +54,7 @@ fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
 
 fun runCommand(code: String, repl: ReplForJupyter): Response {
     val args = code.trim().substring(1).split(" ")
-    val cmd = getCommand(args[0]) ?: return AbortResponseWithMessage(textResult("Failed!"), "unknown command: $code\nto see available commands, enter :help")
+    val cmd = getCommand(args[0]) ?: return AbortResponseWithMessage("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
         ReplCommands.classpath -> {
             val cp = repl.currentClasspath
