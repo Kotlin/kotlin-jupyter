@@ -2,15 +2,19 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
-import jupyter.kotlin.KotlinKernelHost
-import jupyter.kotlin.KotlinKernelVersion
-import jupyter.kotlin.ReplOutputs
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlin.jupyter.api.Renderable
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlin.jupyter.libraries.buildDependenciesInitCode
+import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlin.jupyter.repl.ClassWriter
 import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
@@ -106,11 +110,8 @@ interface ReplOptions {
     var outputConfig: OutputConfig
 }
 
-typealias TypeName = String
-typealias Code = String
-
 interface ReplForJupyter {
-    fun eval(code: Code, displayHandler: ((Any) -> Unit)? = null, jupyterId: Int = -1): EvalResult
+    fun eval(code: Code, displayHandler: DisplayHandler? = null, jupyterId: Int = -1): EvalResult
 
     fun evalOnShutdown(): List<EvalResult>
 
@@ -131,6 +132,8 @@ interface ReplForJupyter {
     val libraryFactory: LibraryFactory
 
     var outputConfig: OutputConfig
+
+    val notebook: NotebookImpl
 }
 
 class ReplForJupyterImpl(
@@ -151,6 +154,7 @@ class ReplForJupyterImpl(
     override val librariesDir: File = homeDir?.resolve(LibrariesDir) ?: File(LibrariesDir)
 
     private var outputConfigImpl = OutputConfig()
+    override val notebook = NotebookImpl(this, runtimeProperties)
 
     override var outputConfig
         get() = outputConfigImpl
@@ -185,8 +189,10 @@ class ReplForJupyterImpl(
 
     private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
         if (value == null || resultField == null) return null
-        val code = typeRenderers[value.javaClass.canonicalName]?.replace("\$it", resultField.first)
-            ?: return value
+        val rendererCode = typeRenderers[value.javaClass.canonicalName]
+                ?: return if (value is Renderable) value.render(notebook) else value
+
+        val code = rendererCode.replace("\$it", resultField.first)
         val result = doEval(code)
         return renderResult(result.value, result.resultField)
     }
@@ -210,13 +216,8 @@ class ReplForJupyterImpl(
         val typeConverters = mutableListOf<TypeHandler>()
         val annotations = mutableListOf<TypeHandler>()
 
-        processedMagics.libraries.forEach { libraryDefinition ->
-            val builder = StringBuilder()
-            libraryDefinition.repositories.forEach { builder.appendLine("@file:Repository(\"$it\")") }
-            libraryDefinition.dependencies.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
-            libraryDefinition.imports.forEach { builder.appendLine("import $it") }
-            if (builder.isNotBlank())
-                initCodes.add(builder.toString())
+        processedMagics.libraries.getDefinitions(notebook).forEach { libraryDefinition ->
+            libraryDefinition.buildDependenciesInitCode()?.let { initCodes.add(it) }
             typeRenderers.addAll(libraryDefinition.renderers)
             typeConverters.addAll(libraryDefinition.converters)
             annotations.addAll(libraryDefinition.annotations)
@@ -323,14 +324,15 @@ class ReplForJupyterImpl(
         implicitReceivers.invoke(v = scriptReceivers)
         if (!embedded) {
             jvm {
-                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
-                    it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
+                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {fqn ->
+                    listOf("jupyter.kotlin.", "org.jetbrains.kotlin.jupyter.api", "kotlin.").any { fqn.startsWith(it) } ||
+                        (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlin.jupyter."))
                 }
                 val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
                 baseClassLoader(scriptClassloader)
             }
         }
-        constructorArgs(this@ReplForJupyterImpl as KotlinKernelHost)
+        constructorArgs(notebook)
     }
 
     private var executionCounter = 0
@@ -351,7 +353,7 @@ class ReplForJupyterImpl(
 
     private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl(contextUpdater)
 
-    private var currentDisplayHandler: ((Any) -> Unit)? = null
+    private var currentDisplayHandler: DisplayHandler? = null
 
     private val scheduledExecutions = LinkedList<Code>()
 
@@ -368,7 +370,7 @@ class ReplForJupyterImpl(
 
     private fun executeInitCellCode() = initCellCodes.forEach(::evalNoReturn)
 
-    private fun executeInitCode(p: PreprocessingResult) = p.initCodes.forEach(::evalNoReturn)
+    private fun executeInitCode(initCodes: List<Code>) = initCodes.forEach(::evalNoReturn)
 
     private fun executeScheduledCode() {
         while (scheduledExecutions.isNotEmpty()) {
@@ -414,7 +416,7 @@ class ReplForJupyterImpl(
 
     private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptInstance
 
-    override fun eval(code: String, displayHandler: ((Any) -> Unit)?, jupyterId: Int): EvalResult {
+    override fun eval(code: String, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
             try {
 
@@ -424,14 +426,14 @@ class ReplForJupyterImpl(
 
                 val preprocessed = preprocessCode(code)
 
-                executeInitCode(preprocessed)
+                executeInitCode(preprocessed.initCodes)
 
                 var result: Any? = null
                 var resultField: Pair<String, KotlinType>? = null
                 var replLine: Any? = null
 
                 if (preprocessed.code.isNotBlank()) {
-                    doEval(preprocessed.code).let {
+                    doEval(preprocessed.code, jupyterId).let {
                         result = it.value
                         resultField = it.resultField
                     }
@@ -467,6 +469,7 @@ class ReplForJupyterImpl(
                 } ?: emptyList()
 
                 result = renderResult(result, resultField)
+
 
                 return EvalResult(result, newClasspath)
             } finally {
@@ -592,11 +595,16 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun doEval(code: String): InternalEvalResult {
+    private fun doEval(code: String, displayId: Int? = null): InternalEvalResult {
         if (executedCodeLogging == ExecutedCodeLogging.All)
             println(code)
         val id = executionCounter++
         val codeLine = SourceCodeImpl(id, code)
+
+        val cell = if (displayId != null) {
+            notebook.addCell(displayId, id, code)
+        } else null
+
         when (val compileResultWithDiagnostics = runBlocking { compiler.compile(codeLine, compilerConfiguration) }) {
             is ResultWithDiagnostics.Success -> {
                 val compileResult = compileResultWithDiagnostics.value
@@ -613,6 +621,7 @@ class ReplForJupyterImpl(
                                 InternalEvalResult(Unit, null)
                             }
                             is ResultValue.Value -> {
+                                cell?.resultVal = resultValue.value
                                 InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
                             }
                             is ResultValue.NotEvaluated -> {
@@ -646,10 +655,23 @@ class ReplForJupyterImpl(
     }
 
     override fun display(value: Any) {
-        currentDisplayHandler?.invoke(value)
+        currentDisplayHandler?.handleDisplay(value)
     }
 
-    override fun scheduleExecution(code: String) {
+    override fun updateDisplay(value: Any, id: String?) {
+        currentDisplayHandler?.handleUpdate(value, id)
+    }
+
+    override fun scheduleExecution(code: Code) {
         scheduledExecutions.add(code)
+    }
+
+    override fun executeInit(codes: List<Code>) {
+        executeInitCode(codes)
+    }
+
+    override fun execute(code: Code): Any? {
+        val internalResult = doEval(code)
+        return internalResult.value
     }
 }

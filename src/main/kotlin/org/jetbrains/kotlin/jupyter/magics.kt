@@ -6,12 +6,13 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import org.jetbrains.kotlin.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
 
-data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinition>)
+data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinitionProducer>)
 
 class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesProcessor) {
 
@@ -48,7 +49,7 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
         var nextSearchIndex = 0
         var nextCopyIndex = 0
 
-        val newLibraries = mutableListOf<LibraryDefinition>()
+        val newLibraries = mutableListOf<LibraryDefinitionProducer>()
         while (true) {
 
             var magicStart: Int

@@ -1,6 +1,9 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
+import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
@@ -22,7 +25,7 @@ interface TypeProvidersProcessor {
      * `$it` will be replaced with variable name
      * Result of callback must be of type List<String>, that contains a list of code snippets to be executed for type conversion
      * This list consists of a number of declarations followed by actual code for type conversion
-     * Declarations can have a `###` placeholder that will be replaced with autoincremented ID, if the code snippet is new, or will reuse existing ID, if exactly the same code snippet has already been declared
+     * Declarations can have a `###` placeholder that will be replaced with auto-incremented ID, if the code snippet is new, or will reuse existing ID, if exactly the same code snippet has already been declared
      */
     fun register(handler: TypeHandler): Code
 

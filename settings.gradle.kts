@@ -49,9 +49,13 @@ gradle.projectsLoaded {
 
 val pluginProject = "kotlin-jupyter-plugin"
 val depsProject = "kotlin-jupyter-deps"
+val apiProject = "kotlin-jupyter-api"
+val libProject = "jupyter-lib"
 
 includeBuild(pluginProject)
 include(depsProject)
 project(":$depsProject").projectDir = file("$pluginProject/$depsProject")
 
-include("jupyter-lib")
+include(libProject)
+include(apiProject)
+project(":$apiProject").projectDir = file("$libProject/$apiProject")

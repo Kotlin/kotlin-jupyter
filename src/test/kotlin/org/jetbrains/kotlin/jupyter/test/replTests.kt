@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
-import jupyter.kotlin.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import jupyter.kotlin.MimeTypedResult
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
 import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.jupyter.GitHubRepoName
@@ -573,15 +573,13 @@ class ReplWithResolverTest : AbstractReplTest() {
         val code2 =
             """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
         val displays = mutableListOf<Any>()
-        fun displayHandler(display: Any) {
-            displays.add(display)
-        }
+        val displayHandler = TestDisplayHandler(displays)
 
-        val res1 = repl.eval(code1, ::displayHandler)
+        val res1 = repl.eval(code1, displayHandler)
         assertEquals(1, displays.count())
         displays.clear()
         assertNull(res1.resultValue)
-        val res2 = repl.eval(code2, ::displayHandler)
+        val res2 = repl.eval(code2, displayHandler)
         assertEquals(0, displays.count())
         val mime = res2.resultValue as? MimeTypedResult
         assertNotNull(mime)
@@ -631,10 +629,9 @@ class ReplWithResolverTest : AbstractReplTest() {
     fun testTwoLibrariesInUse() {
         val code = "%use lets-plot, krangl"
         val displays = mutableListOf<Any>()
-        fun displayHandler(display: Any) {
-            displays.add(display)
-        }
-        repl.eval(code, ::displayHandler)
+        val displayHandler = TestDisplayHandler(displays)
+
+        repl.eval(code, displayHandler)
         assertEquals(1, displays.count())
     }
 
@@ -698,7 +695,9 @@ class ReplWithResolverTest : AbstractReplTest() {
         assertEquals(43, res2.resultValue)
 
         val displays = mutableListOf<Any>()
-        val res3 = repl.eval("%use lets-plot@$commit", { displays.add(it) })
+        val handler = TestDisplayHandler(displays)
+
+        val res3 = repl.eval("%use lets-plot@$commit", handler)
         assertEquals(1, displays.count())
         assertNull(res3.resultValue)
         displays.clear()
