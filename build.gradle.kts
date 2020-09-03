@@ -7,6 +7,7 @@ import java.nio.file.Paths
 
 val packageName by extra("kotlin-jupyter-kernel")
 val baseVersion: String by project
+val klaxonVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -172,7 +173,6 @@ val deploy: Configuration by configurations.creating
 dependencies {
     val junitVersion = "5.6.2"
     val slf4jVersion = "1.7.30"
-    val klaxonVersion = "5.2"
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")

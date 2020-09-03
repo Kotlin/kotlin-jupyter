@@ -13,6 +13,7 @@ class CodeCellImpl(
         override val id: Int,
         override val internalId: Int,
         override val code: String,
+        override val preprocessedCode: String,
         override val prevCell: CodeCell?,
 ) : CodeCell {
     var resultVal: Any? = null
@@ -38,6 +39,11 @@ class CodeCellImpl(
         }
 }
 
+class EvalData(
+        val executionCounter: Int,
+        val rawCode: String,
+)
+
 class NotebookImpl(
         override val host: KotlinKernelHost,
         private val runtimeProperties: ReplRuntimeProperties,
@@ -54,19 +60,18 @@ class NotebookImpl(
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
 
-
     override val kernelVersion: KotlinKernelVersion
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val runtimeUtils: RuntimeUtils
         get() = JavaRuntime
 
     fun addCell(
-            executionCounter: Int,
             internalId: Int,
-            code: String,
+            preprocessedCode: String,
+            data: EvalData,
     ): CodeCellImpl {
-        val cell = CodeCellImpl(executionCounter, internalId, code, lastCell)
-        cells[executionCounter] = cell
+        val cell = CodeCellImpl(data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
+        cells[data.executionCounter] = cell
         history.add(cell)
         mainCellCreated = true
         return cell

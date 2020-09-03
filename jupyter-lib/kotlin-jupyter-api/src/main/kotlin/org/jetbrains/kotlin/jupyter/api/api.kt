@@ -1,13 +1,42 @@
 package org.jetbrains.kotlin.jupyter.api
 
+/**
+ * Single evaluated notebook cell representation
+ */
 interface CodeCell {
+    /**
+     * Displayed cell ID
+     */
     val id: Int
+
+    /**
+     * Internal cell ID which is used to generate internal class names and result fields
+     */
     val internalId: Int
 
+    /**
+     * Cell code
+     */
     val code: String
+
+    /**
+     * Cell code after magic preprocessing
+     */
+    val preprocessedCode: String
+
+    /**
+     * Cell result value
+     */
     val result: Any?
+
+    /**
+     * Cell standard output
+     */
     val streamOutput: String
 
+    /**
+     * Previously evaluated cell
+     */
     val prevCell: CodeCell?
 }
 

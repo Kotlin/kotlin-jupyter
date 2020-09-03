@@ -10,6 +10,7 @@ plugins {
 }
 
 project.version = rootProject.version
+val klaxonVersion: String by rootProject
 
 repositories {
     mavenCentral()
@@ -17,8 +18,6 @@ repositories {
 }
 
 dependencies {
-    val klaxonVersion = "5.2"
-
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
