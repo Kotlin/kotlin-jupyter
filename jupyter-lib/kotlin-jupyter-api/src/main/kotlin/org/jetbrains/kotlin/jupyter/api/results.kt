@@ -2,8 +2,25 @@ package org.jetbrains.kotlin.jupyter.api
 
 import com.beust.klaxon.JsonObject
 
-interface DisplayResult {
+interface Renderable {
+    fun render(notebook: Notebook<*>): DisplayResult
+}
+
+interface DisplayResult: Renderable {
+    val id: String? get() = null
+
     fun toJson(): JsonObject
+
+    override fun render(notebook: Notebook<*>) = this
+}
+
+interface DisplayResultWithCell: DisplayResult {
+    val cell: CodeCell
+}
+
+interface DisplayContainer {
+    fun getAll(): List<DisplayResultWithCell>
+    fun getById(id: String?): List<DisplayResultWithCell>?
 }
 
 fun DisplayResult?.toJson(): JsonObject {
@@ -29,7 +46,7 @@ private fun jsonObject(vararg namedVals: Pair<String, Any?>): JsonObject = JsonO
 class MimeTypedResult(
         mimeData: Map<String, String>,
         var isolatedHtml: Boolean = false,
-        val id: String? = null
+        override val id: String? = null
 ) : Map<String, String> by mimeData, DisplayResult {
     override fun toJson(): JsonObject {
         val data = JsonObject(this)
@@ -49,7 +66,3 @@ fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 fun textResult(text: String): MimeTypedResult = mimeResult("text/plain" to text)
 fun htmlResult(text: String, isolated: Boolean = false) = mimeResult("text/html" to text).also { it.isolatedHtml = isolated }
-
-interface Renderable {
-    fun render(notebook: Notebook<*>): DisplayResult
-}

@@ -65,8 +65,10 @@ class SocketDisplayHandler(
         private val message: Message,
 ) : DisplayHandler {
     override fun handleDisplay(value: Any) {
-        val display = value.toDisplayResult(notebook)
+        val display = value.toDisplayResult(notebook) ?: return
         val json = display.toJson()
+
+        notebook.thisCell?.addDisplay(display)
 
         socket.send(makeReplyMessage(message,
                 "display_data",
@@ -74,8 +76,10 @@ class SocketDisplayHandler(
     }
 
     override fun handleUpdate(value: Any, id: String?) {
-        val display = value.toDisplayResult(notebook)
+        val display = value.toDisplayResult(notebook) ?: return
         val json = display.toJson()
+
+        notebook.thisCell?.displays?.update(id, display)
 
         json.setDisplayId(id) ?: throw ReplEvalRuntimeException("`update_display_data` response should provide an id of data being updated")
 
