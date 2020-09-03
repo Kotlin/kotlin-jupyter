@@ -2,6 +2,9 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlin.jupyter.api.CodeCell
+import org.jetbrains.kotlin.jupyter.api.DisplayContainer
+import org.jetbrains.kotlin.jupyter.api.DisplayResult
+import org.jetbrains.kotlin.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.Notebook
@@ -9,7 +12,48 @@ import org.jetbrains.kotlin.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlin.jupyter.api.RuntimeUtils
 import java.lang.IllegalStateException
 
+class DisplayResultWrapper private constructor(
+        val display: DisplayResult,
+        override val cell: CodeCellImpl,
+): DisplayResult by display, DisplayResultWithCell {
+    companion object {
+        fun create(display: DisplayResult, cell: CodeCellImpl): DisplayResultWrapper {
+            return if (display is DisplayResultWrapper) DisplayResultWrapper(display.display, cell)
+            else DisplayResultWrapper(display, cell)
+        }
+    }
+}
+
+class DisplayContainerImpl : DisplayContainer {
+    private val displays: MutableMap<String?, MutableList<DisplayResultWrapper>> = mutableMapOf()
+
+    fun add(display: DisplayResultWrapper) {
+        val list = displays.getOrPut(display.id) { mutableListOf() }
+        list.add(display)
+    }
+
+    fun add(display: DisplayResult, cell: CodeCellImpl) {
+        add(DisplayResultWrapper.create(display, cell))
+    }
+
+    override fun getAll(): List<DisplayResultWithCell> {
+        return displays.flatMap { it.value }
+    }
+
+    override fun getById(id: String?): List<DisplayResultWithCell>? {
+        return displays[id]
+    }
+
+    fun update(id: String?, display: DisplayResult) {
+        val initialDisplays = displays[id] ?: return
+        val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
+        initialDisplays.clear()
+        initialDisplays.addAll(updated)
+    }
+}
+
 class CodeCellImpl(
+        override val notebook: NotebookImpl,
         override val id: Int,
         override val internalId: Int,
         override val code: String,
@@ -37,6 +81,14 @@ class CodeCellImpl(
 
             return collectedStreamOutput
         }
+
+    override val displays = DisplayContainerImpl()
+
+    fun addDisplay(display: DisplayResult) {
+        val wrapper = DisplayResultWrapper.create(display, this)
+        displays.add(wrapper)
+        notebook.displays.add(wrapper)
+    }
 }
 
 class EvalData(
@@ -60,6 +112,8 @@ class NotebookImpl(
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
 
+    override val displays = DisplayContainerImpl()
+
     override val kernelVersion: KotlinKernelVersion
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val runtimeUtils: RuntimeUtils
@@ -70,7 +124,7 @@ class NotebookImpl(
             preprocessedCode: String,
             data: EvalData,
     ): CodeCellImpl {
-        val cell = CodeCellImpl(data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
+        val cell = CodeCellImpl(this, data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
         cells[data.executionCounter] = cell
         history.add(cell)
         mainCellCreated = true

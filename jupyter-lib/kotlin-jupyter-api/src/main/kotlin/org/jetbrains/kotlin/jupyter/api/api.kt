@@ -5,6 +5,11 @@ package org.jetbrains.kotlin.jupyter.api
  */
 interface CodeCell {
     /**
+     * Reference to the notebook instance
+     */
+    val notebook: Notebook<*>
+
+    /**
      * Displayed cell ID
      */
     val id: Int
@@ -35,6 +40,11 @@ interface CodeCell {
     val streamOutput: String
 
     /**
+     * Cell displays
+     */
+    val displays: DisplayContainer
+
+    /**
      * Previously evaluated cell
      */
     val prevCell: CodeCell?
@@ -61,6 +71,7 @@ interface RuntimeUtils: JavaVersionHelper
 interface Notebook<CellT: CodeCell> {
     val cells: Map<Int, CellT>
     val results: ResultsAccessor
+    val displays: DisplayContainer
     val host: KotlinKernelHost
 
     fun prevCell(before: Int): CellT?
