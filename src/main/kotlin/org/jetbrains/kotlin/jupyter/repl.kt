@@ -433,7 +433,7 @@ class ReplForJupyterImpl(
                 var replLine: Any? = null
 
                 if (preprocessed.code.isNotBlank()) {
-                    doEval(preprocessed.code, jupyterId).let {
+                    doEval(preprocessed.code, EvalData(jupyterId, code)).let {
                         result = it.value
                         resultField = it.resultField
                     }
@@ -595,14 +595,14 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun doEval(code: String, displayId: Int? = null): InternalEvalResult {
+    private fun doEval(code: String, evalData: EvalData? = null): InternalEvalResult {
         if (executedCodeLogging == ExecutedCodeLogging.All)
             println(code)
         val id = executionCounter++
         val codeLine = SourceCodeImpl(id, code)
 
-        val cell = if (displayId != null) {
-            notebook.addCell(displayId, id, code)
+        val cell = if (evalData != null) {
+            notebook.addCell(id, code, evalData)
         } else null
 
         when (val compileResultWithDiagnostics = runBlocking { compiler.compile(codeLine, compilerConfiguration) }) {

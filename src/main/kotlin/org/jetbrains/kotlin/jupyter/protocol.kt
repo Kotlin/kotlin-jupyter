@@ -61,7 +61,7 @@ interface DisplayHandler {
 
 class SocketDisplayHandler(
         private val socket: JupyterConnection.Socket,
-        private val notebook: Notebook<*>,
+        private val notebook: NotebookImpl,
         private val message: Message,
 ) : DisplayHandler {
     override fun handleDisplay(value: Any) {
