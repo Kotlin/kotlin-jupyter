@@ -93,8 +93,7 @@ class KotlinKernelVersion private constructor(
         }
 
         private fun maxSize(a: Collection<*>, b: Collection<*>): Int {
-            return if(a.size > b.size) a.size
-            else b.size
+            return if(a.size > b.size) a.size else b.size
         }
     }
 }
