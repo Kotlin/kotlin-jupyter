@@ -40,8 +40,8 @@ class DisplayContainerImpl : DisplayContainer {
         return displays.flatMap { it.value }
     }
 
-    override fun getById(id: String?): List<DisplayResultWithCell>? {
-        return displays[id]
+    override fun getById(id: String?): List<DisplayResultWithCell> {
+        return displays[id].orEmpty()
     }
 
     fun update(id: String?, display: DisplayResult) {

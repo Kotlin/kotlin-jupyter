@@ -20,7 +20,7 @@ interface DisplayResultWithCell: DisplayResult {
 
 interface DisplayContainer {
     fun getAll(): List<DisplayResultWithCell>
-    fun getById(id: String?): List<DisplayResultWithCell>?
+    fun getById(id: String?): List<DisplayResultWithCell>
 }
 
 fun DisplayResult?.toJson(): JsonObject {
