@@ -8,6 +8,7 @@ import java.nio.file.Paths
 val packageName by extra("kotlin-jupyter-kernel")
 val baseVersion: String by project
 val klaxonVersion: String by project
+val kotlinVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -299,7 +300,7 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
     val readmeFile = readmePath.toFile()
     val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
     val librariesDir = File(librariesPath)
-    val readmeGenerator = ReadmeGenerator(librariesDir)
+    val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion)
 
     val generateReadme by tasks.registering {
         group = buildGroup

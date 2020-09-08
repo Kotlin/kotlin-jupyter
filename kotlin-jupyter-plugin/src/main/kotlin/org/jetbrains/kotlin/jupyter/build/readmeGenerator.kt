@@ -6,7 +6,8 @@ import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
 import java.io.File
 
 class ReadmeGenerator(
-        private val librariesDir: File
+        private val librariesDir: File,
+        private val kotlinVersion: String
 ) {
     fun generate(stub: File, destination: File) {
         var result = stub.readText()
@@ -19,7 +20,8 @@ class ReadmeGenerator(
     private val processors: Map<String, () -> String> = mapOf(
         "supported_libraries" to ::processSupportedLibraries,
         "supported_commands" to ::processCommands,
-        "magics" to ::processMagics
+        "magics" to ::processMagics,
+        "kotlin_version" to ::processKotlinVersion
     )
 
     private fun processSupportedLibraries(): String {
@@ -54,5 +56,9 @@ class ReadmeGenerator(
 
             description + usage
         }
+    }
+
+    private fun processKotlinVersion(): String {
+        return kotlinVersion
     }
 }

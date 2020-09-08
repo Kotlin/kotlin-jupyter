@@ -6,7 +6,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.4.0) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) ([[kotlin_version]]) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
 on Windows, Ubuntu Linux and MacOS. Using with Jupyter Console frontend is problematic now because of
