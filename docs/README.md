@@ -8,7 +8,9 @@
 
 [Kotlin](https://kotlinlang.org/) (1.4.0) kernel for [Jupyter](https://jupyter.org).
 
-Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
+Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
+on Windows, Ubuntu Linux and MacOS. Using with Jupyter Console frontend is problematic now because of
+logging which cannot be switched off. Tuning logging options is planned for future releases.
 
 ![Screenshot in Jupyter](Screenshot.png)
 
