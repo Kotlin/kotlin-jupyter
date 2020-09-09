@@ -135,6 +135,7 @@ class ReplForJupyterImpl(
         override val resolverConfig: ResolverConfig? = null,
         override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
         private val scriptReceivers: List<Any> = emptyList(),
+        private val embedded: Boolean = false,
 ) : ReplForJupyter, ReplOptions, KotlinKernelHost {
 
     constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()):
@@ -316,12 +317,14 @@ class ReplForJupyterImpl(
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
         implicitReceivers.invoke(v = scriptReceivers)
-        jvm {
-            val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
-                it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
+        if (!embedded) {
+            jvm {
+                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {
+                    it.startsWith("jupyter.kotlin.") || it.startsWith("kotlin.") || (it.startsWith("org.jetbrains.kotlin.") && !it.startsWith("org.jetbrains.kotlin.jupyter."))
+                }
+                val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
+                baseClassLoader(scriptClassloader)
             }
-            val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
-            baseClassLoader(scriptClassloader)
         }
         constructorArgs(this@ReplForJupyterImpl as KotlinKernelHost)
     }
