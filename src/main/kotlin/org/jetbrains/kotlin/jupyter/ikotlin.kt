@@ -66,17 +66,16 @@ fun main(vararg args: String) {
     try {
         log.info("Kernel args: "+ args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val runtimeProperties = defaultRuntimeProperties
         val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
         val libraryFactory = LibraryFactory.withDefaultDirectoryResolution(libraryPath)
         val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryFactory)
-        kernelServer(kernelConfig, runtimeProperties)
+        kernelServer(kernelConfig)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
 }
 
-fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties) {
+fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties) {
     log.info("Starting server with config: $config")
 
     JupyterConnection(config).use { conn ->

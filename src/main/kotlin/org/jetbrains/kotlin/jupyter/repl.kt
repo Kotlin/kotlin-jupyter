@@ -139,7 +139,7 @@ class ReplForJupyterImpl(
 ) : ReplForJupyter, ReplOptions, KotlinKernelHost {
 
     constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()):
-            this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers)
+            this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers, config.embedded)
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
