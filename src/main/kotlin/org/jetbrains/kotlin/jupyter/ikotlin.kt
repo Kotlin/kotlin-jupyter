@@ -75,6 +75,14 @@ fun main(vararg args: String) {
     }
 }
 
+fun embedKernel(cfgFile: File) {
+    val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
+    val config = KernelConfig.fromConfig(
+            KernelCfgFile.fromFile(cfgFile),
+            LibraryFactory.EMPTY, cp, null, true)
+    kernelServer(config)
+}
+
 fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties) {
     log.info("Starting server with config: $config")
 
