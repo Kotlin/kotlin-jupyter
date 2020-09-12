@@ -2,6 +2,8 @@ package org.jetbrains.kotlin.jupyter.test
 
 
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.test.ReplWithResolverTest.Companion.resolverConfig
 import org.junit.jupiter.api.Test
 import java.io.File

@@ -75,15 +75,16 @@ fun main(vararg args: String) {
     }
 }
 
-fun embedKernel(cfgFile: File) {
+fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
             KernelCfgFile.fromFile(cfgFile),
-            LibraryFactory.EMPTY, cp, null, true)
-    kernelServer(config)
+            libraryFactory ?: LibraryFactory.EMPTY,
+            cp, null, true)
+    kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())
 }
 
-fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties) {
+fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
     log.info("Starting server with config: $config")
 
     JupyterConnection(config).use { conn ->
@@ -94,7 +95,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyterImpl(config, runtimeProperties)
+        val repl = ReplForJupyterImpl(config, runtimeProperties, scriptReceivers)
 
         val mainThread = Thread.currentThread()
 
