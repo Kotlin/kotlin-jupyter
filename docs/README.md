@@ -168,7 +168,7 @@ List of supported libraries:
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
+ - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin mathematical library operating on generic algebras
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling

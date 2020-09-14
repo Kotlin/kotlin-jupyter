@@ -1,5 +1,5 @@
 {
-  "description": "Kotlin mathematical library analogous to NumPy",
+  "description": "Experimental Kotlin mathematical library operating on generic algebras",
   "properties": {
     "v": "0.1.3"
   },
