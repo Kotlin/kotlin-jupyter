@@ -1,0 +1,36 @@
+{
+    "imports": [
+        "kscience.plotly.*",
+        "kscience.plotly.models.*",
+        "kscience.plotly.server.JupyterPlotlyServer",
+        "hep.dataforge.meta.*",
+        "kotlinx.html.*"
+    ],
+    "repositories": [
+        "https://dl.bintray.com/mipt-npm/dataforge",
+        "https://dl.bintray.com/mipt-npm/kscience",
+        "https://dl.bintray.com/mipt-npm/dev"
+    ],
+    "properties": {
+        "v": "0.2.0",
+        "port": 8882
+    },
+    "link": "https://github.com/mipt-npm/plotly.kt",
+    "description": "An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.",
+    "dependencies": [
+        "kscience.plotlykt:plotlykt-server:$v"
+    ],
+    "init": [
+        "DISPLAY(HTML(JupyterPlotlyServer.start($port).toString()))",
+        "DISPLAY(HTML(\"<p>Plotly.kt jupyter integration is in the development phase. Expect glitches! Classic jupyter notebook is not fully supported.</p>\"))"
+    ],
+    "shutdown":[
+        "DISPLAY(HTML(JupyterPlotlyServer.stop().toString()))"
+    ],
+    "renderers": {
+        "kscience.plotly.HtmlFragment": "HTML($it.toString())",
+        "kscience.plotly.Plot": "HTML(JupyterPlotlyServer.renderPlot($it))",
+        "kscience.plotly.PlotlyFragment": "HTML(JupyterPlotlyServer.renderFragment($it))",
+        "kscience.plotly.PlotlyPage": "HTML(JupyterPlotlyServer.renderPage($it), true)"
+    }
+}

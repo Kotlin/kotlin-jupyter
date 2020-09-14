@@ -168,7 +168,7 @@ List of supported libraries:
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
+ - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin mathematical library operating on generic algebras
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
@@ -177,6 +177,8 @@ List of supported libraries:
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between lets-plot and dataframe libraries
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
+ - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
+ - [plotly-server](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
 
