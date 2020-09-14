@@ -7,7 +7,6 @@
         "kotlinx.html.*"
     ],
     "repositories": [
-        "*mavenLocal",
         "https://dl.bintray.com/mipt-npm/dataforge",
         "https://dl.bintray.com/mipt-npm/kscience",
         "https://dl.bintray.com/mipt-npm/dev"
@@ -17,12 +16,13 @@
         "port": 8882
     },
     "link": "https://github.com/mipt-npm/plotly.kt",
+    "description": "An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.",
     "dependencies": [
         "kscience.plotlykt:plotlykt-server:$v"
     ],
     "init": [
         "DISPLAY(HTML(JupyterPlotlyServer.start($port).toString()))",
-        "DISPLAY(HTML(\"<p>Plotly.kt jupyter integration is in the development phase. Expect glitches!</p>\"))"
+        "DISPLAY(HTML(\"<p>Plotly.kt jupyter integration is in the development phase. Expect glitches! Classic jupyter notebook is not fully supported.</p>\"))"
     ],
     "shutdown":[
         "DISPLAY(HTML(JupyterPlotlyServer.stop().toString()))"
