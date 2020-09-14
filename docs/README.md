@@ -177,6 +177,8 @@ List of supported libraries:
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between lets-plot and dataframe libraries
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
+ - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
+ - [plotly-server](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
 
