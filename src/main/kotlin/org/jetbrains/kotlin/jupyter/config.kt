@@ -162,34 +162,23 @@ data class KernelConfig(
 
 data class Variable(val name: String, val value: String, val required: Boolean = false)
 
-open class LibraryDefinition(
-        val dependencies: List<String>,
-        val initCell: List<String>,
-        val imports: List<String>,
-        val repositories: List<String>,
-        val init: List<String>,
-        val shutdown: List<String>,
-        val renderers: List<TypeHandler>,
-        val converters: List<TypeHandler>,
-        val annotations: List<TypeHandler>
-)
-
 class LibraryDescriptor(
-        val originalJson: JsonObject,
-        dependencies: List<String>,
-        val variables: List<Variable>,
-        initCell: List<String>,
-        imports: List<String>,
-        repositories: List<String>,
-        init: List<String>,
-        shutdown: List<String>,
-        renderers: List<TypeHandler>,
-        converters: List<TypeHandler>,
-        annotations: List<TypeHandler>,
-        val link: String?,
-        val description: String?,
-        val minKernelVersion: String?,
-) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
+    val originalJson: JsonObject,
+    val libraryDefinitions: List<Code>,
+    dependencies: List<String>,
+    val variables: List<Variable>,
+    initCell: List<String>,
+    imports: List<String>,
+    repositories: List<String>,
+    init: List<String>,
+    shutdown: List<String>,
+    renderers: List<TypeHandler>,
+    converters: List<TypeHandler>,
+    annotations: List<TypeHandler>,
+    val link: String?,
+    val description: String?,
+    val minKernelVersion: String?,
+) : LibraryDefinition(dependencies, repositories, imports, init, initCell, shutdown, renderers, converters, annotations)
 
 data class ResolverConfig(
     val repositories: List<RepositoryCoordinates>,

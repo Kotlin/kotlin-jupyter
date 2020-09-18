@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.jupyter.api.RuntimeUtils
 import java.lang.IllegalStateException
 
 class DisplayResultWrapper private constructor(
-        val display: DisplayResult,
-        override val cell: CodeCellImpl,
-): DisplayResult by display, DisplayResultWithCell {
+    val display: DisplayResult,
+    override val cell: CodeCellImpl,
+) : DisplayResult by display, DisplayResultWithCell {
     companion object {
         fun create(display: DisplayResult, cell: CodeCellImpl): DisplayResultWrapper {
             return if (display is DisplayResultWrapper) DisplayResultWrapper(display.display, cell)
@@ -53,12 +53,12 @@ class DisplayContainerImpl : DisplayContainer {
 }
 
 class CodeCellImpl(
-        override val notebook: NotebookImpl,
-        override val id: Int,
-        override val internalId: Int,
-        override val code: String,
-        override val preprocessedCode: String,
-        override val prevCell: CodeCell?,
+    override val notebook: NotebookImpl,
+    override val id: Int,
+    override val internalId: Int,
+    override val code: String,
+    override val preprocessedCode: String,
+    override val prevCell: CodeCell?,
 ) : CodeCell {
     var resultVal: Any? = null
     override val result: Any?
@@ -92,19 +92,19 @@ class CodeCellImpl(
 }
 
 class EvalData(
-        val executionCounter: Int,
-        val rawCode: String,
+    val executionCounter: Int,
+    val rawCode: String,
 )
 
 class NotebookImpl(
-        override val host: KotlinKernelHost,
-        private val runtimeProperties: ReplRuntimeProperties,
-): Notebook<CodeCellImpl> {
+    override val host: KotlinKernelHost,
+    private val runtimeProperties: ReplRuntimeProperties,
+) : Notebook<CodeCellImpl> {
     override val cells = hashMapOf<Int, CodeCellImpl>()
     override val results = object : ResultsAccessor {
         override fun get(i: Int): Any? {
             val cell = cells[i] ?: throw ArrayIndexOutOfBoundsException(
-                    "There is no cell with number '$i'"
+                "There is no cell with number '$i'"
             )
             return cell.result
         }
@@ -120,9 +120,9 @@ class NotebookImpl(
         get() = JavaRuntime
 
     fun addCell(
-            internalId: Int,
-            preprocessedCode: String,
-            data: EvalData,
+        internalId: Int,
+        preprocessedCode: String,
+        data: EvalData,
     ): CodeCellImpl {
         val cell = CodeCellImpl(this, data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
         cells[data.executionCounter] = cell

@@ -2,13 +2,13 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
-import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.TypeHandler
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
@@ -190,7 +190,7 @@ class ReplForJupyterImpl(
     private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
         if (value == null || resultField == null) return null
         val rendererCode = typeRenderers[value.javaClass.canonicalName]
-                ?: return if (value is Renderable) value.render(notebook) else value
+            ?: return if (value is Renderable) value.render(notebook) else value
 
         val code = rendererCode.replace("\$it", resultField.first)
         val result = doEval(code)
@@ -324,7 +324,7 @@ class ReplForJupyterImpl(
         implicitReceivers.invoke(v = scriptReceivers)
         if (!embedded) {
             jvm {
-                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) {fqn ->
+                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) { fqn ->
                     listOf("jupyter.kotlin.", "org.jetbrains.kotlin.jupyter.api", "kotlin.").any { fqn.startsWith(it) } ||
                         (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlin.jupyter."))
                 }
@@ -460,16 +460,11 @@ class ReplForJupyterImpl(
                     executeScheduledCode()
                 }
 
-                log.catchAll {
-                    updateOutputList(jupyterId, result)
-                }
-
                 val newClasspath = log.catchAll {
                     updateClasspath()
                 } ?: emptyList()
 
                 result = renderResult(result, resultField)
-
 
                 return EvalResult(result, newClasspath)
             } finally {
@@ -481,13 +476,6 @@ class ReplForJupyterImpl(
 
     override fun evalOnShutdown(): List<EvalResult> {
         return shutdownCodes.map(::evalWithReturn)
-    }
-
-    private fun updateOutputList(jupyterId: Int, result: Any?) {
-        if (jupyterId >= 0) {
-            while (ReplOutputs.count() <= jupyterId) ReplOutputs.add(null)
-            ReplOutputs[jupyterId] = result
-        }
     }
 
     /**

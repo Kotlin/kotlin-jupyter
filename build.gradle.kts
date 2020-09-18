@@ -1,7 +1,27 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.jupyter.build.*
+import org.jetbrains.kotlin.jupyter.build.AllOptions
+import org.jetbrains.kotlin.jupyter.build.CondaCredentials
+import org.jetbrains.kotlin.jupyter.build.CondaTaskSpec
+import org.jetbrains.kotlin.jupyter.build.DistributionPackageSettings
+import org.jetbrains.kotlin.jupyter.build.ProjectWithOptionsImpl
+import org.jetbrains.kotlin.jupyter.build.PyPiTaskSpec
+import org.jetbrains.kotlin.jupyter.build.ReadmeGenerator
+import org.jetbrains.kotlin.jupyter.build.UploadTaskSpecs
+import org.jetbrains.kotlin.jupyter.build.createCleanTasks
+import org.jetbrains.kotlin.jupyter.build.createInstallTasks
+import org.jetbrains.kotlin.jupyter.build.detectVersion
+import org.jetbrains.kotlin.jupyter.build.getCurrentBranch
+import org.jetbrains.kotlin.jupyter.build.getCurrentCommitSha
+import org.jetbrains.kotlin.jupyter.build.getFlag
+import org.jetbrains.kotlin.jupyter.build.getSubDir
+import org.jetbrains.kotlin.jupyter.build.prepareCondaTasks
+import org.jetbrains.kotlin.jupyter.build.prepareDistributionTasks
+import org.jetbrains.kotlin.jupyter.build.prepareLocalTasks
+import org.jetbrains.kotlin.jupyter.build.preparePyPiTasks
+import org.jetbrains.kotlin.jupyter.build.readProperties
+import org.jetbrains.kotlin.jupyter.build.stringPropOrEmpty
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -29,8 +49,9 @@ class TaskOptions : AllOptions {
         val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
         artifactsDir = rootPath.resolve(artifactsPathStr)
 
-        if (isLocalBuild)
+        if (isLocalBuild) {
             project.delete(artifactsDir)
+        }
 
         project.version = detectVersion(baseVersion, artifactsDir, versionFileName)
         println("##teamcity[buildNumber '$version']")

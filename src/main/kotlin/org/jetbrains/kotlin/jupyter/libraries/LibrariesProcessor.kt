@@ -1,11 +1,11 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlin.jupyter.Variable
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.TypeHandler
 
@@ -47,7 +47,8 @@ class LibrariesProcessor(
     private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>): LibraryDefinitionProducer {
         val definitionCodes = library.libraryDefinitions
         return if (definitionCodes.isEmpty()) {
-            TrivialLibraryDefinitionProducer(LibraryDefinition(
+            TrivialLibraryDefinitionProducer(
+                LibraryDefinition(
                     dependencies = library.dependencies.replaceVariables(mapping),
                     repositories = library.repositories.replaceVariables(mapping),
                     imports = library.imports.replaceVariables(mapping),
@@ -57,7 +58,8 @@ class LibrariesProcessor(
                     renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
                     converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
                     annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
-            ))
+                )
+            )
         } else {
             val initCodes = library.buildDependenciesInitCode(mapping)?.let { listOf(it) } ?: emptyList()
             ResolvingLibraryDefinitionProducer(initCodes, definitionCodes)

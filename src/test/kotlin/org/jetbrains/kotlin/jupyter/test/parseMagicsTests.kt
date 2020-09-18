@@ -2,10 +2,10 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
