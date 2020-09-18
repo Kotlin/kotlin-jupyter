@@ -1,8 +1,6 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
 import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.jupyter.GitHubRepoName
@@ -13,6 +11,8 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlin.jupyter.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.generateDiagnostic

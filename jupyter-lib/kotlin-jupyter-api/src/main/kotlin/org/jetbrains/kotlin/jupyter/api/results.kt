@@ -9,7 +9,7 @@ interface Renderable {
 interface DisplayResult: Renderable {
     val id: String? get() = null
 
-    fun toJson(): JsonObject
+    fun toJson(additionalMetadata: JsonObject = jsonObject()): JsonObject
 
     override fun render(notebook: Notebook<*>) = this
 }
@@ -23,6 +23,7 @@ interface DisplayContainer {
     fun getById(id: String?): List<DisplayResultWithCell>
 }
 
+@Suppress("unused")
 fun DisplayResult?.toJson(): JsonObject {
     if (this != null) return this.toJson()
     return jsonObject("data" to null, "metadata" to jsonObject())
@@ -48,9 +49,13 @@ class MimeTypedResult(
         var isolatedHtml: Boolean = false,
         override val id: String? = null
 ) : Map<String, String> by mimeData, DisplayResult {
-    override fun toJson(): JsonObject {
+    override fun toJson(additionalMetadata: JsonObject): JsonObject {
         val data = JsonObject(this)
         val metadata = if (isolatedHtml) jsonObject("text/html" to jsonObject("isolated" to true)) else jsonObject()
+        additionalMetadata.forEach { key, value ->
+            metadata[key] = value
+        }
+
         val result = jsonObject(
                 "data" to data,
                 "metadata" to metadata
@@ -60,7 +65,10 @@ class MimeTypedResult(
     }
 }
 
+@Suppress("unused", "FunctionName")
 fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(*mimeToData)
+
+@Suppress("unused", "FunctionName")
 fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))

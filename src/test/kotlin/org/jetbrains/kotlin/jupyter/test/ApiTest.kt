@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class ApiTest: AbstractReplTest() {
+class ApiTest : AbstractReplTest() {
     private val repl = ReplForJupyterImpl(libraryFactory, classpath)
 
     private fun jEval(jupyterId: Int, code: String): EvalResult {
@@ -16,9 +16,12 @@ class ApiTest: AbstractReplTest() {
     fun testRepl() {
         jEval(1, "val x = 3")
         jEval(2, "x*2")
-        jEval(3, """
+        jEval(
+            3,
+            """
             println(x*3)
-        """.trimIndent())
+            """.trimIndent()
+        )
         val res1 = jEval(4, "notebook.cells[2]?.result")
         assertEquals(6, res1.resultValue)
     }

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.jupyter.api.Notebook
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.setDisplayId
 import org.jetbrains.kotlin.jupyter.api.textResult
-import org.jetbrains.kotlin.jupyter.api.toJson
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -49,68 +48,23 @@ abstract class Response(
 }
 
 class OkResponseWithMessage(
-    private val result: MimeTypedResult?,
+    private val result: DisplayResult?,
     private val newClasspath: Classpath = emptyList(),
     stdOut: String? = null,
     stdErr: String? = null,
 ) : Response(stdOut, stdErr) {
-interface DisplayHandler {
-    fun handleDisplay(value: Any)
-    fun handleUpdate(value: Any, id: String? = null)
-}
-
-class SocketDisplayHandler(
-        private val socket: JupyterConnection.Socket,
-        private val notebook: NotebookImpl,
-        private val message: Message,
-) : DisplayHandler {
-    override fun handleDisplay(value: Any) {
-        val display = value.toDisplayResult(notebook) ?: return
-        val json = display.toJson()
-
-        notebook.thisCell?.addDisplay(display)
-
-        socket.send(makeReplyMessage(message,
-                "display_data",
-                content = json))
-    }
-
-    override fun handleUpdate(value: Any, id: String?) {
-        val display = value.toDisplayResult(notebook) ?: return
-        val json = display.toJson()
-
-        notebook.thisCell?.displays?.update(id, display)
-
-        json.setDisplayId(id) ?: throw ReplEvalRuntimeException("`update_display_data` response should provide an id of data being updated")
-
-        socket.send(makeReplyMessage(message,
-                "update_display_data",
-                content = json))
-    }
-}
-
-data class OkResponseWithMessage(
-        val result: DisplayResult?,
-        override val stdOut: String? = null,
-        override val stdErr: String? = null,
-): Response{
     override val state: ResponseState = ResponseState.Ok
 
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         if (result != null) {
-            val metadata = jsonObject()
-            if (result.isolatedHtml) metadata["text/html"] = jsonObject("isolated" to true)
-            metadata["new_classpath"] = newClasspath
+            val metadata = jsonObject("new_classpath" to newClasspath)
+            val resultJson = result.toJson(metadata).also { it["execution_count"] = requestCount }
 
             socket.connection.iopub.send(
                 makeReplyMessage(
                     requestMsg,
                     "execute_result",
-                    content = jsonObject(
-                        "execution_count" to requestCount,
-                        "data" to result,
-                        "metadata" to metadata
-                    )
+                    content = resultJson
                 )
             )
         }
@@ -136,9 +90,50 @@ data class OkResponseWithMessage(
         )
     }
 }
+interface DisplayHandler {
+    fun handleDisplay(value: Any)
+    fun handleUpdate(value: Any, id: String? = null)
+}
+
+class SocketDisplayHandler(
+    private val socket: JupyterConnection.Socket,
+    private val notebook: NotebookImpl,
+    private val message: Message,
+) : DisplayHandler {
+    override fun handleDisplay(value: Any) {
+        val display = value.toDisplayResult(notebook) ?: return
+        val json = display.toJson()
+
+        notebook.thisCell?.addDisplay(display)
+
+        socket.send(
+            makeReplyMessage(
+                message,
+                "display_data",
+                content = json
+            )
+        )
+    }
+
+    override fun handleUpdate(value: Any, id: String?) {
+        val display = value.toDisplayResult(notebook) ?: return
+        val json = display.toJson()
+
+        notebook.thisCell?.displays?.update(id, display)
+
+        json.setDisplayId(id) ?: throw ReplEvalRuntimeException("`update_display_data` response should provide an id of data being updated")
+
+        socket.send(
+            makeReplyMessage(
+                message,
+                "update_display_data",
+                content = json
+            )
+        )
+    }
+}
 
 class AbortResponseWithMessage(
-    val result: MimeTypedResult?,
     stdErr: String? = null,
 ) : Response(null, stdErr) {
     override val state: ResponseState = ResponseState.Abort
@@ -158,7 +153,6 @@ class AbortResponseWithMessage(
 }
 
 class ErrorResponseWithMessage(
-    val result: MimeTypedResult?,
     stdErr: String? = null,
     private val errorName: String = "Unknown error",
     private var errorValue: String = "",
@@ -467,11 +461,12 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             } ?: jsonObject()
 
             ErrorResponseWithMessage(
-                    ex.message,
-                    ex.javaClass.canonicalName,
-                    ex.message ?: "",
-                    ex.stackTrace.map { it.toString() },
-                    additionalInfo)
+                ex.message,
+                ex.javaClass.canonicalName,
+                ex.message ?: "",
+                ex.stackTrace.map { it.toString() },
+                additionalInfo
+            )
         } catch (ex: ReplEvalRuntimeException) {
             forkedOut.flush()
 
@@ -491,10 +486,11 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
                 }
             }
             ErrorResponseWithMessage(
-                    stdErr.toString(),
-                    ex.javaClass.canonicalName,
-                    ex.message ?: "",
-                    ex.stackTrace.map { it.toString() })
+                stdErr.toString(),
+                ex.javaClass.canonicalName,
+                ex.message ?: "",
+                ex.stackTrace.map { it.toString() }
+            )
         }
     } finally {
         forkedOut.close()

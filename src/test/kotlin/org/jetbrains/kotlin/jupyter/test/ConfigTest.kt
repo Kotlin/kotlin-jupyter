@@ -1,9 +1,9 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryPropertiesFile
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.log
 import org.jetbrains.kotlin.jupyter.parseIniConfig

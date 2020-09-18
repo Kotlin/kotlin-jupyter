@@ -6,12 +6,12 @@ import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.Notebook
+import org.jetbrains.kotlin.jupyter.api.TypeHandler
 import org.jetbrains.kotlin.jupyter.catchAll
 import org.jetbrains.kotlin.jupyter.getHttp
 import org.jetbrains.kotlin.jupyter.log
@@ -152,26 +152,26 @@ fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
     return LibraryDescriptor(
         originalJson = json,
         libraryDefinitions = json.array<String>("libraryDefinitions")?.toList().orEmpty(),
-            dependencies = json.array<String>("dependencies")?.toList().orEmpty(),
-            variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
-            imports = json.array<String>("imports")?.toList().orEmpty(),
-            repositories = json.array<String>("repositories")?.toList().orEmpty(),
-            init = json.array<String>("init")?.toList().orEmpty(),
-            shutdown = json.array<String>("shutdown")?.toList().orEmpty(),
-            initCell = json.array<String>("initCell")?.toList().orEmpty(),
-            renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
-            link = json.string("link"),
-            description = json.string("description"),
-            minKernelVersion = json.string("minKernelVersion"),
-            converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
-            annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
+        dependencies = json.array<String>("dependencies")?.toList().orEmpty(),
+        variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
+        imports = json.array<String>("imports")?.toList().orEmpty(),
+        repositories = json.array<String>("repositories")?.toList().orEmpty(),
+        init = json.array<String>("init")?.toList().orEmpty(),
+        shutdown = json.array<String>("shutdown")?.toList().orEmpty(),
+        initCell = json.array<String>("initCell")?.toList().orEmpty(),
+        renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
+        link = json.string("link"),
+        description = json.string("description"),
+        minKernelVersion = json.string("minKernelVersion"),
+        converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
+        annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
     )
 }
 
 fun replaceVariables(str: String, mapping: Map<String, String>) =
-        mapping.asSequence().fold(str) { s, template ->
-            s.replace("\$${template.key}", template.value)
-        }
+    mapping.asSequence().fold(str) { s, template ->
+        s.replace("\$${template.key}", template.value)
+    }
 
 fun List<String>.replaceVariables(mapping: Map<String, String>) = map { replaceVariables(it, mapping) }
 
@@ -182,13 +182,13 @@ fun parseLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, Libr
     }
 }
 
-class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition): LibraryDefinitionProducer {
+class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) : LibraryDefinitionProducer {
     override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
         return listOf(library)
     }
 }
 
-class ResolvingLibraryDefinitionProducer(private val initCodes: List<Code>, private val codes: List<Code>): LibraryDefinitionProducer {
+class ResolvingLibraryDefinitionProducer(private val initCodes: List<Code>, private val codes: List<Code>) : LibraryDefinitionProducer {
     override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
         if (notebook == null) return emptyList()
 
@@ -196,7 +196,7 @@ class ResolvingLibraryDefinitionProducer(private val initCodes: List<Code>, priv
 
         val definitions = mutableListOf<LibraryDefinition>()
         for (code in codes) {
-            when(val result = notebook.host.execute(code)) {
+            when (val result = notebook.host.execute(code)) {
                 is LibraryDefinition -> definitions.add(result)
                 is LibraryDefinitionProducer -> {
                     val produced = result.getDefinitions(notebook)
@@ -206,7 +206,6 @@ class ResolvingLibraryDefinitionProducer(private val initCodes: List<Code>, priv
         }
         return definitions
     }
-
 }
 
 fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
