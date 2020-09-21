@@ -1,5 +1,6 @@
 {
   "link": "https://github.com/breandan/kaliningraph",
+  "description": "Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms",
   "repositories": [
     "https://jitpack.io"
   ],
