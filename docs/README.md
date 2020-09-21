@@ -166,6 +166,7 @@ List of supported libraries:
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin mathematical library operating on generic algebras
