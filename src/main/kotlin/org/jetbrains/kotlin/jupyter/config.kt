@@ -83,6 +83,26 @@ class RuntimeKernelProperties(val map: Map<String, String>): ReplRuntimeProperti
     }
 }
 
+data class KernelJupyterParams(
+        val sigScheme: String?,
+        val key: String?,
+        val ports: List<Int>,
+        val transport: String?) {
+    companion object {
+        fun fromFile(cfgFile: File): KernelJupyterParams {
+            val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
+            fun JsonObject.getInt(field: String): Int = int(field)
+                    ?: throw RuntimeException("Cannot find $field in $cfgFile")
+
+            val sigScheme = cfgJson.string("signature_scheme")
+            val key = cfgJson.string("key")
+            val ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }
+            val transport = cfgJson.string("transport") ?: "tcp"
+            return KernelJupyterParams(sigScheme, key, ports, transport)
+        }
+    }
+}
+
 data class KernelConfig(
         val ports: List<Int>,
         val transport: String,
@@ -93,6 +113,7 @@ data class KernelConfig(
         val homeDir: File?,
         val resolverConfig: ResolverConfig?,
         val libraryFactory: LibraryFactory,
+        val embedded: Boolean = false,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
         val cfgJson = jsonObject(
@@ -113,21 +134,22 @@ data class KernelConfig(
     companion object {
         fun fromArgs(args: KernelArgs, libraryFactory: LibraryFactory): KernelConfig {
             val (cfgFile, scriptClasspath, homeDir) = args
-            val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
-            fun JsonObject.getInt(field: String): Int = int(field) ?: throw RuntimeException("Cannot find $field in $cfgFile")
+            val cfg = KernelJupyterParams.fromFile(cfgFile)
+            return fromConfig(cfg, libraryFactory, scriptClasspath, homeDir)
+        }
 
-            val sigScheme = cfgJson.string("signature_scheme")
-            val key = cfgJson.string("key")
+        fun fromConfig(cfg: KernelJupyterParams, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
 
             return KernelConfig(
-                    ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") },
-                    transport = cfgJson.string("transport") ?: "tcp",
-                    signatureScheme = sigScheme ?: "hmac1-sha256",
-                    signatureKey = if (sigScheme == null || key == null) "" else key,
+                    ports = cfg.ports,
+                    transport = cfg.transport ?: "tcp",
+                    signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
+                    signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
                     scriptClasspath = scriptClasspath,
                     homeDir = homeDir,
                     resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), libraryFactory) },
                     libraryFactory = libraryFactory,
+                    embedded = embedded,
             )
         }
     }
