@@ -75,6 +75,11 @@ fun main(vararg args: String) {
     }
 }
 
+/**
+ * This function is to be run in projects which use kernel as a library,
+ * so we don't have a big need in covering it with tests
+ */
+@Suppress("unused")
 fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
