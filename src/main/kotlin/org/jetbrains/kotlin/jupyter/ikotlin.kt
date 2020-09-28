@@ -78,7 +78,7 @@ fun main(vararg args: String) {
 fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
-            KernelCfgFile.fromFile(cfgFile),
+            KernelJupyterParams.fromFile(cfgFile),
             libraryFactory ?: LibraryFactory.EMPTY,
             cp, null, true)
     kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())

@@ -83,13 +83,13 @@ class RuntimeKernelProperties(val map: Map<String, String>): ReplRuntimeProperti
     }
 }
 
-data class KernelCfgFile(
+data class KernelJupyterParams(
         val sigScheme: String?,
         val key: String?,
         val ports: List<Int>,
         val transport: String?) {
     companion object {
-        fun fromFile(cfgFile: File): KernelCfgFile {
+        fun fromFile(cfgFile: File): KernelJupyterParams {
             val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
             fun JsonObject.getInt(field: String): Int = int(field)
                     ?: throw RuntimeException("Cannot find $field in $cfgFile")
@@ -98,7 +98,7 @@ data class KernelCfgFile(
             val key = cfgJson.string("key")
             val ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }
             val transport = cfgJson.string("transport") ?: "tcp"
-            return KernelCfgFile(sigScheme, key, ports, transport)
+            return KernelJupyterParams(sigScheme, key, ports, transport)
         }
     }
 }
@@ -134,11 +134,11 @@ data class KernelConfig(
     companion object {
         fun fromArgs(args: KernelArgs, libraryFactory: LibraryFactory): KernelConfig {
             val (cfgFile, scriptClasspath, homeDir) = args
-            val cfg = KernelCfgFile.fromFile(cfgFile)
+            val cfg = KernelJupyterParams.fromFile(cfgFile)
             return fromConfig(cfg, libraryFactory, scriptClasspath, homeDir)
         }
 
-        fun fromConfig(cfg: KernelCfgFile, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
+        fun fromConfig(cfg: KernelJupyterParams, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
 
             return KernelConfig(
                     ports = cfg.ports,
