@@ -156,11 +156,11 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testDependsOnAnnotations() {
-        val sb = StringBuilder()
-        sb.appendLine("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
-        sb.appendLine("@file:Repository(\"https://repo.spring.io/libs-release\")")
-        sb.appendLine("@file:DependsOn(\"org.jetbrains.kotlinx:kotlinx.html.jvm:0.5.12\")")
-        repl.eval(sb.toString())
+        repl.eval("""
+            @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
+            @file:Repository("https://repo.spring.io/libs-release")
+            @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
+        """.trimIndent())
     }
 
     @Test
