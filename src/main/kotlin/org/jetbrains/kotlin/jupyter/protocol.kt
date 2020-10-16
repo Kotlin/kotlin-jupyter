@@ -25,46 +25,101 @@ enum class JupyterOutType {
     fun optionName() = name.toLowerCase()
 }
 
-interface Response {
-    val state: ResponseState
-    val hasStdOut: Boolean
-    val hasStdErr: Boolean
-    val stdOut: String?
-    val stdErr: String?
+abstract class Response(
+    private val stdOut: String?,
+    private val stdErr: String?
+) {
+    abstract val state: ResponseState
+
+    fun send(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
+        if (stdOut != null && stdOut.isNotEmpty()) {
+            socket.connection.iopub.sendOut(requestMsg, JupyterOutType.STDOUT, stdOut)
+        }
+        if (stdErr != null && stdErr.isNotEmpty()) {
+            socket.connection.iopub.sendOut(requestMsg, JupyterOutType.STDERR, stdErr)
+        }
+        sendBody(socket, requestCount, requestMsg, startedTime)
+    }
+
+    protected abstract fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String)
 }
 
-data class OkResponseWithMessage(
-        val result: MimeTypedResult?,
-        override val stdOut: String? = null,
-        override val stdErr: String? = null,
-): Response{
+class OkResponseWithMessage(
+        private val result: MimeTypedResult?,
+        private val newClasspath: Classpath = emptyList(),
+        stdOut: String? = null,
+        stdErr: String? = null,
+): Response(stdOut, stdErr){
     override val state: ResponseState = ResponseState.Ok
-    override val hasStdOut: Boolean = stdOut != null && stdOut.isNotEmpty()
-    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+
+    override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
+        if (result != null) {
+            val metadata = jsonObject()
+            if (result.isolatedHtml) metadata["text/html"] = jsonObject("isolated" to true)
+            metadata["new_classpath"] = newClasspath
+
+            socket.connection.iopub.send(makeReplyMessage(requestMsg,
+                "execute_result",
+                content = jsonObject(
+                    "execution_count" to requestCount,
+                    "data" to result,
+                    "metadata" to metadata
+                )))
+        }
+
+        socket.send(makeReplyMessage(requestMsg, "execute_reply",
+            metadata = jsonObject(
+                "dependencies_met" to true,
+                "engine" to requestMsg.header["session"],
+                "status" to "ok",
+                "started" to startedTime),
+            content = jsonObject(
+                "status" to "ok",
+                "execution_count" to requestCount,
+                "user_variables" to JsonObject(),
+                "payload" to listOf<String>(),
+                "user_expressions" to JsonObject())))
+    }
 }
 
-data class AbortResponseWithMessage(
+class AbortResponseWithMessage(
         val result: MimeTypedResult?,
-        override val stdErr: String? = null,
-): Response{
+        stdErr: String? = null,
+): Response(null, stdErr){
     override val state: ResponseState = ResponseState.Abort
-    override val stdOut: String? = null
-    override val hasStdOut: Boolean = false
-    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+
+    override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
+        val errorReply = makeReplyMessage(requestMsg, "execute_reply",
+            content = jsonObject(
+                "status" to "abort",
+                "execution_count" to requestCount))
+        System.err.println("Sending abort: $errorReply")
+        socket.send(errorReply)
+    }
 }
 
-data class ErrorResponseWithMessage(
+class ErrorResponseWithMessage(
         val result: MimeTypedResult?,
-        override val stdErr: String? = null,
-        val errorName: String = "Unknown error",
-        var errorValue: String = "",
-        val traceback: List<String> = emptyList(),
-        val additionalInfo: JsonObject = jsonObject(),
-): Response{
+        stdErr: String? = null,
+        private val errorName: String = "Unknown error",
+        private var errorValue: String = "",
+        private val traceback: List<String> = emptyList(),
+        private val additionalInfo: JsonObject = jsonObject(),
+): Response(null, stdErr){
     override val state: ResponseState = ResponseState.Error
-    override val stdOut: String? = null
-    override val hasStdOut: Boolean = false
-    override val hasStdErr: Boolean = stdErr != null && stdErr.isNotEmpty()
+
+    override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
+        val errorReply = makeReplyMessage(requestMsg, "execute_reply",
+            content = jsonObject(
+                "status" to "error",
+                "execution_count" to requestCount,
+                "ename" to errorName,
+                "evalue" to errorValue,
+                "traceback" to traceback,
+                "additionalInfo" to additionalInfo))
+        System.err.println("Sending error: $errorReply")
+        socket.send(errorReply)
+    }
 }
 
 fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
@@ -144,61 +199,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
             }
 
-            if (res.hasStdOut) {
-                connection.iopub.sendOut(msg, JupyterOutType.STDOUT, res.stdOut!!)
-            }
-            if (res.hasStdErr) {
-                connection.iopub.sendOut(msg, JupyterOutType.STDERR, res.stdErr!!)
-            }
-
-            when (res) {
-                is OkResponseWithMessage -> {
-                    if (res.result != null) {
-                        val metadata = if (res.result.isolatedHtml)
-                            jsonObject("text/html" to jsonObject("isolated" to true)) else jsonObject()
-                        connection.iopub.send(makeReplyMessage(msg,
-                                "execute_result",
-                                content = jsonObject(
-                                        "execution_count" to count,
-                                        "data" to res.result,
-                                        "metadata" to metadata
-                                )))
-                    }
-
-                    send(makeReplyMessage(msg, "execute_reply",
-                            metadata = jsonObject(
-                                    "dependencies_met" to true,
-                                    "engine" to msg.header["session"],
-                                    "status" to "ok",
-                                    "started" to startedTime),
-                            content = jsonObject(
-                                    "status" to "ok",
-                                    "execution_count" to count,
-                                    "user_variables" to JsonObject(),
-                                    "payload" to listOf<String>(),
-                                    "user_expressions" to JsonObject())))
-                }
-                is ErrorResponseWithMessage -> {
-                    val errorReply = makeReplyMessage(msg, "execute_reply",
-                            content = jsonObject(
-                                    "status" to "error",
-                                    "execution_count" to count,
-                                    "ename" to res.errorName,
-                                    "evalue" to res.errorValue,
-                                    "traceback" to res.traceback,
-                                    "additionalInfo" to res.additionalInfo))
-                    System.err.println("Sending error: $errorReply")
-                    send(errorReply)
-                }
-                is AbortResponseWithMessage -> {
-                    val errorReply = makeReplyMessage(msg, "execute_reply",
-                            content = jsonObject(
-                                    "status" to "abort",
-                                    "execution_count" to count))
-                    System.err.println("Sending abort: $errorReply")
-                    send(errorReply)
-                }
-            }
+            res.send(this, count, msg, startedTime)
 
             connection.iopub.sendStatus("idle", msg)
             connection.contextMessage = null
@@ -353,7 +354,7 @@ fun JupyterConnection.evalWithIO(config: OutputConfig, srcMessage: Message, body
 
                 try {
                     val result = exec.resultValue?.toMimeTypedResult()
-                    OkResponseWithMessage(result)
+                    OkResponseWithMessage(result, exec.newClasspath)
                 } catch (e: Exception) {
                     AbortResponseWithMessage(textResult("Error!"), "error:  Unable to convert result to a string: $e")
                 }

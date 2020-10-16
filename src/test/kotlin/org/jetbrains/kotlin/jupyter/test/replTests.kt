@@ -156,11 +156,21 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testDependsOnAnnotations() {
-        repl.eval("""
+        val res = repl.eval("""
             @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
             @file:Repository("https://repo.spring.io/libs-release")
             @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
         """.trimIndent())
+
+        assertTrue(res.newClasspath.size >= 2)
+
+        val htmlLibPath = listOf(
+            "org.jetbrains.kotlinx",
+            "kotlinx-html-jvm",
+            "jars",
+            "kotlinx-html-jvm"
+        ).joinToString(File.separator)
+        assertTrue(res.newClasspath.any { htmlLibPath in it })
     }
 
     @Test

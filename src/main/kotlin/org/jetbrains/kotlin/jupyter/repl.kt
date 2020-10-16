@@ -59,7 +59,12 @@ import kotlin.script.experimental.jvm.util.isIncomplete
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 import kotlin.script.experimental.jvm.withUpdatedClasspath
 
-data class EvalResult(val resultValue: Any?)
+typealias Classpath = List<String>
+
+data class EvalResult(
+    val resultValue: Any?,
+    val newClasspath: Classpath,
+)
 
 data class CheckResult(val isComplete: Boolean = true)
 
@@ -300,9 +305,7 @@ class ReplForJupyterImpl(
                 ?.flatMap { it.classpath }
                 .orEmpty()
 
-    override val currentClasspath = mutableSetOf<String>().also { filePaths ->
-        filePaths.addAll(compilerConfiguration.classpath.map { it.canonicalPath })
-    }
+    override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
@@ -458,13 +461,13 @@ class ReplForJupyterImpl(
                     updateOutputList(jupyterId, result)
                 }
 
-                log.catchAll {
+                val newClasspath = log.catchAll {
                     updateClasspath()
-                }
+                } ?: emptyList()
 
                 result = renderResult(result, resultField)
 
-                return EvalResult(result)
+                return EvalResult(result, newClasspath)
 
             } finally {
                 currentDisplayHandler = null
@@ -484,27 +487,33 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun updateClasspath() {
+    /**
+     * Updates current classpath with newly resolved libraries paths
+     * Also, prints information about resolved libraries to stdout if [trackClasspath] is true
+     *
+     * @return Newly resolved classpath
+     */
+    private fun updateClasspath(): Classpath {
         val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
-        if (resolvedClasspath.isNotEmpty()) {
+        if (resolvedClasspath.isEmpty()) return emptyList()
 
-            val newClasspath = resolvedClasspath.filter { !currentClasspath.contains(it) }
-            val oldClasspath = resolvedClasspath.filter { currentClasspath.contains(it) }
-            currentClasspath.addAll(newClasspath)
-            if (trackClasspath) {
-                val sb = StringBuilder()
-                if (newClasspath.count() > 0) {
-                    sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
-                    newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
-                }
-                if (oldClasspath.count() > 0) {
-                    sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
-                    oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
-                }
-                sb.appendLine("Current classpath size: ${currentClasspath.count()}")
-                println(sb.toString())
+        val (oldClasspath, newClasspath) = resolvedClasspath.partition { it in currentClasspath }
+        currentClasspath.addAll(newClasspath)
+        if (trackClasspath) {
+            val sb = StringBuilder()
+            if (newClasspath.count() > 0) {
+                sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
+                newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
             }
+            if (oldClasspath.count() > 0) {
+                sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
+                oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
+            }
+            sb.appendLine("Current classpath size: ${currentClasspath.count()}")
+            println(sb.toString())
         }
+
+        return newClasspath
     }
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
@@ -557,7 +566,7 @@ class ReplForJupyterImpl(
             InternalEvalResult(null, null)
         }
         processAnnotations(lastReplLine())
-        return EvalResult(result.value)
+        return EvalResult(result.value, emptyList())
     }
 
     private data class InternalEvalResult(val value: Any?, val resultField: Pair<String, KotlinType>?)

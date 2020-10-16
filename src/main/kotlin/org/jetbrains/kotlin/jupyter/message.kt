@@ -48,6 +48,6 @@ fun makeHeader(msgType: String? = null, incomingMsg: Message? = null, sessionId:
         "msg_id" to UUID.randomUUID().toString(),
         "date" to ISO8601DateNow,
         "version" to protocolVersion,
-        "username" to ((incomingMsg?.header?.get("username") as? String) ?: "kernel"),
-        "session" to ((incomingMsg?.header?.get("session") as? String) ?: sessionId),
+        "username" to ((incomingMsg?.header["username"] as? String) ?: "kernel"),
+        "session" to ((incomingMsg?.header["session"] as? String) ?: sessionId),
         "msg_type" to (msgType ?: "none"))
