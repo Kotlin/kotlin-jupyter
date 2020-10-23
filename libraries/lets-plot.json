@@ -8,7 +8,7 @@
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
-    "https://jetbrains.bintray.com/lets-plot-maven"
+    "https://jetbrains.bintray.com/lets-plot-maven/"
   ],
   "dependencies": [
     "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api-kernel:$api",

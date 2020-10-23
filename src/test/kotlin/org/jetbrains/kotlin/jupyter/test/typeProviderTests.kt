@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.defaultRepositories
-import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptors
 import org.junit.jupiter.api.Assertions.assertEquals

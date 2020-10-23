@@ -24,15 +24,24 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
             DependenciesResolverOptionsName.SCOPE.key to "compile,runtime"
     ))
 
+    private val repositories = arrayListOf<RepositoryCoordinates>()
+    private val addedClasspath = arrayListOf<File>()
+
     init {
         resolver = CompoundDependenciesResolver(
                 FileSystemDependenciesResolver(),
                 RemoteResolverWrapper(IvyResolver())
         )
-        resolverConfig?.repositories?.forEach { resolver.addRepository(it) }
+        resolverConfig?.repositories?.forEach { addRepository(it) }
     }
 
-    private val addedClasspath: MutableList<File> = mutableListOf()
+    private fun addRepository(repository: RepositoryCoordinates): Boolean {
+        val repoIndex = repositories.indexOfFirst { it.string == repository.string }
+        if (repoIndex != -1) repositories.removeAt(repoIndex)
+        repositories.add(repository)
+
+        return resolver.addRepository(repository).valueOrNull() == true
+    }
 
     fun popAddedClasspath(): List<File> {
         val result = addedClasspath.toList()
@@ -43,13 +52,20 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
     fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>> {
         val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
         val classpath = mutableListOf<File>()
+        var existingRepositories: List<RepositoryCoordinates>? = null
 
         script.annotations.forEach { annotation ->
             when (annotation) {
                 is Repository -> {
                     log.info("Adding repository: ${annotation.value}")
-                    if (resolver.addRepository(RepositoryCoordinates(annotation.value)).valueOrNull() != true)
+                    if (existingRepositories == null) {
+                        existingRepositories = ArrayList(repositories)
+                    }
+
+                    if (!addRepository(RepositoryCoordinates(annotation.value)))
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
+
+                    existingRepositories?.forEach{ addRepository(it) }
                 }
                 is DependsOn -> {
                     log.info("Resolving ${annotation.value}")
@@ -71,12 +87,19 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                         log.error(diagnostic.message, e)
                         scriptDiagnostics.add(diagnostic)
                     }
+                    // Hack: after first resolution add "standard" Central repo to the end of the list, giving it the lowest priority
+                    addRepository(CENTRAL_REPO_COORDINATES)
                 }
                 else -> throw Exception("Unknown annotation ${annotation.javaClass}")
             }
         }
+
         return if (scriptDiagnostics.isEmpty()) classpath.asSuccess()
         else makeFailureResult(scriptDiagnostics)
+    }
+
+    companion object {
+        val CENTRAL_REPO_COORDINATES = RepositoryCoordinates("https://repo1.maven.org/maven2/")
     }
 }
 
