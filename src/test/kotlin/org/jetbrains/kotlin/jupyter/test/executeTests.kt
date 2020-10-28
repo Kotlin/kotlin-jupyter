@@ -1,7 +1,10 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
-import org.jetbrains.kotlin.jupyter.*
+import org.jetbrains.kotlin.jupyter.JupyterSockets
+import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.get
+import org.jetbrains.kotlin.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -17,11 +20,11 @@ fun Message.type(): String {
 class ExecuteTests : KernelServerTestsBase() {
 
     private fun doExecute(
-            code : String,
-            hasResult: Boolean = true,
-            ioPubChecker : (ZMQ.Socket) -> Unit = {},
-            inputs: List<String> = emptyList(),
-    ) : Any? {
+        code: String,
+        hasResult: Boolean = true,
+        ioPubChecker: (ZMQ.Socket) -> Unit = {},
+        inputs: List<String> = emptyList(),
+    ): Any? {
         val context = ZMQ.context(1)
         val shell = ClientSocket(context, JupyterSockets.shell)
         val ioPub = ClientSocket(context, JupyterSockets.iopub)
@@ -67,19 +70,20 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
-    fun testExecute(){
+    fun testExecute() {
         val res = doExecute("2+2") as JsonObject
         assertEquals("4", res["text/plain"])
     }
 
     @Test
-    fun testOutput(){
-        val code = """
+    fun testOutput() {
+        val code =
+            """
             for (i in 1..5) {
                 Thread.sleep(200)
                 print(i)
             }
-        """.trimIndent()
+            """.trimIndent()
 
         fun checker(ioPub: ZMQ.Socket) {
             for (i in 1..5) {
@@ -94,15 +98,16 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
-    fun testOutputMagic(){
-        val code = """
+    fun testOutputMagic() {
+        val code =
+            """
             %output --max-buffer=2 --max-time=10000
             for (i in 1..5) {
                 print(i)
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val expected = arrayOf("12","34","5")
+        val expected = arrayOf("12", "34", "5")
 
         fun checker(ioPub: ZMQ.Socket) {
             for (el in expected) {
@@ -118,12 +123,13 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testOutputStrings() {
-        val code = """
+        val code =
+            """
             for (i in 1..5) {
                 Thread.sleep(200)
                 println("text" + i)
             }
-        """.trimIndent()
+            """.trimIndent()
 
         fun checker(ioPub: ZMQ.Socket) {
             for (i in 1..5) {
@@ -139,10 +145,11 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testReadLine() {
-        val code = """
+        val code =
+            """
             val answer = readLine()
             answer
-        """.trimIndent()
+            """.trimIndent()
         val res = doExecute(code, inputs = listOf("42"))
         assertEquals(jsonObject("text/plain" to "42"), res)
     }

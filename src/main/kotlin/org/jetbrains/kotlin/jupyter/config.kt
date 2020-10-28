@@ -35,13 +35,13 @@ val defaultRuntimeProperties by lazy {
 }
 
 val defaultRepositories = arrayOf(
-        "https://jcenter.bintray.com/",
-        "https://repo.maven.apache.org/maven2/",
-        "https://jitpack.io/",
+    "https://jcenter.bintray.com/",
+    "https://repo.maven.apache.org/maven2/",
+    "https://jitpack.io/",
 ).map { RepositoryCoordinates(it) }
 
 val defaultGlobalImports = listOf(
-        "kotlin.math.*",
+    "kotlin.math.*",
 )
 
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
@@ -53,11 +53,11 @@ enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: Sock
 }
 
 data class OutputConfig(
-        var captureOutput: Boolean = true,
-        var captureBufferTimeLimitMs: Long = 100,
-        var captureBufferMaxSize: Int = 1000,
-        var cellOutputMaxSize: Int = 100000,
-        var captureNewlineBufferSize: Int = 100
+    var captureOutput: Boolean = true,
+    var captureBufferTimeLimitMs: Long = 100,
+    var captureBufferMaxSize: Int = 1000,
+    var cellOutputMaxSize: Int = 100000,
+    var captureNewlineBufferSize: Int = 100
 ) {
     fun update(other: OutputConfig) {
         captureOutput = other.captureOutput
@@ -68,9 +68,9 @@ data class OutputConfig(
     }
 }
 
-class RuntimeKernelProperties(val map: Map<String, String>): ReplRuntimeProperties {
+class RuntimeKernelProperties(val map: Map<String, String>) : ReplRuntimeProperties {
     override val version: KotlinKernelVersion? by lazy {
-        map["version"]?.let{ KotlinKernelVersion.from(it) }
+        map["version"]?.let { KotlinKernelVersion.from(it) }
     }
     override val librariesFormatVersion: Int
         get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
@@ -84,15 +84,16 @@ class RuntimeKernelProperties(val map: Map<String, String>): ReplRuntimeProperti
 }
 
 data class KernelJupyterParams(
-        val sigScheme: String?,
-        val key: String?,
-        val ports: List<Int>,
-        val transport: String?) {
+    val sigScheme: String?,
+    val key: String?,
+    val ports: List<Int>,
+    val transport: String?
+) {
     companion object {
         fun fromFile(cfgFile: File): KernelJupyterParams {
             val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
             fun JsonObject.getInt(field: String): Int = int(field)
-                    ?: throw RuntimeException("Cannot find $field in $cfgFile")
+                ?: throw RuntimeException("Cannot find $field in $cfgFile")
 
             val sigScheme = cfgJson.string("signature_scheme")
             val key = cfgJson.string("key")
@@ -104,22 +105,22 @@ data class KernelJupyterParams(
 }
 
 data class KernelConfig(
-        val ports: List<Int>,
-        val transport: String,
-        val signatureScheme: String,
-        val signatureKey: String,
-        val pollingIntervalMillis: Long = 100,
-        val scriptClasspath: List<File> = emptyList(),
-        val homeDir: File?,
-        val resolverConfig: ResolverConfig?,
-        val libraryFactory: LibraryFactory,
-        val embedded: Boolean = false,
+    val ports: List<Int>,
+    val transport: String,
+    val signatureScheme: String,
+    val signatureKey: String,
+    val pollingIntervalMillis: Long = 100,
+    val scriptClasspath: List<File> = emptyList(),
+    val homeDir: File?,
+    val resolverConfig: ResolverConfig?,
+    val libraryFactory: LibraryFactory,
+    val embedded: Boolean = false,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
         val cfgJson = jsonObject(
-                "transport" to transport,
-                "signature_scheme" to signatureScheme,
-                "key" to signatureKey,
+            "transport" to transport,
+            "signature_scheme" to signatureScheme,
+            "key" to signatureKey,
         ).also { cfg ->
             JupyterSockets.values().forEach { cfg["${it.name}_port"] = ports[it.ordinal] }
         }
@@ -141,15 +142,15 @@ data class KernelConfig(
         fun fromConfig(cfg: KernelJupyterParams, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
 
             return KernelConfig(
-                    ports = cfg.ports,
-                    transport = cfg.transport ?: "tcp",
-                    signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
-                    signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
-                    scriptClasspath = scriptClasspath,
-                    homeDir = homeDir,
-                    resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), libraryFactory) },
-                    libraryFactory = libraryFactory,
-                    embedded = embedded,
+                ports = cfg.ports,
+                transport = cfg.transport ?: "tcp",
+                signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
+                signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
+                scriptClasspath = scriptClasspath,
+                homeDir = homeDir,
+                resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), libraryFactory) },
+                libraryFactory = libraryFactory,
+                embedded = embedded,
             )
         }
     }
@@ -160,36 +161,38 @@ data class TypeHandler(val className: TypeName, val code: Code)
 data class Variable(val name: String, val value: String, val required: Boolean = false)
 
 open class LibraryDefinition(
-        val dependencies: List<String>,
-        val initCell: List<String>,
-        val imports: List<String>,
-        val repositories: List<String>,
-        val init: List<String>,
-        val shutdown: List<String>,
-        val renderers: List<TypeHandler>,
-        val converters: List<TypeHandler>,
-        val annotations: List<TypeHandler>
+    val dependencies: List<String>,
+    val initCell: List<String>,
+    val imports: List<String>,
+    val repositories: List<String>,
+    val init: List<String>,
+    val shutdown: List<String>,
+    val renderers: List<TypeHandler>,
+    val converters: List<TypeHandler>,
+    val annotations: List<TypeHandler>
 )
 
 class LibraryDescriptor(
-        val originalJson: JsonObject,
-        dependencies: List<String>,
-        val variables: List<Variable>,
-        initCell: List<String>,
-        imports: List<String>,
-        repositories: List<String>,
-        init: List<String>,
-        shutdown: List<String>,
-        renderers: List<TypeHandler>,
-        converters: List<TypeHandler>,
-        annotations: List<TypeHandler>,
-        val link: String?,
-        val description: String?,
-        val minKernelVersion: String?,
+    val originalJson: JsonObject,
+    dependencies: List<String>,
+    val variables: List<Variable>,
+    initCell: List<String>,
+    imports: List<String>,
+    repositories: List<String>,
+    init: List<String>,
+    shutdown: List<String>,
+    renderers: List<TypeHandler>,
+    converters: List<TypeHandler>,
+    annotations: List<TypeHandler>,
+    val link: String?,
+    val description: String?,
+    val minKernelVersion: String?,
 ) : LibraryDefinition(dependencies, initCell, imports, repositories, init, shutdown, renderers, converters, annotations)
 
-data class ResolverConfig(val repositories: List<RepositoryCoordinates>,
-                          val libraries: LibraryResolver)
+data class ResolverConfig(
+    val repositories: List<RepositoryCoordinates>,
+    val libraries: LibraryResolver
+)
 
 fun getHttp(url: String): Response {
     val response = khttp.get(url)

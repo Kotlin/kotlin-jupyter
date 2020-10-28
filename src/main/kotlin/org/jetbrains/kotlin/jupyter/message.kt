@@ -2,7 +2,9 @@ package org.jetbrains.kotlin.jupyter
 
 import com.beust.klaxon.JsonObject
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.HashMap
+import java.util.UUID
 
 private val ISO8601DateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
 internal val ISO8601DateNow: String get() = ISO8601DateFormatter.format(Date())
@@ -12,14 +14,14 @@ internal val emptyJsonObjectString = emptyJsonObject.toJsonString(prettyPrint = 
 internal val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 
 data class Message(
-        val id: List<ByteArray> = listOf(),
-        val header: JsonObject? = null,
-        val parentHeader: JsonObject? = null,
-        val metadata: JsonObject? = null,
-        val content: JsonObject? = null
+    val id: List<ByteArray> = listOf(),
+    val header: JsonObject? = null,
+    val parentHeader: JsonObject? = null,
+    val metadata: JsonObject? = null,
+    val content: JsonObject? = null
 ) {
     override fun toString(): String =
-            "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}]" +
+        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}]" +
             " header = ${header?.toJsonString(false) ?: emptyJsonObjectString}" +
             " parentHeader = ${parentHeader?.toJsonString(false) ?: emptyJsonObjectString}" +
             " metadata = ${metadata?.toJsonString(false) ?: emptyJsonObjectString}" +
@@ -31,23 +33,28 @@ fun jsonObject(namedVals: Iterable<Pair<String, Any?>>): JsonObject = JsonObject
 
 internal operator fun JsonObject?.get(key: String) = this?.get(key)
 
-fun makeReplyMessage(msg: Message,
-                     msgType: String? = null,
-                     sessionId: String? = null,
-                     header: JsonObject? = null,
-                     parentHeader: JsonObject? = null,
-                     metadata: JsonObject? = null,
-                     content: JsonObject? = null) =
-        Message(id = msg.id,
-                header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
-                parentHeader = parentHeader ?: msg.header,
-                metadata = metadata,
-                content = content)
+fun makeReplyMessage(
+    msg: Message,
+    msgType: String? = null,
+    sessionId: String? = null,
+    header: JsonObject? = null,
+    parentHeader: JsonObject? = null,
+    metadata: JsonObject? = null,
+    content: JsonObject? = null
+) =
+    Message(
+        id = msg.id,
+        header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
+        parentHeader = parentHeader ?: msg.header,
+        metadata = metadata,
+        content = content
+    )
 
 fun makeHeader(msgType: String? = null, incomingMsg: Message? = null, sessionId: String? = null): JsonObject = jsonObject(
-        "msg_id" to UUID.randomUUID().toString(),
-        "date" to ISO8601DateNow,
-        "version" to protocolVersion,
-        "username" to ((incomingMsg?.header["username"] as? String) ?: "kernel"),
-        "session" to ((incomingMsg?.header["session"] as? String) ?: sessionId),
-        "msg_type" to (msgType ?: "none"))
+    "msg_id" to UUID.randomUUID().toString(),
+    "date" to ISO8601DateNow,
+    "version" to protocolVersion,
+    "username" to ((incomingMsg?.header["username"] as? String) ?: "kernel"),
+    "session" to ((incomingMsg?.header["session"] as? String) ?: sessionId),
+    "msg_type" to (msgType ?: "none")
+)

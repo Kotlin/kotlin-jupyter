@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWith
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import java.io.File
 import java.net.URLClassLoader
-import java.util.*
+import java.util.LinkedList
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ReplAnalyzerResult
@@ -72,14 +72,14 @@ open class ReplException(message: String, cause: Throwable? = null) : Exception(
 
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
-class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null)
-    : ReplException(message ?: errorResult?.getErrors() ?: "") {
+class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null) :
+    ReplException(message ?: errorResult?.getErrors() ?: "") {
 
     val firstDiagnostics = errorResult?.reports?.firstOrNull {
         it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
     }
 
-    constructor(message: String): this(null, message)
+    constructor(message: String) : this(null, message)
 }
 
 enum class ExecutedCodeLogging {
@@ -134,17 +134,17 @@ interface ReplForJupyter {
 }
 
 class ReplForJupyterImpl(
-        override val libraryFactory: LibraryFactory,
-        private val scriptClasspath: List<File> = emptyList(),
-        override val homeDir: File? = null,
-        override val resolverConfig: ResolverConfig? = null,
-        override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
-        private val scriptReceivers: List<Any> = emptyList(),
-        private val embedded: Boolean = false,
+    override val libraryFactory: LibraryFactory,
+    private val scriptClasspath: List<File> = emptyList(),
+    override val homeDir: File? = null,
+    override val resolverConfig: ResolverConfig? = null,
+    override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
+    private val scriptReceivers: List<Any> = emptyList(),
+    private val embedded: Boolean = false,
 ) : ReplForJupyter, ReplOptions, KotlinKernelHost {
 
-    constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()):
-            this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers, config.embedded)
+    constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()) :
+        this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers, config.embedded)
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
@@ -186,17 +186,17 @@ class ReplForJupyterImpl(
     private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
         if (value == null || resultField == null) return null
         val code = typeRenderers[value.javaClass.canonicalName]?.replace("\$it", resultField.first)
-                ?: return value
+            ?: return value
         val result = doEval(code)
         return renderResult(result.value, result.resultField)
     }
 
     data class PreprocessingResult(
-            val code: Code,
-            val initCodes: List<Code>,
-            val shutdownCodes: List<Code>,
-            val initCellCodes: List<Code>,
-            val typeRenderers: List<TypeHandler>,
+        val code: Code,
+        val initCodes: List<Code>,
+        val shutdownCodes: List<Code>,
+        val initCellCodes: List<Code>,
+        val typeRenderers: List<TypeHandler>,
     )
 
     fun preprocessCode(code: String): PreprocessingResult {
@@ -236,7 +236,7 @@ class ReplForJupyterImpl(
         }
 
         val declarations = (typeConverters.map { typeProvidersProcessor.register(it) } + annotations.map { annotationsProcessor.register(it) })
-                .joinToString("\n")
+            .joinToString("\n")
         if (declarations.isNotBlank()) {
             initCodes.add(declarations)
         }
@@ -250,7 +250,7 @@ class ReplForJupyterImpl(
 
     private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
-                ?: return context.compilationConfiguration.asSuccess()
+            ?: return context.compilationConfiguration.asSuccess()
         val scriptContents = object : ScriptContents {
             override val annotations: Iterable<Annotation> = annotations
             override val file: File? = null
@@ -258,11 +258,11 @@ class ReplForJupyterImpl(
         }
         return try {
             resolver.resolveFromAnnotations(scriptContents)
-                    .onSuccess { classpath ->
-                        context.compilationConfiguration
-                                .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
-                                .asSuccess()
-                    }
+                .onSuccess { classpath ->
+                    context.compilationConfiguration
+                        .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
+                        .asSuccess()
+                }
         } catch (e: Throwable) {
             ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))
         }
@@ -275,9 +275,9 @@ class ReplForJupyterImpl(
             fileExtension.put("jupyter.kts")
 
             val classImports = listOf(
-                    DependsOn::class,
-                    Repository::class,
-                    ScriptTemplateWithDisplayHelpers::class,
+                DependsOn::class,
+                Repository::class,
+                ScriptTemplateWithDisplayHelpers::class,
             ).map { it.java.name }
             defaultImports(classImports + defaultGlobalImports)
 
@@ -293,17 +293,18 @@ class ReplForJupyterImpl(
             skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
             compilerOptions(
-                    "-jvm-target", runtimeProperties.jvmTargetForSnippets,
-                    "-no-stdlib"
+                "-jvm-target",
+                runtimeProperties.jvmTargetForSnippets,
+                "-no-stdlib"
             )
         }
     }
 
     private val ScriptCompilationConfiguration.classpath
         get() = this[ScriptCompilationConfiguration.dependencies]
-                ?.filterIsInstance<JvmDependency>()
-                ?.flatMap { it.classpath }
-                .orEmpty()
+            ?.filterIsInstance<JvmDependency>()
+            ?.flatMap { it.classpath }
+            .orEmpty()
 
     override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
 
@@ -468,7 +469,6 @@ class ReplForJupyterImpl(
                 result = renderResult(result, resultField)
 
                 return EvalResult(result, newClasspath)
-
             } finally {
                 currentDisplayHandler = null
                 scheduledExecutions.clear()
@@ -518,7 +518,7 @@ class ReplForJupyterImpl(
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
     override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) =
-            doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor), ::doComplete)
+        doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor), ::doComplete)
 
     private fun doComplete(args: CompletionArgs): CompletionResult {
         if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
@@ -529,7 +529,7 @@ class ReplForJupyterImpl(
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
     override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) =
-            doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
+        doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
 
     private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
         if (isCommand(args.code)) return reportCommandErrors(args.code)
@@ -540,7 +540,7 @@ class ReplForJupyterImpl(
         return ListErrorsResult(args.code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }
 
-    private fun <T, Args: LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {
+    private fun <T, Args : LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {
         queue.add(args)
 
         val result = synchronized(this) {
@@ -578,7 +578,7 @@ class ReplForJupyterImpl(
     private data class CompletionArgs(val code: String, val cursor: Int, override val callback: (CompletionResult) -> Unit) : LockQueueArgs<CompletionResult>
     private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) : LockQueueArgs<ListErrorsResult>
 
-    private class LockQueue<T, Args: LockQueueArgs<T>> {
+    private class LockQueue<T, Args : LockQueueArgs<T>> {
         private var args: Args? = null
 
         fun add(args: Args) {
@@ -604,7 +604,7 @@ class ReplForJupyterImpl(
                 val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evaluatorConfiguration) }
                 contextUpdater.update()
 
-                when(resultWithDiagnostics) {
+                when (resultWithDiagnostics) {
                     is ResultWithDiagnostics.Success -> {
                         val pureResult = resultWithDiagnostics.value.get()
                         return when (val resultValue = pureResult.result) {
@@ -616,14 +616,16 @@ class ReplForJupyterImpl(
                                 InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
                             }
                             is ResultValue.NotEvaluated -> {
-                                throw ReplEvalRuntimeException(buildString {
-                                    val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
-                                    val stackTrace = cause?.stackTrace.orEmpty()
-                                    append("This snippet was not evaluated: ")
-                                    appendLine(cause.toString())
-                                    for (s in stackTrace)
-                                        appendLine(s)
-                                })
+                                throw ReplEvalRuntimeException(
+                                    buildString {
+                                        val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
+                                        val stackTrace = cause?.stackTrace.orEmpty()
+                                        append("This snippet was not evaluated: ")
+                                        appendLine(cause.toString())
+                                        for (s in stackTrace)
+                                            appendLine(s)
+                                    }
+                                )
                             }
                             else -> throw IllegalStateException("Unknown eval result type $this")
                         }
@@ -633,7 +635,6 @@ class ReplForJupyterImpl(
                     }
                     else -> throw IllegalStateException("Unknown result")
                 }
-
             }
             is ResultWithDiagnostics.Failure -> throw ReplCompilerException(compileResultWithDiagnostics)
         }

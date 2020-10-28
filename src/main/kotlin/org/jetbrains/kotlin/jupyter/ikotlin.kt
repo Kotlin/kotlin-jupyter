@@ -9,9 +9,9 @@ import kotlin.script.experimental.jvm.util.classpathFromClassloader
 val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
 
 data class KernelArgs(
-        val cfgFile: File,
-        val scriptClasspath: List<File>,
-        val homeDir: File?
+    val cfgFile: File,
+    val scriptClasspath: List<File>,
+    val homeDir: File?
 ) {
     fun argsList(): List<String> {
         return mutableListOf<String>().apply {
@@ -64,7 +64,7 @@ fun printClassPath() {
 
 fun main(vararg args: String) {
     try {
-        log.info("Kernel args: "+ args.joinToString { it })
+        log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
         val libraryFactory = LibraryFactory.withDefaultDirectoryResolution(libraryPath)
@@ -83,9 +83,12 @@ fun main(vararg args: String) {
 fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
-            KernelJupyterParams.fromFile(cfgFile),
-            libraryFactory ?: LibraryFactory.EMPTY,
-            cp, null, true)
+        KernelJupyterParams.fromFile(cfgFile),
+        libraryFactory ?: LibraryFactory.EMPTY,
+        cp,
+        null,
+        true
+    )
     kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())
 }
 

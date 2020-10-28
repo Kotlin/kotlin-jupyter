@@ -7,7 +7,7 @@ import kotlin.script.experimental.api.asSuccess
 
 abstract class LibraryResolutionInfoParser(val name: String, private val parameters: List<Parameter>) {
     fun getInfo(args: List<Variable>): LibraryResolutionInfo {
-        val map = when(val mapResult = substituteArguments(parameters, args)) {
+        val map = when (val mapResult = substituteArguments(parameters, args)) {
             is ResultWithDiagnostics.Success -> mapResult.value
             is ResultWithDiagnostics.Failure -> throw ReplCompilerException(mapResult)
         }
@@ -31,8 +31,8 @@ abstract class LibraryResolutionInfoParser(val name: String, private val paramet
             var argIndex = 0
 
             for (arg in arguments) {
-                val param = parameters.getOrNull(argIndex) ?:
-                return diagFailure("Too many arguments for library resolution info: ${arguments.size} got, ${parameters.size} allowed")
+                val param = parameters.getOrNull(argIndex)
+                    ?: return diagFailure("Too many arguments for library resolution info: ${arguments.size} got, ${parameters.size} allowed")
                 if (arg.name.isNotEmpty()) break
 
                 result[param.name] = arg.value

@@ -7,7 +7,12 @@ import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.makeFailureResult
+import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
@@ -20,17 +25,19 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
     private val log by lazy { LoggerFactory.getLogger("resolver") }
 
     private val resolver: ExternalDependenciesResolver
-    private val resolverOptions = makeExternalDependenciesResolverOptions(mapOf(
+    private val resolverOptions = makeExternalDependenciesResolverOptions(
+        mapOf(
             DependenciesResolverOptionsName.SCOPE.key to "compile,runtime"
-    ))
+        )
+    )
 
     private val repositories = arrayListOf<RepositoryCoordinates>()
     private val addedClasspath = arrayListOf<File>()
 
     init {
         resolver = CompoundDependenciesResolver(
-                FileSystemDependenciesResolver(),
-                RemoteResolverWrapper(IvyResolver())
+            FileSystemDependenciesResolver(),
+            RemoteResolverWrapper(IvyResolver())
         )
         resolverConfig?.repositories?.forEach { addRepository(it) }
     }
@@ -65,7 +72,7 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                     if (!addRepository(RepositoryCoordinates(annotation.value)))
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
 
-                    existingRepositories?.forEach{ addRepository(it) }
+                    existingRepositories?.forEach { addRepository(it) }
                 }
                 is DependsOn -> {
                     log.info("Resolving ${annotation.value}")
@@ -103,12 +110,12 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
     }
 }
 
-class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesResolver):
-        ExternalDependenciesResolver by remoteResolver {
+class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesResolver) :
+    ExternalDependenciesResolver by remoteResolver {
 
     override fun acceptsRepository(repositoryCoordinates: RepositoryCoordinates): Boolean {
         return hasRepository(repositoryCoordinates) ||
-                remoteResolver.acceptsRepository(repositoryCoordinates)
+            remoteResolver.acceptsRepository(repositoryCoordinates)
     }
 
     override fun addRepository(repositoryCoordinates: RepositoryCoordinates, options: ExternalDependenciesResolver.Options, sourceCodeLocation: SourceCode.LocationWithId?): ResultWithDiagnostics<Boolean> {
@@ -124,18 +131,18 @@ class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesReso
         private val HOME_PATH = System.getProperty("user.home") ?: "~"
         private const val PREFIX = "*"
         private val repositories: Map<String, Shortcut> =
-                listOf(
-                        Shortcut("mavenLocal") {
-                            // Simplified version, without looking in XML files
-                            val path = System.getProperty("maven.repo.local")
-                                    ?: "$HOME_PATH/.m2/repository"
-                            path.toURLString()
-                        },
-                        Shortcut("ivyLocal") {
-                            val path = "$HOME_PATH/.ivy2/cache"
-                            path.toURLString()
-                        },
-                )
+            listOf(
+                Shortcut("mavenLocal") {
+                    // Simplified version, without looking in XML files
+                    val path = System.getProperty("maven.repo.local")
+                        ?: "$HOME_PATH/.m2/repository"
+                    path.toURLString()
+                },
+                Shortcut("ivyLocal") {
+                    val path = "$HOME_PATH/.ivy2/cache"
+                    path.toURLString()
+                },
+            )
                 .map {
                     "${PREFIX}${it.shortcut}" to it
                 }

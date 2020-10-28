@@ -7,8 +7,8 @@ import java.net.URL
 import java.nio.file.Paths
 
 class LibraryFactory(
-        val resolutionInfoProvider: ResolutionInfoProvider,
-        private val parsers: Map<String, LibraryResolutionInfoParser> = defaultParsers,
+    val resolutionInfoProvider: ResolutionInfoProvider,
+    private val parsers: Map<String, LibraryResolutionInfoParser> = defaultParsers,
 ) {
     fun parseReferenceWithArgs(str: String): Pair<LibraryReference, List<Variable>> {
         val (fullName, vars) = parseLibraryName(str)
@@ -25,7 +25,7 @@ class LibraryFactory(
 
     private fun parseResolutionInfo(string: String): LibraryResolutionInfo {
         // In case of empty string after `@`: %use lib@
-        if(string.isBlank()) return resolutionInfoProvider.get()
+        if (string.isBlank()) return resolutionInfoProvider.get()
 
         val (type, vars) = parseCall(string, Brackets.SQUARE)
         val parser = parsers[type] ?: return resolutionInfoProvider.get(type)
@@ -44,18 +44,18 @@ class LibraryFactory(
 
     companion object {
         private val defaultParsers = listOf(
-                LibraryResolutionInfoParser.make("ref", listOf(Parameter.Required("ref"))) { args ->
-                    LibraryResolutionInfo.getInfoByRef(args["ref"] ?: error("Argument 'ref' should be specified"))
-                },
-                LibraryResolutionInfoParser.make("file", listOf(Parameter.Required("path"))) { args ->
-                    LibraryResolutionInfo.ByFile(File(args["path"] ?: error("Argument 'path' should be specified")))
-                },
-                LibraryResolutionInfoParser.make("dir", listOf(Parameter.Required("dir"))) { args ->
-                    LibraryResolutionInfo.ByDir(File(args["dir"] ?: error("Argument 'dir' should be specified")))
-                },
-                LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
-                    LibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
-                },
+            LibraryResolutionInfoParser.make("ref", listOf(Parameter.Required("ref"))) { args ->
+                LibraryResolutionInfo.getInfoByRef(args["ref"] ?: error("Argument 'ref' should be specified"))
+            },
+            LibraryResolutionInfoParser.make("file", listOf(Parameter.Required("path"))) { args ->
+                LibraryResolutionInfo.ByFile(File(args["path"] ?: error("Argument 'path' should be specified")))
+            },
+            LibraryResolutionInfoParser.make("dir", listOf(Parameter.Required("dir"))) { args ->
+                LibraryResolutionInfo.ByDir(File(args["dir"] ?: error("Argument 'dir' should be specified")))
+            },
+            LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
+                LibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
+            },
         ).map { it.name to it }.toMap()
 
         val EMPTY = LibraryFactory(EmptyResolutionInfoProvider)

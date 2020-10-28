@@ -1,7 +1,11 @@
 
 package org.jetbrains.kotlin.jupyter.test
 
-import org.jetbrains.kotlin.jupyter.*
+import org.jetbrains.kotlin.jupyter.JupyterSockets
+import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.makeHeader
+import org.jetbrains.kotlin.jupyter.receiveMessage
+import org.jetbrains.kotlin.jupyter.sendMessage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.zeromq.ZMQ
@@ -11,7 +15,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testHeartbeat() {
         val context = ZMQ.context(1)
-        with (ClientSocket(context, JupyterSockets.hb)) {
+        with(ClientSocket(context, JupyterSockets.hb)) {
             try {
                 connect()
                 send("abc")
@@ -27,7 +31,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testStdin() {
         val context = ZMQ.context(1)
-        with (ClientSocket(context, JupyterSockets.stdin)) {
+        with(ClientSocket(context, JupyterSockets.stdin)) {
             try {
                 connect()
                 sendMore("abc")
@@ -43,7 +47,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testShell() {
         val context = ZMQ.context(1)
-        with (ClientSocket(context, JupyterSockets.control)) {
+        with(ClientSocket(context, JupyterSockets.control)) {
             try {
                 connect()
                 sendMessage(Message(id = messageId, header = makeHeader("interrupt_request")), hmac)

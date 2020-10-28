@@ -11,7 +11,6 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledModuleInMemory
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
-
 /**
  * Kotlin REPL compiler generates compiled classes consisting of
  * compiled in-memory module and some other classes.
@@ -19,7 +18,7 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
  * so this class provides writing classes on disk.
  */
 class ClassWriter(_outputDir: String = "") {
-    val outputDir: Path  = if(_outputDir == "") {
+    val outputDir: Path = if (_outputDir == "") {
         val tempDir = Files.createTempDirectory("kotlin-jupyter")
         tempDir.toFile().deleteOnExit()
         tempDir.toAbsolutePath()
@@ -66,5 +65,4 @@ class ClassWriter(_outputDir: String = "") {
     companion object {
         private val logger = LoggerFactory.getLogger(ClassWriter::class.java)
     }
-
 }

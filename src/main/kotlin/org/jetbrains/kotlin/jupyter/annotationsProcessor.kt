@@ -24,8 +24,8 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
         val annotationArgument = "__annotation"
         val classArgument = "__class"
         val body = handler.code
-                .replace("\$annotation", annotationArgument)
-                .replace("\$kclass", classArgument)
+            .replace("\$annotation", annotationArgument)
+            .replace("\$kclass", classArgument)
         val annotationType = handler.className
         val methodId = nextGeneratedMethodId++
         val methodName = getMethodName(methodId)

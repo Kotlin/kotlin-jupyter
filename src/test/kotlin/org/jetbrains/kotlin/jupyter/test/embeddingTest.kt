@@ -1,14 +1,9 @@
 package org.jetbrains.kotlin.jupyter.test
 
-
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlin.jupyter.ResolverConfig
-import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlin.jupyter.test.ReplWithResolverTest.Companion.resolverConfig
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
-
 
 class SomeSingleton {
     companion object {
@@ -16,13 +11,12 @@ class SomeSingleton {
     }
 }
 
-
 class EmbedReplTest : AbstractReplTest() {
 
     @Test
     fun testSharedStaticVariables() {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        val repl = ReplForJupyterImpl(libraryFactory, embeddedClasspath, embedded=true)
+        val repl = ReplForJupyterImpl(libraryFactory, embeddedClasspath, embedded = true)
 
         var res = repl.eval("org.jetbrains.kotlin.jupyter.test.SomeSingleton.initialized")
         assertEquals(false, res.resultValue)
@@ -31,13 +25,12 @@ class EmbedReplTest : AbstractReplTest() {
 
         res = repl.eval("org.jetbrains.kotlin.jupyter.test.SomeSingleton.initialized")
         assertEquals(true, res.resultValue)
-
     }
 
     @Test
     fun testCustomClasses() {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        val repl = ReplForJupyterImpl(libraryFactory, embeddedClasspath, embedded=true)
+        val repl = ReplForJupyterImpl(libraryFactory, embeddedClasspath, embedded = true)
 
         repl.eval("class Point(val x: Int, val y: Int)")
 
