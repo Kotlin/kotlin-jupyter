@@ -9,8 +9,11 @@ pluginManagement {
         mavenLocal()
         mavenCentral()
         // only when using Kotlin EAP releases ...
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
+        maven("https://dl.bintray.com/kotlin/kotlin-eap")
+
+        val teamcityUrl = "https://teamcity.jetbrains.com"
+        val teamcityProjectId = "Kotlin_KotlinPublic_Aggregate"
+        maven("$teamcityUrl/guestAuth/app/rest/builds/buildType:(id:$teamcityProjectId),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
 
         // Used for TeamCity build
         val m2LocalPath = File(".m2/repository")
