@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
 import org.jetbrains.kotlin.jupyter.api.Code
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import kotlin.reflect.KMutableProperty
@@ -27,7 +27,7 @@ interface TypeProvidersProcessor {
      * This list consists of a number of declarations followed by actual code for type conversion
      * Declarations can have a `###` placeholder that will be replaced with auto-incremented ID, if the code snippet is new, or will reuse existing ID, if exactly the same code snippet has already been declared
      */
-    fun register(handler: TypeHandler): Code
+    fun register(handler: GenerativeTypeHandler): Code
 
     /**
      * Processes local variables and generates code snippets that perform type conversions
@@ -65,7 +65,7 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
 
     private fun getMethodName(id: Int) = "___getConverter$id"
 
-    override fun register(handler: TypeHandler): Code {
+    override fun register(handler: GenerativeTypeHandler): Code {
         val instanceArg = "__it"
         val propertyArg = "__property"
         val body = handler.code.replace("\$it", instanceArg).replace("\$property", propertyArg)

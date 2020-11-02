@@ -28,8 +28,8 @@ data class Message(
             " content = ${content?.toJsonString(false) ?: emptyJsonObjectString}"
 }
 
-fun jsonObject(vararg namedVals: Pair<String, Any?>): JsonObject = JsonObject(hashMapOf(*namedVals))
-fun jsonObject(namedVals: Iterable<Pair<String, Any?>>): JsonObject = JsonObject(HashMap<String, Any?>().apply { putAll(namedVals) })
+fun jsonObject(vararg namedValues: Pair<String, Any?>): JsonObject = JsonObject(hashMapOf(*namedValues))
+fun jsonObject(namedValues: Iterable<Pair<String, Any?>>): JsonObject = JsonObject(HashMap<String, Any?>().apply { putAll(namedValues) })
 
 internal operator fun JsonObject?.get(key: String) = this?.get(key)
 
