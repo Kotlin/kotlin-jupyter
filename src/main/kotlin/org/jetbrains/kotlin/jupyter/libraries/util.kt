@@ -8,13 +8,18 @@ import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.CodeExecution
+import org.jetbrains.kotlin.jupyter.api.ExactRendererTypeHandler
+import org.jetbrains.kotlin.jupyter.api.Execution
+import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.Notebook
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.TypeHandlerCodeExecution
 import org.jetbrains.kotlin.jupyter.catchAll
 import org.jetbrains.kotlin.jupyter.getHttp
 import org.jetbrains.kotlin.jupyter.log
+import org.jetbrains.kotlin.jupyter.util.replaceVariables
 import org.json.JSONObject
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -148,6 +153,10 @@ fun parseLibraryDescriptor(json: String): LibraryDescriptor {
     throw ReplCompilerException("Result of library descriptor parsing is of type ${res.javaClass.canonicalName} which is unexpected")
 }
 
+fun JsonObject.parseExecutions(name: String): List<Execution> {
+    return array<String>(name)?.toList().orEmpty().map(::CodeExecution)
+}
+
 fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
     return LibraryDescriptor(
         originalJson = json,
@@ -156,24 +165,17 @@ fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
         variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
         imports = json.array<String>("imports")?.toList().orEmpty(),
         repositories = json.array<String>("repositories")?.toList().orEmpty(),
-        init = json.array<String>("init")?.toList().orEmpty(),
-        shutdown = json.array<String>("shutdown")?.toList().orEmpty(),
-        initCell = json.array<String>("initCell")?.toList().orEmpty(),
-        renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
+        init = json.parseExecutions("init"),
+        shutdown = json.parseExecutions("shutdown"),
+        initCell = json.parseExecutions("initCell"),
+        renderers = json.obj("renderers")?.map { ExactRendererTypeHandler(it.key, TypeHandlerCodeExecution(it.value.toString())) }?.toList().orEmpty(),
         link = json.string("link"),
         description = json.string("description"),
         minKernelVersion = json.string("minKernelVersion"),
-        converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
-        annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
+        converters = json.obj("typeConverters")?.map { GenerativeTypeHandler(it.key, it.value.toString()) }.orEmpty(),
+        annotations = json.obj("annotationHandlers")?.map { GenerativeTypeHandler(it.key, it.value.toString()) }.orEmpty()
     )
 }
-
-fun replaceVariables(str: String, mapping: Map<String, String>) =
-    mapping.asSequence().fold(str) { s, template ->
-        s.replace("\$${template.key}", template.value)
-    }
-
-fun List<String>.replaceVariables(mapping: Map<String, String>) = map { replaceVariables(it, mapping) }
 
 fun parseLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
     return libJsons.mapValues {

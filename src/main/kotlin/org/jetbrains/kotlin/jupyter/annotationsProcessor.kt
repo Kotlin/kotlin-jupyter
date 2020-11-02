@@ -2,13 +2,13 @@ package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
 import org.jetbrains.kotlin.jupyter.api.Code
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 
 interface AnnotationsProcessor {
 
-    fun register(handler: TypeHandler): Code
+    fun register(handler: GenerativeTypeHandler): Code
 
     fun process(line: Any): List<Code>
 }
@@ -23,7 +23,7 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
 
     private fun getMethodName(id: Int) = "___processAnnotation$id"
 
-    override fun register(handler: TypeHandler): Code {
+    override fun register(handler: GenerativeTypeHandler): Code {
         val annotationArgument = "__annotation"
         val classArgument = "__class"
         val body = handler.code
@@ -48,12 +48,12 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
             }
         }
         val codeToExecute = mutableListOf<Code>()
-        line.javaClass.kotlin.nestedClasses.forEach { kclass ->
-            kclass.annotations.forEach {
+        line.javaClass.kotlin.nestedClasses.forEach { kClass ->
+            kClass.annotations.forEach {
                 val annotationType = it.annotationClass.qualifiedName!!
                 val handler = handlers[annotationType]
                 if (handler != null) {
-                    val result = handler.function.call(handler.line, it, kclass)
+                    val result = handler.function.call(handler.line, it, kClass)
                     (result as? List<String>?)?.let(codeToExecute::addAll)
                 }
             }

@@ -7,10 +7,14 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.CodeExecution
+import org.jetbrains.kotlin.jupyter.api.Execution
+import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.Renderable
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.buildDependenciesInitCode
@@ -182,67 +186,88 @@ class ReplForJupyterImpl(
 
     private val resolver = JupyterScriptDependenciesResolver(resolverConfig)
 
-    private val typeRenderers = mutableMapOf<String, String>()
+    private val typeRenderers = mutableListOf<RendererTypeHandler>()
 
-    private val initCellCodes = mutableListOf<String>()
-    private val shutdownCodes = mutableListOf<String>()
+    private val initCellCodes = mutableListOf<Execution>()
+    private val shutdownCodes = mutableListOf<Execution>()
 
-    private fun renderResult(value: Any?, resultField: Pair<String, KotlinType>?): Any? {
-        if (value == null || resultField == null) return null
-        val rendererCode = typeRenderers[value.javaClass.canonicalName]
+    private fun renderResult(value: Any?, resultFieldName: String?): Any? {
+        if (value == null) return null
+        val handler = typeRenderers.firstOrNull { it.acceptsType(value::class) }
             ?: return if (value is Renderable) value.render(notebook) else value
 
-        val code = rendererCode.replace("\$it", resultField.first)
-        val result = doEval(code)
-        return renderResult(result.value, result.resultField)
+        val result = handler.execution.execute(this, value, resultFieldName)
+        return renderResult(result.value, result.fieldName)
     }
 
     data class PreprocessingResult(
         val code: Code,
-        val initCodes: List<Code>,
-        val shutdownCodes: List<Code>,
-        val initCellCodes: List<Code>,
-        val typeRenderers: List<TypeHandler>,
+        val initCodes: List<Execution>,
+        val shutdownCodes: List<Execution>,
+        val initCellCodes: List<Execution>,
+        val typeRenderers: List<RendererTypeHandler>,
     )
 
-    fun preprocessCode(code: String): PreprocessingResult {
+    inner class PreprocessingResultBuilder(private val code: Code) {
+        private val initCodes = mutableListOf<Execution>()
+        private val shutdownCodes = mutableListOf<Execution>()
+        private val initCellCodes = mutableListOf<Execution>()
+        private val typeRenderers = mutableListOf<RendererTypeHandler>()
+        private val typeConverters = mutableListOf<GenerativeTypeHandler>()
+        private val annotations = mutableListOf<GenerativeTypeHandler>()
 
-        val processedMagics = magics.processMagics(code)
-
-        val initCodes = mutableListOf<Code>()
-        val shutdownCodes = mutableListOf<Code>()
-        val initCellCodes = mutableListOf<Code>()
-        val typeRenderers = mutableListOf<TypeHandler>()
-        val typeConverters = mutableListOf<TypeHandler>()
-        val annotations = mutableListOf<TypeHandler>()
-
-        processedMagics.libraries.getDefinitions(notebook).forEach { libraryDefinition ->
-            libraryDefinition.buildDependenciesInitCode()?.let { initCodes.add(it) }
+        fun add(libraryDefinition: LibraryDefinition) {
+            libraryDefinition.buildDependenciesInitCode()?.let { initCodes.add(CodeExecution(it)) }
             typeRenderers.addAll(libraryDefinition.renderers)
             typeConverters.addAll(libraryDefinition.converters)
             annotations.addAll(libraryDefinition.annotations)
             initCellCodes.addAll(libraryDefinition.initCell)
             shutdownCodes.addAll(libraryDefinition.shutdown)
             libraryDefinition.init.forEach {
-
-                // Library init code may contain other magics, so we process them recursively
-                val preprocessed = preprocessCode(it)
-                initCodes.addAll(preprocessed.initCodes)
-                typeRenderers.addAll(preprocessed.typeRenderers)
-                initCellCodes.addAll(preprocessed.initCellCodes)
-                shutdownCodes.addAll(preprocessed.shutdownCodes)
-                if (preprocessed.code.isNotBlank())
-                    initCodes.add(preprocessed.code)
+                if (it is CodeExecution) {
+                    // Library init code may contain other magics, so we process them recursively
+                    val preprocessed = preprocessCode(it.code)
+                    initCodes.addAll(preprocessed.initCodes)
+                    typeRenderers.addAll(preprocessed.typeRenderers)
+                    initCellCodes.addAll(preprocessed.initCellCodes)
+                    shutdownCodes.addAll(preprocessed.shutdownCodes)
+                    if (preprocessed.code.isNotBlank())
+                        initCodes.add(CodeExecution(preprocessed.code))
+                } else {
+                    initCodes.add(it)
+                }
             }
         }
 
-        val declarations = (typeConverters.map { typeProvidersProcessor.register(it) } + annotations.map { annotationsProcessor.register(it) })
-            .joinToString("\n")
-        if (declarations.isNotBlank()) {
-            initCodes.add(declarations)
-        }
+        fun build(): PreprocessingResult {
+            val declarations = (typeConverters.map { typeProvidersProcessor.register(it) } + annotations.map { annotationsProcessor.register(it) })
+                .joinToString("\n")
+            if (declarations.isNotBlank()) {
+                initCodes.add(CodeExecution(declarations))
+            }
 
-        return PreprocessingResult(processedMagics.code, initCodes, shutdownCodes, initCellCodes, typeRenderers)
+            return PreprocessingResult(code, initCodes, shutdownCodes, initCellCodes, typeRenderers)
+        }
+    }
+
+    fun preprocessCode(code: String): PreprocessingResult {
+        val processedMagics = magics.processMagics(code)
+        val builder = PreprocessingResultBuilder(processedMagics.code)
+
+        processedMagics.libraries.getDefinitions(notebook).forEach { builder.add(it) }
+
+        return builder.build()
+    }
+
+    override fun addLibrary(definition: LibraryDefinition) {
+        val builder = PreprocessingResultBuilder("")
+        builder.add(definition)
+        val result = builder.build()
+
+        result.initCodes.forEach { it.execute(this) }
+        log.catchAll {
+            registerNewLibraries(result)
+        }
     }
 
     private val ctx = KotlinContext()
@@ -355,7 +380,7 @@ class ReplForJupyterImpl(
 
     private var currentDisplayHandler: DisplayHandler? = null
 
-    private val scheduledExecutions = LinkedList<Code>()
+    private val scheduledExecutions = LinkedList<Execution>()
 
     override fun checkComplete(code: String): CheckResult {
         val id = executionCounter++
@@ -368,16 +393,14 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun executeInitCellCode() = initCellCodes.forEach(::evalNoReturn)
-
-    private fun executeInitCode(initCodes: List<Code>) = initCodes.forEach(::evalNoReturn)
+    private fun executeInitCellCode() = initCellCodes.forEach { it.execute(this) }
 
     private fun executeScheduledCode() {
         while (scheduledExecutions.isNotEmpty()) {
             val code = scheduledExecutions.pop()
             if (executedCodeLogging == ExecutedCodeLogging.Generated)
                 println(code)
-            evalNoReturn(code)
+            code.execute(this)
         }
     }
 
@@ -392,7 +415,7 @@ class ReplForJupyterImpl(
             codes.forEach {
                 if (executedCodeLogging == ExecutedCodeLogging.Generated)
                     println(it)
-                evalNoReturn(it)
+                execute(it)
             }
         } while (codes.isNotEmpty())
     }
@@ -404,14 +427,14 @@ class ReplForJupyterImpl(
         }?.forEach {
             if (executedCodeLogging == ExecutedCodeLogging.Generated)
                 println(it)
-            evalNoReturn(it)
+            execute(it)
         }
     }
 
     private fun registerNewLibraries(p: PreprocessingResult) {
         p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
         p.shutdownCodes.filter { !shutdownCodes.contains(it) }.let(shutdownCodes::addAll)
-        typeRenderers.putAll(p.typeRenderers.map { it.className to it.code })
+        typeRenderers.addAll(p.typeRenderers)
     }
 
     private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptInstance
@@ -426,7 +449,7 @@ class ReplForJupyterImpl(
 
                 val preprocessed = preprocessCode(code)
 
-                executeInitCode(preprocessed.initCodes)
+                preprocessed.initCodes.forEach { it.execute(this) }
 
                 var result: Any? = null
                 var resultField: Pair<String, KotlinType>? = null
@@ -464,7 +487,7 @@ class ReplForJupyterImpl(
                     updateClasspath()
                 } ?: emptyList()
 
-                result = renderResult(result, resultField)
+                result = renderResult(result, resultField?.first)
 
                 return EvalResult(result, newClasspath)
             } finally {
@@ -544,20 +567,16 @@ class ReplForJupyterImpl(
         args.callback(result)
     }
 
-    private fun evalNoReturn(code: String) {
-        doEval(code)
-        processAnnotations(lastReplLine())
-    }
-
     // Result of this function is considered to be used for testing/debug purposes
-    private fun evalWithReturn(code: String): EvalResult {
+    private fun evalWithReturn(execution: Execution): EvalResult {
         val result = try {
-            doEval(code)
+            if (execution is CodeExecution) doEval(execution.code).value
+            else execution.execute(this)
         } catch (e: Exception) {
-            InternalEvalResult(null, null)
+            null
         }
         processAnnotations(lastReplLine())
-        return EvalResult(result.value, emptyList())
+        return EvalResult(result, emptyList())
     }
 
     private data class InternalEvalResult(val value: Any?, val resultField: Pair<String, KotlinType>?)
@@ -650,16 +669,22 @@ class ReplForJupyterImpl(
         currentDisplayHandler?.handleUpdate(value, id)
     }
 
-    override fun scheduleExecution(code: Code) {
-        scheduledExecutions.add(code)
+    override fun scheduleExecution(execution: Execution) {
+        scheduledExecutions.add(execution)
     }
 
     override fun executeInit(codes: List<Code>) {
-        executeInitCode(codes)
+        codes.forEach(::execute)
     }
 
     override fun execute(code: Code): Any? {
         val internalResult = doEval(code)
+        processAnnotations(lastReplLine())
         return internalResult.value
+    }
+
+    override fun executeInternal(code: Code): KotlinKernelHost.Result {
+        val internalResult = doEval(code)
+        return KotlinKernelHost.Result(internalResult.value, internalResult.resultField?.first)
     }
 }

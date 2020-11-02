@@ -5,9 +5,11 @@ import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
 import khttp.responses.Response
 import org.jetbrains.kotlin.jupyter.api.Code
+import org.jetbrains.kotlin.jupyter.api.Execution
+import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
 import org.slf4j.LoggerFactory
@@ -165,20 +167,20 @@ data class Variable(val name: String, val value: String, val required: Boolean =
 class LibraryDescriptor(
     val originalJson: JsonObject,
     val libraryDefinitions: List<Code>,
-    dependencies: List<String>,
+    override val dependencies: List<String>,
     val variables: List<Variable>,
-    initCell: List<String>,
-    imports: List<String>,
-    repositories: List<String>,
-    init: List<String>,
-    shutdown: List<String>,
-    renderers: List<TypeHandler>,
-    converters: List<TypeHandler>,
-    annotations: List<TypeHandler>,
+    override val initCell: List<Execution>,
+    override val imports: List<String>,
+    override val repositories: List<String>,
+    override val init: List<Execution>,
+    override val shutdown: List<Execution>,
+    override val renderers: List<RendererTypeHandler>,
+    override val converters: List<GenerativeTypeHandler>,
+    override val annotations: List<GenerativeTypeHandler>,
     val link: String?,
     val description: String?,
     val minKernelVersion: String?,
-) : LibraryDefinition(dependencies, repositories, imports, init, initCell, shutdown, renderers, converters, annotations)
+) : LibraryDefinition
 
 data class ResolverConfig(
     val repositories: List<RepositoryCoordinates>,

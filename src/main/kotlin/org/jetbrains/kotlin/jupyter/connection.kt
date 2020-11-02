@@ -153,7 +153,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     }
 }
 
-private val DELIM: ByteArray = "<IDS|MSG>".map { it.toByte() }.toByteArray()
+private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.toByte() }.toByteArray()
 
 class HMAC(algorithm: String, key: String?) {
     private val mac = if (key?.isNotBlank() == true) Mac.getInstance(algorithm) else null
@@ -177,7 +177,7 @@ fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".form
 fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
     synchronized(this) {
         msg.id.forEach { sendMore(it) }
-        sendMore(DELIM)
+        sendMore(MESSAGE_DELIMITER)
         val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
             .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
         sendMore(hmac(signableMsg) ?: "")
@@ -186,8 +186,8 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
     }
 }
 
-fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
-    val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(DELIM) }
+fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
+    val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
     val sig = recvStr().toLowerCase()
     val header = recv()
     val parentHeader = recv()

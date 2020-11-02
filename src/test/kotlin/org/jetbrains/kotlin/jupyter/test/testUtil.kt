@@ -67,7 +67,7 @@ class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<Librar
     override val cache = hashMapOf<LibraryReference, LibraryDescriptor>()
 
     init {
-        initialCache?.forEach { key, value ->
+        initialCache?.forEach { (key, value) ->
             cache[key] = value
         }
     }

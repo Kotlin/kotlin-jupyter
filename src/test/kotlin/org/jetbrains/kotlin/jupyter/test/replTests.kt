@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlin.jupyter.defaultRepositories
@@ -499,8 +500,14 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "anotherInit"
         )
         assertEquals(inits.count(), res.initCodes.count())
+
+        val actualCodes = res.initCodes.map {
+            it as CodeExecution
+            it.code.trimEnd().convertCRLFtoLF()
+        }
+
         inits.forEachIndexed { index, expected ->
-            assertEquals(expected.trimIndent(), res.initCodes[index].trimEnd().convertCRLFtoLF())
+            assertEquals(expected.trimIndent(), actualCodes[index])
         }
     }
 

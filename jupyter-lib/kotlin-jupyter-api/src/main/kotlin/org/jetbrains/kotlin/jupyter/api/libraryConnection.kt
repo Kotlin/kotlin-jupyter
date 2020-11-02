@@ -1,47 +1,75 @@
 package org.jetbrains.kotlin.jupyter.api
 
+import org.jetbrains.kotlin.jupyter.util.replaceVariables
+
 typealias TypeName = String
 typealias Code = String
 
-data class TypeHandler(val className: TypeName, val code: Code)
+interface VariablesSubstitutionAvailable<out T> {
+    fun replaceVariables(mapping: Map<String, String>): T
+}
 
-open class LibraryDefinition(
-        /**
-         * List of artifact dependencies in gradle colon-separated format
-         */
-        val dependencies: List<String> = emptyList(),
+fun interface Execution: VariablesSubstitutionAvailable<Execution> {
+    fun execute(host: KotlinKernelHost): Any?
 
-        /**
-         * List of repository URLs to resolve dependencies in
-         */
-        val repositories: List<String> = emptyList(),
+    override fun replaceVariables(mapping: Map<String, String>): Execution = this
+}
 
-        /**
-         * List of imports: simple and star imports are both allowed
-         */
-        val imports: List<String> = emptyList(),
+class CodeExecution(val code: Code): Execution {
+    override fun execute(host: KotlinKernelHost): Any? {
+        return host.execute(code)
+    }
 
-        /**
-         * List of code snippets evaluated on library initialization
-         */
-        val init: List<Code> = emptyList(),
+    override fun replaceVariables(mapping: Map<String, String>): CodeExecution {
+        return CodeExecution(replaceVariables(code, mapping))
+    }
+}
 
-        /**
-         * List of code snippets evaluated before every cell evaluation
-         */
-        val initCell: List<Code> = emptyList(),
+interface LibraryDefinition {
+    /**
+     * List of artifact dependencies in gradle colon-separated format
+     */
+    val dependencies: List<String>
+        get() = emptyList()
 
-        /**
-         * List of code snippets evaluated on kernel shutdown
-         */
-        val shutdown: List<Code> = emptyList(),
+    /**
+     * List of repository URLs to resolve dependencies in
+     */
+    val repositories: List<String>
+        get() = emptyList()
 
+    /**
+     * List of imports: simple and star imports are both allowed
+     */
+    val imports: List<String>
+        get() = emptyList()
 
-        val renderers: List<TypeHandler> = emptyList(),
-        val converters: List<TypeHandler> = emptyList(),
-        val annotations: List<TypeHandler> = emptyList(),
-)
+    /**
+     * List of code snippets evaluated on library initialization
+     */
+    val init: List<Execution>
+        get() = emptyList()
+
+    /**
+     * List of code snippets evaluated before every cell evaluation
+     */
+    val initCell: List<Execution>
+        get() = emptyList()
+
+    /**
+     * List of code snippets evaluated on kernel shutdown
+     */
+    val shutdown: List<Execution>
+        get() = emptyList()
+
+    val renderers: List<RendererTypeHandler>
+        get() = emptyList()
+    val converters: List<GenerativeTypeHandler>
+        get() = emptyList()
+    val annotations: List<GenerativeTypeHandler>
+        get() = emptyList()
+}
 
 interface LibraryDefinitionProducer {
-        fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition>
+    fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition>
 }

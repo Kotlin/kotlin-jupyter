@@ -5,9 +5,8 @@ import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
-import org.jetbrains.kotlin.jupyter.api.TypeHandler
+import org.jetbrains.kotlin.jupyter.util.replaceVariables
 
 class LibrariesProcessor(
     private val libraries: LibraryResolver?,
@@ -48,16 +47,16 @@ class LibrariesProcessor(
         val definitionCodes = library.libraryDefinitions
         return if (definitionCodes.isEmpty()) {
             TrivialLibraryDefinitionProducer(
-                LibraryDefinition(
+                LibraryDefinitionImpl(
                     dependencies = library.dependencies.replaceVariables(mapping),
                     repositories = library.repositories.replaceVariables(mapping),
                     imports = library.imports.replaceVariables(mapping),
                     init = library.init.replaceVariables(mapping),
                     shutdown = library.shutdown.replaceVariables(mapping),
                     initCell = library.initCell.replaceVariables(mapping),
-                    renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-                    converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-                    annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
+                    renderers = library.renderers.replaceVariables(mapping),
+                    converters = library.converters.replaceVariables(mapping),
+                    annotations = library.annotations.replaceVariables(mapping)
                 )
             )
         } else {
@@ -76,9 +75,9 @@ class LibrariesProcessor(
         var prev = 0
         var commaDepth = 0
         val result = mutableListOf<String>()
-        val delim = charArrayOf(',', '(', ')')
+        val delimiters = charArrayOf(',', '(', ')')
         while (true) {
-            i = text.indexOfAny(delim, i)
+            i = text.indexOfAny(delimiters, i)
             if (i == -1) {
                 val res = text.substring(prev, text.length).trim()
                 if (res.isNotEmpty())

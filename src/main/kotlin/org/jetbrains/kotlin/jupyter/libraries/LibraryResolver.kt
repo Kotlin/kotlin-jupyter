@@ -33,7 +33,7 @@ abstract class LibraryResolver(private val parent: LibraryResolver? = null) {
 }
 
 class FallbackLibraryResolver : LibraryResolver() {
-    override fun tryResolve(reference: LibraryReference): LibraryDescriptor? {
+    override fun tryResolve(reference: LibraryReference): LibraryDescriptor {
         return reference.resolve()
     }
 
