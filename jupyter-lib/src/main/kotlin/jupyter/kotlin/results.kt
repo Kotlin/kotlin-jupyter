@@ -19,7 +19,7 @@ annotation class DependsOn(val value: String = "")
 annotation class Repository(val value: String = "")
 
 abstract class ScriptTemplateWithDisplayHelpers(
-        val notebook: Notebook<*>,
+    val notebook: Notebook<*>,
 ) {
     fun DISPLAY(value: Any) = notebook.host.display(value)
 

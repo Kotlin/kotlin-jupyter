@@ -11,4 +11,4 @@ fun replaceVariables(str: String, mapping: Map<String, String>) =
 fun Iterable<String>.replaceVariables(mapping: Map<String, String>) = map { replaceVariables(it, mapping) }
 
 @JvmName("replaceVariablesExecution")
-fun <T: VariablesSubstitutionAvailable<T>> Iterable<T>.replaceVariables(mapping: Map<String, String>) = map { it.replaceVariables(mapping) }
+fun <T : VariablesSubstitutionAvailable<T>> Iterable<T>.replaceVariables(mapping: Map<String, String>) = map { it.replaceVariables(mapping) }

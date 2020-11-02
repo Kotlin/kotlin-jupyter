@@ -96,9 +96,9 @@ interface ResultsAccessor {
     operator fun get(i: Int): Any?
 }
 
-interface RuntimeUtils: JavaVersionHelper
+interface RuntimeUtils : JavaVersionHelper
 
-interface Notebook<CellT: CodeCell> {
+interface Notebook<CellT : CodeCell> {
     val cells: Map<Int, CellT>
     val results: ResultsAccessor
     val displays: DisplayContainer

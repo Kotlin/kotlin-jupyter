@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.jupyter.api
 
 class KotlinKernelVersion private constructor(
-        private val components: List<Int>
-): Comparable<KotlinKernelVersion> {
+    private val components: List<Int>
+) : Comparable<KotlinKernelVersion> {
     val major: Int get() = components[0]
     val minor: Int get() = components[1]
     val micro: Int get() = components[2]
@@ -10,7 +10,7 @@ class KotlinKernelVersion private constructor(
     val dev: Int? get() = components.getOrNull(4)
 
     override fun compareTo(other: KotlinKernelVersion): Int {
-        for(i in 0 until maxSize(components, other.components)) {
+        for (i in 0 until maxSize(components, other.components)) {
             val thisC = components.getOrNull(i) ?: -1
             val otherC = other.components.getOrNull(i) ?: -1
             val compareRes = thisC.compareTo(otherC)
@@ -59,7 +59,7 @@ class KotlinKernelVersion private constructor(
 
             if (components.size >= 4) {
                 intComponents.add(components[3].toIntOrNull() ?: return null)
-                if(components.size >= 5) {
+                if (components.size >= 5) {
                     val devComponent = components[4]
                     if (!devComponent.startsWith(DEV_PREFIX)) return null
                     val devInt = devComponent.removePrefix(DEV_PREFIX).toIntOrNull() ?: return null
@@ -93,7 +93,7 @@ class KotlinKernelVersion private constructor(
         }
 
         private fun maxSize(a: Collection<*>, b: Collection<*>): Int {
-            return if(a.size > b.size) a.size else b.size
+            return if (a.size > b.size) a.size else b.size
         }
     }
 }

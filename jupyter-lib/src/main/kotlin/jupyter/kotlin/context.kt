@@ -1,6 +1,6 @@
 package jupyter.kotlin
 
-import java.util.*
+import java.util.HashMap
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
 
@@ -9,16 +9,16 @@ import kotlin.reflect.KProperty
  * and setting invokeWrapper for additional side effects in evaluation.
  * It can be accessed inside REPL by name `kc`, e.g. kc.showVars()
  */
-class KotlinContext(val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-                    val functions: HashMap<String, KotlinFunctionInfo> = HashMap())
+class KotlinContext(
+    val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
+    val functions: HashMap<String, KotlinFunctionInfo> = HashMap()
+)
 
+private fun functionSignature(function: KFunction<*>) =
+    function.toString().replace("Line_\\d+\\.".toRegex(), "")
 
-
-private fun functionSignature(function: KFunction<*>)
-        = function.toString().replace("Line_\\d+\\.".toRegex(), "")
-
-private fun shortenType(name: String)
-        = name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
+private fun shortenType(name: String) =
+    name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
 
 class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable<KotlinFunctionInfo> {
 

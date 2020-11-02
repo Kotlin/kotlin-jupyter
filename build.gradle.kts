@@ -174,6 +174,10 @@ class TaskOptions : AllOptions {
     }
 }
 
+subprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+}
+
 allprojects {
     val kotlinLanguageLevel: String by rootProject
     val jvmTarget: String by rootProject

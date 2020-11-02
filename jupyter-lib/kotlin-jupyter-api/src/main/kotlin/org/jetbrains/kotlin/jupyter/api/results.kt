@@ -6,7 +6,7 @@ interface Renderable {
     fun render(notebook: Notebook<*>): DisplayResult
 }
 
-interface DisplayResult: Renderable {
+interface DisplayResult : Renderable {
     val id: String? get() = null
 
     fun toJson(additionalMetadata: JsonObject = jsonObject()): JsonObject
@@ -14,7 +14,7 @@ interface DisplayResult: Renderable {
     override fun render(notebook: Notebook<*>) = this
 }
 
-interface DisplayResultWithCell: DisplayResult {
+interface DisplayResultWithCell : DisplayResult {
     val cell: CodeCell
 }
 
@@ -45,9 +45,9 @@ fun JsonObject.setDisplayId(id: String? = null, force: Boolean = false): String?
 private fun jsonObject(vararg namedVals: Pair<String, Any?>): JsonObject = JsonObject(hashMapOf(*namedVals))
 
 class MimeTypedResult(
-        mimeData: Map<String, String>,
-        var isolatedHtml: Boolean = false,
-        override val id: String? = null
+    mimeData: Map<String, String>,
+    var isolatedHtml: Boolean = false,
+    override val id: String? = null
 ) : Map<String, String> by mimeData, DisplayResult {
     override fun toJson(additionalMetadata: JsonObject): JsonObject {
         val data = JsonObject(this)
@@ -57,8 +57,8 @@ class MimeTypedResult(
         }
 
         val result = jsonObject(
-                "data" to data,
-                "metadata" to metadata
+            "data" to data,
+            "metadata" to metadata
         )
         result.setDisplayId(id)
         return result
