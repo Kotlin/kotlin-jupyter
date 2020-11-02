@@ -74,11 +74,11 @@ interface Notebook<CellT: CodeCell> {
     val displays: DisplayContainer
     val host: KotlinKernelHost
 
-    fun prevCell(before: Int): CellT?
-    val thisCell: CellT?
-        get() = prevCell(0)
+    fun history(before: Int): CellT?
+    val currentCell: CellT?
+        get() = history(0)
     val lastCell: CellT?
-        get() = prevCell(1)
+        get() = history(1)
 
     val kernelVersion: KotlinKernelVersion
     val runtimeUtils: RuntimeUtils
