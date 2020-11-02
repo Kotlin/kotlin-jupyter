@@ -9,13 +9,13 @@ interface VariablesSubstitutionAvailable<out T> {
     fun replaceVariables(mapping: Map<String, String>): T
 }
 
-fun interface Execution: VariablesSubstitutionAvailable<Execution> {
+fun interface Execution : VariablesSubstitutionAvailable<Execution> {
     fun execute(host: KotlinKernelHost): Any?
 
     override fun replaceVariables(mapping: Map<String, String>): Execution = this
 }
 
-class CodeExecution(val code: Code): Execution {
+class CodeExecution(val code: Code) : Execution {
     override fun execute(host: KotlinKernelHost): Any? {
         return host.execute(code)
     }

@@ -10,7 +10,7 @@ object JavaRuntime : RuntimeUtils {
         val version: String? = System.getProperty("java.version")
 
         val versionParts = version?.split('.')
-        if (versionParts.isNullOrEmpty()){
+        if (versionParts.isNullOrEmpty()) {
             defaultVersionStr
         } else if (versionParts[0] == "1") {
             if (versionParts.size > 1) {
@@ -37,12 +37,12 @@ object JavaRuntime : RuntimeUtils {
     }
 
     override fun assertVersionAtLeast(minVersion: Int) =
-            assertVersion("JRE version should be at least $minVersion") {
-                it >= minVersion
-            }
+        assertVersion("JRE version should be at least $minVersion") {
+            it >= minVersion
+        }
 
     override fun assertVersionInRange(minVersion: Int, maxVersion: Int) =
-            assertVersion("JRE version should be in range [$minVersion, $maxVersion]") {
-                it in minVersion..maxVersion
-            }
+        assertVersion("JRE version should be in range [$minVersion, $maxVersion]") {
+            it in minVersion..maxVersion
+        }
 }

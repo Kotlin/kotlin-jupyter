@@ -1,6 +1,6 @@
-import kotlin.Suppress
 import com.jfrog.bintray.gradle.BintrayExtension
 import java.util.Date
+import kotlin.Suppress
 
 plugins {
     kotlin("jvm")
@@ -48,7 +48,7 @@ tasks {
         outputDirectory = "$buildDir/dokka"
     }
 
-    dokkaJavadoc{
+    dokkaJavadoc {
         outputDirectory = this@tasks.javadoc.get().destinationDir!!.path
         inputs.dir("src/main/kotlin")
     }
@@ -81,28 +81,32 @@ bintray {
     user = project.findProperty("bintray_user") as String? ?: ""
     key = project.findProperty("bintray_key") as String? ?: ""
 
-    setPublications("api") //When uploading configuration files
+    setPublications("api") // When uploading configuration files
 
-    dryRun = false //Whether to run this as dry-run, without deploying
+    dryRun = false // Whether to run this as dry-run, without deploying
     publish = true // If version should be auto published after an upload
 
-    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
-        repo = "kotlin-datascience-ileasile"
-        name = "kotlin-jupyter-api"
-        userOrg = "ileasile"
+    pkg(
+        delegateClosureOf<BintrayExtension.PackageConfig> {
+            repo = "kotlin-datascience-ileasile"
+            name = "kotlin-jupyter-api"
+            userOrg = "ileasile"
 
-        vcsUrl = "https://github.com/Kotlin/kotlin-jupyter"
+            vcsUrl = "https://github.com/Kotlin/kotlin-jupyter"
 
-        setLicenses("MIT")
-        publicDownloadNumbers = true
+            setLicenses("MIT")
+            publicDownloadNumbers = true
 
-        //Optional version descriptor
-        version(delegateClosureOf<BintrayExtension.VersionConfig>{
-            val projVersion = project.version as String
-            name = projVersion //Bintray logical version name
-            desc = "API for Kotlin Jupyter notebooks"
-            released = Date().toString()
-            vcsTag = "v$projVersion"
-        })
-    })
+            // Optional version descriptor
+            version(
+                delegateClosureOf<BintrayExtension.VersionConfig> {
+                    val projVersion = project.version as String
+                    name = projVersion // Bintray logical version name
+                    desc = "API for Kotlin Jupyter notebooks"
+                    released = Date().toString()
+                    vcsTag = "v$projVersion"
+                }
+            )
+        }
+    )
 }
