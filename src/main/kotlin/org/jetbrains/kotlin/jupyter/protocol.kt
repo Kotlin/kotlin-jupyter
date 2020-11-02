@@ -104,7 +104,7 @@ class SocketDisplayHandler(
         val display = value.toDisplayResult(notebook) ?: return
         val json = display.toJson()
 
-        notebook.thisCell?.addDisplay(display)
+        notebook.currentCell?.addDisplay(display)
 
         socket.send(
             makeReplyMessage(
@@ -119,7 +119,7 @@ class SocketDisplayHandler(
         val display = value.toDisplayResult(notebook) ?: return
         val json = display.toJson()
 
-        notebook.thisCell?.displays?.update(id, display)
+        notebook.currentCell?.displays?.update(id, display)
 
         json.setDisplayId(id) ?: throw ReplEvalRuntimeException("`update_display_data` response should provide an id of data being updated")
 
@@ -405,7 +405,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     val out = System.out
     val err = System.err
     repl.notebook.beginEvalSession()
-    val cell = { repl.notebook.thisCell }
+    val cell = { repl.notebook.currentCell }
 
     fun getCapturingStream(stream: PrintStream, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
         return CapturingOutputStream(

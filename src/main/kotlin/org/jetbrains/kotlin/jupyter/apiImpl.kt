@@ -135,7 +135,7 @@ class NotebookImpl(
         mainCellCreated = false
     }
 
-    override fun prevCell(before: Int): CodeCellImpl? {
+    override fun history(before: Int): CodeCellImpl? {
         val offset = if (mainCellCreated) 1 else 0
         return history.getOrNull(history.size - offset - before)
     }
