@@ -1,5 +1,4 @@
-@file:Suppress("unused")
-package jupyter.kotlin
+package org.jetbrains.kotlin.jupyter.config
 
 import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.Notebook
@@ -17,7 +16,6 @@ annotation class DependsOn(val value: String = "")
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
 annotation class Repository(val value: String = "")
-
 abstract class ScriptTemplateWithDisplayHelpers(
     val notebook: Notebook<*>,
 ) {

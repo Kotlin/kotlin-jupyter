@@ -2,14 +2,14 @@ package org.jetbrains.kotlin.jupyter.test
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlin.jupyter.DisplayHandler
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlin.jupyter.ResolverConfig
-import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.config.DependsOn
+import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryReference

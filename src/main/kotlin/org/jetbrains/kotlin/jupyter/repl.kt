@@ -1,9 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
-import jupyter.kotlin.Repository
-import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.Code
@@ -15,6 +12,9 @@ import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlin.jupyter.config.DependsOn
+import org.jetbrains.kotlin.jupyter.config.Repository
+import org.jetbrains.kotlin.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.buildDependenciesInitCode
@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
-import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import java.io.File
 import java.net.URLClassLoader
 import java.util.LinkedList
@@ -43,25 +42,16 @@ import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.asDiagnostics
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.baseClass
-import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.constructorArgs
-import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.foundAnnotations
-import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.onSuccess
-import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOrThrow
-import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.jvm.util.isError
 import kotlin.script.experimental.jvm.util.isIncomplete
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
@@ -295,34 +285,8 @@ class ReplForJupyterImpl(
     }
 
     private val compilerConfiguration by lazy {
-        ScriptCompilationConfiguration {
-            hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
-            baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
-            fileExtension.put("jupyter.kts")
-
-            val classImports = listOf(
-                DependsOn::class,
-                Repository::class,
-                ScriptTemplateWithDisplayHelpers::class,
-            ).map { it.java.name }
-            defaultImports(classImports + defaultGlobalImports)
-
-            jvm {
-                updateClasspath(scriptClasspath)
-            }
-            refineConfiguration {
-                onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
-            }
-
-            val receiversTypes = scriptReceivers.map { KotlinType(it.javaClass.canonicalName) }
-            implicitReceivers(receiversTypes)
-            skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
-
-            compilerOptions(
-                "-jvm-target",
-                runtimeProperties.jvmTargetForSnippets,
-                "-no-stdlib"
-            )
+        getCompilationConfiguration(scriptClasspath, scriptReceivers, runtimeProperties.jvmTargetForSnippets) {
+            onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
         }
     }
 

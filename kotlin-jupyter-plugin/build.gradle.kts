@@ -4,11 +4,14 @@ plugins {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 
 dependencies {
     implementation(project(":kotlin-jupyter-deps"))
+
+    implementation("khttp:khttp:1.0.0")
 }
 
 gradlePlugin {

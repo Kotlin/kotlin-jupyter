@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger

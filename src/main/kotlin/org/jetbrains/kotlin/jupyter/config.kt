@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
 import org.slf4j.LoggerFactory
@@ -38,17 +39,6 @@ internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(ClassLoader.getSystemResource("runtime.properties")?.readText()?.parseIniConfig().orEmpty())
 }
-
-val defaultRepositories = arrayOf(
-    "https://jcenter.bintray.com/",
-    "https://repo.maven.apache.org/maven2/",
-    "https://jitpack.io/",
-).map { RepositoryCoordinates(it) }
-
-val defaultGlobalImports = listOf(
-    "kotlin.math.*",
-    "org.jetbrains.kotlin.jupyter.api.*",
-)
 
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
     hb(SocketType.REP, SocketType.REQ),

@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.jupyter
 
-import jupyter.kotlin.DependsOn
-import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.jupyter.config.DependsOn
+import org.jetbrains.kotlin.jupyter.config.Repository
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.slf4j.LoggerFactory
 import java.io.File

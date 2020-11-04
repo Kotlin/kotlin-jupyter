@@ -39,11 +39,11 @@ fun readProperties(propertiesFile: Path): Map<String, String> =
 
 fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
     @Suppress("UNCHECKED_CAST")
-    return (if (extra.has(name)) extra[name] as? T else null)  ?: {
+    return (if (extra.has(name)) extra[name] as? T else null)  ?: run {
         val value = initializer()
         extra[name] = value
         value
-    }()
+    }
 }
 
 fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
