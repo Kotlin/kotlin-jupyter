@@ -1,6 +1,7 @@
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
+    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
 }
 
 repositories {
@@ -18,7 +19,7 @@ gradlePlugin {
     plugins {
         create("dependencies") {
             id = "org.jetbrains.kotlin.jupyter.dependencies"
-            implementationClass = "org.jetbrains.kotlin.jupyter.plugin.KotlinJupyterBuildDependency"
+            implementationClass = "org.jetbrains.kotlin.jupyter.plugin.KotlinJupyterGradlePlugin"
         }
     }
 }

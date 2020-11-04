@@ -31,8 +31,8 @@ fun Project.getCurrentBranch(): String =
     // Just result caching, don't set this property explicitly
     project.getOrInitProperty("git.currentBranch") {
         getPropertyByCommand(
-                "build.branch",
-                arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD")
+            "build.branch",
+            arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD")
         )
     }
 
@@ -40,8 +40,8 @@ fun Project.getCurrentCommitSha(): String =
     // Just result caching, don't set this property explicitly
     project.getOrInitProperty("git.currentSha") {
         getPropertyByCommand(
-                "build.commit_sha",
-                arrayOf("git", "rev-parse", "HEAD")
+            "build.commit_sha",
+            arrayOf("git", "rev-parse", "HEAD")
         )
     }
 
@@ -59,10 +59,11 @@ fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileNa
 
     val devCounterOrNull = rootProject.findProperty("build.devCounter") as String?
     val devCounter = devCounterOrNull ?: "1"
-    val devAddition = if(isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
+    val devAddition = if (isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
 
     val defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
-    val buildNumberRegex = """\d+(\.\d+){3}(\.dev\d+)?"""
+    val buildNumberRegex =
+        """\d+(\.\d+){3}(\.dev\d+)?"""
 
     return if (!buildNumber.matches(Regex(buildNumberRegex))) {
         val versionFile = artifactsDir.resolve(versionFileName).toFile()

@@ -1,177 +1,17 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.jupyter.build.AllOptions
-import org.jetbrains.kotlin.jupyter.build.CondaCredentials
-import org.jetbrains.kotlin.jupyter.build.CondaTaskSpec
-import org.jetbrains.kotlin.jupyter.build.DistributionPackageSettings
 import org.jetbrains.kotlin.jupyter.build.ProjectWithOptionsImpl
-import org.jetbrains.kotlin.jupyter.build.PyPiTaskSpec
-import org.jetbrains.kotlin.jupyter.build.ReadmeGenerator
-import org.jetbrains.kotlin.jupyter.build.UploadTaskSpecs
-import org.jetbrains.kotlin.jupyter.build.createCleanTasks
-import org.jetbrains.kotlin.jupyter.build.createInstallTasks
-import org.jetbrains.kotlin.jupyter.build.detectVersion
-import org.jetbrains.kotlin.jupyter.build.getCurrentBranch
-import org.jetbrains.kotlin.jupyter.build.getCurrentCommitSha
 import org.jetbrains.kotlin.jupyter.build.getFlag
-import org.jetbrains.kotlin.jupyter.build.getSubDir
-import org.jetbrains.kotlin.jupyter.build.prepareCondaTasks
-import org.jetbrains.kotlin.jupyter.build.prepareDistributionTasks
-import org.jetbrains.kotlin.jupyter.build.prepareLocalTasks
-import org.jetbrains.kotlin.jupyter.build.preparePyPiTasks
-import org.jetbrains.kotlin.jupyter.build.readProperties
-import org.jetbrains.kotlin.jupyter.build.stringPropOrEmpty
-import java.nio.file.Path
-import java.nio.file.Paths
+import org.jetbrains.kotlin.jupyter.plugin.options
 
-val packageName by extra("kotlin-jupyter-kernel")
-val baseVersion: String by project
 val klaxonVersion: String by project
-val kotlinVersion: String by project
 
 plugins {
     kotlin("jvm")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlin.jupyter.dependencies")
-}
-
-class TaskOptions : AllOptions {
-    override val versionFileName = "VERSION"
-    override val rootPath: Path = rootDir.toPath()
-
-    override val isLocalBuild = getFlag("build.isLocal")
-
-    override val artifactsDir: Path
-
-    init {
-        val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
-        artifactsDir = rootPath.resolve(artifactsPathStr)
-
-        if (isLocalBuild) {
-            project.delete(artifactsDir)
-        }
-
-        project.version = detectVersion(baseVersion, artifactsDir, versionFileName)
-        println("##teamcity[buildNumber '$version']")
-    }
-
-    override val readmePath: Path = rootPath.resolve("docs").resolve("README.md")
-
-    private val installPath = rootProject.findProperty("installPath") as String?
-
-    override val librariesPath = "libraries"
-    override val librariesPropertiesPath: Path = rootPath.resolve(librariesPath).resolve(".properties")
-
-    override val installPathLocal: Path = if (installPath != null) Paths.get(installPath)
-    else Paths.get(System.getProperty("user.home").toString(), ".ipython", "kernels", "kotlin")
-
-    override val resourcesDir = "resources"
-    override val distribBuildPath: Path = rootPath.resolve("build").resolve("distrib-build")
-    override val logosPath = getSubDir(rootPath, resourcesDir, "logos")
-    override val nbExtensionPath = getSubDir(rootPath, resourcesDir, "notebook-extension")
-    override val distributionPath: Path by extra(rootPath.resolve("distrib"))
-    override val jarsPath = "jars"
-    override val configDir = "config"
-
-    // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
-    override val jarArgsFile = "$configDir/jar_args.json"
-    override val runKernelPy = "run_kernel.py"
-    override val kernelFile = "kernel.json"
-    override val mainClassFQN = "org.jetbrains.kotlin.jupyter.IkotlinKt"
-    override val installKernelTaskPrefix = "installKernel"
-    override val cleanInstallDirTaskPrefix = "cleanInstallDir"
-    override val copyLibrariesTaskPrefix = "copyLibraries"
-    override val installLibsTaskPrefix = "installLibs"
-
-    override val localGroup = "local install"
-    override val distribGroup = "distrib"
-    override val condaGroup = "conda"
-    override val pyPiGroup = "pip"
-    override val buildGroup = "build"
-
-    private val debugPort = 1044
-    override val debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
-
-    override val mainSourceSetDir = "main"
-    override val runtimePropertiesFile = "runtime.properties"
-
-    override val distribKernelDir = "kernel"
-    override val runKernelDir = "run_kotlin_kernel"
-    override val setupPy = "setup.py"
-
-    override val copyRunKernelPy: Task
-        get() = tasks.getByName("copyRunKernelPy")
-    override val prepareDistributionDir: Task
-        get() = tasks.getByName("prepareDistributionDir")
-    override val cleanInstallDirDistrib: Task
-        get() = tasks.getByName("cleanInstallDirDistrib")
-
-    override val isOnProtectedBranch: Boolean
-        get() = extra["isOnProtectedBranch"] as Boolean
-
-    override val distribUtilsPath: Path = rootPath.resolve("distrib-util")
-    override val distribUtilRequirementsPath: Path = distribUtilsPath.resolve("requirements-common.txt")
-    override val distribUtilRequirementsHintsRemPath: Path = distribUtilsPath.resolve("requirements-hints-remover.txt")
-    override val removeTypeHints = true
-    override val typeHintsRemover: Path = distribUtilsPath.resolve("remove_type_hints.py")
-
-    override val condaTaskSpecs by lazy {
-        val condaUserStable = stringPropOrEmpty("condaUserStable")
-        val condaPasswordStable = stringPropOrEmpty("condaPasswordStable")
-        val condaUserDev = stringPropOrEmpty("condaUserDev")
-
-        val condaPackageSettings = object : DistributionPackageSettings {
-            override val dir = "conda-package"
-            override val name = packageName
-            override val fileName by lazy { "$name-$version-py_0.tar.bz2" }
-        }
-
-        val condaCredentials = CondaCredentials(condaUserStable, condaPasswordStable)
-        UploadTaskSpecs(
-            condaPackageSettings,
-            "conda",
-            condaGroup,
-            CondaTaskSpec(
-                condaUserStable,
-                condaCredentials
-            ),
-            CondaTaskSpec(
-                condaUserDev,
-                condaCredentials
-            )
-        )
-    }
-
-    override val pyPiTaskSpecs by lazy {
-        val stablePyPiUser = stringPropOrEmpty("stablePyPiUser")
-        val stablePyPiPassword = stringPropOrEmpty("stablePyPiPassword")
-        val devPyPiUser = stringPropOrEmpty("devPyPiUser")
-        val devPyPiPassword = stringPropOrEmpty("devPyPiPassword")
-
-        val pyPiPackageSettings = object : DistributionPackageSettings {
-            override val dir = "pip-package"
-            override val name = packageName.replace("-", "_")
-            override val fileName by lazy { "$name-$version-py3-none-any.whl" }
-        }
-
-        UploadTaskSpecs(
-            pyPiPackageSettings,
-            "pyPi",
-            pyPiGroup,
-            PyPiTaskSpec(
-                "https://upload.pypi.org/legacy/",
-                stablePyPiUser,
-                stablePyPiPassword
-            ),
-            PyPiTaskSpec(
-                "https://test.pypi.org/legacy/",
-                devPyPiUser,
-                devPyPiPassword
-            )
-        )
-    }
 }
 
 subprojects {
@@ -243,7 +83,7 @@ tasks.register("publishLocal") {
     )
 }
 
-with(ProjectWithOptionsImpl(project, TaskOptions())) {
+with(ProjectWithOptionsImpl(project, project.options())) {
     /****** Build tasks ******/
     tasks.jar {
         manifest {
@@ -289,88 +129,11 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
         )
     }
 
-    val buildProperties by tasks.registering {
-        group = buildGroup
-        val outputDir = file(getSubDir(buildDir.toPath(), resourcesDir, mainSourceSetDir))
-
-        inputs.property("version", version)
-        inputs.property("currentBranch", getCurrentBranch())
-        inputs.property("currentSha", getCurrentCommitSha())
-        inputs.property(
-            "jvmTargetForSnippets",
-            rootProject.findProperty("jvmTargetForSnippets") ?: "1.8"
-        )
-        inputs.file(librariesPropertiesPath)
-
-        outputs.dir(outputDir)
-
-        doLast {
-            outputDir.mkdirs()
-            val propertiesFile = file(getSubDir(outputDir.toPath(), runtimePropertiesFile))
-
-            val properties = inputs.properties.entries.map { it.toPair() }.toMutableList()
-            properties.apply {
-                val librariesProperties = readProperties(librariesPropertiesPath)
-                add("librariesFormatVersion" to librariesProperties["formatVersion"])
-            }
-
-            propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
-        }
-    }
-
     tasks.processResources {
-        dependsOn(buildProperties)
-    }
-
-    val readmeFile = readmePath.toFile()
-    val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
-    val librariesDir = File(librariesPath)
-    val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion)
-
-    val generateReadme by tasks.registering {
-        group = buildGroup
-
-        readmeFile.parentFile.mkdirs()
-
-        inputs.file(readmeStubFile)
-        inputs.dir(librariesDir)
-        outputs.file(readmeFile)
-
-        doLast {
-            readmeGenerator.generate(readmeStubFile, readmeFile)
-        }
-    }
-
-    val checkReadme by tasks.registering {
-        group = "verification"
-
-        inputs.file(readmeStubFile)
-        inputs.dir(librariesDir)
-        inputs.file(readmeFile)
-
-        doLast {
-            val tempFile = createTempFile("kotlin-jupyter-readme")
-            tempFile.deleteOnExit()
-            readmeGenerator.generate(readmeStubFile, tempFile)
-            if (tempFile.readText() != readmeFile.readText()) {
-                throw AssertionError("Readme is not regenerated. Regenerate it using `./gradlew ${generateReadme.name}` command")
-            }
-        }
+        dependsOn(tasks.buildProperties)
     }
 
     tasks.check {
-        dependsOn(checkReadme)
+        dependsOn(tasks.checkReadme)
     }
-
-    createCleanTasks()
-
-    /****** Local install ******/
-    prepareLocalTasks()
-
-    /****** Distribution ******/
-    prepareDistributionTasks()
-    createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBuildPath.resolve(runKernelDir))
-    prepareCondaTasks()
-    preparePyPiTasks()
-    prepareAggregateUploadTasks()
 }

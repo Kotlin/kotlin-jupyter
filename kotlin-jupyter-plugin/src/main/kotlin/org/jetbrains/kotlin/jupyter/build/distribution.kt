@@ -27,9 +27,9 @@ interface DistribOptions {
     val typeHintsRemover: Path
 }
 
-interface ProjectWithDistribOptions: Project, DistribOptions
+interface ProjectWithDistribOptions : Project, DistribOptions
 
-open class TaskSpec (
+open class TaskSpec(
     var taskName: String = ""
 )
 
@@ -40,11 +40,11 @@ interface DistributionPackageSettings {
 }
 
 class UploadTaskSpecs <T : TaskSpec>(
-        val packageSettings: DistributionPackageSettings,
-        private val repoName: String,
-        private val taskGroup: String,
-        val stable: T,
-        val dev: T
+    val packageSettings: DistributionPackageSettings,
+    private val repoName: String,
+    private val taskGroup: String,
+    val stable: T,
+    val dev: T
 ) {
     init {
         this.stable.taskName = taskName("Stable")
@@ -71,7 +71,7 @@ class UploadTaskSpecs <T : TaskSpec>(
     }
 }
 
-class CondaCredentials (
+class CondaCredentials(
     val username: String,
     val password: String
 )
@@ -81,7 +81,7 @@ class CondaTaskSpec(
     val credentials: CondaCredentials
 ) : TaskSpec()
 
-class PyPiTaskSpec (
+class PyPiTaskSpec(
     val repoURL: String,
     val username: String,
     val password: String
@@ -90,8 +90,8 @@ class PyPiTaskSpec (
 abstract class PipInstallReq : Exec() {
     @get:InputFile
     var requirementsFile: Path? = null
-    set(value) {
-        commandLine("python", "-m", "pip", "install", "-r", value)
-        field = value
-    }
+        set(value) {
+            commandLine("python", "-m", "pip", "install", "-r", value)
+            field = value
+        }
 }
