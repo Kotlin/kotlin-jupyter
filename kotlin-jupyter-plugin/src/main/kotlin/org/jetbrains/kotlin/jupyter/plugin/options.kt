@@ -13,13 +13,14 @@ import org.jetbrains.kotlin.jupyter.build.PyPiTaskSpec
 import org.jetbrains.kotlin.jupyter.build.UploadTaskSpecs
 import org.jetbrains.kotlin.jupyter.build.detectVersion
 import org.jetbrains.kotlin.jupyter.build.getFlag
+import org.jetbrains.kotlin.jupyter.build.getOrInitProperty
 import org.jetbrains.kotlin.jupyter.build.getSubDir
 import org.jetbrains.kotlin.jupyter.build.stringPropOrEmpty
 import java.nio.file.Path
 import java.nio.file.Paths
 
 fun Project.options(): AllOptions {
-    val taskOptions: AllOptions by project.extra {
+    return project.getOrInitProperty("taskOptions") {
         val baseVersion: String by project
 
         object : AllOptions {
@@ -162,6 +163,4 @@ fun Project.options(): AllOptions {
             }
         }
     }
-
-    return taskOptions
 }

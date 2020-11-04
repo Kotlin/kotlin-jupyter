@@ -1,11 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.jupyter.build.ProjectWithOptionsImpl
 import org.jetbrains.kotlin.jupyter.build.getFlag
 import org.jetbrains.kotlin.jupyter.plugin.options
-
-val klaxonVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -13,6 +10,11 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlin.jupyter.dependencies")
 }
+
+val klaxonVersion: String by project
+
+val taskOptions = project.options()
+val deploy: Configuration by configurations.creating
 
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
@@ -33,8 +35,6 @@ allprojects {
         maven { url = uri("https://kotlin.bintray.com/kotlin-dependencies") }
     }
 }
-
-val deploy: Configuration by configurations.creating
 
 dependencies {
     val junitVersion = "5.6.2"
@@ -83,57 +83,54 @@ tasks.register("publishLocal") {
     )
 }
 
-with(ProjectWithOptionsImpl(project, project.options())) {
-    /****** Build tasks ******/
-    tasks.jar {
-        manifest {
-            attributes["Main-Class"] = mainClassFQN
-            attributes["Implementation-Version"] = project.version
-        }
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = taskOptions.mainClassFQN
+        attributes["Implementation-Version"] = project.version
+    }
+}
+
+tasks.shadowJar {
+    archiveBaseName.set(taskOptions.packageName)
+    archiveClassifier.set("")
+    mergeServiceFiles()
+
+    manifest {
+        attributes(tasks.jar.get().manifest.attributes)
+    }
+}
+
+tasks.test {
+    val doParallelTesting = getFlag("test.parallel", true)
+
+    /**
+     *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
+     */
+    val useShadowedJar = getFlag("test.useShadowed", false)
+
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
     }
 
-    tasks.shadowJar {
-        archiveBaseName.set(packageName)
-        archiveClassifier.set("")
-        mergeServiceFiles()
-
-        manifest {
-            attributes["Main-Class"] = mainClassFQN
-        }
+    if (useShadowedJar) {
+        dependsOn(tasks.shadowJar.get())
+        classpath = files(tasks.shadowJar.get()) + classpath
     }
 
-    tasks.test {
-        val doParallelTesting = getFlag("test.parallel", true)
+    systemProperties = mutableMapOf(
+        "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
 
-        /**
-         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
-         */
-        val useShadowedJar = getFlag("test.useShadowed", false)
+        "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+        "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+        "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+    )
+}
 
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
+tasks.processResources {
+    dependsOn(tasks.buildProperties)
+}
 
-        if (useShadowedJar) {
-            dependsOn(tasks.shadowJar.get())
-            classpath = files(tasks.shadowJar.get()) + classpath
-        }
-
-        systemProperties = mutableMapOf(
-            "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
-
-            "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-            "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
-        )
-    }
-
-    tasks.processResources {
-        dependsOn(tasks.buildProperties)
-    }
-
-    tasks.check {
-        dependsOn(tasks.checkReadme)
-    }
+tasks.check {
+    dependsOn(tasks.checkReadme)
 }
