@@ -32,7 +32,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
     tasks.register<Copy>("copyDistribFiles") {
         group = distribGroup
         dependsOn("cleanInstallDirDistrib")
-        if(removeTypeHints) {
+        if (removeTypeHints) {
             dependsOn("installHintRemoverRequirements")
         }
         from(distributionPath)
@@ -43,7 +43,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
         val pythonFiles = mutableListOf<Path>()
         eachFile {
             val absPath = distribBuildPath.resolve(this.path).toAbsolutePath()
-            if(this.path.endsWith(".py"))
+            if (this.path.endsWith(".py"))
                 pythonFiles.add(absPath)
         }
 
@@ -67,7 +67,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
 }
 
 fun ProjectWithOptions.prepareCondaTasks() {
-    with (condaTaskSpecs) {
+    with(condaTaskSpecs) {
         tasks.register<Exec>("condaPackage") {
             group = condaGroup
             dependsOn("cleanInstallDirDistrib", "preparePackage")
@@ -92,9 +92,14 @@ fun ProjectWithOptions.prepareCondaTasks() {
 
                 doLast {
                     exec {
-                        commandLine ("anaconda", "login",
-                                "--username", taskSpec.credentials.username,
-                                "--password", taskSpec.credentials.password)
+                        commandLine(
+                            "anaconda",
+                            "login",
+                            "--username",
+                            taskSpec.credentials.username,
+                            "--password",
+                            taskSpec.credentials.password
+                        )
 
                         standardInput = ByteArrayInputStream("yes".toByteArray())
                     }
@@ -118,8 +123,13 @@ fun ProjectWithOptions.preparePyPiTasks() {
                 dependsOn("installCommonRequirements")
             }
 
-            commandLine("python", setupPy, "bdist_wheel",
-                    "--dist-dir", packageSettings.dir)
+            commandLine(
+                "python",
+                setupPy,
+                "bdist_wheel",
+                "--dist-dir",
+                packageSettings.dir
+            )
             workingDir(distribBuildPath)
 
             doLast {
@@ -143,11 +153,13 @@ fun ProjectWithOptions.preparePyPiTasks() {
                     dependsOn("pyPiPackage")
                 }
 
-                commandLine("twine", "upload",
-                        "-u", taskSpec.username,
-                        "-p", taskSpec.password,
-                        "--repository-url", taskSpec.repoURL,
-                        packageSettings.fileName)
+                commandLine(
+                    "twine", "upload",
+                    "-u", taskSpec.username,
+                    "-p", taskSpec.password,
+                    "--repository-url", taskSpec.repoURL,
+                    packageSettings.fileName
+                )
             }
         }
     }
