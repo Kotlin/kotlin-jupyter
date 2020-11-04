@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.jupyter.build.getFlag
 import org.jetbrains.kotlin.jupyter.plugin.options
