@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
 import org.jetbrains.kotlin.jupyter.generateDiagnosticFromAbsolute
@@ -412,7 +412,15 @@ class ReplTest : AbstractReplTest() {
 }
 
 class CustomLibraryResolverTests : AbstractReplTest() {
-    private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(libraryFactory, classpath, homeDir, ResolverConfig(defaultRepositories, libs))
+    private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(
+        libraryFactory,
+        classpath,
+        homeDir,
+        ResolverConfig(
+            defaultRepositories,
+            libs
+        )
+    )
 
     @Test
     fun testUseMagic() {
