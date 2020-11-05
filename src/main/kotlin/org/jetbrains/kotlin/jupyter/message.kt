@@ -50,11 +50,14 @@ fun makeReplyMessage(
         content = content
     )
 
-fun makeHeader(msgType: String? = null, incomingMsg: Message? = null, sessionId: String? = null): JsonObject = jsonObject(
-    "msg_id" to UUID.randomUUID().toString(),
-    "date" to ISO8601DateNow,
-    "version" to protocolVersion,
-    "username" to ((incomingMsg?.header["username"] as? String) ?: "kernel"),
-    "session" to ((incomingMsg?.header["session"] as? String) ?: sessionId),
-    "msg_type" to (msgType ?: "none")
-)
+fun makeHeader(msgType: String? = null, incomingMsg: Message? = null, sessionId: String? = null): JsonObject {
+    val header = incomingMsg?.header
+    return jsonObject(
+        "msg_id" to UUID.randomUUID().toString(),
+        "date" to ISO8601DateNow,
+        "version" to protocolVersion,
+        "username" to ((header["username"] as? String) ?: "kernel"),
+        "session" to ((header["session"] as? String) ?: sessionId),
+        "msg_type" to (msgType ?: "none")
+    )
+}
