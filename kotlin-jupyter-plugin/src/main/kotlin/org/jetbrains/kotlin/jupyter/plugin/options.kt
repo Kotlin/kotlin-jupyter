@@ -113,8 +113,7 @@ fun Project.options(): AllOptions {
 
                 val condaPackageSettings = object : DistributionPackageSettings {
                     override val dir = "conda-package"
-                    override val name = packageName
-                    override val fileName by lazy { "$name-$version-py_0.tar.bz2" }
+                    override val fileName by lazy { "$packageName-$version-py_0.tar.bz2" }
                 }
 
                 val condaCredentials = CondaCredentials(condaUserStable, condaPasswordStable)
@@ -141,8 +140,9 @@ fun Project.options(): AllOptions {
 
                 val pyPiPackageSettings = object : DistributionPackageSettings {
                     override val dir = "pip-package"
-                    override val name = packageName.replace("-", "_")
-                    override val fileName by lazy { "$name-$version-py3-none-any.whl" }
+                    override val fileName by lazy {
+                        "${packageName.replace("-", "_")}-$version-py3-none-any.whl"
+                    }
                 }
 
                 UploadTaskSpecs(

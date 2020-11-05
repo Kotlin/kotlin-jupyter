@@ -35,7 +35,6 @@ open class TaskSpec(
 
 interface DistributionPackageSettings {
     val dir: String
-    val name: String
     val fileName: String
 }
 
