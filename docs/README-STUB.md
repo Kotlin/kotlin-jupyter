@@ -9,7 +9,7 @@
 [Kotlin](https://kotlinlang.org/) ([[kotlin_version]]) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
-on Windows, Ubuntu Linux and MacOS. Using with Jupyter Console frontend is problematic now because of
+on Windows, Ubuntu Linux and macOS. Using with Jupyter Console frontend is problematic now because of
 logging which cannot be switched off. Tuning logging options is planned for future releases.
 
 ![Screenshot in Jupyter](Screenshot.png)
@@ -22,7 +22,7 @@ Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://myb
 
 ## Installation
 
-There are three ways to install kernel:
+There are three ways to install the kernel:
 
 ### Conda
 
@@ -56,7 +56,7 @@ cd kotlin-jupyter
 ./gradlew install
 ```
 
-Default installation path is `~/.ipython/kernels/kotlin/`. To install to some other location use option `-PinstallPath=`, but note that Jupyter looks for kernel specs files only in predefined places
+Default installation path is `~/.ipython/kernels/kotlin/`. To install to some other location use option `-PinstallPath=`, but note that Jupyter looks for the kernel specs files only in predefined places
 
 Uninstall: `./gradlew uninstall`  
 
@@ -78,7 +78,8 @@ The following REPL commands are supported:
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
+ - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class 
+   directories or jars, ivy and maven artifacts represented by the colon separated string
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
  To specify Maven local, use `@file:Repository("*mavenLocal")`.
  
@@ -113,7 +114,7 @@ When a library is included with `%use` keyword, the following functionality is a
 
 This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](../libraries) directory.
 A library descriptor may provide a set of properties with default values that can be overridden when library is included.
-The major use case for library properties is to specify particular version of library. If descriptor has only one property, it can be 
+The major use case for library properties is to specify a particular version of library. If descriptor has only one property, it can be 
 defined without naming:
 ```
 %use krangl(0.10)
@@ -158,7 +159,7 @@ List of supported libraries:
 
 ### Rich output
   
-By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
+By default, the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
  to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function: 
 ```kotlin
 fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
@@ -188,7 +189,7 @@ an error message which can help you to fix the error.
 
 ## Debugging
 
-1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
+1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for the debugger. Default port is 1044.
 2. Run `jupyter-notebook`
 3. Attach a remote debugger to JVM with specified port 
 
