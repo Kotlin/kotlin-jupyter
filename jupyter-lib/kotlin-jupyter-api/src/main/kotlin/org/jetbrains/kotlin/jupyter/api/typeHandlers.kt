@@ -26,6 +26,11 @@ class TypeHandlerCodeExecution(val code: Code) : TypeHandlerExecution {
     }
 }
 
+class AlwaysRendererTypeHandler(override val execution: TypeHandlerExecution) : RendererTypeHandler {
+    override fun acceptsType(type: KClass<*>): Boolean = true
+    override fun replaceVariables(mapping: Map<String, String>) = this
+}
+
 class ExactRendererTypeHandler(private val className: TypeName, override val execution: TypeHandlerExecution) : RendererTypeHandler {
     override fun acceptsType(type: KClass<*>): Boolean {
         return className == type.java.canonicalName
