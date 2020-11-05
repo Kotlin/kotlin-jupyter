@@ -33,6 +33,7 @@
       <w>jetbrains</w>
       <w>jlleitschuh</w>
       <w>johnrengelman</w>
+      <w>kaliningraph</w>
       <w>kclass</w>
       <w>khttp</w>
       <w>kmath</w>
@@ -51,6 +52,7 @@
       <w>mpicbg</w>
       <w>mylib</w>
       <w>noarch</w>
+      <w>numpy</w>
       <w>pygments</w>
       <w>scicomp</w>
       <w>signable</w>
