@@ -1,10 +1,14 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
-import org.jetbrains.kotlin.com.intellij.openapi.Disposable
-import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.utils.addToStdlib.min
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
@@ -12,6 +16,7 @@ import java.io.IOException
 import java.security.SignatureException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.math.min
 
 class JupyterConnection(val config: KernelConfig) : Closeable {
 
@@ -35,18 +40,18 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
 
         inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
 
-        fun sendStatus(status: String, msg: Message) {
-            connection.iopub.send(makeReplyMessage(msg, "status", content = jsonObject("execution_state" to status)))
+        fun sendStatus(status: KernelStatus, msg: Message) {
+            connection.iopub.send(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
         }
 
         fun sendWrapped(incomingMessage: Message, msg: Message) {
-            sendStatus("busy", incomingMessage)
+            sendStatus(KernelStatus.BUSY, incomingMessage)
             send(msg)
-            sendStatus("idle", incomingMessage)
+            sendStatus(KernelStatus.IDLE, incomingMessage)
         }
 
         fun sendOut(msg: Message, stream: JupyterOutType, text: String) {
-            send(makeReplyMessage(msg, header = makeHeader("stream", msg), content = jsonObject("name" to stream.optionName(), "text" to text)))
+            send(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
         }
 
         fun send(msg: Message) {
@@ -76,15 +81,14 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             stdin.send(
                 makeReplyMessage(
                     contextMessage!!,
-                    "input_request",
-                    content = jsonObject("prompt" to "stdin:")
+                    MessageType.INPUT_REQUEST,
+                    content = InputRequest("stdin:")
                 )
             )
             val msg = stdin.receiveMessage(stdin.recv())
-            val input = msg?.content?.get("value")
-            if (msg == null || msg.header?.get("msg_type")?.equals("input_reply") != true || input == null || input !is String)
-                throw UnsupportedOperationException("Unexpected input message $msg")
-            return input
+            val content = msg?.data?.content as? InputReply
+
+            return content?.value ?: throw UnsupportedOperationException("Unexpected input message $msg")
         }
 
         private fun initializeCurrentBuf(): ByteArray {
@@ -130,8 +134,6 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
-    private val disposable = Disposable { }
-
     val heartbeat = Socket(JupyterSockets.hb)
     val shell = Socket(JupyterSockets.shell)
     val control = Socket(JupyterSockets.control)
@@ -149,7 +151,6 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
         stdin.close()
         iopub.close()
         context.close()
-        Disposer.dispose(disposable)
     }
 }
 
@@ -178,8 +179,10 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
     synchronized(this) {
         msg.id.forEach { sendMore(it) }
         sendMore(MESSAGE_DELIMITER)
-        val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
-            .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
+
+        val dataJson = Json.encodeToJsonElement(msg.data).jsonObject
+        val signableMsg = listOf("header", "parent_header", "metadata", "content")
+            .map { fieldName -> dataJson[fieldName]?.let { Json.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes }
         sendMore(hmac(signableMsg) ?: "")
         signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
         send(signableMsg.last())
@@ -198,15 +201,27 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
     if (calculatedSig != null && sig != calculatedSig)
         throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
 
-    fun ByteArray.parseJson(): JsonObject =
-        Parser.default().parse(this.inputStream()) as JsonObject
+    fun ByteArray.parseJson(): JsonElement {
+        val json = Json.decodeFromString<JsonElement>(this.toString(Charsets.UTF_8))
+        return if (json is JsonObject && json.isEmpty()) JsonNull else json
+    }
+
+    fun JsonElement.orEmptyObject() = if (this is JsonNull) emptyJsonObject else this
+
+    val dataJson = jsonObject(
+        "header" to header.parseJson(),
+        "parent_header" to parentHeader.parseJson(),
+        "metadata" to metadata.parseJson().orEmptyObject(),
+        "content" to content.parseJson().orEmptyObject()
+    )
+
+    log.info(Json { prettyPrint = true }.encodeToString(dataJson))
+
+    val data = Json.decodeFromJsonElement<MessageData>(dataJson)
 
     return Message(
         ids,
-        header.parseJson(),
-        parentHeader.parseJson(),
-        metadata.parseJson(),
-        content.parseJson()
+        data
     )
 }
 

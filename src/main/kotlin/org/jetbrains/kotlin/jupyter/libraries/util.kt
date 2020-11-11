@@ -1,21 +1,17 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.Code
-import org.jetbrains.kotlin.jupyter.api.CodeExecution
-import org.jetbrains.kotlin.jupyter.api.ExactRendererTypeHandler
-import org.jetbrains.kotlin.jupyter.api.Execution
-import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.Notebook
-import org.jetbrains.kotlin.jupyter.api.TypeHandlerCodeExecution
 import org.jetbrains.kotlin.jupyter.catchAll
 import org.jetbrains.kotlin.jupyter.getHttp
 import org.jetbrains.kotlin.jupyter.log
@@ -146,35 +142,14 @@ fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<Strin
     }
 
 fun parseLibraryDescriptor(json: String): LibraryDescriptor {
-    val jsonParser = Parser.default()
-    val res = jsonParser.parse(json.byteInputStream())
+    val res = Json.parseToJsonElement(json)
     if (res is JsonObject) return parseLibraryDescriptor(res)
 
     throw ReplCompilerException("Result of library descriptor parsing is of type ${res.javaClass.canonicalName} which is unexpected")
 }
 
-fun JsonObject.parseExecutions(name: String): List<Execution> {
-    return array<String>(name)?.toList().orEmpty().map(::CodeExecution)
-}
-
 fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
-    return LibraryDescriptor(
-        originalJson = json,
-        libraryDefinitions = json.array<String>("libraryDefinitions")?.toList().orEmpty(),
-        dependencies = json.array<String>("dependencies")?.toList().orEmpty(),
-        variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
-        imports = json.array<String>("imports")?.toList().orEmpty(),
-        repositories = json.array<String>("repositories")?.toList().orEmpty(),
-        init = json.parseExecutions("init"),
-        shutdown = json.parseExecutions("shutdown"),
-        initCell = json.parseExecutions("initCell"),
-        renderers = json.obj("renderers")?.map { ExactRendererTypeHandler(it.key, TypeHandlerCodeExecution(it.value.toString())) }?.toList().orEmpty(),
-        link = json.string("link"),
-        description = json.string("description"),
-        minKernelVersion = json.string("minKernelVersion"),
-        converters = json.obj("typeConverters")?.map { GenerativeTypeHandler(it.key, it.value.toString()) }.orEmpty(),
-        annotations = json.obj("annotationHandlers")?.map { GenerativeTypeHandler(it.key, it.value.toString()) }.orEmpty()
-    )
+    return Json.decodeFromJsonElement(json)
 }
 
 fun parseLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {

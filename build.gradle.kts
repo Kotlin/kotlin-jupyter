@@ -4,12 +4,13 @@ import org.jetbrains.kotlin.jupyter.plugin.options
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlin.jupyter.dependencies")
 }
 
-val klaxonVersion: String by project
+val kotlinxSerializationVersion: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
@@ -63,7 +64,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("khttp:khttp:1.0.0")
     implementation("org.zeromq:jeromq:0.5.2")
-    implementation("com.beust:klaxon:$klaxonVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("com.github.ajalt:clikt:2.8.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 

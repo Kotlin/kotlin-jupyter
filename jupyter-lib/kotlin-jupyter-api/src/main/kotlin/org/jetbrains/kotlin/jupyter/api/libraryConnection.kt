@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter.api
 
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.jupyter.util.CodeExecutionSerializer
 import org.jetbrains.kotlin.jupyter.util.replaceVariables
 
 typealias TypeName = String
@@ -15,6 +17,7 @@ fun interface Execution : VariablesSubstitutionAvailable<Execution> {
     override fun replaceVariables(mapping: Map<String, String>): Execution = this
 }
 
+@Serializable(with = CodeExecutionSerializer::class)
 class CodeExecution(val code: Code) : Execution {
     override fun execute(host: KotlinKernelHost): Any? {
         return host.execute(code)

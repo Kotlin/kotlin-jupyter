@@ -51,9 +51,11 @@
       <w>mllib</w>
       <w>mpicbg</w>
       <w>mylib</w>
+      <w>nbconvert</w>
       <w>noarch</w>
       <w>numpy</w>
       <w>pygments</w>
+      <w>renderable</w>
       <w>scicomp</w>
       <w>signable</w>
       <w>sonatype</w>

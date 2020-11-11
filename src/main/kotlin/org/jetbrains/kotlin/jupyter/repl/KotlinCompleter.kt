@@ -1,12 +1,16 @@
 package org.jetbrains.kotlin.jupyter.repl
 
-import com.beust.klaxon.JsonObject
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.jupyter.jsonObject
+import org.jetbrains.kotlin.jupyter.CompleteReply
+import org.jetbrains.kotlin.jupyter.ErrorReply
+import org.jetbrains.kotlin.jupyter.ListErrorsReply
+import org.jetbrains.kotlin.jupyter.MessageContent
+import org.jetbrains.kotlin.jupyter.Paragraph
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
-import java.io.PrintWriter
-import java.io.StringWriter
 import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -14,23 +18,10 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.api.valueOrNull
 
-enum class CompletionStatus(private val value: String) {
-    OK("ok"),
-    ERROR("error");
-
-    override fun toString(): String {
-        return value
-    }
-}
-
 data class CompletionTokenBounds(val start: Int, val end: Int)
 
-abstract class CompletionResult(
-    private val status: CompletionStatus
-) {
-    open fun toJson(): JsonObject {
-        return jsonObject("status" to status.toString())
-    }
+abstract class CompletionResult {
+    abstract val message: MessageContent
 
     open class Success(
         private val matches: List<String>,
@@ -38,40 +29,39 @@ abstract class CompletionResult(
         private val metadata: List<SourceCodeCompletionVariant>,
         private val text: String,
         private val cursor: Int
-    ) : CompletionResult(CompletionStatus.OK) {
+    ) : CompletionResult() {
         init {
             assert(matches.size == metadata.size)
         }
 
-        override fun toJson(): JsonObject {
-            val res = super.toJson()
-            res["matches"] = matches
-            res["cursor_start"] = bounds.start
-            res["cursor_end"] = bounds.end
-            res["metadata"] = mapOf(
-                "_jupyter_types_experimental" to metadata.map {
+        override val message: MessageContent
+            get() = CompleteReply(
+                matches,
+                bounds.start,
+                bounds.end,
+                Paragraph(cursor, text),
+                Json.encodeToJsonElement(
                     mapOf(
-                        "text" to it.text,
-                        "type" to it.tail,
-                        "start" to bounds.start,
-                        "end" to bounds.end
+                        "_jupyter_types_experimental" to metadata.map {
+                            mapOf(
+                                "text" to it.text,
+                                "type" to it.tail,
+                                "start" to bounds.start,
+                                "end" to bounds.end
+                            )
+                        },
+                        "_jupyter_extended_metadata" to metadata.map {
+                            mapOf(
+                                "text" to it.text,
+                                "displayText" to it.displayText,
+                                "icon" to it.icon,
+                                "tail" to it.tail
+                            )
+                        }
                     )
-                },
-                "_jupyter_extended_metadata" to metadata.map {
-                    mapOf(
-                        "text" to it.text,
-                        "displayText" to it.displayText,
-                        "icon" to it.icon,
-                        "tail" to it.tail
-                    )
-                }
+                ).jsonObject,
+
             )
-            res["paragraph"] = mapOf(
-                "cursor" to cursor,
-                "text" to text
-            )
-            return res
-        }
 
         @TestOnly
         fun sortedMatches(): List<String> = matches.sorted()
@@ -85,45 +75,21 @@ abstract class CompletionResult(
     class Error(
         private val errorName: String,
         private val errorValue: String,
-        private val traceBack: String
-    ) : CompletionResult(CompletionStatus.ERROR) {
-        override fun toJson(): JsonObject {
-            val res = super.toJson()
-            res["ename"] = errorName
-            res["evalue"] = errorValue
-            res["traceback"] = traceBack
-            return res
-        }
+        private val traceBack: List<String>
+    ) : CompletionResult() {
+        override val message: MessageContent
+            get() = ErrorReply(errorName, errorValue, traceBack)
     }
 }
 
 data class ListErrorsResult(val code: String, val errors: Sequence<ScriptDiagnostic> = emptySequence()) {
-    fun toJson(): JsonObject {
-        return jsonObject(
-            "code" to code,
-            "errors" to errors.map {
-                val er = jsonObject(
-                    "message" to it.message,
-                    "severity" to it.severity.name
-                )
-
-                val loc = it.location
-                if (loc != null) {
-                    val start = loc.start
-                    val end = loc.end
-                    er["start"] = jsonObject("line" to start.line, "col" to start.col)
-                    if (end != null)
-                        er["end"] = jsonObject("line" to end.line, "col" to end.col)
-                }
-                er
-            }.toList()
-        )
-    }
+    val message: ListErrorsReply
+        get() = ListErrorsReply(code, errors.toList())
 }
 
 internal class SourceCodeImpl(number: Int, override val text: String) : SourceCode {
-    override val name: String? = "Line_$number"
-    override val locationId: String? = "location_$number"
+    override val name: String = "Line_$number"
+    override val locationId: String = "location_$number"
 }
 
 class KotlinCompleter {
@@ -138,9 +104,7 @@ class KotlinCompleter {
                 getResult(code, cursor, completionList)
             } ?: CompletionResult.Empty(code, cursor)
         } catch (e: Exception) {
-            val sw = StringWriter()
-            e.printStackTrace(PrintWriter(sw))
-            CompletionResult.Error(e.javaClass.simpleName, e.message ?: "", sw.toString())
+            CompletionResult.Error(e.javaClass.simpleName, e.message ?: "", e.stackTrace.map { it.toString() })
         }
     }
 

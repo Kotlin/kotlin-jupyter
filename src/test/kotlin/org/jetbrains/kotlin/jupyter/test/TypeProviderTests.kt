@@ -1,8 +1,9 @@
 package org.jetbrains.kotlin.jupyter.test
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
 import jupyter.kotlin.receivers.TypeProviderReceiver
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
@@ -18,8 +19,6 @@ class TypeProviderTests {
 
     @Test
     fun test() {
-
-        val parser = Parser.default()
         val descriptor =
             """
             {
@@ -29,7 +28,7 @@ class TypeProviderTests {
             }
             """.trimIndent()
         val cp = classpath + File(TypeProviderReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
-        val libJsons = mapOf("mylib" to parser.parse(StringBuilder(descriptor)) as JsonObject)
+        val libJsons = mapOf("mylib" to Json.decodeFromString<JsonObject>(descriptor))
         val libraryFactory = LibraryFactory.EMPTY
         val config = ResolverConfig(defaultRepositories, libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons)))
         val repl = ReplForJupyterImpl(libraryFactory, cp, null, config, scriptReceivers = listOf(TypeProviderReceiver()))

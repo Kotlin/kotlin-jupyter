@@ -1,7 +1,8 @@
 package org.jetbrains.kotlin.jupyter.test
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlin.jupyter.DisplayHandler
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
@@ -42,8 +43,7 @@ val LibraryFactory.testResolverConfig: ResolverConfig
     )
 
 fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
-    val parser = Parser.default()
-    val libJsons = map { it.first to parser.parse(StringBuilder(it.second)) as JsonObject }.toMap()
+    val libJsons = map { it.first to Json.decodeFromString<JsonObject>(it.second) }.toMap()
     return libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
 }
 
@@ -52,12 +52,11 @@ fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>):
 }
 
 fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
-    val parser = Parser.default()
     return File(basePath, LibrariesDir)
         .listFiles()?.filter { it.extension == LibraryDescriptorExt }
         ?.map {
             log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
-            it.nameWithoutExtension to parser.parse(it.canonicalPath) as JsonObject
+            it.nameWithoutExtension to Json.decodeFromString<JsonObject>(it.readText())
         }
         .orEmpty()
         .toMap()
