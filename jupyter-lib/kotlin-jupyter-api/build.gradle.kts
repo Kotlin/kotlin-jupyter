@@ -4,13 +4,14 @@ import kotlin.Suppress
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     `maven-publish`
     id("org.jetbrains.dokka") version "1.4.0-rc"
     id("com.jfrog.bintray") version "1.8.1"
 }
 
 project.version = rootProject.version
-val klaxonVersion: String by rootProject
+val kotlinxSerializationVersion: String by rootProject
 
 repositories {
     mavenCentral()
@@ -24,10 +25,11 @@ dependencies {
     implementation(kotlin("scripting-compiler-embeddable"))
     implementation(kotlin("scripting-dependencies"))
     implementation(kotlin("scripting-jvm"))
+    implementation(kotlin("serialization"))
 
     compileOnly(kotlin("scripting-compiler-impl"))
 
-    api("com.beust:klaxon:$klaxonVersion")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 
     testImplementation(kotlin("test"))
 

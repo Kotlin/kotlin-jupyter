@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.JupyterSockets
 import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.MessageData
+import org.jetbrains.kotlin.jupyter.MessageType
 import org.jetbrains.kotlin.jupyter.makeHeader
 import org.jetbrains.kotlin.jupyter.receiveMessage
 import org.jetbrains.kotlin.jupyter.sendMessage
@@ -50,9 +52,15 @@ class KernelServerTest : KernelServerTestsBase() {
         with(ClientSocket(context, JupyterSockets.control)) {
             try {
                 connect()
-                sendMessage(Message(id = messageId, header = makeHeader("interrupt_request")), hmac)
+                sendMessage(
+                    Message(
+                        id = messageId,
+                        MessageData(header = makeHeader(MessageType.INTERRUPT_REQUEST))
+                    ),
+                    hmac
+                )
                 val msg = receiveMessage(recv(), hmac)
-                assertEquals("interrupt_reply", msg!!.header!!["msg_type"])
+                assertEquals(MessageType.INTERRUPT_REPLY, msg.type)
             } finally {
                 close()
                 context.term()

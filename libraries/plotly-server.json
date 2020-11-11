@@ -13,7 +13,7 @@
     ],
     "properties": {
         "v": "0.2.0",
-        "port": 8882
+        "port": "8882"
     },
     "link": "https://github.com/mipt-npm/plotly.kt",
     "description": "An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.",

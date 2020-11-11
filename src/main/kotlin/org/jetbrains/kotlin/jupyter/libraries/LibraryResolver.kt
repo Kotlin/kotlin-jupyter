@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
 import org.jetbrains.kotlin.jupyter.LocalCacheDir
@@ -73,7 +75,9 @@ class LocalLibraryResolver(
         val dir = pathsToCheck.first()
         val file = reference.getFile(dir)
         file.parentFile.mkdirs()
-        file.writeText(descriptor.originalJson.toJsonString(true))
+
+        val format = Json { prettyPrint = true }
+        file.writeText(format.encodeToString(descriptor))
     }
 
     private fun LibraryReference.getFile(dir: String) = Paths.get(dir, this.key + "." + LibraryDescriptorExt).toFile()

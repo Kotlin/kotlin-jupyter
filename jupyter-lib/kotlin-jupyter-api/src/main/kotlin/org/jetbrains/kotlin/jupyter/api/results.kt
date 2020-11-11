@@ -1,6 +1,11 @@
 package org.jetbrains.kotlin.jupyter.api
 
-import com.beust.klaxon.JsonObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 
 interface Renderable {
     fun render(notebook: Notebook<*>): DisplayResult
@@ -9,7 +14,7 @@ interface Renderable {
 interface DisplayResult : Renderable {
     val id: String? get() = null
 
-    fun toJson(additionalMetadata: JsonObject = jsonObject()): JsonObject
+    fun toJson(additionalMetadata: JsonObject = JsonObject(mapOf())): JsonObject
 
     override fun render(notebook: Notebook<*>) = this
 }
@@ -23,45 +28,46 @@ interface DisplayContainer {
     fun getById(id: String?): List<DisplayResultWithCell>
 }
 
+typealias MutableJsonObject = MutableMap<String, JsonElement>
+
 @Suppress("unused")
 fun DisplayResult?.toJson(): JsonObject {
     if (this != null) return this.toJson()
-    return jsonObject("data" to null, "metadata" to jsonObject())
+    return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 
-fun JsonObject.setDisplayId(id: String? = null, force: Boolean = false): String? {
-    val transient = get("transient") as? JsonObject
-    val oldId = transient?.get("display_id") as? String
+fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): String? {
+    val transient = get("transient")?.let { Json.decodeFromJsonElement<MutableJsonObject>(it) }
+    val oldId = (transient?.get("display_id") as? JsonPrimitive)?.content
 
     if (id == null) return oldId
     if (oldId != null && !force) return oldId
 
-    val newTransient = transient ?: jsonObject()
-    newTransient["display_id"] = id
-    this["transient"] = newTransient
+    val newTransient = transient ?: mutableMapOf()
+    newTransient["display_id"] = JsonPrimitive(id)
+    this["transient"] = Json.encodeToJsonElement(newTransient)
     return id
 }
 
-private fun jsonObject(vararg namedVals: Pair<String, Any?>): JsonObject = JsonObject(hashMapOf(*namedVals))
-
 class MimeTypedResult(
-    mimeData: Map<String, String>,
+    private val mimeData: Map<String, String>,
     var isolatedHtml: Boolean = false,
     override val id: String? = null
 ) : Map<String, String> by mimeData, DisplayResult {
     override fun toJson(additionalMetadata: JsonObject): JsonObject {
-        val data = JsonObject(this)
-        val metadata = if (isolatedHtml) jsonObject("text/html" to jsonObject("isolated" to true)) else jsonObject()
-        additionalMetadata.forEach { key, value ->
-            metadata[key] = value
+        val metadata = HashMap<String, JsonElement>().apply {
+            if (isolatedHtml) put("text/html", Json.encodeToJsonElement(mapOf("isolated" to true)))
+            additionalMetadata.forEach { key, value ->
+                put(key, value)
+            }
         }
 
-        val result = jsonObject(
-            "data" to data,
-            "metadata" to metadata
+        val result: MutableJsonObject = hashMapOf(
+            "data" to Json.encodeToJsonElement(mimeData),
+            "metadata" to Json.encodeToJsonElement(metadata)
         )
         result.setDisplayId(id)
-        return result
+        return Json.encodeToJsonElement(result) as JsonObject
     }
 }
 

@@ -1,18 +1,31 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
 import jupyter.kotlin.JavaRuntime
 import khttp.responses.Response
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.serializer
 import org.jetbrains.kotlin.jupyter.api.Code
-import org.jetbrains.kotlin.jupyter.api.Execution
+import org.jetbrains.kotlin.jupyter.api.CodeExecution
+import org.jetbrains.kotlin.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
-import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlin.jupyter.util.GenerativeHandlersSerializer
+import org.jetbrains.kotlin.jupyter.util.ListToMapSerializer
+import org.jetbrains.kotlin.jupyter.util.RenderersSerializer
 import org.slf4j.LoggerFactory
 import org.zeromq.SocketType
 import java.io.File
@@ -79,6 +92,7 @@ class RuntimeKernelProperties(val map: Map<String, String>) : ReplRuntimePropert
     }
 }
 
+@Serializable(KernelJupyterParamsSerializer::class)
 data class KernelJupyterParams(
     val sigScheme: String?,
     val key: String?,
@@ -87,16 +101,41 @@ data class KernelJupyterParams(
 ) {
     companion object {
         fun fromFile(cfgFile: File): KernelJupyterParams {
-            val cfgJson = Parser.default().parse(cfgFile.canonicalPath) as JsonObject
-            fun JsonObject.getInt(field: String): Int = int(field)
-                ?: throw RuntimeException("Cannot find $field in $cfgFile")
-
-            val sigScheme = cfgJson.string("signature_scheme")
-            val key = cfgJson.string("key")
-            val ports = JupyterSockets.values().map { cfgJson.getInt("${it.name}_port") }
-            val transport = cfgJson.string("transport") ?: "tcp"
-            return KernelJupyterParams(sigScheme, key, ports, transport)
+            val jsonString = cfgFile.canonicalFile.readText()
+            return Json.decodeFromString(jsonString)
         }
+    }
+}
+
+object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
+    private val utilSerializer = serializer<Map<String, JsonPrimitive>>()
+
+    override val descriptor: SerialDescriptor
+        get() = utilSerializer.descriptor
+
+    override fun deserialize(decoder: Decoder): KernelJupyterParams {
+        val map = utilSerializer.deserialize(decoder)
+        return KernelJupyterParams(
+            map["signature_scheme"]?.content,
+            map["key"]?.content,
+            JupyterSockets.values().map { socket ->
+                val fieldName = "${socket.name}_port"
+                map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
+            },
+            map["transport"]?.content ?: "tcp"
+        )
+    }
+
+    override fun serialize(encoder: Encoder, value: KernelJupyterParams) {
+        val map = mutableMapOf(
+            "signature_scheme" to JsonPrimitive(value.sigScheme),
+            "key" to JsonPrimitive(value.key),
+            "transport" to JsonPrimitive(value.transport)
+        )
+        JupyterSockets.values().forEach {
+            map["${it.name}_port"] = JsonPrimitive(value.ports[it.ordinal])
+        }
+        utilSerializer.serialize(encoder, map)
     }
 }
 
@@ -113,17 +152,12 @@ data class KernelConfig(
     val embedded: Boolean = false,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
-        val cfgJson = jsonObject(
-            "transport" to transport,
-            "signature_scheme" to signatureScheme,
-            "key" to signatureKey,
-        ).also { cfg ->
-            JupyterSockets.values().forEach { cfg["${it.name}_port"] = ports[it.ordinal] }
-        }
+        val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
 
         val cfgFile = createTempFile("kotlin-kernel-config-$prefix", ".json")
         cfgFile.deleteOnExit()
-        cfgFile.writeText(cfgJson.toJsonString(true))
+        val format = Json { prettyPrint = true }
+        cfgFile.writeText(format.encodeToString(params))
 
         return KernelArgs(cfgFile, scriptClasspath, homeDir)
     }
@@ -152,24 +186,44 @@ data class KernelConfig(
     }
 }
 
+@Serializable
 data class Variable(val name: String, val value: String, val required: Boolean = false)
 
+object VariablesSerializer : ListToMapSerializer<Variable, String, String>(
+    serializer(),
+    ::Variable,
+    { it.name to it.value }
+)
+
+@Serializable
 class LibraryDescriptor(
-    val originalJson: JsonObject,
-    val libraryDefinitions: List<Code>,
-    override val dependencies: List<String>,
-    val variables: List<Variable>,
-    override val initCell: List<Execution>,
-    override val imports: List<String>,
-    override val repositories: List<String>,
-    override val init: List<Execution>,
-    override val shutdown: List<Execution>,
-    override val renderers: List<RendererTypeHandler>,
-    override val converters: List<GenerativeTypeHandler>,
-    override val annotations: List<GenerativeTypeHandler>,
-    val link: String?,
-    val description: String?,
-    val minKernelVersion: String?,
+    val libraryDefinitions: List<Code> = emptyList(),
+    override val dependencies: List<String> = emptyList(),
+
+    @Serializable(VariablesSerializer::class)
+    @SerialName("properties")
+    val variables: List<Variable> = emptyList(),
+
+    override val initCell: List<CodeExecution> = emptyList(),
+    override val imports: List<String> = emptyList(),
+    override val repositories: List<String> = emptyList(),
+    override val init: List<CodeExecution> = emptyList(),
+    override val shutdown: List<CodeExecution> = emptyList(),
+
+    @Serializable(RenderersSerializer::class)
+    override val renderers: List<ExactRendererTypeHandler> = emptyList(),
+
+    @Serializable(GenerativeHandlersSerializer::class)
+    @SerialName("typeConverters")
+    override val converters: List<GenerativeTypeHandler> = emptyList(),
+
+    @Serializable(GenerativeHandlersSerializer::class)
+    @SerialName("annotationHandlers")
+    override val annotations: List<GenerativeTypeHandler> = emptyList(),
+
+    val link: String? = null,
+    val description: String? = null,
+    val minKernelVersion: String? = null,
 ) : LibraryDefinition
 
 data class ResolverConfig(

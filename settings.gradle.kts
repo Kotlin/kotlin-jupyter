@@ -35,6 +35,7 @@ pluginManagement {
 
     plugins {
         kotlin("jvm") version kotlinVersion
+        kotlin("plugin.serialization") version kotlinVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
         id("org.jetbrains.kotlin.jupyter.dependencies")

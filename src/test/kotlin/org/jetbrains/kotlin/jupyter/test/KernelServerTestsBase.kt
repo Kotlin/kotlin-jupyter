@@ -1,10 +1,12 @@
 package org.jetbrains.kotlin.jupyter.test
 
-import com.beust.klaxon.JsonObject
 import org.jetbrains.kotlin.jupyter.HMAC
 import org.jetbrains.kotlin.jupyter.JupyterSockets
 import org.jetbrains.kotlin.jupyter.KernelConfig
 import org.jetbrains.kotlin.jupyter.Message
+import org.jetbrains.kotlin.jupyter.MessageContent
+import org.jetbrains.kotlin.jupyter.MessageData
+import org.jetbrains.kotlin.jupyter.MessageType
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.iKotlinClass
 import org.jetbrains.kotlin.jupyter.kernelServer
@@ -110,11 +112,11 @@ open class KernelServerTestsBase {
         fun connect() = connect("${config.transport}://*:${config.ports[socket.ordinal]}")
     }
 
-    fun ZMQ.Socket.sendMessage(msgType: String, content: JsonObject) {
-        sendMessage(Message(id = messageId, header = makeHeader(msgType, sessionId = sessionId), content = content), hmac)
+    fun ZMQ.Socket.sendMessage(msgType: MessageType, content: MessageContent) {
+        sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)), hmac)
     }
 
-    fun ZMQ.Socket.receiveMessage() = receiveMessage(recv(), hmac)!!
+    fun ZMQ.Socket.receiveMessage() = receiveMessage(recv(), hmac)
 
     companion object {
         private val rng = Random()

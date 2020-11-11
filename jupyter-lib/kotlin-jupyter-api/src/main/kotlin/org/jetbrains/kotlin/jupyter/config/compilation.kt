@@ -47,7 +47,7 @@ fun getCompilationConfiguration(
         compilerOptions(
             "-jvm-target",
             jvmTargetVersion,
-            "-no-stdlib"
+            "-no-stdlib",
         )
     }
 }

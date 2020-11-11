@@ -1,12 +1,15 @@
 package org.jetbrains.kotlin.jupyter
 
-import com.beust.klaxon.JsonObject
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.DisplayResult
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlin.jupyter.api.MutableJsonObject
 import org.jetbrains.kotlin.jupyter.api.Notebook
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.setDisplayId
@@ -57,14 +60,18 @@ class OkResponseWithMessage(
 
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         if (result != null) {
-            val metadata = jsonObject("new_classpath" to newClasspath)
-            val resultJson = result.toJson(metadata).also { it["execution_count"] = requestCount }
+            val metadata = jsonObject("new_classpath" to Json.encodeToJsonElement(newClasspath))
+            val resultJson = result.toJson(metadata)
 
             socket.connection.iopub.send(
                 makeReplyMessage(
                     requestMsg,
-                    "execute_result",
-                    content = resultJson
+                    MessageType.EXECUTE_RESULT,
+                    content = ExecutionResult(
+                        executionCount = requestCount,
+                        data = resultJson["data"]!!,
+                        metadata = resultJson["metadata"]!!
+                    )
                 )
             )
         }
@@ -72,19 +79,16 @@ class OkResponseWithMessage(
         socket.send(
             makeReplyMessage(
                 requestMsg,
-                "execute_reply",
+                MessageType.EXECUTE_REPLY,
                 metadata = jsonObject(
-                    "dependencies_met" to true,
-                    "engine" to requestMsg.header["session"],
-                    "status" to "ok",
-                    "started" to startedTime
+                    "dependencies_met" to Json.encodeToJsonElement(true),
+                    "engine" to Json.encodeToJsonElement(requestMsg.data.header?.session),
+                    "status" to Json.encodeToJsonElement("ok"),
+                    "started" to Json.encodeToJsonElement(startedTime)
                 ),
-                content = jsonObject(
-                    "status" to "ok",
-                    "execution_count" to requestCount,
-                    "user_variables" to JsonObject(),
-                    "payload" to listOf<String>(),
-                    "user_expressions" to JsonObject()
+                content = ExecuteReply(
+                    MessageStatus.OK,
+                    requestCount,
                 )
             )
         )
@@ -109,15 +113,19 @@ class SocketDisplayHandler(
         socket.send(
             makeReplyMessage(
                 message,
-                "display_data",
-                content = json
+                MessageType.DISPLAY_DATA,
+                content = DisplayDataResponse(
+                    json["data"],
+                    json["metadata"],
+                    json["transient"]
+                )
             )
         )
     }
 
     override fun handleUpdate(value: Any, id: String?) {
         val display = value.toDisplayResult(notebook) ?: return
-        val json = display.toJson()
+        val json: MutableJsonObject = display.toJson().toMutableMap()
 
         notebook.currentCell?.displays?.update(id, display)
 
@@ -126,8 +134,12 @@ class SocketDisplayHandler(
         socket.send(
             makeReplyMessage(
                 message,
-                "update_display_data",
-                content = json
+                MessageType.UPDATE_DISPLAY_DATA,
+                content = DisplayDataResponse(
+                    json["data"],
+                    json["metadata"],
+                    json["transient"]
+                )
             )
         )
     }
@@ -141,11 +153,8 @@ class AbortResponseWithMessage(
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         val errorReply = makeReplyMessage(
             requestMsg,
-            "execute_reply",
-            content = jsonObject(
-                "status" to "abort",
-                "execution_count" to requestCount
-            )
+            MessageType.EXECUTE_REPLY,
+            content = ExecuteReply(MessageStatus.ABORT, requestCount)
         )
         System.err.println("Sending abort: $errorReply")
         socket.send(errorReply)
@@ -157,22 +166,15 @@ class ErrorResponseWithMessage(
     private val errorName: String = "Unknown error",
     private var errorValue: String = "",
     private val traceback: List<String> = emptyList(),
-    private val additionalInfo: JsonObject = jsonObject(),
+    private val additionalInfo: JsonObject = emptyJsonObject,
 ) : Response(null, stdErr) {
     override val state: ResponseState = ResponseState.Error
 
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         val errorReply = makeReplyMessage(
             requestMsg,
-            "execute_reply",
-            content = jsonObject(
-                "status" to "error",
-                "execution_count" to requestCount,
-                "ename" to errorName,
-                "evalue" to errorValue,
-                "traceback" to traceback,
-                "additionalInfo" to additionalInfo
-            )
+            MessageType.EXECUTE_REPLY,
+            content = ExecuteErrorReply(requestCount, errorName, errorValue, traceback, additionalInfo)
         )
         System.err.println("Sending error: $errorReply")
         socket.send(errorReply)
@@ -180,131 +182,125 @@ class ErrorResponseWithMessage(
 }
 
 fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
-    when (msg.header!!["msg_type"]) {
-        "interrupt_request" -> {
+    when (msg.content) {
+        is InterruptRequest -> {
             log.warn("Interruption is not yet supported!")
-            send(makeReplyMessage(msg, "interrupt_reply", content = msg.content))
+            send(makeReplyMessage(msg, MessageType.INTERRUPT_REPLY, content = msg.content))
         }
-        "shutdown_request" -> {
+        is ShutdownRequest -> {
             repl?.evalOnShutdown()
-            send(makeReplyMessage(msg, "shutdown_reply", content = msg.content))
+            send(makeReplyMessage(msg, MessageType.SHUTDOWN_REPLY, content = msg.content))
             exitProcess(0)
         }
     }
 }
 
 fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJupyter, executionCount: AtomicLong) {
-    when (msg.header!!["msg_type"]) {
-        "kernel_info_request" ->
+    when (val content = msg.content) {
+        is KernelInfoRequest ->
             sendWrapped(
                 msg,
                 makeReplyMessage(
                     msg,
-                    "kernel_info_reply",
-                    content = jsonObject(
-                        "protocol_version" to protocolVersion,
-                        "language" to "Kotlin",
-                        "language_version" to KotlinCompilerVersion.VERSION,
-                        "language_info" to jsonObject(
-                            "name" to "kotlin",
-                            "codemirror_mode" to "text/x-kotlin",
-                            "file_extension" to ".kt",
-                            "mimetype" to "text/x-kotlin",
-                            "pygments_lexer" to "kotlin",
-                            "version" to KotlinCompilerVersion.VERSION
+                    MessageType.KERNEL_INFO_REPLY,
+                    content = KernelInfoReply(
+                        protocolVersion,
+                        "Kotlin",
+                        repl.runtimeProperties.version.toMaybeUnspecifiedString(),
+                        "Kotlin kernel v. ${repl.runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
+                        LanguageInfo(
+                            "kotlin",
+                            KotlinCompilerVersion.VERSION,
+                            "text/x-kotlin",
+                            ".kt",
+                            "kotlin",
+                            "text/x-kotlin",
+                            ""
                         ),
-
-                        // Jupyter lab Console support
-                        "banner" to "Kotlin kernel v. ${repl.runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
-                        "implementation" to "Kotlin",
-                        "implementation_version" to repl.runtimeProperties.version.toMaybeUnspecifiedString(),
-                        "status" to "ok"
-                    )
+                        listOf()
+                    ),
                 )
             )
-        "history_request" ->
+
+        is HistoryRequest ->
             sendWrapped(
                 msg,
                 makeReplyMessage(
                     msg,
-                    "history_reply",
-                    content = jsonObject(
-                        "history" to listOf<String>() // not implemented
-                    )
+                    MessageType.HISTORY_REPLY,
+                    content = HistoryReply(listOf()) // not implemented
+
                 )
             )
 
         // TODO: This request is deprecated since messaging protocol v.5.1,
         // remove it in future versions of kernel
-        "connect_request" ->
+        is ConnectRequest ->
             sendWrapped(
                 msg,
                 makeReplyMessage(
                     msg,
-                    "connect_reply",
-                    content = jsonObject(
-                        JupyterSockets.values()
-                            .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) }
+                    MessageType.CONNECT_REPLY,
+                    content = ConnectReply(
+                        jsonObject(
+                            JupyterSockets.values()
+                                .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) }
+                        )
                     )
                 )
             )
-        "execute_request" -> {
+
+        is ExecuteRequest -> {
             connection.contextMessage = msg
             val count = executionCount.getAndIncrement()
             val startedTime = ISO8601DateNow
 
             val displayHandler = SocketDisplayHandler(connection.iopub, repl.notebook, msg)
 
-            connection.iopub.sendStatus("busy", msg)
-            val code = msg.content["code"]
+            connection.iopub.sendStatus(KernelStatus.BUSY, msg)
+
+            val code = content.code
             connection.iopub.send(
                 makeReplyMessage(
                     msg,
-                    "execute_input",
-                    content = jsonObject(
-                        "execution_count" to count,
-                        "code" to code
-                    )
+                    MessageType.EXECUTE_INPUT,
+                    content = ExecutionInputReply(code, count)
                 )
             )
-            val res: Response = if (isCommand(code.toString())) {
-                runCommand(code.toString(), repl)
+            val res: Response = if (isCommand(code)) {
+                runCommand(code, repl)
             } else {
                 connection.evalWithIO(repl, msg) {
-                    repl.eval(code.toString(), displayHandler, count.toInt())
+                    repl.eval(code, displayHandler, count.toInt())
                 }
             }
 
             res.send(this, count, msg, startedTime)
 
-            connection.iopub.sendStatus("idle", msg)
+            connection.iopub.sendStatus(KernelStatus.IDLE, msg)
             connection.contextMessage = null
         }
-        "comm_info_request" -> {
-            sendWrapped(msg, makeReplyMessage(msg, "comm_info_reply", content = jsonObject("comms" to jsonObject())))
+        is CommInfoRequest -> {
+            sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
-        "complete_request" -> {
-            val code = msg.content["code"].toString()
-            val cursor = msg.content["cursor_pos"] as Int
+        is CompleteRequest -> {
             GlobalScope.launch {
-                repl.complete(code, cursor) { result ->
-                    sendWrapped(msg, makeReplyMessage(msg, "complete_reply", content = result.toJson()))
+                repl.complete(content.code, content.cursorPos) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.COMPLETE_REPLY, content = result.message))
                 }
             }
         }
-        "list_errors_request" -> {
-            val code = msg.content["code"].toString()
+        is ListErrorsRequest -> {
             GlobalScope.launch {
-                repl.listErrors(code) { result ->
-                    sendWrapped(msg, makeReplyMessage(msg, "list_errors_reply", content = result.toJson()))
+                repl.listErrors(content.code) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.LIST_ERRORS_REPLY, content = result.message))
                 }
             }
         }
-        "is_complete_request" -> {
-            val code = msg.content["code"].toString()
-            val resStr = if (isCommand(code)) "complete" else {
+        is IsCompleteRequest -> {
+            val resStr = if (isCommand(content.code)) "complete" else {
                 val result = try {
-                    val check = repl.checkComplete(code)
+                    val check = repl.checkComplete(content.code)
                     when {
                         check.isComplete -> "complete"
                         else -> "incomplete"
@@ -314,9 +310,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
                 result
             }
-            sendWrapped(msg, makeReplyMessage(msg, "is_complete_reply", content = jsonObject("status" to resStr)))
+            sendWrapped(msg, makeReplyMessage(msg, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
         }
-        else -> send(makeReplyMessage(msg, "unsupported_message_reply"))
+        else -> send(makeReplyMessage(msg, MessageType.NONE))
     }
 }
 
@@ -451,14 +447,14 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             val additionalInfo = firstDiagnostic?.location?.let {
                 val errorMessage = firstDiagnostic.message
                 jsonObject(
-                    "lineStart" to it.start.line,
-                    "colStart" to it.start.col,
-                    "lineEnd" to (it.end?.line ?: -1),
-                    "colEnd" to (it.end?.col ?: -1),
-                    "message" to errorMessage,
-                    "path" to firstDiagnostic.sourcePath.orEmpty()
+                    "lineStart" to Json.encodeToJsonElement(it.start.line),
+                    "colStart" to Json.encodeToJsonElement(it.start.col),
+                    "lineEnd" to Json.encodeToJsonElement(it.end?.line ?: -1),
+                    "colEnd" to Json.encodeToJsonElement(it.end?.col ?: -1),
+                    "message" to Json.encodeToJsonElement(errorMessage),
+                    "path" to Json.encodeToJsonElement(firstDiagnostic.sourcePath.orEmpty())
                 )
-            } ?: jsonObject()
+            } ?: emptyJsonObject
 
             ErrorResponseWithMessage(
                 ex.message,

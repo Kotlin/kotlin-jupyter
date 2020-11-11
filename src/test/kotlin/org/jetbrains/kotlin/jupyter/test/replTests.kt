@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.jupyter.test
 import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.jupyter.GitHubRepoName
 import org.jetbrains.kotlin.jupyter.GitHubRepoOwner
 import org.jetbrains.kotlin.jupyter.LibrariesDir
@@ -358,7 +360,7 @@ class ReplTest : AbstractReplTest() {
     @Test
     fun testEmptyErrorsListJson() {
         val res = ListErrorsResult("someCode")
-        assertEquals("""{"errors":[],"code":"someCode"}""", res.toJson().toJsonString())
+        assertEquals("""{"code":"someCode","errors":[]}""", Json.encodeToString(res.message))
     }
 
     @Test
