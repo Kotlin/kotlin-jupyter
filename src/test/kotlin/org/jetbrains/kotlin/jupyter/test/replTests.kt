@@ -167,7 +167,7 @@ class ReplTest : AbstractReplTest() {
         val res = repl.eval(
             """
             @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
-            @file:Repository("https://repo.spring.io/libs-release")
+            @file:Repository("https://dl.bintray.com/kotlin/kotlinx")
             @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
             """.trimIndent()
         )
