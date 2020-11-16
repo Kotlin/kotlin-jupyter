@@ -60,19 +60,88 @@ fun diagFailure(message: String): ResultWithDiagnostics.Failure {
     return ResultWithDiagnostics.Failure(ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, message))
 }
 
-fun parseLibraryArgument(str: String): Variable {
-    val eq = str.indexOf('=')
-    return if (eq == -1) Variable("", str.trim())
-    else Variable(str.substring(0, eq).trim(), str.substring(eq + 1).trim())
+data class ArgParseResult(
+    val variable: Variable,
+    val end: Int
+)
+
+fun parseLibraryArgument(str: String, argEndChars: List<Char>, begin: Int): ArgParseResult? {
+    val eq = str.indexOf('=', begin)
+    val untrimmedName = if (eq < 0) "" else str.substring(begin, eq)
+    val name = untrimmedName.trim()
+
+    var argBegan = false
+    var argEnded = false
+    var quoteOpened = false
+    var escape = false
+
+    val builder = StringBuilder()
+
+    var i = if (eq < 0) begin - 1 else eq
+    while ((++i) < str.length) {
+        val c = str[i]
+
+        if (escape) {
+            builder.append(c)
+            escape = false
+            continue
+        }
+
+        when (c) {
+            '\\' -> {
+                if (quoteOpened) escape = true
+                else builder.append(c)
+            }
+            '"' -> {
+                if (argBegan) {
+                    quoteOpened = false
+                    argEnded = true
+                } else {
+                    quoteOpened = true
+                    argBegan = true
+                }
+            }
+            in argEndChars -> {
+                if (quoteOpened) builder.append(c)
+                else break
+            }
+            else -> {
+                if (!c.isWhitespace()) {
+                    if (argEnded) {
+                        throw ReplCompilerException(
+                            "Cannot parse library arguments: unexpected char '$c' " +
+                                "on position $i " +
+                                "in arguments string '$str'"
+                        )
+                    }
+                    argBegan = true
+                    builder.append(c)
+                }
+            }
+        }
+    }
+
+    val value = builder.toString().trim()
+    if (eq == -1 && value.isEmpty()) return null
+
+    val nextIndex = if (i == str.length) i else i + 1
+    return ArgParseResult(Variable(name, value), nextIndex)
 }
 
 fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.substring(0, openBracketIndex).trim()
-    val args = str.substring(openBracketIndex + 1, str.indexOf(brackets.close, openBracketIndex))
-        .split(',')
-        .map(::parseLibraryArgument)
+    val argsString = str.substring(openBracketIndex + 1, str.indexOfLast { it == brackets.close })
+
+    val endChars = listOf(brackets.close, ',')
+    val firstArg = parseLibraryArgument(argsString, endChars, 0)
+    val args = generateSequence(firstArg) {
+        parseLibraryArgument(argsString, endChars, it.end)
+    }.map {
+        it.variable
+    }.toList()
+
     return name to args
 }
 

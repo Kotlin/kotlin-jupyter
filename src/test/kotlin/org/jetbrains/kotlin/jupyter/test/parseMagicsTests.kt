@@ -49,6 +49,26 @@ class ParseArgumentsTests {
     }
 
     @Test
+    fun test4() {
+        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api="[1.0,)")""")
+        assertEquals("lets-plot", ref.name)
+        assertEquals(1, args.count())
+        assertEquals("api", args[0].name)
+        assertEquals("[1.0,)", args[0].value)
+    }
+
+    @Test
+    fun test5() {
+        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api = "[1.0,)"   , lib=1.5.3 )""")
+        assertEquals("lets-plot", ref.name)
+        assertEquals(2, args.count())
+        assertEquals("api", args[0].name)
+        assertEquals("[1.0,)", args[0].value)
+        assertEquals("lib", args[1].name)
+        assertEquals("1.5.3", args[1].value)
+    }
+
+    @Test
     fun testInfo1() {
         val requestUrl = "https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/master/libraries/default.json"
         val (ref, args) = libraryFactory.parseReferenceWithArgs("lib_name@url[$requestUrl]")
