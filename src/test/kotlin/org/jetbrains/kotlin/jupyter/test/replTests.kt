@@ -591,6 +591,22 @@ class ReplWithResolverTest : AbstractReplTest() {
     }
 
     @Test
+    fun testSerialization() {
+        val serialized = repl.eval(
+            """
+            %use serialization
+            
+            @Serializable
+            class C(val x: Int)
+            
+            Json.encodeToString(C(42))
+            """.trimIndent()
+        )
+
+        assertEquals("""{"x":42}""", serialized.resultValue)
+    }
+
+    @Test
     fun testResolverRepoOrder() {
         val res = repl.eval(
             """

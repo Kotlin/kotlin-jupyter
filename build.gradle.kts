@@ -188,6 +188,7 @@ dependencies {
     implementation(kotlin("scripting-dependencies"))
     implementation(kotlin("scripting-dependencies-maven"))
     implementation(kotlin("main-kts"))
+    implementation(kotlin("serialization"))
 
     compileOnly(kotlin("scripting-compiler-impl"))
 
