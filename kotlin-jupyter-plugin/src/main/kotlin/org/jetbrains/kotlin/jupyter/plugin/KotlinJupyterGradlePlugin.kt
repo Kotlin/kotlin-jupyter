@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.jupyter.build.ProjectWithOptionsImpl
 import org.jetbrains.kotlin.jupyter.build.createCleanTasks
 import org.jetbrains.kotlin.jupyter.build.createInstallTasks
+import org.jetbrains.kotlin.jupyter.build.prepareAggregateUploadTasks
 import org.jetbrains.kotlin.jupyter.build.prepareCondaTasks
 import org.jetbrains.kotlin.jupyter.build.prepareDistributionTasks
 import org.jetbrains.kotlin.jupyter.build.prepareKotlinVersionUpdateTask
@@ -32,6 +33,7 @@ class KotlinJupyterGradlePlugin : Plugin<Project> {
             createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBuildPath.resolve(runKernelDir))
             prepareCondaTasks()
             preparePyPiTasks()
+            prepareAggregateUploadTasks()
         }
     }
 }

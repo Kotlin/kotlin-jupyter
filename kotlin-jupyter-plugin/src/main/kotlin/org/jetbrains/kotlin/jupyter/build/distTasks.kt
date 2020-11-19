@@ -177,6 +177,8 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
             tasksList.add(taskSpecGetter(taskSpec).taskName)
         }
 
+        tasksList.add("bintrayUpload")
+
         tasks.register("aggregate${infix}Upload") {
             group = distribGroup
             dependsOn(tasksList)
