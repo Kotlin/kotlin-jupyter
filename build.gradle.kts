@@ -338,4 +338,5 @@ with(ProjectWithOptionsImpl(project, TaskOptions())) {
     createInstallTasks(false, distribBuildPath.resolve(distribKernelDir), distribBuildPath.resolve(runKernelDir))
     prepareCondaTasks()
     preparePyPiTasks()
+    prepareAggregateUploadTasks()
 }

@@ -41,7 +41,8 @@ class UploadTaskSpecs <T : TaskSpec>(
         val packageSettings: DistributionPackageSettings,
         private val repoName: String,
         private val taskGroup: String,
-        private val stable: T, private val dev: T
+        val stable: T,
+        val dev: T
 ) {
     init {
         this.stable.taskName = taskName("Stable")

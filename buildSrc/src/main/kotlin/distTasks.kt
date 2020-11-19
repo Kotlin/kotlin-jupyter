@@ -150,3 +150,22 @@ fun ProjectWithOptions.preparePyPiTasks() {
         }
     }
 }
+
+fun ProjectWithOptions.prepareAggregateUploadTasks() {
+    val infixToSpec = mapOf<String, (UploadTaskSpecs<*>) -> TaskSpec>(
+        "Dev" to { taskSpec -> taskSpec.dev },
+        "Stable" to { taskSpec -> taskSpec.stable }
+    )
+
+    infixToSpec.forEach { (infix, taskSpecGetter) ->
+        val tasksList = mutableListOf<String>()
+        listOf(condaTaskSpecs, pyPiTaskSpecs).forEach { taskSpec ->
+            tasksList.add(taskSpecGetter(taskSpec).taskName)
+        }
+
+        tasks.register("aggregate${infix}Upload") {
+            group = distribGroup
+            dependsOn(tasksList)
+        }
+    }
+}
