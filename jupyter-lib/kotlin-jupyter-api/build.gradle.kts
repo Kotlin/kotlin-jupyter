@@ -21,7 +21,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    implementation(kotlin("scripting-common"))
+
+    api(kotlin("scripting-common"))
     implementation(kotlin("scripting-compiler-embeddable"))
     implementation(kotlin("scripting-dependencies"))
     implementation(kotlin("scripting-jvm"))
