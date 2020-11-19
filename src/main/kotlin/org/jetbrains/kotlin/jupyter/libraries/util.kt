@@ -75,14 +75,10 @@ data class ArgParseResult(
     val end: Int
 )
 
-val unescapeRegex = Regex("""\\(.)""")
+private val unescapeRegex = Regex("""\\(.)""")
+private fun String.unescape() = unescapeRegex.replace(this, "$1")
 
-fun String.unescape(): String {
-    @Suppress("CanBeParameter")
-    return unescapeRegex.replace(this, "$1")
-}
-
-fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): ArgParseResult? {
+private fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): ArgParseResult? {
     if (begin >= str.length) return null
 
     val match = brackets.argRegex.find(str, begin) ?: return null
