@@ -21,7 +21,17 @@ sealed class Parameter(val name: String, open val default: String?) {
     class Optional(name: String, override val default: String) : Parameter(name, default)
 }
 
-class Brackets(val open: Char, val close: Char) {
+class Brackets(
+    val open: Char,
+    @Suppress("MemberVisibilityCanBePrivate") val close: Char
+) {
+    val argRegex: Regex
+
+    init {
+        val endCharsStr = ",\\$close"
+        argRegex = Regex("""\s*((?<name>\p{Alnum}+)\s*=\s*)?((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""")
+    }
+
     companion object {
         val ROUND = Brackets('(', ')')
         val SQUARE = Brackets('[', ']')
@@ -65,79 +75,38 @@ data class ArgParseResult(
     val end: Int
 )
 
-fun parseLibraryArgument(str: String, argEndChars: List<Char>, begin: Int): ArgParseResult? {
-    val eq = str.indexOf('=', begin)
-    val untrimmedName = if (eq < 0) "" else str.substring(begin, eq)
-    val name = untrimmedName.trim()
+val unescapeRegex = Regex("""\\(.)""")
 
-    var argBegan = false
-    var argEnded = false
-    var quoteOpened = false
-    var escape = false
+fun String.unescape(): String {
+    @Suppress("CanBeParameter")
+    return unescapeRegex.replace(this, "$1")
+}
 
-    val builder = StringBuilder()
+fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): ArgParseResult? {
+    if (begin >= str.length) return null
 
-    var i = if (eq < 0) begin - 1 else eq
-    while ((++i) < str.length) {
-        val c = str[i]
+    val match = brackets.argRegex.find(str, begin) ?: return null
+    val groups = match.groups
 
-        if (escape) {
-            builder.append(c)
-            escape = false
-            continue
-        }
+    val name = groups["name"]?.value.orEmpty()
 
-        when (c) {
-            '\\' -> {
-                if (quoteOpened) escape = true
-                else builder.append(c)
-            }
-            '"' -> {
-                if (argBegan) {
-                    quoteOpened = false
-                    argEnded = true
-                } else {
-                    quoteOpened = true
-                    argBegan = true
-                }
-            }
-            in argEndChars -> {
-                if (quoteOpened) builder.append(c)
-                else break
-            }
-            else -> {
-                if (!c.isWhitespace()) {
-                    if (argEnded) {
-                        throw ReplCompilerException(
-                            "Cannot parse library arguments: unexpected char '$c' " +
-                                "on position $i " +
-                                "in arguments string '$str'"
-                        )
-                    }
-                    argBegan = true
-                    builder.append(c)
-                }
-            }
-        }
-    }
+    val raw = groups["raw"]?.value
+    val quoted = groups["quoted"]?.value
+    val endIndex = match.range.last + 1
+    val value = raw ?: quoted?.unescape() ?: ""
 
-    val value = builder.toString().trim()
-    if (eq == -1 && value.isEmpty()) return null
-
-    val nextIndex = if (i == str.length) i else i + 1
-    return ArgParseResult(Variable(name, value), nextIndex)
+    return ArgParseResult(Variable(name, value), endIndex)
 }
 
 fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.substring(0, openBracketIndex).trim()
-    val argsString = str.substring(openBracketIndex + 1, str.indexOfLast { it == brackets.close })
+    val argsString = str.substring(openBracketIndex + 1)
 
-    val endChars = listOf(brackets.close, ',')
-    val firstArg = parseLibraryArgument(argsString, endChars, 0)
+    val firstArg = parseLibraryArgument(argsString, brackets, 0)
     val args = generateSequence(firstArg) {
-        parseLibraryArgument(argsString, endChars, it.end)
+        parseLibraryArgument(argsString, brackets, it.end)
     }.map {
         it.variable
     }.toList()
