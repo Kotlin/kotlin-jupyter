@@ -29,6 +29,5 @@ class ResolverTests {
         files.forEach {
             log.debug(it.toString())
         }
-
     }
 }

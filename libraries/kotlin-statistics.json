@@ -1,4 +1,5 @@
 {
+  "description": "Idiomatic statistical operators for Kotlin",
   "properties": {
     "v": "-SNAPSHOT"
   },

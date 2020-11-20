@@ -12,7 +12,6 @@
 *.iml
 
 # Folders with build files
-/distrib-build/**
 out/
 **/build/
 artifacts/

@@ -1,4 +1,5 @@
 {
+  "description": "Kotlin grammar for data visualization",
   "properties": {
     "v": "-SNAPSHOT"
   },

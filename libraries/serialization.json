@@ -1,0 +1,14 @@
+{
+  "description": "Kotlin multi-format reflection-less serialization",
+  "properties": {
+    "v": "1.0.1"
+  },
+  "link": "https://github.com/Kotlin/kotlinx.serialization",
+  "dependencies": [
+    "org.jetbrains.kotlinx:kotlinx-serialization-json:$v"
+  ],
+  "imports": [
+    "kotlinx.serialization.*",
+    "kotlinx.serialization.json.*"
+  ]
+}

@@ -14,6 +14,7 @@ interface BuildOptions {
     val rootPath: Path
 
     val artifactsDir: Path
+    val readmePath: Path
 }
 
 interface ProjectWithBuildOptions: Project, BuildOptions
@@ -160,11 +161,7 @@ fun ProjectWithInstallOptions.makeKernelSpec(installPath: Path, localInstall: Bo
     ), installPath.resolve(kernelFile))
 
     project.copy {
-        from (logosPath)
-        into (installPath)
-    }
-    project.copy {
-        from(nbExtensionPath)
+        from(nbExtensionPath, logosPath)
         into(installPath)
     }
 }

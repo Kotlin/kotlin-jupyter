@@ -1,9 +1,18 @@
-package org.jetbrains.kotlin.jupyter
+package org.jetbrains.kotlin.jupyter.libraries
 
 import jupyter.kotlin.KotlinKernelVersion
-import kotlinx.coroutines.Deferred
+import org.jetbrains.kotlin.jupyter.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.LibraryDescriptor
+import org.jetbrains.kotlin.jupyter.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlin.jupyter.TypeHandler
+import org.jetbrains.kotlin.jupyter.Variable
 
-class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDescriptor>>?) {
+class LibrariesProcessor(
+    private val libraries: LibraryResolver?,
+    private val runtimeProperties: ReplRuntimeProperties,
+    val libraryFactory: LibraryFactory,
+) {
 
     /**
      * Matches a list of actual library arguments with declared library parameters
@@ -35,15 +44,15 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
     }
 
     private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>) = LibraryDefinition(
-            dependencies = library.dependencies.map { replaceVariables(it, mapping) },
-            repositories = library.repositories.map { replaceVariables(it, mapping) },
-            imports = library.imports.map { replaceVariables(it, mapping) },
-            init = library.init.map { replaceVariables(it, mapping) },
-            shutdown = library.shutdown.map { replaceVariables(it, mapping) },
-            initCell = library.initCell.map { replaceVariables(it, mapping) },
-            renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-            converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
-            annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
+        dependencies = library.dependencies.map { replaceVariables(it, mapping) },
+        repositories = library.repositories.map { replaceVariables(it, mapping) },
+        imports = library.imports.map { replaceVariables(it, mapping) },
+        init = library.init.map { replaceVariables(it, mapping) },
+        shutdown = library.shutdown.map { replaceVariables(it, mapping) },
+        initCell = library.initCell.map { replaceVariables(it, mapping) },
+        renderers = library.renderers.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
+        converters = library.converters.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) },
+        annotations = library.annotations.map { TypeHandler(it.className, replaceVariables(it.code, mapping)) }
     )
 
     /**
@@ -80,14 +89,14 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
     }
 
     private fun replaceVariables(str: String, mapping: Map<String, String>) =
-            mapping.asSequence().fold(str) { s, template ->
-                s.replace("\$${template.key}", template.value)
-            }
+        mapping.asSequence().fold(str) { s, template ->
+            s.replace("\$${template.key}", template.value)
+        }
 
     private fun checkKernelVersionRequirements(name: String, library: LibraryDescriptor) {
         library.minKernelVersion?.let { minVersionStr ->
             val minVersion = KotlinKernelVersion.from(minVersionStr)
-                    ?: throw ReplCompilerException("Wrong format of minimal kernel version for library '$name': $minVersionStr")
+                ?: throw ReplCompilerException("Wrong format of minimal kernel version for library '$name': $minVersionStr")
             runtimeProperties.version?.let { currentVersion ->
                 if (currentVersion < minVersion) {
                     throw ReplCompilerException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
@@ -97,14 +106,14 @@ class LibrariesProcessor(private val libraries: Deferred<Map<String, LibraryDesc
     }
 
     fun processNewLibraries(arg: String) =
-            splitLibraryCalls(arg).map {
-                val (name, vars) = parseLibraryName(it)
-                val library = libraries?.awaitBlocking()?.get(name)
-                        ?: throw ReplCompilerException("Unknown library '$name'")
-                checkKernelVersionRequirements(name, library)
+        splitLibraryCalls(arg).map {
+            val (libRef, vars) = libraryFactory.parseReferenceWithArgs(it)
+            val library = libraries?.resolve(libRef)
+                ?: throw ReplCompilerException("Unknown library '$libRef'")
+            checkKernelVersionRequirements(libRef.toString(), library)
 
-                val mapping = substituteArguments(library.variables, vars)
+            val mapping = substituteArguments(library.variables, vars)
 
-                processDescriptor(library, mapping)
-            }
+            processDescriptor(library, mapping)
+        }
 }

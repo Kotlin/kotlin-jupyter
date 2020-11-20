@@ -5,17 +5,23 @@ import jupyter.kotlin.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import jupyter.kotlin.MimeTypedResult
 import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.jupyter.GitHubRepoName
+import org.jetbrains.kotlin.jupyter.GitHubRepoOwner
+import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.defaultRepositories
+import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
 import org.jetbrains.kotlin.jupyter.generateDiagnosticFromAbsolute
-import org.jetbrains.kotlin.jupyter.repl.completion.CompletionResult
-import org.jetbrains.kotlin.jupyter.repl.completion.ListErrorsResult
-import org.jetbrains.kotlin.jupyter.runtimeProperties
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
+import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlin.jupyter.repl.CompletionResult
+import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlin.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -34,10 +40,18 @@ abstract class AbstractReplTest {
     protected fun String.convertCRLFtoLF(): String {
         return replace("\r\n", "\n")
     }
+
+    companion object {
+        @JvmStatic
+        protected val libraryFactory = LibraryFactory.EMPTY
+
+        @JvmStatic
+        protected val homeDir = File("")
+    }
 }
 
 class ReplTest : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(classpath)
+    private val repl = ReplForJupyterImpl(libraryFactory, classpath)
 
     @Test
     fun testRepl() {
@@ -54,11 +68,13 @@ class ReplTest : AbstractReplTest() {
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
         assertThrows<ReplEvalRuntimeException> {
-            repl.eval("""
+            repl.eval(
+                """
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1
                 val x = stack(1, X)
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             print("")
         }
@@ -67,12 +83,14 @@ class ReplTest : AbstractReplTest() {
     @Test
     fun testError() {
         try {
-            repl.eval("""
+            repl.eval(
+                """
                 val foobar = 78
                 val foobaz = "dsdsda"
                 val ddd = ppp
                 val ooo = foobar
-            """.trimIndent())
+                """.trimIndent()
+            )
         } catch (ex: ReplCompilerException) {
             val diag = ex.firstDiagnostics
             val location = diag?.location ?: fail("Location should not be null")
@@ -94,7 +112,7 @@ class ReplTest : AbstractReplTest() {
     fun testReplWithReceiver() {
         val value = 5
         val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
-        val repl = ReplForJupyterImpl(cp, null, ConstReceiver(value))
+        val repl = ReplForJupyterImpl(libraryFactory, cp, null, scriptReceivers = listOf(ConstReceiver(value)))
         val res = repl.eval("value")
         assertEquals(value, res.resultValue)
     }
@@ -106,17 +124,19 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testDependsOnAnnotationCompletion() {
-        repl.eval("""
+        repl.eval(
+            """
             @file:Repository("https://repo1.maven.org/maven2/")
             @file:DependsOn("com.github.doyaaaaaken:kotlin-csv-jvm:0.7.3")
-        """.trimIndent())
+            """.trimIndent()
+        )
 
         val res = runBlocking {
             var res2: CompletionResult? = null
             repl.complete("import com.github.", 18) { res2 = it }
             res2
         }
-        when(res) {
+        when (res) {
             is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
             else -> fail("Completion should be successful")
         }
@@ -124,11 +144,13 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testExternalStaticFunctions() {
-        val res = repl.eval("""
+        val res = repl.eval(
+            """
             @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
             import pack.*
             func()
-        """.trimIndent())
+            """.trimIndent()
+        )
 
         assertEquals(42, res.resultValue)
     }
@@ -142,11 +164,23 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testDependsOnAnnotations() {
-        val sb = StringBuilder()
-        sb.appendLine("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
-        sb.appendLine("@file:Repository(\"https://repo.spring.io/libs-release\")")
-        sb.appendLine("@file:DependsOn(\"org.jetbrains.kotlinx:kotlinx.html.jvm:0.5.12\")")
-        repl.eval(sb.toString())
+        val res = repl.eval(
+            """
+            @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
+            @file:Repository("https://dl.bintray.com/kotlin/kotlinx")
+            @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
+            """.trimIndent()
+        )
+
+        assertTrue(res.newClasspath.size >= 2)
+
+        val htmlLibPath = listOf(
+            "org.jetbrains.kotlinx",
+            "kotlinx-html-jvm",
+            "jars",
+            "kotlinx-html-jvm"
+        ).joinToString(File.separator)
+        assertTrue(res.newClasspath.any { htmlLibPath in it })
     }
 
     @Test
@@ -154,8 +188,9 @@ class ReplTest : AbstractReplTest() {
         repl.eval("val foobar = 42")
         repl.eval("var foobaz = 43")
 
-        runBlocking { repl.complete("val t = foo", 11) {
-            result ->
+        runBlocking {
+            repl.complete("val t = foo", 11) {
+                result ->
                 if (result is CompletionResult.Success) {
                     assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
                 } else {
@@ -167,20 +202,22 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testNoCompletionAfterNumbers() {
-        runBlocking { repl.complete("val t = 42", 10) {
-            result ->
-            if (result is CompletionResult.Success) {
-                assertEquals(emptyList(), result.sortedMatches())
-            } else {
-                fail("Result should be success")
+        runBlocking {
+            repl.complete("val t = 42", 10) {
+                result ->
+                if (result is CompletionResult.Success) {
+                    assertEquals(emptyList(), result.sortedMatches())
+                } else {
+                    fail("Result should be success")
+                }
             }
-        }
         }
     }
 
     @Test
     fun testCompletionForImplicitReceivers() {
-        repl.eval("""
+        repl.eval(
+            """
             class AClass(val c_prop_x: Int) {
                 fun filter(xxx: (AClass).() -> Boolean): AClass {
                     return this
@@ -192,7 +229,8 @@ class ReplTest : AbstractReplTest() {
             fun AClass.c_meth_z(v: Int) = v * c_prop_y
             val df = AClass(10)
             val c_zzz = "some string"
-        """.trimIndent())
+            """.trimIndent()
+        )
         runBlocking {
             repl.complete("df.filter { c_ }", 14) { result ->
                 if (result is CompletionResult.Success) {
@@ -206,27 +244,37 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testErrorsList() {
-        repl.eval("""
+        repl.eval(
+            """
             data class AClass(val memx: Int, val memy: String)
             data class BClass(val memz: String, val mema: AClass)
             val foobar = 42
             var foobaz = "string"
             val v = BClass("KKK", AClass(5, "25"))
-        """.trimIndent())
+            """.trimIndent()
+        )
         runBlocking {
-            repl.listErrors("""
+            repl.listErrors(
+                """
                 val a = AClass("42", 3.14)
                 val b: Int = "str"
                 val c = foob
-            """.trimIndent()) {result ->
+                """.trimIndent()
+            ) { result ->
                 val actualErrors = result.errors.toList()
                 val path = actualErrors.first().sourcePath
-                assertEquals(withPath(path, listOf(
-                        generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                        generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-                )), actualErrors)
+                assertEquals(
+                    withPath(
+                        path,
+                        listOf(
+                            generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                            generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                            generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                            generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+                        )
+                    ),
+                    actualErrors
+                )
             }
         }
     }
@@ -234,18 +282,26 @@ class ReplTest : AbstractReplTest() {
     @Test
     fun testErrorsListWithMagic() {
         runBlocking {
-            repl.listErrors("""
+            repl.listErrors(
+                """
                 %use krangl
                 
                 val x = foobar
                 3 * 14
                 %trackClasspath
-            """.trimIndent()) { result ->
+                """.trimIndent()
+            ) { result ->
                 val actualErrors = result.errors.toList()
                 val path = actualErrors.first().sourcePath
-                assertEquals(withPath(path, listOf(
-                        generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
-                )), actualErrors)
+                assertEquals(
+                    withPath(
+                        path,
+                        listOf(
+                            generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
+                        )
+                    ),
+                    actualErrors
+                )
             }
         }
     }
@@ -255,12 +311,13 @@ class ReplTest : AbstractReplTest() {
         repl.eval("val foobar = 42")
 
         runBlocking {
-            val code = """
+            val code =
+                """
                     
                 %trackClasspath
             
                 foo
-            """.trimIndent()
+                """.trimIndent()
             repl.complete(code, code.indexOf("foo") + 3) { result ->
                 if (result is CompletionResult.Success) {
                     assertEquals(arrayListOf("foobar"), result.sortedMatches())
@@ -314,23 +371,47 @@ class ReplTest : AbstractReplTest() {
     @Test
     fun testOutputMagic() {
         repl.preprocessCode("%output --max-cell-size=100500 --no-stdout")
-        assertEquals(OutputConfig(
+        assertEquals(
+            OutputConfig(
                 cellOutputMaxSize = 100500,
                 captureOutput = false
-        ), repl.outputConfig)
+            ),
+            repl.outputConfig
+        )
 
         repl.preprocessCode("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
-        assertEquals(OutputConfig(
+        assertEquals(
+            OutputConfig(
                 cellOutputMaxSize = 100500,
                 captureOutput = false,
                 captureBufferMaxSize = 42,
                 captureNewlineBufferSize = 33,
                 captureBufferTimeLimitMs = 2000
-        ), repl.outputConfig)
+            ),
+            repl.outputConfig
+        )
 
         repl.preprocessCode("%output --reset-to-defaults")
         assertEquals(OutputConfig(), repl.outputConfig)
     }
+
+    @Test
+    fun testJavaRuntimeUtils() {
+        val result = repl.eval("JavaRuntimeUtils.version")
+        val resultVersion = result.resultValue
+        val expectedVersion = JavaRuntime.version
+        assertEquals(expectedVersion, resultVersion)
+    }
+
+    @Test
+    fun testKotlinMath() {
+        val result = repl.eval("2.0.pow(2.0)").resultValue
+        assertEquals(4.0, result)
+    }
+}
+
+class CustomLibraryResolverTests : AbstractReplTest() {
+    private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(libraryFactory, classpath, homeDir, ResolverConfig(defaultRepositories, libs))
 
     @Test
     fun testUseMagic() {
@@ -351,7 +432,8 @@ class ReplTest : AbstractReplTest() {
                             "code1",
                             "code2"
                         ]
-                    }""".trimIndent()
+                    }
+        """.trimIndent()
         val lib2 = "other" to """
                                 {
                                     "properties": {
@@ -390,31 +472,31 @@ class ReplTest : AbstractReplTest() {
                                             }
         """.trimIndent()
 
-        val libs = listOf(lib1, lib2, lib3).toLibrariesAsync()
+        val libs = listOf(lib1, lib2, lib3).toLibraries(libraryFactory)
 
-        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
+        val replWithResolver = makeRepl(libs)
         val res = replWithResolver.preprocessCode("%use mylib(1.0), another")
         assertEquals("", res.code)
         val inits = arrayOf(
-                """
+            """
                     @file:DependsOn("artifact1:1.0")
                     @file:DependsOn("artifact2:1.0")
                     import package1
                     import package2
                     """,
-                "code1",
-                "code2",
-                """
+            "code1",
+            "code2",
+            """
                     @file:DependsOn("anotherDep")
                     import anotherPackage1
                     """,
-                """
+            """
                     @file:Repository("repo-debug")
                     @file:DependsOn("path-release")
                     import otherPackage
                     """,
-                "otherInit",
-                "anotherInit"
+            "otherInit",
+            "anotherInit"
         )
         assertEquals(inits.count(), res.initCodes.count())
         inits.forEachIndexed { index, expected ->
@@ -431,17 +513,19 @@ class ReplTest : AbstractReplTest() {
                             "throw RuntimeException()",
                             "21 + 22"
                         ]
-                    }""".trimIndent()
+                    }
+        """.trimIndent()
 
         val lib2 = "mylib2" to """
                     {
                         "shutdown": [
                             "100"
                         ]
-                    }""".trimIndent()
+                    }
+        """.trimIndent()
 
-        val libs = listOf(lib1, lib2).toLibrariesAsync()
-        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
+        val libs = listOf(lib1, lib2).toLibraries(libraryFactory)
+        val replWithResolver = makeRepl(libs)
         replWithResolver.eval("%use mylib, mylib2")
         val results = replWithResolver.evalOnShutdown()
 
@@ -455,45 +539,39 @@ class ReplTest : AbstractReplTest() {
     @Test
     fun testLibraryKernelVersionRequirements() {
         val minRequiredVersion = "999.42.0.1"
-        val kernelVersion = runtimeProperties.version.toMaybeUnspecifiedString()
+        val kernelVersion = defaultRuntimeProperties.version.toMaybeUnspecifiedString()
 
         val lib1 = "mylib" to """
                     {
                         "minKernelVersion": "$minRequiredVersion"
-                    }""".trimIndent()
+                    }
+        """.trimIndent()
 
-        val libs = listOf(lib1).toLibrariesAsync()
-        val replWithResolver = ReplForJupyterImpl(classpath, ResolverConfig(defaultRepositories, libs))
+        val libs = listOf(lib1).toLibraries(libraryFactory)
+        val replWithResolver = makeRepl(libs)
         val exception = assertThrows<ReplCompilerException> { replWithResolver.eval("%use mylib") }
 
         val message = exception.message!!
         assertTrue(message.contains(minRequiredVersion))
         assertTrue(message.contains(kernelVersion))
     }
-
-    @Test
-    fun testJavaRuntimeUtils() {
-        val result = repl.eval("JavaRuntimeUtils.version")
-        val resultVersion = result.resultValue
-        val expectedVersion = JavaRuntime.version
-        assertEquals(expectedVersion, resultVersion)
-    }
-
-    @Test
-    fun testKotlinMath() {
-        val result = repl.eval("2.0.pow(2.0)").resultValue
-        assertEquals(4.0, result)
-    }
 }
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithResolverTest : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(classpath, testResolverConfig)
+    private val repl = ReplForJupyterImpl(libraryFactory, classpath, homeDir, resolverConfig)
+
+    private fun getReplWithStandardResolver(): ReplForJupyterImpl {
+        val standardLibraryFactory = LibraryFactory.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
+        val config = ResolverConfig(defaultRepositories, standardLibraryFactory.getStandardResolver("."))
+        return ReplForJupyterImpl(standardLibraryFactory, classpath, homeDir, config, standardResolverRuntimeProperties)
+    }
 
     @Test
     fun testLetsPlot() {
         val code1 = "%use lets-plot"
-        val code2 = """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
+        val code2 =
+            """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
         val displays = mutableListOf<Any>()
         fun displayHandler(display: Any) {
             displays.add(display)
@@ -510,6 +588,41 @@ class ReplWithResolverTest : AbstractReplTest() {
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
         assertNotNull(res2.resultValue)
+    }
+
+    @Test
+    fun testSerialization() {
+        val serialized = repl.eval(
+            """
+            %use serialization
+            
+            @Serializable
+            class C(val x: Int)
+            
+            Json.encodeToString(C(42))
+            """.trimIndent()
+        )
+
+        assertEquals("""{"x":42}""", serialized.resultValue)
+    }
+
+    @Test
+    fun testResolverRepoOrder() {
+        val res = repl.eval(
+            """
+            @file:Repository("https://repo.osgeo.org/repository/release/")
+            @file:DependsOn("org.geotools:gt-shapefile:[23,)")
+            @file:DependsOn("org.geotools:gt-cql:[23,)")
+            
+            %use lets-plot(api=1.0.1-dev-1)
+            
+            @file:DependsOn("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:1.0.1-dev-1")
+            
+            import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
+            """.trimIndent()
+        )
+
+        assertTrue(res.newClasspath.size >= 2)
     }
 
     @Test
@@ -531,12 +644,81 @@ class ReplWithResolverTest : AbstractReplTest() {
     }
 
     @Test
-    fun testRuntimeDepsResolution() {
-        val res = repl.eval("""
+    fun testStandardLibraryResolver() {
+        val repl = getReplWithStandardResolver()
+
+        val res = repl.eval(
+            """
             %use krangl(0.13)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-        """.trimIndent())
+            """.trimIndent()
+        )
+        assertEquals("John Smith", res.resultValue)
+    }
+
+    @Test
+    fun testDefaultInfoSwitcher() {
+        val repl = getReplWithStandardResolver()
+        val infoProvider = repl.libraryFactory.resolutionInfoProvider
+
+        val initialDefaultResolutionInfo = infoProvider.fallback
+        assertTrue(initialDefaultResolutionInfo is LibraryResolutionInfo.ByDir)
+
+        repl.eval("%useLatestDescriptors")
+        assertTrue(infoProvider.fallback is LibraryResolutionInfo.ByGitRef)
+
+        repl.eval("%useLatestDescriptors -off")
+        assertTrue(infoProvider.fallback === initialDefaultResolutionInfo)
+    }
+
+    @Test
+    fun testUseFileUrlRef() {
+        val repl = getReplWithStandardResolver()
+
+        val commit = "561ce1a324a9434d3481456b11678851b48a3132"
+        val libraryPath = "src/test/testData/test-init.json"
+
+        val res1 = repl.eval(
+            """
+            %use @file[$libraryPath](name=x, value=42)
+            x
+            """.trimIndent()
+        )
+        assertEquals(42, res1.resultValue)
+
+        val res2 = repl.eval(
+            """
+            %use @url[https://raw.githubusercontent.com/$GitHubRepoOwner/$GitHubRepoName/$commit/$libraryPath](name=y, value=43)
+            y
+            """.trimIndent()
+        )
+        assertEquals(43, res2.resultValue)
+
+        val displays = mutableListOf<Any>()
+        val res3 = repl.eval("%use lets-plot@$commit", { displays.add(it) })
+        assertEquals(1, displays.count())
+        assertNull(res3.resultValue)
+        displays.clear()
+
+        val res4 = repl.eval(
+            """
+            %use @$libraryPath(name=z, value=44)
+            z
+            """.trimIndent()
+        )
+        assertEquals(44, res4.resultValue)
+    }
+
+    @Test
+    fun testRuntimeDepsResolution() {
+        val res = repl.eval(
+            """
+            %use krangl(0.13)
+            val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
+            df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
+            """.trimIndent()
+        )
         assertEquals("John Smith", res.resultValue)
     }
 
@@ -551,7 +733,8 @@ class ReplWithResolverTest : AbstractReplTest() {
 
     @Test
     fun testKlaxonClasspathDoesntLeak() {
-        val res = repl.eval("""
+        val res = repl.eval(
+            """
             %use klaxon(2.1.8)
             class Person (val name: String, var age: Int = 23)
             val klaxon = Klaxon()
@@ -561,7 +744,12 @@ class ReplWithResolverTest : AbstractReplTest() {
                 }
                 ""${'"'})
             parseRes?.age
-        """.trimIndent())
+            """.trimIndent()
+        )
         assertEquals(23, res.resultValue)
+    }
+
+    companion object {
+        val resolverConfig = libraryFactory.testResolverConfig
     }
 }

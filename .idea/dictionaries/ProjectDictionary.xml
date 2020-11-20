@@ -2,12 +2,14 @@
   <dictionary name="ProjectDictionary">
     <words>
       <w>ajalt</w>
+      <w>alnum</w>
       <w>autocompletion</w>
       <w>beust</w>
       <w>cacheable</w>
       <w>clikt</w>
       <w>comms</w>
       <w>deeplearning</w>
+      <w>displayname</w>
       <w>distrib</w>
       <w>doyaaaaaken</w>
       <w>dsdsda</w>
@@ -21,11 +23,13 @@
       <w>gral</w>
       <w>ikotlin</w>
       <w>iopub</w>
+      <w>ipython</w>
       <w>jcabi</w>
       <w>jdwp</w>
       <w>jengelman</w>
       <w>jeromq</w>
       <w>jetbrains</w>
+      <w>jlleitschuh</w>
       <w>johnrengelman</w>
       <w>khttp</w>
       <w>kmath</w>
@@ -34,6 +38,7 @@
       <w>kotlinx</w>
       <w>krangl</w>
       <w>kravis</w>
+      <w>ktlint</w>
       <w>mema</w>
       <w>memx</w>
       <w>memy</w>

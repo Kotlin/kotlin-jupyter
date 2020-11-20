@@ -8,13 +8,15 @@
 
 [Kotlin](https://kotlinlang.org/) (1.4.0) kernel for [Jupyter](https://jupyter.org).
 
-Alpha version. Tested with Jupyter 6.0.1 on OS X so far.
+Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
+on Windows, Ubuntu Linux and MacOS. Using with Jupyter Console frontend is problematic now because of
+logging which cannot be switched off. Tuning logging options is planned for future releases.
 
-![Screenshot in Jupyter](./samples/Screenshot.png)
+![Screenshot in Jupyter](Screenshot.png)
 
 To start using Kotlin kernel for Jupyter take a look at [introductory guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
 
-Example notebooks can be found in the [samples](samples) folder
+Example notebooks can be found in the [samples](../samples) folder
 
 Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
@@ -100,9 +102,10 @@ The following line magics are supported:
  - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
  - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
  - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
+ - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
  - `%output [options]` - output capturing settings.
  
- See detailed info about line magics [here](doc/magics.md).
+ See detailed info about line magics [here](magics.md).
  
 ### Supported Libraries
 
@@ -113,7 +116,7 @@ When a library is included with `%use` keyword, the following functionality is a
  - library initialization code
  - renderers for special types, e.g. charts and data frames
 
-This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](libraries) directory.
+This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](../libraries) directory.
 A library descriptor may provide a set of properties with default values that can be overridden when library is included.
 The major use case for library properties is to specify particular version of library. If descriptor has only one property, it can be 
 defined without naming:
@@ -128,22 +131,35 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
+You can also specify the source of library descriptor. By default, it's downloaded from the latest commit on the
+branch which kernel was built from. If you want to try descriptor from another revision, use the following syntax:
+```
+// Specify tag
+%use lets-plot@0.8.2.5
+// Specify commit sha, with more verbose syntax
+%use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
+// Specify git ref along with library arguments
+%use krangl@dev(0.10)
+```
+Other options are resolving library descriptor from a local file or from remote URL:
+```
+// Load library from file
+%use mylib@file[/home/user/lib.json]
+// Load library from file: kernel will guess it's a file actually
+%use @/home/user/libs/lib.json
+// Or use another approach: specify a directory and file name without 
+// extension (it should be JSON in such case) before it
+%use lib@/home/user/libs
+// Load library descriptor from a remote URL
+%use herlib@url[https://site.com/lib.json]
+// If your URL responds with 200(OK), you may skip `url[]` part:
+%use @https://site.com/lib.json
+// You may omit library name for file and URL resolution:
+%use @file[lib.json]
+```
 
 List of supported libraries:
- - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
- - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
- - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
- - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
- - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
- - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
- - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
- - [kmath](https://github.com/mipt-npm/kmath) - Kotlin mathematical library analogous to NumPy
- - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
- - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
- - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
- - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
- - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
+[[supported_libraries]]
 
 ### Rich output
   
@@ -179,16 +195,17 @@ an error message which can help you to fix the error.
 
 1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
 2. Run `jupyter-notebook`
-3. Attach remote debugger to JVM with specified port 
+3. Attach a remote debugger to JVM with specified port 
 
 ## Adding new libraries
 
 To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
 
-Check [libraries](libraries) directory to see examples of library descriptors.
+Check [libraries](../libraries) directory to see examples of library descriptors.
 
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
+- `description`: a short library description which is used for generating libraries list in README
 - `link`: a link to library homepage. This link will be displayed in `:help` command
 - `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
 - `repositories`: a list of maven or ivy repositories to search for dependencies
@@ -210,15 +227,10 @@ Name of the file is a library name that is passed to '%use' command
 Library properties can be used in any parts of library descriptor as `$property`
 
 To register new library descriptor:
-1. For private usage - add it to local settings folder `<UserHome>/.jupyter_kotlin/libraries`
-2. For sharing with community - commit it to [libraries](libraries) directory and create pull request.
+1. For private usage - create it anywhere on your computer and reference it using file syntax.
+2. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
 
-If you are maintaining some library and want to update your library descriptor, just create pull request with your update. After your request is accepted, 
-new version of your library will be available to all Kotlin Jupyter users immediately on next kernel startup (no kernel update is needed).
-
-If a library descriptor with the same name is found in several locations, the following resolution priority is used:
-1. Local settings folder (highest priority)
-2. [libraries](libraries) directory at the latest master branch of `https://github.com/Kotlin/kotlin-jupyter` repository
-3. Kernel installation directory
-
-If you don't want some library to be updated automatically, put fixed version of its library descriptor into local settings folder.
+If you are maintaining some library and want to update your library descriptor, create pull request with your update. 
+After your request is accepted, new version of your library will be available to all Kotlin Jupyter users 
+immediately on next kernel startup (no kernel update is needed) - but only if they use `useLatestDescriptors` magic.
+If not, kernel update is needed.

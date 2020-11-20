@@ -1,4 +1,5 @@
 {
+  "description": "Kotlin wrapper for Python NumPy package",
   "properties": {
     "v": "0.1.4"
   },

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.KotlinFunctionInfo
-import org.jetbrains.kotlin.jupyter.repl.reflect.ContextUpdater
+import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 
 interface AnnotationsProcessor {
 
@@ -24,8 +24,8 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
         val annotationArgument = "__annotation"
         val classArgument = "__class"
         val body = handler.code
-                .replace("\$annotation", annotationArgument)
-                .replace("\$kclass", classArgument)
+            .replace("\$annotation", annotationArgument)
+            .replace("\$kclass", classArgument)
         val annotationType = handler.className
         val methodId = nextGeneratedMethodId++
         val methodName = getMethodName(methodId)

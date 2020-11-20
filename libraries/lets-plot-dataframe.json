@@ -1,4 +1,5 @@
 {
+  "description": "A bridge between lets-plot and dataframe libraries",
   "properties": {
     "v": "0.0.10-dev-15"
   },

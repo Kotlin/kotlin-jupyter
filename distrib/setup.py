@@ -38,7 +38,7 @@ def main():
     classifiers = [
         "Framework :: Jupyter",
         "Development Status :: 4 - Beta",
-        "Programming Language :: Other",
+        "Programming Language :: Kotlin",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",

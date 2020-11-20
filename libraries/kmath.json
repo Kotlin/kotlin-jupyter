@@ -1,4 +1,5 @@
 {
+  "description": "Experimental Kotlin mathematical library operating on generic algebras",
   "properties": {
     "v": "0.1.3"
   },
