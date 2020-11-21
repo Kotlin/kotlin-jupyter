@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "api": "1.1.0",
+    "gt": "[23,)"
+  },
+  "link": "https://github.com/JetBrains/lets-plot-kotlin",
+  "repositories": [
+    "https://repo.osgeo.org/repository/release",
+    "https://jetbrains.bintray.com/lets-plot-maven"
+  ],
+  "dependencies": [
+    "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:$api",
+    "org.geotools:gt-geojson:$gt"
+  ],
+  "imports": [
+    "jetbrains.letsPlot.toolkit.geotools.toSpatialDataset"
+  ]
+}
