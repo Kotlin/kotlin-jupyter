@@ -162,7 +162,7 @@ List of supported libraries:
  - [dataframe](https://github.com/nikitinas/krangl-typed) - Kotlin framework for structured data processing
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
  - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
- - default - Default imports: dataframe and lets-plot libraries
+ - default - Default imports: dataframe and Lets-Plot libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
@@ -175,7 +175,8 @@ List of supported libraries:
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
- - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between lets-plot and dataframe libraries
+ - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
+ - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.

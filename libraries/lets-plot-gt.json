@@ -1,9 +1,10 @@
 {
+  "description": "Lets-Plot visualisation for GeoTools toolkit",
+  "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "properties": {
     "api": "1.1.0",
     "gt": "[23,)"
   },
-  "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
     "https://repo.osgeo.org/repository/release",
     "https://jetbrains.bintray.com/lets-plot-maven"

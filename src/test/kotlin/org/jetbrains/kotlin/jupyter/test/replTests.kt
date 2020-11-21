@@ -614,9 +614,9 @@ class ReplWithResolverTest : AbstractReplTest() {
             @file:DependsOn("org.geotools:gt-shapefile:[23,)")
             @file:DependsOn("org.geotools:gt-cql:[23,)")
             
-            %use lets-plot(api=1.0.1-dev-1)
+            %use lets-plot(api=1.1.0)
             
-            @file:DependsOn("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:1.0.1-dev-1")
+            @file:DependsOn("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:1.1.0")
             
             import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
             """.trimIndent()
