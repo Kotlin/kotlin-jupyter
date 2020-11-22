@@ -44,6 +44,7 @@ import kotlin.script.experimental.api.asDiagnostics
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.foundAnnotations
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.onSuccess
@@ -128,6 +129,8 @@ interface ReplForJupyter {
     var outputConfig: OutputConfig
 
     val notebook: NotebookImpl
+
+    val fileExtension: String
 }
 
 class ReplForJupyterImpl(
@@ -289,6 +292,9 @@ class ReplForJupyterImpl(
             onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
         }
     }
+
+    override val fileExtension: String
+        get() = compilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
 
     private val ScriptCompilationConfiguration.classpath
         get() = this[ScriptCompilationConfiguration.dependencies]

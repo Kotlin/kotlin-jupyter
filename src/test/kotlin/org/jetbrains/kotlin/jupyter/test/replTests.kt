@@ -100,7 +100,7 @@ class ReplTest : AbstractReplTest() {
             val message = ex.message
 
             val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
-            val expectedMessage = "Line_0.jupyter.kts (3:11 - 14) Unresolved reference: ppp"
+            val expectedMessage = "Line_0.${repl.fileExtension} (3:11 - 14) Unresolved reference: ppp"
 
             assertEquals(expectedLocation, location)
             assertEquals(expectedMessage, message)
