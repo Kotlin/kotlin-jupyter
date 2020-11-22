@@ -26,7 +26,7 @@ fun getCompilationConfiguration(
     return ScriptCompilationConfiguration {
         hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
         baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
-        fileExtension.put("jupyter.kts")
+        fileExtension.put("jupyter-kts")
 
         val classImports = listOf(
             DependsOn::class,
