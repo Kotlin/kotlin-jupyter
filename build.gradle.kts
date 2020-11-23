@@ -169,7 +169,7 @@ val deploy: Configuration by configurations.creating
 
 dependencies {
     val junitVersion = "5.6.2"
-    val slf4jVersion = "1.7.29"
+    val slf4jVersion = "1.7.30"
     val klaxonVersion = "5.2"
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -192,15 +192,12 @@ dependencies {
 
     compileOnly(kotlin("scripting-compiler-impl"))
 
-    implementation("org.apache.maven:maven-core:3.0.3")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("khttp:khttp:1.0.0")
     implementation("org.zeromq:jeromq:0.5.2")
     implementation("com.beust:klaxon:$klaxonVersion")
-    implementation("com.github.ajalt:clikt:2.3.0")
+    implementation("com.github.ajalt:clikt:2.8.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
-    runtimeOnly("org.eclipse.aether:aether-api:1.1.0")
-    runtimeOnly("net.java.dev.jna:jna:5.4.0")
 
     deploy(project(":jupyter-lib"))
     deploy(kotlin("script-runtime"))
