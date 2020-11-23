@@ -199,10 +199,7 @@ dependencies {
     implementation("com.beust:klaxon:$klaxonVersion")
     implementation("com.github.ajalt:clikt:2.3.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
-    runtimeOnly("org.jetbrains.kotlin:jcabi-aether:1.0-dev-3") {
-        exclude("org.slf4j", "slf4j-log4j12")
-    }
-    runtimeOnly("org.sonatype.aether:aether-api:1.13.1")
+    runtimeOnly("org.eclipse.aether:aether-api:1.1.0")
     runtimeOnly("net.java.dev.jna:jna:5.4.0")
 
     deploy(project(":jupyter-lib"))
