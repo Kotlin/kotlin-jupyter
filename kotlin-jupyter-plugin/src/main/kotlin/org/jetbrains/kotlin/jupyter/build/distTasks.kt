@@ -167,8 +167,8 @@ fun ProjectWithOptions.preparePyPiTasks() {
 
 fun ProjectWithOptions.prepareAggregateUploadTasks() {
     val infixToSpec = mapOf<String, (UploadTaskSpecs<*>) -> TaskSpec>(
-        "Dev" to { taskSpec -> taskSpec.dev },
-        "Stable" to { taskSpec -> taskSpec.stable }
+        "Dev" to { it.dev },
+        "Stable" to { it.stable }
     )
 
     infixToSpec.forEach { (infix, taskSpecGetter) ->
