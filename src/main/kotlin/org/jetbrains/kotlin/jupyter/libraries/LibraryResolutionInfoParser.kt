@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.Variable
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.asSuccess
 

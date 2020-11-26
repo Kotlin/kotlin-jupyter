@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.jupyter.api.Notebook
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.setDisplayId
 import org.jetbrains.kotlin.jupyter.api.textResult
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream

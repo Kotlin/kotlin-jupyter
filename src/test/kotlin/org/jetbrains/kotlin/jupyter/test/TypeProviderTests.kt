@@ -4,9 +4,9 @@ import jupyter.kotlin.receivers.TypeProviderReceiver
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptors

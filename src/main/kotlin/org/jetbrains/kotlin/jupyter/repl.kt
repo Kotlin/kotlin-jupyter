@@ -12,6 +12,11 @@ import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlin.jupyter.compiler.getCompilerWithCompletion
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
+import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlin.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlin.jupyter.config.DependsOn
 import org.jetbrains.kotlin.jupyter.config.Repository
 import org.jetbrains.kotlin.jupyter.config.getCompilationConfiguration
@@ -24,11 +29,10 @@ import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
-import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import java.io.File
 import java.net.URLClassLoader
 import java.util.LinkedList
+import kotlin.reflect.KClass
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ReplAnalyzerResult
@@ -37,7 +41,6 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
-import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.asDiagnostics
@@ -48,7 +51,9 @@ import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.foundAnnotations
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.onSuccess
+import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
@@ -67,19 +72,7 @@ data class EvalResult(
 
 data class CheckResult(val isComplete: Boolean = true)
 
-open class ReplException(message: String, cause: Throwable? = null) : Exception(message, cause)
-
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
-
-class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null) :
-    ReplException(message ?: errorResult?.getErrors() ?: "") {
-
-    val firstDiagnostics = errorResult?.reports?.firstOrNull {
-        it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
-    }
-
-    constructor(message: String) : this(null, message)
-}
 
 enum class ExecutedCodeLogging {
     Off,
@@ -287,14 +280,19 @@ class ReplForJupyterImpl(
         }
     }
 
-    private val compilerConfiguration by lazy {
-        getCompilationConfiguration(scriptClasspath, scriptReceivers, runtimeProperties.jvmTargetForSnippets) {
+    // Used for various purposes, i.e. completion and listing errors
+    private val lightCompilerConfiguration =
+        getCompilationConfiguration(scriptClasspath, scriptReceivers, runtimeProperties.jvmTargetForSnippets)
+
+    // Used only for compilation
+    private val compilerConfiguration = lightCompilerConfiguration.with {
+        refineConfiguration {
             onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
         }
     }
 
     override val fileExtension: String
-        get() = compilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
+        get() = lightCompilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
 
     private val ScriptCompilationConfiguration.classpath
         get() = this[ScriptCompilationConfiguration.dependencies]
@@ -302,7 +300,7 @@ class ReplForJupyterImpl(
             ?.flatMap { it.classpath }
             .orEmpty()
 
-    override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
+    override val currentClasspath = lightCompilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
@@ -330,10 +328,8 @@ class ReplForJupyterImpl(
         constructorArgs(notebook)
     }
 
-    private var executionCounter = 0
-
-    private val compiler: KJvmReplCompilerWithIdeServices by lazy {
-        KJvmReplCompilerWithIdeServices()
+    private val jupyterCompiler by lazy {
+        getCompilerWithCompletion(compilerConfiguration, evaluatorConfiguration)
     }
 
     private val evaluator: BasicJvmReplEvaluator by lazy {
@@ -353,9 +349,8 @@ class ReplForJupyterImpl(
     private val scheduledExecutions = LinkedList<Execution>()
 
     override fun checkComplete(code: String): CheckResult {
-        val id = executionCounter++
-        val codeLine = SourceCodeImpl(id, code)
-        val result = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
+        val codeLine = jupyterCompiler.nextSourceCode(code)
+        val result = runBlocking { jupyterCompiler.compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), lightCompilerConfiguration) }
         return when {
             result.isIncomplete() -> CheckResult(false)
             result.isError() -> throw ReplException(result.getErrors())
@@ -390,10 +385,9 @@ class ReplForJupyterImpl(
         } while (codes.isNotEmpty())
     }
 
-    private fun processAnnotations(replLine: Any?) {
-        if (replLine == null) return
+    private fun processAnnotations(replLineClass: KClass<*>) {
         log.catchAll {
-            annotationsProcessor.process(replLine)
+            annotationsProcessor.process(replLineClass)
         }?.forEach {
             if (executedCodeLogging == ExecutedCodeLogging.Generated)
                 println(it)
@@ -406,8 +400,6 @@ class ReplForJupyterImpl(
         p.shutdownCodes.filter { !shutdownCodes.contains(it) }.let(shutdownCodes::addAll)
         typeRenderers.addAll(p.typeRenderers)
     }
-
-    private fun lastReplLine() = evaluator.lastEvaluatedSnippet?.get()?.result?.scriptInstance
 
     override fun eval(code: String, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
@@ -423,18 +415,16 @@ class ReplForJupyterImpl(
 
                 var result: Any? = null
                 var resultField: Pair<String, KotlinType>? = null
-                var replLine: Any? = null
 
                 if (preprocessed.code.isNotBlank()) {
                     doEval(preprocessed.code, EvalData(jupyterId, code)).let {
                         result = it.value
                         resultField = it.resultField
                     }
-                    replLine = lastReplLine()
-                }
 
-                log.catchAll {
-                    processAnnotations(replLine)
+                    log.catchAll {
+                        processAnnotations(jupyterCompiler.lastKClass)
+                    }
                 }
 
                 log.catchAll {
@@ -508,7 +498,7 @@ class ReplForJupyterImpl(
         if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
 
         val preprocessed = magics.processMagics(args.code, true).code
-        return completer.complete(compiler, compilerConfiguration, args.code, preprocessed, executionCounter++, args.cursor)
+        return completer.complete(jupyterCompiler.compiler, lightCompilerConfiguration, args.code, preprocessed, jupyterCompiler.nextCounter(), args.cursor)
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
@@ -519,8 +509,8 @@ class ReplForJupyterImpl(
         if (isCommand(args.code)) return reportCommandErrors(args.code)
 
         val preprocessed = magics.processMagics(args.code, true).code
-        val codeLine = SourceCodeImpl(executionCounter++, preprocessed)
-        val errorsList = runBlocking { compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), compilerConfiguration) }
+        val codeLine = SourceCodeImpl(jupyterCompiler.nextCounter(), preprocessed)
+        val errorsList = runBlocking { jupyterCompiler.compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), lightCompilerConfiguration) }
         return ListErrorsResult(args.code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }
 
@@ -545,7 +535,7 @@ class ReplForJupyterImpl(
         } catch (e: Exception) {
             null
         }
-        processAnnotations(lastReplLine())
+        processAnnotations(jupyterCompiler.lastKClass)
         return EvalResult(result, emptyList())
     }
 
@@ -575,54 +565,50 @@ class ReplForJupyterImpl(
     private fun doEval(code: String, evalData: EvalData? = null): InternalEvalResult {
         if (executedCodeLogging == ExecutedCodeLogging.All)
             println(code)
-        val id = executionCounter++
+        val id = jupyterCompiler.nextCounter()
         val codeLine = SourceCodeImpl(id, code)
 
         val cell = if (evalData != null) {
             notebook.addCell(id, code, evalData)
         } else null
 
-        when (val compileResultWithDiagnostics = runBlocking { compiler.compile(codeLine, compilerConfiguration) }) {
-            is ResultWithDiagnostics.Success -> {
-                val compileResult = compileResultWithDiagnostics.value
-                classWriter?.writeClasses(codeLine, compileResult.get())
-                val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evaluatorConfiguration) }
-                contextUpdater.update()
+        val (compileResult, evalConfig) = jupyterCompiler.compileSync(codeLine)
 
-                when (resultWithDiagnostics) {
-                    is ResultWithDiagnostics.Success -> {
-                        val pureResult = resultWithDiagnostics.value.get()
-                        return when (val resultValue = pureResult.result) {
-                            is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
-                            is ResultValue.Unit -> {
-                                InternalEvalResult(Unit, null)
-                            }
-                            is ResultValue.Value -> {
-                                cell?.resultVal = resultValue.value
-                                InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
-                            }
-                            is ResultValue.NotEvaluated -> {
-                                throw ReplEvalRuntimeException(
-                                    buildString {
-                                        val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
-                                        val stackTrace = cause?.stackTrace.orEmpty()
-                                        append("This snippet was not evaluated: ")
-                                        appendLine(cause.toString())
-                                        for (s in stackTrace)
-                                            appendLine(s)
-                                    }
-                                )
-                            }
-                            else -> throw IllegalStateException("Unknown eval result type $this")
-                        }
+        classWriter?.writeClasses(codeLine, compileResult.get())
+        val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evalConfig) }
+        contextUpdater.update()
+
+        when (resultWithDiagnostics) {
+            is ResultWithDiagnostics.Success -> {
+                val pureResult = resultWithDiagnostics.value.get()
+                return when (val resultValue = pureResult.result) {
+                    is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
+                    is ResultValue.Unit -> {
+                        InternalEvalResult(Unit, null)
                     }
-                    is ResultWithDiagnostics.Failure -> {
-                        throw ReplCompilerException(resultWithDiagnostics)
+                    is ResultValue.Value -> {
+                        cell?.resultVal = resultValue.value
+                        InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
                     }
-                    else -> throw IllegalStateException("Unknown result")
+                    is ResultValue.NotEvaluated -> {
+                        throw ReplEvalRuntimeException(
+                            buildString {
+                                val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
+                                val stackTrace = cause?.stackTrace.orEmpty()
+                                append("This snippet was not evaluated: ")
+                                appendLine(cause.toString())
+                                for (s in stackTrace)
+                                    appendLine(s)
+                            }
+                        )
+                    }
+                    else -> throw IllegalStateException("Unknown eval result type $this")
                 }
             }
-            is ResultWithDiagnostics.Failure -> throw ReplCompilerException(compileResultWithDiagnostics)
+            is ResultWithDiagnostics.Failure -> {
+                throw ReplCompilerException(resultWithDiagnostics)
+            }
+            else -> throw IllegalStateException("Unknown result")
         }
     }
 
@@ -649,7 +635,7 @@ class ReplForJupyterImpl(
 
     override fun execute(code: Code): Any? {
         val internalResult = doEval(code)
-        processAnnotations(lastReplLine())
+        processAnnotations(jupyterCompiler.lastKClass)
         return internalResult.value
     }
 

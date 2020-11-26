@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
@@ -44,26 +45,12 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
     }
 
     fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): MagicProcessingResult {
-
-        val sb = StringBuilder()
-        var nextSearchIndex = 0
-        var nextCopyIndex = 0
+        val magics = magicsIntervals(code)
 
         val newLibraries = mutableListOf<LibraryDefinitionProducer>()
-        while (true) {
-
-            var magicStart: Int
-            do {
-                magicStart = code.indexOf("%", nextSearchIndex)
-                nextSearchIndex = magicStart + 1
-            } while (magicStart != -1 && magicStart != 0 && code[magicStart - 1] != '\n')
-            if (magicStart == -1) {
-                sb.append(code.substring(nextCopyIndex))
-                return MagicProcessingResult(sb.toString(), newLibraries)
-            }
-
-            val magicEnd = code.indexOf('\n', magicStart).let { if (it == -1) code.length else it }
-            val magicText = code.substring(magicStart + 1, magicEnd)
+        for (magicRange in magics) {
+            // Skip `%` sign
+            val magicText = code.substring(magicRange.from + 1, magicRange.to)
 
             try {
                 val parts = magicText.split(' ', limit = 2)
@@ -74,8 +61,6 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                 if (magic == null && !parseOnly && !tryIgnoreErrors) {
                     throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
                 }
-
-                sb.append(code.substring(nextCopyIndex, magicStart))
 
                 when (magic) {
                     ReplLineMagics.trackExecution -> {
@@ -108,11 +93,53 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                         repl.outputConfig = updateOutputConfig(repl.outputConfig, (arg ?: "").split(" "))
                     }
                 }
-                nextCopyIndex = magicEnd
-                nextSearchIndex = magicEnd
             } catch (e: Exception) {
                 throw ReplCompilerException("Failed to process '%$magicText' command. " + e.message)
             }
         }
+
+        val codes = codeIntervals(code, magics)
+        val preprocessedCode = codes.joinToString("") { code.substring(it.from, it.to) }
+        return MagicProcessingResult(preprocessedCode, newLibraries)
+    }
+
+    fun codeIntervals(
+        code: String,
+        magicsIntervals: Sequence<CodeInterval> = magicsIntervals(code)
+    ) = sequence {
+        var codeStart = 0
+
+        for (interval in magicsIntervals) {
+            if (codeStart != interval.from) {
+                yield(CodeInterval(codeStart, interval.from))
+            }
+            codeStart = interval.to
+        }
+
+        if (codeStart != code.length) {
+            yield(CodeInterval(codeStart, code.length))
+        }
+    }
+
+    fun magicsIntervals(code: String): Sequence<CodeInterval> {
+        return generateSequence(MAGICS_REGEX.find(code, 0)) {
+            MAGICS_REGEX.find(code, it.range.last)
+        }.map { CodeInterval(it.range.first, it.range.last + 1) }
+    }
+
+    data class CodeInterval(
+        /**
+         * Inclusive
+         */
+        val from: Int,
+
+        /**
+         * Exclusive
+         */
+        val to: Int,
+    )
+
+    companion object {
+        private val MAGICS_REGEX = Regex("^%.*$", RegexOption.MULTILINE)
     }
 }

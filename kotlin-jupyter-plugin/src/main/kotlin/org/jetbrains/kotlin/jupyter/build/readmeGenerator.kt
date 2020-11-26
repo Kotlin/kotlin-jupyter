@@ -10,7 +10,8 @@ import java.io.File
 
 class ReadmeGenerator(
     private val librariesDir: File,
-    private val kotlinVersion: String
+    private val kotlinVersion: String,
+    private val repoUrl: String
 ) {
     fun generate(stub: File, destination: File) {
         var result = stub.readText()
@@ -24,7 +25,8 @@ class ReadmeGenerator(
         "supported_libraries" to ::processSupportedLibraries,
         "supported_commands" to ::processCommands,
         "magics" to ::processMagics,
-        "kotlin_version" to ::processKotlinVersion
+        "kotlin_version" to ::processKotlinVersion,
+        "repo_url" to ::processRepoUrl
     )
 
     private fun processSupportedLibraries(): String {
@@ -64,15 +66,20 @@ class ReadmeGenerator(
     private fun processKotlinVersion(): String {
         return kotlinVersion
     }
+
+    private fun processRepoUrl(): String {
+        return "$repoUrl.git"
+    }
 }
 
 fun ProjectWithOptions.prepareReadmeTasks() {
     val kotlinVersion: String by project
+    val projectRepoUrl: String by project
 
     val readmeFile = readmePath.toFile()
     val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
     val librariesDir = File(librariesPath)
-    val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion)
+    val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
 
     val generateReadme by tasks.registering {
         group = buildGroup

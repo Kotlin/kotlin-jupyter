@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.jupyter
 import org.jetbrains.kotlin.jupyter.api.textResult
 import org.jetbrains.kotlin.jupyter.common.ReplCommands
 import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
+import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
-import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant

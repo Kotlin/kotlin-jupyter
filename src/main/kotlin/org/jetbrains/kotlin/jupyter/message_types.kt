@@ -22,6 +22,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -288,8 +289,34 @@ class CompleteReply(
 
     val paragraph: Paragraph,
 
-    val metadata: JsonObject = emptyJsonObject,
-) : OkReply()
+    val metadata: Metadata,
+) : OkReply() {
+
+    @Serializable
+    class Metadata(
+        @SerialName("_jupyter_types_experimental")
+        val experimentalTypes: List<ExperimentalType>,
+
+        @SerialName("_jupyter_extended_metadata")
+        val extended: List<ExtendedMetadataEntry>,
+    )
+
+    @Serializable
+    class ExperimentalType(
+        val text: String,
+        val type: String,
+        val start: Int,
+        val end: Int,
+    )
+
+    @Serializable
+    class ExtendedMetadataEntry(
+        val text: String,
+        val displayText: String,
+        val icon: String,
+        val tail: String,
+    )
+}
 
 @Serializable
 class IsCompleteRequest(
