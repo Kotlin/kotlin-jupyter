@@ -131,10 +131,10 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's downloaded from the latest commit on the
-branch which kernel was built from. If you want to try descriptor from another revision, use the following syntax:
+You can also specify the source of library descriptor. By default, it's taken from the libraries directory
+of kernel installation. If you want to try descriptor from another revision, use the following syntax:
 ```
-// Specify tag
+// Specify some git tag from this repository
 %use lets-plot@0.8.2.5
 // Specify commit sha, with more verbose syntax
 %use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
@@ -162,10 +162,11 @@ List of supported libraries:
  - [dataframe](https://github.com/nikitinas/krangl-typed) - Kotlin framework for structured data processing
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
  - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
- - default - Default imports: dataframe and lets-plot libraries
+ - default - Default imports: dataframe and Lets-Plot libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin mathematical library operating on generic algebras
@@ -174,11 +175,13 @@ List of supported libraries:
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
- - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between lets-plot and dataframe libraries
+ - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
+ - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.
+ - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
 

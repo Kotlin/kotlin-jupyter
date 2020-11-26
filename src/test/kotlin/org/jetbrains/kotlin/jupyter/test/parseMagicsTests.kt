@@ -2,13 +2,12 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
@@ -47,6 +46,26 @@ class ParseArgumentsTests {
         assertEquals("1.2", args[0].value)
         assertEquals("arg2", args[1].name)
         assertEquals("val2", args[1].value)
+    }
+
+    @Test
+    fun test4() {
+        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api="[1.0,)")""")
+        assertEquals("lets-plot", ref.name)
+        assertEquals(1, args.count())
+        assertEquals("api", args[0].name)
+        assertEquals("[1.0,)", args[0].value)
+    }
+
+    @Test
+    fun test5() {
+        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api = "[1.0,)"   , lib=1.5.3 )""")
+        assertEquals("lets-plot", ref.name)
+        assertEquals(2, args.count())
+        assertEquals("api", args[0].name)
+        assertEquals("[1.0,)", args[0].value)
+        assertEquals("lib", args[1].name)
+        assertEquals("1.5.3", args[1].value)
     }
 
     @Test
@@ -119,7 +138,7 @@ class ParseMagicsTests {
 
     @Test
     fun `trailing newlines should be left`() {
-        test("\n%use krangl\n\n", "\n\n\n"){ libs ->
+        test("\n%use krangl\n\n", "\n\n\n") { libs ->
             assertEquals(1, libs.size)
         }
     }
@@ -127,23 +146,23 @@ class ParseMagicsTests {
     @Test
     fun `multiple magics`() {
         test(
-                """
+            """
                     %use lets-plot, krangl
                     
                     fun f() = 42
                     %trackClasspath
                     val x = 9
                     
-                """.trimIndent(),
-                """
+            """.trimIndent(),
+            """
                     
                     
                     fun f() = 42
                     
                     val x = 9
                     
-                """.trimIndent()
-        ){ libs ->
+            """.trimIndent()
+        ) { libs ->
             assertEquals(2, libs.size)
         }
 
@@ -153,23 +172,23 @@ class ParseMagicsTests {
     @Test
     fun `wrong magics should be tolerated`() {
         test(
-                """
+            """
                     %use lets-plot
                     %use wrongLib
                     val x = 9
                     %wrongMagic
                     fun f() = 42
                     %trackExecution -generated
-                """.trimIndent(),
-                """
+            """.trimIndent(),
+            """
                     
                     
                     val x = 9
                     
                     fun f() = 42
                     
-                """.trimIndent()
-        ){ libs ->
+            """.trimIndent()
+        ) { libs ->
             assertEquals(1, libs.size)
         }
 
@@ -178,19 +197,21 @@ class ParseMagicsTests {
 
     @Test
     fun `source location is correctly transformed`() {
-        val sourceText = """
+        val sourceText =
+            """
             fun g() = 99
             %use lets-plot
             %use wrongLib
             val x = 9
-        """.trimIndent()
+            """.trimIndent()
 
-        val resultText = """
+        val resultText =
+            """
             fun g() = 99
             
             
             val x = 9
-        """.trimIndent()
+            """.trimIndent()
 
         test(sourceText, resultText) { libs ->
             assertEquals(1, libs.size)

@@ -1,5 +1,5 @@
 {
-  "description": "Default imports: dataframe and lets-plot libraries",
+  "description": "Default imports: dataframe and Lets-Plot libraries",
   "init": [
     "%use dataframe, lets-plot-dataframe"
   ]

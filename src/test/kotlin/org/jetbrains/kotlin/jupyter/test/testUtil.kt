@@ -26,17 +26,17 @@ val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaul
 }
 
 val classpath = scriptCompilationClasspathFromContext(
-        "jupyter-lib",
-        "kotlin-stdlib",
-        "kotlin-reflect",
-        "kotlin-script-runtime",
-        classLoader = DependsOn::class.java.classLoader
+    "jupyter-lib",
+    "kotlin-stdlib",
+    "kotlin-reflect",
+    "kotlin-script-runtime",
+    classLoader = DependsOn::class.java.classLoader
 )
 
 val LibraryFactory.testResolverConfig: ResolverConfig
     get() = ResolverConfig(
-            defaultRepositories,
-            getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
+        defaultRepositories,
+        getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
     )
 
 fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
@@ -52,16 +52,16 @@ fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>):
 fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
     val parser = Parser.default()
     return File(basePath, LibrariesDir)
-            .listFiles()?.filter { it.extension == LibraryDescriptorExt}
-            ?.map {
-                log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
-                it.nameWithoutExtension to parser.parse(it.canonicalPath) as JsonObject
-            }
-            .orEmpty()
-            .toMap()
+        .listFiles()?.filter { it.extension == LibraryDescriptorExt }
+        ?.map {
+            log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
+            it.nameWithoutExtension to parser.parse(it.canonicalPath) as JsonObject
+        }
+        .orEmpty()
+        .toMap()
 }
 
-class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null): LibraryResolver(parent) {
+class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null) : LibraryResolver(parent) {
     override val cache = hashMapOf<LibraryReference, LibraryDescriptor>()
 
     init {

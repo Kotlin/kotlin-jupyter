@@ -10,18 +10,20 @@ import java.io.PrintStream
 import java.util.concurrent.atomic.AtomicInteger
 
 class CapturingStreamTests {
-    private val nullOStream = object: OutputStream() {
+    private val nullOStream = object : OutputStream() {
         override fun write(b: Int) {
         }
     }
 
-    private fun getStream(stdout: OutputStream = nullOStream,
-                          captureOutput: Boolean = true,
-                          maxBufferLifeTimeMs: Long = 1000,
-                          maxBufferSize: Int = 1000,
-                          maxOutputSize: Int = 1000,
-                          maxBufferNewlineSize: Int = 1,
-                          onCaptured: (String) -> Unit = {}): CapturingOutputStream {
+    private fun getStream(
+        stdout: OutputStream = nullOStream,
+        captureOutput: Boolean = true,
+        maxBufferLifeTimeMs: Long = 1000,
+        maxBufferSize: Int = 1000,
+        maxOutputSize: Int = 1000,
+        maxBufferNewlineSize: Int = 1,
+        onCaptured: (String) -> Unit = {}
+    ): CapturingOutputStream {
 
         val printStream = PrintStream(stdout, false, "UTF-8")
         val config = OutputConfig(captureOutput, maxBufferLifeTimeMs, maxBufferSize, maxOutputSize, maxBufferNewlineSize)
@@ -85,7 +87,7 @@ class CapturingStreamTests {
 
         assertEquals(expected.size, i.get())
     }
-    
+
     @Test
     fun testMaxBufferLifeTime() {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")

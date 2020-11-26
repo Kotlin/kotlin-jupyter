@@ -12,7 +12,7 @@ import java.security.SignatureException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-class JupyterConnection(val config: KernelConfig): Closeable {
+class JupyterConnection(val config: KernelConfig) : Closeable {
 
     inner class Socket(private val socket: JupyterSockets, type: SocketType = socket.zmqKernelType) : ZMQ.Socket(context, type) {
         val name: String get() = socket.name
@@ -44,8 +44,8 @@ class JupyterConnection(val config: KernelConfig): Closeable {
             sendStatus("idle", incomingMessage)
         }
 
-        fun sendOut(msg:Message, stream: JupyterOutType, text: String) {
-            send(makeReplyMessage(msg, header = makeHeader("stream", msg),content = jsonObject("name" to stream.optionName(),"text" to text)))
+        fun sendOut(msg: Message, stream: JupyterOutType, text: String) {
+            send(makeReplyMessage(msg, header = makeHeader("stream", msg), content = jsonObject("name" to stream.optionName(), "text" to text)))
         }
 
         fun send(msg: Message) {
@@ -72,8 +72,13 @@ class JupyterConnection(val config: KernelConfig): Closeable {
         private var currentBufPos = 0
 
         private fun getInput(): String {
-            stdin.send(makeReplyMessage(contextMessage!!, "input_request",
-                    content = jsonObject("prompt" to "stdin:")))
+            stdin.send(
+                makeReplyMessage(
+                    contextMessage!!,
+                    "input_request",
+                    content = jsonObject("prompt" to "stdin:")
+                )
+            )
             val msg = stdin.receiveMessage(stdin.recv())
             val input = msg?.content?.get("value")
             if (msg == null || msg.header?.get("msg_type")?.equals("input_reply") != true || input == null || input !is String)
@@ -158,10 +163,10 @@ class HMAC(algorithm: String, key: String?) {
 
     @Synchronized
     operator fun invoke(data: Iterable<ByteArray>): String? =
-            mac?.let { mac ->
-                data.forEach { mac.update(it) }
-                mac.doFinal().toHexString()
-            }
+        mac?.let { mac ->
+            data.forEach { mac.update(it) }
+            mac.doFinal().toHexString()
+        }
 
     operator fun invoke(vararg data: ByteArray): String? = invoke(data.asIterable())
 }
@@ -173,7 +178,7 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
         msg.id.forEach { sendMore(it) }
         sendMore(DELIM)
         val signableMsg = listOf(msg.header, msg.parentHeader, msg.metadata, msg.content)
-                .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
+            .map { it?.toJsonString(prettyPrint = false)?.toByteArray() ?: emptyJsonObjectStringBytes }
         sendMore(hmac(signableMsg) ?: "")
         signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
         send(signableMsg.last())
@@ -193,11 +198,13 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
         throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
 
     fun ByteArray.parseJson(): JsonObject =
-            Parser.default().parse(this.inputStream()) as JsonObject
+        Parser.default().parse(this.inputStream()) as JsonObject
 
-    return Message(ids,
-            header.parseJson(),
-            parentHeader.parseJson(),
-            metadata.parseJson(),
-            content.parseJson())
+    return Message(
+        ids,
+        header.parseJson(),
+        parentHeader.parseJson(),
+        metadata.parseJson(),
+        content.parseJson()
+    )
 }

@@ -43,13 +43,13 @@ class FallbackLibraryResolver : LibraryResolver() {
 }
 
 class LocalLibraryResolver(
-        parent: LibraryResolver?,
-        mainLibrariesDir: String
-): LibraryResolver(parent) {
+    parent: LibraryResolver?,
+    mainLibrariesDir: String
+) : LibraryResolver(parent) {
     private val pathsToCheck = listOf(
-            Paths.get(LocalSettingsPath, LocalCacheDir).toString(),
-            LocalSettingsPath,
-            mainLibrariesDir
+        Paths.get(LocalSettingsPath, LocalCacheDir).toString(),
+        LocalSettingsPath,
+        mainLibrariesDir
     )
 
     override fun shouldResolve(reference: LibraryReference): Boolean {

@@ -8,9 +8,7 @@ import org.jetbrains.kotlin.jupyter.Message
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.iKotlinClass
 import org.jetbrains.kotlin.jupyter.kernelServer
-import org.jetbrains.kotlin.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.makeHeader
 import org.jetbrains.kotlin.jupyter.receiveMessage
 import org.jetbrains.kotlin.jupyter.sendMessage
@@ -24,21 +22,23 @@ import java.io.File
 import java.io.IOException
 import java.net.DatagramSocket
 import java.net.ServerSocket
-import java.util.*
+import java.util.ArrayList
+import java.util.Random
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
 
     private val config = KernelConfig(
-            ports = JupyterSockets.values().map { randomPort() },
-            transport = "tcp",
-            signatureScheme = "hmac1-sha256",
-            signatureKey = "",
-            scriptClasspath = classpath,
-            resolverConfig = null,
-            homeDir = File(""),
-            libraryFactory = LibraryFactory.EMPTY
+        ports = JupyterSockets.values().map { randomPort() },
+        transport = "tcp",
+        signatureScheme = "hmac1-sha256",
+        signatureKey = "",
+        scriptClasspath = classpath,
+        resolverConfig = null,
+        homeDir = File(""),
+        libraryFactory = LibraryFactory.EMPTY
     )
 
     private val sessionId = UUID.randomUUID().toString()
@@ -74,9 +74,9 @@ open class KernelServerTestsBase {
             fileErr = createTempFile("tmp-kernel-err-$testName", ".txt")
 
             serverProcess = ProcessBuilder(command)
-                    .redirectOutput(fileOut)
-                    .redirectError(fileErr)
-                    .start()
+                .redirectOutput(fileOut)
+                .redirectError(fileErr)
+                .start()
         } else {
             serverThread = thread { kernelServer(config, defaultRuntimeProperties) }
         }
@@ -135,7 +135,6 @@ open class KernelServerTestsBase {
                 udpSocket.reuseAddress = true
                 return true
             } catch (e: IOException) {
-
             } finally {
                 tcpSocket?.close()
                 udpSocket?.close()
@@ -143,8 +142,8 @@ open class KernelServerTestsBase {
             return false
         }
 
-        fun randomPort()
-            = generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.take(maxTrials).find {
+        fun randomPort() =
+            generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.take(maxTrials).find {
                 isPortAvailable(it) && usedPorts.add(it)
             } ?: throw RuntimeException("No free port found")
     }

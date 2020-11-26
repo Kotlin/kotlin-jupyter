@@ -9,9 +9,9 @@ import kotlin.script.experimental.jvm.util.classpathFromClassloader
 val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
 
 data class KernelArgs(
-        val cfgFile: File,
-        val scriptClasspath: List<File>,
-        val homeDir: File?
+    val cfgFile: File,
+    val scriptClasspath: List<File>,
+    val homeDir: File?
 ) {
     fun argsList(): List<String> {
         return mutableListOf<String>().apply {
@@ -64,19 +64,35 @@ fun printClassPath() {
 
 fun main(vararg args: String) {
     try {
-        log.info("Kernel args: "+ args.joinToString { it })
+        log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val runtimeProperties = defaultRuntimeProperties
         val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
         val libraryFactory = LibraryFactory.withDefaultDirectoryResolution(libraryPath)
         val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryFactory)
-        kernelServer(kernelConfig, runtimeProperties)
+        kernelServer(kernelConfig)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
 }
 
-fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties) {
+/**
+ * This function is to be run in projects which use kernel as a library,
+ * so we don't have a big need in covering it with tests
+ */
+@Suppress("unused")
+fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
+    val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
+    val config = KernelConfig.fromConfig(
+        KernelJupyterParams.fromFile(cfgFile),
+        libraryFactory ?: LibraryFactory.EMPTY,
+        cp,
+        null,
+        true
+    )
+    kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())
+}
+
+fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
     log.info("Starting server with config: $config")
 
     JupyterConnection(config).use { conn ->
@@ -87,7 +103,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties)
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyterImpl(config, runtimeProperties)
+        val repl = ReplForJupyterImpl(config, runtimeProperties, scriptReceivers)
 
         val mainThread = Thread.currentThread()
 

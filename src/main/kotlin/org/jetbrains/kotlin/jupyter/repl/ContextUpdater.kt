@@ -4,9 +4,8 @@ import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
 import org.slf4j.LoggerFactory
-
 import java.lang.reflect.Field
-import java.util.*
+import java.util.HashSet
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator

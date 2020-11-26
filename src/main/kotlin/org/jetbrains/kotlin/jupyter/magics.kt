@@ -51,11 +51,11 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
         return if (parser.reset) OutputConfig() else
             with(parser) {
                 OutputConfig(
-                        !dontCaptureStdout,
-                        maxTimeInterval,
-                        maxBuffer,
-                        max,
-                        maxBufferNewline
+                    !dontCaptureStdout,
+                    maxTimeInterval,
+                    maxBuffer,
+                    max,
+                    maxBufferNewline
                 )
             }
     }
@@ -88,7 +88,7 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                 val arg = if (parts.count() > 1) parts[1] else null
 
                 val magic = if (parseOnly) null else ReplLineMagics.valueOfOrNull(keyword)
-                if(magic == null && !parseOnly && !tryIgnoreErrors) {
+                if (magic == null && !parseOnly && !tryIgnoreErrors) {
                     throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
                 }
 
@@ -111,11 +111,11 @@ class MagicsProcessor(val repl: ReplOptions, private val libraries: LibrariesPro
                             if (arg == null) throw ReplCompilerException("Need some arguments for 'use' command")
                             newLibraries.addAll(libraries.processNewLibraries(arg))
                         } catch (e: Exception) {
-                            if (!tryIgnoreErrors) throw  e
+                            if (!tryIgnoreErrors) throw e
                         }
                     }
                     ReplLineMagics.useLatestDescriptors -> {
-                        libraryResolutionInfoSwitcher.switch = when(arg?.trim()) {
+                        libraryResolutionInfoSwitcher.switch = when (arg?.trim()) {
                             "-on" -> DefaultInfoSwitch.GIT_REFERENCE
                             "-off" -> DefaultInfoSwitch.DIRECTORY
                             else -> DefaultInfoSwitch.GIT_REFERENCE

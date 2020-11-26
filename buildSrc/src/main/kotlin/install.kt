@@ -161,11 +161,7 @@ fun ProjectWithInstallOptions.makeKernelSpec(installPath: Path, localInstall: Bo
     ), installPath.resolve(kernelFile))
 
     project.copy {
-        from (logosPath)
-        into (installPath)
-    }
-    project.copy {
-        from(nbExtensionPath)
+        from(nbExtensionPath, logosPath)
         into(installPath)
     }
 }

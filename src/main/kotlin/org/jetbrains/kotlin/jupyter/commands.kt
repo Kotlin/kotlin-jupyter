@@ -35,12 +35,15 @@ fun reportCommandErrors(code: String): ListErrorsResult {
 
     val sourceCode = SourceCodeImpl(0, code)
     val location = SourceCode.Location(
-            0.toSourceCodePosition(sourceCode),
-            (commandString.length + 1).toSourceCodePosition(sourceCode)
+        0.toSourceCodePosition(sourceCode),
+        (commandString.length + 1).toSourceCodePosition(sourceCode)
     )
-    return ListErrorsResult(code, sequenceOf(
+    return ListErrorsResult(
+        code,
+        sequenceOf(
             ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unknown command", location = location)
-    ))
+        )
+    )
 }
 
 fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
@@ -68,7 +71,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 s
             }
             val libraryFiles =
-                    repl.homeDir?.resolve(LibrariesDir)?.listFiles { file -> file.isFile && file.name.endsWith(".$LibraryDescriptorExt") } ?: emptyArray()
+                repl.homeDir?.resolve(LibrariesDir)?.listFiles { file -> file.isFile && file.name.endsWith(".$LibraryDescriptorExt") } ?: emptyArray()
             val libraries = libraryFiles.toList().mapNotNull { file ->
                 val libraryName = file.nameWithoutExtension
                 log.info("Parsing descriptor for library '$libraryName'")
@@ -77,10 +80,10 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 }
 
                 if (descriptor != null) {
-                    val link  = if (descriptor.link != null) " (${descriptor.link})" else ""
+                    val link = if (descriptor.link != null) " (${descriptor.link})" else ""
                     val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
                     "$libraryName$link$description"
-                } else  {
+                } else {
                     null
                 }
             }.joinToStringIndented()

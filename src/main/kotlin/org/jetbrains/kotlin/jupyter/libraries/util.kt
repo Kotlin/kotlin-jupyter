@@ -17,11 +17,21 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 sealed class Parameter(val name: String, open val default: String?) {
-    class Required(name: String): Parameter(name, null)
-    class Optional(name: String, override val default: String): Parameter(name, default)
+    class Required(name: String) : Parameter(name, null)
+    class Optional(name: String, override val default: String) : Parameter(name, default)
 }
 
-class Brackets(val open: Char, val close: Char) {
+class Brackets(
+    val open: Char,
+    @Suppress("MemberVisibilityCanBePrivate") val close: Char
+) {
+    val argRegex: Regex
+
+    init {
+        val endCharsStr = ",\\$close"
+        argRegex = Regex("""\s*((?<name>\p{Alnum}+)\s*=\s*)?((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""")
+    }
+
     companion object {
         val ROUND = Brackets('(', ')')
         val SQUARE = Brackets('[', ']')
@@ -47,7 +57,7 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
             val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) initialInfo else LibraryResolutionInfo.ByDir(defaultDir)
             val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) initialInfo else LibraryResolutionInfo.getInfoByRef(defaultRef)
             return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
-                when(switch) {
+                when (switch) {
                     DefaultInfoSwitch.DIRECTORY -> dirInfo
                     DefaultInfoSwitch.GIT_REFERENCE -> refInfo
                 }
@@ -60,19 +70,43 @@ fun diagFailure(message: String): ResultWithDiagnostics.Failure {
     return ResultWithDiagnostics.Failure(ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, message))
 }
 
-fun parseLibraryArgument(str: String): Variable {
-    val eq = str.indexOf('=')
-    return if (eq == -1) Variable("", str.trim())
-    else Variable(str.substring(0, eq).trim(), str.substring(eq + 1).trim())
+data class ArgParseResult(
+    val variable: Variable,
+    val end: Int
+)
+
+private val unescapeRegex = Regex("""\\(.)""")
+private fun String.unescape() = unescapeRegex.replace(this, "$1")
+
+private fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): ArgParseResult? {
+    if (begin >= str.length) return null
+
+    val match = brackets.argRegex.find(str, begin) ?: return null
+    val groups = match.groups
+
+    val name = groups["name"]?.value.orEmpty()
+
+    val raw = groups["raw"]?.value
+    val quoted = groups["quoted"]?.value
+    val endIndex = match.range.last + 1
+    val value = raw ?: quoted?.unescape() ?: ""
+
+    return ArgParseResult(Variable(name, value), endIndex)
 }
 
 fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.substring(0, openBracketIndex).trim()
-    val args = str.substring(openBracketIndex + 1, str.indexOf(brackets.close, openBracketIndex))
-            .split(',')
-            .map(::parseLibraryArgument)
+    val argsString = str.substring(openBracketIndex + 1)
+
+    val firstArg = parseLibraryArgument(argsString, brackets, 0)
+    val args = generateSequence(firstArg) {
+        parseLibraryArgument(argsString, brackets, it.end)
+    }.map {
+        it.variable
+    }.toList()
+
     return name to args
 }
 
@@ -81,26 +115,26 @@ fun parseLibraryName(str: String): Pair<String, List<Variable>> {
 }
 
 fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<String, String>? =
-        log.catchAll {
-            var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$ref"
+    log.catchAll {
+        var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$ref"
+        if (sinceTimestamp != null)
+            url += "&since=$sinceTimestamp"
+        log.info("Checking for new commits to library descriptors at $url")
+        val arr = getHttp(url).jsonArray
+        if (arr.length() == 0) {
             if (sinceTimestamp != null)
-                url += "&since=$sinceTimestamp"
-            log.info("Checking for new commits to library descriptors at $url")
-            val arr = getHttp(url).jsonArray
-            if (arr.length() == 0) {
-                if (sinceTimestamp != null)
-                    getLatestCommitToLibraries(ref, null)
-                else {
-                    log.info("Didn't find any commits to '$LibrariesDir' at $url")
-                    null
-                }
-            } else {
-                val commit = arr[0] as JSONObject
-                val sha = commit["sha"] as String
-                val timestamp = ((commit["commit"] as JSONObject)["committer"] as JSONObject)["date"] as String
-                sha to timestamp
+                getLatestCommitToLibraries(ref, null)
+            else {
+                log.info("Didn't find any commits to '$LibrariesDir' at $url")
+                null
             }
+        } else {
+            val commit = arr[0] as JSONObject
+            val sha = commit["sha"] as String
+            val timestamp = ((commit["commit"] as JSONObject)["committer"] as JSONObject)["date"] as String
+            sha to timestamp
         }
+    }
 
 fun parseLibraryDescriptor(json: String): LibraryDescriptor {
     val jsonParser = Parser.default()
@@ -112,20 +146,20 @@ fun parseLibraryDescriptor(json: String): LibraryDescriptor {
 
 fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
     return LibraryDescriptor(
-            originalJson = json,
-            dependencies = json.array<String>("dependencies")?.toList().orEmpty(),
-            variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
-            imports = json.array<String>("imports")?.toList().orEmpty(),
-            repositories = json.array<String>("repositories")?.toList().orEmpty(),
-            init = json.array<String>("init")?.toList().orEmpty(),
-            shutdown = json.array<String>("shutdown")?.toList().orEmpty(),
-            initCell = json.array<String>("initCell")?.toList().orEmpty(),
-            renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
-            link = json.string("link"),
-            description = json.string("description"),
-            minKernelVersion = json.string("minKernelVersion"),
-            converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
-            annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
+        originalJson = json,
+        dependencies = json.array<String>("dependencies")?.toList().orEmpty(),
+        variables = json.obj("properties")?.map { Variable(it.key, it.value.toString()) }.orEmpty(),
+        imports = json.array<String>("imports")?.toList().orEmpty(),
+        repositories = json.array<String>("repositories")?.toList().orEmpty(),
+        init = json.array<String>("init")?.toList().orEmpty(),
+        shutdown = json.array<String>("shutdown")?.toList().orEmpty(),
+        initCell = json.array<String>("initCell")?.toList().orEmpty(),
+        renderers = json.obj("renderers")?.map { TypeHandler(it.key, it.value.toString()) }?.toList().orEmpty(),
+        link = json.string("link"),
+        description = json.string("description"),
+        minKernelVersion = json.string("minKernelVersion"),
+        converters = json.obj("typeConverters")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty(),
+        annotations = json.obj("annotationHandlers")?.map { TypeHandler(it.key, it.value.toString()) }.orEmpty()
     )
 }
 

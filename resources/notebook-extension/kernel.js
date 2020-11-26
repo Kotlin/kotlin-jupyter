@@ -693,16 +693,17 @@ define(function(){
             return [passed, other];
         };
 
-        function clearErrors(cm) {
-            cm.getAllMarks()
+        function clearErrors(cell) {
+            cell.code_mirror.getAllMarks()
                 .filter(it => additionalClasses.some((cl) => it.className === cl))
                 .forEach(it => it.clear());
+            cell.errorsList = []
         }
 
         function clearAllErrors(notebook) {
             notebook.get_cells().forEach((cell) =>{
                 if (cell.code_mirror) {
-                    clearErrors(cell.code_mirror);
+                    clearErrors(cell);
                 }
             });
         }

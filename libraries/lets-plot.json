@@ -1,14 +1,14 @@
 {
   "description": "ggplot-like interactive visualization for Kotlin",
   "properties": {
-    "api": "1.0.0",
-    "lib": "1.5.2",
-    "js": "1.5.2",
+    "api": "1.1.0",
+    "lib": "1.5.4",
+    "js": "1.5.4",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
-    "https://jetbrains.bintray.com/lets-plot-maven"
+    "https://jetbrains.bintray.com/lets-plot-maven/"
   ],
   "dependencies": [
     "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api-kernel:$api",
@@ -23,7 +23,9 @@
     "jetbrains.letsPlot.scale.*",
     "jetbrains.letsPlot.facet.*",
     "jetbrains.letsPlot.sampling.*",
-    "jetbrains.letsPlot.export.*"
+    "jetbrains.letsPlot.export.*",
+    "jetbrains.letsPlot.tooltips.layer_tooltips",
+    "jetbrains.letsPlot.tooltips.tooltips_none"
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",

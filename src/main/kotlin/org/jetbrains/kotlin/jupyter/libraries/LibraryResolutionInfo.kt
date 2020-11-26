@@ -12,15 +12,15 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class LibraryResolutionInfo(
-        private val typeKey: String
-): LibraryCacheable {
+    private val typeKey: String
+) : LibraryCacheable {
     class ByNothing : LibraryResolutionInfo("nothing") {
         override val args: List<Variable> = listOf()
 
         override fun resolve(name: String?): String = "{}"
     }
 
-    class ByURL(val url: URL): LibraryResolutionInfo("url") {
+    class ByURL(val url: URL) : LibraryResolutionInfo("url") {
         override val args = listOf(Variable("url", url.toString()))
         override val shouldBeCachedLocally get() = false
 
@@ -30,7 +30,7 @@ abstract class LibraryResolutionInfo(
         }
     }
 
-    class ByFile(val file: File): LibraryResolutionInfo("file") {
+    class ByFile(val file: File) : LibraryResolutionInfo("file") {
         override val args = listOf(Variable("file", file.path))
         override val shouldBeCachedLocally get() = false
 
@@ -39,7 +39,7 @@ abstract class LibraryResolutionInfo(
         }
     }
 
-    class ByDir(private val librariesDir: File): LibraryResolutionInfo("bundled") {
+    class ByDir(private val librariesDir: File) : LibraryResolutionInfo("bundled") {
         override val args = listOf(Variable("dir", librariesDir.path))
         override val shouldBeCachedLocally get() = false
 
@@ -50,7 +50,7 @@ abstract class LibraryResolutionInfo(
         }
     }
 
-    class ByGitRef(private val ref: String): LibraryResolutionInfo("ref") {
+    class ByGitRef(private val ref: String) : LibraryResolutionInfo("ref") {
         override val valueKey: String
             get() = sha
 
@@ -97,11 +97,11 @@ abstract class LibraryResolutionInfo(
 
     override fun toString(): String {
         return typeKey +
-                when {
-                    args.isEmpty() -> ""
-                    args.size == 1 -> "[${args[0].value}]"
-                    else -> args.joinToString(", ", "[", "]") { "${it.name}=${it.value}" }
-                }
+            when {
+                args.isEmpty() -> ""
+                args.size == 1 -> "[${args[0].value}]"
+                else -> args.joinToString(", ", "[", "]") { "${it.name}=${it.value}" }
+            }
     }
 
     companion object {
@@ -115,5 +115,4 @@ abstract class LibraryResolutionInfo(
             return string.replace("""[<>/\\:"|?*]""".toRegex(), "_")
         }
     }
-
 }

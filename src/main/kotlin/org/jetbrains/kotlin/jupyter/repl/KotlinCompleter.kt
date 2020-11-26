@@ -7,7 +7,12 @@ import org.jetbrains.kotlin.jupyter.jsonObject
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import java.io.PrintWriter
 import java.io.StringWriter
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ReplCompleter
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
+import kotlin.script.experimental.api.valueOrNull
 
 enum class CompletionStatus(private val value: String) {
     OK("ok"),
@@ -21,19 +26,19 @@ enum class CompletionStatus(private val value: String) {
 data class CompletionTokenBounds(val start: Int, val end: Int)
 
 abstract class CompletionResult(
-        private val status: CompletionStatus
+    private val status: CompletionStatus
 ) {
     open fun toJson(): JsonObject {
         return jsonObject("status" to status.toString())
     }
 
     open class Success(
-            private val matches: List<String>,
-            private val bounds: CompletionTokenBounds,
-            private val metadata: List<SourceCodeCompletionVariant>,
-            private val text: String,
-            private val cursor: Int
-    ): CompletionResult(CompletionStatus.OK) {
+        private val matches: List<String>,
+        private val bounds: CompletionTokenBounds,
+        private val metadata: List<SourceCodeCompletionVariant>,
+        private val text: String,
+        private val cursor: Int
+    ) : CompletionResult(CompletionStatus.OK) {
         init {
             assert(matches.size == metadata.size)
         }
@@ -44,26 +49,26 @@ abstract class CompletionResult(
             res["cursor_start"] = bounds.start
             res["cursor_end"] = bounds.end
             res["metadata"] = mapOf(
-                    "_jupyter_types_experimental" to metadata.map {
-                        mapOf(
-                                "text" to it.text,
-                                "type" to it.tail,
-                                "start" to bounds.start,
-                                "end" to bounds.end
-                        )
-                    },
-                    "_jupyter_extended_metadata" to metadata.map {
-                        mapOf(
-                                "text" to it.text,
-                                "displayText" to it.displayText,
-                                "icon" to it.icon,
-                                "tail" to it.tail
-                        )
-                    }
+                "_jupyter_types_experimental" to metadata.map {
+                    mapOf(
+                        "text" to it.text,
+                        "type" to it.tail,
+                        "start" to bounds.start,
+                        "end" to bounds.end
+                    )
+                },
+                "_jupyter_extended_metadata" to metadata.map {
+                    mapOf(
+                        "text" to it.text,
+                        "displayText" to it.displayText,
+                        "icon" to it.icon,
+                        "tail" to it.tail
+                    )
+                }
             )
             res["paragraph"] = mapOf(
-                    "cursor" to cursor,
-                    "text" to text
+                "cursor" to cursor,
+                "text" to text
             )
             return res
         }
@@ -73,14 +78,15 @@ abstract class CompletionResult(
     }
 
     class Empty(
-            text: String, cursor: Int
-    ): Success(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
+        text: String,
+        cursor: Int
+    ) : Success(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
 
     class Error(
-            private val errorName: String,
-            private val errorValue: String,
-            private val traceBack: String
-    ): CompletionResult(CompletionStatus.ERROR) {
+        private val errorName: String,
+        private val errorValue: String,
+        private val traceBack: String
+    ) : CompletionResult(CompletionStatus.ERROR) {
         override fun toJson(): JsonObject {
             val res = super.toJson()
             res["ename"] = errorName
@@ -93,23 +99,25 @@ abstract class CompletionResult(
 
 data class ListErrorsResult(val code: String, val errors: Sequence<ScriptDiagnostic> = emptySequence()) {
     fun toJson(): JsonObject {
-        return jsonObject("code" to code,
-                "errors" to errors.map {
-            val er = jsonObject(
+        return jsonObject(
+            "code" to code,
+            "errors" to errors.map {
+                val er = jsonObject(
                     "message" to it.message,
                     "severity" to it.severity.name
-            )
+                )
 
-            val loc = it.location
-            if (loc != null) {
-                val start = loc.start
-                val end = loc.end
-                er["start"] = jsonObject("line" to start.line, "col" to start.col)
-                if (end != null)
-                    er["end"] = jsonObject("line" to end.line, "col" to end.col)
-            }
-            er
-        }.toList())
+                val loc = it.location
+                if (loc != null) {
+                    val start = loc.start
+                    val end = loc.end
+                    er["start"] = jsonObject("line" to start.line, "col" to start.col)
+                    if (end != null)
+                        er["end"] = jsonObject("line" to end.line, "col" to end.col)
+                }
+                er
+            }.toList()
+        )
     }
 }
 
@@ -129,7 +137,6 @@ class KotlinCompleter {
             completionResult?.valueOrNull()?.toList()?.let { completionList ->
                 getResult(code, cursor, completionList)
             } ?: CompletionResult.Empty(code, cursor)
-
         } catch (e: Exception) {
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))
@@ -148,7 +155,7 @@ class KotlinCompleter {
 
             val startSubstring = buf.substring(0, cursor)
 
-            val filter = {c: Char -> !c.isLetterOrDigit() && c != '_'}
+            val filter = { c: Char -> !c.isLetterOrDigit() && c != '_' }
 
             val start = startSubstring.indexOfLast(filter) + 1
 
