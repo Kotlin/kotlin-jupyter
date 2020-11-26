@@ -12,7 +12,7 @@ plugins {
 
 project.version = rootProject.version
 val kotlinxSerializationVersion: String by rootProject
-val publicationName = "api"
+val publicationName = "compiler"
 
 repositories {
     mavenCentral()
@@ -20,8 +20,20 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":kotlin-jupyter-api"))
+
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
+
+    api(kotlin("scripting-common"))
+    implementation(kotlin("scripting-compiler-embeddable"))
+    implementation(kotlin("scripting-dependencies"))
+    implementation(kotlin("scripting-jvm"))
+    implementation(kotlin("serialization"))
+    implementation(kotlin("scripting-ide-services") as String) { isTransitive = false }
+    implementation(kotlin("compiler-embeddable"))
+
+    compileOnly(kotlin("scripting-compiler-impl"))
 
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 
@@ -67,7 +79,7 @@ tasks {
 publishing {
     publications {
         create<MavenPublication>(publicationName) {
-            artifactId = "notebook-api"
+            artifactId = "compiler"
             groupId = "org.jetbrains.kotlinx.jupyter"
 
             from(components["java"])
@@ -93,7 +105,7 @@ bintray {
     pkg(
         delegateClosureOf<BintrayExtension.PackageConfig> {
             repo = bintrayRepo
-            name = "kotlin-jupyter-api"
+            name = "kotlin-jupyter-compiler"
             userOrg = bintrayUserOrg
 
             vcsUrl = project.findProperty("projectRepoUrl") as String? ?: ""
@@ -106,7 +118,7 @@ bintray {
                 delegateClosureOf<BintrayExtension.VersionConfig> {
                     val projVersion = project.version as String
                     name = projVersion // Bintray logical version name
-                    desc = "API for Kotlin Jupyter notebooks"
+                    desc = "Compiler helpers for Kotlin Jupyter notebooks"
                     released = Date().toString()
                     vcsTag = projVersion
                 }

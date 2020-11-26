@@ -6,13 +6,13 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.Notebook
 import org.jetbrains.kotlin.jupyter.catchAll
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.getHttp
 import org.jetbrains.kotlin.jupyter.log
 import org.jetbrains.kotlin.jupyter.util.replaceVariables

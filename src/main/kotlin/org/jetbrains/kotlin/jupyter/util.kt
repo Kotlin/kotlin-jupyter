@@ -1,9 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
-import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
+import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.slf4j.Logger
-import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
@@ -43,39 +41,6 @@ fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: St
 
 fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =
     diagnostics.map { it.copy(sourcePath = path) }
-
-internal fun <T> ResultWithDiagnostics<T>.getErrors(): String {
-    val filteredReports = reports.filter {
-        it.code != ScriptDiagnostic.incompleteCode
-    }
-
-    return filteredReports.joinToString("\n") { report ->
-        report.location?.let { loc ->
-            CompilerMessageLocationWithRange.create(
-                report.sourcePath,
-                loc.start.line,
-                loc.start.col,
-                loc.end?.line,
-                loc.end?.col,
-                null
-            )?.toExtString()?.let {
-                "$it "
-            }
-        }.orEmpty() + report.message
-    }
-}
-
-fun CompilerMessageLocationWithRange.toExtString(): String {
-    val start =
-        if (line == -1 && column == -1) ""
-        else "$line:$column"
-    val end =
-        if (lineEnd == -1 && columnEnd == -1) ""
-        else if (lineEnd == line) " - $columnEnd"
-        else " - $lineEnd:$columnEnd"
-    val loc = if (start.isEmpty() && end.isEmpty()) "" else " ($start$end)"
-    return path + loc
-}
 
 fun String.findNthSubstring(s: String, n: Int, start: Int = 0): Int {
     if (n < 1 || start == -1) return -1

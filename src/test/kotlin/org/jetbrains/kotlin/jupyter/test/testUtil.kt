@@ -30,6 +30,7 @@ val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaul
 val classpath = scriptCompilationClasspathFromContext(
     "jupyter-lib",
     "kotlin-jupyter-api",
+    "kotlin-jupyter-compiler",
     "kotlin-stdlib",
     "kotlin-reflect",
     "kotlin-script-runtime",

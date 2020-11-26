@@ -45,6 +45,7 @@ dependencies {
 
     implementation(project(":kotlin-jupyter-deps"))
     implementation(project(":kotlin-jupyter-api"))
+    implementation(project(":kotlin-jupyter-compiler"))
     implementation(project(":jupyter-lib"))
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
@@ -70,6 +71,7 @@ dependencies {
 
     deploy(project(":jupyter-lib"))
     deploy(project(":kotlin-jupyter-api"))
+    deploy(project(":kotlin-jupyter-compiler"))
     deploy(kotlin("script-runtime"))
 }
 

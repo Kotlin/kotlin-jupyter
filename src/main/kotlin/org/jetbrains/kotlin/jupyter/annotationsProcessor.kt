@@ -5,12 +5,13 @@ import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
+import kotlin.reflect.KClass
 
 interface AnnotationsProcessor {
 
     fun register(handler: GenerativeTypeHandler): Code
 
-    fun process(line: Any): List<Code>
+    fun process(kClass: KClass<*>): List<Code>
 }
 
 class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : AnnotationsProcessor {
@@ -36,7 +37,7 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
         return "fun $methodName($annotationArgument : $annotationType, $classArgument : kotlin.reflect.KClass<*>) = $body"
     }
 
-    override fun process(line: Any): List<Code> {
+    override fun process(kClass: KClass<*>): List<Code> {
         if (methodIdMap.isNotEmpty()) {
             contextUpdater.update()
             val resolvedMethods = methodIdMap.map {
@@ -48,12 +49,12 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
             }
         }
         val codeToExecute = mutableListOf<Code>()
-        line.javaClass.kotlin.nestedClasses.forEach { kClass ->
-            kClass.annotations.forEach {
+        kClass.nestedClasses.forEach { nestedClass ->
+            nestedClass.annotations.forEach {
                 val annotationType = it.annotationClass.qualifiedName!!
                 val handler = handlers[annotationType]
                 if (handler != null) {
-                    val result = handler.function.call(handler.line, it, kClass)
+                    val result = handler.function.call(handler.line, it, nestedClass)
                     (result as? List<String>?)?.let(codeToExecute::addAll)
                 }
             }

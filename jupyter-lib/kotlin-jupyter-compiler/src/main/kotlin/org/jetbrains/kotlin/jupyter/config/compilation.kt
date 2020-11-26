@@ -3,15 +3,16 @@ package org.jetbrains.kotlin.jupyter.config
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
-import kotlin.script.experimental.api.RefineConfigurationBuilder
+import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.implicitReceivers
-import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.jvm
@@ -21,7 +22,7 @@ fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
     scriptReceivers: List<Any> = emptyList(),
     jvmTargetVersion: String = "1.8",
-    refinementAction: RefineConfigurationBuilder.() -> Unit = {}
+    body: ScriptCompilationConfiguration.Builder.() -> Unit = {}
 ): ScriptCompilationConfiguration {
     return ScriptCompilationConfiguration {
         hostConfiguration.update { it.withDefaultsFrom(defaultJvmScriptingHostConfiguration) }
@@ -38,7 +39,6 @@ fun getCompilationConfiguration(
         jvm {
             updateClasspath(scriptClasspath)
         }
-        refineConfiguration(refinementAction)
 
         val receiversTypes = scriptReceivers.map { KotlinType(it.javaClass.canonicalName) }
         implicitReceivers(receiversTypes)
@@ -49,5 +49,11 @@ fun getCompilationConfiguration(
             jvmTargetVersion,
             "-no-stdlib",
         )
+
+        ide {
+            acceptedLocations(ScriptAcceptedLocation.Everywhere)
+        }
+
+        body()
     }
 }

@@ -6,12 +6,12 @@ import org.jetbrains.kotlin.jupyter.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
-import org.jetbrains.kotlin.jupyter.repl.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

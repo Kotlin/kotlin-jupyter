@@ -9,13 +9,12 @@ import org.jetbrains.kotlin.jupyter.GitHubRepoName
 import org.jetbrains.kotlin.jupyter.GitHubRepoOwner
 import org.jetbrains.kotlin.jupyter.LibrariesDir
 import org.jetbrains.kotlin.jupyter.OutputConfig
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
-import org.jetbrains.kotlin.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlin.jupyter.ResolverConfig
 import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlin.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.generateDiagnostic
@@ -70,7 +69,7 @@ class ReplTest : AbstractReplTest() {
         // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        assertThrows<ReplEvalRuntimeException> {
+        assertThrows<ReplCompilerException> {
             repl.eval(
                 """
                 fun stack(vararg tup: Int): Int = tup.sum()

@@ -1,11 +1,11 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
 import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-import org.jetbrains.kotlin.jupyter.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
+import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.util.replaceVariables
 
 class LibrariesProcessor(
