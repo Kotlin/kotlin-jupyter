@@ -1,22 +1,10 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
-import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.api.Notebook
-import org.jetbrains.kotlin.jupyter.catchAll
-import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
-import org.jetbrains.kotlin.jupyter.getHttp
-import org.jetbrains.kotlin.jupyter.log
 import org.jetbrains.kotlin.jupyter.util.replaceVariables
-import org.json.JSONObject
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -59,8 +47,12 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
     companion object {
         fun default(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
             val initialInfo = provider.fallback
-            val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) initialInfo else LibraryResolutionInfo.ByDir(defaultDir)
-            val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) initialInfo else LibraryResolutionInfo.getInfoByRef(defaultRef)
+            val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) initialInfo else LibraryResolutionInfo.ByDir(
+                defaultDir
+            )
+            val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) initialInfo else LibraryResolutionInfo.getInfoByRef(
+                defaultRef
+            )
             return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
                 when (switch) {
                     DefaultInfoSwitch.DIRECTORY -> dirInfo
@@ -117,46 +109,6 @@ fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
 
 fun parseLibraryName(str: String): Pair<String, List<Variable>> {
     return parseCall(str, Brackets.ROUND)
-}
-
-fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<String, String>? =
-    log.catchAll {
-        var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$ref"
-        if (sinceTimestamp != null)
-            url += "&since=$sinceTimestamp"
-        log.info("Checking for new commits to library descriptors at $url")
-        val arr = getHttp(url).jsonArray
-        if (arr.length() == 0) {
-            if (sinceTimestamp != null)
-                getLatestCommitToLibraries(ref, null)
-            else {
-                log.info("Didn't find any commits to '$LibrariesDir' at $url")
-                null
-            }
-        } else {
-            val commit = arr[0] as JSONObject
-            val sha = commit["sha"] as String
-            val timestamp = ((commit["commit"] as JSONObject)["committer"] as JSONObject)["date"] as String
-            sha to timestamp
-        }
-    }
-
-fun parseLibraryDescriptor(json: String): LibraryDescriptor {
-    val res = Json.parseToJsonElement(json)
-    if (res is JsonObject) return parseLibraryDescriptor(res)
-
-    throw ReplCompilerException("Result of library descriptor parsing is of type ${res.javaClass.canonicalName} which is unexpected")
-}
-
-fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
-    return Json.decodeFromJsonElement(json)
-}
-
-fun parseLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
-    return libJsons.mapValues {
-        log.info("Parsing '${it.key}' descriptor")
-        parseLibraryDescriptor(it.value)
-    }
 }
 
 class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) : LibraryDefinitionProducer {

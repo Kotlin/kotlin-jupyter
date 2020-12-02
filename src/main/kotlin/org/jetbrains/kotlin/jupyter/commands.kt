@@ -2,8 +2,11 @@ package org.jetbrains.kotlin.jupyter
 
 import org.jetbrains.kotlin.jupyter.api.textResult
 import org.jetbrains.kotlin.jupyter.common.ReplCommands
-import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
+import org.jetbrains.kotlin.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlin.jupyter.config.catchAll
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlin.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlin.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
@@ -62,7 +65,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
         }
         ReplCommands.help -> {
             val commands = ReplCommands.values().asIterable().joinToStringIndented { ":${it.name} - ${it.desc}" }
-            val magics = ReplLineMagics.values().asIterable().filter { it.visibleInHelp }.joinToStringIndented {
+            val magics = ReplLineMagic.values().asIterable().filter { it.visibleInHelp }.joinToStringIndented {
                 var s = "%${it.name} - ${it.desc}"
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.name} ${it.argumentsUsage}"
                 s

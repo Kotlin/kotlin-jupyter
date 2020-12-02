@@ -17,13 +17,20 @@ import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.compiler.util.getErrors
-import org.jetbrains.kotlin.jupyter.config.DependsOn
-import org.jetbrains.kotlin.jupyter.config.Repository
+import org.jetbrains.kotlin.jupyter.config.catchAll
 import org.jetbrains.kotlin.jupyter.config.getCompilationConfiguration
+import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
+import org.jetbrains.kotlin.jupyter.dependencies.JupyterScriptDependenciesResolver
+import org.jetbrains.kotlin.jupyter.dependencies.MavenDepsOnAnnotationsConfigurator
+import org.jetbrains.kotlin.jupyter.dependencies.Repository
+import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
+import org.jetbrains.kotlin.jupyter.magics.FullMagicsHandler
+import org.jetbrains.kotlin.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.repl.ClassWriter
 import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
@@ -33,24 +40,17 @@ import java.io.File
 import java.net.URLClassLoader
 import java.util.LinkedList
 import kotlin.reflect.KClass
-import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.analysisDiagnostics
-import kotlin.script.experimental.api.asDiagnostics
-import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
-import kotlin.script.experimental.api.foundAnnotations
 import kotlin.script.experimental.api.implicitReceivers
-import kotlin.script.experimental.api.onSuccess
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.api.with
@@ -61,7 +61,6 @@ import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.util.isError
 import kotlin.script.experimental.jvm.util.isIncomplete
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
-import kotlin.script.experimental.jvm.withUpdatedClasspath
 
 typealias Classpath = List<String>
 
@@ -171,6 +170,7 @@ class ReplForJupyterImpl(
         }
 
     private val resolver = JupyterScriptDependenciesResolver(resolverConfig)
+    private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
 
     private val typeRenderers = mutableListOf<RendererTypeHandler>()
 
@@ -258,36 +258,20 @@ class ReplForJupyterImpl(
 
     private val ctx = KotlinContext()
 
-    private val magics = MagicsProcessor(this, LibrariesProcessor(resolverConfig?.libraries, runtimeProperties, libraryFactory))
-
-    private fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)?.takeIf { it.isNotEmpty() }
-            ?: return context.compilationConfiguration.asSuccess()
-        val scriptContents = object : ScriptContents {
-            override val annotations: Iterable<Annotation> = annotations
-            override val file: File? = null
-            override val text: CharSequence? = null
-        }
-        return try {
-            resolver.resolveFromAnnotations(scriptContents)
-                .onSuccess { classpath ->
-                    context.compilationConfiguration
-                        .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }
-                        .asSuccess()
-                }
-        } catch (e: Throwable) {
-            ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))
-        }
-    }
+    private val magics = MagicsProcessor(FullMagicsHandler(this, LibrariesProcessor(resolverConfig?.libraries, runtimeProperties.version, libraryFactory)))
 
     // Used for various purposes, i.e. completion and listing errors
-    private val lightCompilerConfiguration =
-        getCompilationConfiguration(scriptClasspath, scriptReceivers, runtimeProperties.jvmTargetForSnippets)
+    private val lightCompilerConfiguration: ScriptCompilationConfiguration =
+        getCompilationConfiguration(
+            scriptClasspath,
+            scriptReceivers,
+            runtimeProperties.jvmTargetForSnippets,
+        )
 
     // Used only for compilation
-    private val compilerConfiguration = lightCompilerConfiguration.with {
+    private val compilerConfiguration: ScriptCompilationConfiguration = lightCompilerConfiguration.with {
         refineConfiguration {
-            onAnnotations(DependsOn::class, Repository::class, handler = { configureMavenDepsOnAnnotations(it) })
+            onAnnotations(DependsOn::class, Repository::class, handler = mavenDepsConfigurator::configure)
         }
     }
 

@@ -11,6 +11,9 @@ plugins {
 }
 
 val kotlinxSerializationVersion: String by project
+val junitVersion: String by project
+val slf4jVersion: String by project
+val khttpVersion: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
@@ -36,9 +39,6 @@ allprojects {
 }
 
 dependencies {
-    val junitVersion = "5.6.2"
-    val slf4jVersion = "1.7.30"
-
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation(kotlin("test"))
@@ -63,7 +63,7 @@ dependencies {
     compileOnly(kotlin("scripting-compiler-impl"))
 
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    implementation("khttp:khttp:1.0.0")
+    implementation("khttp:khttp:$khttpVersion")
     implementation("org.zeromq:jeromq:0.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("com.github.ajalt:clikt:2.8.0")

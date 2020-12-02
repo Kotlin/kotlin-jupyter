@@ -2,11 +2,7 @@ package org.jetbrains.kotlin.jupyter.libraries
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
-import org.jetbrains.kotlin.jupyter.LocalCacheDir
-import org.jetbrains.kotlin.jupyter.LocalSettingsPath
-import org.jetbrains.kotlin.jupyter.log
+import org.jetbrains.kotlin.jupyter.config.getLogger
 import java.nio.file.Paths
 
 abstract class LibraryResolver(private val parent: LibraryResolver? = null) {
@@ -48,11 +44,17 @@ class LocalLibraryResolver(
     parent: LibraryResolver?,
     mainLibrariesDir: String
 ) : LibraryResolver(parent) {
-    private val pathsToCheck = listOf(
-        Paths.get(LocalSettingsPath, LocalCacheDir).toString(),
-        LocalSettingsPath,
-        mainLibrariesDir
-    )
+    private val logger = getLogger()
+    private val pathsToCheck: List<String>
+
+    init {
+        val localSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kotlin").toString()
+        pathsToCheck = listOf(
+            Paths.get(localSettingsPath, LocalCacheDir).toString(),
+            localSettingsPath,
+            mainLibrariesDir
+        )
+    }
 
     override fun shouldResolve(reference: LibraryReference): Boolean {
         return reference.shouldBeCachedLocally
@@ -65,7 +67,9 @@ class LocalLibraryResolver(
             else { file.readText() }
         }
 
-        if (jsons.size > 1) log.warn("More than one file for library $reference found in local cache directories")
+        if (jsons.size > 1) {
+            logger.warn("More than one file for library $reference found in local cache directories")
+        }
 
         val json = jsons.firstOrNull() ?: return null
         return parseLibraryDescriptor(json)

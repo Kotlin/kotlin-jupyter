@@ -34,6 +34,3 @@ pluginManagement {
         id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
     }
 }
-
-includeBuild("../kotlin-jupyter-publish")
-include("kotlin-jupyter-deps")

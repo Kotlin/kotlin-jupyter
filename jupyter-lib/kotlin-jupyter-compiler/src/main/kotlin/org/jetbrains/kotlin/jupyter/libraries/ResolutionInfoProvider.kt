@@ -1,7 +1,5 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
-import org.jetbrains.kotlin.jupyter.LibrariesDir
 import java.io.File
 import java.net.URL
 

@@ -1,7 +1,5 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.Variable
 import java.io.File
 import java.net.URL
 import java.nio.file.Paths
@@ -60,6 +58,10 @@ class LibraryFactory(
 
         val EMPTY = LibraryFactory(EmptyResolutionInfoProvider)
 
-        fun withDefaultDirectoryResolution(dir: File) = LibraryFactory(StandardResolutionInfoProvider(LibraryResolutionInfo.ByDir(dir)))
+        fun withDefaultDirectoryResolution(dir: File) = LibraryFactory(
+            StandardResolutionInfoProvider(
+                LibraryResolutionInfo.ByDir(dir)
+            )
+        )
     }
 }

@@ -1,9 +1,7 @@
 package org.jetbrains.kotlin.jupyter
 
 import jupyter.kotlin.JavaRuntime
-import khttp.responses.Response
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -14,40 +12,17 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlin.jupyter.api.Code
-import org.jetbrains.kotlin.jupyter.api.CodeExecution
-import org.jetbrains.kotlin.jupyter.api.ExactRendererTypeHandler
-import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
+import org.jetbrains.kotlin.jupyter.config.getLogger
+import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
-import org.jetbrains.kotlin.jupyter.util.GenerativeHandlersSerializer
-import org.jetbrains.kotlin.jupyter.util.ListToMapSerializer
-import org.jetbrains.kotlin.jupyter.util.RenderersSerializer
-import org.slf4j.LoggerFactory
 import org.zeromq.SocketType
 import java.io.File
-import java.nio.file.Paths
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
-
-const val LibrariesDir = "libraries"
-const val LocalCacheDir = "cache"
-
-val LocalSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kotlin").toString()
-
-const val GitHubApiHost = "api.github.com"
-const val GitHubRepoOwner = "kotlin"
-const val GitHubRepoName = "kotlin-jupyter"
-const val GitHubApiPrefix = "https://$GitHubApiHost/repos/$GitHubRepoOwner/$GitHubRepoName"
-
-const val LibraryDescriptorExt = "json"
-const val LibraryPropertiesFile = ".properties"
 
 const val protocolVersion = "5.3"
 
-internal val log by lazy { LoggerFactory.getLogger("ikotlin") }
+internal val log by lazy { getLogger() }
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(ClassLoader.getSystemResource("runtime.properties")?.readText()?.parseIniConfig().orEmpty())
@@ -184,58 +159,6 @@ data class KernelConfig(
             )
         }
     }
-}
-
-@Serializable
-data class Variable(val name: String, val value: String, val required: Boolean = false)
-
-object VariablesSerializer : ListToMapSerializer<Variable, String, String>(
-    serializer(),
-    ::Variable,
-    { it.name to it.value }
-)
-
-@Serializable
-class LibraryDescriptor(
-    val libraryDefinitions: List<Code> = emptyList(),
-    override val dependencies: List<String> = emptyList(),
-
-    @Serializable(VariablesSerializer::class)
-    @SerialName("properties")
-    val variables: List<Variable> = emptyList(),
-
-    override val initCell: List<CodeExecution> = emptyList(),
-    override val imports: List<String> = emptyList(),
-    override val repositories: List<String> = emptyList(),
-    override val init: List<CodeExecution> = emptyList(),
-    override val shutdown: List<CodeExecution> = emptyList(),
-
-    @Serializable(RenderersSerializer::class)
-    override val renderers: List<ExactRendererTypeHandler> = emptyList(),
-
-    @Serializable(GenerativeHandlersSerializer::class)
-    @SerialName("typeConverters")
-    override val converters: List<GenerativeTypeHandler> = emptyList(),
-
-    @Serializable(GenerativeHandlersSerializer::class)
-    @SerialName("annotationHandlers")
-    override val annotations: List<GenerativeTypeHandler> = emptyList(),
-
-    val link: String? = null,
-    val description: String? = null,
-    val minKernelVersion: String? = null,
-) : LibraryDefinition
-
-data class ResolverConfig(
-    val repositories: List<RepositoryCoordinates>,
-    val libraries: LibraryResolver
-)
-
-fun getHttp(url: String): Response {
-    val response = khttp.get(url)
-    if (response.statusCode != 200)
-        throw Exception("Http request failed. Url = $url. Response = $response")
-    return response
 }
 
 fun loadResolverConfig(homeDir: String, libraryFactory: LibraryFactory) = ResolverConfig(defaultRepositories, libraryFactory.getStandardResolver(homeDir))

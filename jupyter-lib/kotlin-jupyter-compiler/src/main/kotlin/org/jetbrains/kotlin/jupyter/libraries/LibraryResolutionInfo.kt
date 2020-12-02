@@ -1,12 +1,7 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.GitHubApiPrefix
-import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.LibraryDescriptorExt
-import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
-import org.jetbrains.kotlin.jupyter.getHttp
-import org.jetbrains.kotlin.jupyter.log
+import org.jetbrains.kotlin.jupyter.config.getLogger
 import java.io.File
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -65,7 +60,7 @@ abstract class LibraryResolutionInfo(
             if (name == null) throw ReplCompilerException("Reference library resolver needs name to be specified")
 
             val url = "$GitHubApiPrefix/contents/$LibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
-            log.info("Requesting library descriptor at $url")
+            getLogger().info("Requesting library descriptor at $url")
             val response = getHttp(url).jsonObject
 
             val downloadURL = response["download_url"].toString()

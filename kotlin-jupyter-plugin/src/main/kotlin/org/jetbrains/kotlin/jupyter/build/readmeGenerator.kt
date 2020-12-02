@@ -5,7 +5,7 @@ import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.registering
 import org.jetbrains.kotlin.jupyter.common.ReplCommands
-import org.jetbrains.kotlin.jupyter.common.ReplLineMagics
+import org.jetbrains.kotlin.jupyter.common.ReplLineMagic
 import java.io.File
 
 class ReadmeGenerator(
@@ -54,7 +54,7 @@ class ReadmeGenerator(
     }
 
     private fun processMagics(): String {
-        return ReplLineMagics.values().filter { it.visibleInHelp }.joinToString("\n") {
+        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString("\n") {
             val description = " - `%${it.name}` - ${it.desc}"
             val usage = if (it.argumentsUsage == null) ""
             else "\n\tUsage example: %${it.name} ${it.argumentsUsage}"

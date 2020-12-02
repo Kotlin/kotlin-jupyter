@@ -13,9 +13,17 @@ pluginManagement {
         // only when using Kotlin EAP releases ...
         maven("https://dl.bintray.com/kotlin/kotlin-eap")
 
-        val teamcityUrl = "https://teamcity.jetbrains.com"
-        val teamcityProjectId = "Kotlin_KotlinPublic_Aggregate"
-        maven("$teamcityUrl/guestAuth/app/rest/builds/buildType:(id:$teamcityProjectId),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
+        class TeamcitySettings(
+            val url: String,
+            val projectId: String
+        )
+        val teamcityRepos = listOf(
+            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Aggregate"),
+            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Aggregate")
+        )
+        for (teamcity in teamcityRepos) {
+            maven("${teamcity.url}/guestAuth/app/rest/builds/buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
+        }
 
         // Used for TeamCity build
         val m2LocalPath = File(".m2/repository")
@@ -49,11 +57,13 @@ gradle.projectsLoaded {
 }
 
 val pluginProject = "kotlin-jupyter-plugin"
+val publishPluginProject = "kotlin-jupyter-publish"
 val depsProject = "kotlin-jupyter-deps"
 val apiProject = "kotlin-jupyter-api"
 val compilerProject = "kotlin-jupyter-compiler"
 val libProject = "jupyter-lib"
 
+includeBuild(publishPluginProject)
 includeBuild(pluginProject)
 include(depsProject)
 include(libProject)

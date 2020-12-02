@@ -1,7 +1,7 @@
 plugins {
+    id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
 }
 
 repositories {

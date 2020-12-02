@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter
 
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong

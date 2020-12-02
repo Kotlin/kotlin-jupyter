@@ -1,8 +1,5 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
-import org.jetbrains.kotlin.jupyter.Variable
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
@@ -10,7 +7,7 @@ import org.jetbrains.kotlin.jupyter.util.replaceVariables
 
 class LibrariesProcessor(
     private val libraries: LibraryResolver?,
-    private val runtimeProperties: ReplRuntimeProperties,
+    private val kernelVersion: KotlinKernelVersion?,
     val libraryFactory: LibraryFactory,
 ) {
 
@@ -102,7 +99,7 @@ class LibrariesProcessor(
         library.minKernelVersion?.let { minVersionStr ->
             val minVersion = KotlinKernelVersion.from(minVersionStr)
                 ?: throw ReplCompilerException("Wrong format of minimal kernel version for library '$name': $minVersionStr")
-            runtimeProperties.version?.let { currentVersion ->
+            kernelVersion?.let { currentVersion ->
                 if (currentVersion < minVersion) {
                     throw ReplCompilerException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
                 }

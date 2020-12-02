@@ -1,7 +1,5 @@
 package org.jetbrains.kotlin.jupyter.libraries
 
-import org.jetbrains.kotlin.jupyter.LibraryDescriptor
-
 data class LibraryReference(
     val info: LibraryResolutionInfo,
     val name: String? = null,
