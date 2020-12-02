@@ -72,8 +72,8 @@ open class KernelServerTestsBase {
             }
 
             testLogger = LoggerFactory.getLogger("testKernel_$testName")
-            fileOut = createTempFile("tmp-kernel-out-$testName", ".txt")
-            fileErr = createTempFile("tmp-kernel-err-$testName", ".txt")
+            fileOut = File.createTempFile("tmp-kernel-out-$testName", ".txt")
+            fileErr = File.createTempFile("tmp-kernel-err-$testName", ".txt")
 
             serverProcess = ProcessBuilder(command)
                 .redirectOutput(fileOut)

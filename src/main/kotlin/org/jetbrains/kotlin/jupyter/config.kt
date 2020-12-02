@@ -129,7 +129,7 @@ data class KernelConfig(
     fun toArgs(prefix: String = ""): KernelArgs {
         val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
 
-        val cfgFile = createTempFile("kotlin-kernel-config-$prefix", ".json")
+        val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
         cfgFile.deleteOnExit()
         val format = Json { prettyPrint = true }
         cfgFile.writeText(format.encodeToString(params))
