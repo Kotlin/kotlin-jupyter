@@ -1,6 +1,6 @@
 package org.jetbrains.kotlin.jupyter.common
 
-enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
+enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     use("injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers", "klaxon(5.0.1), lets-plot"),
     trackClasspath("logs any changes of current classpath. Useful for debugging artifact resolution failures"),
     trackExecution("logs pieces of code that are going to be executed. Useful for debugging of libraries support"),
@@ -9,7 +9,7 @@ enum class ReplLineMagics(val desc: String, val argumentsUsage: String? = null, 
     output("output capturing settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400");
 
     companion object {
-        fun valueOfOrNull(name: String): ReplLineMagics? {
+        fun valueOfOrNull(name: String): ReplLineMagic? {
             return try {
                 valueOf(name)
             } catch (e: IllegalArgumentException) {

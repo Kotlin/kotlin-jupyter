@@ -14,8 +14,11 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.with
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.baseClassLoader
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
@@ -30,7 +33,7 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     private val classes = mutableListOf<KClass<*>>()
 
     val numberOfSnippets: Int
-        get() = generateSequence(lastCompiledSnippet) { it.previous }.count()
+        get() = classes.size
 
     val previousScriptsClasses: List<KClass<*>>
         get() = classes
@@ -81,7 +84,8 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     )
 }
 
-class SimpleReplCompiler : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(
+class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(
+    hostConfiguration = hostConfiguration,
     initAnalyzer = { sharedScriptCompilationContext, scopeProcessor ->
         ReplCodeAnalyzerBase(sharedScriptCompilationContext.environment, implicitsResolutionFilter = scopeProcessor)
     }
@@ -91,12 +95,26 @@ fun getSimpleCompiler(
     compilationConfiguration: ScriptCompilationConfiguration,
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler<KJvmReplCompilerBase<ReplCodeAnalyzerBase>> {
-    return JupyterCompiler(SimpleReplCompiler(), compilationConfiguration, evaluationConfiguration)
+    return JupyterCompiler(
+        SimpleReplCompiler(
+            compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
+                ?: defaultJvmScriptingHostConfiguration
+        ),
+        compilationConfiguration,
+        evaluationConfiguration
+    )
 }
 
 fun getCompilerWithCompletion(
     compilationConfiguration: ScriptCompilationConfiguration,
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler<KJvmReplCompilerWithIdeServices> {
-    return JupyterCompiler(KJvmReplCompilerWithIdeServices(), compilationConfiguration, evaluationConfiguration)
+    return JupyterCompiler(
+        KJvmReplCompilerWithIdeServices(
+            compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
+                ?: defaultJvmScriptingHostConfiguration
+        ),
+        compilationConfiguration,
+        evaluationConfiguration
+    )
 }

@@ -1,17 +1,18 @@
 package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.ExecutedCodeLogging
-import org.jetbrains.kotlin.jupyter.LibrariesDir
-import org.jetbrains.kotlin.jupyter.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
+import org.jetbrains.kotlin.jupyter.magics.FullMagicsHandler
+import org.jetbrains.kotlin.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -123,7 +124,8 @@ class ParseMagicsTests {
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
         val libraryFactory = LibraryFactory.EMPTY
-        val processor = MagicsProcessor(options, LibrariesProcessor(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties, libraryFactory))
+        val magicsHandler = FullMagicsHandler(options, LibrariesProcessor(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties.version, libraryFactory))
+        val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)
             librariesChecker(libraries.getDefinitions(null))

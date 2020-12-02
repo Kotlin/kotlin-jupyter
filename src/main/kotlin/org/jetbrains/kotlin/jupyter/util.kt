@@ -1,18 +1,10 @@
 package org.jetbrains.kotlin.jupyter
 
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
-import org.slf4j.Logger
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
-
-fun <T> Logger.catchAll(msg: String = "", body: () -> T): T? = try {
-    body()
-} catch (e: Exception) {
-    this.error(msg, e)
-    null
-}
 
 fun String.parseIniConfig() =
     lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()

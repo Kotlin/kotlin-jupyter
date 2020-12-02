@@ -64,7 +64,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
             }
 
             val repoUrl = rootProject.property("projectRepoUrl") as String
-            artifactsDir.resolve("REPO_URL").toFile().writeText(repoUrl)
+            distribBuildPath.resolve("REPO_URL").toFile().writeText(repoUrl)
         }
     }
 }

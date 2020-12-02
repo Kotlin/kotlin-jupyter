@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.jupyter.config
+package org.jetbrains.kotlin.jupyter.dependencies
 
 // in case of flat or direct resolvers the value should be a direct path or file name of a jar respectively
 // in case of maven resolver the maven coordinates string is accepted (resolved with com.jcabi.aether library)
