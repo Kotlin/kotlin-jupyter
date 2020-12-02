@@ -41,6 +41,8 @@ fun Project.options(): AllOptions {
                     project.delete(artifactsDir)
                 }
 
+                project.extra.set("localPublicationsRepo", artifactsDir.resolve("maven"))
+
                 project.version = detectVersion(baseVersion, artifactsDir, versionFileName)
                 println("##teamcity[buildNumber '$version']")
             }

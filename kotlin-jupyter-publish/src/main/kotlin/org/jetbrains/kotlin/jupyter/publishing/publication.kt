@@ -10,8 +10,10 @@ import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.maven
 import org.jetbrains.dokka.gradle.DokkaTask
 import java.io.File
+import java.nio.file.Path
 import java.util.Date
 
 fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
@@ -49,7 +51,7 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
 
     extensions.configure<PublishingExtension>("publishing") {
         publications {
-            this.register(settings.publicationName!!, MavenPublication::class.java) {
+            register(settings.publicationName!!, MavenPublication::class.java) {
                 artifactId = settings.artifactId
                 groupId = settings.groupId
 
@@ -57,6 +59,10 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
                 artifact(tasks["sourceJar"])
                 artifact(tasks["javadocJar"])
             }
+        }
+
+        repositories {
+            (rootProject.findProperty("localPublicationsRepo") as? Path)?.let { maven(it.toUri()) }
         }
     }
 
