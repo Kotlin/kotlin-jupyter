@@ -203,6 +203,15 @@ dependencies {
     deploy(kotlin("script-runtime"))
 }
 
+tasks.register("publishLocal") {
+    group = "publishing"
+
+    dependsOn(
+        "condaPackage",
+        "pyPiPackage"
+    )
+}
+
 with(ProjectWithOptionsImpl(project, TaskOptions())) {
     /****** Build tasks ******/
     tasks.jar {
