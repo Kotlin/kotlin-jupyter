@@ -55,8 +55,6 @@ dependencies {
     implementation(kotlin("compiler-embeddable"))
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("script-util"))
-    implementation(kotlin("scripting-dependencies"))
-    implementation(kotlin("scripting-dependencies-maven"))
     implementation(kotlin("main-kts"))
     implementation(kotlin("serialization"))
 
@@ -71,7 +69,6 @@ dependencies {
 
     deploy(project(":jupyter-lib"))
     deploy(project(":kotlin-jupyter-api"))
-    deploy(project(":kotlin-jupyter-compiler"))
     deploy(kotlin("script-runtime"))
 }
 
