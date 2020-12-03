@@ -1,17 +1,20 @@
 package org.jetbrains.kotlin.jupyter
 
+import AnnotationsProcessor
 import jupyter.kotlin.KotlinContext
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.Execution
-import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlin.jupyter.codegen.AnnotationsProcessorImpl
+import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessor
+import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessorImpl
 import org.jetbrains.kotlin.jupyter.compiler.getCompilerWithCompletion
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
@@ -27,7 +30,6 @@ import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlin.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlin.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlin.jupyter.magics.MagicsProcessor
@@ -186,69 +188,23 @@ class ReplForJupyterImpl(
         return renderResult(result.value, result.fieldName)
     }
 
-    data class PreprocessingResult(
-        val code: Code,
-        val initCodes: List<Execution>,
-        val shutdownCodes: List<Execution>,
-        val initCellCodes: List<Execution>,
-        val typeRenderers: List<RendererTypeHandler>,
-    )
-
-    inner class PreprocessingResultBuilder(private val code: Code) {
-        private val initCodes = mutableListOf<Execution>()
-        private val shutdownCodes = mutableListOf<Execution>()
-        private val initCellCodes = mutableListOf<Execution>()
-        private val typeRenderers = mutableListOf<RendererTypeHandler>()
-        private val typeConverters = mutableListOf<GenerativeTypeHandler>()
-        private val annotations = mutableListOf<GenerativeTypeHandler>()
-
-        fun add(libraryDefinition: LibraryDefinition) {
-            libraryDefinition.buildDependenciesInitCode()?.let { initCodes.add(CodeExecution(it)) }
-            typeRenderers.addAll(libraryDefinition.renderers)
-            typeConverters.addAll(libraryDefinition.converters)
-            annotations.addAll(libraryDefinition.annotations)
-            initCellCodes.addAll(libraryDefinition.initCell)
-            shutdownCodes.addAll(libraryDefinition.shutdown)
-            libraryDefinition.init.forEach {
-                if (it is CodeExecution) {
-                    // Library init code may contain other magics, so we process them recursively
-                    val preprocessed = preprocessCode(it.code)
-                    initCodes.addAll(preprocessed.initCodes)
-                    typeRenderers.addAll(preprocessed.typeRenderers)
-                    initCellCodes.addAll(preprocessed.initCellCodes)
-                    shutdownCodes.addAll(preprocessed.shutdownCodes)
-                    if (preprocessed.code.isNotBlank())
-                        initCodes.add(CodeExecution(preprocessed.code))
-                } else {
-                    initCodes.add(it)
-                }
-            }
-        }
-
-        fun build(): PreprocessingResult {
-            val declarations = (typeConverters.map { typeProvidersProcessor.register(it) } + annotations.map { annotationsProcessor.register(it) })
-                .joinToString("\n")
-            if (declarations.isNotBlank()) {
-                initCodes.add(CodeExecution(declarations))
-            }
-
-            return PreprocessingResult(code, initCodes, shutdownCodes, initCellCodes, typeRenderers)
-        }
+    private fun buildPreprocessingResult(code: Code, action: PreprocessingResultBuilder.() -> Unit): PreprocessingResult {
+        val builder = PreprocessingResultBuilder(code, typeProvidersProcessor, annotationsProcessor, ::preprocessCode)
+        builder.action()
+        return builder.build()
     }
 
     fun preprocessCode(code: String): PreprocessingResult {
         val processedMagics = magics.processMagics(code)
-        val builder = PreprocessingResultBuilder(processedMagics.code)
-
-        processedMagics.libraries.getDefinitions(notebook).forEach { builder.add(it) }
-
-        return builder.build()
+        return buildPreprocessingResult(processedMagics.code) {
+            processedMagics.libraries.getDefinitions(notebook).forEach { add(it) }
+        }
     }
 
     override fun addLibrary(definition: LibraryDefinition) {
-        val builder = PreprocessingResultBuilder("")
-        builder.add(definition)
-        val result = builder.build()
+        val result = buildPreprocessingResult("") {
+            add(definition)
+        }
 
         result.initCodes.forEach { it.execute(this) }
         log.catchAll {
