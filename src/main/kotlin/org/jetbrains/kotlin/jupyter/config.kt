@@ -15,6 +15,7 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.config.getLogger
+import org.jetbrains.kotlin.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.zeromq.SocketType
@@ -25,7 +26,7 @@ const val protocolVersion = "5.3"
 internal val log by lazy { getLogger() }
 
 val defaultRuntimeProperties by lazy {
-    RuntimeKernelProperties(ClassLoader.getSystemResource("runtime.properties")?.readText()?.parseIniConfig().orEmpty())
+    RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
 }
 
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {

@@ -2,11 +2,11 @@ package org.jetbrains.kotlin.jupyter.test
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.config.parseIniConfig
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibraryPropertiesFile
 import org.jetbrains.kotlin.jupyter.log
-import org.jetbrains.kotlin.jupyter.parseIniConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
