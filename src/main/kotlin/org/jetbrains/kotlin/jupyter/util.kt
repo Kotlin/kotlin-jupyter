@@ -6,9 +6,6 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
-fun String.parseIniConfig() =
-    lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
-
 fun List<String>.joinToLines() = joinToString("\n")
 
 fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, message: String, severity: String) =

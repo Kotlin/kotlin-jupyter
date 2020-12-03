@@ -2,8 +2,12 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.EvalResult
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlin.jupyter.compiler.getSimpleCompiler
 import org.junit.jupiter.api.Test
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ApiTest : AbstractReplTest() {
     private val repl = ReplForJupyterImpl(libraryFactory, classpath)
@@ -40,5 +44,15 @@ class ApiTest : AbstractReplTest() {
 
         val res = repl.eval("x")
         assertEquals(42, res.resultValue)
+    }
+
+    @Test
+    fun compilerVersion() {
+        val jCompiler = getSimpleCompiler(
+            ScriptCompilationConfiguration(),
+            ScriptEvaluationConfiguration()
+        )
+        val version = jCompiler.version
+        assertTrue(version.major >= 0)
     }
 }

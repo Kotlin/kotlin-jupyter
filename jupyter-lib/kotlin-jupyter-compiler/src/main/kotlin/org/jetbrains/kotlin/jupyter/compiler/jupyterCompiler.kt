@@ -1,9 +1,11 @@
 package org.jetbrains.kotlin.jupyter.compiler
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.compiler.util.actualClassLoader
+import org.jetbrains.kotlin.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
@@ -31,6 +33,12 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 ) : ReplCompiler<KJvmCompiledScript> by compiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
+    private val properties = readResourceAsIniFile("compiler.properties")
+
+    val version: KotlinKernelVersion =
+        KotlinKernelVersion.from(
+            properties["version"] ?: error("Compiler artifact should contain version")
+        )!!
 
     val numberOfSnippets: Int
         get() = classes.size

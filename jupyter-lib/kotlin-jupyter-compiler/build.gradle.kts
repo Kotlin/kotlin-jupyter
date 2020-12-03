@@ -60,6 +60,24 @@ tasks {
     }
 }
 
+val buildProperties by tasks.registering {
+    inputs.property("version", version)
+
+    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
+    outputs.dir(outputDir)
+
+    doLast {
+        outputDir.mkdirs()
+        val properties = inputs.properties.entries.map { it.toPair() }.toMutableList()
+        val propertiesFile = outputDir.resolve("compiler.properties")
+        propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
+    }
+}
+
+tasks.processResources {
+    dependsOn(buildProperties)
+}
+
 addPublication {
     publicationName = "compiler"
     artifactId = "compiler"
