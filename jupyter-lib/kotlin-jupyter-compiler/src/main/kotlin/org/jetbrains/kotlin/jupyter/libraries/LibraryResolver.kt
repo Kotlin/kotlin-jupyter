@@ -42,18 +42,20 @@ class FallbackLibraryResolver : LibraryResolver() {
 
 class LocalLibraryResolver(
     parent: LibraryResolver?,
-    mainLibrariesDir: String
+    mainLibrariesDir: String?
 ) : LibraryResolver(parent) {
     private val logger = getLogger()
     private val pathsToCheck: List<String>
 
     init {
         val localSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kotlin").toString()
-        pathsToCheck = listOf(
+        val paths = mutableListOf(
             Paths.get(localSettingsPath, LocalCacheDir).toString(),
-            localSettingsPath,
-            mainLibrariesDir
+            localSettingsPath
         )
+        mainLibrariesDir?.let { paths.add(it) }
+
+        pathsToCheck = paths
     }
 
     override fun shouldResolve(reference: LibraryReference): Boolean {

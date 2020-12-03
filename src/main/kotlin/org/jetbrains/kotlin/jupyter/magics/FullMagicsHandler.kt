@@ -10,11 +10,19 @@ import org.jetbrains.kotlin.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
+import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
 
 class FullMagicsHandler(
     private val repl: ReplOptions,
     libraries: LibrariesProcessor
-) : LibrariesOnlyMagicsHandler(libraries, repl.librariesDir, repl.currentBranch) {
+) : LibrariesOnlyMagicsHandler(
+    libraries,
+    LibraryFactoryDefaultInfoSwitcher.default(
+        libraries.libraryFactory.resolutionInfoProvider,
+        repl.librariesDir,
+        repl.currentBranch
+    )
+) {
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
 

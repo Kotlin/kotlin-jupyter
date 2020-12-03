@@ -4,15 +4,11 @@ import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
-import java.io.File
 
 open class LibrariesOnlyMagicsHandler(
     private val librariesProcessor: LibrariesProcessor,
-    librariesDir: File,
-    currentBranch: String,
+    private val libraryResolutionInfoSwitcher: LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch>,
 ) : AbstractMagicsHandler() {
-    private val libraryResolutionInfoSwitcher = LibraryFactoryDefaultInfoSwitcher.default(librariesProcessor.libraryFactory.resolutionInfoProvider, librariesDir, currentBranch)
-
     override fun handleUse() {
         try {
             arg?.let { notNullArg ->

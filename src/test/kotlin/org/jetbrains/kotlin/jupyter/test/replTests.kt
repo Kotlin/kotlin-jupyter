@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlin.jupyter.libraries.GitHubRepoName
 import org.jetbrains.kotlin.jupyter.libraries.GitHubRepoOwner
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlin.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolver
@@ -570,6 +571,27 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val message = exception.message!!
         assertTrue(message.contains(minRequiredVersion))
         assertTrue(message.contains(kernelVersion))
+    }
+
+    @Test
+    fun `descriptor with libraryDefinitions`() {
+        val def1 = LibraryDescriptor(
+            libraryDefinitions = listOf(
+                """
+                object: LibraryDefinition {
+                    override val init: List<Execution>
+                        get() = listOf(Execution{ it.scheduleExecution("val x = 42") })
+                }
+                """.trimIndent()
+            )
+        )
+        val resolver = listOf("lib-desc" to Json.encodeToString(def1)).toLibraries(libraryFactory)
+
+        val replWithResolver = makeRepl(resolver)
+        replWithResolver.eval("%use lib-desc")
+
+        val res = replWithResolver.eval("x")
+        assertEquals(42, res.resultValue)
     }
 }
 

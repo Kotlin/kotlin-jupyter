@@ -14,10 +14,11 @@ class LibraryFactory(
         return reference to vars
     }
 
-    fun getStandardResolver(homeDir: String): LibraryResolver {
+    fun getStandardResolver(homeDir: String? = null): LibraryResolver {
         // Standard resolver doesn't cache results in memory
         var res: LibraryResolver = FallbackLibraryResolver()
-        res = LocalLibraryResolver(res, Paths.get(homeDir, LibrariesDir).toString())
+        val librariesDir: String? = homeDir?.let { Paths.get(it, LibrariesDir).toString() }
+        res = LocalLibraryResolver(res, librariesDir)
         return res
     }
 
@@ -61,6 +62,14 @@ class LibraryFactory(
         fun withDefaultDirectoryResolution(dir: File) = LibraryFactory(
             StandardResolutionInfoProvider(
                 LibraryResolutionInfo.ByDir(dir)
+            )
+        )
+
+        // Used in Kotlin Jupyter plugin for IDEA
+        @Suppress("unused")
+        fun withDefaultGitRefResolution(ref: String) = LibraryFactory(
+            StandardResolutionInfoProvider(
+                LibraryResolutionInfo.getInfoByRef(ref)
             )
         )
     }
