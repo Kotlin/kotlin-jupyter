@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlin.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlin.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlin.jupyter.libraries.getDefinitions
+import org.jetbrains.kotlin.jupyter.magics.AbstractMagicsHandler
 import org.jetbrains.kotlin.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlin.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertTrue
+
+private typealias MagicsAndCodeIntervals = Pair<List<MagicsProcessor.CodeInterval>, List<MagicsProcessor.CodeInterval>>
 
 class ParseArgumentsTests {
     private val libraryFactory = LibraryFactory.EMPTY
@@ -120,6 +123,8 @@ class ParseMagicsTests {
         override var outputConfig = OutputConfig()
     }
 
+    private object NoOpMagicsHandler : AbstractMagicsHandler()
+
     private val options = TestReplOptions()
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
@@ -130,6 +135,15 @@ class ParseMagicsTests {
             assertEquals(expectedProcessedCode, this.code)
             librariesChecker(libraries.getDefinitions(null))
         }
+    }
+
+    private fun intervals(code: String, parseOutCellMarker: Boolean): MagicsAndCodeIntervals {
+        val processor = MagicsProcessor(NoOpMagicsHandler, parseOutCellMarker)
+
+        val magicsIntervals = processor.magicsIntervals(code)
+        val codeIntervals = processor.codeIntervals(code, magicsIntervals)
+
+        return magicsIntervals.toList() to codeIntervals.toList()
     }
 
     @Test
@@ -226,5 +240,60 @@ class ParseMagicsTests {
 
         val actualPos = cursor.toSourceCodePositionWithNewAbsolute(source, result)
         assertNull(actualPos)
+    }
+
+    @Test
+    fun `cell marker is recognised if specified`() {
+        val (magicsIntervals, codeIntervals) = intervals(
+            """
+            #%% some cell description
+            
+            fun f() = "pay respect"
+            % some magic
+            
+            %some another magic
+            """.trimIndent(),
+            true
+        )
+
+        assertEquals(3, magicsIntervals.size)
+        assertEquals(2, codeIntervals.size)
+    }
+
+    @Test
+    fun `cell marker in the middle is not recognised`() {
+        val (magicsIntervals, codeIntervals) = intervals(
+            """
+            #%% some cell description
+            
+            fun f() = "pay respect"
+            % some magic
+            #%% some another description - not recognised
+            val x = 42
+            %some another magic
+            """.trimIndent(),
+            true
+        )
+
+        assertEquals(3, magicsIntervals.size)
+        assertEquals(2, codeIntervals.size)
+    }
+
+    @Test
+    fun `cell marker is not recognised if not specified`() {
+        val (magicsIntervals, codeIntervals) = intervals(
+            """
+            #%% some cell description
+            
+            fun f() = "pay respect"
+            % some magic
+            
+            %some another magic
+            """.trimIndent(),
+            false
+        )
+
+        assertEquals(2, magicsIntervals.size)
+        assertEquals(2, codeIntervals.size)
     }
 }

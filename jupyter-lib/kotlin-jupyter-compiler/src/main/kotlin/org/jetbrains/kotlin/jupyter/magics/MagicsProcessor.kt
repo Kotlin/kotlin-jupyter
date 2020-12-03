@@ -6,12 +6,13 @@ import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 
 class MagicsProcessor(
     private val handler: MagicsHandler,
+    private val parseOutCellMarker: Boolean = false,
 ) {
     fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): MagicProcessingResult {
         val magics = magicsIntervals(code)
 
         for (magicRange in magics) {
-            // Skip `%` sign
+            if (code[magicRange.from] != MAGICS_SIGN) continue
             val magicText = code.substring(magicRange.from + 1, magicRange.to)
 
             try {
@@ -56,7 +57,9 @@ class MagicsProcessor(
     }
 
     fun magicsIntervals(code: String): Sequence<CodeInterval> {
-        return generateSequence(MAGICS_REGEX.find(code, 0)) {
+        val maybeFirstMatch = if (parseOutCellMarker) CELL_MARKER_REGEX.find(code, 0) else null
+        val seed = maybeFirstMatch ?: MAGICS_REGEX.find(code, 0)
+        return generateSequence(seed) {
             MAGICS_REGEX.find(code, it.range.last)
         }.map { CodeInterval(it.range.first, it.range.last + 1) }
     }
@@ -76,6 +79,8 @@ class MagicsProcessor(
     data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinitionProducer>)
 
     companion object {
-        private val MAGICS_REGEX = Regex("^%.*$", RegexOption.MULTILINE)
+        private const val MAGICS_SIGN = '%'
+        private val MAGICS_REGEX = Regex("^$MAGICS_SIGN.*$", RegexOption.MULTILINE)
+        private val CELL_MARKER_REGEX = Regex("""\A\s*#%%.*$""", RegexOption.MULTILINE)
     }
 }
