@@ -1,18 +1,12 @@
-package org.jetbrains.kotlin.jupyter
+package org.jetbrains.kotlin.jupyter.codegen
 
+import AnnotationsProcessor
 import jupyter.kotlin.KotlinFunctionInfo
 import org.jetbrains.kotlin.jupyter.api.Code
 import org.jetbrains.kotlin.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlin.jupyter.api.TypeName
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import kotlin.reflect.KClass
-
-interface AnnotationsProcessor {
-
-    fun register(handler: GenerativeTypeHandler): Code
-
-    fun process(kClass: KClass<*>): List<Code>
-}
 
 class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : AnnotationsProcessor {
 
