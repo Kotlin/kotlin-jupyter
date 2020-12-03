@@ -60,6 +60,14 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
                 }
             }
         }
+
+        // Used in Kotlin Jupyter plugin for IDEA
+        @Suppress("unused")
+        fun noop(provider: ResolutionInfoProvider): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
+            return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.GIT_REFERENCE) {
+                provider.fallback
+            }
+        }
     }
 }
 

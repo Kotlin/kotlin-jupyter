@@ -20,8 +20,8 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":kotlin-jupyter-api"))
-    implementation(project(":kotlin-jupyter-deps"))
+    api(project(":kotlin-jupyter-api"))
+    api(project(":kotlin-jupyter-deps"))
 
     implementation(kotlin("stdlib"))
     implementation(kotlin("stdlib-jdk8"))
