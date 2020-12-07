@@ -46,7 +46,7 @@ dependencies {
     implementation(project(":kotlin-jupyter-deps"))
     implementation(project(":kotlin-jupyter-api"))
     implementation(project(":kotlin-jupyter-compiler"))
-    implementation(project(":jupyter-lib"))
+    implementation(project(":kotlin-jupyter-lib"))
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
     implementation(kotlin("scripting-ide-services") as String) { isTransitive = false }
@@ -67,7 +67,7 @@ dependencies {
     implementation("com.github.ajalt:clikt:2.8.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 
-    deploy(project(":jupyter-lib"))
+    deploy(project(":kotlin-jupyter-lib"))
     deploy(project(":kotlin-jupyter-api"))
     deploy(kotlin("script-runtime"))
 }

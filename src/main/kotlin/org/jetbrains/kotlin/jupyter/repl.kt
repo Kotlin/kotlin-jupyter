@@ -554,6 +554,7 @@ class ReplForJupyterImpl(
 
     init {
         log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
+        log.info("Kernel version: ${runtimeProperties.version}")
         log.info("Classpath used in script: $scriptClasspath")
     }
 

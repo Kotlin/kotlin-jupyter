@@ -10,8 +10,6 @@ project.version = rootProject.version
 val kotlinxSerializationVersion: String by rootProject
 val junitVersion: String by rootProject
 
-val publicationName = "api"
-
 repositories {
     mavenCentral()
     jcenter()

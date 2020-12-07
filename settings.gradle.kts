@@ -61,7 +61,8 @@ val publishPluginProject = "kotlin-jupyter-publish"
 val depsProject = "kotlin-jupyter-deps"
 val apiProject = "kotlin-jupyter-api"
 val compilerProject = "kotlin-jupyter-compiler"
-val libProject = "jupyter-lib"
+val libProject = "kotlin-jupyter-lib"
+val libsPath = "jupyter-lib"
 
 includeBuild(publishPluginProject)
 includeBuild(pluginProject)
@@ -71,6 +72,6 @@ include(apiProject)
 include(compilerProject)
 
 project(":$depsProject").projectDir = file("$pluginProject/$depsProject")
-project(":$libProject").projectDir = file(libProject)
-project(":$apiProject").projectDir = file("$libProject/$apiProject")
-project(":$compilerProject").projectDir = file("$libProject/$compilerProject")
+project(":$libProject").projectDir = file("$libsPath/$libProject")
+project(":$apiProject").projectDir = file("$libsPath/$apiProject")
+project(":$compilerProject").projectDir = file("$libsPath/$compilerProject")
