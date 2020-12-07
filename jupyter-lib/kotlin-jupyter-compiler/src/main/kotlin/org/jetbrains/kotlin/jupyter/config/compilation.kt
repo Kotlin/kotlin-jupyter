@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter.config
 
+import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
 import org.jetbrains.kotlin.jupyter.dependencies.Repository
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost

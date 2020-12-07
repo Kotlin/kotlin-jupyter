@@ -12,8 +12,6 @@ val slf4jVersion: String by rootProject
 val junitVersion: String by rootProject
 val khttpVersion: String by rootProject
 
-val publicationName = "compiler"
-
 repositories {
     mavenCentral()
     jcenter()
@@ -21,6 +19,7 @@ repositories {
 
 dependencies {
     api(project(":kotlin-jupyter-api"))
+    api(project(":kotlin-jupyter-lib"))
     api(project(":kotlin-jupyter-deps"))
 
     implementation(kotlin("stdlib"))

@@ -33,7 +33,7 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 ) : ReplCompiler<KJvmCompiledScript> by compiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
-    private val properties = readResourceAsIniFile("compiler.properties")
+    private val properties = readResourceAsIniFile("compiler.properties", JupyterCompiler::class.java.classLoader)
 
     val version: KotlinKernelVersion =
         KotlinKernelVersion.from(

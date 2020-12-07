@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.jupyter.config
+package jupyter.kotlin
 
 import org.jetbrains.kotlin.jupyter.api.CodeExecution
 import org.jetbrains.kotlin.jupyter.api.Notebook
