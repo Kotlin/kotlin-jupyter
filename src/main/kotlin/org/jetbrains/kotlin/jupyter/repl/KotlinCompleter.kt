@@ -1,85 +1,13 @@
 package org.jetbrains.kotlin.jupyter.repl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.jupyter.CompleteReply
-import org.jetbrains.kotlin.jupyter.ErrorReply
-import org.jetbrains.kotlin.jupyter.ListErrorsReply
-import org.jetbrains.kotlin.jupyter.MessageContent
-import org.jetbrains.kotlin.jupyter.Paragraph
+import org.jetbrains.kotlin.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.toSourceCodePositionWithNewAbsolute
 import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.api.valueOrNull
-
-data class CompletionTokenBounds(val start: Int, val end: Int)
-
-abstract class CompletionResult {
-    abstract val message: MessageContent
-
-    open class Success(
-        private val matches: List<String>,
-        private val bounds: CompletionTokenBounds,
-        private val metadata: List<SourceCodeCompletionVariant>,
-        private val text: String,
-        private val cursor: Int
-    ) : CompletionResult() {
-        init {
-            assert(matches.size == metadata.size)
-        }
-
-        override val message: MessageContent
-            get() = CompleteReply(
-                matches,
-                bounds.start,
-                bounds.end,
-                Paragraph(cursor, text),
-                CompleteReply.Metadata(
-                    metadata.map {
-                        CompleteReply.ExperimentalType(
-                            it.text,
-                            it.tail,
-                            bounds.start,
-                            bounds.end
-                        )
-                    },
-                    metadata.map {
-                        CompleteReply.ExtendedMetadataEntry(
-                            it.text,
-                            it.displayText,
-                            it.icon,
-                            it.tail
-                        )
-                    }
-                )
-            )
-
-        @TestOnly
-        fun sortedMatches(): List<String> = matches.sorted()
-    }
-
-    class Empty(
-        text: String,
-        cursor: Int
-    ) : Success(emptyList(), CompletionTokenBounds(cursor, cursor), emptyList(), text, cursor)
-
-    class Error(
-        private val errorName: String,
-        private val errorValue: String,
-        private val traceBack: List<String>
-    ) : CompletionResult() {
-        override val message: MessageContent
-            get() = ErrorReply(errorName, errorValue, traceBack)
-    }
-}
-
-data class ListErrorsResult(val code: String, val errors: Sequence<ScriptDiagnostic> = emptySequence()) {
-    val message: ListErrorsReply
-        get() = ListErrorsReply(code, errors.toList())
-}
 
 class KotlinCompleter {
     fun complete(
@@ -115,7 +43,7 @@ class KotlinCompleter {
             return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)
         }
 
-        private fun getTokenBounds(buf: String, cursor: Int): CompletionTokenBounds {
+        private fun getTokenBounds(buf: String, cursor: Int): CodeInterval {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
             val startSubstring = buf.substring(0, cursor)
@@ -124,7 +52,7 @@ class KotlinCompleter {
 
             val start = startSubstring.indexOfLast(filter) + 1
 
-            return CompletionTokenBounds(start, cursor)
+            return CodeInterval(start, cursor)
         }
     }
 }

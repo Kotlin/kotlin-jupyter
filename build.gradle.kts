@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.jupyter.build.excludeKotlinDependencies
 import org.jetbrains.kotlin.jupyter.build.getFlag
 import org.jetbrains.kotlin.jupyter.plugin.options
 
@@ -11,6 +12,7 @@ plugins {
 }
 
 val kotlinxSerializationVersion: String by project
+val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
 val khttpVersion: String by project
@@ -18,8 +20,16 @@ val khttpVersion: String by project
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
 
+ktlint {
+    version.set(ktlintVersion)
+}
+
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
+    ktlint {
+        version.set(ktlintVersion)
+    }
 }
 
 allprojects {
@@ -39,33 +49,52 @@ allprojects {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    testImplementation(kotlin("test"))
+    // Dependency on module with compiler. We're going to substitute
+    // unshaded compiler dependencies with embedded ones, so we do an exclusion here.
+    // implementation(project(":kotlin-jupyter-compiler-embeddable"))
 
-    implementation(project(":kotlin-jupyter-deps"))
-    implementation(project(":kotlin-jupyter-api"))
-    implementation(project(":kotlin-jupyter-compiler"))
-    implementation(project(":kotlin-jupyter-lib"))
+    implementation(project(":kotlin-jupyter-compiler")) {
+        excludeKotlinDependencies(
+            "compiler",
+            "scripting-compiler",
+            "serialization-unshaded"
+        )
+    }
+
+    // Standard dependencies
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    implementation(kotlin("scripting-ide-services") as String) { isTransitive = false }
-    implementation(kotlin("scripting-common"))
-    implementation(kotlin("scripting-compiler-embeddable"))
-    implementation(kotlin("compiler-embeddable"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("script-util"))
+
+    // Embedded compiler and scripting dependencies
+    implementation(kotlin("compiler-embeddable"))
+    compileOnly(kotlin("scripting-compiler-impl"))
+    implementation(kotlin("scripting-compiler-embeddable"))
+    implementation(kotlin("scripting-ide-services"))
     implementation(kotlin("main-kts"))
+    implementation(kotlin("script-util"))
+    implementation(kotlin("scripting-common"))
+
+    // Embedded version of serialization plugin for notebook code
     implementation(kotlin("serialization"))
 
-    compileOnly(kotlin("scripting-compiler-impl"))
-
+    // Logging
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    implementation("khttp:khttp:$khttpVersion")
-    implementation("org.zeromq:jeromq:0.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
-    implementation("com.github.ajalt:clikt:2.8.0")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
+
+    // ZeroMQ library for implementing messaging protocol
+    implementation("org.zeromq:jeromq:0.5.2")
+
+    // Clikt library for parsing output magics
+    implementation("com.github.ajalt:clikt:2.8.0")
+
+    // Serialization implementation for kernel code
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+
+    // Test dependencies: kotlin-test and Junit 5
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     deploy(project(":kotlin-jupyter-lib"))
     deploy(project(":kotlin-jupyter-api"))

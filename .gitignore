@@ -16,7 +16,6 @@ out/
 /build/
 /*jupyter*/build/
 /*jupyter*/*jupyter*/build/
-artifacts/
 
 # Gradle caches and internal files
 .gradle/

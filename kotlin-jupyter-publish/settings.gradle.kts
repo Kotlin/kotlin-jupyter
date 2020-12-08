@@ -16,7 +16,7 @@ pluginManagement {
     }
 
     val rootProperties = findRootProperties()
-    val ktlintVersion = rootProperties["ktlintVersion"] as String
+    val ktlintGradleVersion = rootProperties["ktlintGradleVersion"] as String
 
     repositories {
         gradlePluginPortal()
@@ -25,12 +25,12 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             when (requested.id.id) {
-                "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintVersion")
+                "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintGradleVersion")
             }
         }
     }
 
     plugins {
-        id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
+        id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
     }
 }

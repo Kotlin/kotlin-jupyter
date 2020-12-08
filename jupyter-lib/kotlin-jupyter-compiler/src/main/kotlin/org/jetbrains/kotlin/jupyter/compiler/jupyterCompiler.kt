@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlin.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ReplCompiler
@@ -105,20 +104,6 @@ fun getSimpleCompiler(
 ): JupyterCompiler<KJvmReplCompilerBase<ReplCodeAnalyzerBase>> {
     return JupyterCompiler(
         SimpleReplCompiler(
-            compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                ?: defaultJvmScriptingHostConfiguration
-        ),
-        compilationConfiguration,
-        evaluationConfiguration
-    )
-}
-
-fun getCompilerWithCompletion(
-    compilationConfiguration: ScriptCompilationConfiguration,
-    evaluationConfiguration: ScriptEvaluationConfiguration,
-): JupyterCompiler<KJvmReplCompilerWithIdeServices> {
-    return JupyterCompiler(
-        KJvmReplCompilerWithIdeServices(
             compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
                 ?: defaultJvmScriptingHostConfiguration
         ),

@@ -2,6 +2,8 @@ package org.jetbrains.kotlin.jupyter.build
 
 import groovy.json.JsonOutput
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.extra
 import java.nio.file.Path
 
@@ -54,4 +56,11 @@ fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
             else -> null
         }
     } ?: default
+}
+
+@Suppress("unused")
+fun ModuleDependency.excludeKotlinDependencies(vararg dependencyNames: String) {
+    dependencyNames.forEach {
+        exclude("org.jetbrains.kotlin", "kotlin-$it")
+    }
 }
