@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlin.jupyter.OutputConfig
 import org.jetbrains.kotlin.jupyter.ReplOptions
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinition
+import org.jetbrains.kotlin.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertTrue
 
-private typealias MagicsAndCodeIntervals = Pair<List<MagicsProcessor.CodeInterval>, List<MagicsProcessor.CodeInterval>>
+private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
 class ParseArgumentsTests {
     private val libraryFactory = LibraryFactory.EMPTY

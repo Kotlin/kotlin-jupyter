@@ -3,7 +3,7 @@
 pluginManagement {
     val kotlinVersion: String by settings
     val shadowJarVersion: String by settings
-    val ktlintVersion: String by settings
+    val ktlintGradleVersion: String by settings
 
     repositories {
         jcenter()
@@ -36,7 +36,7 @@ pluginManagement {
         eachPlugin {
             when (requested.id.id) {
                 "com.github.johnrengelman.shadow" -> useModule("com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion")
-                "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintVersion")
+                "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintGradleVersion")
             }
         }
     }
@@ -45,7 +45,7 @@ pluginManagement {
         kotlin("jvm") version kotlinVersion
         kotlin("plugin.serialization") version kotlinVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
-        id("org.jlleitschuh.gradle.ktlint") version ktlintVersion
+        id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
         id("org.jetbrains.kotlin.jupyter.dependencies")
     }
 }

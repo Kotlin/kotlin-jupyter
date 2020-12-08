@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.jupyter.magics
 
 import org.jetbrains.kotlin.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlin.jupyter.common.ReplLineMagic
+import org.jetbrains.kotlin.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 
 class MagicsProcessor(
@@ -63,18 +64,6 @@ class MagicsProcessor(
             MAGICS_REGEX.find(code, it.range.last)
         }.map { CodeInterval(it.range.first, it.range.last + 1) }
     }
-
-    data class CodeInterval(
-        /**
-         * Inclusive
-         */
-        val from: Int,
-
-        /**
-         * Exclusive
-         */
-        val to: Int,
-    )
 
     data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinitionProducer>)
 

@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlin.jupyter.codegen.AnnotationsProcessorImpl
 import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessorImpl
-import org.jetbrains.kotlin.jupyter.compiler.getCompilerWithCompletion
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.jupyter.repl.CompletionResult
 import org.jetbrains.kotlin.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlin.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlin.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlin.jupyter.repl.getCompilerWithCompletion
 import java.io.File
 import java.net.URLClassLoader
 import java.util.LinkedList

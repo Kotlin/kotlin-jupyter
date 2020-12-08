@@ -18,34 +18,42 @@ repositories {
 }
 
 dependencies {
+    // Internal dependencies
     api(project(":kotlin-jupyter-api"))
     api(project(":kotlin-jupyter-lib"))
     api(project(":kotlin-jupyter-deps"))
 
+    // Standard dependencies
     implementation(kotlin("stdlib"))
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
+    // Scripting and compilation-related dependencies
     api(kotlin("scripting-common"))
-    implementation(kotlin("scripting-compiler-embeddable"))
+    implementation(kotlin("compiler"))
+    implementation(kotlin("scripting-compiler"))
     implementation(kotlin("scripting-dependencies"))
     implementation(kotlin("scripting-jvm"))
-    implementation(kotlin("serialization"))
-    implementation(kotlin("scripting-ide-services") as String) { isTransitive = false }
-    implementation(kotlin("compiler-embeddable"))
     implementation(kotlin("main-kts"))
 
+    // Adding this dependency to runtime classpath may lead to problems
     compileOnly(kotlin("scripting-compiler-impl"))
 
+    // Serialization compiler plugin (for notebooks, not for kernel code)
+    implementation(kotlin("serialization-unshaded"))
+
+    // Logging
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 
+    // Khttp for resolving remote library dependencies
     implementation("khttp:khttp:$khttpVersion")
 
+    // Serialization implementation for kernel code
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 
+    // Testing dependencies: kotlin-test and JUnit 5
     testImplementation(kotlin("test"))
-
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 }
