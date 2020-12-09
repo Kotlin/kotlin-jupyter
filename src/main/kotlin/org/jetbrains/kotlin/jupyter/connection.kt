@@ -198,8 +198,9 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
     val content = recv()
     val calculatedSig = hmac(header, parentHeader, metadata, content)
 
-    if (calculatedSig != null && sig != calculatedSig)
+    if (calculatedSig != null && sig != calculatedSig) {
         throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
+    }
 
     fun ByteArray.parseJson(): JsonElement {
         val json = Json.decodeFromString<JsonElement>(this.toString(Charsets.UTF_8))

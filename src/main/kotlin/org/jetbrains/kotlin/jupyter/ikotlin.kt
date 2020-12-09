@@ -54,13 +54,13 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
 }
 
 fun printClassPath() {
-
     val cl = ClassLoader.getSystemClassLoader()
 
     val cp = classpathFromClassloader(cl)
 
-    if (cp != null)
+    if (cp != null) {
         log.info("Current classpath: " + cp.joinToString())
+    }
 }
 
 fun main(vararg args: String) {

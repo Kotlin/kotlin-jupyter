@@ -66,8 +66,9 @@ open class JupyterScriptDependenciesResolver(resolverConfig: ResolverConfig?) {
                         existingRepositories = ArrayList(repositories)
                     }
 
-                    if (!addRepository(RepositoryCoordinates(annotation.value)))
+                    if (!addRepository(RepositoryCoordinates(annotation.value))) {
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
+                    }
 
                     existingRepositories?.forEach { addRepository(it) }
                 }

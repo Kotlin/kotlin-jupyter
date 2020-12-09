@@ -244,11 +244,12 @@ class ReplForJupyterImpl(
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
-            val c = if (name != null && includeFilter(name))
+            val c = if (name != null && includeFilter(name)) {
                 parent.loadClass(name)
-            else parent.parent.loadClass(name)
-            if (resolve)
+            } else parent.parent.loadClass(name)
+            if (resolve) {
                 resolveClass(c)
+            }
             return c
         }
     }
@@ -303,8 +304,9 @@ class ReplForJupyterImpl(
     private fun executeScheduledCode() {
         while (scheduledExecutions.isNotEmpty()) {
             val code = scheduledExecutions.pop()
-            if (executedCodeLogging == ExecutedCodeLogging.Generated)
+            if (executedCodeLogging == ExecutedCodeLogging.Generated) {
                 println(code)
+            }
             code.execute(this)
         }
     }
@@ -318,8 +320,9 @@ class ReplForJupyterImpl(
             }
             val codes = typeProvidersProcessor.process()
             codes.forEach {
-                if (executedCodeLogging == ExecutedCodeLogging.Generated)
+                if (executedCodeLogging == ExecutedCodeLogging.Generated) {
                     println(it)
+                }
                 execute(it)
             }
         } while (codes.isNotEmpty())
@@ -329,8 +332,9 @@ class ReplForJupyterImpl(
         log.catchAll {
             annotationsProcessor.process(replLineClass)
         }?.forEach {
-            if (executedCodeLogging == ExecutedCodeLogging.Generated)
+            if (executedCodeLogging == ExecutedCodeLogging.Generated) {
                 println(it)
+            }
             execute(it)
         }
     }
@@ -344,7 +348,6 @@ class ReplForJupyterImpl(
     override fun eval(code: String, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
             try {
-
                 currentDisplayHandler = displayHandler
 
                 executeInitCellCode()
@@ -459,10 +462,11 @@ class ReplForJupyterImpl(
 
         val result = synchronized(this) {
             val lastArgs = queue.get()
-            if (lastArgs != args)
+            if (lastArgs != args) {
                 default
-            else
+            } else {
                 action(args)
+            }
         }
         args.callback(result)
     }
@@ -481,7 +485,7 @@ class ReplForJupyterImpl(
 
     private data class InternalEvalResult(val value: Any?, val resultField: Pair<String, KotlinType>?)
 
-    private interface LockQueueArgs <T> {
+    private interface LockQueueArgs<T> {
         val callback: (T) -> Unit
     }
 
@@ -503,8 +507,9 @@ class ReplForJupyterImpl(
     }
 
     private fun doEval(code: String, evalData: EvalData? = null): InternalEvalResult {
-        if (executedCodeLogging == ExecutedCodeLogging.All)
+        if (executedCodeLogging == ExecutedCodeLogging.All) {
             println(code)
+        }
         val id = jupyterCompiler.nextCounter()
         val codeLine = SourceCodeImpl(id, code)
 

@@ -21,10 +21,12 @@ class LibrariesProcessor(
     private fun substituteArguments(parameters: List<Variable>, arguments: List<Variable>): Map<String, String> {
         val result = mutableMapOf<String, String>()
         if (arguments.any { it.name.isEmpty() }) {
-            if (parameters.count() != 1)
+            if (parameters.count() != 1) {
                 throw ReplCompilerException("Unnamed argument is allowed only if library has a single property")
-            if (arguments.count() != 1)
+            }
+            if (arguments.count() != 1) {
                 throw ReplCompilerException("Too many arguments")
+            }
             result[parameters[0].name] = arguments[0].value
             return result
         }
@@ -77,15 +79,17 @@ class LibrariesProcessor(
             i = text.indexOfAny(delimiters, i)
             if (i == -1) {
                 val res = text.substring(prev, text.length).trim()
-                if (res.isNotEmpty())
+                if (res.isNotEmpty()) {
                     result.add(res)
+                }
                 return result
             }
             when (text[i]) {
                 ',' -> if (commaDepth == 0) {
                     val res = text.substring(prev, i).trim()
-                    if (res.isNotEmpty())
+                    if (res.isNotEmpty()) {
                         result.add(res)
+                    }
                     prev = i + 1
                 }
                 '(' -> commaDepth++

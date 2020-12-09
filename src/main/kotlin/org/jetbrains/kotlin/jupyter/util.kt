@@ -56,8 +56,9 @@ fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCod
     if (nextNewLinePos == -1) nextNewLinePos = newCode.text.length
 
     val abs = absLineStart + pos.col - 1
-    if (abs > nextNewLinePos)
+    if (abs > nextNewLinePos) {
         return null
+    }
 
     return SourceCode.Position(pos.line, abs - absLineStart + 1, abs)
 }

@@ -35,8 +35,9 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
 
         fun withoutDeclarations() = TypeConverterCodes(emptyList(), converter, wildcard)
 
-        fun replaceWildcard(str: String) = if (!hasWildcard) throw Exception() else
+        fun replaceWildcard(str: String) = if (!hasWildcard) throw Exception() else {
             TypeConverterCodes(declarations.map { it.replace(wildcard!!, str) }, converter.replace(wildcard!!, str), null)
+        }
     }
 
     private fun getMethodName(id: Int) = "___getConverter$id"
@@ -55,7 +56,6 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
     private fun toRegex(name: TypeName) = name.split('.').joinToString("\\.").split('*').joinToString(".*").toRegex()
 
     override fun process(): List<Code> {
-
         if (methodIdMap.isNotEmpty()) {
             contextUpdater.update()
             handlers.putAll(
@@ -91,13 +91,15 @@ class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : T
                             id = codeToMethodMap.size
                             codeToMethodMap[fullCode] = id
                         }
-                        if (typeConverterCodes.hasWildcard)
+                        if (typeConverterCodes.hasWildcard) {
                             typeConverterCodes = typeConverterCodes.replaceWildcard("$id")
+                        }
                     }
                     initCodes.addAll(typeConverterCodes.declarations)
                     var converterCode = typeConverterCodes.converter
-                    if (propertyType.isMarkedNullable)
+                    if (propertyType.isMarkedNullable) {
                         converterCode = converterCode.replace(variablePlaceholder, "$variablePlaceholder!!")
+                    }
                     conversionCodes[property] = converterCode
                     continue
                 }
