@@ -47,12 +47,19 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
     companion object {
         fun default(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
             val initialInfo = provider.fallback
-            val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) initialInfo else LibraryResolutionInfo.ByDir(
-                defaultDir
-            )
-            val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) initialInfo else LibraryResolutionInfo.getInfoByRef(
-                defaultRef
-            )
+
+            val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) {
+                initialInfo
+            } else {
+                LibraryResolutionInfo.ByDir(defaultDir)
+            }
+
+            val refInfo = if (initialInfo is LibraryResolutionInfo.ByGitRef) {
+                initialInfo
+            } else {
+                LibraryResolutionInfo.getInfoByRef(defaultRef)
+            }
+
             return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
                 when (switch) {
                     DefaultInfoSwitch.DIRECTORY -> dirInfo

@@ -26,8 +26,9 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
             val newSnippets = mutableListOf<Any>()
             while (lastSnippet != lastProcessedSnippet && lastSnippet != null) {
                 val line = lastSnippet.get().result.scriptInstance
-                if (line != null)
+                if (line != null) {
                     newSnippets.add(line)
+                }
                 lastSnippet = lastSnippet.previous
             }
             newSnippets.reverse()

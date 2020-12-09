@@ -22,6 +22,7 @@ val deploy: Configuration by configurations.creating
 
 ktlint {
     version.set(ktlintVersion)
+    enableExperimentalRules.set(true)
 }
 
 subprojects {
@@ -29,6 +30,7 @@ subprojects {
 
     ktlint {
         version.set(ktlintVersion)
+        enableExperimentalRules.set(true)
     }
 }
 

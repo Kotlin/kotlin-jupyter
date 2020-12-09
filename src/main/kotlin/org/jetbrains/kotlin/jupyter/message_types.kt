@@ -527,8 +527,9 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
                     val start = loc.start
                     val end = loc.end
                     put("start", jsonObject("line" to start.line, "col" to start.col))
-                    if (end != null)
+                    if (end != null) {
                         put("end", jsonObject("line" to end.line, "col" to end.col))
+                    }
                 }
             }
         )

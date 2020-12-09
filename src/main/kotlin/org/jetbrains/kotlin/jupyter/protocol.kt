@@ -350,10 +350,12 @@ class CapturingOutputStream(
 
         val size = capturedLines.size() + capturedNewLine.size()
 
-        if (newlineFound && size >= conf.captureNewlineBufferSize)
+        if (newlineFound && size >= conf.captureNewlineBufferSize) {
             return flushBuffers(capturedLines)
-        if (size >= conf.captureBufferMaxSize)
+        }
+        if (size >= conf.captureBufferMaxSize) {
             return flush()
+        }
     }
 
     @Synchronized

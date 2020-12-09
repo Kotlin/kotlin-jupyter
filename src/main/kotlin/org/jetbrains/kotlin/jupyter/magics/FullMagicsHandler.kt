@@ -25,7 +25,6 @@ class FullMagicsHandler(
 ) {
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
-
         val parser = object : CliktCommand() {
             val max: Int by option("--max-cell-size", help = "Maximum cell output").int().default(conf.cellOutputMaxSize)
             val maxBuffer: Int by option("--max-buffer", help = "Maximum buffer size").int().default(conf.captureBufferMaxSize)
@@ -37,7 +36,7 @@ class FullMagicsHandler(
         }
         parser.parse(argv)
 
-        return if (parser.reset) OutputConfig() else
+        return if (parser.reset) OutputConfig() else {
             with(parser) {
                 OutputConfig(
                     !dontCaptureStdout,
@@ -47,6 +46,7 @@ class FullMagicsHandler(
                     maxBufferNewline
                 )
             }
+        }
     }
 
     override fun handleTrackExecution() {

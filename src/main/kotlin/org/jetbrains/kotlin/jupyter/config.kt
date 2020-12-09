@@ -29,6 +29,7 @@ val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
 }
 
+@Suppress("EnumEntryName")
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
     hb(SocketType.REP, SocketType.REQ),
     shell(SocketType.ROUTER, SocketType.REQ),
@@ -146,7 +147,6 @@ data class KernelConfig(
         }
 
         fun fromConfig(cfg: KernelJupyterParams, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
-
             return KernelConfig(
                 ports = cfg.ports,
                 transport = cfg.transport ?: "tcp",

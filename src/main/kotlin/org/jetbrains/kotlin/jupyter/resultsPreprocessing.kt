@@ -38,8 +38,9 @@ class PreprocessingResultBuilder(
                 typeRenderers.addAll(preprocessed.typeRenderers)
                 initCellCodes.addAll(preprocessed.initCellCodes)
                 shutdownCodes.addAll(preprocessed.shutdownCodes)
-                if (preprocessed.code.isNotBlank())
+                if (preprocessed.code.isNotBlank()) {
                     initCodes.add(CodeExecution(preprocessed.code))
+                }
             } else {
                 initCodes.add(it)
             }
