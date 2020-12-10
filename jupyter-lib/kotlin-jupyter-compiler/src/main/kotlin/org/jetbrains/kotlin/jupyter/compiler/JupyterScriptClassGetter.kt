@@ -12,7 +12,7 @@ class JupyterScriptClassGetter(
     private val getScriptingClass = JvmGetScriptingClass()
 
     private val lastClassLoader
-        get() = previousScriptClassesProvider.get().lastOrNull()?.java?.classLoader
+        get() = previousScriptClassesProvider.get().lastOrNull()?.fromClass?.java?.classLoader
 
     override fun invoke(
         classType: KotlinType,
