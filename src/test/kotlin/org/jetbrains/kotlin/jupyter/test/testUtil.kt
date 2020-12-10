@@ -1,10 +1,18 @@
 package org.jetbrains.kotlin.jupyter.test
 
+import jupyter.kotlin.JavaRuntime
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlin.jupyter.DisplayHandler
 import org.jetbrains.kotlin.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlin.jupyter.api.CodeCell
+import org.jetbrains.kotlin.jupyter.api.DisplayContainer
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.api.Notebook
+import org.jetbrains.kotlin.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlin.jupyter.api.RuntimeUtils
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
@@ -93,4 +101,24 @@ class TestDisplayHandler(private val list: MutableList<Any> = mutableListOf()) :
     override fun handleUpdate(value: Any, id: String?) {
         // TODO: Implement correct updating
     }
+}
+
+class NotebookMock : Notebook<CodeCell> {
+    override val cells: Map<Int, CodeCell>
+        get() = emptyMap()
+    override val results: ResultsAccessor
+        get() = ResultsAccessor { cells[it] }
+    override val displays: DisplayContainer
+        get() = error("Not supposed to be called")
+    override val host: KotlinKernelHost
+        get() = error("Not supposed to be called")
+
+    override fun history(before: Int): CodeCell? {
+        error("Not supposed to be called")
+    }
+
+    override val kernelVersion: KotlinKernelVersion
+        get() = defaultRuntimeProperties.version!!
+    override val runtimeUtils: RuntimeUtils
+        get() = JavaRuntime
 }

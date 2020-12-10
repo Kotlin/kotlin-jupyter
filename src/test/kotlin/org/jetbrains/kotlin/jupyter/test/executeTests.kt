@@ -1,15 +1,21 @@
 package org.jetbrains.kotlin.jupyter.test
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlin.jupyter.ExecuteRequest
 import org.jetbrains.kotlin.jupyter.ExecutionResult
 import org.jetbrains.kotlin.jupyter.InputReply
 import org.jetbrains.kotlin.jupyter.JupyterSockets
 import org.jetbrains.kotlin.jupyter.KernelStatus
+import org.jetbrains.kotlin.jupyter.Message
 import org.jetbrains.kotlin.jupyter.MessageType
 import org.jetbrains.kotlin.jupyter.StatusReply
 import org.jetbrains.kotlin.jupyter.StreamResponse
+import org.jetbrains.kotlin.jupyter.compiler.CompiledScriptsSerializer
+import org.jetbrains.kotlin.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlin.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -17,7 +23,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.zeromq.ZMQ
+import java.net.URLClassLoader
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 fun JsonObject.string(key: String): String {
@@ -31,6 +42,7 @@ class ExecuteTests : KernelServerTestsBase() {
         code: String,
         hasResult: Boolean = true,
         ioPubChecker: (ZMQ.Socket) -> Unit = {},
+        executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
     ): Any? {
@@ -51,6 +63,8 @@ class ExecuteTests : KernelServerTestsBase() {
 
             var msg = shell.receiveMessage()
             assertEquals(MessageType.EXECUTE_REPLY, msg.type)
+            executeReplyChecker(msg)
+
             msg = ioPub.receiveMessage()
             assertEquals(MessageType.STATUS, msg.type)
             assertEquals(KernelStatus.BUSY, (msg.content as StatusReply).status)
@@ -177,6 +191,44 @@ class ExecuteTests : KernelServerTestsBase() {
             """.trimIndent()
         val res = doExecute(code, inputs = listOf("42"))
         assertEquals(jsonObject("text/plain" to "42"), res)
+    }
+
+    @Test
+    fun testCompiledData() {
+        val code =
+            """
+            val xyz = 42
+            """.trimIndent()
+        val res = doExecute(
+            code,
+            hasResult = false,
+            executeReplyChecker = { message ->
+                val metadata = message.data.metadata
+                assertTrue(metadata is JsonObject)
+                val compiledData = Json.decodeFromJsonElement<SerializedCompiledScriptsData?>(
+                    metadata["compiled_data"] ?: JsonNull
+                )
+                assertNotNull(compiledData)
+
+                val deserializer = CompiledScriptsSerializer()
+                val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
+
+                val names = deserializer.deserializeAndSave(compiledData, dir)
+                val kClassName = names.single()
+                val classLoader = URLClassLoader(arrayOf(dir.toUri().toURL()), ClassLoader.getSystemClassLoader())
+                val loadedClass = classLoader.loadClass(kClassName).kotlin
+                dir.toFile().delete()
+
+                @Suppress("UNCHECKED_CAST")
+                val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
+                val constructor = loadedClass.constructors.single()
+                val instance = constructor.call(NotebookMock())
+
+                val result = xyzProperty.get(instance)
+                assertEquals(42, result)
+            }
+        )
+        assertNull(res)
     }
 
     @Test

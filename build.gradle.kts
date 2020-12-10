@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.jupyter.build.excludeKotlinDependencies
 import org.jetbrains.kotlin.jupyter.build.getFlag
 import org.jetbrains.kotlin.jupyter.plugin.options
 
@@ -51,17 +50,8 @@ allprojects {
 }
 
 dependencies {
-    // Dependency on module with compiler. We're going to substitute
-    // unshaded compiler dependencies with embedded ones, so we do an exclusion here.
-    // implementation(project(":kotlin-jupyter-compiler-embeddable"))
-
-    implementation(project(":kotlin-jupyter-compiler")) {
-        excludeKotlinDependencies(
-            "compiler",
-            "scripting-compiler",
-            "serialization-unshaded"
-        )
-    }
+    // Dependency on module with compiler.
+    implementation(project(":kotlin-jupyter-compiler"))
 
     // Standard dependencies
     implementation(kotlin("stdlib"))

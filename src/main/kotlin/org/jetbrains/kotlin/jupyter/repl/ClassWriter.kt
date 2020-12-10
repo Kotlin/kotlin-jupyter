@@ -31,10 +31,6 @@ class ClassWriter(_outputDir: String = "") {
     }
 
     fun writeClasses(code: SourceCode, classes: KJvmCompiledScript) {
-        writeModuleInMemory(code, classes)
-    }
-
-    private fun writeModuleInMemory(code: SourceCode, classes: KJvmCompiledScript) {
         try {
             val moduleInMemory = classes.getCompiledModule() as KJvmCompiledModuleInMemory
             moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->

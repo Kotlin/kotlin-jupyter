@@ -92,7 +92,7 @@ interface KotlinKernelHost {
     class Result(val value: Any?, val fieldName: String?)
 }
 
-interface ResultsAccessor {
+fun interface ResultsAccessor {
     operator fun get(i: Int): Any?
 }
 

@@ -15,14 +15,16 @@ import org.jetbrains.kotlin.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlin.jupyter.codegen.AnnotationsProcessorImpl
 import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlin.jupyter.codegen.TypeProvidersProcessorImpl
+import org.jetbrains.kotlin.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplException
+import org.jetbrains.kotlin.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlin.jupyter.config.catchAll
 import org.jetbrains.kotlin.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
-import org.jetbrains.kotlin.jupyter.dependencies.JupyterScriptDependenciesResolver
+import org.jetbrains.kotlin.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlin.jupyter.dependencies.MavenDepsOnAnnotationsConfigurator
 import org.jetbrains.kotlin.jupyter.dependencies.Repository
 import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
@@ -69,6 +71,7 @@ typealias Classpath = List<String>
 data class EvalResult(
     val resultValue: Any?,
     val newClasspath: Classpath,
+    val compiledData: SerializedCompiledScriptsData?,
 )
 
 data class CheckResult(val isComplete: Boolean = true)
@@ -171,7 +174,9 @@ class ReplForJupyterImpl(
             }
         }
 
-    private val resolver = JupyterScriptDependenciesResolver(resolverConfig)
+    private val scriptsSerializer = CompiledScriptsSerializer()
+
+    private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
     private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
 
     private val typeRenderers = mutableListOf<RendererTypeHandler>()
@@ -358,11 +363,13 @@ class ReplForJupyterImpl(
 
                 var result: Any? = null
                 var resultField: Pair<String, KotlinType>? = null
+                var compiledData: SerializedCompiledScriptsData? = null
 
                 if (preprocessed.code.isNotBlank()) {
                     doEval(preprocessed.code, EvalData(jupyterId, code)).let {
                         result = it.value
                         resultField = it.resultField
+                        compiledData = it.compiledData
                     }
 
                     log.catchAll {
@@ -392,7 +399,7 @@ class ReplForJupyterImpl(
 
                 result = renderResult(result, resultField?.first)
 
-                return EvalResult(result, newClasspath)
+                return EvalResult(result, newClasspath, compiledData)
             } finally {
                 currentDisplayHandler = null
                 scheduledExecutions.clear()
@@ -480,10 +487,14 @@ class ReplForJupyterImpl(
             null
         }
         processAnnotations(jupyterCompiler.lastKClass)
-        return EvalResult(result, emptyList())
+        return EvalResult(result, emptyList(), null)
     }
 
-    private data class InternalEvalResult(val value: Any?, val resultField: Pair<String, KotlinType>?)
+    private data class InternalEvalResult(
+        val value: Any?,
+        val resultField: Pair<String, KotlinType>?,
+        val compiledData: SerializedCompiledScriptsData? = null,
+    )
 
     private interface LockQueueArgs<T> {
         val callback: (T) -> Unit
@@ -518,8 +529,9 @@ class ReplForJupyterImpl(
         } else null
 
         val (compileResult, evalConfig) = jupyterCompiler.compileSync(codeLine)
+        val compiledScript = compileResult.get()
 
-        classWriter?.writeClasses(codeLine, compileResult.get())
+        classWriter?.writeClasses(codeLine, compiledScript)
         val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evalConfig) }
         contextUpdater.update()
 
@@ -529,11 +541,15 @@ class ReplForJupyterImpl(
                 return when (val resultValue = pureResult.result) {
                     is ResultValue.Error -> throw ReplEvalRuntimeException(resultValue.error.message.orEmpty(), resultValue.error)
                     is ResultValue.Unit -> {
-                        InternalEvalResult(Unit, null)
+                        InternalEvalResult(Unit, null, scriptsSerializer.serialize(compiledScript))
                     }
                     is ResultValue.Value -> {
                         cell?.resultVal = resultValue.value
-                        InternalEvalResult(resultValue.value, pureResult.compiledSnippet.resultField)
+                        InternalEvalResult(
+                            resultValue.value,
+                            pureResult.compiledSnippet.resultField,
+                            scriptsSerializer.serialize(compiledScript)
+                        )
                     }
                     is ResultValue.NotEvaluated -> {
                         throw ReplEvalRuntimeException(
