@@ -248,7 +248,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = ConnectReply(
                         jsonObject(
                             JupyterSockets.values()
-                                .map { Pair("${it.name}_port", connection.config.ports[it.ordinal]) }
+                                .map { Pair("${it.nameForUser}_port", connection.config.ports[it.ordinal]) }
                         )
                     )
                 )

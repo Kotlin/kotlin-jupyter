@@ -47,9 +47,9 @@ class ExecuteTests : KernelServerTestsBase() {
         allowStdin: Boolean = true,
     ): Any? {
         val context = ZMQ.context(1)
-        val shell = ClientSocket(context, JupyterSockets.shell)
-        val ioPub = ClientSocket(context, JupyterSockets.iopub)
-        val stdin = ClientSocket(context, JupyterSockets.stdin)
+        val shell = ClientSocket(context, JupyterSockets.SHELL)
+        val ioPub = ClientSocket(context, JupyterSockets.IOPUB)
+        val stdin = ClientSocket(context, JupyterSockets.STDIN)
         ioPub.subscribe(byteArrayOf())
         try {
             shell.connect()

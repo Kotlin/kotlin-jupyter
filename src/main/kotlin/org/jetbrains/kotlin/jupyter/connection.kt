@@ -134,11 +134,11 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
-    val heartbeat = Socket(JupyterSockets.hb)
-    val shell = Socket(JupyterSockets.shell)
-    val control = Socket(JupyterSockets.control)
-    val stdin = Socket(JupyterSockets.stdin)
-    val iopub = Socket(JupyterSockets.iopub)
+    val heartbeat = Socket(JupyterSockets.HB)
+    val shell = Socket(JupyterSockets.SHELL)
+    val control = Socket(JupyterSockets.CONTROL)
+    val stdin = Socket(JupyterSockets.STDIN)
+    val iopub = Socket(JupyterSockets.IOPUB)
 
     val stdinIn = StdinInputStream()
 
