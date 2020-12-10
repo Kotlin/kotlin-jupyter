@@ -63,8 +63,7 @@ class OkResponseWithMessage(
 
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         if (result != null) {
-            val metadata = jsonObject("new_classpath" to Json.encodeToJsonElement(newClasspath))
-            val resultJson = result.toJson(metadata)
+            val resultJson = result.toJson()
 
             socket.connection.iopub.send(
                 makeReplyMessage(
@@ -89,6 +88,7 @@ class OkResponseWithMessage(
                     "status" to Json.encodeToJsonElement("ok"),
                     "started" to Json.encodeToJsonElement(startedTime),
                     "compiled_data" to Json.encodeToJsonElement(compiledData),
+                    "new_classpath" to Json.encodeToJsonElement(newClasspath),
                 ),
                 content = ExecuteReply(
                     MessageStatus.OK,

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.jupyter.compiler
 
-import kotlin.reflect.KClass
+import kotlin.script.experimental.api.KotlinType
 
 fun interface PreviousScriptClassesProvider {
-    fun get(): List<KClass<*>>
+    fun get(): List<KotlinType>
 }
