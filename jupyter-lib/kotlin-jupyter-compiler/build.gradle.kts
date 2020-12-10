@@ -24,22 +24,21 @@ dependencies {
     api(project(":kotlin-jupyter-deps"))
 
     // Standard dependencies
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("reflect"))
+    compileOnly(kotlin("stdlib"))
+    compileOnly(kotlin("stdlib-jdk8"))
+    compileOnly(kotlin("reflect"))
 
     // Scripting and compilation-related dependencies
     compileOnly(kotlin("scripting-common"))
-    compileOnly(kotlin("scripting-dependencies"))
     compileOnly(kotlin("scripting-jvm"))
     compileOnly(kotlin("scripting-compiler-impl"))
+    implementation(kotlin("scripting-dependencies") as String) { isTransitive = false }
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
     compileOnly(kotlin("serialization-unshaded"))
 
     // Logging
     compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
-    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 
     // Khttp for resolving remote library dependencies
     implementation("khttp:khttp:$khttpVersion")

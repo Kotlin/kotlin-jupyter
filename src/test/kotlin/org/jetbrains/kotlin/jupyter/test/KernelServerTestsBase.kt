@@ -58,6 +58,9 @@ open class KernelServerTestsBase {
     private var fileOut: File? = null
     private var fileErr: File? = null
 
+    open fun beforeEach() {}
+    open fun afterEach() {}
+
     @BeforeEach
     fun setupServer(testInfo: TestInfo) {
         if (runInSeparateProcess) {
@@ -82,10 +85,12 @@ open class KernelServerTestsBase {
         } else {
             serverThread = thread { kernelServer(config, defaultRuntimeProperties) }
         }
+        beforeEach()
     }
 
     @AfterEach
     fun teardownServer() {
+        afterEach()
         if (runInSeparateProcess) {
             serverProcess?.run {
                 destroy()
