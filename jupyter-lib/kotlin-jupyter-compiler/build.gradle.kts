@@ -29,21 +29,16 @@ dependencies {
     implementation(kotlin("reflect"))
 
     // Scripting and compilation-related dependencies
-    api(kotlin("scripting-common"))
-    implementation(kotlin("compiler"))
-    implementation(kotlin("scripting-compiler"))
-    implementation(kotlin("scripting-dependencies"))
-    implementation(kotlin("scripting-jvm"))
-    implementation(kotlin("main-kts"))
-
-    // Adding this dependency to runtime classpath may lead to problems
+    compileOnly(kotlin("scripting-common"))
+    compileOnly(kotlin("scripting-dependencies"))
+    compileOnly(kotlin("scripting-jvm"))
     compileOnly(kotlin("scripting-compiler-impl"))
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
-    implementation(kotlin("serialization-unshaded"))
+    compileOnly(kotlin("serialization-unshaded"))
 
     // Logging
-    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
     runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
 
     // Khttp for resolving remote library dependencies

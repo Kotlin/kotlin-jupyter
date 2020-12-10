@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.jupyter.test
 
 import org.jetbrains.kotlin.jupyter.EvalResult
 import org.jetbrains.kotlin.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlin.jupyter.compiler.getSimpleCompiler
+import org.jetbrains.kotlin.jupyter.repl.getSimpleCompiler
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration

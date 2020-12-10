@@ -1,6 +1,6 @@
 package org.jetbrains.kotlin.jupyter.compiler.util
 
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
+import kotlinx.serialization.Serializable
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -47,4 +47,30 @@ class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, 
     }
 
     constructor(message: String) : this(null, message)
+}
+
+@Serializable
+data class CompilerMessageLocationWithRange(
+    val path: String,
+    val line: Int,
+    val column: Int,
+    val lineEnd: Int,
+    val columnEnd: Int,
+    val lineContent: String?
+) {
+    override fun toString(): String =
+        path + (if (line != -1 || column != -1) " ($line:$column)" else "")
+
+    companion object {
+        @JvmStatic
+        fun create(
+            path: String?,
+            lineStart: Int,
+            columnStart: Int,
+            lineEnd: Int?,
+            columnEnd: Int?,
+            lineContent: String?
+        ): CompilerMessageLocationWithRange? =
+            if (path == null) null else CompilerMessageLocationWithRange(path, lineStart, columnStart, lineEnd ?: -1, columnEnd ?: -1, lineContent)
+    }
 }

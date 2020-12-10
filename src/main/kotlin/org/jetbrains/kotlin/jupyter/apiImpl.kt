@@ -101,13 +101,11 @@ class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
 ) : Notebook<CodeCellImpl> {
     override val cells = hashMapOf<Int, CodeCellImpl>()
-    override val results = object : ResultsAccessor {
-        override fun get(i: Int): Any? {
-            val cell = cells[i] ?: throw ArrayIndexOutOfBoundsException(
-                "There is no cell with number '$i'"
-            )
-            return cell.result
-        }
+    override val results = ResultsAccessor { i ->
+        val cell = cells[i] ?: throw ArrayIndexOutOfBoundsException(
+            "There is no cell with number '$i'"
+        )
+        cell.result
     }
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false

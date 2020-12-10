@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.jupyter.api.Renderable
 import org.jetbrains.kotlin.jupyter.api.setDisplayId
 import org.jetbrains.kotlin.jupyter.api.textResult
 import org.jetbrains.kotlin.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlin.jupyter.compiler.util.SerializedCompiledScriptsData
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -54,6 +55,7 @@ abstract class Response(
 class OkResponseWithMessage(
     private val result: DisplayResult?,
     private val newClasspath: Classpath = emptyList(),
+    private val compiledData: SerializedCompiledScriptsData? = null,
     stdOut: String? = null,
     stdErr: String? = null,
 ) : Response(stdOut, stdErr) {
@@ -85,7 +87,8 @@ class OkResponseWithMessage(
                     "dependencies_met" to Json.encodeToJsonElement(true),
                     "engine" to Json.encodeToJsonElement(requestMsg.data.header?.session),
                     "status" to Json.encodeToJsonElement("ok"),
-                    "started" to Json.encodeToJsonElement(startedTime)
+                    "started" to Json.encodeToJsonElement(startedTime),
+                    "compiled_data" to Json.encodeToJsonElement(compiledData),
                 ),
                 content = ExecuteReply(
                     MessageStatus.OK,
@@ -437,7 +440,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
 
                 try {
                     val result = exec.resultValue?.toDisplayResult(repl.notebook)
-                    OkResponseWithMessage(result, exec.newClasspath)
+                    OkResponseWithMessage(result, exec.newClasspath, exec.compiledData)
                 } catch (e: Exception) {
                     AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                 }
