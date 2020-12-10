@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
+import org.jetbrains.kotlin.jupyter.ExecuteReply
 import org.jetbrains.kotlin.jupyter.ExecuteRequest
 import org.jetbrains.kotlin.jupyter.ExecutionResult
 import org.jetbrains.kotlin.jupyter.InputReply
@@ -37,6 +38,37 @@ fun JsonObject.string(key: String): String {
 
 @Timeout(100, unit = TimeUnit.SECONDS)
 class ExecuteTests : KernelServerTestsBase() {
+    private var context: ZMQ.Context? = null
+    private var shell: ClientSocket? = null
+    private var ioPub: ClientSocket? = null
+    private var stdin: ClientSocket? = null
+
+    override fun beforeEach() {
+        try {
+            context = ZMQ.context(1)
+            shell = ClientSocket(context!!, JupyterSockets.SHELL)
+            ioPub = ClientSocket(context!!, JupyterSockets.IOPUB)
+            stdin = ClientSocket(context!!, JupyterSockets.STDIN)
+            ioPub?.subscribe(byteArrayOf())
+            shell?.connect()
+            ioPub?.connect()
+            stdin?.connect()
+        } catch (e: Throwable) {
+            afterEach()
+            throw e
+        }
+    }
+
+    override fun afterEach() {
+        shell?.close()
+        shell = null
+        ioPub?.close()
+        ioPub = null
+        stdin?.close()
+        stdin = null
+        context?.term()
+        context = null
+    }
 
     private fun doExecute(
         code: String,
@@ -46,16 +78,10 @@ class ExecuteTests : KernelServerTestsBase() {
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
     ): Any? {
-        val context = ZMQ.context(1)
-        val shell = ClientSocket(context, JupyterSockets.SHELL)
-        val ioPub = ClientSocket(context, JupyterSockets.IOPUB)
-        val stdin = ClientSocket(context, JupyterSockets.STDIN)
-        ioPub.subscribe(byteArrayOf())
         try {
-            shell.connect()
-            ioPub.connect()
-            stdin.connect()
-
+            val shell = this.shell!!
+            val ioPub = this.ioPub!!
+            val stdin = this.stdin!!
             shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code))
             inputs.forEach {
                 stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
@@ -85,11 +111,9 @@ class ExecuteTests : KernelServerTestsBase() {
             assertEquals(MessageType.STATUS, msg.type)
             assertEquals(KernelStatus.IDLE, (msg.content as StatusReply).status)
             return response
-        } finally {
-            shell.close()
-            ioPub.close()
-            stdin.close()
-            context.term()
+        } catch (e: Throwable) {
+            afterEach()
+            throw e
         }
     }
 
@@ -229,6 +253,19 @@ class ExecuteTests : KernelServerTestsBase() {
             }
         )
         assertNull(res)
+    }
+
+    @Test
+    fun testCounter() {
+        fun checkCounter(message: Message, expectedCounter: Long) {
+            val data = message.data.content as ExecuteReply
+            assertEquals(expectedCounter, data.executionCount)
+        }
+        val res1 = doExecute("42", executeReplyChecker = { checkCounter(it, 1) })
+        val res2 = doExecute("43", executeReplyChecker = { checkCounter(it, 2) })
+
+        assertEquals(jsonObject("text/plain" to "42"), res1)
+        assertEquals(jsonObject("text/plain" to "43"), res2)
     }
 
     @Test
