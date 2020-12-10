@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.jupyter.build.getFlag
 import org.jetbrains.kotlin.jupyter.plugin.options
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     kotlin("jvm")
@@ -19,17 +20,20 @@ val khttpVersion: String by project
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
 
-ktlint {
+fun KtlintExtension.setup() {
     version.set(ktlintVersion)
     enableExperimentalRules.set(true)
+}
+
+ktlint {
+    setup()
 }
 
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     ktlint {
-        version.set(ktlintVersion)
-        enableExperimentalRules.set(true)
+        setup()
     }
 }
 

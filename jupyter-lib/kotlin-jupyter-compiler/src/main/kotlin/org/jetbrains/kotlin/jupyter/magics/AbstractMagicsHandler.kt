@@ -11,12 +11,12 @@ abstract class AbstractMagicsHandler : MagicsHandler {
     protected val newLibraries: MutableList<LibraryDefinitionProducer> = mutableListOf()
 
     private val callbackMap: Map<ReplLineMagic, () -> Unit> = mapOf(
-        ReplLineMagic.use to ::handleUse,
-        ReplLineMagic.trackClasspath to ::handleTrackClasspath,
-        ReplLineMagic.trackExecution to ::handleTrackExecution,
-        ReplLineMagic.dumpClassesForSpark to ::handleDumpClassesForSpark,
-        ReplLineMagic.useLatestDescriptors to ::handleUseLatestDescriptors,
-        ReplLineMagic.output to ::handleOutput,
+        ReplLineMagic.USE to ::handleUse,
+        ReplLineMagic.TRACK_CLASSPATH to ::handleTrackClasspath,
+        ReplLineMagic.TRACK_EXECUTION to ::handleTrackExecution,
+        ReplLineMagic.DUMP_CLASSES_FOR_SPARK to ::handleDumpClassesForSpark,
+        ReplLineMagic.USE_LATEST_DESCRIPTORS to ::handleUseLatestDescriptors,
+        ReplLineMagic.OUTPUT to ::handleOutput,
     )
 
     override fun handle(magic: ReplLineMagic, arg: String?, tryIgnoreErrors: Boolean, parseOnly: Boolean) {

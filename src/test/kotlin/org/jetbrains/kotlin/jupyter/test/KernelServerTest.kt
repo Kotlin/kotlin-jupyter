@@ -17,7 +17,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testHeartbeat() {
         val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSockets.hb)) {
+        with(ClientSocket(context, JupyterSockets.HB)) {
             try {
                 connect()
                 send("abc")
@@ -33,7 +33,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testStdin() {
         val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSockets.stdin)) {
+        with(ClientSocket(context, JupyterSockets.STDIN)) {
             try {
                 connect()
                 sendMore("abc")
@@ -49,7 +49,7 @@ class KernelServerTest : KernelServerTestsBase() {
     @Test
     fun testShell() {
         val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSockets.control)) {
+        with(ClientSocket(context, JupyterSockets.CONTROL)) {
             try {
                 connect()
                 sendMessage(

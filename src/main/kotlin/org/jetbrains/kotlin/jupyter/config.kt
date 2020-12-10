@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlin.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlin.jupyter.common.getNameForUser
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.config.getLogger
 import org.jetbrains.kotlin.jupyter.config.readResourceAsIniFile
@@ -29,13 +30,14 @@ val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
 }
 
-@Suppress("EnumEntryName")
 enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
-    hb(SocketType.REP, SocketType.REQ),
-    shell(SocketType.ROUTER, SocketType.REQ),
-    control(SocketType.ROUTER, SocketType.REQ),
-    stdin(SocketType.ROUTER, SocketType.REQ),
-    iopub(SocketType.PUB, SocketType.SUB)
+    HB(SocketType.REP, SocketType.REQ),
+    SHELL(SocketType.ROUTER, SocketType.REQ),
+    CONTROL(SocketType.ROUTER, SocketType.REQ),
+    STDIN(SocketType.ROUTER, SocketType.REQ),
+    IOPUB(SocketType.PUB, SocketType.SUB);
+
+    val nameForUser = getNameForUser(name)
 }
 
 data class OutputConfig(
@@ -96,7 +98,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
             map["signature_scheme"]?.content,
             map["key"]?.content,
             JupyterSockets.values().map { socket ->
-                val fieldName = "${socket.name}_port"
+                val fieldName = "${socket.nameForUser}_port"
                 map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
             },
             map["transport"]?.content ?: "tcp"
@@ -110,7 +112,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
             "transport" to JsonPrimitive(value.transport)
         )
         JupyterSockets.values().forEach {
-            map["${it.name}_port"] = JsonPrimitive(value.ports[it.ordinal])
+            map["${it.nameForUser}_port"] = JsonPrimitive(value.ports[it.ordinal])
         }
         utilSerializer.serialize(encoder, map)
     }
