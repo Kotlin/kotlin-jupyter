@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.jupyter.dependencies
 
+import jupyter.kotlin.DependsOn
+import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.jupyter.config.getLogger
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver

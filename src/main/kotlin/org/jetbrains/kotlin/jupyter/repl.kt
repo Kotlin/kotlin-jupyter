@@ -1,7 +1,9 @@
 package org.jetbrains.kotlin.jupyter
 
 import AnnotationsProcessor
+import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
+import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.jupyter.api.Code
@@ -23,10 +25,8 @@ import org.jetbrains.kotlin.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlin.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlin.jupyter.config.catchAll
 import org.jetbrains.kotlin.jupyter.config.getCompilationConfiguration
-import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
 import org.jetbrains.kotlin.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlin.jupyter.dependencies.MavenDepsOnAnnotationsConfigurator
-import org.jetbrains.kotlin.jupyter.dependencies.Repository
 import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesProcessor
