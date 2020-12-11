@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.jupyter.test
 
+import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlin.jupyter.api.RuntimeUtils
 import org.jetbrains.kotlin.jupyter.config.defaultRepositories
 import org.jetbrains.kotlin.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlin.jupyter.dependencies.DependsOn
 import org.jetbrains.kotlin.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlin.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlin.jupyter.libraries.LibraryDescriptor
