@@ -104,6 +104,7 @@ tasks.register("publishLocal") {
         "condaPackage",
         "pyPiPackage",
         ":kotlin-jupyter-api:publish",
+        ":kotlin-jupyter-lib:publish",
         ":kotlin-jupyter-compiler:publish",
         ":kotlin-jupyter-deps:publish"
     )
