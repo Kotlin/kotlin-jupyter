@@ -36,4 +36,4 @@ pluginManagement {
 }
 
 includeBuild("../kotlin-jupyter-publish")
-include("kotlin-jupyter-deps")
+include("common-dependencies")

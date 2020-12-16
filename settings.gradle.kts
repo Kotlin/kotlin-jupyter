@@ -58,10 +58,10 @@ gradle.projectsLoaded {
 
 val pluginProject = "kotlin-jupyter-plugin"
 val publishPluginProject = "kotlin-jupyter-publish"
-val depsProject = "kotlin-jupyter-deps"
-val apiProject = "kotlin-jupyter-api"
-val compilerProject = "kotlin-jupyter-compiler"
-val libProject = "kotlin-jupyter-lib"
+val depsProject = "common-dependencies"
+val apiProject = "api"
+val compilerProject = "shared-compiler"
+val libProject = "lib"
 val libsPath = "jupyter-lib"
 
 includeBuild(publishPluginProject)

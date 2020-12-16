@@ -38,7 +38,7 @@ tasks {
 
 addPublication {
     publicationName = "api"
-    artifactId = "notebook-api"
-    bintrayDescription = "API for Kotlin Jupyter notebooks"
-    bintrayPackageName = "kotlin-jupyter-api"
+    artifactId = "kotlin-jupyter-api"
+    bintrayDescription = "API for libraries supporting Kotlin Jupyter notebooks"
+    bintrayPackageName = artifactId
 }

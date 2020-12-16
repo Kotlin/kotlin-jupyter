@@ -19,9 +19,9 @@ repositories {
 
 dependencies {
     // Internal dependencies
-    api(project(":kotlin-jupyter-api"))
-    api(project(":kotlin-jupyter-lib"))
-    api(project(":kotlin-jupyter-deps"))
+    api(project(":api"))
+    api(project(":lib"))
+    api(project(":common-dependencies"))
 
     // Standard dependencies
     compileOnly(kotlin("stdlib"))
@@ -81,7 +81,7 @@ tasks.processResources {
 
 addPublication {
     publicationName = "compiler"
-    artifactId = "compiler"
-    bintrayDescription = "Compiler helpers for Kotlin Jupyter notebooks"
-    bintrayPackageName = "kotlin-jupyter-compiler"
+    artifactId = "kotlin-jupyter-shared-compiler"
+    bintrayDescription = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"
+    bintrayPackageName = artifactId
 }
