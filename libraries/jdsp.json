@@ -1,5 +1,5 @@
 {
-  "description": "Signal processing",
+  "description": "Java library for signal processing",
   "properties": {
     "v": "0.5.1"
   },
