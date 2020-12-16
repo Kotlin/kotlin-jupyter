@@ -83,10 +83,14 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
                 repo = bintrayRepo
                 name = settings.bintrayPackageName
                 userOrg = bintrayUserOrg
+                desc = settings.bintrayDescription
 
-                vcsUrl = project.findProperty("projectRepoUrl") as String? ?: ""
+                val projectUrl = project.findProperty("projectRepoUrl") as String? ?: ""
+                websiteUrl = projectUrl
+                vcsUrl = projectUrl
+                issueTrackerUrl = "$projectUrl/issues"
 
-                setLicenses("MIT")
+                setLicenses("Apache-2.0")
                 publicDownloadNumbers = true
 
                 // Optional version descriptor
