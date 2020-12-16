@@ -17,8 +17,8 @@ dependencies {
 }
 
 addPublication {
-    publicationName = "dependencies"
-    artifactId = "notebook-api-dependencies"
-    bintrayDescription = "Additional API for Kotlin Jupyter notebooks"
-    bintrayPackageName = "kotlin-jupyter-api-dependencies"
+    publicationName = "common-dependencies"
+    artifactId = "kotlin-jupyter-common-dependencies"
+    bintrayDescription = "Notebook API entities used for building kernel documentation"
+    bintrayPackageName = artifactId
 }

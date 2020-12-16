@@ -55,7 +55,7 @@ allprojects {
 
 dependencies {
     // Dependency on module with compiler.
-    implementation(project(":kotlin-jupyter-compiler"))
+    implementation(project(":shared-compiler"))
 
     // Standard dependencies
     implementation(kotlin("stdlib"))
@@ -92,8 +92,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
-    deploy(project(":kotlin-jupyter-lib"))
-    deploy(project(":kotlin-jupyter-api"))
+    deploy(project(":lib"))
+    deploy(project(":api"))
     deploy(kotlin("script-runtime"))
 }
 
@@ -103,10 +103,10 @@ tasks.register("publishLocal") {
     dependsOn(
         "condaPackage",
         "pyPiPackage",
-        ":kotlin-jupyter-api:publish",
-        ":kotlin-jupyter-lib:publish",
-        ":kotlin-jupyter-compiler:publish",
-        ":kotlin-jupyter-deps:publish"
+        ":api:publish",
+        ":lib:publish",
+        ":shared-compiler:publish",
+        ":common-dependencies:publish"
     )
 }
 

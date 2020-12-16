@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":kotlin-jupyter-deps"))
+    implementation(project(":common-dependencies"))
 
     implementation("khttp:khttp:1.0.0")
 }

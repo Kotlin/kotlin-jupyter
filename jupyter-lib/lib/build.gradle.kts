@@ -8,14 +8,14 @@ plugins {
 project.version = rootProject.version
 
 dependencies {
-    implementation(project(":kotlin-jupyter-api"))
+    implementation(project(":api"))
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 }
 
 addPublication {
     publicationName = "lib"
-    artifactId = "notebook-lib"
-    bintrayDescription = "Internal Kotlin Jupyter API"
-    bintrayPackageName = "kotlin-jupyter-lib"
+    artifactId = "kotlin-jupyter-lib"
+    bintrayDescription = "Internal part of Kotlin Jupyter API used only inside notebook cells"
+    bintrayPackageName = artifactId
 }
