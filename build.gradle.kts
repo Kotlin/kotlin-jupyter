@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.jupyter.build.getFlag
-import org.jetbrains.kotlin.jupyter.plugin.options
+import org.jetbrains.kotlinx.jupyter.build.getFlag
+import org.jetbrains.kotlinx.jupyter.plugin.options
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
@@ -8,7 +8,7 @@ plugins {
     kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
-    id("org.jetbrains.kotlin.jupyter.dependencies")
+    id("org.jetbrains.kotlinx.jupyter.dependencies")
 }
 
 val kotlinxSerializationVersion: String by project
