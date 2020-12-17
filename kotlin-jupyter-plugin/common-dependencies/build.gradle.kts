@@ -1,7 +1,7 @@
-import org.jetbrains.kotlin.jupyter.publishing.addPublication
+import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 
 plugins {
-    id("org.jetbrains.kotlin.jupyter.publishing")
+    id("org.jetbrains.kotlinx.jupyter.publishing")
     kotlin("jvm")
 }
 

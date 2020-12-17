@@ -1,6 +1,6 @@
 package jupyter.kotlin
 
-import org.jetbrains.kotlin.jupyter.api.RuntimeUtils
+import org.jetbrains.kotlinx.jupyter.api.RuntimeUtils
 
 object JavaRuntime : RuntimeUtils {
     private const val defaultVersion = 8

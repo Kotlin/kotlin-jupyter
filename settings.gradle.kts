@@ -46,7 +46,7 @@ pluginManagement {
         kotlin("plugin.serialization") version kotlinVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
-        id("org.jetbrains.kotlin.jupyter.dependencies")
+        id("org.jetbrains.kotlinx.jupyter.dependencies")
     }
 }
 

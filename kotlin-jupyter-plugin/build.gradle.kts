@@ -18,8 +18,8 @@ dependencies {
 gradlePlugin {
     plugins {
         create("dependencies") {
-            id = "org.jetbrains.kotlin.jupyter.dependencies"
-            implementationClass = "org.jetbrains.kotlin.jupyter.plugin.KotlinJupyterGradlePlugin"
+            id = "org.jetbrains.kotlinx.jupyter.dependencies"
+            implementationClass = "org.jetbrains.kotlinx.jupyter.plugin.KotlinJupyterGradlePlugin"
         }
     }
 }

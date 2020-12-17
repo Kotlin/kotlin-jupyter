@@ -21,8 +21,8 @@ dependencies {
 gradlePlugin {
     plugins {
         create("publishing") {
-            id = "org.jetbrains.kotlin.jupyter.publishing"
-            implementationClass = "org.jetbrains.kotlin.jupyter.plugin.ApiPublishGradlePlugin"
+            id = "org.jetbrains.kotlinx.jupyter.publishing"
+            implementationClass = "org.jetbrains.kotlinx.jupyter.plugin.ApiPublishGradlePlugin"
         }
     }
 }
