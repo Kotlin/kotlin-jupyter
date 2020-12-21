@@ -5,11 +5,14 @@ import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
@@ -640,6 +643,28 @@ class ReplWithResolverTest : AbstractReplTest() {
         )
 
         assertEquals("""{"x":42}""", serialized.resultValue)
+    }
+
+    @Test
+    fun testLibraryFromClasspath() {
+        repl.eval(
+            """
+            @file:Repository("https://dl.bintray.com/ileasile/kotlin-datascience-ileasile")
+            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.7")
+            """.trimIndent()
+        )
+
+        val res = repl.eval(
+            """
+            ses.visualizeColor("red")
+            """.trimIndent()
+        )
+
+        val result = res.resultValue as Renderable
+        val json = result.render(repl.notebook).toJson()
+        val jsonData = json["data"] as JsonObject
+        val htmlString = jsonData["text/html"] as JsonPrimitive
+        assertEquals("""<span style="color:red">red</span>""", htmlString.content)
     }
 
     @Test

@@ -1,11 +1,11 @@
 package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.Execution
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 

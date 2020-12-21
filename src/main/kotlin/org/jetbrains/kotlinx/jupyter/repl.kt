@@ -6,13 +6,13 @@ import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.Execution
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessorImpl
@@ -28,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.dependencies.MavenDepsOnAnnotationsConfigur
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
@@ -147,6 +148,7 @@ class ReplForJupyterImpl(
 
     private var outputConfigImpl = OutputConfig()
     override val notebook = NotebookImpl(this, runtimeProperties)
+    private val librariesScanner = LibrariesScanner()
 
     override var outputConfig
         get() = outputConfigImpl
@@ -377,6 +379,10 @@ class ReplForJupyterImpl(
 
                 log.catchAll {
                     executeScheduledCode()
+                }
+
+                log.catchAll {
+                    librariesScanner.addLibrariesFromClassLoader(jupyterCompiler.lastClassLoader, notebook)
                 }
 
                 log.catchAll {

@@ -1,13 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
+
+typealias FQN = String
 
 sealed class Parameter(val name: String, open val default: String?) {
     class Required(name: String) : Parameter(name, null)

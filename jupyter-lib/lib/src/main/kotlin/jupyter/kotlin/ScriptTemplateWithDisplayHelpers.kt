@@ -1,8 +1,8 @@
 package jupyter.kotlin
 
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 
 abstract class ScriptTemplateWithDisplayHelpers(
     val notebook: Notebook<*>,
