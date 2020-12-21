@@ -1,5 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+
+typealias TypeName = String
+typealias Code = String
+
 /**
  * Single evaluated notebook cell representation
  */

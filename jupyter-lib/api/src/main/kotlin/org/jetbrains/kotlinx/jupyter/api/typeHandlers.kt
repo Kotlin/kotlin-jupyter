@@ -1,17 +1,18 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import kotlin.reflect.KClass
 
-fun interface TypeHandlerExecution : VariablesSubstitutionAvailable<TypeHandlerExecution> {
+fun interface TypeHandlerExecution : VariablesSubstitutionAware<TypeHandlerExecution> {
     fun execute(host: KotlinKernelHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result
 
     override fun replaceVariables(mapping: Map<String, String>): TypeHandlerExecution = this
 }
 
-interface RendererTypeHandler : VariablesSubstitutionAvailable<RendererTypeHandler> {
+interface RendererTypeHandler : VariablesSubstitutionAware<RendererTypeHandler> {
     fun acceptsType(type: KClass<*>): Boolean
 
     val execution: TypeHandlerExecution
@@ -46,7 +47,7 @@ class ExactRendererTypeHandler(val className: TypeName, override val execution: 
 }
 
 @Serializable
-class GenerativeTypeHandler(val className: TypeName, val code: Code) : VariablesSubstitutionAvailable<GenerativeTypeHandler> {
+class GenerativeTypeHandler(val className: TypeName, val code: Code) : VariablesSubstitutionAware<GenerativeTypeHandler> {
     override fun replaceVariables(mapping: Map<String, String>): GenerativeTypeHandler {
         return GenerativeTypeHandler(className, replaceVariables(code, mapping))
     }

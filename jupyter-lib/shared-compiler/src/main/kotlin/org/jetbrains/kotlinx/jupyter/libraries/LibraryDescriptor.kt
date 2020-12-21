@@ -3,10 +3,10 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.util.GenerativeHandlersSerializer
 import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
 

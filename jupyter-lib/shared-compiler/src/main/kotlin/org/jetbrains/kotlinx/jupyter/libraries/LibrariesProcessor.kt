@@ -1,7 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinitionProducer
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 

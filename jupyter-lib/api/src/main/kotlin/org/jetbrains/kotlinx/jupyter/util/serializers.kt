@@ -8,10 +8,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.TypeHandlerCodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

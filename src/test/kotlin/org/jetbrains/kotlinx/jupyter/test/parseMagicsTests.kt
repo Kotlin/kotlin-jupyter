@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test
 import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplOptions
-import org.jetbrains.kotlinx.jupyter.api.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties

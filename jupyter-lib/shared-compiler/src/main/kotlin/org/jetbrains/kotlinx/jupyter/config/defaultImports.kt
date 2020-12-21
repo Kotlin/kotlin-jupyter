@@ -11,4 +11,5 @@ val defaultRepositories = arrayOf(
 val defaultGlobalImports = listOf(
     "kotlin.math.*",
     "org.jetbrains.kotlinx.jupyter.api.*",
+    "org.jetbrains.kotlinx.jupyter.api.libraries.*",
 )

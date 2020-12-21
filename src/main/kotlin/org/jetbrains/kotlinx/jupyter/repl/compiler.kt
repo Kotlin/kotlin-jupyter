@@ -63,6 +63,9 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     val lastKClass: KClass<*>
         get() = classes.last()
 
+    val lastClassLoader: ClassLoader
+        get() = classes.lastOrNull()?.java?.classLoader ?: basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
+
     fun nextCounter() = executionCounter.getAndIncrement()
     fun nextSourceCode(code: String): SourceCode = SourceCodeImpl(nextCounter(), code)
 
