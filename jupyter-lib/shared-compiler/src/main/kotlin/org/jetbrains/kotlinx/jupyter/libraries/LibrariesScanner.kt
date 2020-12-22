@@ -1,16 +1,21 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.libraries.FQN
+import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
+import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesInstantiable
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 
 class LibrariesScanner {
     private val processedFQNs = mutableSetOf<FQN>()
 
-    private fun <T, I : Instantiable<T>> Iterable<I>.filterProcessed(): List<I> {
+    private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
         return filter { it.fqn !in processedFQNs }
     }
 
@@ -21,27 +26,27 @@ class LibrariesScanner {
         libraries.forEach { notebook.host.addLibrary(it) }
     }
 
-    private fun scanForLibraries(classLoader: ClassLoader): ScanResult {
-        val results = classLoader.getResources(LIBRARIES_DEFINITIONS_PATH).toList().map { url ->
+    private fun scanForLibraries(classLoader: ClassLoader): LibrariesScanResult {
+        val results = classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
             val contents = url.readText()
-            Json.decodeFromString<ScanResult>(contents)
+            Json.decodeFromString<LibrariesScanResult>(contents)
         }
 
-        val definitions = mutableListOf<DefinitionDeclaration>()
-        val producers = mutableListOf<ProducerDeclaration>()
+        val definitions = mutableListOf<LibrariesDefinitionDeclaration>()
+        val producers = mutableListOf<LibrariesProducerDeclaration>()
 
         for (result in results) {
             definitions.addAll(result.definitions)
             producers.addAll(result.producers)
         }
 
-        return ScanResult(
+        return LibrariesScanResult(
             definitions.filterProcessed(),
             producers.filterProcessed(),
         )
     }
 
-    private fun updateProcessed(scanResult: ScanResult) {
+    private fun updateProcessed(scanResult: LibrariesScanResult) {
         scanResult.apply {
             val instantiableData = producers + definitions
             instantiableData.map {
@@ -52,7 +57,7 @@ class LibrariesScanner {
         }
     }
 
-    private fun instantiateLibraries(classLoader: ClassLoader, scanResult: ScanResult, notebook: Notebook<*>): List<LibraryDefinition> {
+    private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook<*>): List<LibraryDefinition> {
         val definitions = mutableListOf<LibraryDefinition>()
 
         scanResult.definitions.mapTo(definitions) {
@@ -65,7 +70,7 @@ class LibrariesScanner {
         return definitions
     }
 
-    private fun <T> instantiate(classLoader: ClassLoader, data: Instantiable<T>, notebook: Notebook<*>): T {
+    private fun <T> instantiate(classLoader: ClassLoader, data: LibrariesInstantiable<T>, notebook: Notebook<*>): T {
         val clazz = classLoader.loadClass(data.fqn)
         val constructor = clazz.constructors.single()
 
@@ -79,29 +84,5 @@ class LibrariesScanner {
             }
             else -> throw IllegalStateException("Only zero or one argument is allowed for library class")
         } as T
-    }
-
-    @Serializable
-    private class ScanResult(
-        val definitions: List<DefinitionDeclaration> = emptyList(),
-        val producers: List<ProducerDeclaration> = emptyList(),
-    )
-
-    @Serializable
-    private class DefinitionDeclaration(
-        override val fqn: FQN,
-    ) : Instantiable<LibraryDefinition>
-
-    @Serializable
-    private class ProducerDeclaration(
-        override val fqn: FQN,
-    ) : Instantiable<LibraryDefinitionProducer>
-
-    private interface Instantiable<T> {
-        val fqn: FQN
-    }
-
-    companion object {
-        const val LIBRARIES_DEFINITIONS_PATH = "META-INF/kotlin-jupyter-libraries/libraries.json"
     }
 }

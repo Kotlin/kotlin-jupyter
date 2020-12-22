@@ -62,6 +62,7 @@ val depsProject = "common-dependencies"
 val apiProject = "api"
 val compilerProject = "shared-compiler"
 val libProject = "lib"
+val apiGradlePluginProject = "api-gradle-plugin"
 val libsPath = "jupyter-lib"
 
 includeBuild(publishPluginProject)
@@ -69,9 +70,11 @@ includeBuild(pluginProject)
 include(depsProject)
 include(libProject)
 include(apiProject)
+include(apiGradlePluginProject)
 include(compilerProject)
 
 project(":$depsProject").projectDir = file("$pluginProject/$depsProject")
 project(":$libProject").projectDir = file("$libsPath/$libProject")
 project(":$apiProject").projectDir = file("$libsPath/$apiProject")
+project(":$apiGradlePluginProject").projectDir = file("$libsPath/$apiGradlePluginProject")
 project(":$compilerProject").projectDir = file("$libsPath/$compilerProject")
