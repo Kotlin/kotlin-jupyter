@@ -9,6 +9,7 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
+    id("org.jetbrains.kotlinx.jupyter.publishing") apply false
 }
 
 val kotlinxSerializationVersion: String by project
@@ -104,6 +105,7 @@ tasks.register("publishLocal") {
         "condaPackage",
         "pyPiPackage",
         ":api:publish",
+        ":api-gradle-plugin:publish",
         ":lib:publish",
         ":shared-compiler:publish",
         ":common-dependencies:publish"

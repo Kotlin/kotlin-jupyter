@@ -9,8 +9,6 @@ import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
-typealias FQN = String
-
 sealed class Parameter(val name: String, open val default: String?) {
     class Required(name: String) : Parameter(name, null)
     class Optional(name: String, override val default: String) : Parameter(name, default)
