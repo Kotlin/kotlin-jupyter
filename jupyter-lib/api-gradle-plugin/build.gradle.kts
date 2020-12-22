@@ -16,8 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":api"))
-    api(kotlin("stdlib"))
+    implementation("com.google.code.gson:gson:2.8.6")
 }
 
 val saveVersion by tasks.registering {
