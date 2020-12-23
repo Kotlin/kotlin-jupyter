@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 fun interface TypeHandlerExecution : VariablesSubstitutionAware<TypeHandlerExecution> {
     fun execute(host: KotlinKernelHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result
@@ -43,6 +44,16 @@ class ExactRendererTypeHandler(val className: TypeName, override val execution: 
 
     override fun replaceVariables(mapping: Map<String, String>): RendererTypeHandler {
         return ExactRendererTypeHandler(className, execution.replaceVariables(mapping))
+    }
+}
+
+class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val execution: TypeHandlerExecution) : RendererTypeHandler {
+    override fun acceptsType(type: KClass<*>): Boolean {
+        return type.isSubclassOf(superType)
+    }
+
+    override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {
+        return SubtypeRendererTypeHandler(superType, execution.replaceVariables(mapping))
     }
 }
 
