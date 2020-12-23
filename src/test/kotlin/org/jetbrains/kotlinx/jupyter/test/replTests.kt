@@ -650,7 +650,7 @@ class ReplWithResolverTest : AbstractReplTest() {
         repl.eval(
             """
             @file:Repository("https://dl.bintray.com/ileasile/kotlin-datascience-ileasile")
-            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.8")
+            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.9")
             """.trimIndent()
         )
 
