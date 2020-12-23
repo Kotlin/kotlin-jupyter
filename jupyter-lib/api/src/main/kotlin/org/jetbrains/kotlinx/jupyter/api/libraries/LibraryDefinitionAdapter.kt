@@ -4,7 +4,15 @@ import org.jetbrains.kotlinx.jupyter.api.AlwaysRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
-open class FunctionalLibraryDefinition(
+/**
+ * Easy-to-use [LibraryDefinition] adapter
+ *
+ * @property repositories A list of maven repositories URLs and directories to search for dependencies
+ * @property dependencies A list of maven coordinates or file paths of artifact dependencies
+ * @property imports A list of default imports. Star imports are supported
+ * @constructor Creates an adapter
+ */
+open class LibraryDefinitionAdapter(
     override val repositories: List<String> = emptyList(),
     override val dependencies: List<String> = emptyList(),
     override val imports: List<String> = emptyList(),
