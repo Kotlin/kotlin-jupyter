@@ -13,5 +13,5 @@ abstract class ScriptTemplateWithDisplayHelpers(
 
     val Out: ResultsAccessor get() = notebook.results
 
-    val JavaRuntimeUtils get() = notebook.runtimeUtils
+    val JavaRuntimeUtils get() = notebook.jreInfo
 }

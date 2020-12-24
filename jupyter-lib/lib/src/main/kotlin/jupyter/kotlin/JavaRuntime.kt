@@ -1,8 +1,8 @@
 package jupyter.kotlin
 
-import org.jetbrains.kotlinx.jupyter.api.RuntimeUtils
+import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 
-object JavaRuntime : RuntimeUtils {
+object JavaRuntime : JREInfoProvider {
     private const val defaultVersion = 8
 
     override val version by lazy {
@@ -30,8 +30,8 @@ object JavaRuntime : RuntimeUtils {
         plainVersion?.toIntOrNull() ?: defaultVersion
     }
 
-    override fun assertVersion(message: String, assertion: (Int) -> Boolean) {
-        if (!assertion(versionAsInt)) {
+    override fun assertVersion(message: String, condition: (Int) -> Boolean) {
+        if (!condition(versionAsInt)) {
             throw AssertionError(message)
         }
     }

@@ -184,7 +184,7 @@ class ReplForJupyterImpl(
     private val initCellCodes = mutableListOf<Execution>()
     private val shutdownCodes = mutableListOf<Execution>()
 
-    private fun renderResult(value: Any?, resultFieldName: String?): Any? {
+    private tailrec fun renderResult(value: Any?, resultFieldName: String?): Any? {
         if (value == null) return null
         val handler = typeRenderers.firstOrNull { it.acceptsType(value::class) }
             ?: return if (value is Renderable) value.render(notebook) else value

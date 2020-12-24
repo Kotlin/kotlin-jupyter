@@ -9,11 +9,11 @@ import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
+import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
-import org.jetbrains.kotlinx.jupyter.api.RuntimeUtils
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
@@ -119,6 +119,6 @@ class NotebookMock : Notebook<CodeCell> {
 
     override val kernelVersion: KotlinKernelVersion
         get() = defaultRuntimeProperties.version!!
-    override val runtimeUtils: RuntimeUtils
+    override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 }

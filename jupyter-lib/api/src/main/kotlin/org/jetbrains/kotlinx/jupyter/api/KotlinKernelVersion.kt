@@ -1,5 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+/**
+ * Kotlin kernel version, with full specification, [Comparable] implementation and
+ * serialization/deserialization
+ */
 class KotlinKernelVersion private constructor(
     private val components: List<Int>
 ) : Comparable<KotlinKernelVersion> {

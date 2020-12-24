@@ -7,6 +7,16 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 
+/**
+ * Type alias for FQNs - fully qualified names of classes
+ */
+typealias TypeName = String
+
+/**
+ * Type alias for plain code ready for execution
+ */
+typealias Code = String
+
 interface Renderable {
     fun render(notebook: Notebook<*>): DisplayResult
 }
