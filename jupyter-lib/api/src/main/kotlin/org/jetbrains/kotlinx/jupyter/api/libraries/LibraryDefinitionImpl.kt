@@ -3,6 +3,11 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
+/**
+ * Trivial implementation of [LibraryDefinition].
+ * You may use it in simple cases instead of overriding [LibraryDefinition]
+ * to avoid additional anonymous classes creation
+ */
 class LibraryDefinitionImpl(
     override val dependencies: List<String> = emptyList(),
     override val repositories: List<String> = emptyList(),

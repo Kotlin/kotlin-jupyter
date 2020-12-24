@@ -5,7 +5,8 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
 /**
- * Easy-to-use [LibraryDefinition] adapter
+ * Easy-to-use [LibraryDefinition] adapter. It will suit you if you're not going
+ * to use plain code callbacks.
  *
  * @property repositories A list of maven repositories URLs and directories to search for dependencies
  * @property dependencies A list of maven coordinates or file paths of artifact dependencies

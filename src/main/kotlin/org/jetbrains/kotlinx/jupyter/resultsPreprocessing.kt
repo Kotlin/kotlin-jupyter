@@ -7,11 +7,12 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 
 class PreprocessingResultBuilder(
     private val code: Code,
-    private val typeProvidersProcessor: org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor,
+    private val typeProvidersProcessor: TypeProvidersProcessor,
     private val annotationsProcessor: AnnotationsProcessor,
     private val preprocessCode: (Code) -> PreprocessingResult
 ) {

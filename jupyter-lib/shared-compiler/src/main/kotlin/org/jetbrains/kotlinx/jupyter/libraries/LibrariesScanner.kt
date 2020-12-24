@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.libraries.FQN
+import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 class LibrariesScanner {
-    private val processedFQNs = mutableSetOf<FQN>()
+    private val processedFQNs = mutableSetOf<TypeName>()
 
     private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
         return filter { it.fqn !in processedFQNs }

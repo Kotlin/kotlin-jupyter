@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
 
-class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor {
+class TypeProvidersProcessorImpl(private val contextUpdater: ContextUpdater) : TypeProvidersProcessor {
 
     private val handlers = mutableMapOf<Regex, KotlinFunctionInfo>()
 

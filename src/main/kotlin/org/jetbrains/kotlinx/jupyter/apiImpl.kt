@@ -5,11 +5,11 @@ import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
-import org.jetbrains.kotlinx.jupyter.api.RuntimeUtils
 import java.lang.IllegalStateException
 
 class DisplayResultWrapper private constructor(
@@ -114,7 +114,7 @@ class NotebookImpl(
 
     override val kernelVersion: KotlinKernelVersion
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
-    override val runtimeUtils: RuntimeUtils
+    override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
     fun addCell(
