@@ -18,8 +18,7 @@ class KotlinKernelVersion private constructor(
             val thisC = components.getOrNull(i) ?: -1
             val otherC = other.components.getOrNull(i) ?: -1
             val compareRes = thisC.compareTo(otherC)
-            if (compareRes == 0) continue
-            return compareRes
+            if (compareRes != 0) return compareRes
         }
         return 0
     }
