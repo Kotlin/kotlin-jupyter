@@ -4,18 +4,21 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
@@ -179,42 +182,35 @@ class ReplForJupyterImpl(
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
     private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
 
-    private val typeRenderers = mutableListOf<RendererTypeHandler>()
-
     private val initCellCodes = mutableListOf<Execution>()
     private val shutdownCodes = mutableListOf<Execution>()
 
-    private tailrec fun renderResult(value: Any?, resultFieldName: String?): Any? {
-        if (value == null) return null
-        val handler = typeRenderers.firstOrNull { it.acceptsType(value::class) }
-            ?: return if (value is Renderable) value.render(notebook) else value
-
-        val result = handler.execution.execute(this, value, resultFieldName)
-        return renderResult(result.value, result.fieldName)
+    private fun renderResult(value: Any?, resultFieldName: String?): Any? {
+        val result = typeRenderersProcessor.renderResult(value, resultFieldName)
+        return if (result is Renderable) result.render(notebook) else result
     }
 
-    private fun buildPreprocessingResult(code: Code, action: PreprocessingResultBuilder.() -> Unit): PreprocessingResult {
-        val builder = PreprocessingResultBuilder(code, typeProvidersProcessor, annotationsProcessor, ::preprocessCode)
-        builder.action()
+    private fun preprocessCode(
+        code: Code,
+        builder: PreprocessingResultBuilder,
+        addCodeAsInitCode: Boolean = false
+    ) {
+        val processedMagics = magics.processMagics(code)
+        builder.addCode(processedMagics.code, addCodeAsInitCode)
+        processedMagics.libraries.getDefinitions(notebook).forEach {
+            builder.add(it)
+        }
+    }
+
+    @TestOnly
+    fun getPreprocessingResult(code: Code): PreprocessingResult {
+        val builder = PreprocessingResultBuilder(typeProvidersProcessor, annotationsProcessor, typeRenderersProcessor, ::preprocessCode)
+        preprocessCode(code, builder, false)
         return builder.build()
     }
 
-    fun preprocessCode(code: String): PreprocessingResult {
-        val processedMagics = magics.processMagics(code)
-        return buildPreprocessingResult(processedMagics.code) {
-            processedMagics.libraries.getDefinitions(notebook).forEach { add(it) }
-        }
-    }
-
     override fun addLibrary(definition: LibraryDefinition) {
-        val result = buildPreprocessingResult("") {
-            add(definition)
-        }
-
-        result.initCodes.forEach { it.execute(this) }
-        log.catchAll {
-            registerNewLibraries(result)
-        }
+        preprocessingResultBuilder.add(definition)
     }
 
     private val ctx = KotlinContext()
@@ -286,13 +282,22 @@ class ReplForJupyterImpl(
 
     private val contextUpdater = ContextUpdater(ctx, evaluator)
 
-    private val typeProvidersProcessor: org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor = TypeProvidersProcessorImpl(contextUpdater)
+    private val typeRenderersProcessor: TypeRenderersProcessor = TypeRenderersProcessorImpl(this, contextUpdater)
+
+    private val typeProvidersProcessor: TypeProvidersProcessor = TypeProvidersProcessorImpl(contextUpdater)
 
     private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl(contextUpdater)
 
     private var currentDisplayHandler: DisplayHandler? = null
 
     private val scheduledExecutions = LinkedList<Execution>()
+
+    private val preprocessingResultBuilder = PreprocessingResultBuilder(
+        typeProvidersProcessor,
+        annotationsProcessor,
+        typeRenderersProcessor,
+        ::preprocessCode,
+    )
 
     override fun checkComplete(code: String): CheckResult {
         val codeLine = jupyterCompiler.nextSourceCode(code)
@@ -347,7 +352,6 @@ class ReplForJupyterImpl(
     private fun registerNewLibraries(p: PreprocessingResult) {
         p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
         p.shutdownCodes.filter { !shutdownCodes.contains(it) }.let(shutdownCodes::addAll)
-        typeRenderers.addAll(p.typeRenderers)
     }
 
     override fun eval(code: String, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
@@ -357,9 +361,10 @@ class ReplForJupyterImpl(
 
                 executeInitCellCode()
 
-                val preprocessed = preprocessCode(code)
-
+                preprocessCode(code, preprocessingResultBuilder, false)
+                val preprocessed = preprocessingResultBuilder.build()
                 preprocessed.initCodes.forEach { it.execute(this) }
+                preprocessingResultBuilder.clearInitCodes()
 
                 var result: Any? = null
                 var resultField: Pair<String, KotlinType>? = null
@@ -386,7 +391,10 @@ class ReplForJupyterImpl(
                 }
 
                 log.catchAll {
-                    registerNewLibraries(preprocessed)
+                    val newPreprocessedResult = preprocessingResultBuilder.build()
+                    newPreprocessedResult.initCodes.forEach { it.execute(this) }
+                    registerNewLibraries(newPreprocessedResult)
+                    preprocessingResultBuilder.clear()
                 }
 
                 log.catchAll {

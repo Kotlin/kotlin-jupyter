@@ -376,7 +376,7 @@ class ReplTest : AbstractReplTest() {
 
     @Test
     fun testOutputMagic() {
-        repl.preprocessCode("%output --max-cell-size=100500 --no-stdout")
+        repl.getPreprocessingResult("%output --max-cell-size=100500 --no-stdout")
         assertEquals(
             OutputConfig(
                 cellOutputMaxSize = 100500,
@@ -385,7 +385,7 @@ class ReplTest : AbstractReplTest() {
             repl.outputConfig
         )
 
-        repl.preprocessCode("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
+        repl.getPreprocessingResult("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
         assertEquals(
             OutputConfig(
                 cellOutputMaxSize = 100500,
@@ -397,7 +397,7 @@ class ReplTest : AbstractReplTest() {
             repl.outputConfig
         )
 
-        repl.preprocessCode("%output --reset-to-defaults")
+        repl.getPreprocessingResult("%output --reset-to-defaults")
         assertEquals(OutputConfig(), repl.outputConfig)
     }
 
@@ -489,7 +489,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val libs = listOf(lib1, lib2, lib3).toLibraries(libraryFactory)
 
         val replWithResolver = makeRepl(libs)
-        val res = replWithResolver.preprocessCode("%use mylib(1.0), another")
+        val res = replWithResolver.getPreprocessingResult("%use mylib(1.0), another")
         assertEquals("", res.code)
         val inits = arrayOf(
             """
@@ -512,13 +512,13 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "otherInit",
             "anotherInit"
         )
-        assertEquals(inits.count(), res.initCodes.count())
 
         val actualCodes = res.initCodes.map {
             it as CodeExecution
             it.code.trimEnd().convertCRLFtoLF()
         }
 
+        assertEquals(inits.count(), actualCodes.count())
         inits.forEachIndexed { index, expected ->
             assertEquals(expected.trimIndent(), actualCodes[index])
         }

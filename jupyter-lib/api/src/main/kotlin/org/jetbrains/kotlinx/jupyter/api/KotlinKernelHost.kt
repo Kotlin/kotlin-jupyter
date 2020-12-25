@@ -50,5 +50,5 @@ interface KotlinKernelHost {
      * @property fieldName Result field name of compiled snippet class
      * @constructor Create Result
      */
-    class Result(val value: Any?, val fieldName: String?)
+    data class Result(val value: Any?, val fieldName: String?)
 }
