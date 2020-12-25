@@ -6,7 +6,6 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.invoke
@@ -33,7 +32,7 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
             outputDirectory.set(File("$buildDir/dokka"))
         }
 
-        val javadocDestDir = named("javadoc", Javadoc::class.java).get().destinationDir
+        val javadocDestDir = File("$buildDir/dokkaJavadoc")
 
         val dokkaJavadoc = named("dokkaJavadoc", DokkaTask::class.java) {
             outputDirectory.set(javadocDestDir)
