@@ -19,6 +19,11 @@ interface RendererTypeHandler : VariablesSubstitutionAware<RendererTypeHandler> 
     val execution: TypeHandlerExecution
 }
 
+interface PrecompiledRendererTypeHandler : RendererTypeHandler {
+    val mayBePrecompiled: Boolean
+    fun precompile(methodName: String, paramName: String): Code?
+}
+
 @Serializable(TypeHandlerCodeExecutionSerializer::class)
 class TypeHandlerCodeExecution(val code: Code) : TypeHandlerExecution {
     override fun execute(host: KotlinKernelHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result {
@@ -47,7 +52,26 @@ class ExactRendererTypeHandler(val className: TypeName, override val execution: 
     }
 }
 
-class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val execution: TypeHandlerExecution) : RendererTypeHandler {
+class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val execution: TypeHandlerExecution) : PrecompiledRendererTypeHandler {
+    override val mayBePrecompiled: Boolean
+        get() = execution is TypeHandlerCodeExecution
+
+    override fun precompile(methodName: String, paramName: String): Code? {
+        if (execution !is TypeHandlerCodeExecution) return null
+
+        val typeParamsString = superType.typeParameters.run {
+            if (isEmpty()) {
+                ""
+            } else {
+                joinToString(", ", "<", ">") { "*" }
+            }
+        }
+        val typeDef = superType.qualifiedName!! + typeParamsString
+        val methodBody = replaceVariables(execution.code, mapOf("it" to paramName))
+
+        return "fun $methodName($paramName: $typeDef): Any? = $methodBody"
+    }
+
     override fun acceptsType(type: KClass<*>): Boolean {
         return type.isSubclassOf(superType)
     }

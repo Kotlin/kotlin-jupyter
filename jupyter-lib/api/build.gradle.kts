@@ -1,3 +1,4 @@
+import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
 import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 
 plugins {
@@ -16,10 +17,15 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    compileOnly(kotlin("stdlib"))
+    compileOnly(kotlin("reflect"))
 
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion") {
+        excludeKotlinDependencies(
+            "stdlib",
+            "stdlib-common"
+        )
+    }
 
     testImplementation(kotlin("test"))
 

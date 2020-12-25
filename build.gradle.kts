@@ -62,6 +62,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains:annotations:20.1.0")
 
     // Embedded compiler and scripting dependencies
     implementation(kotlin("compiler-embeddable"))
