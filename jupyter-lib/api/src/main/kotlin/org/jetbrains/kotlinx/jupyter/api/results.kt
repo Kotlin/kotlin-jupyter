@@ -17,22 +17,54 @@ typealias TypeName = String
  */
 typealias Code = String
 
+/**
+ * Object that should be rendered to [DisplayResult] if
+ * it is the result of code cell
+ */
 interface Renderable {
+    /**
+     * Render to display result
+     *
+     * @param notebook Current notebook
+     * @return Display result
+     */
     fun render(notebook: Notebook<*>): DisplayResult
 }
 
+/**
+ * Display result that may be converted to JSON for `display_data`
+ * kernel response
+ */
 interface DisplayResult : Renderable {
+    /**
+     * Unique id that may be used for updating display data
+     */
     val id: String? get() = null
 
+    /**
+     * Converts display data to JSON object for `display_data` response
+     *
+     * @param additionalMetadata Additional reply metadata
+     * @return Display JSON
+     */
     fun toJson(additionalMetadata: JsonObject = JsonObject(mapOf())): JsonObject
 
+    /**
+     * Renders display result, generally should return `this`
+     */
     override fun render(notebook: Notebook<*>) = this
 }
 
+/**
+ * Display result that holds the reference to related cell
+ */
 interface DisplayResultWithCell : DisplayResult {
     val cell: CodeCell
 }
 
+/**
+ * Container that holds all notebook display results
+ */
 interface DisplayContainer {
     fun getAll(): List<DisplayResultWithCell>
     fun getById(id: String?): List<DisplayResultWithCell>
@@ -40,12 +72,24 @@ interface DisplayContainer {
 
 typealias MutableJsonObject = MutableMap<String, JsonElement>
 
+/**
+ * Convenience method for converting nullable [DisplayResult] to JSON
+ *
+ * @return JSON for `display_data` response
+ */
 @Suppress("unused")
 fun DisplayResult?.toJson(): JsonObject {
     if (this != null) return this.toJson()
     return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 
+/**
+ * Sets display ID to JSON.
+ * If ID was not set, sets it to [id] and returns it back
+ * If ID was set and [force] is false, just returns old ID
+ * If ID was set, [force] is true and [id] is `null`, just returns old ID
+ * If ID was set, [force] is true and [id] is not `null`, sets ID to [id] and returns it back
+ */
 fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): String? {
     val transient = get("transient")?.let { Json.decodeFromJsonElement<MutableJsonObject>(it) }
     val oldId = (transient?.get("display_id") as? JsonPrimitive)?.content
@@ -59,6 +103,10 @@ fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): 
     return id
 }
 
+/**
+ * Convenient implementation of [DisplayResult],
+ * supposed to be used almost always.
+ */
 class MimeTypedResult(
     private val mimeData: Map<String, String>,
     var isolatedHtml: Boolean = false,
@@ -81,6 +129,7 @@ class MimeTypedResult(
     }
 }
 
+// Convenience methods for displaying results
 @Suppress("unused", "FunctionName")
 fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(*mimeToData)
 

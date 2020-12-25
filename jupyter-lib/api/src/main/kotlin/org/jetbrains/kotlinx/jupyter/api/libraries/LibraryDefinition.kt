@@ -3,6 +3,9 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
+/**
+ * Library definition represents "library" concept in Kotlin kernel.
+ */
 interface LibraryDefinition {
     /**
      * List of artifact dependencies in gradle colon-separated format
