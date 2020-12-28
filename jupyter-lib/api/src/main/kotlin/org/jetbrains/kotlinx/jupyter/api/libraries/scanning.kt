@@ -31,7 +31,7 @@ interface LibrariesInstantiable<T> {
  * @property fqn Implementor FQN
  */
 @Serializable
-class LibrariesDefinitionDeclaration(
+data class LibrariesDefinitionDeclaration(
     override val fqn: TypeName,
 ) : LibrariesInstantiable<LibraryDefinition>
 
@@ -41,7 +41,7 @@ class LibrariesDefinitionDeclaration(
  * @property fqn Implementor FQN
  */
 @Serializable
-class LibrariesProducerDeclaration(
+data class LibrariesProducerDeclaration(
     override val fqn: TypeName,
 ) : LibrariesInstantiable<LibraryDefinitionProducer>
 
@@ -50,7 +50,7 @@ class LibrariesProducerDeclaration(
  * [KOTLIN_JUPYTER_LIBRARIES_FILE_NAME] file, and vice versa.
  */
 @Serializable
-class LibrariesScanResult(
+data class LibrariesScanResult(
     val definitions: List<LibrariesDefinitionDeclaration> = emptyList(),
     val producers: List<LibrariesProducerDeclaration> = emptyList(),
 )

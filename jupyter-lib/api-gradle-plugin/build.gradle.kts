@@ -9,6 +9,8 @@ plugins {
 
 project.version = rootProject.version
 
+val junitVersion: String by rootProject
+
 repositories {
     jcenter()
     mavenCentral()
@@ -16,7 +18,17 @@ repositories {
 }
 
 dependencies {
+    // Temporary solution until Kotlin 1.4 will be supported in
+    // .kts buildscripts and it will be possible to use
+    // kotlinx.serialization in plugin code
     implementation("com.google.code.gson:gson:2.8.6")
+
+    testImplementation(kotlin("test"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+
+    testImplementation(project(":api"))
 }
 
 val saveVersion by tasks.registering {
@@ -34,6 +46,13 @@ val saveVersion by tasks.registering {
 
 tasks.processResources {
     dependsOn(saveVersion)
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
 
 gradlePlugin {
