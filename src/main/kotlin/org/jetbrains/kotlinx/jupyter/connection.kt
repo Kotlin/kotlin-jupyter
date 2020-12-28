@@ -216,8 +216,6 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
         "content" to content.parseJson().orEmptyObject()
     )
 
-    log.info(Json { prettyPrint = true }.encodeToString(dataJson))
-
     val data = Json.decodeFromJsonElement<MessageData>(dataJson)
 
     return Message(
