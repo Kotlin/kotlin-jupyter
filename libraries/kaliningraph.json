@@ -2,7 +2,7 @@
   "link": "https://github.com/breandan/kaliningraph",
   "description": "Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms",
   "dependencies": [
-    "com.github.breandan:kaliningraph:0.1.1"
+    "com.github.breandan:kaliningraph:0.1.4"
   ],
   "imports": [
     "edu.mcgill.kaliningraph.*",
