@@ -1,13 +1,18 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.*
-import kotlin.reflect.KClass
+import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.TypeHandlerExecution
 
-/*
-    Base class for library integration with Jupyter Kernel via DSL
-    Derive from this class and pass registration callback into constructor
+/**
+ * Base class for library integration with Jupyter Kernel via DSL
+ * Derive from this class and pass registration callback into constructor
  */
-abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?)->Unit) : LibraryDefinitionProducer {
+abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -> Unit) : LibraryDefinitionProducer {
 
     class Builder {
 
@@ -29,15 +34,15 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?)->
 
         private val repositories = mutableListOf<String>()
 
-        fun addRenderer(handler: RendererTypeHandler){
+        fun addRenderer(handler: RendererTypeHandler) {
             renderers.add(handler)
         }
 
-        fun addTypeConverter(handler: GenerativeTypeHandler){
+        fun addTypeConverter(handler: GenerativeTypeHandler) {
             converters.add(handler)
         }
 
-        fun addAnnotationHandler(handler: GenerativeTypeHandler){
+        fun addAnnotationHandler(handler: GenerativeTypeHandler) {
             annotations.add(handler)
         }
 
@@ -72,30 +77,30 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?)->
             initCellCallbacks.add(Execution { _ -> callback() })
         }
 
-        //TODO: use callback
-        inline fun <reified T> generateCodeOnVariable(handler: Code){
+        // TODO: use callback
+        inline fun <reified T> generateCodeOnVariable(handler: Code) {
             val className = T::class.qualifiedName!!
             addTypeConverter(GenerativeTypeHandler(className, handler))
         }
 
-        //TODO: use callback
-        inline fun <reified T> generateCodeOnAnnotation(handler: Code){
+        // TODO: use callback
+        inline fun <reified T> generateCodeOnAnnotation(handler: Code) {
             val className = T::class.qualifiedName!!
             addAnnotationHandler(GenerativeTypeHandler(className, handler))
         }
 
         internal fun getDefinition() =
-                LibraryDefinitionImpl(
-                        init = initCallbacks,
-                        renderers = renderers,
-                        converters = converters,
-                        imports = imports,
-                        dependencies = dependencies,
-                        repositories = repositories,
-                        initCell = initCellCallbacks,
-                        shutdown = shutdownCallbacks,
-                        annotations = annotations
-                )
+            LibraryDefinitionImpl(
+                init = initCallbacks,
+                renderers = renderers,
+                converters = converters,
+                imports = imports,
+                dependencies = dependencies,
+                repositories = repositories,
+                initCell = initCellCallbacks,
+                shutdown = shutdownCallbacks,
+                annotations = annotations
+            )
     }
 
     override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
