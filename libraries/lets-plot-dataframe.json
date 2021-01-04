@@ -1,7 +1,7 @@
 {
   "description": "A bridge between Lets-Plot and dataframe libraries",
   "properties": {
-    "v": "0.0.10-dev-15"
+    "v": "0.0.10-dev-16"
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "repositories": [
