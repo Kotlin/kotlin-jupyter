@@ -98,6 +98,7 @@ class OkResponseWithMessage(
         )
     }
 }
+
 interface DisplayHandler {
     fun handleDisplay(value: Any)
     fun handleUpdate(value: Any, id: String? = null)

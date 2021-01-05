@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
@@ -24,12 +25,14 @@ class PreprocessingResultBuilder(
     private val typeRenderers = mutableListOf<RendererTypeHandler>()
     private val typeConverters = mutableListOf<GenerativeTypeHandler>()
     private val annotations = mutableListOf<GenerativeTypeHandler>()
+    private val resources = mutableListOf<LibraryResource>()
 
     fun add(libraryDefinition: LibraryDefinition) {
         libraryDefinition.buildDependenciesInitCode()?.let { initCodes.add(CodeExecution(it)) }
         typeRenderers.addAll(libraryDefinition.renderers)
         typeConverters.addAll(libraryDefinition.converters)
         annotations.addAll(libraryDefinition.annotations)
+        resources.addAll(libraryDefinition.resources)
         initCellCodes.addAll(libraryDefinition.initCell)
         shutdownCodes.addAll(libraryDefinition.shutdown)
         libraryDefinition.init.forEach {
@@ -58,7 +61,7 @@ class PreprocessingResultBuilder(
             initCodes.add(CodeExecution(declarations))
         }
 
-        return PreprocessingResult(codeBuilder.toString(), initCodes, shutdownCodes, initCellCodes)
+        return PreprocessingResult(codeBuilder.toString(), initCodes, shutdownCodes, initCellCodes, resources)
     }
 
     fun clearInitCodes() {
@@ -73,6 +76,7 @@ class PreprocessingResultBuilder(
         typeRenderers.clear()
         typeConverters.clear()
         annotations.clear()
+        resources.clear()
     }
 }
 
@@ -81,4 +85,5 @@ data class PreprocessingResult(
     val initCodes: List<Execution>,
     val shutdownCodes: List<Execution>,
     val initCellCodes: List<Execution>,
+    val resources: List<LibraryResource>,
 )

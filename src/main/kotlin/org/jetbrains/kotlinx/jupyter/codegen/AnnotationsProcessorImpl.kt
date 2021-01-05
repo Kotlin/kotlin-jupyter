@@ -52,6 +52,6 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
                 }
             }
         }
-        return if(codeToExecute.isEmpty()) return null else codeToExecute.joinToString("\n")
+        return if (codeToExecute.isEmpty()) return null else codeToExecute.joinToString("\n")
     }
 }

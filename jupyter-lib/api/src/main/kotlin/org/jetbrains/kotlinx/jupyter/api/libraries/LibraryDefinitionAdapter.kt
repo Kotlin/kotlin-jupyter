@@ -17,6 +17,7 @@ open class LibraryDefinitionAdapter(
     override val repositories: List<String> = emptyList(),
     override val dependencies: List<String> = emptyList(),
     override val imports: List<String> = emptyList(),
+    override val resources: List<LibraryResource> = emptyList(),
 ) : LibraryDefinition {
     open fun onInit(host: KotlinKernelHost): Any? {
         return Unit

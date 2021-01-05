@@ -18,4 +18,5 @@ class LibraryDefinitionImpl(
     override val renderers: List<RendererTypeHandler> = emptyList(),
     override val converters: List<GenerativeTypeHandler> = emptyList(),
     override val annotations: List<GenerativeTypeHandler> = emptyList(),
+    override val resources: List<LibraryResource> = emptyList(),
 ) : LibraryDefinition
