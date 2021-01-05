@@ -8,5 +8,5 @@ interface AnnotationsProcessor {
 
     fun register(handler: GenerativeTypeHandler): Code
 
-    fun process(kClass: KClass<*>): List<Code>
+    fun process(kClass: KClass<*>): Code?
 }

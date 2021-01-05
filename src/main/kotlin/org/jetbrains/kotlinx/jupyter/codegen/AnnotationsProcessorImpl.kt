@@ -30,7 +30,7 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
         return "fun $methodName($annotationArgument : $annotationType, $classArgument : kotlin.reflect.KClass<*>) = $body"
     }
 
-    override fun process(kClass: KClass<*>): List<Code> {
+    override fun process(kClass: KClass<*>): Code? {
         if (methodIdMap.isNotEmpty()) {
             contextUpdater.update()
             val resolvedMethods = methodIdMap.map {
@@ -48,10 +48,10 @@ class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : Ann
                 val handler = handlers[annotationType]
                 if (handler != null) {
                     val result = handler.function.call(handler.line, it, nestedClass)
-                    (result as? List<String>?)?.let(codeToExecute::addAll)
+                    (result as? Code)?.let(codeToExecute::add)
                 }
             }
         }
-        return codeToExecute
+        return if(codeToExecute.isEmpty()) return null else codeToExecute.joinToString("\n")
     }
 }

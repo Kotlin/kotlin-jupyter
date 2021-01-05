@@ -341,7 +341,7 @@ class ReplForJupyterImpl(
     private fun processAnnotations(replLineClass: KClass<*>) {
         log.catchAll {
             annotationsProcessor.process(replLineClass)
-        }?.forEach {
+        }?.let {
             if (executedCodeLogging == ExecutedCodeLogging.Generated) {
                 println(it)
             }
@@ -531,7 +531,7 @@ class ReplForJupyterImpl(
 
     private fun doEval(code: String, evalData: EvalData? = null): InternalEvalResult {
         if (executedCodeLogging == ExecutedCodeLogging.All) {
-            println(code)
+            println("Executing:\n" + code)
         }
         val id = jupyterCompiler.nextCounter()
         val codeLine = SourceCodeImpl(id, code)
