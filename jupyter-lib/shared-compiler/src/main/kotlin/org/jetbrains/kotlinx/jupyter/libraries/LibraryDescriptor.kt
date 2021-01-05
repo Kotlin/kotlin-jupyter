@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.util.GenerativeHandlersSerializer
 import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
 
@@ -35,6 +36,8 @@ class LibraryDescriptor(
     @Serializable(GenerativeHandlersSerializer::class)
     @SerialName("annotationHandlers")
     override val annotations: List<GenerativeTypeHandler> = emptyList(),
+
+    override val resources: List<LibraryResource> = emptyList(),
 
     val link: String? = null,
     val description: String? = null,

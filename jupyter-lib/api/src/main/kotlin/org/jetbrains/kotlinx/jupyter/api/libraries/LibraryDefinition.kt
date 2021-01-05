@@ -61,4 +61,10 @@ interface LibraryDefinition {
      */
     val annotations: List<GenerativeTypeHandler>
         get() = emptyList()
+
+    /**
+     * List of library resources
+     */
+    val resources: List<LibraryResource>
+        get() = emptyList()
 }

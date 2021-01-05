@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
@@ -19,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
@@ -33,6 +35,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
@@ -152,6 +155,7 @@ class ReplForJupyterImpl(
     private var outputConfigImpl = OutputConfig()
     override val notebook = NotebookImpl(this, runtimeProperties)
     private val librariesScanner = LibrariesScanner()
+    private val resourcesProcessor = LibraryResourcesProcessor()
 
     override var outputConfig
         get() = outputConfigImpl
@@ -177,7 +181,7 @@ class ReplForJupyterImpl(
             }
         }
 
-    private val scriptsSerializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
+    private val scriptsSerializer = CompiledScriptsSerializer()
 
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
     private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
@@ -352,6 +356,12 @@ class ReplForJupyterImpl(
     private fun registerNewLibraries(p: PreprocessingResult) {
         p.initCellCodes.filter { !initCellCodes.contains(it) }.let(initCellCodes::addAll)
         p.shutdownCodes.filter { !shutdownCodes.contains(it) }.let(shutdownCodes::addAll)
+
+        val classLoader = jupyterCompiler.lastClassLoader
+        p.resources.forEach {
+            val htmlText = resourcesProcessor.wrapLibrary(it, classLoader)
+            currentDisplayHandler?.handleDisplay(HTML(htmlText))
+        }
     }
 
     override fun eval(code: String, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
