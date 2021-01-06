@@ -1,6 +1,14 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
+import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.TypeHandlerExecution
 
 /**
  * Base class for library integration with Jupyter Kernel via DSL
@@ -77,7 +85,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             addTypeConverter(GenerativeTypeHandler(className, handler))
         }
 
-        inline fun <reified T: Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {
+        inline fun <reified T : Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {
             addAnnotationHandler(AnnotationHandler(T::class, callback))
         }
 
