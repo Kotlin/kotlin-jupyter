@@ -1,11 +1,8 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.0.8-dev-71"
+    "v": "0.0.8-dev-73"
   },
-  "init": [
-    "fun org.jetbrains.dataframe.DataFrame<*>.extractSchema(name: String? = null) = EXECUTE(schema(name))"
-  ],
   "imports": [
     "org.jetbrains.dataframe.*",
     "org.jetbrains.dataframe.io.*"
