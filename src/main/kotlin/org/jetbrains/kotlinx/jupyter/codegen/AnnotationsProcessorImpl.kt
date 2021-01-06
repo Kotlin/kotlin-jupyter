@@ -15,7 +15,7 @@ class AnnotationsProcessorImpl(private val host: KotlinKernelHost) : Annotations
 
     override fun process(executedSnippet: KClass<*>) {
         executedSnippet.nestedClasses
-            .flatMap { clazz -> clazz.annotations.map { it.javaClass.kotlin to clazz } }
+            .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }
             .forEach {
                 val handler = handlers[it.key]
