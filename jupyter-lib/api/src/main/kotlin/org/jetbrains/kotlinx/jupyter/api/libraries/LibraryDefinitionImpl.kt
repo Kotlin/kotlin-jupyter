@@ -10,14 +10,14 @@ import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
  * to avoid additional anonymous classes creation
  */
 class LibraryDefinitionImpl(
-        override val dependencies: List<String> = emptyList(),
-        override val repositories: List<String> = emptyList(),
-        override val imports: List<String> = emptyList(),
-        override val init: List<Execution> = emptyList(),
-        override val initCell: List<Execution> = emptyList(),
-        override val shutdown: List<Execution> = emptyList(),
-        override val renderers: List<RendererTypeHandler> = emptyList(),
-        override val converters: List<GenerativeTypeHandler> = emptyList(),
-        override val annotations: List<AnnotationHandler> = emptyList(),
-        override val resources: List<LibraryResource> = emptyList(),
+    override val dependencies: List<String> = emptyList(),
+    override val repositories: List<String> = emptyList(),
+    override val imports: List<String> = emptyList(),
+    override val init: List<Execution> = emptyList(),
+    override val initCell: List<Execution> = emptyList(),
+    override val shutdown: List<Execution> = emptyList(),
+    override val renderers: List<RendererTypeHandler> = emptyList(),
+    override val converters: List<GenerativeTypeHandler> = emptyList(),
+    override val annotations: List<AnnotationHandler> = emptyList(),
+    override val resources: List<LibraryResource> = emptyList(),
 ) : LibraryDefinition
