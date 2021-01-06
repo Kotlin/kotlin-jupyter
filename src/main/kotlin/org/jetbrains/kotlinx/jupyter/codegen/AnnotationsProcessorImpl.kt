@@ -1,57 +1,27 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
-import jupyter.kotlin.KotlinFunctionInfo
-import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.TypeName
-import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import kotlin.reflect.KClass
 
-class AnnotationsProcessorImpl(private val contextUpdater: ContextUpdater) : AnnotationsProcessor {
+class AnnotationsProcessorImpl(private val host: KotlinKernelHost) : AnnotationsProcessor {
 
-    private val handlers = mutableMapOf<TypeName, KotlinFunctionInfo>()
+    private val handlers = mutableMapOf<KClass<out Annotation>, ClassDeclarationsCallback>()
 
-    private val methodIdMap = mutableMapOf<TypeName, Int>()
-
-    private var nextGeneratedMethodId = 0
-
-    private fun getMethodName(id: Int) = "___processAnnotation$id"
-
-    override fun register(handler: GenerativeTypeHandler): Code {
-        val annotationArgument = "__annotation"
-        val classArgument = "__class"
-        val body = handler.code
-            .replace("\$annotation", annotationArgument)
-            .replace("\$kclass", classArgument)
-        val annotationType = handler.className
-        val methodId = nextGeneratedMethodId++
-        val methodName = getMethodName(methodId)
-        methodIdMap[annotationType] = methodId
-        return "fun $methodName($annotationArgument : $annotationType, $classArgument : kotlin.reflect.KClass<*>) = $body"
+    override fun register(handler: AnnotationHandler) {
+        handlers[handler.annotation] = handler.callback
     }
 
-    override fun process(kClass: KClass<*>): Code? {
-        if (methodIdMap.isNotEmpty()) {
-            contextUpdater.update()
-            val resolvedMethods = methodIdMap.map {
-                it.key to contextUpdater.context.functions[getMethodName(it.value)]
-            }.filter { it.second != null }.map { it.first to it.second!! }
-            handlers.putAll(resolvedMethods)
-            resolvedMethods.forEach {
-                methodIdMap.remove(it.first)
-            }
-        }
-        val codeToExecute = mutableListOf<Code>()
-        kClass.nestedClasses.forEach { nestedClass ->
-            nestedClass.annotations.forEach {
-                val annotationType = it.annotationClass.qualifiedName!!
-                val handler = handlers[annotationType]
+    override fun process(executedSnippet: KClass<*>) {
+        executedSnippet.nestedClasses
+            .flatMap { clazz -> clazz.annotations.map { it.javaClass.kotlin to clazz } }
+            .groupBy { it.first }
+            .forEach {
+                val handler = handlers[it.key]
                 if (handler != null) {
-                    val result = handler.function.call(handler.line, it, nestedClass)
-                    (result as? Code)?.let(codeToExecute::add)
+                    handler(it.value.map { it.second }, host)
                 }
             }
-        }
-        return if (codeToExecute.isEmpty()) return null else codeToExecute.joinToString("\n")
     }
 }

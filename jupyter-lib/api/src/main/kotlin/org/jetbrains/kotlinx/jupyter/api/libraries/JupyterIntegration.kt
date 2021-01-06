@@ -1,12 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.TypeHandlerExecution
+import org.jetbrains.kotlinx.jupyter.api.*
 
 /**
  * Base class for library integration with Jupyter Kernel via DSL
@@ -26,7 +20,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val converters = mutableListOf<GenerativeTypeHandler>()
 
-        private val annotations = mutableListOf<GenerativeTypeHandler>()
+        private val annotations = mutableListOf<AnnotationHandler>()
 
         private val imports = mutableListOf<String>()
 
@@ -42,7 +36,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             converters.add(handler)
         }
 
-        fun addAnnotationHandler(handler: GenerativeTypeHandler) {
+        fun addAnnotationHandler(handler: AnnotationHandler) {
             annotations.add(handler)
         }
 
@@ -83,10 +77,8 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             addTypeConverter(GenerativeTypeHandler(className, handler))
         }
 
-        // TODO: use callback
-        inline fun <reified T> generateCodeOnAnnotation(handler: Code) {
-            val className = T::class.qualifiedName!!
-            addAnnotationHandler(GenerativeTypeHandler(className, handler))
+        inline fun <reified T: Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {
+            addAnnotationHandler(AnnotationHandler(T::class, callback))
         }
 
         internal fun getDefinition() =

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
@@ -59,7 +60,7 @@ interface LibraryDefinition {
     /**
      * List of type annotations used by annotations processor
      */
-    val annotations: List<GenerativeTypeHandler>
+    val annotations: List<AnnotationHandler>
         get() = emptyList()
 
     /**
