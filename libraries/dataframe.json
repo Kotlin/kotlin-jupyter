@@ -21,8 +21,5 @@
     "org.jetbrains.dataframe.DataFrame<*>": "CodeGenerator.Default.generate($it, $property)",
     "org.jetbrains.dataframe.DataFrameToListNamedStub": "CodeGenerator.Default.generate($it)",
     "org.jetbrains.dataframe.DataFrameToListTypedStub": "CodeGenerator.Default.generate($it)"
-  },
-  "annotationHandlers": {
-    "org.jetbrains.dataframe.DataFrameType": "CodeGenerator.Default.generate($kclass)"
   }
 }

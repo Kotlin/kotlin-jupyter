@@ -55,8 +55,7 @@ class LibrariesProcessor(
                     shutdown = library.shutdown.replaceVariables(mapping),
                     initCell = library.initCell.replaceVariables(mapping),
                     renderers = library.renderers.replaceVariables(mapping),
-                    converters = library.converters.replaceVariables(mapping),
-                    annotations = library.annotations.replaceVariables(mapping)
+                    converters = library.converters.replaceVariables(mapping)
                 )
             )
         } else {

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -32,10 +33,6 @@ class LibraryDescriptor(
     @Serializable(GenerativeHandlersSerializer::class)
     @SerialName("typeConverters")
     override val converters: List<GenerativeTypeHandler> = emptyList(),
-
-    @Serializable(GenerativeHandlersSerializer::class)
-    @SerialName("annotationHandlers")
-    override val annotations: List<GenerativeTypeHandler> = emptyList(),
 
     override val resources: List<LibraryResource> = emptyList(),
 

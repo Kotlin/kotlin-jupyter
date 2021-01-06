@@ -140,3 +140,13 @@ class GenerativeTypeHandler(val className: TypeName, val code: Code) : Variables
         return GenerativeTypeHandler(className, replaceVariables(code, mapping))
     }
 }
+
+/**
+ * Callback to handle new class or interface declarations in executed snippets
+ */
+typealias ClassDeclarationsCallback = (List<KClass<*>>, KotlinKernelHost) -> Unit
+
+/**
+ * Annotation handler used to hook class declarations with specific annotations
+ */
+class AnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)

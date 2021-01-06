@@ -290,7 +290,7 @@ class ReplForJupyterImpl(
 
     private val typeProvidersProcessor: TypeProvidersProcessor = TypeProvidersProcessorImpl(contextUpdater)
 
-    private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl(contextUpdater)
+    private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl(this)
 
     private var currentDisplayHandler: DisplayHandler? = null
 
@@ -345,11 +345,6 @@ class ReplForJupyterImpl(
     private fun processAnnotations(replLineClass: KClass<*>) {
         log.catchAll {
             annotationsProcessor.process(replLineClass)
-        }?.let {
-            if (executedCodeLogging == ExecutedCodeLogging.Generated) {
-                println(it)
-            }
-            execute(it)
         }
     }
 

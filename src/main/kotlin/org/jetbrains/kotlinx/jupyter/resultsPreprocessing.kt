@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
@@ -24,7 +25,7 @@ class PreprocessingResultBuilder(
     private val initCellCodes = mutableListOf<Execution>()
     private val typeRenderers = mutableListOf<RendererTypeHandler>()
     private val typeConverters = mutableListOf<GenerativeTypeHandler>()
-    private val annotations = mutableListOf<GenerativeTypeHandler>()
+    private val annotations = mutableListOf<AnnotationHandler>()
     private val resources = mutableListOf<LibraryResource>()
 
     fun add(libraryDefinition: LibraryDefinition) {
@@ -54,7 +55,7 @@ class PreprocessingResultBuilder(
     fun build(): PreprocessingResult {
         val declarationsList = mutableListOf<String>()
         typeConverters.mapTo(declarationsList) { typeProvidersProcessor.register(it) }
-        annotations.mapTo(declarationsList) { annotationsProcessor.register(it) }
+        annotations.forEach { annotationsProcessor.register(it) }
         typeRenderers.mapNotNullTo(declarationsList) { typeRenderersProcessor.register(it) }
         val declarations = declarationsList.joinToString("\n")
         if (declarations.isNotBlank()) {
