@@ -37,7 +37,7 @@ enum class ResourceType {
 data class ResourceLocation(
     val path: String,
     val type: ResourcePathType,
-): VariablesSubstitutionAware<ResourceLocation> {
+) : VariablesSubstitutionAware<ResourceLocation> {
     override fun replaceVariables(mapping: Map<String, String>): ResourceLocation {
         return ResourceLocation(replaceVariables(path, mapping), type)
     }
@@ -48,7 +48,7 @@ data class LibraryResource(
     val locations: List<ResourceLocation>,
     val type: ResourceType,
     val name: String,
-): VariablesSubstitutionAware<LibraryResource> {
+) : VariablesSubstitutionAware<LibraryResource> {
     override fun replaceVariables(mapping: Map<String, String>): LibraryResource {
         return LibraryResource(
             locations.map { it.replaceVariables(mapping) },
