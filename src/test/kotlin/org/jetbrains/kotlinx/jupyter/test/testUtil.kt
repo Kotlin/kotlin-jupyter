@@ -93,7 +93,7 @@ class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<Librar
     }
 }
 
-class TestDisplayHandler(private val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
+class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
     override fun handleDisplay(value: Any) {
         list.add(value)
     }
