@@ -97,7 +97,7 @@ class LibraryResourcesProcessor {
             // language=js
             return """
                 (function(script) {
-                    script.textContent = "$escapedCode"
+                    script.textContent = $escapedCode
                 })
             """.trimIndent()
         }

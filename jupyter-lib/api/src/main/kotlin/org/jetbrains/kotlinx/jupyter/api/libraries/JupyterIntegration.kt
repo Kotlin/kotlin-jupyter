@@ -30,6 +30,8 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val annotations = mutableListOf<AnnotationHandler>()
 
+        private val resources = mutableListOf<LibraryResource>()
+
         private val imports = mutableListOf<String>()
 
         private val dependencies = mutableListOf<String>()
@@ -53,6 +55,10 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
                 KotlinKernelHost.Result(renderer(value as T), resultFieldName)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
+        }
+
+        fun resource(resource: LibraryResource) {
+            resources.add(resource)
         }
 
         fun import(path: String) {
@@ -99,7 +105,8 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
                 repositories = repositories,
                 initCell = initCellCallbacks,
                 shutdown = shutdownCallbacks,
-                annotations = annotations
+                annotations = annotations,
+                resources = resources,
             )
     }
 

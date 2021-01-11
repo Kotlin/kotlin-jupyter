@@ -1,12 +1,18 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.TypeHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SomeSingleton {
     companion object {
@@ -51,6 +57,29 @@ val testLibraryDefinition1 = LibraryDefinitionImpl(
     )
 )
 
+/**
+ * Used for [EmbedReplTest.testJsResources]
+ */
+@Suppress("unused")
+val testLibraryDefinition2 = LibraryDefinitionImpl(
+    resources = listOf(
+        LibraryResource(
+            listOf(
+                ResourceLocation(
+                    "https://cdn.plot.ly/plotly-latest.min.js",
+                    ResourcePathType.URL
+                ),
+                ResourceLocation(
+                    "src/test/testData/js-lib.js",
+                    ResourcePathType.LOCAL_PATH
+                )
+            ),
+            ResourceType.JS,
+            "testLib2"
+        )
+    )
+)
+
 class EmbedReplTest : AbstractReplTest() {
     private val repl = run {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
@@ -89,5 +118,20 @@ class EmbedReplTest : AbstractReplTest() {
             """.trimIndent()
         )
         assertEquals("[12, 13, 14]", result2.resultValue)
+    }
+
+    @Test
+    fun testJsResources() {
+        val displayHandler = TestDisplayHandler()
+        val res = repl.eval(
+            "notebook.host.addLibrary(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
+            displayHandler
+        )
+        assertTrue(res.resultValue is Unit)
+        assertEquals(1, displayHandler.list.size)
+        val typedResult = displayHandler.list[0] as MimeTypedResult
+        val content = typedResult["text/html"]!!
+        assertTrue(content.contains("""id="kotlin_out_0""""))
+        assertTrue(content.contains("""function test_fun(x) {\n    console.log(\"var\" + x)\n}\n"""))
     }
 }
