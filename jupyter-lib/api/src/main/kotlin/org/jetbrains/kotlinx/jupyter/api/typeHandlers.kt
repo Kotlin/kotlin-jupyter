@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
@@ -11,7 +12,7 @@ import kotlin.reflect.full.isSubclassOf
  * Execution interface for type handlers
  */
 fun interface TypeHandlerExecution : VariablesSubstitutionAware<TypeHandlerExecution> {
-    fun execute(host: KotlinKernelHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result
+    fun execute(host: ExecutionHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result
 
     override fun replaceVariables(mapping: Map<String, String>): TypeHandlerExecution = this
 }
@@ -58,9 +59,11 @@ interface PrecompiledRendererTypeHandler : RendererTypeHandler {
  */
 @Serializable(TypeHandlerCodeExecutionSerializer::class)
 class TypeHandlerCodeExecution(val code: Code) : TypeHandlerExecution {
-    override fun execute(host: KotlinKernelHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result {
+    override fun execute(host: ExecutionHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result {
         val execCode = resultFieldName?.let { code.replace("\$it", it) } ?: code
-        return host.executeInternal(execCode)
+        return host.execute {
+            executeInternal(execCode)
+        }
     }
 
     override fun replaceVariables(mapping: Map<String, String>): TypeHandlerCodeExecution {

@@ -23,11 +23,6 @@ interface Notebook<CellT : CodeCell> {
     val displays: DisplayContainer
 
     /**
-     * Host provides an API for compiling and executing plain code
-     */
-    val host: KotlinKernelHost
-
-    /**
      * Get cell by relative offset: 0 for current cell,
      * 1 for previous cell, and so on
      *

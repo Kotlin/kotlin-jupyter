@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
@@ -130,7 +130,7 @@ class ParseMagicsTests {
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
         val libraryFactory = LibraryFactory.EMPTY
-        val magicsHandler = FullMagicsHandler(options, LibrariesProcessor(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties.version, libraryFactory))
+        val magicsHandler = FullMagicsHandler(options, LibrariesProcessorImpl(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties.version, libraryFactory))
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)

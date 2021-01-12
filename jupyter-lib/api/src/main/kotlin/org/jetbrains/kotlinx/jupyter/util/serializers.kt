@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.util
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -10,6 +11,7 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.TypeHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import kotlin.reflect.KClass
@@ -74,3 +76,17 @@ object GenerativeHandlersSerializer : ListToMapSerializer<GenerativeTypeHandler,
     ::GenerativeTypeHandler,
     { it.className to it.code }
 )
+
+object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
+
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(KotlinKernelVersion::class.qualifiedName!!, PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): KotlinKernelVersion {
+        val str = decoder.decodeString()
+        return KotlinKernelVersion.from(str) ?: throw SerializationException("Wrong format of kotlin kernel version: $str")
+    }
+
+    override fun serialize(encoder: Encoder, value: KotlinKernelVersion) {
+        encoder.encodeString(value.toString())
+    }
+}

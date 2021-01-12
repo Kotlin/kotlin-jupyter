@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.repl
+package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import org.slf4j.LoggerFactory
 import java.io.BufferedOutputStream

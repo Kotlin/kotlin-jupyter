@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
@@ -12,18 +13,18 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
-class LibrariesScanner {
+class LibrariesScanner(val notebook: Notebook<*>) {
     private val processedFQNs = mutableSetOf<TypeName>()
 
     private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
         return filter { it.fqn !in processedFQNs }
     }
 
-    fun addLibrariesFromClassLoader(classLoader: ClassLoader, notebook: Notebook<*>) {
+    fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost) {
         val scanResult = scanForLibraries(classLoader)
         updateProcessed(scanResult)
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
-        libraries.forEach { notebook.host.addLibrary(it) }
+        libraries.forEach { host.addLibrary(it) }
     }
 
     private fun scanForLibraries(classLoader: ClassLoader): LibrariesScanResult {

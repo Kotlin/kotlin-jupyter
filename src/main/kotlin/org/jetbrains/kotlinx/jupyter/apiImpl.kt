@@ -6,7 +6,6 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
@@ -97,7 +96,6 @@ class EvalData(
 )
 
 class NotebookImpl(
-    override val host: KotlinKernelHost,
     private val runtimeProperties: ReplRuntimeProperties,
 ) : Notebook<CodeCellImpl> {
     override val cells = hashMapOf<Int, CodeCellImpl>()

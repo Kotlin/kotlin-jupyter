@@ -5,20 +5,20 @@ import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import kotlin.reflect.KClass
 
-class AnnotationsProcessorImpl(private val host: KotlinKernelHost) : AnnotationsProcessor {
+class AnnotationsProcessorImpl : AnnotationsProcessor {
 
-    private val handlers = mutableMapOf<KClass<out Annotation>, ClassDeclarationsCallback>()
+    private val handlers = mutableMapOf<String, ClassDeclarationsCallback>()
 
     override fun register(handler: AnnotationHandler) {
-        handlers[handler.annotation] = handler.callback
+        handlers[handler.annotation.qualifiedName!!] = handler.callback
     }
 
-    override fun process(executedSnippet: KClass<*>) {
+    override fun process(executedSnippet: KClass<*>, host: KotlinKernelHost) {
         executedSnippet.nestedClasses
             .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }
             .forEach {
-                val handler = handlers[it.key]
+                val handler = handlers[it.key.qualifiedName!!]
                 if (handler != null) {
                     handler(it.value.map { it.second }, host)
                 }

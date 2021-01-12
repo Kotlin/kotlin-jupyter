@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
 /**
@@ -29,19 +30,19 @@ interface LibraryDefinition {
     /**
      * List of code snippets evaluated on library initialization
      */
-    val init: List<Execution>
+    val init: List<Execution<*>>
         get() = emptyList()
 
     /**
      * List of code snippets evaluated before every cell evaluation
      */
-    val initCell: List<Execution>
+    val initCell: List<Execution<*>>
         get() = emptyList()
 
     /**
      * List of code snippets evaluated on kernel shutdown
      */
-    val shutdown: List<Execution>
+    val shutdown: List<Execution<*>>
         get() = emptyList()
 
     /**
@@ -68,4 +69,6 @@ interface LibraryDefinition {
      */
     val resources: List<LibraryResource>
         get() = emptyList()
+
+    val minKernelVersion: KotlinKernelVersion?
 }
