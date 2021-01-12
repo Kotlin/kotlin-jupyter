@@ -6,6 +6,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 
 class LibraryResourcesProcessor {
@@ -19,7 +20,9 @@ class LibraryResourcesProcessor {
                     URLScriptModifierFunctionGenerator(pathString)
                 }
                 ResourcePathType.LOCAL_PATH -> {
-                    CodeScriptModifierFunctionGenerator(File(pathString).readText())
+                    val file = File(pathString)
+                    logger.debug("Resolving resource file: ${file.absolutePath}")
+                    CodeScriptModifierFunctionGenerator(file.readText())
                 }
                 ResourcePathType.CLASSPATH_PATH -> {
                     CodeScriptModifierFunctionGenerator(classLoader.getResource(pathString)?.readText().orEmpty())
@@ -59,12 +62,12 @@ class LibraryResourcesProcessor {
                     script.type = "text/javascript";
                     script.onload = function() {
                         window.call_$resourceName = function(f) {f();};
-                        window.kotlinQueues.forEach(function(f) {f();});
-                        window.kotlinQueues = [];
+                        window.kotlinQueues.$resourceName.forEach(function(f) {f();});
+                        window.kotlinQueues.$resourceName = [];
                     };
                     script.onerror = function() {
                         window.call_$resourceName = function(f) {};
-                        window.kotlinQueues = [];
+                        window.kotlinQueues.$resourceName = [];
                         var div = document.createElement("div");
                         div.style.color = 'darkred';
                         div.textContent = 'Error loading resource $resourceName';
@@ -114,5 +117,9 @@ class LibraryResourcesProcessor {
                 })
             """.trimIndent()
         }
+    }
+
+    companion object {
+        val logger = getLogger(LibraryResourcesProcessor::class.simpleName!!)
     }
 }
