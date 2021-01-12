@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import jupyter.kotlin.KotlinKernelHostProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -207,6 +208,7 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
+    // TODO: investigate, why this test is hanging
     fun testReadLine() {
         val code =
             """
@@ -246,7 +248,12 @@ class ExecuteTests : KernelServerTestsBase() {
                 @Suppress("UNCHECKED_CAST")
                 val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
                 val constructor = loadedClass.constructors.single()
-                val instance = constructor.call(NotebookMock())
+
+                val hostProvider = object : KotlinKernelHostProvider {
+                    override val host = null
+                }
+
+                val instance = constructor.call(NotebookMock(), hostProvider)
 
                 val result = xyzProperty.get(instance)
                 assertEquals(42, result)

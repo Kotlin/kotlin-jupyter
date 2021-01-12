@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
@@ -65,7 +66,7 @@ class MagicsProcessor(
         }.map { CodeInterval(it.range.first, it.range.last + 1) }
     }
 
-    data class MagicProcessingResult(val code: String, val libraries: List<LibraryDefinitionProducer>)
+    data class MagicProcessingResult(val code: Code, val libraries: List<LibraryDefinitionProducer>)
 
     companion object {
         private const val MAGICS_SIGN = '%'

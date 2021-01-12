@@ -2,7 +2,8 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.EvalResult
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.repl.getSimpleCompiler
+import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
+import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -28,22 +29,6 @@ class ApiTest : AbstractReplTest() {
         )
         val res1 = jEval(4, "notebook.cells[2]?.result")
         assertEquals(6, res1.resultValue)
-    }
-
-    @Test
-    fun addLibrary() {
-        repl.eval(
-            """
-            object customLib: LibraryDefinition {
-                override val init: List<Execution>
-                    get() = listOf(Execution{ it.scheduleExecution("val x = 42") })
-            }
-            notebook.host.addLibrary(customLib)
-            """.trimIndent()
-        )
-
-        val res = repl.eval("x")
-        assertEquals(42, res.resultValue)
     }
 
     @Test

@@ -22,11 +22,8 @@ interface KotlinKernelHost {
     /**
      * Schedules execution of the given [execution] after the completing of execution of the current cell
      */
-    fun scheduleExecution(execution: Execution)
+    fun scheduleExecution(execution: Execution<*>)
 
-    /**
-     * See [scheduleExecution]
-     */
     fun scheduleExecution(execution: Code) = scheduleExecution(CodeExecution(execution))
 
     /**
@@ -34,14 +31,12 @@ interface KotlinKernelHost {
      */
     fun execute(code: Code): Any?
 
-    fun executeInit(codes: List<Code>)
-
     fun executeInternal(code: Code): Result
 
     /**
      * Adds a new library via its definition. Fully interchangeable with `%use` approach
      */
-    fun addLibrary(definition: LibraryDefinition)
+    fun addLibrary(library: LibraryDefinition)
 
     /**
      * Execution result

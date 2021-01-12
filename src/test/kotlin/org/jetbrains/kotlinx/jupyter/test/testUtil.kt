@@ -10,19 +10,21 @@ import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import java.io.File
@@ -56,6 +58,12 @@ fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory)
     return libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
 }
 
+@JvmName("toLibrariesStringLibraryDefinition")
+fun Collection<Pair<String, LibraryDefinition>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
+    val map = toMap().mapKeys { entry -> LibraryReference(libraryFactory.resolutionInfoProvider.get(), entry.key) }
+    return LibraryDefinitionResolver(map)
+}
+
 fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>): LibraryResolver {
     return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(resolutionInfoProvider.get(), entry.key) })
 }
@@ -71,7 +79,14 @@ fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
         .toMap()
 }
 
-class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null) : LibraryResolver(parent) {
+class LibraryDefinitionResolver(val map: Map<LibraryReference, LibraryDefinition>) : LibraryResolver {
+
+    override fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition? {
+        return map[reference]
+    }
+}
+
+class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null) : LibraryDescriptorResolver(parent) {
     override val cache = hashMapOf<LibraryReference, LibraryDescriptor>()
 
     init {
@@ -109,8 +124,6 @@ class NotebookMock : Notebook<CodeCell> {
     override val results: ResultsAccessor
         get() = ResultsAccessor { cells[it] }
     override val displays: DisplayContainer
-        get() = error("Not supposed to be called")
-    override val host: KotlinKernelHost
         get() = error("Not supposed to be called")
 
     override fun history(before: Int): CodeCell? {

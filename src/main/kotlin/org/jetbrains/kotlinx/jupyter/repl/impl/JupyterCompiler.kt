@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.repl
+package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
@@ -26,7 +26,7 @@ import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.util.LinkedSnippet
 
-fun getCompilerWithCompletion(
+internal fun getCompilerWithCompletion(
     compilationConfiguration: ScriptCompilationConfiguration,
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler<KJvmReplCompilerWithIdeServices> {
@@ -110,17 +110,17 @@ class JupyterCompiler<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     )
 }
 
-class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(
-    hostConfiguration = hostConfiguration,
-    initAnalyzer = { sharedScriptCompilationContext, scopeProcessor ->
-        ReplCodeAnalyzerBase(sharedScriptCompilationContext.environment, implicitsResolutionFilter = scopeProcessor)
-    }
-)
-
 fun getSimpleCompiler(
     compilationConfiguration: ScriptCompilationConfiguration,
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler<KJvmReplCompilerBase<ReplCodeAnalyzerBase>> {
+    class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(
+        hostConfiguration = hostConfiguration,
+        initAnalyzer = { sharedScriptCompilationContext, scopeProcessor ->
+            ReplCodeAnalyzerBase(sharedScriptCompilationContext.environment, implicitsResolutionFilter = scopeProcessor)
+        }
+    )
+
     return JupyterCompiler(
         SimpleReplCompiler(
             compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]

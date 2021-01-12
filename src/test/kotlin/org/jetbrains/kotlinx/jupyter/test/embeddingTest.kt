@@ -9,6 +9,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
+import org.jetbrains.kotlinx.jupyter.execute
+import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
@@ -108,7 +110,9 @@ class EmbedReplTest : AbstractReplTest() {
 
     @Test
     fun testSubtypeRenderer() {
-        repl.eval("notebook.host.addLibrary(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition1)")
+        repl.execute {
+            addLibrary(testLibraryDefinition1)
+        }
         val result1 = repl.eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
         assertEquals(13, result1.resultValue)
         val result2 = repl.eval(
@@ -124,7 +128,7 @@ class EmbedReplTest : AbstractReplTest() {
     fun testJsResources() {
         val displayHandler = TestDisplayHandler()
         val res = repl.eval(
-            "notebook.host.addLibrary(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
+            "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
             displayHandler
         )
         assertTrue(res.resultValue is Unit)

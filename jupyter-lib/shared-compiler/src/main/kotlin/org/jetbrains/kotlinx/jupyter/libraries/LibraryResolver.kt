@@ -2,35 +2,90 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import java.nio.file.Paths
 
-abstract class LibraryResolver(private val parent: LibraryResolver? = null) {
+interface LibraryResolver {
+    fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition?
+}
+
+abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
     protected abstract fun tryResolve(reference: LibraryReference): LibraryDescriptor?
     protected abstract fun save(reference: LibraryReference, descriptor: LibraryDescriptor)
     protected open fun shouldResolve(reference: LibraryReference): Boolean = true
 
     open val cache: Map<LibraryReference, LibraryDescriptor>? = null
 
-    fun resolve(reference: LibraryReference): LibraryDescriptor? {
+    override fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition? {
         val shouldBeResolved = shouldResolve(reference)
         if (shouldBeResolved) {
             val result = tryResolve(reference)
             if (result != null) {
-                return result
+                val mapping = substituteArguments(result.variables, vars)
+
+                return processDescriptor(result, mapping)
             }
         }
 
-        val parentResult = parent?.resolve(reference) ?: return null
-        if (shouldBeResolved) {
+        val parentResult = parent?.resolve(reference, vars) ?: return null
+        if (shouldBeResolved && parentResult is LibraryDescriptor) {
             save(reference, parentResult)
         }
 
         return parentResult
     }
+
+    /**
+     * Matches a list of actual library arguments with declared library parameters
+     * Arguments can be named or not. Named arguments should be placed after unnamed
+     * Parameters may have default value
+     *
+     * @return A name-to-value map of library arguments
+     */
+    private fun substituteArguments(parameters: List<Variable>, arguments: List<Variable>): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        if (arguments.any { it.name.isEmpty() }) {
+            if (parameters.count() != 1) {
+                throw ReplCompilerException("Unnamed argument is allowed only if library has a single property")
+            }
+            if (arguments.count() != 1) {
+                throw ReplCompilerException("Too many arguments")
+            }
+            result[parameters[0].name] = arguments[0].value
+            return result
+        }
+
+        arguments.forEach {
+            result[it.name] = it.value
+        }
+        parameters.forEach {
+            if (!result.containsKey(it.name)) {
+                result[it.name] = it.value
+            }
+        }
+        return result
+    }
+
+    private fun processDescriptor(library: LibraryDescriptor, mapping: Map<String, String>): LibraryDefinition {
+        return LibraryDefinitionImpl(
+            dependencies = library.dependencies.replaceVariables(mapping),
+            repositories = library.repositories.replaceVariables(mapping),
+            imports = library.imports.replaceVariables(mapping),
+            init = library.init.replaceVariables(mapping),
+            shutdown = library.shutdown.replaceVariables(mapping),
+            initCell = library.initCell.replaceVariables(mapping),
+            renderers = library.renderers.replaceVariables(mapping),
+            converters = library.converters.replaceVariables(mapping),
+            minKernelVersion = library.minKernelVersion
+        )
+    }
 }
 
-class FallbackLibraryResolver : LibraryResolver() {
+class FallbackLibraryResolver : LibraryDescriptorResolver() {
     override fun tryResolve(reference: LibraryReference): LibraryDescriptor {
         return reference.resolve()
     }
@@ -43,7 +98,7 @@ class FallbackLibraryResolver : LibraryResolver() {
 class LocalLibraryResolver(
     parent: LibraryResolver?,
     mainLibrariesDir: String?
-) : LibraryResolver(parent) {
+) : LibraryDescriptorResolver(parent) {
     private val logger = getLogger()
     private val pathsToCheck: List<String>
 
@@ -51,7 +106,7 @@ class LocalLibraryResolver(
         val localSettingsPath = Paths.get(System.getProperty("user.home"), ".jupyter_kotlin").toString()
         val paths = mutableListOf(
             Paths.get(localSettingsPath, LocalCacheDir).toString(),
-            localSettingsPath
+            Paths.get(localSettingsPath, LibrariesDir).toString()
         )
         mainLibrariesDir?.let { paths.add(it) }
 

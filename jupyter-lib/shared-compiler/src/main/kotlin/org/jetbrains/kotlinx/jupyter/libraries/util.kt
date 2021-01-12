@@ -132,26 +132,6 @@ class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) :
     }
 }
 
-class ResolvingLibraryDefinitionProducer(private val initCodes: List<Code>, private val codes: List<Code>) : LibraryDefinitionProducer {
-    override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
-        if (notebook == null) return emptyList()
-
-        notebook.host.executeInit(initCodes)
-
-        val definitions = mutableListOf<LibraryDefinition>()
-        for (code in codes) {
-            when (val result = notebook.host.execute(code)) {
-                is LibraryDefinition -> definitions.add(result)
-                is LibraryDefinitionProducer -> {
-                    val produced = result.getDefinitions(notebook)
-                    definitions.addAll(produced)
-                }
-            }
-        }
-        return definitions
-    }
-}
-
 fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
     return flatMap { it.getDefinitions(notebook) }
 }

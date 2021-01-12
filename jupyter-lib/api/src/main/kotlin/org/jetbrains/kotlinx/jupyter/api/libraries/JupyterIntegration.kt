@@ -20,11 +20,11 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val renderers = mutableListOf<RendererTypeHandler>()
 
-        private val initCallbacks = mutableListOf<Execution>()
+        private val initCallbacks = mutableListOf<Execution<*>>()
 
-        private val initCellCallbacks = mutableListOf<Execution>()
+        private val initCellCallbacks = mutableListOf<Execution<*>>()
 
-        private val shutdownCallbacks = mutableListOf<Execution>()
+        private val shutdownCallbacks = mutableListOf<Execution<*>>()
 
         private val converters = mutableListOf<GenerativeTypeHandler>()
 
@@ -65,6 +65,10 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             imports.add(path)
         }
 
+        inline fun <reified T> import() {
+            import(T::class.qualifiedName!!)
+        }
+
         fun dependency(path: String) {
             dependencies.add(path)
         }
@@ -73,16 +77,16 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             repositories.add(path)
         }
 
-        fun onLibraryLoaded(callback: () -> Unit) {
-            initCallbacks.add(Execution { _ -> callback() })
+        fun onLoaded(callback: KotlinKernelHost.() -> Unit) {
+            initCallbacks.add(DelegatedExecution(callback))
         }
 
-        fun onKernelShutdown(callback: () -> Unit) {
-            shutdownCallbacks.add(Execution { _ -> callback() })
+        fun onShutdown(callback: KotlinKernelHost.() -> Unit) {
+            shutdownCallbacks.add(DelegatedExecution(callback))
         }
 
-        fun beforeCellExecution(callback: () -> Unit) {
-            initCellCallbacks.add(Execution { _ -> callback() })
+        fun beforeCellExecution(callback: KotlinKernelHost.() -> Unit) {
+            initCellCallbacks.add(DelegatedExecution(callback))
         }
 
         // TODO: use callback
