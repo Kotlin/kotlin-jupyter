@@ -27,5 +27,8 @@ out/
 # Jupyter notebooks checkpoints
 **/.ipynb_checkpoints
 
+# Jupyter log files
+samples/debug.log
+
 # MacOS attributes files
 *.DS_Store
