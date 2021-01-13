@@ -5,12 +5,17 @@ import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 
 enum class ResourcePathType {
     /**
-     * URL resource.
+     * URL resource. Resource is attached by link.
      * Examples:
      * - https://github.com/Kotlin/kotlin-jupyter/lib.js
      * - file:///C:/Users/lib.js
      */
     URL,
+
+    /**
+     * URL resource. Resource is embedded into notebook.
+     */
+    URL_EMBEDDED,
 
     /**
      * Local resource.
