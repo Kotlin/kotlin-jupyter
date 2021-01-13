@@ -31,7 +31,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
@@ -161,7 +161,7 @@ class ReplForJupyterImpl(
     override val notebook = NotebookImpl(runtimeProperties)
 
     private val librariesScanner = LibrariesScanner(notebook)
-    private val resourcesProcessor = LibraryResourcesProcessor()
+    private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
     override var outputConfig
         get() = outputConfigImpl
