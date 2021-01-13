@@ -8,9 +8,9 @@ import kotlin.reflect.full.starProjectedType
 
 typealias VariableDeclarationCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> Unit
 
-typealias FieldName = String
+typealias VariableName = String
 
-typealias VariableUpdateCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> FieldName?
+typealias VariableUpdateCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> VariableName?
 
 fun interface FieldHandlerExecution<T> {
 
