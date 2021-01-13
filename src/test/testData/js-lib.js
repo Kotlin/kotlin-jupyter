@@ -1,3 +1,3 @@
 function test_fun(x) {
-    console.log("var" + x)
+    return ("var" + x);
 }

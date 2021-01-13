@@ -80,6 +80,7 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
             initCell = library.initCell.replaceVariables(mapping),
             renderers = library.renderers.replaceVariables(mapping),
             converters = library.converters.replaceVariables(mapping),
+            resources = library.resources.replaceVariables(mapping),
             minKernelVersion = library.minKernelVersion
         )
     }

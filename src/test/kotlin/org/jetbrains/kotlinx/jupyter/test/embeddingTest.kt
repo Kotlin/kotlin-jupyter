@@ -136,6 +136,6 @@ class EmbedReplTest : AbstractReplTest() {
         val typedResult = displayHandler.list[0] as MimeTypedResult
         val content = typedResult["text/html"]!!
         assertTrue(content.contains("""id="kotlin_out_0""""))
-        assertTrue(content.contains("""function test_fun(x) {\n    console.log(\"var\" + x)\n}\n"""))
+        assertTrue(content.contains("""function test_fun(x)"""))
     }
 }

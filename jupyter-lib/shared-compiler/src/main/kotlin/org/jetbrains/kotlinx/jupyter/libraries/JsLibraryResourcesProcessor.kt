@@ -19,6 +19,10 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                 ResourcePathType.URL -> {
                     URLScriptModifierFunctionGenerator(pathString)
                 }
+                ResourcePathType.URL_EMBEDDED -> {
+                    val scriptText = getHttp(pathString).text
+                    CodeScriptModifierFunctionGenerator(scriptText)
+                }
                 ResourcePathType.LOCAL_PATH -> {
                     val file = File(pathString)
                     logger.debug("Resolving resource file: ${file.absolutePath}")
@@ -59,7 +63,6 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                 modifiers.forEach(function (gen) {
                     var script = document.createElement("script");
                     gen(script)
-                    script.type = "text/javascript";
                     script.onload = function() {
                         window.call_$resourceName = function(f) {f();};
                         window.kotlinQueues.$resourceName.forEach(function(f) {f();});
@@ -101,6 +104,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
             return """
                 (function(script) {
                     script.textContent = $escapedCode
+                    script.type = "text/javascript";
                 })
             """.trimIndent()
         }
