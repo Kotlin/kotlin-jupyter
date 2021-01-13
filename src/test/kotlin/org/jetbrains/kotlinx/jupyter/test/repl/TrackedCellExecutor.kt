@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
@@ -48,7 +49,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
 
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
-        return InternalEvalResult(null, null, null)
+        return InternalEvalResult(FieldValue(null, null), null)
     }
 }
 
@@ -61,7 +62,7 @@ internal class TrackedInternalEvaluatorImpl(val baseEvaluator: InternalEvaluator
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         val res = baseEvaluator.eval(code, onInternalIdGenerated)
-        results.add(res.value)
+        results.add(res.field?.value)
         return res
     }
 }

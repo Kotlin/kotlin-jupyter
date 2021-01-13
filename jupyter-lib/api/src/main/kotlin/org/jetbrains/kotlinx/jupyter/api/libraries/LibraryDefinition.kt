@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
@@ -55,7 +55,7 @@ interface LibraryDefinition {
     /**
      * List of type converters used by type providers processors
      */
-    val converters: List<GenerativeTypeHandler>
+    val converters: List<FieldHandler>
         get() = emptyList()
 
     /**

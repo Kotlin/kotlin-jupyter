@@ -14,8 +14,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.DelegatedExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.TypeProvidersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
@@ -147,8 +147,20 @@ class ReplForJupyterImpl(
     private val embedded: Boolean = false,
 ) : ReplForJupyter, ReplOptions, BaseKernelHost, KotlinKernelHostProvider {
 
-    constructor(config: KernelConfig, runtimeProperties: ReplRuntimeProperties, scriptReceivers: List<Any> = emptyList()) :
-        this(config.libraryFactory, config.scriptClasspath, config.homeDir, config.resolverConfig, runtimeProperties, scriptReceivers, config.embedded)
+    constructor(
+        config: KernelConfig,
+        runtimeProperties: ReplRuntimeProperties,
+        scriptReceivers: List<Any> = emptyList()
+    ) :
+        this(
+            config.libraryFactory,
+            config.scriptClasspath,
+            config.homeDir,
+            config.resolverConfig,
+            runtimeProperties,
+            scriptReceivers,
+            config.embedded
+        )
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
@@ -182,7 +194,9 @@ class ReplForJupyterImpl(
 
     override var writeCompiledClasses: Boolean
         get() = internalEvaluator.writeCompiledClasses
-        set(value) { internalEvaluator.writeCompiledClasses = value }
+        set(value) {
+            internalEvaluator.writeCompiledClasses = value
+        }
 
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
     private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
@@ -192,7 +206,12 @@ class ReplForJupyterImpl(
 
     private val ctx = KotlinContext()
 
-    private val magics = MagicsProcessor(FullMagicsHandler(this, LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version, libraryFactory)))
+    private val magics = MagicsProcessor(
+        FullMagicsHandler(
+            this,
+            LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version, libraryFactory)
+        )
+    )
 
     // Used for various purposes, i.e. completion and listing errors
     private val lightCompilerConfiguration: ScriptCompilationConfiguration =
@@ -220,7 +239,8 @@ class ReplForJupyterImpl(
 
     override val currentClasspath = lightCompilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
 
-    private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) : ClassLoader(parent) {
+    private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) :
+        ClassLoader(parent) {
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
             val c = if (name != null && includeFilter(name)) {
                 parent.loadClass(name)
@@ -237,10 +257,15 @@ class ReplForJupyterImpl(
         if (!embedded) {
             jvm {
                 val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) { fqn ->
-                    listOf("jupyter.kotlin.", "org.jetbrains.kotlinx.jupyter.api", "kotlin.").any { fqn.startsWith(it) } ||
+                    listOf(
+                        "jupyter.kotlin.",
+                        "org.jetbrains.kotlinx.jupyter.api",
+                        "kotlin."
+                    ).any { fqn.startsWith(it) } ||
                         (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
                 }
-                val scriptClassloader = URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
+                val scriptClassloader =
+                    URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
                 baseClassLoader(scriptClassloader)
             }
         }
@@ -259,17 +284,28 @@ class ReplForJupyterImpl(
 
     private val contextUpdater = ContextUpdater(ctx, evaluator)
 
-    private val internalEvaluator: InternalEvaluator = InternalEvaluatorImpl(jupyterCompiler, evaluator, contextUpdater, executedCodeLogging != ExecutedCodeLogging.Off)
+    private val internalEvaluator: InternalEvaluator = InternalEvaluatorImpl(
+        jupyterCompiler,
+        evaluator,
+        contextUpdater,
+        executedCodeLogging != ExecutedCodeLogging.Off
+    )
 
     private val typeRenderersProcessor: TypeRenderersProcessor = TypeRenderersProcessorImpl(contextUpdater)
 
-    private val typeProvidersProcessor: TypeProvidersProcessor = TypeProvidersProcessorImpl(contextUpdater)
+    private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
 
     private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl()
 
     override fun checkComplete(code: String): CheckResult {
         val codeLine = jupyterCompiler.nextSourceCode(code)
-        val result = runBlocking { jupyterCompiler.compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), lightCompilerConfiguration) }
+        val result = runBlocking {
+            jupyterCompiler.compiler.analyze(
+                codeLine,
+                0.toSourceCodePosition(codeLine),
+                lightCompilerConfiguration
+            )
+        }
         return when {
             result.isIncomplete() -> CheckResult(false)
             result.isError() -> throw ReplException(result.getErrors())
@@ -277,7 +313,19 @@ class ReplForJupyterImpl(
         }
     }
 
-    internal val sharedContext = SharedReplContext(annotationsProcessor, typeProvidersProcessor, typeRenderersProcessor, magics, resourcesProcessor, librariesScanner, notebook, initCellCodes, shutdownCodes, internalEvaluator, this)
+    internal val sharedContext = SharedReplContext(
+        annotationsProcessor,
+        fieldsProcessor,
+        typeRenderersProcessor,
+        magics,
+        resourcesProcessor,
+        librariesScanner,
+        notebook,
+        initCellCodes,
+        shutdownCodes,
+        internalEvaluator,
+        this
+    )
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
@@ -291,12 +339,13 @@ class ReplForJupyterImpl(
                 cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
             }
 
-            cell?.resultVal = result.value
+            cell?.resultVal = result.field?.value
 
-            val rendered =
-                typeRenderersProcessor.renderResult(executor, result.value, result.resultField)?.let {
-                    if (it is Renderable) it.render(notebook) else it
-                }
+            val rendered = result.field?.let {
+                typeRenderersProcessor.renderResult(executor, it)
+            }?.let {
+                if (it is Renderable) it.render(notebook) else it
+            }
 
             val newClasspath = log.catchAll {
                 updateClasspath()
@@ -350,13 +399,25 @@ class ReplForJupyterImpl(
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
     override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) =
-        doWithLock(CompletionArgs(code, cursor, callback), completionQueue, CompletionResult.Empty(code, cursor), ::doComplete)
+        doWithLock(
+            CompletionArgs(code, cursor, callback),
+            completionQueue,
+            CompletionResult.Empty(code, cursor),
+            ::doComplete
+        )
 
     private fun doComplete(args: CompletionArgs): CompletionResult {
         if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
 
         val preprocessed = magics.processMagics(args.code, true).code
-        return completer.complete(jupyterCompiler.compiler, lightCompilerConfiguration, args.code, preprocessed, jupyterCompiler.nextCounter(), args.cursor)
+        return completer.complete(
+            jupyterCompiler.compiler,
+            lightCompilerConfiguration,
+            args.code,
+            preprocessed,
+            jupyterCompiler.nextCounter(),
+            args.cursor
+        )
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
@@ -368,11 +429,22 @@ class ReplForJupyterImpl(
 
         val preprocessed = magics.processMagics(args.code, true).code
         val codeLine = SourceCodeImpl(jupyterCompiler.nextCounter(), preprocessed)
-        val errorsList = runBlocking { jupyterCompiler.compiler.analyze(codeLine, 0.toSourceCodePosition(codeLine), lightCompilerConfiguration) }
+        val errorsList = runBlocking {
+            jupyterCompiler.compiler.analyze(
+                codeLine,
+                0.toSourceCodePosition(codeLine),
+                lightCompilerConfiguration
+            )
+        }
         return ListErrorsResult(args.code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
     }
 
-    private fun <T, Args : LockQueueArgs<T>> doWithLock(args: Args, queue: LockQueue<T, Args>, default: T, action: (Args) -> T) {
+    private fun <T, Args : LockQueueArgs<T>> doWithLock(
+        args: Args,
+        queue: LockQueue<T, Args>,
+        default: T,
+        action: (Args) -> T
+    ) {
         queue.add(args)
 
         val result = synchronized(this) {
@@ -390,8 +462,14 @@ class ReplForJupyterImpl(
         val callback: (T) -> Unit
     }
 
-    private data class CompletionArgs(val code: String, val cursor: Int, override val callback: (CompletionResult) -> Unit) : LockQueueArgs<CompletionResult>
-    private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) : LockQueueArgs<ListErrorsResult>
+    private data class CompletionArgs(
+        val code: String,
+        val cursor: Int,
+        override val callback: (CompletionResult) -> Unit
+    ) : LockQueueArgs<CompletionResult>
+
+    private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) :
+        LockQueueArgs<ListErrorsResult>
 
     private class LockQueue<T, Args : LockQueueArgs<T>> {
         private var args: Args? = null

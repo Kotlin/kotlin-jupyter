@@ -13,18 +13,17 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
-import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import java.io.File
@@ -59,12 +58,9 @@ fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory)
 }
 
 @JvmName("toLibrariesStringLibraryDefinition")
-fun Collection<Pair<String, LibraryDefinition>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
-    val map = toMap().mapKeys { entry -> LibraryReference(libraryFactory.resolutionInfoProvider.get(), entry.key) }
-    return LibraryDefinitionResolver(map)
-}
+fun Collection<Pair<String, LibraryDefinition>>.toLibraries(libraryFactory: LibraryFactory) = libraryFactory.getResolverFromNamesMap(toMap())
 
-fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDescriptor>): LibraryResolver {
+fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDefinition>): LibraryResolver {
     return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(resolutionInfoProvider.get(), entry.key) })
 }
 
@@ -79,15 +75,8 @@ fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
         .toMap()
 }
 
-class LibraryDefinitionResolver(val map: Map<LibraryReference, LibraryDefinition>) : LibraryResolver {
-
-    override fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition? {
-        return map[reference]
-    }
-}
-
-class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDescriptor>? = null) : LibraryDescriptorResolver(parent) {
-    override val cache = hashMapOf<LibraryReference, LibraryDescriptor>()
+class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDefinition>? = null) : LibraryDescriptorResolver(parent) {
+    override val cache = hashMapOf<LibraryReference, LibraryDefinition>()
 
     init {
         initialCache?.forEach { (key, value) ->
@@ -99,11 +88,11 @@ class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<Librar
         return reference.shouldBeCachedInMemory
     }
 
-    override fun tryResolve(reference: LibraryReference): LibraryDescriptor? {
+    override fun tryResolve(reference: LibraryReference): LibraryDefinition? {
         return cache[reference]
     }
 
-    override fun save(reference: LibraryReference, descriptor: LibraryDescriptor) {
+    override fun save(reference: LibraryReference, descriptor: LibraryDefinition) {
         cache[reference] = descriptor
     }
 }
@@ -134,4 +123,9 @@ class NotebookMock : Notebook<CodeCell> {
         get() = defaultRuntimeProperties.version!!
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+}
+
+fun library(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
+    val o = object : JupyterIntegration(builder) {}
+    return o.getDefinitions(null).single()
 }

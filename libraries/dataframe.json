@@ -13,10 +13,5 @@
   "link": "https://github.com/nikitinas/dataframe",
   "dependencies": [
     "org.jetbrains.kotlin:dataframe:$v"
-  ],
-  "typeConverters": {
-    "org.jetbrains.dataframe.DataFrame<*>": "CodeGenerator.Default.generate($it, $property)",
-    "org.jetbrains.dataframe.DataFrameToListNamedStub": "CodeGenerator.Default.generate($it)",
-    "org.jetbrains.dataframe.DataFrameToListTypedStub": "CodeGenerator.Default.generate($it)"
-  }
+  ]
 }

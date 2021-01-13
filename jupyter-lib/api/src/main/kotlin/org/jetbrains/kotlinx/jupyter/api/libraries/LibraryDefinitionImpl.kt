@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
@@ -18,7 +18,7 @@ class LibraryDefinitionImpl(
     override val initCell: List<Execution<*>> = emptyList(),
     override val shutdown: List<Execution<*>> = emptyList(),
     override val renderers: List<RendererTypeHandler> = emptyList(),
-    override val converters: List<GenerativeTypeHandler> = emptyList(),
+    override val converters: List<FieldHandler> = emptyList(),
     override val annotations: List<AnnotationHandler> = emptyList(),
     override val resources: List<LibraryResource> = emptyList(),
     override val minKernelVersion: KotlinKernelVersion? = null,

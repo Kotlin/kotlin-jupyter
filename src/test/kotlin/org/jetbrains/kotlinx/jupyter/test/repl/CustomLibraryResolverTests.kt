@@ -2,15 +2,13 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -177,11 +175,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         Assertions.assertTrue(message.contains(kernelVersion))
     }
 
-    fun library(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
-        val o = object : JupyterIntegration(builder) {}
-        return o.getDefinitions(null).single()
-    }
-
     annotation class TestAnnotation
 
     @Test
@@ -210,8 +203,8 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 )
             }
             import<TestAnnotation>()
-            onClassAnnotation<TestAnnotation> { classes, host ->
-                host.execute(
+            onClassAnnotation<TestAnnotation> {
+                execute(
                     """
                     EXECUTE("3")
                     """.trimIndent()

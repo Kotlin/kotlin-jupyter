@@ -1,12 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.FieldHandler
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 
 /**
- * Processes REPL local variables (implemented as properties in script classes) and converts them into new types using code generation
+ * Processes REPL local variables (implemented as properties of script classes) and converts them into new types using code generation
  */
-interface TypeProvidersProcessor {
+interface FieldsProcessor {
 
     /**
      * Registers new type handler together with a callback code, that generates code for new type
@@ -20,10 +21,10 @@ interface TypeProvidersProcessor {
      * This list consists of a number of declarations followed by actual code for type conversion
      * Declarations can have a `###` placeholder that will be replaced with auto-incremented ID, if the code snippet is new, or will reuse existing ID, if exactly the same code snippet has already been declared
      */
-    fun register(handler: GenerativeTypeHandler): Code
+    fun register(handler: FieldHandler)
 
     /**
      * Processes local variables and generates code snippets that perform type conversions
      */
-    fun process(): List<Code>
+    fun process(host: KotlinKernelHost): List<Code>
 }

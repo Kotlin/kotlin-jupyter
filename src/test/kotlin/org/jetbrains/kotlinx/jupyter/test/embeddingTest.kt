@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.TypeHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
@@ -50,11 +50,11 @@ val testLibraryDefinition1 = LibraryDefinitionImpl(
     renderers = listOf(
         SubtypeRendererTypeHandler(
             TestSum::class,
-            TypeHandlerCodeExecution("\$it.a + \$it.b")
+            ResultHandlerCodeExecution("\$it.a + \$it.b")
         ),
         SubtypeRendererTypeHandler(
             TestFunList::class,
-            TypeHandlerCodeExecution("\$it.render()")
+            ResultHandlerCodeExecution("\$it.render()")
         )
     )
 )

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl
-
 import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
@@ -43,7 +43,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             } else code
 
             if (preprocessedCode.isBlank()) {
-                return InternalEvalResult(null, null, null)
+                return InternalEvalResult(FieldValue(null, null), null)
             }
 
             val result = baseHost.withHost(context) {
@@ -55,7 +55,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             if (processVariables) {
                 log.catchAll {
-                    typeProvidersProcessor.process().forEach(context::execute)
+                    fieldsProcessor.process(context).forEach(context::execute)
                 }
             }
 
@@ -97,7 +97,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             library.buildDependenciesInitCode()?.let { runChild(it) }
             library.init.forEach(::runChild)
             library.renderers.mapNotNull(sharedContext.typeRenderersProcessor::register).joinToLines().let(::runChild)
-            library.converters.map(sharedContext.typeProvidersProcessor::register).joinToLines().let(::runChild)
+            library.converters.forEach(sharedContext.fieldsProcessor::register)
             library.annotations.forEach(sharedContext.annotationsProcessor::register)
 
             val classLoader = sharedContext.evaluator.lastClassLoader
@@ -110,12 +110,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
         }
 
-        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false).value
-
-        override fun executeInternal(code: Code): KotlinKernelHost.Result {
-            val internalResult = sharedContext.evaluator.eval(code)
-            return KotlinKernelHost.Result(internalResult.value, internalResult.resultField)
-        }
+        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false).field
 
         override fun display(value: Any) {
             displayHandler?.handleDisplay(value)
