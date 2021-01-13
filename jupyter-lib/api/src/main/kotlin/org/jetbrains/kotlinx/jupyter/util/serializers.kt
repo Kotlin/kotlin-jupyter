@@ -8,11 +8,9 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.TypeHandlerCodeExecution
+import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -40,10 +38,10 @@ object CodeExecutionSerializer : PrimitiveStringPropertySerializer<CodeExecution
     ::CodeExecution
 )
 
-object TypeHandlerCodeExecutionSerializer : PrimitiveStringPropertySerializer<TypeHandlerCodeExecution>(
-    TypeHandlerCodeExecution::class,
-    TypeHandlerCodeExecution::code,
-    ::TypeHandlerCodeExecution
+object TypeHandlerCodeExecutionSerializer : PrimitiveStringPropertySerializer<ResultHandlerCodeExecution>(
+    ResultHandlerCodeExecution::class,
+    ResultHandlerCodeExecution::code,
+    ::ResultHandlerCodeExecution
 )
 
 abstract class ListToMapSerializer<T, K, V>(
@@ -65,16 +63,10 @@ abstract class ListToMapSerializer<T, K, V>(
     }
 }
 
-object RenderersSerializer : ListToMapSerializer<ExactRendererTypeHandler, String, TypeHandlerCodeExecution>(
+object RenderersSerializer : ListToMapSerializer<ExactRendererTypeHandler, String, ResultHandlerCodeExecution>(
     serializer(),
     ::ExactRendererTypeHandler,
     { it.className to it.execution }
-)
-
-object GenerativeHandlersSerializer : ListToMapSerializer<GenerativeTypeHandler, String, Code>(
-    serializer(),
-    ::GenerativeTypeHandler,
-    { it.className to it.code }
 )
 
 object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {

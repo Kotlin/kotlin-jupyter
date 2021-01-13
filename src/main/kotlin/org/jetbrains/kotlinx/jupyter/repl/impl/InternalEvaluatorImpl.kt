@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
@@ -71,12 +72,11 @@ internal class InternalEvaluatorImpl(val compiler: JupyterCompiler<*>, val evalu
                             resultValue.error
                         )
                         is ResultValue.Unit -> {
-                            InternalEvalResult(Unit, null, scriptsSerializer.serialize(compiledScript))
+                            InternalEvalResult(FieldValue(Unit, null), scriptsSerializer.serialize(compiledScript))
                         }
                         is ResultValue.Value -> {
                             InternalEvalResult(
-                                resultValue.value,
-                                pureResult.compiledSnippet.resultField?.first,
+                                FieldValue(resultValue.value, pureResult.compiledSnippet.resultField?.first), // TODO: replace with resultValue.name
                                 scriptsSerializer.serialize(compiledScript)
                             )
                         }

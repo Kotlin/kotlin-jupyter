@@ -4,17 +4,36 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
-import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
 /**
  * Execution interface for type handlers
  */
-fun interface TypeHandlerExecution : VariablesSubstitutionAware<TypeHandlerExecution> {
-    fun execute(host: ExecutionHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result
+fun interface ResultHandlerExecution : VariablesSubstitutionAware<ResultHandlerExecution> {
+    fun execute(host: ExecutionHost, result: FieldValue): FieldValue
 
-    override fun replaceVariables(mapping: Map<String, String>): TypeHandlerExecution = this
+    override fun replaceVariables(mapping: Map<String, String>): ResultHandlerExecution = this
+}
+
+data class FieldValue(val value: Any?, val name: String?)
+
+/**
+ * Execution represented by code snippet.
+ * This snippet should return the value.
+ */
+@Serializable(TypeHandlerCodeExecutionSerializer::class)
+class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
+    override fun execute(host: ExecutionHost, result: FieldValue): FieldValue {
+        val execCode = result.name?.let { code.replace("\$it", it) } ?: code
+        return host.execute {
+            execute(execCode)
+        }
+    }
+
+    override fun replaceVariables(mapping: Map<String, String>): ResultHandlerCodeExecution {
+        return ResultHandlerCodeExecution(org.jetbrains.kotlinx.jupyter.util.replaceVariables(code, mapping))
+    }
 }
 
 /**
@@ -30,7 +49,7 @@ interface RendererTypeHandler : VariablesSubstitutionAware<RendererTypeHandler> 
      * Execution to handle result.
      * Should not throw if [acceptsType] returns true
      */
-    val execution: TypeHandlerExecution
+    val execution: ResultHandlerExecution
 }
 
 /**
@@ -54,28 +73,10 @@ interface PrecompiledRendererTypeHandler : RendererTypeHandler {
 }
 
 /**
- * Execution represented by code snippet.
- * This snippet should return the value.
- */
-@Serializable(TypeHandlerCodeExecutionSerializer::class)
-class TypeHandlerCodeExecution(val code: Code) : TypeHandlerExecution {
-    override fun execute(host: ExecutionHost, value: Any?, resultFieldName: String?): KotlinKernelHost.Result {
-        val execCode = resultFieldName?.let { code.replace("\$it", it) } ?: code
-        return host.execute {
-            executeInternal(execCode)
-        }
-    }
-
-    override fun replaceVariables(mapping: Map<String, String>): TypeHandlerCodeExecution {
-        return TypeHandlerCodeExecution(replaceVariables(code, mapping))
-    }
-}
-
-/**
  * Simple implementation for [RendererTypeHandler].
  * Renders any type by default
  */
-open class AlwaysRendererTypeHandler(override val execution: TypeHandlerExecution) : RendererTypeHandler {
+open class AlwaysRendererTypeHandler(override val execution: ResultHandlerExecution) : RendererTypeHandler {
     override fun acceptsType(type: KClass<*>): Boolean = true
     override fun replaceVariables(mapping: Map<String, String>) = this
 }
@@ -83,11 +84,11 @@ open class AlwaysRendererTypeHandler(override val execution: TypeHandlerExecutio
 /**
  * Serializable version of type handler.
  * Renders only classes which exactly match [className] by FQN.
- * Accepts only [TypeHandlerCodeExecution] because it's the only one that
+ * Accepts only [ResultHandlerCodeExecution] because it's the only one that
  * may be correctly serialized.
  */
 @Serializable
-class ExactRendererTypeHandler(val className: TypeName, override val execution: TypeHandlerCodeExecution) : RendererTypeHandler {
+class ExactRendererTypeHandler(val className: TypeName, override val execution: ResultHandlerCodeExecution) : RendererTypeHandler {
     override fun acceptsType(type: KClass<*>): Boolean {
         return className == type.java.canonicalName
     }
@@ -99,15 +100,15 @@ class ExactRendererTypeHandler(val className: TypeName, override val execution: 
 
 /**
  * Renders any object of [superType] (including subtypes).
- * If [execution] is [TypeHandlerCodeExecution], this renderer may be
+ * If [execution] is [ResultHandlerCodeExecution], this renderer may be
  * optimized by pre-compilation (unlike [ExactRendererTypeHandler]).
  */
-class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val execution: TypeHandlerExecution) : PrecompiledRendererTypeHandler {
+class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val execution: ResultHandlerExecution) : PrecompiledRendererTypeHandler {
     override val mayBePrecompiled: Boolean
-        get() = execution is TypeHandlerCodeExecution
+        get() = execution is ResultHandlerCodeExecution
 
     override fun precompile(methodName: String, paramName: String): Code? {
-        if (execution !is TypeHandlerCodeExecution) return null
+        if (execution !is ResultHandlerCodeExecution) return null
 
         val typeParamsString = superType.typeParameters.run {
             if (isEmpty()) {
@@ -117,7 +118,7 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
             }
         }
         val typeDef = superType.qualifiedName!! + typeParamsString
-        val methodBody = replaceVariables(execution.code, mapOf("it" to paramName))
+        val methodBody = org.jetbrains.kotlinx.jupyter.util.replaceVariables(execution.code, mapOf("it" to paramName))
 
         return "fun $methodName($paramName: $typeDef): Any? = $methodBody"
     }
@@ -130,26 +131,3 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
         return SubtypeRendererTypeHandler(superType, execution.replaceVariables(mapping))
     }
 }
-
-/**
- * Generative type handler is used for processing type converters and annotations
- *
- * @see [org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition.annotations]
- * @see [org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition.converters]
- */
-@Serializable
-class GenerativeTypeHandler(val className: TypeName, val code: Code) : VariablesSubstitutionAware<GenerativeTypeHandler> {
-    override fun replaceVariables(mapping: Map<String, String>): GenerativeTypeHandler {
-        return GenerativeTypeHandler(className, replaceVariables(code, mapping))
-    }
-}
-
-/**
- * Callback to handle new class or interface declarations in executed snippets
- */
-typealias ClassDeclarationsCallback = (List<KClass<*>>, KotlinKernelHost) -> Unit
-
-/**
- * Annotation handler used to hook class declarations with specific annotations
- */
-class AnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)

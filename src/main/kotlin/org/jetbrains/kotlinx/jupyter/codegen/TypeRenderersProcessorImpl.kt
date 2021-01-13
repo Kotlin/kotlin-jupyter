@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
@@ -12,19 +13,19 @@ class TypeRenderersProcessorImpl(
     private var counter = 0
     private val typeRenderers: MutableList<HandlerWithInfo> = mutableListOf()
 
-    override tailrec fun renderResult(host: ExecutionHost, value: Any?, fieldName: String?): Any? {
-        if (value == null) return null
+    override tailrec fun renderResult(host: ExecutionHost, field: FieldValue): Any? {
+        val value = field.value ?: return null
         val (handler, id) = typeRenderers.firstOrNull { it.handler.acceptsType(value::class) }
             ?: return value
         return if (id == null) {
-            val (resultValue, resultFieldName) = handler.execution.execute(host, value, fieldName)
-            renderResult(host, resultValue, resultFieldName)
+            val newField = handler.execution.execute(host, field)
+            renderResult(host, newField)
         } else {
             val methodName = getMethodName(id)
             contextUpdater.update()
             val functionInfo = contextUpdater.context.functions[methodName]!!
             val resultValue = functionInfo.function.call(functionInfo.line, value)
-            renderResult(host, resultValue, null)
+            renderResult(host, FieldValue(resultValue, null))
         }
     }
 

@@ -14,21 +14,22 @@ interface LibraryResolver {
 }
 
 abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
-    protected abstract fun tryResolve(reference: LibraryReference): LibraryDescriptor?
-    protected abstract fun save(reference: LibraryReference, descriptor: LibraryDescriptor)
+    protected abstract fun tryResolve(reference: LibraryReference): LibraryDefinition?
+    protected abstract fun save(reference: LibraryReference, descriptor: LibraryDefinition)
     protected open fun shouldResolve(reference: LibraryReference): Boolean = true
 
-    open val cache: Map<LibraryReference, LibraryDescriptor>? = null
+    open val cache: Map<LibraryReference, LibraryDefinition>? = null
 
     override fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition? {
         val shouldBeResolved = shouldResolve(reference)
         if (shouldBeResolved) {
             val result = tryResolve(reference)
-            if (result != null) {
+            if (result is LibraryDescriptor) {
                 val mapping = substituteArguments(result.variables, vars)
 
                 return processDescriptor(result, mapping)
             }
+            return result
         }
 
         val parentResult = parent?.resolve(reference, vars) ?: return null
@@ -79,7 +80,7 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
             shutdown = library.shutdown.replaceVariables(mapping),
             initCell = library.initCell.replaceVariables(mapping),
             renderers = library.renderers.replaceVariables(mapping),
-            converters = library.converters.replaceVariables(mapping),
+            converters = library.converters,
             resources = library.resources.replaceVariables(mapping),
             minKernelVersion = library.minKernelVersion
         )
@@ -87,11 +88,11 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
 }
 
 class FallbackLibraryResolver : LibraryDescriptorResolver() {
-    override fun tryResolve(reference: LibraryReference): LibraryDescriptor {
+    override fun tryResolve(reference: LibraryReference): LibraryDefinition {
         return reference.resolve()
     }
 
-    override fun save(reference: LibraryReference, descriptor: LibraryDescriptor) {
+    override fun save(reference: LibraryReference, descriptor: LibraryDefinition) {
         // fallback resolver doesn't cache results
     }
 }
@@ -133,13 +134,14 @@ class LocalLibraryResolver(
         return parseLibraryDescriptor(json)
     }
 
-    override fun save(reference: LibraryReference, descriptor: LibraryDescriptor) {
+    override fun save(reference: LibraryReference, library: LibraryDefinition) {
+        if (library !is LibraryDescriptor) return
         val dir = pathsToCheck.first()
         val file = reference.getFile(dir)
         file.parentFile.mkdirs()
 
         val format = Json { prettyPrint = true }
-        file.writeText(format.encodeToString(descriptor))
+        file.writeText(format.encodeToString(library))
     }
 
     private fun LibraryReference.getFile(dir: String) = Paths.get(dir, this.key + "." + LibraryDescriptorExt).toFile()

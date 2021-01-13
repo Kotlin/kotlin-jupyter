@@ -2,13 +2,18 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
-import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.GenerativeTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.FieldHandler
+import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
+import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.TypeHandlerExecution
+import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
+import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
+import kotlin.reflect.KMutableProperty
 
 /**
  * Base class for library integration with Jupyter Kernel via DSL
@@ -26,7 +31,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val shutdownCallbacks = mutableListOf<Execution<*>>()
 
-        private val converters = mutableListOf<GenerativeTypeHandler>()
+        private val converters = mutableListOf<FieldHandler>()
 
         private val annotations = mutableListOf<AnnotationHandler>()
 
@@ -42,7 +47,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             renderers.add(handler)
         }
 
-        fun addTypeConverter(handler: GenerativeTypeHandler) {
+        fun addTypeConverter(handler: FieldHandler) {
             converters.add(handler)
         }
 
@@ -51,8 +56,8 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
         }
 
         inline fun <reified T : Any> render(noinline renderer: (T) -> Any) {
-            val execution = TypeHandlerExecution { _, value, resultFieldName ->
-                KotlinKernelHost.Result(renderer(value as T), resultFieldName)
+            val execution = ResultHandlerExecution { _, property ->
+                FieldValue(renderer(property.value as T), property.name)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
         }
@@ -67,6 +72,14 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         inline fun <reified T> import() {
             import(T::class.qualifiedName!!)
+        }
+
+        inline fun <reified T> importPackage() {
+            val name = T::class.qualifiedName!!
+            val lastDot = name.lastIndexOf(".")
+            if (lastDot != -1) {
+                import(name.substring(0, lastDot + 1) + "*")
+            }
         }
 
         fun dependency(path: String) {
@@ -89,10 +102,21 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             initCellCallbacks.add(DelegatedExecution(callback))
         }
 
-        // TODO: use callback
-        inline fun <reified T> generateCodeOnVariable(handler: Code) {
-            val className = T::class.qualifiedName!!
-            addTypeConverter(GenerativeTypeHandler(className, handler))
+        inline fun <reified T : Any> onVariable(noinline callback: VariableDeclarationCallback<T>) {
+            val execution = FieldHandlerExecution(callback)
+            addTypeConverter(FieldHandlerByClass(T::class, execution))
+        }
+
+        inline fun <reified T : Any> updateVariable(noinline callback: VariableUpdateCallback<T>) {
+            val execution = FieldHandlerExecution<T> { host, value, property ->
+                val tempField = callback(host, value, property)
+                if (tempField != null) {
+                    val valOrVar = if (property is KMutableProperty) "var" else "val"
+                    val redeclaration = "$valOrVar ${property.name} = $tempField"
+                    host.execute(redeclaration)
+                }
+            }
+            addTypeConverter(FieldHandlerByClass(T::class, execution))
         }
 
         inline fun <reified T : Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {

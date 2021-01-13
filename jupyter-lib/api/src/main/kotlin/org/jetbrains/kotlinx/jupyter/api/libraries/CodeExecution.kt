@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 class CodeExecution(val code: Code) : Execution<Any?> {
     override fun execute(host: ExecutionHost): Any? {
         return host.execute {
-            execute(code)
+            execute(code).value
         }
     }
 

@@ -29,21 +29,10 @@ interface KotlinKernelHost {
     /**
      * Executes code immediately. Note that it may lead to breaking the kernel state in some cases
      */
-    fun execute(code: Code): Any?
-
-    fun executeInternal(code: Code): Result
+    fun execute(code: Code): FieldValue
 
     /**
      * Adds a new library via its definition. Fully interchangeable with `%use` approach
      */
     fun addLibrary(library: LibraryDefinition)
-
-    /**
-     * Execution result
-     *
-     * @property value Execution value
-     * @property fieldName Result field name of compiled snippet class
-     * @constructor Create Result
-     */
-    data class Result(val value: Any?, val fieldName: String?)
 }

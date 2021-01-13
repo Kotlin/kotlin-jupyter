@@ -20,7 +20,7 @@ class AnnotationsProcessorImpl : AnnotationsProcessor {
             .forEach {
                 val handler = handlers[it.key.qualifiedName!!]
                 if (handler != null) {
-                    handler(it.value.map { it.second }, host)
+                    handler(host, it.value.map { it.second })
                 }
             }
     }

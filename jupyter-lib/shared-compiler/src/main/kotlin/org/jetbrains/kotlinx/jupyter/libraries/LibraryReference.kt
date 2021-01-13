@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+
 data class LibraryReference(
     val info: LibraryResolutionInfo,
     val name: String? = null,
@@ -12,7 +14,7 @@ data class LibraryReference(
         key = namePart + info.key
     }
 
-    fun resolve(): LibraryDescriptor {
+    fun resolve(): LibraryDefinition {
         val text = info.resolve(name)
         return parseLibraryDescriptor(text)
     }
