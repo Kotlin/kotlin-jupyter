@@ -5,34 +5,49 @@ import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
+import java.io.IOException
 
 class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
     private var outputCounter = 0
 
-    private fun loadResourceAsText(resource: LibraryResource, classLoader: ClassLoader): List<ScriptModifierFunctionGenerator> {
-        return resource.locations.map { location ->
-            val pathString = location.path
-            when (location.type) {
-                ResourcePathType.URL -> {
-                    URLScriptModifierFunctionGenerator(pathString)
+    private fun loadBunch(bunch: ResourceFallbacksBunch, classLoader: ClassLoader): ScriptModifierFunctionGenerator {
+        val exceptions = mutableListOf<Exception>()
+        for (resourceLocation in bunch.locations) {
+            val path = resourceLocation.path
+
+            return try {
+                when (resourceLocation.type) {
+                    ResourcePathType.URL -> {
+                        URLScriptModifierFunctionGenerator(path)
+                    }
+                    ResourcePathType.URL_EMBEDDED -> {
+                        val scriptText = getHttp(path).text
+                        CodeScriptModifierFunctionGenerator(scriptText)
+                    }
+                    ResourcePathType.LOCAL_PATH -> {
+                        val file = File(path)
+                        logger.debug("Resolving resource file: ${file.absolutePath}")
+                        CodeScriptModifierFunctionGenerator(file.readText())
+                    }
+                    ResourcePathType.CLASSPATH_PATH -> {
+                        CodeScriptModifierFunctionGenerator(classLoader.getResource(path)?.readText().orEmpty())
+                    }
                 }
-                ResourcePathType.URL_EMBEDDED -> {
-                    val scriptText = getHttp(pathString).text
-                    CodeScriptModifierFunctionGenerator(scriptText)
-                }
-                ResourcePathType.LOCAL_PATH -> {
-                    val file = File(pathString)
-                    logger.debug("Resolving resource file: ${file.absolutePath}")
-                    CodeScriptModifierFunctionGenerator(file.readText())
-                }
-                ResourcePathType.CLASSPATH_PATH -> {
-                    CodeScriptModifierFunctionGenerator(classLoader.getResource(pathString)?.readText().orEmpty())
-                }
+            } catch (e: IOException) {
+                exceptions.add(e)
+                continue
             }
         }
+
+        throw Exception("No resource fallback found! Related exceptions: $exceptions")
+    }
+
+    private fun loadResourceAsText(resource: LibraryResource, classLoader: ClassLoader): List<ScriptModifierFunctionGenerator> {
+        return resource.bunches.map { loadBunch(it, classLoader) }
     }
 
     override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {

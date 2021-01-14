@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
@@ -67,14 +68,18 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
     resources = listOf(
         LibraryResource(
             listOf(
-                ResourceLocation(
-                    "https://cdn.plot.ly/plotly-latest.min.js",
-                    ResourcePathType.URL
+                ResourceFallbacksBunch(
+                    ResourceLocation(
+                        "https://cdn.plot.ly/plotly-latest.min.js",
+                        ResourcePathType.URL
+                    )
                 ),
-                ResourceLocation(
-                    "src/test/testData/js-lib.js",
-                    ResourcePathType.LOCAL_PATH
-                )
+                ResourceFallbacksBunch(
+                    ResourceLocation(
+                        "src/test/testData/js-lib.js",
+                        ResourcePathType.LOCAL_PATH
+                    )
+                ),
             ),
             ResourceType.JS,
             "testLib2"

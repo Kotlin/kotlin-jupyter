@@ -4,11 +4,12 @@ import khttp.responses.Response
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.json.JSONObject
+import java.io.IOException
 
 fun getHttp(url: String): Response {
     val response = khttp.get(url)
     if (response.statusCode != 200) {
-        throw Exception("Http request failed. Url = $url. Response = $response")
+        throw IOException("Http request failed. Url = $url. Response = $response")
     }
     return response
 }
