@@ -6,8 +6,19 @@ import java.net.URL
 interface ResolutionInfoProvider {
     var fallback: LibraryResolutionInfo
 
-    fun get(): LibraryResolutionInfo = fallback
     fun get(string: String): LibraryResolutionInfo
+
+    companion object {
+        fun withDefaultDirectoryResolution(dir: File) = StandardResolutionInfoProvider(
+            LibraryResolutionInfo.ByDir(dir)
+        )
+
+        // Used in Kotlin Jupyter plugin for IDEA
+        @Suppress("unused")
+        fun withDefaultGitRefResolution(ref: String) = StandardResolutionInfoProvider(
+            LibraryResolutionInfo.getInfoByRef(ref)
+        )
+    }
 }
 
 object EmptyResolutionInfoProvider : ResolutionInfoProvider {
@@ -17,11 +28,15 @@ object EmptyResolutionInfoProvider : ResolutionInfoProvider {
         get() = fallbackInfo
         set(_) {}
 
-    override fun get(string: String) = LibraryResolutionInfo.getInfoByRef(string)
+    override fun get(string: String): LibraryResolutionInfo {
+        if (string.isEmpty()) return fallback
+        return LibraryResolutionInfo.getInfoByRef(string)
+    }
 }
 
 class StandardResolutionInfoProvider(override var fallback: LibraryResolutionInfo) : ResolutionInfoProvider {
     override fun get(string: String): LibraryResolutionInfo {
+        if (string.isEmpty()) return fallback
         return tryGetAsRef(string) ?: tryGetAsDir(string) ?: tryGetAsFile(string) ?: tryGetAsURL(string) ?: fallback
     }
 

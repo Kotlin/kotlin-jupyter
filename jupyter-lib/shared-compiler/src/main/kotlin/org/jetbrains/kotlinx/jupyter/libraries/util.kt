@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import java.io.File
+import java.nio.file.Paths
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -35,7 +36,7 @@ enum class DefaultInfoSwitch {
     GIT_REFERENCE, DIRECTORY
 }
 
-class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionInfoProvider, initialSwitchVal: T, private val switcher: (T) -> LibraryResolutionInfo) {
+class ResolutionInfoSwitcher<T>(private val infoProvider: ResolutionInfoProvider, initialSwitchVal: T, private val switcher: (T) -> LibraryResolutionInfo) {
     private val defaultInfoCache = hashMapOf<T, LibraryResolutionInfo>()
 
     var switch: T = initialSwitchVal
@@ -45,7 +46,7 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
         }
 
     companion object {
-        fun default(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
+        fun default(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): ResolutionInfoSwitcher<DefaultInfoSwitch> {
             val initialInfo = provider.fallback
 
             val dirInfo = if (initialInfo is LibraryResolutionInfo.ByDir) {
@@ -60,7 +61,7 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
                 LibraryResolutionInfo.getInfoByRef(defaultRef)
             }
 
-            return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
+            return ResolutionInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
                 when (switch) {
                     DefaultInfoSwitch.DIRECTORY -> dirInfo
                     DefaultInfoSwitch.GIT_REFERENCE -> refInfo
@@ -70,8 +71,8 @@ class LibraryFactoryDefaultInfoSwitcher<T>(private val infoProvider: ResolutionI
 
         // Used in Kotlin Jupyter plugin for IDEA
         @Suppress("unused")
-        fun noop(provider: ResolutionInfoProvider): LibraryFactoryDefaultInfoSwitcher<DefaultInfoSwitch> {
-            return LibraryFactoryDefaultInfoSwitcher(provider, DefaultInfoSwitch.GIT_REFERENCE) {
+        fun noop(provider: ResolutionInfoProvider): ResolutionInfoSwitcher<DefaultInfoSwitch> {
+            return ResolutionInfoSwitcher(provider, DefaultInfoSwitch.GIT_REFERENCE) {
                 provider.fallback
             }
         }
@@ -124,6 +125,14 @@ fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
 
 fun parseLibraryName(str: String): Pair<String, List<Variable>> {
     return parseCall(str, Brackets.ROUND)
+}
+
+fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoProvider): LibraryResolver {
+    // Standard resolver doesn't cache results in memory
+    var res: LibraryResolver = FallbackLibraryResolver(infoProvider)
+    val librariesDir: String? = homeDir?.let { Paths.get(it, LibrariesDir).toString() }
+    res = LocalLibraryResolver(res, librariesDir)
+    return res
 }
 
 class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) : LibraryDefinitionProducer {

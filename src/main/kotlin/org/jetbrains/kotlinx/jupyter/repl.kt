@@ -30,8 +30,9 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
@@ -124,7 +125,7 @@ interface ReplForJupyter {
 
     val runtimeProperties: ReplRuntimeProperties
 
-    val libraryFactory: LibraryFactory
+    val resolutionInfoProvider: ResolutionInfoProvider
 
     var outputConfig: OutputConfig
 
@@ -138,7 +139,7 @@ fun <T> ReplForJupyter.execute(callback: (KotlinKernelHost).() -> T): T {
 }
 
 class ReplForJupyterImpl(
-    override val libraryFactory: LibraryFactory,
+    override val resolutionInfoProvider: ResolutionInfoProvider,
     private val scriptClasspath: List<File> = emptyList(),
     override val homeDir: File? = null,
     override val resolverConfig: ResolverConfig? = null,
@@ -153,7 +154,7 @@ class ReplForJupyterImpl(
         scriptReceivers: List<Any> = emptyList()
     ) :
         this(
-            config.libraryFactory,
+            config.resolutionInfoProvider,
             config.scriptClasspath,
             config.homeDir,
             config.resolverConfig,
@@ -165,6 +166,12 @@ class ReplForJupyterImpl(
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
     override val librariesDir: File = homeDir?.resolve(LibrariesDir) ?: File(LibrariesDir)
+
+    private val libraryInfoSwitcher = ResolutionInfoSwitcher.default(
+        resolutionInfoProvider,
+        librariesDir,
+        currentBranch
+    )
 
     private var outputConfigImpl = OutputConfig()
 
@@ -184,7 +191,7 @@ class ReplForJupyterImpl(
 
     override var trackClasspath: Boolean = false
 
-    var _executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.Off
+    private var _executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.Off
     override var executedCodeLogging: ExecutedCodeLogging
         get() = _executedCodeLogging
         set(value) {
@@ -209,7 +216,8 @@ class ReplForJupyterImpl(
     private val magics = MagicsProcessor(
         FullMagicsHandler(
             this,
-            LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version, libraryFactory)
+            LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version),
+            libraryInfoSwitcher,
         )
     )
 
@@ -339,9 +347,9 @@ class ReplForJupyterImpl(
                 cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
             }
 
-            cell?.resultVal = result.field?.value
+            cell?.resultVal = result.field.value
 
-            val rendered = result.field?.let {
+            val rendered = result.field.let {
                 typeRenderersProcessor.renderResult(executor, it)
             }?.let {
                 if (it is Renderable) it.render(notebook) else it

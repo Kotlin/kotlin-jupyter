@@ -7,13 +7,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 
 interface LibrariesProcessor {
     fun processNewLibraries(arg: String): List<LibraryDefinitionProducer>
-    val libraryFactory: LibraryFactory
 }
 
 class LibrariesProcessorImpl(
     private val libraries: LibraryResolver?,
     private val kernelVersion: KotlinKernelVersion?,
-    override val libraryFactory: LibraryFactory,
 ) : LibrariesProcessor {
 
     /**
@@ -63,7 +61,7 @@ class LibrariesProcessorImpl(
 
     override fun processNewLibraries(arg: String): List<LibraryDefinitionProducer> =
         splitLibraryCalls(arg).map {
-            val (libRef, vars) = libraryFactory.parseReferenceWithArgs(it)
+            val (libRef, vars) = parseReferenceWithArgs(it)
             val library = libraries?.resolve(libRef, vars)
                 ?: throw ReplCompilerException("Unknown library '$libRef'")
 

@@ -70,12 +70,18 @@ abstract class LibraryResolutionInfo(
         }
     }
 
+    class Default(val string: String = "") : LibraryResolutionInfo("default") {
+        override val args: List<Variable> = listOf()
+
+        override fun resolve(name: String?): Nothing? = null
+    }
+
     protected abstract val args: List<Variable>
     protected open val valueKey: String
         get() = args.joinToString { it.value }
 
     val key: String by lazy { "${typeKey}_${replaceForbiddenChars(valueKey)}" }
-    abstract fun resolve(name: String?): String
+    abstract fun resolve(name: String?): String?
 
     override fun hashCode(): Int {
         return key.hashCode()

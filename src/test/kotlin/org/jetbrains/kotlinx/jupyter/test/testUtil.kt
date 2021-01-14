@@ -21,8 +21,8 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorResolver
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
@@ -46,22 +46,22 @@ val classpath = scriptCompilationClasspathFromContext(
     classLoader = DependsOn::class.java.classLoader
 )
 
-val LibraryFactory.testResolverConfig: ResolverConfig
+val testResolverConfig: ResolverConfig
     get() = ResolverConfig(
         defaultRepositories,
         getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
     )
 
-fun Collection<Pair<String, String>>.toLibraries(libraryFactory: LibraryFactory): LibraryResolver {
+fun Collection<Pair<String, String>>.toLibraries(): LibraryResolver {
     val libJsons = map { it.first to Json.decodeFromString<JsonObject>(it.second) }.toMap()
-    return libraryFactory.getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
+    return getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
 }
 
 @JvmName("toLibrariesStringLibraryDefinition")
-fun Collection<Pair<String, LibraryDefinition>>.toLibraries(libraryFactory: LibraryFactory) = libraryFactory.getResolverFromNamesMap(toMap())
+fun Collection<Pair<String, LibraryDefinition>>.toLibraries() = getResolverFromNamesMap(toMap())
 
-fun LibraryFactory.getResolverFromNamesMap(map: Map<String, LibraryDefinition>): LibraryResolver {
-    return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(resolutionInfoProvider.get(), entry.key) })
+fun getResolverFromNamesMap(map: Map<String, LibraryDefinition>): LibraryResolver {
+    return InMemoryLibraryResolver(null, map.mapKeys { entry -> LibraryReference(LibraryResolutionInfo.Default(), entry.key) })
 }
 
 fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
@@ -76,7 +76,7 @@ fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
 }
 
 class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<LibraryReference, LibraryDefinition>? = null) : LibraryDescriptorResolver(parent) {
-    override val cache = hashMapOf<LibraryReference, LibraryDefinition>()
+    private val cache = hashMapOf<LibraryReference, LibraryDefinition>()
 
     init {
         initialCache?.forEach { (key, value) ->

@@ -1,7 +1,8 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
@@ -68,8 +69,8 @@ fun main(vararg args: String) {
         log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
-        val libraryFactory = LibraryFactory.withDefaultDirectoryResolution(libraryPath)
-        val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryFactory)
+        val libraryInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(libraryPath)
+        val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryInfoProvider)
         kernelServer(kernelConfig)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -81,11 +82,11 @@ fun main(vararg args: String) {
  * so we don't have a big need in covering it with tests
  */
 @Suppress("unused")
-fun embedKernel(cfgFile: File, libraryFactory: LibraryFactory?, scriptReceivers: List<Any>?) {
+fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider = EmptyResolutionInfoProvider, scriptReceivers: List<Any>? = null) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
         KernelJupyterParams.fromFile(cfgFile),
-        libraryFactory ?: LibraryFactory.EMPTY,
+        resolutionInfoProvider,
         cp,
         null,
         true

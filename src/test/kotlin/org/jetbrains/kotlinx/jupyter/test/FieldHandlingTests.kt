@@ -4,7 +4,7 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -14,7 +14,6 @@ class FieldHandlingTests {
     @Test
     fun test() {
         val cp = classpath
-        val libraryFactory = LibraryFactory.EMPTY
 
         val lib = "mylib" to library {
             val generated = mutableSetOf<Int>()
@@ -43,9 +42,9 @@ class FieldHandlingTests {
         }
         val config = ResolverConfig(
             defaultRepositories,
-            listOf(lib).toLibraries(libraryFactory)
+            listOf(lib).toLibraries()
         )
-        val repl = ReplForJupyterImpl(libraryFactory, cp, null, config)
+        val repl = ReplForJupyterImpl(EmptyResolutionInfoProvider, cp, null, config)
 
         // create list 'l' of size 3
         val code1 =

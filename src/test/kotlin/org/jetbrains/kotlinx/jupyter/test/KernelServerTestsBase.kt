@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jupyter.MessageType
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.kernelServer
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.makeHeader
 import org.jetbrains.kotlinx.jupyter.receiveMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
@@ -40,7 +40,7 @@ open class KernelServerTestsBase {
         scriptClasspath = classpath,
         resolverConfig = null,
         homeDir = File(""),
-        libraryFactory = LibraryFactory.EMPTY
+        resolutionInfoProvider = EmptyResolutionInfoProvider,
     )
 
     private val sessionId = UUID.randomUUID().toString()

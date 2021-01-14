@@ -6,7 +6,7 @@
     {
       "type": "JS",
       "name": "Lib",
-      "locations": [
+      "bundles": [
         [
           {
             "path": "https://cdn.plot.ly/plotly-latest.min.js",

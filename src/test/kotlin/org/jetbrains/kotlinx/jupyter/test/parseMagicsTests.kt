@@ -7,11 +7,13 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
+import org.jetbrains.kotlinx.jupyter.libraries.parseReferenceWithArgs
 import org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
@@ -25,18 +27,17 @@ import kotlin.test.assertTrue
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
 class ParseArgumentsTests {
-    private val libraryFactory = LibraryFactory.EMPTY
 
     @Test
     fun test1() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs(" lib ")
+        val (ref, args) = parseReferenceWithArgs(" lib ")
         assertEquals("lib", ref.name)
         assertEquals(0, args.count())
     }
 
     @Test
     fun test2() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("lib(arg1)")
+        val (ref, args) = parseReferenceWithArgs("lib(arg1)")
         assertEquals("lib", ref.name)
         assertEquals(1, args.count())
         assertEquals("arg1", args[0].value)
@@ -45,7 +46,7 @@ class ParseArgumentsTests {
 
     @Test
     fun test3() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("lib (arg1 = 1.2, arg2 = val2)")
+        val (ref, args) = parseReferenceWithArgs("lib (arg1 = 1.2, arg2 = val2)")
         assertEquals("lib", ref.name)
         assertEquals(2, args.count())
         assertEquals("arg1", args[0].name)
@@ -56,7 +57,7 @@ class ParseArgumentsTests {
 
     @Test
     fun test4() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api="[1.0,)")""")
+        val (ref, args) = parseReferenceWithArgs("""lets-plot(api="[1.0,)")""")
         assertEquals("lets-plot", ref.name)
         assertEquals(1, args.count())
         assertEquals("api", args[0].name)
@@ -65,7 +66,7 @@ class ParseArgumentsTests {
 
     @Test
     fun test5() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("""lets-plot(api = "[1.0,)"   , lib=1.5.3 )""")
+        val (ref, args) = parseReferenceWithArgs("""lets-plot(api = "[1.0,)"   , lib=1.5.3 )""")
         assertEquals("lets-plot", ref.name)
         assertEquals(2, args.count())
         assertEquals("api", args[0].name)
@@ -77,7 +78,7 @@ class ParseArgumentsTests {
     @Test
     fun testInfo1() {
         val requestUrl = "https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/master/libraries/default.json"
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("lib_name@url[$requestUrl]")
+        val (ref, args) = parseReferenceWithArgs("lib_name@url[$requestUrl]")
         assertEquals("lib_name", ref.name)
 
         val info = ref.info
@@ -89,7 +90,7 @@ class ParseArgumentsTests {
     @Test
     fun testInfo2() {
         val file = File("libraries/default.json").toString()
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("@file[$file](param=val)")
+        val (ref, args) = parseReferenceWithArgs("@file[$file](param=val)")
         assertEquals("", ref.name)
 
         val info = ref.info
@@ -102,13 +103,20 @@ class ParseArgumentsTests {
 
     @Test
     fun testInfo3() {
-        val (ref, args) = libraryFactory.parseReferenceWithArgs("krangl@0.8.2.5")
+        val (ref, args) = parseReferenceWithArgs("krangl@ref[0.8.2.5]")
         assertEquals("krangl", ref.name)
 
         val info = ref.info
         assertTrue(info is LibraryResolutionInfo.ByGitRef)
         assertEquals(40, info.sha.length, "Expected commit SHA, but was `${info.sha}`")
         assertEquals(0, args.size)
+    }
+
+    @Test
+    fun testInfo4() {
+        val (ref, _) = parseReferenceWithArgs("krangl@0.8.2.5")
+        assertEquals("krangl", ref.name)
+        assertTrue(ref.info is LibraryResolutionInfo.Default)
     }
 }
 
@@ -129,8 +137,8 @@ class ParseMagicsTests {
     private val options = TestReplOptions()
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
-        val libraryFactory = LibraryFactory.EMPTY
-        val magicsHandler = FullMagicsHandler(options, LibrariesProcessorImpl(libraryFactory.testResolverConfig.libraries, defaultRuntimeProperties.version, libraryFactory))
+        val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider)
+        val magicsHandler = FullMagicsHandler(options, LibrariesProcessorImpl(testResolverConfig.libraries, defaultRuntimeProperties.version), switcher)
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)

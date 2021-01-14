@@ -24,7 +24,7 @@ import kotlin.test.assertFails
 import kotlin.test.fail
 
 class ReplTests : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(libraryFactory, classpath)
+    private val repl = ReplForJupyterImpl(resolutionInfoProvider, classpath)
 
     @Test
     fun testRepl() {
@@ -85,7 +85,7 @@ class ReplTests : AbstractReplTest() {
     fun testReplWithReceiver() {
         val value = 5
         val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
-        val repl = ReplForJupyterImpl(libraryFactory, cp, null, scriptReceivers = listOf(ConstReceiver(value)))
+        val repl = ReplForJupyterImpl(resolutionInfoProvider, cp, null, scriptReceivers = listOf(ConstReceiver(value)))
         val res = repl.eval("value")
         assertEquals(value, res.resultValue)
     }

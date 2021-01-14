@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ApiTest : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(libraryFactory, classpath)
+    private val repl = ReplForJupyterImpl(resolutionInfoProvider, classpath)
 
     private fun jEval(jupyterId: Int, code: String): EvalResult {
         return repl.eval(code, jupyterId = jupyterId)

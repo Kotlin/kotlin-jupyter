@@ -41,7 +41,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override var logExecution: Boolean = false
     override var writeCompiledClasses: Boolean = false
     override val lastKClass: KClass<*> = Unit::class
-    override val lastClassLoader = ClassLoader.getSystemClassLoader()
+    override val lastClassLoader: ClassLoader = ClassLoader.getSystemClassLoader()
     override val executedCodes = mutableListOf<Code>()
 
     override val results: List<Any?>
@@ -53,7 +53,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     }
 }
 
-internal class TrackedInternalEvaluatorImpl(val baseEvaluator: InternalEvaluator) : TrackedInternalEvaluator, InternalEvaluator by baseEvaluator {
+internal class TrackedInternalEvaluatorImpl(private val baseEvaluator: InternalEvaluator) : TrackedInternalEvaluator, InternalEvaluator by baseEvaluator {
 
     override val executedCodes = mutableListOf<Code>()
 
@@ -62,7 +62,7 @@ internal class TrackedInternalEvaluatorImpl(val baseEvaluator: InternalEvaluator
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         val res = baseEvaluator.eval(code, onInternalIdGenerated)
-        results.add(res.field?.value)
+        results.add(res.field.value)
         return res
     }
 }

@@ -18,7 +18,8 @@ import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.zeromq.SocketType
 import java.io.File
 
@@ -127,7 +128,7 @@ data class KernelConfig(
     val scriptClasspath: List<File> = emptyList(),
     val homeDir: File?,
     val resolverConfig: ResolverConfig?,
-    val libraryFactory: LibraryFactory,
+    val resolutionInfoProvider: ResolutionInfoProvider,
     val embedded: Boolean = false,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
@@ -142,13 +143,13 @@ data class KernelConfig(
     }
 
     companion object {
-        fun fromArgs(args: KernelArgs, libraryFactory: LibraryFactory): KernelConfig {
+        fun fromArgs(args: KernelArgs, resolutionInfoProvider: ResolutionInfoProvider): KernelConfig {
             val (cfgFile, scriptClasspath, homeDir) = args
             val cfg = KernelJupyterParams.fromFile(cfgFile)
-            return fromConfig(cfg, libraryFactory, scriptClasspath, homeDir)
+            return fromConfig(cfg, resolutionInfoProvider, scriptClasspath, homeDir)
         }
 
-        fun fromConfig(cfg: KernelJupyterParams, libraryFactory: LibraryFactory, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
+        fun fromConfig(cfg: KernelJupyterParams, resolutionInfoProvider: ResolutionInfoProvider, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
             return KernelConfig(
                 ports = cfg.ports,
                 transport = cfg.transport ?: "tcp",
@@ -156,12 +157,12 @@ data class KernelConfig(
                 signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
                 scriptClasspath = scriptClasspath,
                 homeDir = homeDir,
-                resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), libraryFactory) },
-                libraryFactory = libraryFactory,
+                resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), resolutionInfoProvider) },
+                resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,
             )
         }
     }
 }
 
-fun loadResolverConfig(homeDir: String, libraryFactory: LibraryFactory) = ResolverConfig(defaultRepositories, libraryFactory.getStandardResolver(homeDir))
+fun loadResolverConfig(homeDir: String, resolutionInfoProvider: ResolutionInfoProvider) = ResolverConfig(defaultRepositories, getStandardResolver(homeDir, resolutionInfoProvider))

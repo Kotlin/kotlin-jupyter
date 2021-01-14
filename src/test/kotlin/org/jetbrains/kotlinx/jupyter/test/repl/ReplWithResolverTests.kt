@@ -10,8 +10,9 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoName
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoOwner
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
@@ -26,12 +27,12 @@ import kotlin.test.assertNull
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithResolverTests : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(libraryFactory, classpath, homeDir, resolverConfig)
+    private val repl = ReplForJupyterImpl(resolutionInfoProvider, classpath, homeDir, resolverConfig)
 
     private fun getReplWithStandardResolver(): ReplForJupyterImpl {
-        val standardLibraryFactory = LibraryFactory.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
-        val config = ResolverConfig(defaultRepositories, standardLibraryFactory.getStandardResolver("."))
-        return ReplForJupyterImpl(standardLibraryFactory, classpath, homeDir, config, standardResolverRuntimeProperties)
+        val standardResolutionInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
+        val config = ResolverConfig(defaultRepositories, getStandardResolver(".", standardResolutionInfoProvider))
+        return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, config, standardResolverRuntimeProperties)
     }
 
     @Test
@@ -146,7 +147,7 @@ class ReplWithResolverTests : AbstractReplTest() {
     @Test
     fun testDefaultInfoSwitcher() {
         val repl = getReplWithStandardResolver()
-        val infoProvider = repl.libraryFactory.resolutionInfoProvider
+        val infoProvider = repl.resolutionInfoProvider
 
         val initialDefaultResolutionInfo = infoProvider.fallback
         Assertions.assertTrue(initialDefaultResolutionInfo is LibraryResolutionInfo.ByDir)
@@ -238,6 +239,6 @@ class ReplWithResolverTests : AbstractReplTest() {
     }
 
     companion object {
-        val resolverConfig = libraryFactory.testResolverConfig
+        val resolverConfig = testResolverConfig
     }
 }

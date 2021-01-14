@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactory
+import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import java.io.File
 
 abstract class AbstractReplTest {
@@ -10,7 +10,7 @@ abstract class AbstractReplTest {
 
     companion object {
         @JvmStatic
-        val libraryFactory = LibraryFactory.EMPTY
+        val resolutionInfoProvider = EmptyResolutionInfoProvider
 
         @JvmStatic
         protected val homeDir = File("")

@@ -16,7 +16,6 @@ import org.jetbrains.kotlinx.jupyter.Message
 import org.jetbrains.kotlinx.jupyter.MessageType
 import org.jetbrains.kotlinx.jupyter.StatusReply
 import org.jetbrains.kotlinx.jupyter.StreamResponse
-import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -250,7 +249,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val constructor = loadedClass.constructors.single()
 
                 val hostProvider = object : KotlinKernelHostProvider {
-                    override val host = null
+                    override val host: Nothing? = null
                 }
 
                 val instance = constructor.call(NotebookMock(), hostProvider)

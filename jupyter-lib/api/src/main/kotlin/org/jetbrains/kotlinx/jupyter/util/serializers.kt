@@ -17,7 +17,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -88,20 +88,20 @@ object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
     }
 }
 
-object ResourceBunchSerializer : KSerializer<ResourceFallbacksBunch> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(ResourceFallbacksBunch::class.qualifiedName!!, PrimitiveKind.STRING)
+object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(ResourceFallbacksBundle::class.qualifiedName!!, PrimitiveKind.STRING)
 
-    override fun deserialize(decoder: Decoder): ResourceFallbacksBunch {
+    override fun deserialize(decoder: Decoder): ResourceFallbacksBundle {
         return when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
             is JsonArray -> {
-                ResourceFallbacksBunch(
+                ResourceFallbacksBundle(
                     obj.map {
                         Json.decodeFromJsonElement(it)
                     }
                 )
             }
             is JsonObject -> {
-                ResourceFallbacksBunch(
+                ResourceFallbacksBundle(
                     listOf(
                         Json.decodeFromJsonElement(obj)
                     )
@@ -111,7 +111,7 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBunch> {
         }
     }
 
-    override fun serialize(encoder: Encoder, value: ResourceFallbacksBunch) {
+    override fun serialize(encoder: Encoder, value: ResourceFallbacksBundle) {
         encoder.encodeSerializableValue(serializer(), value.locations)
     }
 }

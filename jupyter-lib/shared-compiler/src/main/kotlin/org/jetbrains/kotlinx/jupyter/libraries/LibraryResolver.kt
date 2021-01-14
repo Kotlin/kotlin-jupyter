@@ -18,8 +18,6 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
     protected abstract fun save(reference: LibraryReference, definition: LibraryDefinition)
     protected open fun shouldResolve(reference: LibraryReference): Boolean = true
 
-    open val cache: Map<LibraryReference, LibraryDefinition>? = null
-
     override fun resolve(reference: LibraryReference, vars: List<Variable>): LibraryDefinition? {
         val shouldBeResolved = shouldResolve(reference)
         if (shouldBeResolved) {
@@ -80,16 +78,22 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
             shutdown = library.shutdown.replaceVariables(mapping),
             initCell = library.initCell.replaceVariables(mapping),
             renderers = library.renderers.replaceVariables(mapping),
-            converters = library.converters,
             resources = library.resources.replaceVariables(mapping),
             minKernelVersion = library.minKernelVersion
         )
     }
 }
 
-class FallbackLibraryResolver : LibraryDescriptorResolver() {
-    override fun tryResolve(reference: LibraryReference): LibraryDefinition {
-        return reference.resolve()
+class FallbackLibraryResolver(private val infoProvider: ResolutionInfoProvider) : LibraryDescriptorResolver() {
+    override fun tryResolve(reference: LibraryReference): LibraryDefinition? {
+        val result = reference.resolve()
+        if (result != null) return result
+
+        val infoStub = reference.info
+        if (infoStub !is LibraryResolutionInfo.Default) return null
+
+        val info = infoProvider.get(infoStub.string)
+        return info.resolve(reference.name)?.let { parseLibraryDescriptor(it) }
     }
 
     override fun save(reference: LibraryReference, definition: LibraryDefinition) {
