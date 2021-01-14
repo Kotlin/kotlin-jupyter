@@ -50,25 +50,25 @@ data class ResourceLocation(
 }
 
 @Serializable(ResourceBunchSerializer::class)
-data class ResourceFallbacksBunch(
+data class ResourceFallbacksBundle(
     val locations: List<ResourceLocation>,
-) : VariablesSubstitutionAware<ResourceFallbacksBunch> {
+) : VariablesSubstitutionAware<ResourceFallbacksBundle> {
     constructor(vararg locations: ResourceLocation) : this(listOf(*locations))
 
-    override fun replaceVariables(mapping: Map<String, String>): ResourceFallbacksBunch {
-        return ResourceFallbacksBunch(locations.map { it.replaceVariables(mapping) })
+    override fun replaceVariables(mapping: Map<String, String>): ResourceFallbacksBundle {
+        return ResourceFallbacksBundle(locations.map { it.replaceVariables(mapping) })
     }
 }
 
 @Serializable
 data class LibraryResource(
-    val bunches: List<ResourceFallbacksBunch>,
+    val bundles: List<ResourceFallbacksBundle>,
     val type: ResourceType,
     val name: String,
 ) : VariablesSubstitutionAware<LibraryResource> {
     override fun replaceVariables(mapping: Map<String, String>): LibraryResource {
         return LibraryResource(
-            bunches.map { it.replaceVariables(mapping) },
+            bundles.map { it.replaceVariables(mapping) },
             type,
             replaceVariables(name, mapping)
         )

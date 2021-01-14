@@ -9,19 +9,17 @@ import com.github.ajalt.clikt.parameters.types.long
 import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplOptions
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryFactoryDefaultInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 
 class FullMagicsHandler(
     private val repl: ReplOptions,
-    libraries: LibrariesProcessor
+    librariesProcessor: LibrariesProcessor,
+    switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
 ) : LibrariesOnlyMagicsHandler(
-    libraries,
-    LibraryFactoryDefaultInfoSwitcher.default(
-        libraries.libraryFactory.resolutionInfoProvider,
-        repl.librariesDir,
-        repl.currentBranch
-    )
+    librariesProcessor,
+    switcher
 ) {
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {

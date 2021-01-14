@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
@@ -14,9 +14,9 @@ import java.io.IOException
 class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
     private var outputCounter = 0
 
-    private fun loadBunch(bunch: ResourceFallbacksBunch, classLoader: ClassLoader): ScriptModifierFunctionGenerator {
+    private fun loadBunch(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): ScriptModifierFunctionGenerator {
         val exceptions = mutableListOf<Exception>()
-        for (resourceLocation in bunch.locations) {
+        for (resourceLocation in bundle.locations) {
             val path = resourceLocation.path
 
             return try {
@@ -47,7 +47,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
     }
 
     private fun loadResourceAsText(resource: LibraryResource, classLoader: ClassLoader): List<ScriptModifierFunctionGenerator> {
-        return resource.bunches.map { loadBunch(it, classLoader) }
+        return resource.bundles.map { loadBunch(it, classLoader) }
     }
 
     override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {

@@ -1,11 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -19,7 +23,7 @@ import kotlin.test.assertNull
 
 class CustomLibraryResolverTests : AbstractReplTest() {
     private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(
-        libraryFactory,
+        resolutionInfoProvider,
         classpath + File(CustomLibraryResolverTests::class.java.protectionDomain.codeSource.location.toURI().path),
         homeDir,
         ResolverConfig(
@@ -87,7 +91,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                                             }
         """.trimIndent()
 
-        val libs = listOf(lib1, lib2, lib3).toLibraries(libraryFactory)
+        val libs = listOf(lib1, lib2, lib3).toLibraries()
 
         val executor = makeRepl(libs).mockExecution()
 
@@ -143,7 +147,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     }
         """.trimIndent()
 
-        val libs = listOf(lib1, lib2).toLibraries(libraryFactory)
+        val libs = listOf(lib1, lib2).toLibraries()
         val replWithResolver = makeRepl(libs)
         replWithResolver.eval("%use mylib, mylib2")
         val results = replWithResolver.evalOnShutdown()
@@ -166,7 +170,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     }
         """.trimIndent()
 
-        val libs = listOf(lib1).toLibraries(libraryFactory)
+        val libs = listOf(lib1).toLibraries()
         val replWithResolver = makeRepl(libs)
         val exception = assertThrows<ReplCompilerException> { replWithResolver.eval("%use mylib") }
 
@@ -212,7 +216,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             }
         }
 
-        val repl = makeRepl(listOf(lib1, lib2).toLibraries(libraryFactory)).trackExecution()
+        val repl = makeRepl(listOf(lib1, lib2).toLibraries()).trackExecution()
 
         val code = """
             %use lib1
@@ -244,5 +248,19 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val expectedResults = (1..5).toList()
         val actualResults = repl.results.filter { it != null && it != Unit }.map { it as Int }
         assertEquals(expectedResults, actualResults)
+    }
+
+    @Test
+    fun testLibraryWithResourcesDescriptorParsing() {
+        val descriptor = Json.decodeFromString<LibraryDescriptor>(File("src/test/testData/lib-with-resources.json").readText())
+        val resources = descriptor.resources
+        assertEquals(1, resources.size)
+
+        val jsResource = resources.single()
+        assertEquals(ResourceType.JS, jsResource.type)
+        val bundles = jsResource.bundles
+        assertEquals(2, bundles.size)
+        assertEquals(1, bundles[0].locations.size)
+        assertEquals(1, bundles[1].locations.size)
     }
 }

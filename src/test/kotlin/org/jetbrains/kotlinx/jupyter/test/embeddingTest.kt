@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
@@ -68,13 +68,13 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
     resources = listOf(
         LibraryResource(
             listOf(
-                ResourceFallbacksBunch(
+                ResourceFallbacksBundle(
                     ResourceLocation(
                         "https://cdn.plot.ly/plotly-latest.min.js",
                         ResourcePathType.URL
                     )
                 ),
-                ResourceFallbacksBunch(
+                ResourceFallbacksBundle(
                     ResourceLocation(
                         "src/test/testData/js-lib.js",
                         ResourcePathType.LOCAL_PATH
@@ -90,7 +90,7 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
 class EmbedReplTest : AbstractReplTest() {
     private val repl = run {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        ReplForJupyterImpl(libraryFactory, embeddedClasspath, embedded = true)
+        ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, embedded = true)
     }
 
     @Test

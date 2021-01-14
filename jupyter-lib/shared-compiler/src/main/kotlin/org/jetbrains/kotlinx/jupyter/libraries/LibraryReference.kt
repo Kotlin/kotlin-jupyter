@@ -14,8 +14,8 @@ data class LibraryReference(
         key = namePart + info.key
     }
 
-    fun resolve(): LibraryDefinition {
-        val text = info.resolve(name)
+    fun resolve(): LibraryDefinition? {
+        val text = info.resolve(name) ?: return null
         return parseLibraryDescriptor(text)
     }
 

@@ -1,15 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import java.io.File
 import java.io.IOException
 
 class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
-    private fun loadCssAsText(bunch: ResourceFallbacksBunch, classLoader: ClassLoader): String {
+    private fun loadCssAsText(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): String {
         val exceptions = mutableListOf<Exception>()
-        for (resourceLocation in bunch.locations) {
+        for (resourceLocation in bundle.locations) {
             val path = resourceLocation.path
 
             fun wrapInTag(text: String) = """
@@ -37,6 +37,6 @@ class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
     }
 
     override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {
-        return resource.bunches.joinToString("\n") { loadCssAsText(it, classLoader) }
+        return resource.bundles.joinToString("\n") { loadCssAsText(it, classLoader) }
     }
 }
