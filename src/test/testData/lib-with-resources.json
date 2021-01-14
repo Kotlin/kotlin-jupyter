@@ -7,10 +7,12 @@
       "type": "JS",
       "name": "Lib",
       "locations": [
-        {
-          "path": "https://cdn.plot.ly/plotly-latest.min.js",
-          "type": "URL"
-        },
+        [
+          {
+            "path": "https://cdn.plot.ly/plotly-latest.min.js",
+            "type": "URL"
+          }
+        ],
         {
           "path": "$currentDir/src/test/testData/js-lib.js",
           "type": "LOCAL_PATH"

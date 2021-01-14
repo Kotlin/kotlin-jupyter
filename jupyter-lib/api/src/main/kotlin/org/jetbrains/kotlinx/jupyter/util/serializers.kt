@@ -7,11 +7,17 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBunch
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -70,7 +76,6 @@ object RenderersSerializer : ListToMapSerializer<ExactRendererTypeHandler, Strin
 )
 
 object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
-
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(KotlinKernelVersion::class.qualifiedName!!, PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): KotlinKernelVersion {
@@ -80,5 +85,33 @@ object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
 
     override fun serialize(encoder: Encoder, value: KotlinKernelVersion) {
         encoder.encodeString(value.toString())
+    }
+}
+
+object ResourceBunchSerializer : KSerializer<ResourceFallbacksBunch> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(ResourceFallbacksBunch::class.qualifiedName!!, PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): ResourceFallbacksBunch {
+        return when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
+            is JsonArray -> {
+                ResourceFallbacksBunch(
+                    obj.map {
+                        Json.decodeFromJsonElement(it)
+                    }
+                )
+            }
+            is JsonObject -> {
+                ResourceFallbacksBunch(
+                    listOf(
+                        Json.decodeFromJsonElement(obj)
+                    )
+                )
+            }
+            else -> throw SerializationException("Wrong representation for resource location")
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: ResourceFallbacksBunch) {
+        encoder.encodeSerializableValue(serializer(), value.locations)
     }
 }

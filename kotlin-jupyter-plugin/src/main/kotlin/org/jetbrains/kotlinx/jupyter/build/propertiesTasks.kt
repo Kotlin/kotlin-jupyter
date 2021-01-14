@@ -8,10 +8,10 @@ fun ProjectWithOptions.preparePropertiesTask() {
         inputs.property("version", version)
         inputs.property("currentBranch", getCurrentBranch())
         inputs.property("currentSha", getCurrentCommitSha())
-        inputs.property(
-            "jvmTargetForSnippets",
-            rootProject.findProperty("jvmTargetForSnippets") ?: "1.8"
-        )
+        rootProject.findProperty("jvmTargetForSnippets")?.let {
+            inputs.property("jvmTargetForSnippets", it)
+        }
+
         inputs.file(librariesPropertiesPath)
 
         outputs.dir(outputDir)

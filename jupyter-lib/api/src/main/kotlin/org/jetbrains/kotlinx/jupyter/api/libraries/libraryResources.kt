@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.kotlinx.jupyter.util.ResourceBunchSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 
 enum class ResourcePathType {
@@ -48,15 +49,26 @@ data class ResourceLocation(
     }
 }
 
+@Serializable(ResourceBunchSerializer::class)
+data class ResourceFallbacksBunch(
+    val locations: List<ResourceLocation>,
+) : VariablesSubstitutionAware<ResourceFallbacksBunch> {
+    constructor(vararg locations: ResourceLocation) : this(listOf(*locations))
+
+    override fun replaceVariables(mapping: Map<String, String>): ResourceFallbacksBunch {
+        return ResourceFallbacksBunch(locations.map { it.replaceVariables(mapping) })
+    }
+}
+
 @Serializable
 data class LibraryResource(
-    val locations: List<ResourceLocation>,
+    val bunches: List<ResourceFallbacksBunch>,
     val type: ResourceType,
     val name: String,
 ) : VariablesSubstitutionAware<LibraryResource> {
     override fun replaceVariables(mapping: Map<String, String>): LibraryResource {
         return LibraryResource(
-            locations.map { it.replaceVariables(mapping) },
+            bunches.map { it.replaceVariables(mapping) },
             type,
             replaceVariables(name, mapping)
         )
