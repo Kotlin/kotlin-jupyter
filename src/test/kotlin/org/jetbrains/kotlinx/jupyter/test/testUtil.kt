@@ -92,8 +92,8 @@ class InMemoryLibraryResolver(parent: LibraryResolver?, initialCache: Map<Librar
         return cache[reference]
     }
 
-    override fun save(reference: LibraryReference, descriptor: LibraryDefinition) {
-        cache[reference] = descriptor
+    override fun save(reference: LibraryReference, definition: LibraryDefinition) {
+        cache[reference] = definition
     }
 }
 
