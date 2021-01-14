@@ -15,7 +15,7 @@ interface LibraryResolver {
 
 abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
     protected abstract fun tryResolve(reference: LibraryReference): LibraryDefinition?
-    protected abstract fun save(reference: LibraryReference, descriptor: LibraryDefinition)
+    protected abstract fun save(reference: LibraryReference, definition: LibraryDefinition)
     protected open fun shouldResolve(reference: LibraryReference): Boolean = true
 
     open val cache: Map<LibraryReference, LibraryDefinition>? = null
@@ -29,7 +29,7 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
 
                 return processDescriptor(result, mapping)
             }
-            return result
+            if (result != null) return result
         }
 
         val parentResult = parent?.resolve(reference, vars) ?: return null
@@ -92,7 +92,7 @@ class FallbackLibraryResolver : LibraryDescriptorResolver() {
         return reference.resolve()
     }
 
-    override fun save(reference: LibraryReference, descriptor: LibraryDefinition) {
+    override fun save(reference: LibraryReference, definition: LibraryDefinition) {
         // fallback resolver doesn't cache results
     }
 }
@@ -134,14 +134,14 @@ class LocalLibraryResolver(
         return parseLibraryDescriptor(json)
     }
 
-    override fun save(reference: LibraryReference, library: LibraryDefinition) {
-        if (library !is LibraryDescriptor) return
+    override fun save(reference: LibraryReference, definition: LibraryDefinition) {
+        if (definition !is LibraryDescriptor) return
         val dir = pathsToCheck.first()
         val file = reference.getFile(dir)
         file.parentFile.mkdirs()
 
         val format = Json { prettyPrint = true }
-        file.writeText(format.encodeToString(library))
+        file.writeText(format.encodeToString(definition))
     }
 
     private fun LibraryReference.getFile(dir: String) = Paths.get(dir, this.key + "." + LibraryDescriptorExt).toFile()
