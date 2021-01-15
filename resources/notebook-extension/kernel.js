@@ -116,7 +116,7 @@ define(function(){
             var common;
             var min_lead_prct = 10;
             for (var i = 0; i < B.length; i++) {
-                var str = B[i].str;
+                var str = B[i].replaceText;
                 var localmin = 0;
                 if(drop_prct === true){
                     while ( str.substr(0, 1) == '%') {

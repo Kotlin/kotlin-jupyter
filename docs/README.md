@@ -131,10 +131,10 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's downloaded from the latest commit on the
-branch which kernel was built from. If you want to try descriptor from another revision, use the following syntax:
+You can also specify the source of library descriptor. By default, it's taken from the libraries directory
+of kernel installation. If you want to try descriptor from another revision, use the following syntax:
 ```
-// Specify tag
+// Specify some git tag from this repository
 %use lets-plot@0.8.2.5
 // Specify commit sha, with more verbose syntax
 %use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
@@ -166,6 +166,7 @@ List of supported libraries:
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin

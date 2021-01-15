@@ -1,0 +1,10 @@
+{
+  "description": "Java library for signal processing",
+  "properties": {
+    "v": "0.5.1"
+  },
+  "link": "https://github.com/psambit9791/jDSP",
+  "dependencies": [
+    "com.github.psambit9791:jdsp:$v"
+  ]
+}
