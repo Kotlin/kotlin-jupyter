@@ -127,7 +127,7 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's taken from the libraries directory
+You can also specify the source of library descriptor. By default, it's taken from the `libraries` directory
 of kernel installation. If you want to try descriptor from another revision, use the following syntax:
 ```
 // Specify some git tag from this repository
@@ -211,6 +211,10 @@ Library descriptor is a `<libName>.json` file with the following fields:
 - `initCell`: a list of code snippets to be executed before execution of any cell
 - `shutdown`: a list of code snippets to be executed on kernel shutdown. Any cleanup code goes here
 - `renderers`: a list of type converters for special rendering of particular types
+- `resources`: a list of JS/CSS resources. See [this descriptor](../src/test/testData/lib-with-resources.json) for example
+
+If you are a library author, there is also an advanced way of integration available. See documentation of
+`org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration` class.
 
 *All fields are optional
 
@@ -224,7 +228,9 @@ Library properties can be used in any parts of library descriptor as `$property`
 
 To register new library descriptor:
 1. For private usage - create it anywhere on your computer and reference it using file syntax.
-2. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
+2. Alternative way for private usage - create descriptor in `.jupyter_kotlin/libraries` folder and reference
+   it using "default" syntax
+3. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
 
 If you are maintaining some library and want to update your library descriptor, create pull request with your update. 
 After your request is accepted, new version of your library will be available to all Kotlin Jupyter users 
