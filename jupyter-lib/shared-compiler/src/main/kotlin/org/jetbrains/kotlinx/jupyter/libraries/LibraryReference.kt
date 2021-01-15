@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-
 data class LibraryReference(
     val info: LibraryResolutionInfo,
     val name: String? = null,
@@ -12,11 +10,6 @@ data class LibraryReference(
     init {
         val namePart = if (name.isNullOrEmpty()) "" else "${name}_"
         key = namePart + info.key
-    }
-
-    fun resolve(): LibraryDefinition? {
-        val text = info.resolve(name) ?: return null
-        return parseLibraryDescriptor(text)
     }
 
     override fun toString(): String {

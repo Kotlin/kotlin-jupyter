@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Renderable
@@ -10,7 +11,9 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoName
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoOwner
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
+import org.jetbrains.kotlinx.jupyter.libraries.LocalSettingsPath
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
@@ -24,6 +27,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithResolverTests : AbstractReplTest() {
@@ -197,6 +201,36 @@ class ReplWithResolverTests : AbstractReplTest() {
             """.trimIndent()
         )
         assertEquals(44, res4.resultValue)
+    }
+
+    @Test
+    fun testLocalLibrariesStorage() {
+        @Language("json")
+        val descriptorText = """
+            {
+              "init": [
+                "val y = 25"
+              ]
+            }
+        """.trimIndent()
+
+        val libName = "test-local"
+        val file = LocalSettingsPath.resolve(LibrariesDir).resolve("$libName.$LibraryDescriptorExt").toFile()
+        file.delete()
+
+        file.parentFile.mkdirs()
+        file.writeText(descriptorText)
+
+        val repl = getReplWithStandardResolver()
+        val result = repl.eval(
+            """
+            %use $libName
+            y
+            """.trimIndent()
+        )
+
+        assertEquals(25, result.resultValue)
+        file.delete()
     }
 
     @Test

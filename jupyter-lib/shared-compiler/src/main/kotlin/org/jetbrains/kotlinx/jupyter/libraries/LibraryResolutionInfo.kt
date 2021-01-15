@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -11,38 +9,21 @@ abstract class LibraryResolutionInfo(
 ) : LibraryCacheable {
     class ByNothing : LibraryResolutionInfo("nothing") {
         override val args: List<Variable> = listOf()
-
-        override fun resolve(name: String?): String = "{}"
     }
 
     class ByURL(val url: URL) : LibraryResolutionInfo("url") {
         override val args = listOf(Variable("url", url.toString()))
         override val shouldBeCachedLocally get() = false
-
-        override fun resolve(name: String?): String {
-            val response = getHttp(url.toString())
-            return response.text
-        }
     }
 
     class ByFile(val file: File) : LibraryResolutionInfo("file") {
         override val args = listOf(Variable("file", file.path))
         override val shouldBeCachedLocally get() = false
-
-        override fun resolve(name: String?): String {
-            return file.readText()
-        }
     }
 
-    class ByDir(private val librariesDir: File) : LibraryResolutionInfo("bundled") {
+    class ByDir(val librariesDir: File) : LibraryResolutionInfo("bundled") {
         override val args = listOf(Variable("dir", librariesDir.path))
         override val shouldBeCachedLocally get() = false
-
-        override fun resolve(name: String?): String {
-            if (name == null) throw ReplCompilerException("Directory library resolver needs library name to be specified")
-
-            return librariesDir.resolve("$name.$LibraryDescriptorExt").readText()
-        }
     }
 
     class ByGitRef(private val ref: String) : LibraryResolutionInfo("ref") {
@@ -55,25 +36,11 @@ abstract class LibraryResolutionInfo(
         }
 
         override val args = listOf(Variable("ref", ref))
-
-        override fun resolve(name: String?): String {
-            if (name == null) throw ReplCompilerException("Reference library resolver needs name to be specified")
-
-            val url = "$GitHubApiPrefix/contents/$LibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
-            getLogger().info("Requesting library descriptor at $url")
-            val response = getHttp(url).jsonObject
-
-            val downloadURL = response["download_url"].toString()
-            val res = getHttp(downloadURL)
-            val text = res.jsonObject
-            return text.toString()
-        }
     }
 
     class Default(val string: String = "") : LibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
-
-        override fun resolve(name: String?): Nothing? = null
+        override val shouldBeCachedLocally get() = false
     }
 
     protected abstract val args: List<Variable>
@@ -81,7 +48,6 @@ abstract class LibraryResolutionInfo(
         get() = args.joinToString { it.value }
 
     val key: String by lazy { "${typeKey}_${replaceForbiddenChars(valueKey)}" }
-    abstract fun resolve(name: String?): String?
 
     override fun hashCode(): Int {
         return key.hashCode()
