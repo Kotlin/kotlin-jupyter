@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -129,9 +130,10 @@ fun parseLibraryName(str: String): Pair<String, List<Variable>> {
 
 fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoProvider): LibraryResolver {
     // Standard resolver doesn't cache results in memory
-    var res: LibraryResolver = FallbackLibraryResolver(infoProvider)
-    val librariesDir: String? = homeDir?.let { Paths.get(it, LibrariesDir).toString() }
+    var res: LibraryResolver = FallbackLibraryResolver
+    val librariesDir: Path? = homeDir?.let { Paths.get(it, LibrariesDir) }
     res = LocalLibraryResolver(res, librariesDir)
+    res = DefaultInfoLibraryResolver(res, infoProvider, listOf(LocalSettingsPath.resolve(LibrariesDir)))
     return res
 }
 
