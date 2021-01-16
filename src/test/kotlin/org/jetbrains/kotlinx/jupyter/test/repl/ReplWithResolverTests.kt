@@ -99,13 +99,15 @@ class ReplWithResolverTests : AbstractReplTest() {
 
     @Test
     fun testResolverRepoOrder() {
+        val repl = getReplWithStandardResolver()
+
         val res = repl.eval(
             """
             @file:Repository("https://repo.osgeo.org/repository/release/")
             @file:DependsOn("org.geotools:gt-shapefile:[23,)")
             @file:DependsOn("org.geotools:gt-cql:[23,)")
             
-            %use lets-plot(api=1.1.0)
+            %use lets-plot@f98400094c0650d3497f3fda9910dd86705ee655(api=1.1.0)
             
             @file:DependsOn("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:1.1.0")
             
