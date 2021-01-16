@@ -138,7 +138,7 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
 
 class SpecificLibraryResolver<T : LibraryResolutionInfo>(private val kClass: KClass<T>, val resolveRaw: (T, String?) -> String?) : LibraryResolver {
     fun accepts(reference: LibraryReference): Boolean {
-        return reference.info::class == kClass
+        return kClass.isInstance(reference.info)
     }
 
     override fun resolve(reference: LibraryReference): LibraryDefinition? {
