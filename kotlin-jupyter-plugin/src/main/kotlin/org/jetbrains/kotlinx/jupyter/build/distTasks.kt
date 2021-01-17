@@ -181,6 +181,7 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
         }
 
         tasksList.add("bintrayUpload")
+        tasksList.add("publishDocs")
 
         tasks.register("aggregate${infix}Upload") {
             group = distribGroup

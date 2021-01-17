@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     implementation("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
-    implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.4.10.2")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.4.20")
 
     // For maven-publish
     implementation(gradleApi())
@@ -23,6 +23,10 @@ gradlePlugin {
         create("publishing") {
             id = "org.jetbrains.kotlinx.jupyter.publishing"
             implementationClass = "org.jetbrains.kotlinx.jupyter.plugin.ApiPublishGradlePlugin"
+        }
+        create("doc") {
+            id = "org.jetbrains.kotlinx.jupyter.doc"
+            implementationClass = "org.jetbrains.kotlinx.jupyter.plugin.DocGradlePlugin"
         }
     }
 }
