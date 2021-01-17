@@ -10,9 +10,19 @@ import java.io.File
 import java.lang.IllegalStateException
 
 open class JupyterApiResourcesTask : DefaultTask() {
+    /**
+     * List of classes/objects implementing
+     * `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer`.
+     * Such classes should have exactly one constructor with no arguments or with one `org.jetbrains.kotlinx.jupyter.api.Notebook` argument.
+     */
     @Input
     var libraryProducers: List<String> = emptyList()
 
+    /**
+     * List of classes/objects implementing
+     * `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`.
+     * Such classes should have exactly one constructor with no arguments or with one `org.jetbrains.kotlinx.jupyter.api.Notebook` argument.
+     */
     @Input
     var libraryDefinitions: List<String> = emptyList()
 

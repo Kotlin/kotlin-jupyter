@@ -10,6 +10,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
     id("org.jetbrains.kotlinx.jupyter.publishing") apply false
+    id("org.jetbrains.kotlinx.jupyter.doc")
 }
 
 val kotlinxSerializationVersion: String by project
@@ -17,6 +18,8 @@ val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
 val khttpVersion: String by project
+
+val docsRepo: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
@@ -103,8 +106,8 @@ tasks.register("publishLocal") {
     group = "publishing"
 
     dependsOn(
-        "condaPackage",
-        "pyPiPackage",
+        tasks.condaPackage,
+        tasks.pyPiPackage,
         ":api:publish",
         ":api-gradle-plugin:publish",
         ":lib:publish",
@@ -163,4 +166,8 @@ tasks.processResources {
 
 tasks.check {
     dependsOn(tasks.checkReadme)
+}
+
+tasks.publishDocs {
+    docsRepoUrl.set(docsRepo)
 }
