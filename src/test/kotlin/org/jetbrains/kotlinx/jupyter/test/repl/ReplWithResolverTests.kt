@@ -27,6 +27,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithResolverTests : AbstractReplTest() {
@@ -57,6 +58,29 @@ class ReplWithResolverTests : AbstractReplTest() {
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
         assertNotNull(res2.resultValue)
+    }
+
+    @Test
+    fun testDataframe() {
+        val res = repl.eval(
+            """
+            %use dataframe
+            
+            val name by column<String>()
+            val height by column<Int>()
+            
+            dataFrameOf(name, height)(
+                "Bill", 135,
+                "Mark", 160
+            ).typed<Unit>()
+            """.trimIndent()
+        )
+
+        val value = res.resultValue
+        assertTrue(value is MimeTypedResult)
+
+        val html = value["text/html"]!!
+        assertTrue(html.contains("Bill"))
     }
 
     @Test
