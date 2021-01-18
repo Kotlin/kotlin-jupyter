@@ -195,44 +195,12 @@ an error message which can help you to fix the error.
 
 ## Adding new libraries
 
-To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
+Read [this article](libraries.md) if you want to support new `JVM` library in the kernel.
 
-Check [libraries](../libraries) directory to see examples of library descriptors.
+## Documentation
 
-Library descriptor is a `<libName>.json` file with the following fields:
-- `properties`: a dictionary of properties that are used within library descriptor
-- `description`: a short library description which is used for generating libraries list in README
-- `link`: a link to library homepage. This link will be displayed in `:help` command
-- `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
-- `repositories`: a list of maven or ivy repositories to search for dependencies
-- `dependencies`: a list of library dependencies
-- `imports`: a list of default imports for library
-- `init`: a list of code snippets to be executed when library is included
-- `initCell`: a list of code snippets to be executed before execution of any cell
-- `shutdown`: a list of code snippets to be executed on kernel shutdown. Any cleanup code goes here
-- `renderers`: a list of type converters for special rendering of particular types
-- `resources`: a list of JS/CSS resources. See [this descriptor](../src/test/testData/lib-with-resources.json) for example
-
-If you are a library author, there is also an advanced way of integration available. See documentation of
-`org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration` class.
-
-*All fields are optional
-
-Fields for type renderer:
-- `class`: fully-qualified class name for the type to be rendered 
-- `result`: expression that produces output value. Source object is referenced as `$it`
-
-Name of the file is a library name that is passed to '%use' command
-
-Library properties can be used in any parts of library descriptor as `$property`
-
-To register new library descriptor:
-1. For private usage - create it anywhere on your computer and reference it using file syntax.
-2. Alternative way for private usage - create descriptor in `.jupyter_kotlin/libraries` folder and reference
-   it using "default" syntax
-3. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
-
-If you are maintaining some library and want to update your library descriptor, create pull request with your update. 
-After your request is accepted, new version of your library will be available to all Kotlin Jupyter users 
-immediately on next kernel startup (no kernel update is needed) - but only if they use `useLatestDescriptors` magic.
-If not, kernel update is needed.
+There is a [site](https://ileasile.github.io/kotlin-jupyter-docs) with rendered KDoc comments from the codebase.
+If you are a library author you may be interested in `api` module
+(see [adding new libraries](#adding-new-libraries)). There is also a `lib` module which contains entities
+available from the Notebook cells and `shared-compiler` module which may be used for Jupyter REPL integration
+into standalone application or IDEA plugin.
