@@ -12,3 +12,8 @@ annotation class DependsOn(val value: String = "")
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
 annotation class Repository(val value: String = "")
+
+@Target(AnnotationTarget.FILE)
+@Repeatable
+@Retention(AnnotationRetention.SOURCE)
+annotation class CompilerArgs(vararg val values: String)
