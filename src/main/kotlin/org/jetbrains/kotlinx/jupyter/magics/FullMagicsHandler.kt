@@ -17,9 +17,9 @@ class FullMagicsHandler(
     private val repl: ReplOptions,
     librariesProcessor: LibrariesProcessor,
     switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
-) : LibrariesOnlyMagicsHandler(
+) : SharedMagicsHandler(
     librariesProcessor,
-    switcher
+    switcher,
 ) {
 
     private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {

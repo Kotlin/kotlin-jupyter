@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
@@ -18,6 +19,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
@@ -49,12 +52,17 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.getCompilerWithCompletion
 import java.io.File
 import java.net.URLClassLoader
 import kotlin.script.experimental.api.ReplAnalyzerResult
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.analysisDiagnostics
+import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
+import kotlin.script.experimental.api.foundAnnotations
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOrThrow
@@ -213,6 +221,10 @@ class ReplForJupyterImpl(
 
     private val ctx = KotlinContext()
 
+    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(
+        runtimeProperties.jvmTargetForSnippets
+    )
+
     private val magics = MagicsProcessor(
         FullMagicsHandler(
             this,
@@ -226,14 +238,38 @@ class ReplForJupyterImpl(
         getCompilationConfiguration(
             scriptClasspath,
             scriptReceivers,
-            runtimeProperties.jvmTargetForSnippets,
+            compilerArgsConfigurator,
         )
 
     // Used only for compilation
     private val compilerConfiguration: ScriptCompilationConfiguration = lightCompilerConfiguration.with {
         refineConfiguration {
-            onAnnotations(DependsOn::class, Repository::class, handler = mavenDepsConfigurator::configure)
+            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::configureOnAnnotations)
         }
+    }
+
+    private fun configureOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+        val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations).orEmpty()
+
+        val depsAnnotations = mutableListOf<Annotation>()
+        val argsAnnotations = mutableListOf<Annotation>()
+        annotations.forEach {
+            when (it) {
+                is DependsOn, is Repository -> depsAnnotations.add(it)
+                is CompilerArgs -> argsAnnotations.add(it)
+            }
+        }
+
+        fun process(vararg processors: (ScriptCompilationConfiguration) -> ResultWithDiagnostics<ScriptCompilationConfiguration>): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+            return processors.fold(context.compilationConfiguration.asSuccess()) { acc: ResultWithDiagnostics<ScriptCompilationConfiguration>, processor ->
+                processor(acc.valueOrThrow())
+            }
+        }
+
+        return process(
+            { mavenDepsConfigurator.configure(it, depsAnnotations, context.script) },
+            { compilerArgsConfigurator.configure(it, argsAnnotations) }
+        )
     }
 
     override val fileExtension: String

@@ -1,14 +1,17 @@
 package org.jetbrains.kotlinx.jupyter.config
 
+import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.acceptedLocations
+import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
@@ -16,6 +19,8 @@ import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.implicitReceivers
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.getScriptingClass
 import kotlin.script.experimental.host.with
 import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
@@ -26,9 +31,9 @@ import kotlin.script.experimental.jvm.updateClasspath
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
     scriptReceivers: List<Any> = emptyList(),
-    jvmTargetVersion: String = "1.8",
+    compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
-    body: ScriptCompilationConfiguration.Builder.() -> Unit = {}
+    body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
     return ScriptCompilationConfiguration {
         hostConfiguration.update {
@@ -42,6 +47,7 @@ fun getCompilationConfiguration(
         val classImports = listOf(
             DependsOn::class,
             Repository::class,
+            CompilerArgs::class,
             ScriptTemplateWithDisplayHelpers::class,
         ).map { it.java.name }
         defaultImports(classImports + defaultGlobalImports)
@@ -54,11 +60,15 @@ fun getCompilationConfiguration(
         implicitReceivers(receiversTypes)
         skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
-        compilerOptions(
-            "-jvm-target",
-            jvmTargetVersion,
-            "-no-stdlib",
-        )
+        compilerOptions(compilerArgsConfigurator.getArgs())
+
+        refineConfiguration {
+            beforeCompiling { (_, config, _) ->
+                config.with {
+                    compilerOptions(compilerArgsConfigurator.getArgs())
+                }.asSuccess()
+            }
+        }
 
         ide {
             acceptedLocations(ScriptAcceptedLocation.Everywhere)

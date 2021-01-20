@@ -253,6 +253,28 @@ class ReplTests : AbstractReplTest() {
     }
 
     @Test
+    fun testFreeCompilerArg() {
+        runBlocking {
+            val res = repl.eval(
+                """
+                @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
+                """.trimIndent()
+            )
+            assertEquals(Unit, res.resultValue)
+
+            repl.listErrors(
+                """
+                import kotlin.time.*
+                @OptIn(ExperimentalTime::class)
+                val mark = TimeSource.Monotonic.markNow()
+                """.trimIndent()
+            ) { result ->
+                assertEquals(emptyList(), result.errors.toList())
+            }
+        }
+    }
+
+    @Test
     fun testErrorsListWithMagic() {
         runBlocking {
             repl.listErrors(

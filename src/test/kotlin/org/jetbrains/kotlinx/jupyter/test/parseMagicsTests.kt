@@ -138,7 +138,11 @@ class ParseMagicsTests {
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
         val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider)
-        val magicsHandler = FullMagicsHandler(options, LibrariesProcessorImpl(testResolverConfig.libraries, defaultRuntimeProperties.version), switcher)
+        val magicsHandler = FullMagicsHandler(
+            options,
+            LibrariesProcessorImpl(testResolverConfig.libraries, defaultRuntimeProperties.version),
+            switcher,
+        )
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)
