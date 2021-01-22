@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
-import org.jetbrains.kotlinx.jupyter.api.libraries.KotlinReplIntegration
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
@@ -125,7 +125,7 @@ class NotebookMock : Notebook<CodeCell> {
         get() = JavaRuntime
 }
 
-fun library(builder: KotlinReplIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
-    val o = object : KotlinReplIntegration(builder) {}
+fun library(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
+    val o = object : JupyterIntegration(builder) {}
     return o.getDefinitions(null).single()
 }
