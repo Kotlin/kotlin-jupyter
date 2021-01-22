@@ -38,7 +38,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
         from(distributionPath)
         from(readmePath)
         into(distribBuildPath)
-        exclude(".idea/**")
+        exclude(".idea/**", "venv/**")
 
         val pythonFiles = mutableListOf<Path>()
         eachFile {
