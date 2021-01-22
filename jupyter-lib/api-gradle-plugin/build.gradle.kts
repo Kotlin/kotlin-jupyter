@@ -21,6 +21,7 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")
     implementation("com.google.code.gson:gson:2.8.6")
 
     testImplementation(kotlin("test"))
@@ -29,6 +30,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     testImplementation(project(":api"))
+    testImplementation(project(":api-annotations"))
 }
 
 val saveVersion by tasks.registering {
