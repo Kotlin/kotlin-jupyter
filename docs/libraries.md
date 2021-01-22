@@ -152,3 +152,34 @@ For a further information see docs for:
  - `org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration`
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer`
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`
+
+### Marking integration classes with annotations
+
+There is also an alternative way of letting know kernel about libraries
+definitions inside your JAR - you may mark them with special annotations
+and attach specific annotation processor to process them. See how it
+works.
+
+Add these two additional dependencies to your buildscript:
+```groovy
+dependencies { 
+    implementation("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-annotations:<jupyterApiVersion>")
+    kapt("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-annotations:<jupyterApiVersion>")
+}
+```
+
+Now you don't need to specify options for `processJupyterApiResources` task.
+Just mark your integration class with one of `JupyterLibraryProducers` or
+`JupyterLibraryDefinition` annotations:
+
+```kotlin
+package org.my.lib
+import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibraryProducer
+import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.api.libraries.*
+
+@JupyterLibraryProducer
+class Integration : JupyterIntegration({            
+    import("org.my.lib.*")
+})
+```

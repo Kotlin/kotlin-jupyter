@@ -6,8 +6,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
 import java.io.File
-import java.lang.IllegalStateException
 
 open class JupyterApiResourcesTask : DefaultTask() {
     /**
@@ -41,11 +41,29 @@ open class JupyterApiResourcesTask : DefaultTask() {
         val resultObject = LibrariesScanResult(
             definitions = libraryDefinitions.map { FQNAware(it) }.toTypedArray(),
             producers = libraryProducers.map { FQNAware(it) }.toTypedArray()
-        )
+        ) + getScanResultFromAnnotations()
         val json = Gson().toJson(resultObject)
 
         val libFile = outputDir.resolve("libraries.json")
         libFile.writeText(json)
+    }
+
+    private fun getScanResultFromAnnotations(): LibrariesScanResult {
+        val path = project.buildDir.resolve(ApiGradlePlugin.FQNS_PATH)
+
+        fun fqns(name: String): Array<FQNAware> {
+            val file = path.resolve(name)
+            if (!file.exists()) return emptyArray()
+            return file.readLines()
+                .filter { it.isNotBlank() }
+                .map { FQNAware(it) }
+                .toTypedArray()
+        }
+
+        return LibrariesScanResult(
+            fqns("definitions"),
+            fqns("producers")
+        )
     }
 
     class FQNAware(
@@ -56,4 +74,11 @@ open class JupyterApiResourcesTask : DefaultTask() {
         val definitions: Array<FQNAware>,
         val producers: Array<FQNAware>
     )
+
+    operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult {
+        return LibrariesScanResult(
+            definitions + other.definitions,
+            producers + other.producers
+        )
+    }
 }
