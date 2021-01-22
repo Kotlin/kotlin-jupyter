@@ -56,9 +56,24 @@ cd kotlin-jupyter
 ./gradlew install
 ```
 
-Default installation path is `~/.ipython/kernels/kotlin/`. To install to some other location use option `-PinstallPath=`, but note that Jupyter looks for the kernel specs files only in predefined places
+Default installation path is `~/.ipython/kernels/kotlin/`.
+To install to some other location use option `-PinstallPath=`, but note that Jupyter
+looks for the kernel specs files only in predefined places. For more detailed info
+see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#kernel-specs).
 
-Uninstall: `./gradlew uninstall`  
+Uninstall: `./gradlew uninstall`
+
+### Troubleshooting
+
+There could be a problem with kernel spec detection because of different
+python environments and installation modes. If you are using pip or conda
+to install the package, try running post-install fixup script:
+```bash
+python -m kotlin_kernel fix-kernelspec-location
+```
+
+This script replaces kernel specs to the "user" path where they are always detected.
+Don't forget to re-run this script on the kernel update.
 
 ## Usage
 
