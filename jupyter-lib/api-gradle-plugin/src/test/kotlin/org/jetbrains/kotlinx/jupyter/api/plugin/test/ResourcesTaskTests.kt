@@ -123,11 +123,11 @@ class ResourcesTaskTests {
             """
             package pack
             
-            import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibraryProducer
+            import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
             import org.jetbrains.kotlinx.jupyter.api.*
             import org.jetbrains.kotlinx.jupyter.api.libraries.*
             
-            @JupyterLibraryProducer
+            @JupyterLibrary
             class Integration : JupyterIntegration({            
                 import("org.my.lib.*")
             })
