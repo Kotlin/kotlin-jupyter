@@ -169,16 +169,15 @@ dependencies {
 ```
 
 Now you don't need to specify options for `processJupyterApiResources` task.
-Just mark your integration class with one of `JupyterLibraryProducers` or
-`JupyterLibraryDefinition` annotations:
+Just mark your integration class with `JupyterLibrary` annotations:
 
 ```kotlin
 package org.my.lib
-import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibraryProducer
+import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 
-@JupyterLibraryProducer
+@JupyterLibrary
 class Integration : JupyterIntegration({            
     import("org.my.lib.*")
 })

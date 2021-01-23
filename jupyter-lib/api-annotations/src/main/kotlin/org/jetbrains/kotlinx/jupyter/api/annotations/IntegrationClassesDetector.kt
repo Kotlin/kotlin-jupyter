@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.annotations
 
 import java.io.File
+import java.util.LinkedList
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedOptions
@@ -8,6 +9,7 @@ import javax.annotation.processing.SupportedSourceVersion
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
+import javax.lang.model.type.TypeMirror
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedOptions(
@@ -20,13 +22,15 @@ class IntegrationClassesDetector : AbstractProcessor() {
         const val KOTLIN_JUPYTER_GENERATED_PATH = "kotlin.jupyter.fqn.path"
     }
 
-    private val annotationClasses = mapOf(
-        JupyterLibraryProducer::class to "producers",
-        JupyterLibraryDefinition::class to "definitions"
+    private val annotationClass = JupyterLibrary::class
+
+    private val fqnMap = mapOf(
+        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer" to "producers",
+        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition" to "definitions"
     )
 
     override fun getSupportedAnnotationTypes(): MutableSet<String> {
-        return annotationClasses.keys.map { it.qualifiedName!! }.toMutableSet()
+        return mutableSetOf(annotationClass.qualifiedName!!)
     }
 
     override fun process(annotations: MutableSet<out TypeElement>?, roundEnv: RoundEnvironment): Boolean {
@@ -34,22 +38,46 @@ class IntegrationClassesDetector : AbstractProcessor() {
         val path = File(pathStr)
         path.mkdirs()
 
-        for ((annotation, fileName) in annotationClasses) {
-            val annotatedElements = roundEnv.getElementsAnnotatedWith(annotation.java)
-            val fqnList = mutableListOf<String>()
+        val annotatedElements = roundEnv.getElementsAnnotatedWith(annotationClass.java)
 
-            for (element in annotatedElements) {
-                if (element.kind != ElementKind.CLASS) throw Exception("Elements of kind ${element.kind} are not valid target for $annotation annotations")
-                val classElement = element as? TypeElement ?: throw Exception("Element ${element.simpleName} is not type element")
+        for (element in annotatedElements) {
+            if (element.kind != ElementKind.CLASS) throw Exception("Elements of kind ${element.kind} are not valid target for $annotationClass annotations")
+            element as? TypeElement ?: throw Exception("Element ${element.simpleName} is not type element")
 
-                classElement.qualifiedName?.let { fqnList.add(it.toString()) }
-            }
+            val supertypes = allSupertypes(element)
+            val entry = fqnMap.entries.firstOrNull { it.key in supertypes } ?: throw Exception("Type of ${element.simpleName} is not acceptable")
+            val fileName = entry.value
+
+            val fqn = element.qualifiedName?.toString() ?: continue
             val file = path.resolve(fileName)
-            file.appendText(
-                fqnList.joinToString("", "", "\n")
-            )
+            file.appendText(fqn + "\n")
         }
 
         return true
+    }
+
+    private fun allSupertypes(type: TypeElement): Set<String> {
+        val utils = processingEnv.typeUtils
+        val supertypes = mutableSetOf<String>()
+        val q = LinkedList<TypeMirror>()
+
+        type.qualifiedName?.let {
+            supertypes.add(it.toString())
+            q.add(type.asType())
+        }
+
+        while (q.isNotEmpty()) {
+            val currentType = q.remove()
+            val currentSupertypes = utils.directSupertypes(currentType)
+            for (node in currentSupertypes) {
+                val nodeElement = utils.asElement(node) as? TypeElement ?: continue
+                val nodeName = nodeElement.qualifiedName.toString()
+                if (nodeName in supertypes) continue
+                supertypes.add(nodeName)
+                q.add(node)
+            }
+        }
+
+        return supertypes
     }
 }
