@@ -10,4 +10,8 @@ typealias ClassDeclarationsCallback = KotlinKernelHost.(List<KClass<*>>) -> Unit
 /**
  * Annotation handler used to hook class declarations with specific annotations
  */
-class AnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)
+class ClassAnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)
+
+typealias FileAnnotationCallback = KotlinKernelHost.(List<Annotation>) -> Unit
+
+class FileAnnotationHandler(val annotation: KClass<out Annotation>, val callback: FileAnnotationCallback)

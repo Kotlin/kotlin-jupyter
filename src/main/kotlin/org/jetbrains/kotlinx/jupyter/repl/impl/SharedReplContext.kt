@@ -2,15 +2,17 @@ package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
-import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 
 internal data class SharedReplContext(
-    val annotationsProcessor: AnnotationsProcessor,
+    val classAnnotationsProcessor: ClassAnnotationsProcessor,
+    val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,
     val typeRenderersProcessor: TypeRenderersProcessor,
     val magicsProcessor: MagicsProcessor,

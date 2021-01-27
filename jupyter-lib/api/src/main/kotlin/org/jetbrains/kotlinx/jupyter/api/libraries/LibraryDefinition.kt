@@ -1,7 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
+import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 
@@ -61,7 +62,13 @@ interface LibraryDefinition {
     /**
      * List of type annotations used by annotations processor
      */
-    val annotations: List<AnnotationHandler>
+    val classAnnotations: List<ClassAnnotationHandler>
+        get() = emptyList()
+
+    /**
+     * List of file annotation handlers
+     */
+    val fileAnnotations: List<FileAnnotationHandler>
         get() = emptyList()
 
     /**

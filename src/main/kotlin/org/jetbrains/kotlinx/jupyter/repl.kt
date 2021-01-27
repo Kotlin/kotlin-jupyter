@@ -5,7 +5,6 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
@@ -13,23 +12,23 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.DelegatedExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
-import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.AnnotationsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
-import org.jetbrains.kotlinx.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
-import org.jetbrains.kotlinx.jupyter.dependencies.MavenDepsOnAnnotationsConfigurator
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -48,32 +47,22 @@ import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
-import org.jetbrains.kotlinx.jupyter.repl.impl.getCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import java.io.File
 import java.net.URLClassLoader
-import kotlin.script.experimental.api.ReplAnalyzerResult
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.analysisDiagnostics
-import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
-import kotlin.script.experimental.api.foundAnnotations
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
-import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.util.isError
-import kotlin.script.experimental.jvm.util.isIncomplete
-import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 typealias Classpath = List<String>
 
@@ -121,9 +110,9 @@ interface ReplForJupyter {
 
     fun checkComplete(code: Code): CheckResult
 
-    suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit)
+    suspend fun complete(code: Code, cursor: Int, callback: (CompletionResult) -> Unit)
 
-    suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit)
+    suspend fun listErrors(code: Code, callback: (ListErrorsResult) -> Unit)
 
     val homeDir: File?
 
@@ -214,7 +203,6 @@ class ReplForJupyterImpl(
         }
 
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
-    private val mavenDepsConfigurator = MavenDepsOnAnnotationsConfigurator(resolver)
 
     private val initCellCodes = mutableListOf<Execution<*>>()
     private val shutdownCodes = mutableListOf<Execution<*>>()
@@ -244,32 +232,8 @@ class ReplForJupyterImpl(
     // Used only for compilation
     private val compilerConfiguration: ScriptCompilationConfiguration = lightCompilerConfiguration.with {
         refineConfiguration {
-            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::configureOnAnnotations)
+            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
         }
-    }
-
-    private fun configureOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        val annotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations).orEmpty()
-
-        val depsAnnotations = mutableListOf<Annotation>()
-        val argsAnnotations = mutableListOf<Annotation>()
-        annotations.forEach {
-            when (it) {
-                is DependsOn, is Repository -> depsAnnotations.add(it)
-                is CompilerArgs -> argsAnnotations.add(it)
-            }
-        }
-
-        fun process(vararg processors: (ScriptCompilationConfiguration) -> ResultWithDiagnostics<ScriptCompilationConfiguration>): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-            return processors.fold(context.compilationConfiguration.asSuccess()) { acc: ResultWithDiagnostics<ScriptCompilationConfiguration>, processor ->
-                processor(acc.valueOrThrow())
-            }
-        }
-
-        return process(
-            { mavenDepsConfigurator.configure(it, depsAnnotations, context.script) },
-            { compilerArgsConfigurator.configure(it, argsAnnotations) }
-        )
     }
 
     override val fileExtension: String
@@ -317,7 +281,7 @@ class ReplForJupyterImpl(
     }
 
     private val jupyterCompiler by lazy {
-        getCompilerWithCompletion(compilerConfiguration, evaluatorConfiguration)
+        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration, lightCompilerConfiguration)
     }
 
     private val evaluator: BasicJvmReplEvaluator by lazy {
@@ -339,26 +303,15 @@ class ReplForJupyterImpl(
 
     private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
 
-    private val annotationsProcessor: AnnotationsProcessor = AnnotationsProcessorImpl()
+    private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
-    override fun checkComplete(code: String): CheckResult {
-        val codeLine = jupyterCompiler.nextSourceCode(code)
-        val result = runBlocking {
-            jupyterCompiler.compiler.analyze(
-                codeLine,
-                0.toSourceCodePosition(codeLine),
-                lightCompilerConfiguration
-            )
-        }
-        return when {
-            result.isIncomplete() -> CheckResult(false)
-            result.isError() -> throw ReplException(result.getErrors())
-            else -> CheckResult(true)
-        }
-    }
+    private val fileAnnotationsProcessor: FileAnnotationsProcessor = FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
+
+    override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext = SharedReplContext(
-        annotationsProcessor,
+        classAnnotationsProcessor,
+        fileAnnotationsProcessor,
         fieldsProcessor,
         typeRenderersProcessor,
         magics,
@@ -372,6 +325,8 @@ class ReplForJupyterImpl(
     )
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
+
+    fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext) = fileAnnotationsProcessor.process(context, currentKernelHost!!)
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
@@ -455,7 +410,7 @@ class ReplForJupyterImpl(
 
         val preprocessed = magics.processMagics(args.code, true).code
         return completer.complete(
-            jupyterCompiler.compiler,
+            jupyterCompiler.completer,
             lightCompilerConfiguration,
             args.code,
             preprocessed,
@@ -472,15 +427,10 @@ class ReplForJupyterImpl(
         if (isCommand(args.code)) return reportCommandErrors(args.code)
 
         val preprocessed = magics.processMagics(args.code, true).code
-        val codeLine = SourceCodeImpl(jupyterCompiler.nextCounter(), preprocessed)
-        val errorsList = runBlocking {
-            jupyterCompiler.compiler.analyze(
-                codeLine,
-                0.toSourceCodePosition(codeLine),
-                lightCompilerConfiguration
-            )
-        }
-        return ListErrorsResult(args.code, errorsList.valueOrThrow()[ReplAnalyzerResult.analysisDiagnostics]!!)
+
+        val errorsList = jupyterCompiler.listErrors(preprocessed)
+
+        return ListErrorsResult(args.code, errorsList)
     }
 
     private fun <T, Args : LockQueueArgs<T>> doWithLock(

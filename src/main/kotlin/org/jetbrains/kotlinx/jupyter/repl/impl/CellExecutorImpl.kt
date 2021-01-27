@@ -61,7 +61,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             if (processAnnotations) {
                 log.catchAll {
-                    annotationsProcessor.process(snippetClass, context)
+                    classAnnotationsProcessor.process(snippetClass, context)
                 }
             }
 
@@ -98,7 +98,8 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             library.init.forEach(::runChild)
             library.renderers.mapNotNull(sharedContext.typeRenderersProcessor::register).joinToLines().let(::runChild)
             library.converters.forEach(sharedContext.fieldsProcessor::register)
-            library.annotations.forEach(sharedContext.annotationsProcessor::register)
+            library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
+            library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
 
             val classLoader = sharedContext.evaluator.lastClassLoader
             library.resources.forEach {

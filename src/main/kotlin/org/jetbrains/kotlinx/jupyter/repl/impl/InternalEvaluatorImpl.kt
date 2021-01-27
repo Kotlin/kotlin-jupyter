@@ -14,7 +14,7 @@ import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 
-internal class InternalEvaluatorImpl(val compiler: JupyterCompiler<*>, val evaluator: BasicJvmReplEvaluator, val contextUpdater: ContextUpdater, override var logExecution: Boolean) :
+internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluator: BasicJvmReplEvaluator, val contextUpdater: ContextUpdater, override var logExecution: Boolean) :
     InternalEvaluator {
 
     private var classWriter: ClassWriter? = null
