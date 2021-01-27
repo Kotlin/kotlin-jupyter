@@ -1,15 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
-import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import kotlin.reflect.KClass
 
-class AnnotationsProcessorImpl : AnnotationsProcessor {
+class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
 
     private val handlers = mutableMapOf<String, ClassDeclarationsCallback>()
 
-    override fun register(handler: AnnotationHandler) {
+    override fun register(handler: ClassAnnotationHandler) {
         handlers[handler.annotation.qualifiedName!!] = handler.callback
     }
 

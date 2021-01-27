@@ -1,9 +1,12 @@
+
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import jupyter.kotlin.receivers.TempAnnotation
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -15,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -22,9 +26,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class CustomLibraryResolverTests : AbstractReplTest() {
+
+    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>) = makeRepl(libs.toList().toLibraries())
+
     private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(
         resolutionInfoProvider,
-        classpath + File(CustomLibraryResolverTests::class.java.protectionDomain.codeSource.location.toURI().path),
+        classpathWithTestLib,
         homeDir,
         ResolverConfig(
             defaultRepositories,
@@ -216,7 +223,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             }
         }
 
-        val repl = makeRepl(listOf(lib1, lib2).toLibraries()).trackExecution()
+        val repl = makeRepl(lib1, lib2).trackExecution()
 
         val code = """
             %use lib1
@@ -248,6 +255,49 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val expectedResults = (1..5).toList()
         val actualResults = repl.results.filter { it != null && it != Unit }.map { it as Int }
         assertEquals(expectedResults, actualResults)
+    }
+
+    @Test
+    @Disabled // TODO: waiting for fix https://youtrack.jetbrains.com/issue/KT-44580
+    fun testFileAnnotations() {
+
+        val lib = "lib" to library {
+
+            import<TempAnnotation>()
+            onFileAnnotation<TempAnnotation> {
+                scheduleExecution("val b = a")
+            }
+        }
+        val repl = makeRepl(lib).trackExecution()
+
+        repl.execute("1")
+
+        repl.execute(
+            """
+            %use lib
+            """.trimIndent()
+        )
+        repl.execute(
+            """
+            @file:TempAnnotation
+            val a = 1
+            """.trimIndent()
+        )
+        val res = repl.execute("""
+            b
+        """.trimIndent())
+
+        assertEquals(1,res.field.value)
+
+        val expected = listOf(
+            "1",
+            "@file:TempAnnotation\nval a = 1",
+            "val b = a",
+            "b"
+        )
+        assertEquals(expected, repl.executedCodes)
+
+
     }
 
     @Test

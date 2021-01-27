@@ -1,11 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.AnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
+import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
@@ -33,7 +35,9 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val converters = mutableListOf<FieldHandler>()
 
-        private val annotations = mutableListOf<AnnotationHandler>()
+        private val classAnnotations = mutableListOf<ClassAnnotationHandler>()
+
+        private val fileAnnotations = mutableListOf<FileAnnotationHandler>()
 
         private val resources = mutableListOf<LibraryResource>()
 
@@ -51,8 +55,12 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
             converters.add(handler)
         }
 
-        fun addAnnotationHandler(handler: AnnotationHandler) {
-            annotations.add(handler)
+        fun addClassAnnotationHandler(handler: ClassAnnotationHandler) {
+            classAnnotations.add(handler)
+        }
+
+        fun addFileAnnotationHanlder(handler: FileAnnotationHandler) {
+            fileAnnotations.add(handler)
         }
 
         inline fun <reified T : Any> render(noinline renderer: (T) -> Any) {
@@ -120,7 +128,11 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
         }
 
         inline fun <reified T : Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {
-            addAnnotationHandler(AnnotationHandler(T::class, callback))
+            addClassAnnotationHandler(ClassAnnotationHandler(T::class, callback))
+        }
+
+        inline fun <reified T : Annotation> onFileAnnotation(noinline callback: FileAnnotationCallback) {
+            addFileAnnotationHanlder(FileAnnotationHandler(T::class, callback))
         }
 
         internal fun getDefinition() =
@@ -133,7 +145,8 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
                 repositories = repositories,
                 initCell = initCellCallbacks,
                 shutdown = shutdownCallbacks,
-                annotations = annotations,
+                classAnnotations = classAnnotations,
+                fileAnnotations = fileAnnotations,
                 resources = resources,
             )
     }
