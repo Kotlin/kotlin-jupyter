@@ -22,7 +22,9 @@ import kotlin.reflect.KMutableProperty
  * Base class for library integration with Jupyter Kernel via DSL
  * Derive from this class and pass registration callback into constructor
  */
-abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -> Unit) : LibraryDefinitionProducer {
+abstract class JupyterIntegration : LibraryDefinitionProducer {
+
+    abstract fun Builder.onLoaded(notebook: Notebook<*>?)
 
     class Builder {
 
@@ -161,7 +163,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
     override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
         val builder = Builder()
-        register(builder, notebook)
+        builder.onLoaded(notebook)
         return listOf(builder.getDefinition())
     }
 }
