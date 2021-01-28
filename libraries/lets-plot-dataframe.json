@@ -1,7 +1,7 @@
 {
   "description": "A bridge between Lets-Plot and dataframe libraries",
   "properties": {
-    "v": "0.0.10-dev-18",
+    "v": "0.0.10-dev-19",
     "api": "1.2.0",
     "js": "1.5.6",
     "isolatedFrame": ""
