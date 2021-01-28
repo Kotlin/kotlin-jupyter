@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 
 data class InternalEvalResult(
-    val field: FieldValue,
-    val compiledData: SerializedCompiledScriptsData? = null,
+    val result: FieldValue,
+    val scriptInstance: Any,
+    val compiledData: SerializedCompiledScriptsData? = null
 )

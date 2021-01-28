@@ -27,6 +27,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         processVariables: Boolean,
         processAnnotations: Boolean,
         processMagics: Boolean,
+        invokeAfterCallbacks: Boolean,
         callback: ExecutionStartedCallback?
     ): InternalEvalResult {
         with(replContext) {
@@ -43,7 +44,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             } else code
 
             if (preprocessedCode.isBlank()) {
-                return InternalEvalResult(FieldValue(null, null), null)
+                return InternalEvalResult(FieldValue(null, null), Unit, null)
             }
 
             val result = baseHost.withHost(context) {
@@ -68,6 +69,14 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             // TODO: scan classloader only when new classpath was added
             log.catchAll {
                 librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context)
+            }
+
+            if (invokeAfterCallbacks) {
+                afterCellExecution.forEach {
+                    log.catchAll {
+                        it(context, result.scriptInstance, result.result)
+                    }
+                }
             }
 
             context.processExecutionQueue()
@@ -100,6 +109,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             library.converters.forEach(sharedContext.fieldsProcessor::register)
             library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
             library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
+            sharedContext.afterCellExecution.addAll(library.afterCellExecution)
 
             val classLoader = sharedContext.evaluator.lastClassLoader
             library.resources.forEach {
@@ -107,11 +117,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 displayHandler?.handleDisplay(HTML(htmlText))
             }
 
-            library.initCell.filter { !sharedContext.initCellCodes.contains(it) }.let(sharedContext.initCellCodes::addAll)
+            library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
             library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
         }
 
-        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false).field
+        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false).result
 
         override fun display(value: Any) {
             displayHandler?.handleDisplay(value)

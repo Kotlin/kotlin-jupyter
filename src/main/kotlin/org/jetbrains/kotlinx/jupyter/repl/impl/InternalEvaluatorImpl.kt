@@ -72,11 +72,12 @@ internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluato
                             resultValue.error
                         )
                         is ResultValue.Unit -> {
-                            InternalEvalResult(FieldValue(Unit, null), scriptsSerializer.serialize(compiledScript))
+                            InternalEvalResult(FieldValue(Unit, null), resultValue.scriptInstance!!, scriptsSerializer.serialize(compiledScript))
                         }
                         is ResultValue.Value -> {
                             InternalEvalResult(
                                 FieldValue(resultValue.value, pureResult.compiledSnippet.resultField?.first), // TODO: replace with resultValue.name
+                                resultValue.scriptInstance!!,
                                 scriptsSerializer.serialize(compiledScript)
                             )
                         }
