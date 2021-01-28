@@ -14,7 +14,6 @@ import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
-import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
@@ -260,9 +259,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     @Test
     @Disabled // TODO: waiting for fix https://youtrack.jetbrains.com/issue/KT-44580
     fun testFileAnnotations() {
-
         val lib = "lib" to library {
-
             import<TempAnnotation>()
             onFileAnnotation<TempAnnotation> {
                 scheduleExecution("val b = a")
@@ -283,11 +280,13 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             val a = 1
             """.trimIndent()
         )
-        val res = repl.execute("""
+        val res = repl.execute(
+            """
             b
-        """.trimIndent())
+            """.trimIndent()
+        )
 
-        assertEquals(1,res.field.value)
+        assertEquals(1, res.result.value)
 
         val expected = listOf(
             "1",
@@ -296,8 +295,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "b"
         )
         assertEquals(expected, repl.executedCodes)
-
-
     }
 
     @Test

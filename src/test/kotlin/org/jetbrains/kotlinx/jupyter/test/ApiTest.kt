@@ -10,19 +10,12 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import kotlin.script.experimental.annotations.KotlinScript
-import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
-import kotlin.script.experimental.host.createCompilationConfigurationFromTemplate
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -60,9 +53,7 @@ class ApiTest : AbstractReplTest() {
     @Test
     @Disabled // TODO: waiting for fix https://youtrack.jetbrains.com/issue/KT-44580
     fun fileAnnotationsTest() {
-
         runBlocking {
-
             val config = ScriptCompilationConfiguration()
 
             val compiler = KJvmReplCompilerWithIdeServices(defaultJvmScriptingHostConfiguration)

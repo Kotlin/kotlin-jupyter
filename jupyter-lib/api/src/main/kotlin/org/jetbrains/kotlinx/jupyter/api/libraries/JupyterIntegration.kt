@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
@@ -27,9 +28,11 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         private val renderers = mutableListOf<RendererTypeHandler>()
 
-        private val initCallbacks = mutableListOf<Execution<*>>()
+        private val init = mutableListOf<Execution<*>>()
 
-        private val initCellCallbacks = mutableListOf<Execution<*>>()
+        private val beforeCellExecution = mutableListOf<Execution<*>>()
+
+        private val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 
         private val shutdownCallbacks = mutableListOf<Execution<*>>()
 
@@ -99,7 +102,7 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
         }
 
         fun onLoaded(callback: KotlinKernelHost.() -> Unit) {
-            initCallbacks.add(DelegatedExecution(callback))
+            init.add(DelegatedExecution(callback))
         }
 
         fun onShutdown(callback: KotlinKernelHost.() -> Unit) {
@@ -107,7 +110,11 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
         }
 
         fun beforeCellExecution(callback: KotlinKernelHost.() -> Unit) {
-            initCellCallbacks.add(DelegatedExecution(callback))
+            beforeCellExecution.add(DelegatedExecution(callback))
+        }
+
+        fun afterCellExecution(callback: AfterCellExecutionCallback) {
+            afterCellExecution.add(callback)
         }
 
         inline fun <reified T : Any> onVariable(noinline callback: VariableDeclarationCallback<T>) {
@@ -137,13 +144,14 @@ abstract class JupyterIntegration(private val register: Builder.(Notebook<*>?) -
 
         internal fun getDefinition() =
             LibraryDefinitionImpl(
-                init = initCallbacks,
+                init = init,
                 renderers = renderers,
                 converters = converters,
                 imports = imports,
                 dependencies = dependencies,
                 repositories = repositories,
-                initCell = initCellCallbacks,
+                initCell = beforeCellExecution,
+                afterCellExecution = afterCellExecution,
                 shutdown = shutdownCallbacks,
                 classAnnotations = classAnnotations,
                 fileAnnotations = fileAnnotations,

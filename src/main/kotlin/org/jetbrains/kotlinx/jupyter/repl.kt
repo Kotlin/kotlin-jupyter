@@ -6,6 +6,7 @@ import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -204,7 +205,8 @@ class ReplForJupyterImpl(
 
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
 
-    private val initCellCodes = mutableListOf<Execution<*>>()
+    private val beforeCellExecution = mutableListOf<Execution<*>>()
+    private val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
     private val shutdownCodes = mutableListOf<Execution<*>>()
 
     private val ctx = KotlinContext()
@@ -318,7 +320,7 @@ class ReplForJupyterImpl(
         resourcesProcessor,
         librariesScanner,
         notebook,
-        initCellCodes,
+        beforeCellExecution,
         shutdownCodes,
         internalEvaluator,
         this
@@ -330,7 +332,7 @@ class ReplForJupyterImpl(
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
-            initCellCodes.forEach { it.execute(executor) }
+            beforeCellExecution.forEach { it.execute(executor) }
 
             var cell: CodeCellImpl? = null
 
@@ -338,9 +340,9 @@ class ReplForJupyterImpl(
                 cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
             }
 
-            cell?.resultVal = result.field.value
+            cell?.resultVal = result.result.value
 
-            val rendered = result.field.let {
+            val rendered = result.result.let {
                 typeRenderersProcessor.renderResult(executor, it)
             }?.let {
                 if (it is Renderable) it.render(notebook) else it

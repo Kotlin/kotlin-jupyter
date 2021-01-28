@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
@@ -38,6 +39,12 @@ interface LibraryDefinition {
      * List of code snippets evaluated before every cell evaluation
      */
     val initCell: List<Execution<*>>
+        get() = emptyList()
+
+    /**
+     * List of callbacks called after cell evaluation
+     */
+    val afterCellExecution: List<AfterCellExecutionCallback>
         get() = emptyList()
 
     /**

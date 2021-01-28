@@ -95,6 +95,8 @@ dependencies {
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("io.kotlintest:kotlintest-assertions:3.1.6")
+
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     deploy(project(":lib"))

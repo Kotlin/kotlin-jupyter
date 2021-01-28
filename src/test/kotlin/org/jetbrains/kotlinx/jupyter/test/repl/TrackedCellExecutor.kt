@@ -49,7 +49,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
 
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
-        return InternalEvalResult(FieldValue(null, null), null)
+        return InternalEvalResult(FieldValue(null, null), Unit)
     }
 }
 
@@ -62,7 +62,7 @@ internal class TrackedInternalEvaluatorImpl(private val baseEvaluator: InternalE
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         val res = baseEvaluator.eval(code, onInternalIdGenerated)
-        results.add(res.field.value)
+        results.add(res.result.value)
         return res
     }
 }

@@ -1,20 +1,31 @@
-package org.jetbrains.kotlinx.jupyter.test
+package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.execute
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.library
+import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class FieldHandlingTests {
+class IntegrationApiTests {
+
+    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyterImpl {
+        val config = ResolverConfig(
+            defaultRepositories,
+            libs.toList().toLibraries()
+        )
+        return ReplForJupyterImpl(EmptyResolutionInfoProvider, classpath, null, config)
+    }
 
     @Test
-    fun test() {
-        val cp = classpath
-
+    fun `field handling`() {
         val lib = "mylib" to library {
             val generated = mutableSetOf<Int>()
             updateVariable<List<Int>> { list, property ->
@@ -40,11 +51,8 @@ class FieldHandlingTests {
                 }
             }
         }
-        val config = ResolverConfig(
-            defaultRepositories,
-            listOf(lib).toLibraries()
-        )
-        val repl = ReplForJupyterImpl(EmptyResolutionInfoProvider, cp, null, config)
+
+        val repl = makeRepl(lib)
 
         // create list 'l' of size 3
         val code1 =
@@ -83,5 +91,21 @@ class FieldHandlingTests {
         val res = repl.eval("e").resultValue
 
         assertEquals("TypedIntList5", res!!.javaClass.simpleName)
+    }
+
+    @Test
+    fun `after cell execution`() {
+        val lib = "mylib" to library {
+            afterCellExecution { snippet, result ->
+                execute("2")
+            }
+        }
+        val repl = makeRepl(lib).trackExecution()
+
+        repl.execute("%use mylib\n1")
+
+        assertEquals(2, repl.executedCodes.size)
+        assertEquals(1, repl.results[0])
+        assertEquals(2, repl.results[1])
     }
 }

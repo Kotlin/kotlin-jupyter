@@ -17,8 +17,6 @@ class FieldsProcessorImpl(
 
     private val handlers = mutableListOf<FieldHandler>()
 
-    private val codeToMethodMap = mutableMapOf<Code, Int>()
-
     override fun register(handler: FieldHandler) {
         handlers.add(handler)
     }
