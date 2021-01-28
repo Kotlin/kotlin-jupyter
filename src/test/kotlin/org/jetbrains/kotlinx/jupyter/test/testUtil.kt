@@ -126,6 +126,10 @@ class NotebookMock : Notebook<CodeCell> {
 }
 
 fun library(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
-    val o = object : JupyterIntegration(builder) {}
+    val o = object : JupyterIntegration() {
+        override fun Builder.onLoaded(notebook: Notebook<*>?) {
+            builder(notebook)
+        }
+    }
     return o.getDefinitions(null).single()
 }

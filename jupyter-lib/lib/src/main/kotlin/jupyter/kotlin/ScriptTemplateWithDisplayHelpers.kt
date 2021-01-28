@@ -17,7 +17,11 @@ abstract class ScriptTemplateWithDisplayHelpers(
     fun USE(library: LibraryDefinition) = hostProvider.host!!.addLibrary(library)
 
     fun USE(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit) {
-        val o = object : JupyterIntegration(builder) {}
+        val o = object : JupyterIntegration() {
+            override fun Builder.onLoaded(notebook: Notebook<*>?) {
+                builder(this, notebook)
+            }
+        }
         USE(o.getDefinitions(null).single())
     }
 

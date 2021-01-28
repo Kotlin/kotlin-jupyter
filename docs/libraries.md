@@ -138,12 +138,14 @@ package org.my.lib
 import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 
-internal class Integration : JupyterIntegration({
-    render<MyClass> { HTML(it.toHTML()) }
+internal class Integration : JupyterIntegration() {
 
-    import("org.my.lib.*")
-    import("org.my.lib.io.*")
-})
+    override fun Builder.onLoaded(notebook: Notebook<*>?) {
+        render<MyClass> { HTML(it.toHTML()) }
+        import("org.my.lib.*")
+        import("org.my.lib.io.*")
+    }
+}
 ```
 
 For more complicated example see [integration of dataframe library](https://github.com/nikitinas/dataframe/blob/master/src/main/kotlin/org/jetbrains/dataframe/jupyter/Integration.kt).
@@ -178,7 +180,10 @@ import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 
 @JupyterLibrary
-class Integration : JupyterIntegration({            
-    import("org.my.lib.*")
-})
+internal class Integration : JupyterIntegration() {
+    
+    override fun Builder.onLoaded(notebook: Notebook<*>?) {
+        import("org.my.lib.*")
+    }
+}
 ```
