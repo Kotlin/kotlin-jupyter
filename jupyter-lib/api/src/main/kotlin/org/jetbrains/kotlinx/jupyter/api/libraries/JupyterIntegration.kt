@@ -79,8 +79,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             resources.add(resource)
         }
 
-        fun import(path: String) {
-            imports.add(path)
+        fun import(vararg paths: String) {
+            imports.addAll(paths)
         }
 
         inline fun <reified T> import() {
@@ -95,12 +95,12 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             }
         }
 
-        fun dependency(path: String) {
-            dependencies.add(path)
+        fun dependencies(vararg paths: String) {
+            dependencies.addAll(paths)
         }
 
-        fun repository(path: String) {
-            repositories.add(path)
+        fun repositories(vararg paths: String) {
+            repositories.addAll(paths)
         }
 
         fun onLoaded(callback: KotlinKernelHost.() -> Unit) {
