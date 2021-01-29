@@ -65,8 +65,14 @@ class LibrariesScanner(val notebook: Notebook<*>) {
             instantiate(classLoader, it, notebook)
         }
 
-        scanResult.producers.flatMapTo(definitions) {
-            instantiate(classLoader, it, notebook).getDefinitions(notebook)
+        scanResult.producers.forEach {
+            try {
+                instantiate(classLoader, it, notebook).getDefinitions(notebook).forEach {
+                    definitions.add(it)
+                }
+            } catch (e: Throwable) {
+                System.err.println("Failed to load library integration class '${it.fqn}': " + e.message)
+            }
         }
         return definitions
     }
