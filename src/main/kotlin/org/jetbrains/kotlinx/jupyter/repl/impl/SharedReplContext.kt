@@ -19,7 +19,7 @@ internal data class SharedReplContext(
     val magicsProcessor: MagicsProcessor,
     val resourcesProcessor: LibraryResourcesProcessor,
     val librariesScanner: LibrariesScanner,
-    val notebook: Notebook<*>,
+    val notebook: Notebook,
     val beforeCellExecution: MutableList<Execution<*>>,
     val shutdownCodes: MutableList<Execution<*>>,
     val evaluator: InternalEvaluator,

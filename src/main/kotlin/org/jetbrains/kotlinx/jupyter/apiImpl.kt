@@ -97,7 +97,7 @@ class EvalData(
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
-) : Notebook<CodeCellImpl> {
+) : Notebook {
     override val cells = hashMapOf<Int, CodeCellImpl>()
     override val results = ResultsAccessor { i ->
         val cell = cells[i] ?: throw ArrayIndexOutOfBoundsException(
@@ -135,4 +135,10 @@ class NotebookImpl(
         val offset = if (mainCellCreated) 1 else 0
         return history.getOrNull(history.size - offset - before)
     }
+
+    override val currentCell: CodeCellImpl?
+        get() = history(0)
+
+    override val lastCell: CodeCellImpl?
+        get() = history(1)
 }

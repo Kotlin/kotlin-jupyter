@@ -396,7 +396,7 @@ class CapturingOutputStream(
     }
 }
 
-fun Any.toDisplayResult(notebook: Notebook<*>): DisplayResult? = when (this) {
+fun Any.toDisplayResult(notebook: Notebook): DisplayResult? = when (this) {
     is DisplayResult -> this
     is Renderable -> this.render(notebook)
     is Unit -> null

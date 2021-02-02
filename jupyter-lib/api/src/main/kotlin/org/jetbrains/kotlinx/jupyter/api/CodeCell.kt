@@ -7,7 +7,7 @@ interface CodeCell {
     /**
      * Reference to the notebook instance
      */
-    val notebook: Notebook<*>
+    val notebook: Notebook
 
     /**
      * Displayed cell ID
