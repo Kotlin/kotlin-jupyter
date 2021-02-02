@@ -1,21 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import jupyter.kotlin.receivers.TempAnnotation
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlinx.jupyter.EvalResult
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.refineConfiguration
-import kotlin.script.experimental.api.with
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -48,32 +39,5 @@ class ApiTest : AbstractReplTest() {
         )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
-    }
-
-    @Test
-    @Disabled // TODO: waiting for fix https://youtrack.jetbrains.com/issue/KT-44580
-    fun fileAnnotationsTest() {
-        runBlocking {
-            val config = ScriptCompilationConfiguration()
-
-            val compiler = KJvmReplCompilerWithIdeServices(defaultJvmScriptingHostConfiguration)
-
-            compiler.compile(SourceCodeImpl(1, ""), config)
-
-            var handlerInvoked = false
-
-            val config2 = config.with {
-                refineConfiguration {
-                    onAnnotations<TempAnnotation> {
-                        handlerInvoked = true
-                        it.compilationConfiguration.asSuccess()
-                    }
-                }
-            }
-
-            compiler.compile(SourceCodeImpl(2, "@file:TempAnnotation"), config2)
-
-            assertTrue(handlerInvoked)
-        }
     }
 }

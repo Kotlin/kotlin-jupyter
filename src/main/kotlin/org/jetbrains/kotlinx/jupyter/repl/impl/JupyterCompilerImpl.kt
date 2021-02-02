@@ -4,8 +4,11 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
 import org.jetbrains.kotlinx.jupyter.CheckResult
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
@@ -15,16 +18,24 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
+import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.analysisDiagnostics
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
+import kotlin.script.experimental.api.refineOnAnnotations
+import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -48,6 +59,7 @@ interface JupyterCompiler {
 
     fun nextCounter(): Int
     fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit)
+    fun updateCompilationConfigOnAnnotation(handler: FileAnnotationHandler, callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>)
     fun compileSync(snippet: SourceCode): Result
 
     data class Result(
@@ -85,12 +97,23 @@ interface JupyterCompilerWithCompletion : JupyterCompiler {
 
 open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     protected val compiler: CompilerT,
-    private var compilationConfig: ScriptCompilationConfiguration,
+    initialCompilationConfig: ScriptCompilationConfiguration,
     private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
     private val properties = readResourceAsIniFile("compiler.properties", JupyterCompilerImpl::class.java.classLoader)
+
+    private val refinementCallbacks = mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
+
+    private val compilationConfig: ScriptCompilationConfiguration = initialCompilationConfig.with {
+        refineConfiguration {
+            val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
+            handlers.forEach { beforeCompiling(it.handler) }
+
+            beforeCompiling(::updateConfig)
+        }
+    }
 
     override val version: KotlinKernelVersion =
         KotlinKernelVersion.from(
@@ -113,7 +136,41 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     override fun nextCounter() = executionCounter.getAndIncrement()
 
     override fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
-        compilationConfig = compilationConfig.with(body)
+        refinementCallbacks.add { context ->
+            context.compilationConfiguration.with(body).asSuccess()
+        }
+    }
+
+    override fun updateCompilationConfigOnAnnotation(handler: FileAnnotationHandler, callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>) {
+        refinementCallbacks.add { context ->
+            val ktFile = (context.script as KtFileScriptSource).ktFile
+
+            val withImport = context.compilationConfiguration.with {
+                defaultImports(handler.annotation.java.name)
+                refineConfiguration {
+                    onAnnotations(KotlinType(handler.annotation.qualifiedName!!)) {
+                        callback(it)
+                    }
+                }
+            }
+            val collectedData = getScriptCollectedData(ktFile, withImport, ktFile.project, lastClassLoader)
+
+            withImport.refineOnAnnotations(context.script, collectedData)
+        }
+    }
+
+    private fun updateConfig(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+        return refinementCallbacks.fold(context.compilationConfiguration.asSuccess()) { config: ResultWithDiagnostics<ScriptCompilationConfiguration>, callback ->
+            config.valueOrNull()?.let { conf ->
+                callback(
+                    ScriptConfigurationRefinementContext(
+                        context.script,
+                        conf,
+                        context.collectedData
+                    )
+                )
+            } ?: config
+        }
     }
 
     override fun compileSync(snippet: SourceCode): JupyterCompiler.Result {
@@ -156,7 +213,7 @@ class JupyterCompilerWithCompletionImpl(
     compiler: KJvmReplCompilerWithIdeServices,
     compilationConfig: ScriptCompilationConfiguration,
     evaluationConfig: ScriptEvaluationConfiguration,
-    val configForAnalyze: ScriptCompilationConfiguration
+    private val configForAnalyze: ScriptCompilationConfiguration
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
     JupyterCompilerWithCompletion {
 
@@ -179,14 +236,13 @@ class JupyterCompilerWithCompletionImpl(
     ): ResultWithDiagnostics<ReplAnalyzerResult> {
         val snippet = SourceCodeImpl(nextCounter(), code)
 
-        val result = runBlocking {
+        return runBlocking {
             compiler.analyze(
                 snippet,
                 0.toSourceCodePosition(snippet),
                 configForAnalyze
             )
         }
-        return result
     }
 
     override fun listErrors(code: Code): Sequence<ScriptDiagnostic> {

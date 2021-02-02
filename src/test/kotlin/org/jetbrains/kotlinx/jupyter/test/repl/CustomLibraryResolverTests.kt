@@ -17,7 +17,6 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -257,7 +256,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
-    @Disabled // TODO: waiting for fix https://youtrack.jetbrains.com/issue/KT-44580
     fun testFileAnnotations() {
         val lib = "lib" to library {
             import<TempAnnotation>()
@@ -290,6 +288,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val expected = listOf(
             "1",
+            "import jupyter.kotlin.receivers.TempAnnotation",
             "@file:TempAnnotation\nval a = 1",
             "val b = a",
             "b"

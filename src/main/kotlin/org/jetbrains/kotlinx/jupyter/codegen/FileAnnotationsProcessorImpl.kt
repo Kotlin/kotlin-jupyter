@@ -10,16 +10,13 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
-import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.asDiagnostics
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.foundAnnotations
-import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOr
 
 class FileAnnotationsProcessorImpl(
@@ -33,13 +30,8 @@ class FileAnnotationsProcessorImpl(
 
     override fun register(handler: FileAnnotationHandler) {
         handlers[handler.annotation.qualifiedName!!] = handler.callback
-        compiler.updateCompilationConfig {
-            defaultImports(handler.annotation.java.name)
-            refineConfiguration {
-                onAnnotations(KotlinType(handler.annotation.qualifiedName!!)) {
-                    process(it, kernelHostProvider.host!!)
-                }
-            }
+        compiler.updateCompilationConfigOnAnnotation(handler) { context ->
+            process(context, kernelHostProvider.host!!)
         }
     }
 
