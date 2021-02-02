@@ -66,10 +66,11 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains:annotations:20.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // Embedded compiler and scripting dependencies
     implementation(kotlin("compiler-embeddable"))
-    compileOnly(kotlin("scripting-compiler-impl"))
+    implementation(kotlin("scripting-compiler-impl-embeddable"))
     implementation(kotlin("scripting-compiler-embeddable"))
     implementation(kotlin("scripting-ide-services"))
     implementation(kotlin("main-kts"))

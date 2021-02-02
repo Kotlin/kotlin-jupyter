@@ -61,17 +61,18 @@ class LibrariesScanner(val notebook: Notebook<*>) {
     private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook<*>): List<LibraryDefinition> {
         val definitions = mutableListOf<LibraryDefinition>()
 
-        scanResult.definitions.mapTo(definitions) {
-            instantiate(classLoader, it, notebook)
+        scanResult.definitions.mapTo(definitions) { declaration ->
+            instantiate(classLoader, declaration, notebook)
         }
 
-        scanResult.producers.forEach {
+        scanResult.producers.forEach { declaration ->
             try {
-                instantiate(classLoader, it, notebook).getDefinitions(notebook).forEach {
+                val producer = instantiate(classLoader, declaration, notebook)
+                producer.getDefinitions(notebook).forEach {
                     definitions.add(it)
                 }
             } catch (e: Throwable) {
-                System.err.println("Failed to load library integration class '${it.fqn}': " + e.message)
+                System.err.println("Failed to load library integration class '${declaration.fqn}': " + e.message)
             }
         }
         return definitions

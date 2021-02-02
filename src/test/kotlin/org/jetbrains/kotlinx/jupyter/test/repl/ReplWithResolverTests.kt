@@ -102,12 +102,11 @@ class ReplWithResolverTests : AbstractReplTest() {
     }
 
     @Test
-    @Disabled // TODO: restore
     fun testLibraryFromClasspath() {
         repl.eval(
             """
             @file:Repository("https://dl.bintray.com/ileasile/kotlin-datascience-ileasile")
-            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.11")
+            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.13")
             """.trimIndent()
         )
 
