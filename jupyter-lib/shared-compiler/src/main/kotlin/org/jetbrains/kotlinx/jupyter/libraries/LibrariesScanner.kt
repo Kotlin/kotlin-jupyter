@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
-class LibrariesScanner(val notebook: Notebook<*>) {
+class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
 
     private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
@@ -58,7 +58,7 @@ class LibrariesScanner(val notebook: Notebook<*>) {
         }
     }
 
-    private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook<*>): List<LibraryDefinition> {
+    private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook): List<LibraryDefinition> {
         val definitions = mutableListOf<LibraryDefinition>()
 
         scanResult.definitions.mapTo(definitions) { declaration ->
@@ -78,7 +78,7 @@ class LibrariesScanner(val notebook: Notebook<*>) {
         return definitions
     }
 
-    private fun <T> instantiate(classLoader: ClassLoader, data: LibrariesInstantiable<T>, notebook: Notebook<*>): T {
+    private fun <T> instantiate(classLoader: ClassLoader, data: LibrariesInstantiable<T>, notebook: Notebook): T {
         val clazz = classLoader.loadClass(data.fqn)
         val constructor = clazz.constructors.single()
 

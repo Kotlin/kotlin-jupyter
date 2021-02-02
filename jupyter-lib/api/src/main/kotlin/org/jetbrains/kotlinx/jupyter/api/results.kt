@@ -28,7 +28,7 @@ interface Renderable {
      * @param notebook Current notebook
      * @return Display result
      */
-    fun render(notebook: Notebook<*>): DisplayResult
+    fun render(notebook: Notebook): DisplayResult
 }
 
 /**
@@ -52,7 +52,7 @@ interface DisplayResult : Renderable {
     /**
      * Renders display result, generally should return `this`
      */
-    override fun render(notebook: Notebook<*>) = this
+    override fun render(notebook: Notebook) = this
 }
 
 /**

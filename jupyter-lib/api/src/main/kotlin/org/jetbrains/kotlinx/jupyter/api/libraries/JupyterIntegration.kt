@@ -24,7 +24,7 @@ import kotlin.reflect.KMutableProperty
  */
 abstract class JupyterIntegration : LibraryDefinitionProducer {
 
-    abstract fun Builder.onLoaded(notebook: Notebook<*>?)
+    abstract fun Builder.onLoaded(notebook: Notebook?)
 
     class Builder {
 
@@ -161,7 +161,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             )
     }
 
-    override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
+    override fun getDefinitions(notebook: Notebook?): List<LibraryDefinition> {
         val builder = Builder()
         builder.onLoaded(notebook)
         return listOf(builder.getDefinition())

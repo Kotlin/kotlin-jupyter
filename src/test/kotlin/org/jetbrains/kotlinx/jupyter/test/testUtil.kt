@@ -107,7 +107,7 @@ class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Display
     }
 }
 
-class NotebookMock : Notebook<CodeCell> {
+class NotebookMock : Notebook {
     override val cells: Map<Int, CodeCell>
         get() = emptyMap()
     override val results: ResultsAccessor
@@ -125,9 +125,9 @@ class NotebookMock : Notebook<CodeCell> {
         get() = JavaRuntime
 }
 
-fun library(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit): LibraryDefinition {
+fun library(builder: JupyterIntegration.Builder.(Notebook?) -> Unit): LibraryDefinition {
     val o = object : JupyterIntegration() {
-        override fun Builder.onLoaded(notebook: Notebook<*>?) {
+        override fun Builder.onLoaded(notebook: Notebook?) {
             builder(notebook)
         }
     }

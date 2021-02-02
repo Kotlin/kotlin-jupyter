@@ -140,7 +140,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.*
 
 internal class Integration : JupyterIntegration() {
 
-    override fun Builder.onLoaded(notebook: Notebook<*>?) {
+    override fun Builder.onLoaded(notebook: Notebook?) {
         render<MyClass> { HTML(it.toHTML()) }
         import("org.my.lib.*")
         import("org.my.lib.io.*")
@@ -182,7 +182,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.*
 @JupyterLibrary
 internal class Integration : JupyterIntegration() {
     
-    override fun Builder.onLoaded(notebook: Notebook<*>?) {
+    override fun Builder.onLoaded(notebook: Notebook?) {
         import("org.my.lib.*")
     }
 }

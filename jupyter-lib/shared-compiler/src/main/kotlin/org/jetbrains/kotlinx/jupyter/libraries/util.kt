@@ -138,12 +138,12 @@ fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoPro
 }
 
 class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) : LibraryDefinitionProducer {
-    override fun getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
+    override fun getDefinitions(notebook: Notebook?): List<LibraryDefinition> {
         return listOf(library)
     }
 }
 
-fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook<*>?): List<LibraryDefinition> {
+fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook?): List<LibraryDefinition> {
     return flatMap { it.getDefinitions(notebook) }
 }
 

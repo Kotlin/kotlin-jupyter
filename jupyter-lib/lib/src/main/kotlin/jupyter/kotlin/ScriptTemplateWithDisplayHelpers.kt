@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 abstract class ScriptTemplateWithDisplayHelpers(
-    val notebook: Notebook<*>,
+    val notebook: Notebook,
     private val hostProvider: KotlinKernelHostProvider
 ) {
     fun DISPLAY(value: Any) = hostProvider.host!!.display(value)
@@ -16,9 +16,9 @@ abstract class ScriptTemplateWithDisplayHelpers(
 
     fun USE(library: LibraryDefinition) = hostProvider.host!!.addLibrary(library)
 
-    fun USE(builder: JupyterIntegration.Builder.(Notebook<*>?) -> Unit) {
+    fun USE(builder: JupyterIntegration.Builder.(Notebook?) -> Unit) {
         val o = object : JupyterIntegration() {
-            override fun Builder.onLoaded(notebook: Notebook<*>?) {
+            override fun Builder.onLoaded(notebook: Notebook?) {
                 builder(this, notebook)
             }
         }
