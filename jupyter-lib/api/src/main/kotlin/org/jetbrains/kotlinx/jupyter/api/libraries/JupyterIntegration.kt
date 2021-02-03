@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
@@ -30,13 +31,13 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val renderers = mutableListOf<RendererTypeHandler>()
 
-        private val init = mutableListOf<Execution<*>>()
+        private val init = mutableListOf<ExecutionCallback<*>>()
 
-        private val beforeCellExecution = mutableListOf<Execution<*>>()
+        private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
 
         private val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 
-        private val shutdownCallbacks = mutableListOf<Execution<*>>()
+        private val shutdownCallbacks = mutableListOf<ExecutionCallback<*>>()
 
         private val converters = mutableListOf<FieldHandler>()
 
@@ -104,15 +105,15 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         fun onLoaded(callback: KotlinKernelHost.() -> Unit) {
-            init.add(DelegatedExecution(callback))
+            init.add(callback)
         }
 
         fun onShutdown(callback: KotlinKernelHost.() -> Unit) {
-            shutdownCallbacks.add(DelegatedExecution(callback))
+            shutdownCallbacks.add(callback)
         }
 
         fun beforeCellExecution(callback: KotlinKernelHost.() -> Unit) {
-            beforeCellExecution.add(DelegatedExecution(callback))
+            beforeCellExecution.add(callback)
         }
 
         fun afterCellExecution(callback: AfterCellExecutionCallback) {

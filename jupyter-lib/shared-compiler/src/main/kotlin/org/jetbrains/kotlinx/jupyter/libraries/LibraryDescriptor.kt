@@ -90,5 +90,4 @@ class LibraryDescriptor(
             originalDescriptorText = Json.encodeToString(this),
         )
     }
-
 }

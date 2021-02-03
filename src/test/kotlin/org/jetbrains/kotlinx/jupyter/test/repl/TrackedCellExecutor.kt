@@ -4,9 +4,9 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
-import org.jetbrains.kotlinx.jupyter.repl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import kotlin.reflect.KClass
 
 interface TrackedCellExecutor : CellExecutor {

@@ -12,6 +12,8 @@ typealias ClassDeclarationsCallback = KotlinKernelHost.(List<KClass<*>>) -> Unit
  */
 class ClassAnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)
 
+typealias ExecutionCallback<T> = KotlinKernelHost.() -> T
+
 typealias AfterCellExecutionCallback = KotlinKernelHost.(snippetInstance: Any, result: FieldValue) -> Unit
 
 typealias FileAnnotationCallback = KotlinKernelHost.(List<Annotation>) -> Unit

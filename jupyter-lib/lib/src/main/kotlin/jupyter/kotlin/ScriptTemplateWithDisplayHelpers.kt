@@ -12,7 +12,7 @@ abstract class ScriptTemplateWithDisplayHelpers(
 ) {
     fun DISPLAY(value: Any) = hostProvider.host!!.display(value)
 
-    fun EXECUTE(code: String) = hostProvider.host!!.scheduleExecution(CodeExecution(code))
+    fun EXECUTE(code: String) = hostProvider.host!!.scheduleExecution(CodeExecution(code).toExecutionCallback())
 
     fun USE(library: LibraryDefinition) = hostProvider.host!!.addLibrary(library)
 

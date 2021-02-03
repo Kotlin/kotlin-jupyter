@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -16,10 +17,10 @@ class LibraryDefinitionImpl(
     override val dependencies: List<String> = emptyList(),
     override val repositories: List<String> = emptyList(),
     override val imports: List<String> = emptyList(),
-    override val init: List<Execution<*>> = emptyList(),
-    override val initCell: List<Execution<*>> = emptyList(),
+    override val init: List<ExecutionCallback<*>> = emptyList(),
+    override val initCell: List<ExecutionCallback<*>> = emptyList(),
     override val afterCellExecution: List<AfterCellExecutionCallback> = emptyList(),
-    override val shutdown: List<Execution<*>> = emptyList(),
+    override val shutdown: List<ExecutionCallback<*>> = emptyList(),
     override val renderers: List<RendererTypeHandler> = emptyList(),
     override val converters: List<FieldHandler> = emptyList(),
     override val classAnnotations: List<ClassAnnotationHandler> = emptyList(),

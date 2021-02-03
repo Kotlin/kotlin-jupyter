@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 /**
@@ -22,9 +21,9 @@ interface KotlinKernelHost {
     /**
      * Schedules execution of the given [execution] after the completing of execution of the current cell
      */
-    fun scheduleExecution(execution: Execution<*>)
+    fun scheduleExecution(execution: ExecutionCallback<*>)
 
-    fun scheduleExecution(execution: Code) = scheduleExecution(CodeExecution(execution))
+    fun scheduleExecution(execution: Code) = scheduleExecution(CodeExecution(execution).toExecutionCallback())
 
     /**
      * Executes code immediately. Note that it may lead to breaking the kernel state in some cases

@@ -1,11 +1,12 @@
-package org.jetbrains.kotlinx.jupyter.repl
+package org.jetbrains.kotlinx.jupyter.repl.impl
+
 import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -13,6 +14,9 @@ import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
+import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
+import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import java.util.LinkedList
 
 interface BaseKernelHost {
@@ -92,14 +96,14 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
     private class ExecutionContext(private val sharedContext: SharedReplContext, private val displayHandler: DisplayHandler?, private val executor: CellExecutor) :
         KotlinKernelHost, ExecutionHost {
 
-        private val executionQueue = LinkedList<Execution<*>>()
+        private val executionQueue = LinkedList<ExecutionCallback<*>>()
 
         private fun runChild(code: Code) {
-            if (code.isNotBlank()) runChild(CodeExecution(code))
+            if (code.isNotBlank()) runChild(CodeExecution(code).toExecutionCallback())
         }
 
-        private fun runChild(code: Execution<*>) {
-            code.execute(this)
+        private fun runChild(code: ExecutionCallback<*>) {
+            execute(code)
         }
 
         override fun addLibrary(library: LibraryDefinition) {
@@ -131,7 +135,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             displayHandler?.handleUpdate(value, id)
         }
 
-        override fun scheduleExecution(execution: Execution<*>) {
+        override fun scheduleExecution(execution: ExecutionCallback<*>) {
             executionQueue.add(execution)
         }
 

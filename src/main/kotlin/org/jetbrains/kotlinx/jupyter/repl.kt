@@ -8,11 +8,10 @@ import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.libraries.DelegatedExecution
-import org.jetbrains.kotlinx.jupyter.api.libraries.Execution
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
@@ -38,17 +37,17 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
-import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
-import org.jetbrains.kotlinx.jupyter.repl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
-import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
+import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -105,7 +104,7 @@ interface ReplForJupyter {
 
     fun eval(code: Code, displayHandler: DisplayHandler? = null, jupyterId: Int = -1): EvalResult
 
-    fun <T> eval(execution: Execution<T>): T
+    fun <T> eval(execution: ExecutionCallback<T>): T
 
     fun evalOnShutdown(): List<EvalResult>
 
@@ -132,8 +131,8 @@ interface ReplForJupyter {
     val fileExtension: String
 }
 
-fun <T> ReplForJupyter.execute(callback: (KotlinKernelHost).() -> T): T {
-    return eval(DelegatedExecution(callback))
+fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
+    return eval(callback)
 }
 
 class ReplForJupyterImpl(
@@ -205,9 +204,9 @@ class ReplForJupyterImpl(
 
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
 
-    private val beforeCellExecution = mutableListOf<Execution<*>>()
+    private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
     private val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
-    private val shutdownCodes = mutableListOf<Execution<*>>()
+    private val shutdownCodes = mutableListOf<ExecutionCallback<*>>()
 
     private val ctx = KotlinContext()
 
@@ -332,7 +331,7 @@ class ReplForJupyterImpl(
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         synchronized(this) {
-            beforeCellExecution.forEach { it.execute(executor) }
+            beforeCellExecution.forEach { executor.execute(it) }
 
             var cell: CodeCellImpl? = null
 
@@ -356,7 +355,7 @@ class ReplForJupyterImpl(
         }
     }
 
-    override fun <T> eval(execution: Execution<T>): T {
+    override fun <T> eval(execution: ExecutionCallback<T>): T {
         synchronized(this) {
             return executor.execute(execution)
         }
