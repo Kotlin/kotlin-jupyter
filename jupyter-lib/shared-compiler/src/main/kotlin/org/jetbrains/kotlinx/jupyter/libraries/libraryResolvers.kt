@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.getLogger
@@ -10,22 +8,22 @@ import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
 interface LibraryResolver {
-    fun resolve(reference: LibraryReference): LibraryDefinition?
+    fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition?
 }
 
 abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
-    protected abstract fun tryResolve(reference: LibraryReference): LibraryDefinition?
+    protected abstract fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition?
     protected open fun save(reference: LibraryReference, definition: LibraryDefinition) {}
     protected open fun shouldResolve(reference: LibraryReference): Boolean = true
 
-    override fun resolve(reference: LibraryReference): LibraryDefinition? {
+    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         val shouldBeResolved = shouldResolve(reference)
         if (shouldBeResolved) {
-            val result = tryResolve(reference)
+            val result = tryResolve(reference, arguments)
             if (result != null) return result
         }
 
-        val parentResult = parent?.resolve(reference) ?: return null
+        val parentResult = parent?.resolve(reference, arguments) ?: return null
         if (shouldBeResolved) {
             save(reference, parentResult)
         }
@@ -41,15 +39,15 @@ class DefaultInfoLibraryResolver(
 ) : LibraryResolver {
     private val resolutionInfos = paths.map { LibraryResolutionInfo.ByDir(it.toFile()) }
 
-    override fun resolve(reference: LibraryReference): LibraryDefinition? {
+    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         val referenceInfo = reference.info
-        if (referenceInfo !is LibraryResolutionInfo.Default) return parent.resolve(reference)
+        if (referenceInfo !is LibraryResolutionInfo.Default) return parent.resolve(reference, arguments)
 
         val definitionText = resolutionInfos.asSequence().mapNotNull { byDirResolver.resolveRaw(it, reference.name) }.firstOrNull()
-        if (definitionText != null) return parseLibraryDescriptor(definitionText)
+        if (definitionText != null) return parseLibraryDescriptor(definitionText).convertToDefinition(arguments)
 
         val newReference = transformReference(referenceInfo, reference.name)
-        return parent.resolve(newReference)
+        return parent.resolve(newReference, arguments)
     }
 
     private fun transformReference(referenceInfo: LibraryResolutionInfo.Default, referenceName: String?): LibraryReference {
@@ -79,7 +77,7 @@ class LocalLibraryResolver(
         return reference.shouldBeCachedLocally
     }
 
-    override fun tryResolve(reference: LibraryReference): LibraryDescriptor? {
+    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         val files = pathsToCheck.mapNotNull { dir ->
             val file = reference.getFile(dir)
             if (file.exists()) file else null
@@ -90,17 +88,15 @@ class LocalLibraryResolver(
         }
 
         val jsonFile = files.firstOrNull() ?: return null
-        return parseLibraryDescriptor(jsonFile.readText())
+        return parseLibraryDescriptor(jsonFile.readText()).convertToDefinition(arguments)
     }
 
     override fun save(reference: LibraryReference, definition: LibraryDefinition) {
-        if (definition !is LibraryDescriptor) return
+        val text = definition.originalDescriptorText ?: return
         val dir = pathsToCheck.first()
         val file = reference.getFile(dir)
         file.parentFile.mkdirs()
-
-        val format = Json { prettyPrint = true }
-        file.writeText(format.encodeToString(definition))
+        file.writeText(text)
     }
 
     private fun LibraryReference.getFile(dir: Path) = dir.resolve("$key.$LibraryDescriptorExt").toFile()
@@ -131,8 +127,8 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
         resolver<LibraryResolutionInfo.Default> { null }
     )
 
-    override fun tryResolve(reference: LibraryReference): LibraryDefinition? {
-        return standardResolvers.firstOrNull { it.accepts(reference) }?.resolve(reference)
+    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+        return standardResolvers.firstOrNull { it.accepts(reference) }?.resolve(reference, arguments)
     }
 }
 
@@ -141,10 +137,10 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(private val kClass: KCl
         return kClass.isInstance(reference.info)
     }
 
-    override fun resolve(reference: LibraryReference): LibraryDefinition? {
+    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         if (!accepts(reference)) return null
         val text = resolveRaw(kClass.cast(reference.info), reference.name) ?: return null
-        return parseLibraryDescriptor(text)
+        return parseLibraryDescriptor(text).convertToDefinition(arguments)
     }
 }
 

@@ -84,5 +84,14 @@ interface LibraryDefinition {
     val resources: List<LibraryResource>
         get() = emptyList()
 
+    /**
+     * Minimal kernel version that is supported by this library
+     */
     val minKernelVersion: KotlinKernelVersion?
+
+    /**
+     * Original descriptor text, or **null** if it has non-textual nature
+     */
+    val originalDescriptorText: String?
+        get() = null
 }
