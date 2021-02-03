@@ -26,4 +26,5 @@ class LibraryDefinitionImpl(
     override val fileAnnotations: List<FileAnnotationHandler> = emptyList(),
     override val resources: List<LibraryResource> = emptyList(),
     override val minKernelVersion: KotlinKernelVersion? = null,
+    override val originalDescriptorText: String? = null,
 ) : LibraryDefinition
