@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.util.CodeExecutionSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 
@@ -13,20 +13,11 @@ import org.jetbrains.kotlinx.jupyter.util.replaceVariables
  * @constructor Create code execution with the given [code]
  */
 @Serializable(with = CodeExecutionSerializer::class)
-class CodeExecution(val code: Code) : Execution<Any?> {
-    override fun execute(host: ExecutionHost): Any? {
-        return host.execute {
-            execute(code).value
+class CodeExecution(val code: Code) {
+    fun toExecutionCallback(mapping: Map<String, String> = emptyMap()): ExecutionCallback<Any?> {
+        val codeWithSubstitutedVars = replaceVariables(code, mapping)
+        return {
+            execute(codeWithSubstitutedVars).value
         }
-    }
-
-    override fun replaceVariables(mapping: Map<String, String>): CodeExecution {
-        return CodeExecution(replaceVariables(code, mapping))
-    }
-}
-
-class DelegatedExecution<T>(private val callback: KotlinKernelHost.() -> T) : Execution<T> {
-    override fun execute(host: ExecutionHost): T {
-        return host.execute(callback)
     }
 }

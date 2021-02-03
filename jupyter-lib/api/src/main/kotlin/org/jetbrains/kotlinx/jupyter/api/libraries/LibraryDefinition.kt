@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -32,13 +33,13 @@ interface LibraryDefinition {
     /**
      * List of code snippets evaluated on library initialization
      */
-    val init: List<Execution<*>>
+    val init: List<ExecutionCallback<*>>
         get() = emptyList()
 
     /**
      * List of code snippets evaluated before every cell evaluation
      */
-    val initCell: List<Execution<*>>
+    val initCell: List<ExecutionCallback<*>>
         get() = emptyList()
 
     /**
@@ -50,7 +51,7 @@ interface LibraryDefinition {
     /**
      * List of code snippets evaluated on kernel shutdown
      */
-    val shutdown: List<Execution<*>>
+    val shutdown: List<ExecutionCallback<*>>
         get() = emptyList()
 
     /**
