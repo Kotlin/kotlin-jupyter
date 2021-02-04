@@ -5,14 +5,15 @@ import jupyter.kotlin.JavaRuntime
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.CodeCellImpl
 import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
+import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -125,12 +126,28 @@ class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Display
 }
 
 class NotebookMock : Notebook {
-    override val cells: Map<Int, CodeCell>
-        get() = emptyMap()
-    override val results: ResultsAccessor
-        get() = ResultsAccessor { cells[it] }
-    override val displays: DisplayContainer
+    private val cells = hashMapOf<Int, CodeCellImpl>()
+
+    override fun getCell(id: Int): CodeCellImpl {
+        return cells[id] ?: throw ArrayIndexOutOfBoundsException(
+            "There is no cell with number '$id'"
+        )
+    }
+
+    override fun getResult(id: Int): Any? {
+        return getCell(id).result
+    }
+
+    private val displays: DisplayContainer
         get() = error("Not supposed to be called")
+
+    override fun getAllDisplays(): List<DisplayResultWithCell> {
+        return displays.getAll()
+    }
+
+    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> {
+        return displays.getById(id)
+    }
 
     override fun history(before: Int): CodeCell? {
         error("Not supposed to be called")

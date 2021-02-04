@@ -8,7 +8,6 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import java.lang.IllegalStateException
 
 class DisplayResultWrapper private constructor(
@@ -98,17 +97,30 @@ class EvalData(
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
 ) : Notebook {
-    override val cells = hashMapOf<Int, CodeCellImpl>()
-    override val results = ResultsAccessor { i ->
-        val cell = cells[i] ?: throw ArrayIndexOutOfBoundsException(
-            "There is no cell with number '$i'"
+    private val cells = hashMapOf<Int, CodeCellImpl>()
+
+    override fun getCell(id: Int): CodeCellImpl {
+        return cells[id] ?: throw ArrayIndexOutOfBoundsException(
+            "There is no cell with number '$id'"
         )
-        cell.result
     }
+
+    override fun getResult(id: Int): Any? {
+        return getCell(id).result
+    }
+
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
 
-    override val displays = DisplayContainerImpl()
+    val displays = DisplayContainerImpl()
+
+    override fun getAllDisplays(): List<DisplayResultWithCell> {
+        return displays.getAll()
+    }
+
+    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> {
+        return displays.getById(id)
+    }
 
     override val kernelVersion: KotlinKernelVersion
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")

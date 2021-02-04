@@ -27,8 +27,10 @@ class ApiTest : AbstractReplTest() {
             println(x*3)
             """.trimIndent()
         )
-        val res1 = jEval(4, "notebook.cells[2]?.result")
+        val res1 = jEval(4, "notebook.getCell(2)?.result")
         assertEquals(6, res1.resultValue)
+        val res2 = jEval(5, "notebook.getResult(2)")
+        assertEquals(6, res2.resultValue)
     }
 
     @Test
