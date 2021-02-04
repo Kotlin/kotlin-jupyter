@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import kotlin.jvm.Throws
+
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
  */
@@ -7,17 +9,24 @@ interface Notebook {
     /**
      * Mapping allowing to get cell by execution number
      */
-    val cells: Map<Int, CodeCell>
+    @Throws(IndexOutOfBoundsException::class)
+    fun getCell(id: Int): CodeCell
 
     /**
      * Mapping allowing to get result by execution number
      */
-    val results: ResultsAccessor
+    @Throws(IndexOutOfBoundsException::class)
+    fun getResult(id: Int): Any?
 
     /**
      * Information about all display data objects
      */
-    val displays: DisplayContainer
+    fun getAllDisplays(): List<DisplayResultWithCell>
+
+    /**
+     * Information about displays with the given [id]
+     */
+    fun getDisplaysById(id: String?): List<DisplayResultWithCell>
 
     /**
      * Get cell by relative offset: 0 for current cell,
