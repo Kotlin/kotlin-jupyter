@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.min
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
+import java.io.IOException
 import java.security.SignatureException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -207,4 +208,10 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message? {
         metadata.parseJson(),
         content.parseJson()
     )
+}
+
+object DisabledStdinInputStream : java.io.InputStream() {
+    override fun read(): Int {
+        throw IOException("Input from stdin is unsupported by the client")
+    }
 }

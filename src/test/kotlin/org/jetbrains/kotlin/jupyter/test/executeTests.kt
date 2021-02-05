@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.jupyter.get
 import org.jetbrains.kotlin.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.zeromq.ZMQ
@@ -24,6 +25,7 @@ class ExecuteTests : KernelServerTestsBase() {
         hasResult: Boolean = true,
         ioPubChecker: (ZMQ.Socket) -> Unit = {},
         inputs: List<String> = emptyList(),
+        allowStdin: Boolean = true,
     ): Any? {
         val context = ZMQ.context(1)
         val shell = ClientSocket(context, JupyterSockets.shell)
@@ -35,7 +37,7 @@ class ExecuteTests : KernelServerTestsBase() {
             ioPub.connect()
             stdin.connect()
 
-            shell.sendMessage("execute_request", content = jsonObject("code" to code))
+            shell.sendMessage("execute_request", content = jsonObject("code" to code, "allow_stdin" to allowStdin))
             inputs.forEach {
                 stdin.sendMessage("input_reply", jsonObject("value" to it))
             }
@@ -67,6 +69,19 @@ class ExecuteTests : KernelServerTestsBase() {
             stdin.close()
             context.term()
         }
+    }
+
+    private fun testWithNoStdin(code: String) {
+        doExecute(
+            code,
+            hasResult = false,
+            allowStdin = false,
+            ioPubChecker = {
+                val msg = it.receiveMessage()
+                assertEquals("stream", msg.type())
+                assertTrue((msg.content!!["text"] as String).startsWith("java.io.IOException: Input from stdin is unsupported by the client"))
+            }
+        )
     }
 
     @Test
@@ -152,5 +167,15 @@ class ExecuteTests : KernelServerTestsBase() {
             """.trimIndent()
         val res = doExecute(code, inputs = listOf("42"))
         assertEquals(jsonObject("text/plain" to "42"), res)
+    }
+
+    @Test
+    fun testReadLineWithNoStdin() {
+        testWithNoStdin("readLine() ?: \"blah\"")
+    }
+
+    @Test
+    fun testStdinReadWithNoStdin() {
+        testWithNoStdin("System.`in`.read()")
     }
 }
