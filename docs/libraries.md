@@ -52,67 +52,26 @@ You may also add a Kotlin kernel integration to your library using a
 In the following code snippets `<jupyterApiVersion>` is one of the published versions from the link above.
 It is encouraged to use the latest stable version.
 
-First, adjust your `settings.gradle` file:
-```groovy
-pluginManagement {
-    repositories {
-        maven("https://kotlin.bintray.com/kotlin-datascience/")
-    }
-
-   resolutionStrategy {
-      eachPlugin {
-         if (requested.id.id == 'org.jetbrains.kotlinx.jupyter.api.plugin') {
-            useModule('org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-gradle-plugin:<jupyterApiVersion>')
-         }
-      }
-   }
-}
-```
-
-Or, **alternatively**, your `setting.gradle.kts` file:
-```kotlin
-pluginManagement {
-    repositories {
-        maven("https://kotlin.bintray.com/kotlin-datascience/")
-    }
-
-    resolutionStrategy {
-        eachPlugin {
-            when (requested.id.id) {
-                "org.jetbrains.kotlinx.jupyter.api.plugin" -> useModule("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-gradle-plugin:<jupyterApiVersion>")
-            }
-        }
-    }
-}
-```
-
-Then, add the plugin and API dependencies into your buildscript.
+First, add the plugin dependency into your buildscript.
 
 For `build.gradle`:
 ```groovy
 plugins {
-    id "org.jetbrains.kotlinx.jupyter.api.plugin" version "<jupyterApiVersion>"
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation "org.jetbrains.kotlin:kotlin-reflect"
-    compileOnly("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api:<jupyterApiVersion>")
+    id "org.jetbrains.kotlin.jupyter.api" version "<jupyterApiVersion>"
 }
 ```
 
 For `build.gradle.kts`:
 ```kotlin
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.api.plugin") version "<jupyterApiVersion>"
-}
-
-dependencies { 
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
-    compileOnly("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api:<jupyterApiVersion>")
+    kotlin("jupyter.api") version "<jupyterApiVersion>"
 }
 ```
+
+This plugin adds dependencies to api and annotations ("scanner") artifacts to your project. You may turn of
+the auto-including of these artifacts by specifying following Gradle properties: 
+ - `kotlin.jupyter.add.api` to `false`. Add it manually using `org.jetbrains.kotlinx.jupyter.api.plugin.UtilKt.addKotlinJupyterApiDependency`
+ - `kotlin.jupyter.add.scanner` to `false`. Add it manually using `org.jetbrains.kotlinx.jupyter.api.plugin.UtilKt.addKotlinJupyterScannerDependency`
 
 Finally, refer your implementations of `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` and/or
 `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition` in your buildscript.
@@ -161,14 +120,6 @@ There is also an alternative way of letting know kernel about libraries
 definitions inside your JAR - you may mark them with special annotations
 and attach specific annotation processor to process them. See how it
 works.
-
-Add these two additional dependencies to your buildscript:
-```groovy
-dependencies { 
-    implementation("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-annotations:<jupyterApiVersion>")
-    kapt("org.jetbrains.kotlinx.jupyter:kotlin-jupyter-api-annotations:<jupyterApiVersion>")
-}
-```
 
 Now you don't need to specify options for `processJupyterApiResources` task.
 Just mark your integration class with `JupyterLibrary` annotations:

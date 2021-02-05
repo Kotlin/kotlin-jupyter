@@ -180,6 +180,7 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
             tasksList.add(taskSpecGetter(taskSpec).taskName)
         }
 
+        tasksList.add("publishToPluginPortal")
         tasksList.add("bintrayUpload")
         tasksList.add("publishDocs")
 

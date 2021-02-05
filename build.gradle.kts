@@ -119,6 +119,14 @@ tasks.register("publishLocal") {
     )
 }
 
+tasks.register("publishToPluginPortal") {
+    group = "publishing"
+
+    dependsOn(
+        ":api-gradle-plugin:publishPlugins"
+    )
+}
+
 tasks.jar {
     manifest {
         attributes["Main-Class"] = taskOptions.mainClassFQN
