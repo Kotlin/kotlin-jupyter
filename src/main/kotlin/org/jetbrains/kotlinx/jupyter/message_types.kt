@@ -243,6 +243,17 @@ class ExecuteReply(
 
     @SerialName("user_expressions")
     val userExpressions: Map<String, JsonElement> = mapOf(),
+
+    @SerialName("ename")
+    val errorName: String? = null,
+
+    @SerialName("evalue")
+    val errorValue: String? = null,
+
+    @SerialName("traceback")
+    val traceback: List<String>? = null,
+
+    val additionalInfo: JsonObject? = null,
 ) : MessageContent()
 
 @Serializable

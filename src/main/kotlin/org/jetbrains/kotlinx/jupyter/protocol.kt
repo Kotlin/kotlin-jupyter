@@ -428,7 +428,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     System.setErr(PrintStream(forkedError, false, "UTF-8"))
 
     val `in` = System.`in`
-    val allowStdIn = srcMessage.content?.boolean("allow_stdin") ?: true
+    val allowStdIn = (srcMessage.content as? ExecuteRequest)?.allowStdin ?: true
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
         return try {
