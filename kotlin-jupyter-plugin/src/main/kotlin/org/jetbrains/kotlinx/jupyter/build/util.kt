@@ -51,8 +51,8 @@ fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
 fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
     return rootProject.findProperty(propertyName)?.let {
         when (it) {
-            "true" -> true
-            "false" -> false
+            "true", true -> true
+            "false", false -> false
             else -> null
         }
     } ?: default

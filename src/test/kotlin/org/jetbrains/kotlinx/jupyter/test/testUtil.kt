@@ -128,6 +128,9 @@ class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Display
 class NotebookMock : Notebook {
     private val cells = hashMapOf<Int, CodeCellImpl>()
 
+    override val cellsList: Collection<CodeCell>
+        get() = emptyList()
+
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"

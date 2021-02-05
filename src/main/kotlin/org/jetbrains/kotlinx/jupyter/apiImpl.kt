@@ -99,6 +99,9 @@ class NotebookImpl(
 ) : Notebook {
     private val cells = hashMapOf<Int, CodeCellImpl>()
 
+    override val cellsList: Collection<CodeCellImpl>
+        get() = cells.values
+
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"

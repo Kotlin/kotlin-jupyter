@@ -7,6 +7,11 @@ import kotlin.jvm.Throws
  */
 interface Notebook {
     /**
+     * All executed cells of this notebook
+     */
+    val cellsList: Collection<CodeCell>
+
+    /**
      * Mapping allowing to get cell by execution number
      */
     @Throws(IndexOutOfBoundsException::class)

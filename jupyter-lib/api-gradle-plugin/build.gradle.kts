@@ -1,6 +1,7 @@
 import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 
 plugins {
+    id("com.gradle.plugin-publish") version "0.12.0"
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
@@ -8,6 +9,7 @@ plugins {
 }
 
 project.version = rootProject.version
+project.group = "org.jetbrains.kotlinx.jupyter"
 
 val junitVersion: String by rootProject
 
@@ -57,17 +59,38 @@ tasks.test {
     }
 }
 
+val pluginName = "apiGradlePlugin"
+
 gradlePlugin {
     plugins {
-        create("apiGradlePlugin") {
-            id = "org.jetbrains.kotlinx.jupyter.api.plugin"
+        create(pluginName) {
+            id = "org.jetbrains.kotlin.jupyter.api"
             implementationClass = "org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin"
         }
     }
 }
 
+pluginBundle {
+    // These settings are set for the whole plugin bundle
+    website = "https://github.com/Kotlin/kotlin-jupyter"
+    vcsUrl = "https://github.com/Kotlin/kotlin-jupyter"
+
+    (plugins) {
+        pluginName {
+            // id is captured from java-gradle-plugin configuration
+            displayName = "Kotlin Jupyter kernel integration plugin"
+            description = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
+            tags = listOf("jupyter", "kernel", "kotlin")
+        }
+    }
+
+    mavenCoordinates {
+        groupId = "org.jetbrains.kotlin"
+    }
+}
+
 addPublication {
-    publicationName = "apiGradlePlugin"
+    publicationName = pluginName
     artifactId = "kotlin-jupyter-api-gradle-plugin"
     bintrayDescription = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
     bintrayPackageName = artifactId

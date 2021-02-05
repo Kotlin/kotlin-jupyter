@@ -38,7 +38,12 @@ class ResourcesTaskTests {
         return GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
-            .withArguments(RESOURCES_TASK_NAME)
+            .withArguments(
+                RESOURCES_TASK_NAME,
+                "-Pkotlin.jupyter.add.api=false",
+                "-Pkotlin.jupyter.add.scanner=false"
+            )
+            .forwardOutput()
             .build()
     }
 
@@ -133,13 +138,7 @@ class ResourcesTaskTests {
             })
             """.trimIndent()
         )
-
-        GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments("processJupyterApiResources")
-            .forwardOutput()
-            .build()
+        runResourcesTask()
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
@@ -158,7 +157,7 @@ class ResourcesTaskTests {
         private val PLUGINS_BLOCK = """
             plugins {
                 id 'org.jetbrains.kotlin.jvm' version '1.4.20'
-                id 'org.jetbrains.kotlinx.jupyter.api.plugin'
+                id 'org.jetbrains.kotlin.jupyter.api'
             }
         """.trimIndent()
     }
