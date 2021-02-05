@@ -20,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.zeromq.ZMQ
@@ -82,7 +81,7 @@ class ExecuteTests : KernelServerTestsBase() {
             val shell = this.shell!!
             val ioPub = this.ioPub!!
             val stdin = this.stdin!!
-            shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code))
+            shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin))
             inputs.forEach {
                 stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
             }
@@ -124,8 +123,8 @@ class ExecuteTests : KernelServerTestsBase() {
             allowStdin = false,
             ioPubChecker = {
                 val msg = it.receiveMessage()
-                assertEquals("stream", msg.type())
-                assertTrue((msg.content!!["text"] as String).startsWith("java.io.IOException: Input from stdin is unsupported by the client"))
+                assertEquals(MessageType.STREAM, msg.type)
+                assertTrue((msg.content as StreamResponse).text.startsWith("java.io.IOException: Input from stdin is unsupported by the client"))
             }
         )
     }
