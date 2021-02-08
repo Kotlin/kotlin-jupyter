@@ -181,6 +181,7 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
         }
 
         tasksList.add("publishToPluginPortal")
+        tasksList.add("publishToSonatypeAndRelease")
         tasksList.add("bintrayUpload")
         tasksList.add("publishDocs")
 

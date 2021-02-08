@@ -1,6 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
+import org.jetbrains.kotlinx.jupyter.build.isProtectedBranch
 import org.jetbrains.kotlinx.jupyter.plugin.options
+import org.jetbrains.kotlinx.jupyter.publishing.applyNexusPlugin
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
@@ -13,6 +15,8 @@ plugins {
     id("org.jetbrains.kotlinx.jupyter.doc")
 }
 
+extra["isMainProject"] = true
+
 val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
 val junitVersion: String by project
@@ -23,6 +27,8 @@ val docsRepo: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
+
+applyNexusPlugin()
 
 fun KtlintExtension.setup() {
     version.set(ktlintVersion)
@@ -110,13 +116,21 @@ tasks.register("publishLocal") {
 
     dependsOn(
         tasks.condaPackage,
-        tasks.pyPiPackage,
-        ":api:publish",
-        ":api-gradle-plugin:publish",
-        ":lib:publish",
-        ":shared-compiler:publish",
-        ":common-dependencies:publish"
+        tasks.pyPiPackage
     )
+}
+
+val publishToSonatype by tasks.registering {
+    group = "publishing"
+}
+
+tasks.register("publishToSonatypeAndRelease") {
+    group = "publishing"
+
+    dependsOn(publishToSonatype)
+    if (isProtectedBranch()) {
+        dependsOn("closeAndReleaseRepository")
+    }
 }
 
 tasks.register("publishToPluginPortal") {
