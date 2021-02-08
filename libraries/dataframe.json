@@ -1,7 +1,7 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.7.1-dev-104"
+    "v": "0.7.1-dev-106"
   },
   "repositories": [
     "https://kotlin.bintray.com/kotlin-datascience"
