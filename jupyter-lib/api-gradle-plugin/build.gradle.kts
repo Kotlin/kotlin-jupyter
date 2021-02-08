@@ -94,4 +94,5 @@ addPublication {
     artifactId = "kotlin-jupyter-api-gradle-plugin"
     bintrayDescription = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
     bintrayPackageName = artifactId
+    publishToSonatype = false
 }
