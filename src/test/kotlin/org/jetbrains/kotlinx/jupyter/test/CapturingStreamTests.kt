@@ -92,14 +92,16 @@ class CapturingStreamTests {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")
         val expected = arrayOf("1122", "3344", "5566")
 
+        val timeDelta = 2000L
         val i = AtomicInteger(0)
-        val s = getStream(maxBufferLifeTimeMs = 1000) {
+        val s = getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
             assertEquals(expected[i.getAndIncrement()], it)
         }
 
+        Thread.sleep(timeDelta / 2)
         strings.forEach {
-            Thread.sleep(450)
             s.write(it.toByteArray())
+            Thread.sleep(timeDelta)
         }
 
         s.flush()
