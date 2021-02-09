@@ -180,8 +180,7 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
         }
     }
 
-    val isDevVersion = (rootProject.version as String).contains("dev")
-    if (signingKey != null && !isDevVersion) {
+    if (signingKey != null) {
         extensions.configure<SigningExtension>("signing") {
             sign(extensions.getByName<PublishingExtension>("publishing").publications[publicationName])
 
