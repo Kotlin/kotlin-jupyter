@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
-import org.jetbrains.kotlinx.jupyter.build.isProtectedBranch
 import org.jetbrains.kotlinx.jupyter.plugin.options
 import org.jetbrains.kotlinx.jupyter.publishing.applyNexusPlugin
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
@@ -124,13 +123,14 @@ val publishToSonatype by tasks.registering {
     group = "publishing"
 }
 
+tasks.named("closeRepository") {
+    mustRunAfter(publishToSonatype)
+}
+
 tasks.register("publishToSonatypeAndRelease") {
     group = "publishing"
 
-    dependsOn(publishToSonatype)
-    if (isProtectedBranch()) {
-        dependsOn("closeAndReleaseRepository")
-    }
+    dependsOn(publishToSonatype, "closeAndReleaseRepository")
 }
 
 tasks.register("publishToPluginPortal") {
