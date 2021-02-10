@@ -327,10 +327,10 @@ class ReplForJupyterImpl(
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
-    fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext) = fileAnnotationsProcessor.process(context, currentKernelHost!!)
+    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext) = fileAnnotationsProcessor.process(context, currentKernelHost!!)
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
-        synchronized(this) {
+        return synchronized(this) {
             beforeCellExecution.forEach { executor.execute(it) }
 
             var cell: CodeCellImpl? = null
@@ -351,13 +351,13 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            return EvalResult(rendered, newClasspath, result.compiledData)
+            EvalResult(rendered, newClasspath, result.compiledData)
         }
     }
 
     override fun <T> eval(execution: ExecutionCallback<T>): T {
-        synchronized(this) {
-            return executor.execute(execution)
+        return synchronized(this) {
+            executor.execute(execution)
         }
     }
 
