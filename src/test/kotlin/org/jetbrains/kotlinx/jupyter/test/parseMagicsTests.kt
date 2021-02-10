@@ -309,4 +309,15 @@ class ParseMagicsTests {
         assertEquals(2, magicsIntervals.size)
         assertEquals(2, codeIntervals.size)
     }
+
+    @Test
+    fun `% sign alone is parsed well`() {
+        val (magicsIntervals, codeIntervals) = intervals(
+            "%",
+            false
+        )
+
+        assertEquals(1, magicsIntervals.size)
+        assertEquals(0, codeIntervals.size)
+    }
 }

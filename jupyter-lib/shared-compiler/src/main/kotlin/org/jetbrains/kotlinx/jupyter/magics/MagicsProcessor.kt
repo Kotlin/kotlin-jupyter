@@ -62,7 +62,7 @@ class MagicsProcessor(
         val maybeFirstMatch = if (parseOutCellMarker) CELL_MARKER_REGEX.find(code, 0) else null
         val seed = maybeFirstMatch ?: MAGICS_REGEX.find(code, 0)
         return generateSequence(seed) {
-            MAGICS_REGEX.find(code, it.range.last)
+            MAGICS_REGEX.find(code, it.range.last + 1)
         }.map { CodeInterval(it.range.first, it.range.last + 1) }
     }
 
