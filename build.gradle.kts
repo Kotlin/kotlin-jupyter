@@ -56,10 +56,6 @@ allprojects {
             this.jvmTarget = jvmTarget
         }
     }
-
-    repositories {
-        maven { url = uri("https://kotlin.bintray.com/kotlin-dependencies") }
-    }
 }
 
 dependencies {
