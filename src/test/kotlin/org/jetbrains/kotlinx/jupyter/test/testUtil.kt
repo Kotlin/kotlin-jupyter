@@ -2,9 +2,6 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.CodeCellImpl
 import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
@@ -56,7 +53,7 @@ val testResolverConfig: ResolverConfig
     )
 
 fun Collection<Pair<String, String>>.toLibraries(): LibraryResolver {
-    val libJsons = map { it.first to Json.decodeFromString<JsonObject>(it.second) }.toMap()
+    val libJsons = map { it.first to it.second }.toMap()
     return getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
 }
 
@@ -74,12 +71,12 @@ fun getResolverFromNamesMap(
     )
 }
 
-fun readLibraries(basePath: String? = null): Map<String, JsonObject> {
+fun readLibraries(basePath: String? = null): Map<String, String> {
     return File(basePath, LibrariesDir)
         .listFiles()?.filter { it.extension == LibraryDescriptorExt }
         ?.map {
             log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
-            it.nameWithoutExtension to Json.decodeFromString<JsonObject>(it.readText())
+            it.nameWithoutExtension to it.readText()
         }
         .orEmpty()
         .toMap()

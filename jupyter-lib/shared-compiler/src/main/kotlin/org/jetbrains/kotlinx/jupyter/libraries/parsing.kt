@@ -1,23 +1,20 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 
 fun parseLibraryDescriptor(json: String): LibraryDescriptor {
-    val res = Json.parseToJsonElement(json)
-    if (res is JsonObject) return parseLibraryDescriptor(res)
-
-    throw ReplCompilerException("Result of library descriptor parsing is of type ${res.javaClass.canonicalName} which is unexpected")
+    return try {
+        Json.decodeFromString(json)
+    } catch (e: SerializationException) {
+        throw ReplException("Error during library deserialization. Library descriptor text:\n$json", e)
+    }
 }
 
-fun parseLibraryDescriptor(json: JsonObject): LibraryDescriptor {
-    return Json.decodeFromJsonElement(json)
-}
-
-fun parseLibraryDescriptors(libJsons: Map<String, JsonObject>): Map<String, LibraryDescriptor> {
+fun parseLibraryDescriptors(libJsons: Map<String, String>): Map<String, LibraryDescriptor> {
     val logger = getLogger()
     return libJsons.mapValues {
         logger.info("Parsing '${it.key}' descriptor")

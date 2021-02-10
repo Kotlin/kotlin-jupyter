@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesInstantiable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 
 class LibrariesScanner(val notebook: Notebook) {
@@ -65,18 +66,28 @@ class LibrariesScanner(val notebook: Notebook) {
     private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook): List<LibraryDefinition> {
         val definitions = mutableListOf<LibraryDefinition>()
 
+        fun <T> withErrorsHandling(declaration: LibrariesInstantiable<*>, action: () -> T): T {
+            return try {
+                action()
+            } catch (e: Throwable) {
+                val errorMessage = "Failed to load library integration class '${declaration.fqn}'"
+                log.error("$errorMessage: " + e.message)
+                throw ReplException(errorMessage, e)
+            }
+        }
+
         scanResult.definitions.mapTo(definitions) { declaration ->
-            instantiate(classLoader, declaration, notebook)
+            withErrorsHandling(declaration) {
+                instantiate(classLoader, declaration, notebook)
+            }
         }
 
         scanResult.producers.forEach { declaration ->
-            try {
+            withErrorsHandling(declaration) {
                 val producer = instantiate(classLoader, declaration, notebook)
                 producer.getDefinitions(notebook).forEach {
                     definitions.add(it)
                 }
-            } catch (e: Throwable) {
-                System.err.println("Failed to load library integration class '${declaration.fqn}': " + e.message)
             }
         }
         return definitions

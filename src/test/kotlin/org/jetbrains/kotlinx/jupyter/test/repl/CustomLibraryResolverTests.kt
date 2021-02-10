@@ -2,26 +2,28 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.receivers.TempAnnotation
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class CustomLibraryResolverTests : AbstractReplTest() {
 
@@ -297,8 +299,36 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
+    fun testIncorrectDescriptors() {
+        val ex1 = assertThrows<ReplException> {
+            parseLibraryDescriptor(
+                """
+                {
+                    "imports": []
+                """.trimIndent()
+            )
+        }
+        assertTrue(ex1.cause is SerializationException)
+
+        val ex2 = assertThrows<ReplException> {
+            parseLibraryDescriptor(
+                """
+                {
+                    "imports2": []
+                }
+                """.trimIndent()
+            )
+        }
+        assertTrue(ex2.cause is SerializationException)
+
+        assertDoesNotThrow {
+            parseLibraryDescriptor("{}")
+        }
+    }
+
+    @Test
     fun testLibraryWithResourcesDescriptorParsing() {
-        val descriptor = Json.decodeFromString<LibraryDescriptor>(File("src/test/testData/lib-with-resources.json").readText())
+        val descriptor = parseLibraryDescriptor(File("src/test/testData/lib-with-resources.json").readText())
         val resources = descriptor.resources
         assertEquals(1, resources.size)
 
