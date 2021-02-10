@@ -79,8 +79,7 @@ interface JupyterCompilerWithCompletion : JupyterCompiler {
     companion object {
         fun create(
             compilationConfiguration: ScriptCompilationConfiguration,
-            evaluationConfiguration: ScriptEvaluationConfiguration,
-            lightCompilationConfiguration: ScriptCompilationConfiguration
+            evaluationConfiguration: ScriptEvaluationConfiguration
         ): JupyterCompilerWithCompletion {
             return JupyterCompilerWithCompletionImpl(
                 KJvmReplCompilerWithIdeServices(
@@ -88,8 +87,7 @@ interface JupyterCompilerWithCompletion : JupyterCompiler {
                         ?: defaultJvmScriptingHostConfiguration
                 ),
                 compilationConfiguration,
-                evaluationConfiguration,
-                lightCompilationConfiguration
+                evaluationConfiguration
             )
         }
     }
@@ -106,7 +104,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 
     private val refinementCallbacks = mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
 
-    private val compilationConfig: ScriptCompilationConfiguration = initialCompilationConfig.with {
+    protected val compilationConfig: ScriptCompilationConfiguration = initialCompilationConfig.with {
         refineConfiguration {
             val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
             handlers.forEach { beforeCompiling(it.handler) }
@@ -212,8 +210,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 class JupyterCompilerWithCompletionImpl(
     compiler: KJvmReplCompilerWithIdeServices,
     compilationConfig: ScriptCompilationConfiguration,
-    evaluationConfig: ScriptEvaluationConfiguration,
-    private val configForAnalyze: ScriptCompilationConfiguration
+    evaluationConfig: ScriptEvaluationConfiguration
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
     JupyterCompilerWithCompletion {
 
@@ -240,7 +237,7 @@ class JupyterCompilerWithCompletionImpl(
             compiler.analyze(
                 snippet,
                 0.toSourceCodePosition(snippet),
-                configForAnalyze
+                compilationConfig
             )
         }
     }

@@ -50,9 +50,11 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
@@ -223,22 +225,19 @@ class ReplForJupyterImpl(
     )
 
     // Used for various purposes, i.e. completion and listing errors
-    private val lightCompilerConfiguration: ScriptCompilationConfiguration =
+    private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
             scriptReceivers,
             compilerArgsConfigurator,
-        )
-
-    // Used only for compilation
-    private val compilerConfiguration: ScriptCompilationConfiguration = lightCompilerConfiguration.with {
-        refineConfiguration {
-            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
+        ).with {
+            refineConfiguration {
+                onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
+            }
         }
-    }
 
     override val fileExtension: String
-        get() = lightCompilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
+        get() = compilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
 
     private val ScriptCompilationConfiguration.classpath
         get() = this[ScriptCompilationConfiguration.dependencies]
@@ -246,7 +245,7 @@ class ReplForJupyterImpl(
             ?.flatMap { it.classpath }
             .orEmpty()
 
-    override val currentClasspath = lightCompilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
+    override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) :
         ClassLoader(parent) {
@@ -282,7 +281,7 @@ class ReplForJupyterImpl(
     }
 
     private val jupyterCompiler by lazy {
-        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration, lightCompilerConfiguration)
+        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration)
     }
 
     private val evaluator: BasicJvmReplEvaluator by lazy {
@@ -325,12 +324,27 @@ class ReplForJupyterImpl(
         this
     )
 
+    private var evalContextEnabled = false
+    private fun withEvalContext(action: () -> EvalResult): EvalResult {
+        return synchronized(this) {
+            evalContextEnabled = true
+            try {
+                action()
+            } finally {
+                evalContextEnabled = false
+            }
+        }
+    }
+
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
-    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext) = fileAnnotationsProcessor.process(context, currentKernelHost!!)
+    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+        return if (evalContextEnabled) fileAnnotationsProcessor.process(context, currentKernelHost!!)
+        else context.compilationConfiguration.asSuccess()
+    }
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
-        return synchronized(this) {
+        return withEvalContext {
             beforeCellExecution.forEach { executor.execute(it) }
 
             var cell: CodeCellImpl? = null
@@ -412,7 +426,7 @@ class ReplForJupyterImpl(
         val preprocessed = magics.processMagics(args.code, true).code
         return completer.complete(
             jupyterCompiler.completer,
-            lightCompilerConfiguration,
+            compilerConfiguration,
             args.code,
             preprocessed,
             jupyterCompiler.nextCounter(),

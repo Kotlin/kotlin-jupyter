@@ -37,9 +37,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         with(replContext) {
             val context = ExecutionContext(replContext, displayHandler, this@CellExecutorImpl)
 
+            log.debug("Executing code:\n$code")
             val preprocessedCode = if (processMagics) {
                 val processedMagics = magicsProcessor.processMagics(code)
 
+                log.debug("Adding ${processedMagics.libraries.size} libraries")
                 processedMagics.libraries.getDefinitions(notebook).forEach {
                     context.addLibrary(it)
                 }

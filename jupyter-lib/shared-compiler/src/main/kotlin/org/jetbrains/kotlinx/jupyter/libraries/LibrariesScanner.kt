@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
@@ -12,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesInstantiable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.config.getLogger
 
 class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
@@ -22,8 +24,10 @@ class LibrariesScanner(val notebook: Notebook) {
 
     fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost) {
         val scanResult = scanForLibraries(classLoader)
+        log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
         updateProcessed(scanResult)
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
+        log.debug("Number of detected definitions: ${libraries.size}")
         libraries.forEach { host.addLibrary(it) }
     }
 
@@ -92,5 +96,9 @@ class LibrariesScanner(val notebook: Notebook) {
             }
             else -> throw IllegalStateException("Only zero or one argument is allowed for library class")
         } as T
+    }
+
+    companion object {
+        private val log = getLogger("libraries scanning")
     }
 }
