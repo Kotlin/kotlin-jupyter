@@ -56,7 +56,7 @@ class ReplLibraryException(
     name: String? = null,
     val part: LibraryProblemPart,
     cause: Throwable? = null,
-): ReplException("The problem is found in ${name?.let { "library $it" } ?: "one of the loaded libraries"}: check library ${part.message}", cause)
+) : ReplException("The problem is found in ${name?.let { "library $it" } ?: "one of the loaded libraries"}: check library ${part.message}", cause)
 
 fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {
     return try {
