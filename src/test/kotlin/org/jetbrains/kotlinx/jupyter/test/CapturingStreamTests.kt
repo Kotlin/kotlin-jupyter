@@ -92,10 +92,12 @@ class CapturingStreamTests {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")
         val expected = arrayOf("1122", "3344", "5566")
 
-        val timeDelta = 2000L
-        val i = AtomicInteger(0)
+        val timeDelta = 1000L
+        var i = 0
         val s = getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
-            assertEquals(expected[i.getAndIncrement()], it)
+            synchronized(this) {
+                assertEquals(expected[i++], it)
+            }
         }
 
         Thread.sleep(timeDelta / 2)
@@ -105,7 +107,8 @@ class CapturingStreamTests {
         }
 
         s.flush()
+        s.close()
 
-        assertEquals(expected.size, i.get())
+        assertEquals(expected.size, i)
     }
 }
