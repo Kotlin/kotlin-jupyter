@@ -9,6 +9,8 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
@@ -80,7 +82,9 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             if (invokeAfterCallbacks) {
                 afterCellExecution.forEach {
                     log.catchAll {
-                        it(context, result.scriptInstance, result.result)
+                        rethrowAsLibraryException(LibraryProblemPart.AFTER_CELL_CALLBACKS) {
+                            it(context, result.scriptInstance, result.result)
+                        }
                     }
                 }
             }
@@ -109,8 +113,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         }
 
         override fun addLibrary(library: LibraryDefinition) {
-            library.buildDependenciesInitCode()?.let { runChild(it) }
-            library.init.forEach(::runChild)
+            rethrowAsLibraryException(LibraryProblemPart.PREBUILT) {
+                library.buildDependenciesInitCode()?.let { runChild(it) }
+            }
+            rethrowAsLibraryException(LibraryProblemPart.INIT) {
+                library.init.forEach(::runChild)
+            }
             library.renderers.mapNotNull(sharedContext.typeRenderersProcessor::register).joinToLines().let(::runChild)
             library.converters.forEach(sharedContext.fieldsProcessor::register)
             library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
@@ -118,9 +126,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             sharedContext.afterCellExecution.addAll(library.afterCellExecution)
 
             val classLoader = sharedContext.evaluator.lastClassLoader
-            library.resources.forEach {
-                val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
-                displayHandler?.handleDisplay(HTML(htmlText))
+            rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
+                library.resources.forEach {
+                    val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
+                    displayHandler?.handleDisplay(HTML(htmlText))
+                }
             }
 
             library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)

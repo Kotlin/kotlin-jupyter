@@ -3,16 +3,20 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.receivers.TempAnnotation
 import kotlinx.serialization.SerializationException
+import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
@@ -38,6 +42,14 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             libs
         )
     )
+
+    private fun testOneLibUsage(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
+        val repl = makeRepl("mylib" to definition)
+        val paramList = if (args.isEmpty()) ""
+        else args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
+        repl.eval("%use mylib$paramList")
+        return repl
+    }
 
     @Test
     fun testUseMagic() {
@@ -338,5 +350,78 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         assertEquals(2, bundles.size)
         assertEquals(1, bundles[0].locations.size)
         assertEquals(1, bundles[1].locations.size)
+    }
+
+    @Test
+    fun testLibraryWithIncorrectImport() {
+        val e = assertThrows<ReplLibraryException> {
+            testOneLibUsage(
+                library {
+                    import("ru.incorrect")
+                }
+            )
+        }
+        assertEquals(LibraryProblemPart.PREBUILT, e.part)
+    }
+
+    @Test
+    fun testLibraryWithIncorrectDependency() {
+        val e = assertThrows<ReplLibraryException> {
+            testOneLibUsage(
+                library {
+                    dependencies("org.foo:bar:42")
+                }
+            )
+        }
+        assertEquals(LibraryProblemPart.PREBUILT, e.part)
+    }
+
+    @Test
+    fun testLibraryWithIncorrectInitCode() {
+        val e = assertThrows<ReplLibraryException> {
+            testOneLibUsage(
+                library {
+                    onLoaded {
+                        null!!
+                    }
+                }
+            )
+        }
+        assertEquals(LibraryProblemPart.INIT, e.part)
+    }
+
+    @Test
+    fun testExceptionInRenderer() {
+        val repl = testOneLibUsage(
+            library {
+                render<String> { throw IllegalStateException() }
+            }
+        )
+
+        repl.eval("42")
+        val e = assertThrows<ReplLibraryException> {
+            repl.eval(
+                """
+                "42"
+                """.trimIndent()
+            )
+        }
+        assertEquals(LibraryProblemPart.RENDERERS, e.part)
+    }
+
+    @Test
+    fun testBeforeExecutionException() {
+        val repl = testOneLibUsage(
+            library {
+                beforeCellExecution {
+                    throw NullPointerException()
+                }
+            }
+        )
+
+        val e = assertThrows<ReplLibraryException> {
+            repl.eval("7")
+        }
+        assertEquals(LibraryProblemPart.BEFORE_CELL_CALLBACKS, e.part)
     }
 }

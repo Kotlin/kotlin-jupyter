@@ -6,7 +6,6 @@ import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
@@ -22,8 +21,10 @@ import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
@@ -207,7 +208,6 @@ class ReplForJupyterImpl(
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
 
     private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
-    private val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
     private val shutdownCodes = mutableListOf<ExecutionCallback<*>>()
 
     private val ctx = KotlinContext()
@@ -345,7 +345,9 @@ class ReplForJupyterImpl(
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         return withEvalContext {
-            beforeCellExecution.forEach { executor.execute(it) }
+            rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
+                beforeCellExecution.forEach { executor.execute(it) }
+            }
 
             var cell: CodeCellImpl? = null
 
@@ -377,7 +379,11 @@ class ReplForJupyterImpl(
 
     override fun evalOnShutdown(): List<EvalResult> {
         return shutdownCodes.map {
-            val res = log.catchAll { executor.execute(it) }
+            val res = log.catchAll {
+                rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
+                    executor.execute(it)
+                }
+            }
             EvalResult(res, emptyList(), null)
         }
     }

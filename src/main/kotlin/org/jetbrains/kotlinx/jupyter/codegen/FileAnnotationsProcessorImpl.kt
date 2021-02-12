@@ -8,6 +8,8 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -52,7 +54,11 @@ class FileAnnotationsProcessorImpl(
                     )
                     CompilerArgs::class -> compilerArgsConfigurator.configure(conf, collected)
                     else -> {
-                        handlers[clazz.qualifiedName!!]?.invoke(host, collected)
+                        handlers[clazz.qualifiedName!!]?.let { handler ->
+                            rethrowAsLibraryException(LibraryProblemPart.FILE_ANNOTATIONS) {
+                                handler.invoke(host, collected)
+                            }
+                        }
                         conf.asSuccess()
                     }
                 }

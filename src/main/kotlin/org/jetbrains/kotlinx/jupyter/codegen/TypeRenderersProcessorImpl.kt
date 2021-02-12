@@ -5,6 +5,8 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 
 class TypeRenderersProcessorImpl(
@@ -18,13 +20,17 @@ class TypeRenderersProcessorImpl(
         val (handler, id) = typeRenderers.firstOrNull { it.handler.acceptsType(value::class) }
             ?: return value
         return if (id == null) {
-            val newField = handler.execution.execute(host, field)
+            val newField = rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
+                handler.execution.execute(host, field)
+            }
             renderResult(host, newField)
         } else {
             val methodName = getMethodName(id)
             contextUpdater.update()
             val functionInfo = contextUpdater.context.functions[methodName]!!
-            val resultValue = functionInfo.function.call(functionInfo.line, value)
+            val resultValue = rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
+                functionInfo.function.call(functionInfo.line, value)
+            }
             renderResult(host, FieldValue(resultValue, null))
         }
     }

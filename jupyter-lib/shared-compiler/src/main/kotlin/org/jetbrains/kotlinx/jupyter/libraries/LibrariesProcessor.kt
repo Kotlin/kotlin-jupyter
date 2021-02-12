@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 
 interface LibrariesProcessor {
     fun processNewLibraries(arg: String): List<LibraryDefinitionProducer>
@@ -53,7 +53,7 @@ class LibrariesProcessorImpl(
         library.minKernelVersion?.let { minVersion ->
             kernelVersion?.let { currentVersion ->
                 if (currentVersion < minVersion) {
-                    throw ReplCompilerException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
+                    throw ReplException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
                 }
             }
         }
@@ -63,7 +63,7 @@ class LibrariesProcessorImpl(
         splitLibraryCalls(arg).map {
             val (libRef, vars) = parseReferenceWithArgs(it)
             val library = libraries?.resolve(libRef, vars)
-                ?: throw ReplCompilerException("Unknown library '$libRef'")
+                ?: throw ReplException("Unknown library '$libRef'")
 
             checkKernelVersionRequirements(libRef.toString(), library)
 

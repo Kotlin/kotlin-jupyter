@@ -46,7 +46,7 @@ internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluato
 
             isExecuting = true
             if (logExecution) {
-                println("Executing:\n" + code)
+                println("Executing:\n$code")
             }
             val id = compiler.nextCounter()
 

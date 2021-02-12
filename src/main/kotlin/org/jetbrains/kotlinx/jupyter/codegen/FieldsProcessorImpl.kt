@@ -4,6 +4,8 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import kotlin.reflect.KMutableProperty
@@ -36,7 +38,9 @@ class FieldsProcessorImpl(
             val handler = handlers.asIterable().firstOrNull { it.acceptsType(notNullType) }
             if (handler != null) {
                 val execution = handler.execution as FieldHandlerExecution<Any>
-                execution.execute(host, value, property)
+                rethrowAsLibraryException(LibraryProblemPart.CONVERTERS) {
+                    execution.execute(host, value, property)
+                }
                 continue
             }
             if (propertyType.isMarkedNullable) {

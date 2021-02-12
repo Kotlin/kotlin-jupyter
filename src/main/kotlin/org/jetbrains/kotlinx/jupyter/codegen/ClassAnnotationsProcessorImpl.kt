@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import kotlin.reflect.KClass
 
 class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
@@ -17,10 +19,12 @@ class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
         executedSnippet.nestedClasses
             .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }
-            .forEach {
-                val handler = handlers[it.key.qualifiedName!!]
+            .forEach { (annotationClass, classesList) ->
+                val handler = handlers[annotationClass.qualifiedName!!]
                 if (handler != null) {
-                    handler(host, it.value.map { it.second })
+                    rethrowAsLibraryException(LibraryProblemPart.CLASS_ANNOTATIONS) {
+                        handler(host, classesList.map { it.second })
+                    }
                 }
             }
     }

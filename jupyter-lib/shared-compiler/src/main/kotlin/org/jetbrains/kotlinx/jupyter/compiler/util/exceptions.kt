@@ -39,6 +39,33 @@ fun CompilerMessageLocationWithRange.toExtString(): String {
 
 open class ReplException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+enum class LibraryProblemPart(val message: String) {
+    PREBUILT("imports, dependencies and repositories"),
+    INIT("init codes"),
+    RESOURCES("resources definitions"),
+    RENDERERS("renderers"),
+    CONVERTERS("converters (fields callbacks)"),
+    CLASS_ANNOTATIONS("class annotations callbacks"),
+    FILE_ANNOTATIONS("file annotations callbacks"),
+    BEFORE_CELL_CALLBACKS("initCell codes (before-cell-execution callbacks)"),
+    AFTER_CELL_CALLBACKS("after-cell-execution callbacks"),
+    SHUTDOWN("shutdown callbacks/codes"),
+}
+
+class ReplLibraryException(
+    name: String? = null,
+    val part: LibraryProblemPart,
+    cause: Throwable? = null,
+): ReplException("The problem is found in ${name?.let { "library $it" } ?: "one of the loaded libraries"}: check library ${part.message}", cause)
+
+fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {
+    return try {
+        action()
+    } catch (e: Throwable) {
+        throw ReplLibraryException(part = part, cause = e)
+    }
+}
+
 class ReplCompilerException(errorResult: ResultWithDiagnostics.Failure? = null, message: String? = null) :
     ReplException(message ?: errorResult?.getErrors() ?: "") {
 
