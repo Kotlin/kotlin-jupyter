@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.publishing
 
+import de.marcphilipp.gradle.nexus.NexusPublishExtension
+import de.marcphilipp.gradle.nexus.NexusPublishPlugin
 import io.codearte.gradle.nexus.NexusStagingExtension
 import io.codearte.gradle.nexus.NexusStagingPlugin
 import org.gradle.api.Project
@@ -15,9 +17,21 @@ fun getNexusPassword(): String? {
     return System.getenv("SONATYPE_PASSWORD")
 }
 
+fun Project.configureNexusPublish() {
+    extensions.configure<NexusPublishExtension>("nexusPublishing") {
+        repositories {
+            sonatype {
+                username.set(getNexusUser())
+                password.set(getNexusPassword())
+            }
+        }
+    }
+}
+
 fun Project.applyNexusPlugin() {
     pluginManager.run {
         apply(NexusStagingPlugin::class.java)
+        apply(NexusPublishPlugin::class.java)
     }
 
     extensions.configure<NexusStagingExtension>("nexusStaging") {
@@ -25,6 +39,7 @@ fun Project.applyNexusPlugin() {
         password = getNexusPassword()
         packageGroup = NEXUS_PACKAGE_GROUP
         repositoryDescription = "kotlin-jupyter project, v. ${project.version}"
-        // serverUrl = NEXUS_REPO_URL
     }
+
+    configureNexusPublish()
 }
