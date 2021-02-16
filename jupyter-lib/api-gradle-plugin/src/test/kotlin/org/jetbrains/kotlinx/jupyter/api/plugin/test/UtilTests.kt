@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin.test
 
-import org.jetbrains.kotlinx.jupyter.api.plugin.kotlinJupyterApiVersion
+import org.jetbrains.kotlinx.jupyter.api.plugin.KotlinJupyterPluginExtension
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
@@ -8,7 +8,7 @@ class UtilTests {
 
     @Test
     fun testVersion() {
-        val version = kotlinJupyterApiVersion().trim()
+        val version = KotlinJupyterPluginExtension.apiVersion().trim()
         assertTrue(version.isNotEmpty())
     }
 }

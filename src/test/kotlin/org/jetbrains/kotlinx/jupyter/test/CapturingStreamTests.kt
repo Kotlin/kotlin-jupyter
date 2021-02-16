@@ -92,7 +92,7 @@ class CapturingStreamTests {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")
         val expected = arrayOf("1122", "3344", "5566")
 
-        val timeDelta = 1000L
+        val timeDelta = 2000L
         var i = 0
         val s = getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
             synchronized(this) {

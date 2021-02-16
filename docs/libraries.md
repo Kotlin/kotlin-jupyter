@@ -68,37 +68,32 @@ plugins {
 }
 ```
 
-This plugin adds dependencies to api and annotations ("scanner") artifacts to your project. You may turn of
-the auto-including of these artifacts by specifying following Gradle properties: 
- - `kotlin.jupyter.add.api` to `false`. Add it manually using `org.jetbrains.kotlinx.jupyter.api.plugin.UtilKt.addKotlinJupyterApiDependency`
- - `kotlin.jupyter.add.scanner` to `false`. Add it manually using `org.jetbrains.kotlinx.jupyter.api.plugin.UtilKt.addKotlinJupyterScannerDependency`
+This plugin adds dependencies to api and annotations ("scanner") artifacts to your project. You may turn off
+the auto-including of these artifacts by specifying following Gradle properties:
+ - `kotlin.jupyter.add.api` to `false`.
+ - `kotlin.jupyter.add.scanner` to `false`.
 
-Finally, refer your implementations of `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` and/or
-`org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition` in your buildscript.
-
-For `build.gradle`:
+Add these dependencies manually using `kotlinJupyter` extension:
 ```groovy
-processJupyterApiResources {
-    libraryProducers = ["org.my.lib.Integration"]
+kotlinJupyter {
+    addApiDependency("<version>")
+    addScannerDependency("<version>")
 }
 ```
 
-For `build.gradle.kts`:
-```kotlin
-tasks.processJupyterApiResources {
-    libraryProducers = listOf("org.my.lib.Integration")
-}
-```
-
-Your `org.my.lib.Integration` implementation may look like this:
+Finally, implement `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` or
+`org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition` and mark implementation with
+`JupyterLibrary` annotation:
 
 ```kotlin
 package org.my.lib
+import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 
+@JupyterLibrary
 internal class Integration : JupyterIntegration() {
-
+    
     override fun Builder.onLoaded(notebook: Notebook?) {
         render<MyClass> { HTML(it.toHTML()) }
         import("org.my.lib.*")
@@ -114,27 +109,24 @@ For a further information see docs for:
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer`
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`
 
-### Marking integration classes with annotations
+### Avoiding using annotation processor
+You may want not to use annotation processing for implementations detection.
+Then you may refer your implementations right in your buildscript. Note that
+no checking for existence will be performed in this case.
 
-There is also an alternative way of letting know kernel about libraries
-definitions inside your JAR - you may mark them with special annotations
-and attach specific annotation processor to process them. See how it
-works.
+The following example shows how to refer aforementioned `Integration` class in your buildscript.
+Obviously, in this case you shouldn't mark it with `JupyterLibrary` annotation.
 
-Now you don't need to specify options for `processJupyterApiResources` task.
-Just mark your integration class with `JupyterLibrary` annotations:
+For `build.gradle`:
+```groovy
+processJupyterApiResources {
+    libraryProducers = ["org.my.lib.Integration"]
+}
+```
 
+For `build.gradle.kts`:
 ```kotlin
-package org.my.lib
-import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
-import org.jetbrains.kotlinx.jupyter.api.*
-import org.jetbrains.kotlinx.jupyter.api.libraries.*
-
-@JupyterLibrary
-internal class Integration : JupyterIntegration() {
-    
-    override fun Builder.onLoaded(notebook: Notebook?) {
-        import("org.my.lib.*")
-    }
+tasks.processJupyterApiResources {
+    libraryProducers = listOf("org.my.lib.Integration")
 }
 ```

@@ -34,15 +34,17 @@ class ResourcesTaskTests {
         buildFile.writeText(buildFileText)
     }
 
-    private fun runResourcesTask(): BuildResult {
+    private fun runResourcesTask(args: Array<String>? = null): BuildResult {
+        val arguments = args?.toMutableList() ?: mutableListOf(
+            "-Pkotlin.jupyter.add.api=false",
+            "-Pkotlin.jupyter.add.scanner=false"
+        )
+        arguments.add(0, RESOURCES_TASK_NAME)
+
         return GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
-            .withArguments(
-                RESOURCES_TASK_NAME,
-                "-Pkotlin.jupyter.add.api=false",
-                "-Pkotlin.jupyter.add.scanner=false"
-            )
+            .withArguments(arguments)
             .forwardOutput()
             .build()
     }
@@ -115,6 +117,51 @@ class ResourcesTaskTests {
                 implementation(files("$apiJar"))
                 implementation(files("$apiAnnotations"))
                 kapt(files("$apiAnnotations"))
+            }
+            """.trimIndent()
+        )
+
+        val srcDir = projectDir.resolve("src/main/kotlin")
+        srcDir.mkdirs()
+
+        val integrationKt = srcDir.resolve("pack").resolve("Integration.kt")
+        integrationKt.parentFile.mkdirs()
+        integrationKt.writeText(
+            """
+            package pack
+            
+            import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
+            import org.jetbrains.kotlinx.jupyter.api.*
+            import org.jetbrains.kotlinx.jupyter.api.libraries.*
+            
+            @JupyterLibrary
+            class Integration : JupyterIntegration({            
+                import("org.my.lib.*")
+            })
+            """.trimIndent()
+        )
+        runResourcesTask()
+
+        assertLibrariesJsonContents(
+            LibrariesScanResult(
+                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration)
+            )
+        )
+    }
+
+    @Test
+    fun `check extension`() {
+        val version = "0.8.3.202"
+
+        val buildFile = projectDir.resolve("build.gradle")
+
+        buildFile.writeText(
+            """
+            $PLUGINS_BLOCK
+            
+            kotlinJupyter {
+                addApiDependency("$version")
+                addScannerDependency("$version")
             }
             """.trimIndent()
         )

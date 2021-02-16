@@ -27,7 +27,9 @@ class ApiGradlePlugin : Plugin<Project> {
             maven("https://kotlin.bintray.com/kotlin-datascience")
         }
 
-        target.addDependenciesIfNeeded()
+        val pluginExtension = KotlinJupyterPluginExtension(target)
+        target.extensions.add("kotlinJupyter", pluginExtension)
+        pluginExtension.addDependenciesIfNeeded()
 
         target.tasks {
             val resourcesTaskName = "processJupyterApiResources"
