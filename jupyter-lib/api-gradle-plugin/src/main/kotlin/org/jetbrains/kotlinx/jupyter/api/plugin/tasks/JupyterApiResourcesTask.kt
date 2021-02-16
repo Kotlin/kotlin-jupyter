@@ -66,7 +66,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
         )
     }
 
-    class FQNAware(
+    data class FQNAware(
         val fqn: String
     )
 
@@ -77,8 +77,17 @@ open class JupyterApiResourcesTask : DefaultTask() {
 
     operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult {
         return LibrariesScanResult(
-            definitions + other.definitions,
-            producers + other.producers
+            union(definitions, other.definitions),
+            union(producers, other.producers)
         )
+    }
+
+    companion object {
+        private inline fun <reified T> union(a: Array<T>, b: Array<T>): Array<T> {
+            val result = mutableSetOf<T>()
+            result.addAll(a)
+            result.addAll(b)
+            return result.toTypedArray()
+        }
     }
 }
