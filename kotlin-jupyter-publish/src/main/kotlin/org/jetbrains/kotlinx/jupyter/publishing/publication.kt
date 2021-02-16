@@ -11,7 +11,6 @@ import org.gradle.kotlin.dsl.invoke
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.DokkaTask
 import java.io.File
-import java.net.URI
 import java.nio.file.Path
 
 fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
@@ -21,8 +20,6 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
     val mainSourceSet = sourceSets.named("main").get()
     val publicationName = settings.publicationName!!
 
-    val sonatypeUser = getNexusUser()
-    val sonatypePassword = getNexusPassword()
     val signingPrivateKey = System.getenv("SIGN_KEY_PRIVATE")
     val signingKey = System.getenv("SIGN_KEY_ID")
     val signingKeyPassphrase = System.getenv("SIGN_KEY_PASSPHRASE")
@@ -108,19 +105,11 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
                     url = it.toUri()
                 }
             }
-
-            maven {
-                name = "Sonatype"
-                url = URI(NEXUS_REPO_URL)
-                credentials {
-                    username = sonatypeUser
-                    password = sonatypePassword
-                }
-            }
         }
     }
 
     val thisProjectName = project.name
+    val thisProject = project
 
     if (rootProject.findProperty("isMainProject") == true) {
         rootProject.tasks {
@@ -129,8 +118,9 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
             }
 
             if (settings.publishToSonatype) {
+                thisProject.configureNexusPublish()
                 named("publishToSonatype") {
-                    dependsOn(":$thisProjectName:publishAllPublicationsToSonatypeRepository")
+                    dependsOn(":$thisProjectName:publishToSonatype")
                 }
             }
         }

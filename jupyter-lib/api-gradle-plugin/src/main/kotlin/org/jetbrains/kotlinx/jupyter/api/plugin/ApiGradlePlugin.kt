@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.api.plugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.maven
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin

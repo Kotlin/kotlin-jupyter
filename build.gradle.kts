@@ -115,18 +115,14 @@ tasks.register("publishLocal") {
     )
 }
 
-val publishToSonatype by tasks.registering {
-    group = "publishing"
-}
-
 tasks.named("closeRepository") {
-    mustRunAfter(publishToSonatype)
+    mustRunAfter("publishToSonatype")
 }
 
 tasks.register("publishToSonatypeAndRelease") {
     group = "publishing"
 
-    dependsOn(publishToSonatype, "closeAndReleaseRepository")
+    dependsOn("publishToSonatype", "closeAndReleaseRepository")
 }
 
 tasks.register("publishToPluginPortal") {
