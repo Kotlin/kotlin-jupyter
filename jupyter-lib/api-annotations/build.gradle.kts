@@ -27,6 +27,6 @@ tasks.withType(KotlinCompile::class.java).all {
 addPublication {
     publicationName = "api-annotations"
     artifactId = "kotlin-jupyter-api-annotations"
-    bintrayDescription = "Annotations for adding Kotlin Jupyter notebooks support to Kotlin libraries"
-    bintrayPackageName = artifactId
+    description = "Annotations for adding Kotlin Jupyter notebooks support to Kotlin libraries"
+    packageName = artifactId
 }

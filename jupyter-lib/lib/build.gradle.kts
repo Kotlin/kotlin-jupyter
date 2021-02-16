@@ -16,6 +16,6 @@ dependencies {
 addPublication {
     publicationName = "lib"
     artifactId = "kotlin-jupyter-lib"
-    bintrayDescription = "Internal part of Kotlin Jupyter API used only inside notebook cells"
-    bintrayPackageName = artifactId
+    description = "Internal part of Kotlin Jupyter API used only inside notebook cells"
+    packageName = artifactId
 }

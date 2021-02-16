@@ -24,7 +24,6 @@ class ApiGradlePlugin : Plugin<Project> {
 
         target.repositories {
             mavenCentral()
-            maven("https://kotlin.bintray.com/kotlin-datascience")
         }
 
         val pluginExtension = KotlinJupyterPluginExtension(target)

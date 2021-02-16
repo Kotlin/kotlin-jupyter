@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.plugin
 
-import com.jfrog.bintray.gradle.BintrayPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
@@ -12,7 +11,6 @@ class ApiPublishGradlePlugin : Plugin<Project> {
         target.pluginManager.run {
             apply(DokkaPlugin::class.java)
             apply(MavenPublishPlugin::class.java)
-            apply(BintrayPlugin::class.java)
             apply(SigningPlugin::class.java)
         }
     }
