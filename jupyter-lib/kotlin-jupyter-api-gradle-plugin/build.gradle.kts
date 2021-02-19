@@ -81,6 +81,10 @@ pluginBundle {
             tags = listOf("jupyter", "kernel", "kotlin")
         }
     }
+
+    mavenCoordinates {
+        groupId = "org.jetbrains.kotlin"
+    }
 }
 
 publishing {

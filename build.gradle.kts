@@ -129,7 +129,7 @@ tasks.register("publishToPluginPortal") {
     group = "publishing"
 
     dependsOn(
-        ":api-gradle-plugin:publishPlugins"
+        ":kotlin-jupyter-api-gradle-plugin:publishPlugins"
     )
 }
 

@@ -47,7 +47,7 @@ If not, kernel update is needed.
 ## Integration using Kotlin API
 
 You may also add a Kotlin kernel integration to your library using a
-[Gradle plugin](https://bintray.com/kotlin/kotlin-datascience/kotlin-jupyter-api-gradle-plugin).
+[Gradle plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jupyter.api).
 
 In the following code snippets `<jupyterApiVersion>` is one of the published versions from the link above.
 It is encouraged to use the latest stable version.

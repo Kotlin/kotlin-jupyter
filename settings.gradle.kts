@@ -65,7 +65,7 @@ libSubproject("common-dependencies", "$pluginProject/")
 libSubproject("lib")
 libSubproject("api")
 libSubproject("api-annotations")
-libSubproject("api-gradle-plugin")
+libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
 
 fun libSubproject(name: String, parentPath: String = "jupyter-lib/") {
