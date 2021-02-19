@@ -1,15 +1,12 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
     id("com.gradle.plugin-publish") version "0.12.0"
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("org.jetbrains.kotlinx.jupyter.publishing")
 }
 
 project.version = rootProject.version
-project.group = "org.jetbrains.kotlinx.jupyter"
+project.group = "org.jetbrains.kotlin"
 
 val junitVersion: String by rootProject
 
@@ -83,16 +80,4 @@ pluginBundle {
             tags = listOf("jupyter", "kernel", "kotlin")
         }
     }
-
-    mavenCoordinates {
-        groupId = "org.jetbrains.kotlin"
-    }
-}
-
-addPublication {
-    publicationName = pluginName
-    artifactId = "kotlin-jupyter-api-gradle-plugin"
-    description = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
-    packageName = artifactId
-    publishToSonatype = false
 }
