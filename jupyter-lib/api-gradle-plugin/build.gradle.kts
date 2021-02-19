@@ -3,6 +3,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
+    id("org.jetbrains.kotlinx.jupyter.publishing")
 }
 
 project.version = rootProject.version
@@ -78,6 +79,26 @@ pluginBundle {
             displayName = "Kotlin Jupyter kernel integration plugin"
             description = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
             tags = listOf("jupyter", "kernel", "kotlin")
+        }
+    }
+}
+
+publishing {
+    repositories {
+        (rootProject.findProperty("localPublicationsRepo") as? java.nio.file.Path)?.let {
+            maven {
+                name = "LocalBuild"
+                url = it.toUri()
+            }
+        }
+    }
+}
+
+if (rootProject.findProperty("isMainProject") == true) {
+    val thisProjectName = project.name
+    rootProject.tasks {
+        named("publishLocal") {
+            dependsOn(":$thisProjectName:publishAllPublicationsToLocalBuildRepository")
         }
     }
 }
