@@ -297,6 +297,17 @@ class ReplWithResolverTests : AbstractReplTest() {
         assertEquals(23, res.resultValue)
     }
 
+    @Test
+    fun testLibNewClasspath() {
+        val res = repl.eval(
+            """
+            %use lets-plot
+            """.trimIndent()
+        )
+
+        Assertions.assertTrue(res.newClasspath.size >= 10)
+    }
+
     companion object {
         val resolverConfig = testResolverConfig
     }
