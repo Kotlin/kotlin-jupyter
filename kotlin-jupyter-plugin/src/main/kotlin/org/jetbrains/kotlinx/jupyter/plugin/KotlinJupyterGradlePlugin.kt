@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.build.createInstallTasks
 import org.jetbrains.kotlinx.jupyter.build.prepareAggregateUploadTasks
 import org.jetbrains.kotlinx.jupyter.build.prepareCondaTasks
 import org.jetbrains.kotlinx.jupyter.build.prepareDistributionTasks
-import org.jetbrains.kotlinx.jupyter.build.prepareKotlinVersionUpdateTask
+import org.jetbrains.kotlinx.jupyter.build.prepareKotlinVersionUpdateTasks
 import org.jetbrains.kotlinx.jupyter.build.prepareLocalTasks
 import org.jetbrains.kotlinx.jupyter.build.preparePropertiesTask
 import org.jetbrains.kotlinx.jupyter.build.preparePyPiTasks
@@ -19,7 +19,7 @@ class KotlinJupyterGradlePlugin : Plugin<Project> {
         with(ProjectWithOptionsImpl(project, project.options())) {
             /****** Helper tasks ******/
             prepareReadmeTasks()
-            prepareKotlinVersionUpdateTask()
+            prepareKotlinVersionUpdateTasks()
 
             /****** Build tasks ******/
             preparePropertiesTask()
