@@ -16,6 +16,7 @@ out/
 /build/
 /*jupyter*/build/
 /*jupyter*/*/build/
+/teamcity-artifacts/
 
 # Gradle caches and internal files
 .gradle/
