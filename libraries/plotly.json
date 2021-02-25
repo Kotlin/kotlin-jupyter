@@ -7,12 +7,13 @@
         "kotlinx.html.*"
     ],
     "repositories": [
+        "https://repo.kotlin.link",
         "https://dl.bintray.com/mipt-npm/dataforge",
         "https://dl.bintray.com/mipt-npm/kscience",
         "https://dl.bintray.com/mipt-npm/dev"
     ],
     "properties": {
-        "v": "0.2.0"
+        "v": "0.3.1"
     },
     "link": "https://github.com/mipt-npm/plotly.kt",
     "description": "An experimental plotly.kt integration module. Supports static plots and HTML dashboards.",
