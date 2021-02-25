@@ -116,7 +116,7 @@ define(function(){
             var common;
             var min_lead_prct = 10;
             for (var i = 0; i < B.length; i++) {
-                var str = B[i].str;
+                var str = B[i].replaceText;
                 var localmin = 0;
                 if(drop_prct === true){
                     while ( str.substr(0, 1) == '%') {
@@ -435,6 +435,11 @@ define(function(){
             var extMetadata = metadata._jupyter_extended_metadata || {};
 
             console.log(content);
+
+            // If completion error occurs
+            if (matches === undefined) {
+                return;
+            }
 
             var cur = this.editor.getCursor();
 

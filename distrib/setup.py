@@ -17,6 +17,7 @@ LIBRARIES_FOLDER_NAME = '.jupyter_kotlin'
 LIBRARIES_CACHE_FOLDER_NAME = 'cache'
 VERSION_FILE_NAME = 'VERSION'
 README_FILE_NAME = 'README.md'
+REPO_URL_FILE_NAME = 'REPO_URL'
 
 
 def main():
@@ -28,12 +29,16 @@ def main():
     current_dir = path.dirname(abspath)
     version_file = path.join(current_dir, VERSION_FILE_NAME)
     readme_file = path.join(current_dir, README_FILE_NAME)
+    repo_url_file = path.join(current_dir, REPO_URL_FILE_NAME)
 
     with open(version_file, 'r') as f:
         version = f.read().strip()
 
     with open(readme_file, 'r') as f:
         long_description = f.read()
+
+    with open(repo_url_file, 'r') as f:
+        repo_url = f.read()
 
     classifiers = [
         "Framework :: Jupyter",
@@ -48,7 +53,7 @@ def main():
     setup(name="kotlin-jupyter-kernel",
           author="JetBrains",
           version=version,
-          url="https://github.com/Kotlin/kotlin-jupyter",
+          url=repo_url,
           license="Apache 2.0",
           description="Kotlin kernel for Jupyter notebooks",
           long_description=long_description,
