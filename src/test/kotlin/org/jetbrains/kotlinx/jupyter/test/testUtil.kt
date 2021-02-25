@@ -122,7 +122,7 @@ class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Display
     }
 }
 
-class NotebookMock : Notebook {
+object NotebookMock : Notebook {
     private val cells = hashMapOf<Int, CodeCellImpl>()
 
     override val cellsList: Collection<CodeCell>
@@ -159,11 +159,11 @@ class NotebookMock : Notebook {
         get() = JavaRuntime
 }
 
-fun library(builder: JupyterIntegration.Builder.(Notebook?) -> Unit): LibraryDefinition {
+fun library(builder: JupyterIntegration.Builder.() -> Unit): LibraryDefinition {
     val o = object : JupyterIntegration() {
-        override fun Builder.onLoaded(notebook: Notebook?) {
-            builder(notebook)
+        override fun Builder.onLoaded() {
+            builder()
         }
     }
-    return o.getDefinitions(null).single()
+    return o.getDefinitions(NotebookMock).single()
 }
