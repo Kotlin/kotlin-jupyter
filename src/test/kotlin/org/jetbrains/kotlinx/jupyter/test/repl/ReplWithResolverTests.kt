@@ -21,7 +21,6 @@ import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testResolverConfig
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -62,7 +61,6 @@ class ReplWithResolverTests : AbstractReplTest() {
     }
 
     @Test
-    @Disabled
     fun testDataframe() {
         val res = repl.eval(
             """
