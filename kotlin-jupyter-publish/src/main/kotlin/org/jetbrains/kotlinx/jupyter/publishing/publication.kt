@@ -120,8 +120,10 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
 
             if (settings.publishToSonatype) {
                 thisProject.configureNexusPublish()
-                named("publishToSonatype") {
-                    dependsOn(":$thisProjectName:publishToSonatype")
+                if (thisProject != rootProject) {
+                    named("publishToSonatype") {
+                        dependsOn(":$thisProjectName:publishToSonatype")
+                    }
                 }
             }
         }
