@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
 import org.jetbrains.kotlinx.jupyter.plugin.options
+import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 import org.jetbrains.kotlinx.jupyter.publishing.applyNexusPlugin
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
@@ -10,7 +11,7 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
-    id("org.jetbrains.kotlinx.jupyter.publishing") apply false
+    id("org.jetbrains.kotlinx.jupyter.publishing")
     id("org.jetbrains.kotlinx.jupyter.doc")
 }
 
@@ -187,4 +188,11 @@ tasks.check {
 
 tasks.publishDocs {
     docsRepoUrl.set(docsRepo)
+}
+
+addPublication {
+    publicationName = "kernel"
+    artifactId = "kotlin-jupyter-kernel"
+    description = "Kotlin Jupyter kernel published as artifact"
+    packageName = artifactId
 }
