@@ -251,7 +251,7 @@ class ExecuteTests : KernelServerTestsBase() {
                     override val host: Nothing? = null
                 }
 
-                val instance = constructor.call(NotebookMock(), hostProvider)
+                val instance = constructor.call(NotebookMock, hostProvider)
 
                 val result = xyzProperty.get(instance)
                 assertEquals(42, result)

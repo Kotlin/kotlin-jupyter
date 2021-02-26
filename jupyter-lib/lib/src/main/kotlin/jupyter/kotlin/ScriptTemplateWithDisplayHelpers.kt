@@ -16,13 +16,13 @@ abstract class ScriptTemplateWithDisplayHelpers(
 
     fun USE(library: LibraryDefinition) = hostProvider.host!!.addLibrary(library)
 
-    fun USE(builder: JupyterIntegration.Builder.(Notebook?) -> Unit) {
+    fun USE(builder: JupyterIntegration.Builder.() -> Unit) {
         val o = object : JupyterIntegration() {
-            override fun Builder.onLoaded(notebook: Notebook?) {
-                builder(this, notebook)
+            override fun Builder.onLoaded() {
+                builder()
             }
         }
-        USE(o.getDefinitions(null).single())
+        USE(o.getDefinitions(notebook).single())
     }
 
     val Out: ResultsAccessor get() = ResultsAccessor { id ->

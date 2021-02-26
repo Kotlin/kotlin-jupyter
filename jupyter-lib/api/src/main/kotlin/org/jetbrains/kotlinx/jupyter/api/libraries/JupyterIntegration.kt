@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
+import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
@@ -25,9 +26,9 @@ import kotlin.reflect.KMutableProperty
  */
 abstract class JupyterIntegration : LibraryDefinitionProducer {
 
-    abstract fun Builder.onLoaded(notebook: Notebook?)
+    abstract fun Builder.onLoaded()
 
-    class Builder {
+    class Builder(val notebook: Notebook) {
 
         private val renderers = mutableListOf<RendererTypeHandler>()
 
@@ -69,9 +70,11 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             fileAnnotations.add(handler)
         }
 
-        inline fun <reified T : Any> render(noinline renderer: (T) -> Any) {
+        inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) {
             val execution = ResultHandlerExecution { _, property ->
-                FieldValue(renderer(property.value as T), property.name)
+                val currentCell = notebook.currentCell
+                    ?: throw IllegalStateException("Current cell should not be null on renderer invocation")
+                FieldValue(renderer(currentCell, property.value as T), property.name)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
         }
@@ -162,9 +165,9 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             )
     }
 
-    override fun getDefinitions(notebook: Notebook?): List<LibraryDefinition> {
-        val builder = Builder()
-        builder.onLoaded(notebook)
+    override fun getDefinitions(notebook: Notebook): List<LibraryDefinition> {
+        val builder = Builder(notebook)
+        builder.onLoaded()
         return listOf(builder.getDefinition())
     }
 }

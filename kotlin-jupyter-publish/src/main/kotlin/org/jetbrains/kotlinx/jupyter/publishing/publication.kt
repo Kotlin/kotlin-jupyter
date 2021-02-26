@@ -114,13 +114,16 @@ fun Project.addPublication(configuration: ArtifactPublication.() -> Unit) {
     if (rootProject.findProperty("isMainProject") == true) {
         rootProject.tasks {
             named("publishLocal") {
-                dependsOn(":$thisProjectName:publishAllPublicationsToLocalBuildRepository")
+                val projectPrefix = if (thisProject != rootProject) ":$thisProjectName" else ""
+                dependsOn( "$projectPrefix:publishAllPublicationsToLocalBuildRepository")
             }
 
             if (settings.publishToSonatype) {
                 thisProject.configureNexusPublish()
-                named("publishToSonatype") {
-                    dependsOn(":$thisProjectName:publishToSonatype")
+                if (thisProject != rootProject) {
+                    named("publishToSonatype") {
+                        dependsOn(":$thisProjectName:publishToSonatype")
+                    }
                 }
             }
         }

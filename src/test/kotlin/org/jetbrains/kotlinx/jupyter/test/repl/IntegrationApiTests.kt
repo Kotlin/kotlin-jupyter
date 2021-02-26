@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
-import org.jetbrains.kotlinx.jupyter.execute
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -107,5 +106,20 @@ class IntegrationApiTests {
         assertEquals(2, repl.executedCodes.size)
         assertEquals(1, repl.results[0])
         assertEquals(2, repl.results[1])
+    }
+
+    @Test
+    fun `notebook API inside renderer`() {
+        val repl = makeRepl()
+        repl.eval(
+            """
+            USE {
+                render<Number> { "${"$"}{notebook?.currentCell?.internalId}. ${"$"}{it.toLong() * 10}" }
+            }
+            """.trimIndent()
+        )
+
+        assertEquals("1. 420", repl.eval("42.1").resultValue)
+        assertEquals("2. 150", repl.eval("15").resultValue)
     }
 }
