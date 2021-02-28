@@ -261,6 +261,22 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
+    fun testLibraryLoadingErrors() {
+        doExecute("%output --max-buffer=100000 --max-buffer-newline=10000", false)
+
+        doExecute(
+            "%use dataframe(0.7.2-dev-144-0.8.3.224)",
+            false,
+            ioPubChecker = {
+                val msg = it.receiveMessage()
+                assertEquals(MessageType.STREAM, msg.type)
+                val msgText = (msg.content as StreamResponse).text
+                assertTrue(msgText.startsWith("[ERROR] Failed to load library"))
+            }
+        )
+    }
+
+    @Test
     fun testCounter() {
         fun checkCounter(message: Message, expectedCounter: Long) {
             val data = message.data.content as ExecuteReply
