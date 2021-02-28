@@ -124,7 +124,7 @@ class ExecuteTests : KernelServerTestsBase() {
             ioPubChecker = {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
-                assertTrue((msg.content as StreamResponse).text.startsWith("java.io.IOException: Input from stdin is unsupported by the client"))
+                assertStartsWith("java.io.IOException: Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
             }
         )
     }
@@ -262,7 +262,7 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testLibraryLoadingErrors() {
-        doExecute("%output --max-buffer=100000 --max-buffer-newline=10000", false)
+        doExecute("%output --max-buffer=100000 --max-buffer-newline=10000 --max-time=10000", false)
 
         doExecute(
             "%use dataframe(0.7.2-dev-144-0.8.3.224)",
@@ -271,7 +271,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
                 val msgText = (msg.content as StreamResponse).text
-                assertTrue(msgText.startsWith("[ERROR] Failed to load library"))
+                assertStartsWith("[ERROR] Failed to load library", msgText)
             }
         )
     }

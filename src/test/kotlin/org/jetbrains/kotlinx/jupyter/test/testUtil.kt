@@ -52,6 +52,12 @@ val testResolverConfig: ResolverConfig
         getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
     )
 
+fun assertStartsWith(expectedPrefix: String, actual: String) {
+    if (actual.startsWith(expectedPrefix)) return
+    val actualStart = actual.substring(0, minOf(expectedPrefix.length, actual.length))
+    throw AssertionError("Expected a string to start with '$expectedPrefix', but it starts with '$actualStart")
+}
+
 fun Collection<Pair<String, String>>.toLibraries(): LibraryResolver {
     val libJsons = map { it.first to it.second }.toMap()
     return getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
