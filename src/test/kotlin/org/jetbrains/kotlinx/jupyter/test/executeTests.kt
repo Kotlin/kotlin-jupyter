@@ -271,7 +271,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
                 val msgText = (msg.content as StreamResponse).text
-                assertStartsWith("[ERROR] Failed to load library", msgText)
+                assertTrue("[ERROR] Failed to load library" in msgText)
             }
         )
     }
