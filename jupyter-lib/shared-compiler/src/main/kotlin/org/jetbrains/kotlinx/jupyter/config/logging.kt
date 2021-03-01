@@ -23,6 +23,6 @@ fun Logger.errorForUser(message: String, throwable: Throwable? = null) {
 fun <T> Logger.catchAll(msg: String = "", body: () -> T): T? = try {
     body()
 } catch (e: Throwable) {
-    this.error(msg, e)
+    this.errorForUser(msg, e)
     null
 }
