@@ -132,6 +132,9 @@ interface ReplForJupyter {
     val notebook: NotebookImpl
 
     val fileExtension: String
+
+    val isEmbedded: Boolean
+        get() = false
 }
 
 fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
@@ -145,7 +148,7 @@ class ReplForJupyterImpl(
     override val resolverConfig: ResolverConfig? = null,
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     private val scriptReceivers: List<Any> = emptyList(),
-    private val embedded: Boolean = false,
+    override val isEmbedded: Boolean = false,
 ) : ReplForJupyter, ReplOptions, BaseKernelHost, KotlinKernelHostProvider {
 
     constructor(
@@ -262,7 +265,7 @@ class ReplForJupyterImpl(
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
         implicitReceivers.invoke(v = scriptReceivers)
-        if (!embedded) {
+        if (!isEmbedded) {
             jvm {
                 val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) { fqn ->
                     listOf(
