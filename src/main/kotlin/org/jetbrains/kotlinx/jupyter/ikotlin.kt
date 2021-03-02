@@ -80,13 +80,17 @@ fun main(vararg args: String) {
 /**
  * This function is to be run in projects which use kernel as a library,
  * so we don't have a big need in covering it with tests
+ *
+ * The expected use case for this function is embedding into a Java application that doesn't necessarily support extensions written in Kotlin
+ * The signature of this function should thus be simple, and e.g. allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
+ * because EmptyResolutionInfoProvider is a Kotlin singleton object and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
-fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider = EmptyResolutionInfoProvider, scriptReceivers: List<Any>? = null) {
+fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val config = KernelConfig.fromConfig(
         KernelJupyterParams.fromFile(cfgFile),
-        resolutionInfoProvider,
+        resolutionInfoProvider ?: EmptyResolutionInfoProvider,
         cp,
         null,
         true
