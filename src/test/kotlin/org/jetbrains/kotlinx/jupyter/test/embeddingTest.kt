@@ -90,7 +90,7 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
 class EmbedReplTest : AbstractReplTest() {
     private val repl = run {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, embedded = true)
+        ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true)
     }
 
     @Test
