@@ -69,7 +69,7 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             execGit("commit", "-m", "[AUTO] Update library version")
 
             val repoUrl = rootProject.property("pushRepoUrl") as String
-            execGit("push", "--force", "-u", repoUrl, updateLibBranchName!!) {
+            execGit("push", "--force", "-u", repoUrl, getCurrentBranch() + ":" + updateLibBranchName!!) {
                 this.standardOutput = object: OutputStream() {
                     override fun write(b: Int) { }
                 }
