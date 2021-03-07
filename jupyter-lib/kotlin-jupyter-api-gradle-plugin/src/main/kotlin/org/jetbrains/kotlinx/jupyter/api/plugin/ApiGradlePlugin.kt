@@ -17,7 +17,9 @@ class ApiGradlePlugin : Plugin<Project> {
 
         target.extensions.configure<KaptExtension>("kapt") {
             arguments {
-                arg("kotlin.jupyter.fqn.path", target.buildDir.resolve(FQNS_PATH))
+                val fqnsPath = target.buildDir.resolve(FQNS_PATH)
+                if (fqnsPath.exists()) fqnsPath.deleteRecursively()
+                arg("kotlin.jupyter.fqn.path", fqnsPath)
             }
         }
 
