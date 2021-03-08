@@ -361,9 +361,13 @@ class ReplForJupyterImpl(
             cell?.resultVal = result.result.value
 
             val rendered = result.result.let {
-                typeRenderersProcessor.renderResult(executor, it)
+                log.catchAll {
+                    typeRenderersProcessor.renderResult(executor, it)
+                }
             }?.let {
-                if (it is Renderable) it.render(notebook) else it
+                log.catchAll {
+                    if (it is Renderable) it.render(notebook) else it
+                }
             }
 
             val newClasspath = log.catchAll {
