@@ -15,11 +15,10 @@ class ApiGradlePlugin : Plugin<Project> {
             apply(Kapt3GradleSubplugin::class.java)
         }
 
+        val jupyterBuildPath = target.buildDir.resolve(FQNS_PATH)
         target.extensions.configure<KaptExtension>("kapt") {
             arguments {
-                val fqnsPath = target.buildDir.resolve(FQNS_PATH)
-                if (fqnsPath.exists()) fqnsPath.deleteRecursively()
-                arg("kotlin.jupyter.fqn.path", fqnsPath)
+                arg("kotlin.jupyter.fqn.path", jupyterBuildPath)
             }
         }
 
@@ -32,9 +31,19 @@ class ApiGradlePlugin : Plugin<Project> {
         pluginExtension.addDependenciesIfNeeded()
 
         target.tasks {
+            val cleanJupyterTask = register("cleanJupyterPluginFiles") {
+                doLast {
+                    jupyterBuildPath.deleteRecursively()
+                }
+            }
+
             val resourcesTaskName = "processJupyterApiResources"
             register<JupyterApiResourcesTask>(resourcesTaskName) {
-                dependsOn("kaptKotlin")
+                val kaptKotlinTask = findByName("kaptKotlin")
+                if (kaptKotlinTask != null) {
+                    dependsOn(kaptKotlinTask)
+                    kaptKotlinTask.dependsOn(cleanJupyterTask)
+                }
             }
 
             named("processResources") {
