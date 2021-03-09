@@ -1,18 +1,21 @@
 {
-  "description": "Experimental Kotlin mathematical library operating on generic algebras",
+  "description": "Experimental Kotlin algebra-based mathematical library",
   "properties": {
-    "v": "0.1.3"
+    "v": "0.2.0"
   },
   "link": "https://github.com/mipt-npm/kmath",
   "repositories": [
-    "https://dl.bintray.com/mipt-npm/scientifik"
+    "https://dl.bintray.com/mipt-npm/kscience",
+    "https://dl.bintray.com/mipt-npm/dev"
   ],
   "dependencies": [
-    "scientifik:kmath-core-jvm:$v"
+    "kscience.kmath:kmath-commons:$v",
+    "kscience.kmath:kmath-for-real:$v"
   ],
   "imports": [
-    "scientifik.kmath.linear.*",
-    "scientifik.kmath.operations.*",
-    "scientifik.kmath.structures.*"
+    "kscience.kmath.linear.*",
+    "kscience.kmath.operations.*",
+    "kscience.kmath.structures.*",
+    "kscience.kmath.real.*"
   ]
 }

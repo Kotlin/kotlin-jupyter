@@ -6,7 +6,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.4.30) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.4.31) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
 on Windows, Ubuntu Linux and macOS. Using with Jupyter Console frontend is problematic now because of
@@ -189,7 +189,7 @@ List of supported libraries:
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
- - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin mathematical library operating on generic algebras
+ - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
  - [koma](https://koma.kyonifer.com/index.html) - Scientific computing library
  - [kotlin-dl](https://github.com/JetBrains/KotlinDL) - KotlinDL library which provides Keras-like API for deep learning
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin

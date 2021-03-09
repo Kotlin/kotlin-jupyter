@@ -4,8 +4,12 @@ import com.google.gson.Gson
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.findByType
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
 import java.io.File
 
@@ -31,9 +35,25 @@ open class JupyterApiResourcesTask : DefaultTask() {
 
     init {
         val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
-        val mainSourceSet = sourceSets.named("main").get()
-        outputDir = mainSourceSet.output.resourcesDir?.resolve("META-INF/kotlin-jupyter-libraries")
-            ?: throw IllegalStateException("No resources dir for main source set")
+        when {
+            project.plugins.findPlugin("org.jetbrains.kotlin.jvm") != null -> {
+                val mainSourceSet: SourceSet = sourceSets.named("main").get()
+                outputDir = mainSourceSet.output.resourcesDir?.resolve("META-INF/kotlin-jupyter-libraries")
+                    ?: throw IllegalStateException("No resources dir for main source set")
+            }
+            project.plugins.findPlugin("org.jetbrains.kotlin.multiplatform") != null -> {
+                val mppExtension = project.extensions.findByType<KotlinMultiplatformExtension>()
+                    ?: error("Kotlin MPP extension not found")
+                val jvmTargetName = mppExtension.targets.filterIsInstance<KotlinJvmTarget>().firstOrNull()?.name
+                    ?: error("Single JVM target not found in a multiplatform project")
+                // TODO properly resolve resource directory
+                outputDir = project.buildDir.resolve("processedResources/$jvmTargetName/main")
+                    .resolve("META-INF/kotlin-jupyter-libraries")
+            }
+            else -> {
+                error("Kotlin plugin not found in the project")
+            }
+        }
     }
 
     @TaskAction
