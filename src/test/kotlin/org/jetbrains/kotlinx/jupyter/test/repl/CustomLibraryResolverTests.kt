@@ -399,14 +399,14 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         )
 
         repl.eval("42")
-        val e = assertThrows<ReplLibraryException> {
+        val res = assertDoesNotThrow {
             repl.eval(
                 """
                 "42"
                 """.trimIndent()
             )
         }
-        assertEquals(LibraryProblemPart.RENDERERS, e.part)
+        assertNull(res.resultValue)
     }
 
     @Test
