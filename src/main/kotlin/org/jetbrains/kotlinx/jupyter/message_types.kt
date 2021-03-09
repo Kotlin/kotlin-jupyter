@@ -465,7 +465,23 @@ class InputReply(
 ) : MessageContent()
 
 @Serializable
-class HistoryRequest : MessageContent()
+class HistoryRequest(
+    val output: Boolean,
+    val raw: Boolean,
+    val hist_access_type: String,
+
+    // If hist_access_type is 'range'
+    val session: Int? = null,
+    val start: Int? = null,
+    val stop: Int? = null,
+
+    // hist_access_type is 'tail' or 'search'
+    val n: Int? = null,
+
+    // If hist_access_type is 'search'
+    val pattern: String? = null,
+    val unique: Boolean? = null
+) : MessageContent()
 
 @Serializable
 class HistoryReply(

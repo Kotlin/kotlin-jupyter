@@ -40,6 +40,4 @@ fun Project.applyNexusPlugin() {
         packageGroup = NEXUS_PACKAGE_GROUP
         repositoryDescription = "kotlin-jupyter project, v. ${project.version}"
     }
-
-    configureNexusPublish()
 }

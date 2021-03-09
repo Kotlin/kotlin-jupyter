@@ -1,0 +1,23 @@
+{
+  "description": "KotlinDL library which provides Keras-like API for deep learning",
+  "link": "https://github.com/JetBrains/KotlinDL",
+  "properties": {
+    "v": "0.1.1"
+  },
+  "repositories": [
+    "https://kotlin.bintray.com/kotlin-datascience"
+  ],
+  "dependencies": [
+    "org.jetbrains.kotlin-deeplearning:api:$v"
+  ],
+  "imports": [
+    "org.jetbrains.kotlinx.dl.api.core.*",
+    "org.jetbrains.kotlinx.dl.api.core.activation.*",
+    "org.jetbrains.kotlinx.dl.api.core.initializer.*",
+    "org.jetbrains.kotlinx.dl.api.core.layer.*",
+    "org.jetbrains.kotlinx.dl.api.core.loss.*",
+    "org.jetbrains.kotlinx.dl.api.core.metric.*",
+    "org.jetbrains.kotlinx.dl.api.core.optimizer.*",
+    "org.jetbrains.kotlinx.dl.datasets.*"
+  ]
+}

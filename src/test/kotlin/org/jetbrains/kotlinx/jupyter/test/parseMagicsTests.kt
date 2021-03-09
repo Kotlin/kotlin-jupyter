@@ -146,7 +146,7 @@ class ParseMagicsTests {
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)
-            librariesChecker(libraries.getDefinitions(null))
+            librariesChecker(libraries.getDefinitions(NotebookMock))
         }
     }
 

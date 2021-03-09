@@ -8,17 +8,20 @@ class KotlinJupyterPluginExtension(
 ) {
     fun addApiDependency(version: String? = null) {
         val apiVersion = version ?: apiVersion()
+        val compileOnlyConf = project.configurations.findByName("compileOnly") ?: return
         project.dependencies {
-            "compileOnly"("$GROUP_ID:kotlin-jupyter-api:$apiVersion")
+            compileOnlyConf("$GROUP_ID:kotlin-jupyter-api:$apiVersion")
         }
     }
 
     fun addScannerDependency(version: String? = null) {
+        val implementationConf = project.configurations.findByName("implementation") ?: return
+        val kaptConf = project.configurations.findByName("kapt") ?: return
         val apiVersion = version ?: apiVersion()
         val mavenCoordinates = "$GROUP_ID:kotlin-jupyter-api-annotations:$apiVersion"
         project.dependencies {
-            "implementation"(mavenCoordinates)
-            "kapt"(mavenCoordinates)
+            implementationConf(mavenCoordinates)
+            kaptConf(mavenCoordinates)
         }
     }
 

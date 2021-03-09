@@ -124,7 +124,7 @@ class ExecuteTests : KernelServerTestsBase() {
             ioPubChecker = {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
-                assertTrue((msg.content as StreamResponse).text.startsWith("java.io.IOException: Input from stdin is unsupported by the client"))
+                assertStartsWith("java.io.IOException: Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
             }
         )
     }
@@ -251,13 +251,31 @@ class ExecuteTests : KernelServerTestsBase() {
                     override val host: Nothing? = null
                 }
 
-                val instance = constructor.call(NotebookMock(), hostProvider)
+                val instance = constructor.call(NotebookMock, hostProvider)
 
                 val result = xyzProperty.get(instance)
                 assertEquals(42, result)
             }
         )
         assertNull(res)
+    }
+
+    @Test
+    fun testLibraryLoadingErrors() {
+        doExecute(
+            """
+                USE {
+                    import("xyz.ods")
+                }
+            """.trimIndent(),
+            false,
+            ioPubChecker = {
+                val msg = it.receiveMessage()
+                assertEquals(MessageType.STREAM, msg.type)
+                val msgText = (msg.content as StreamResponse).text
+                assertTrue("The problem is found in one of the loaded libraries" in msgText)
+            }
+        )
     }
 
     @Test

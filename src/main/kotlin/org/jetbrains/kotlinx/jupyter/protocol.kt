@@ -195,7 +195,15 @@ fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJ
         is ShutdownRequest -> {
             repl?.evalOnShutdown()
             send(makeReplyMessage(msg, MessageType.SHUTDOWN_REPLY, content = msg.content))
-            exitProcess(0)
+            // exitProcess would kill the entire process that embedded the kernel
+            // Instead the controlThread will be interrupted,
+            // which will then interrupt the mainThread and make kernelServer return
+            if (repl?.isEmbedded == true) {
+                log.info("Interrupting controlThread to trigger kernel shutdown")
+                throw InterruptedException()
+            } else {
+                exitProcess(0)
+            }
         }
     }
 }
