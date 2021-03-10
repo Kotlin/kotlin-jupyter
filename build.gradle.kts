@@ -28,6 +28,11 @@ val docsRepo: String by project
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
 
+deploy.apply {
+    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json-jvm")
+    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
+}
+
 applyNexusPlugin()
 
 fun KtlintExtension.setup() {
