@@ -52,6 +52,8 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
 
     override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {
         val resourceName = resource.name
+        val resourceIndex = """["$resourceName"]"""
+        val callResourceIndex = """["call_$resourceName"]"""
         val elementId = "kotlin_out_$outputCounter"
         ++outputCounter
 
@@ -65,10 +67,10 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
             if(!window.kotlinQueues) {
                 window.kotlinQueues = {};
             }
-            if(!window.kotlinQueues.$resourceName) {
+            if(!window.kotlinQueues$resourceIndex) {
                 var resQueue = [];
-                window.kotlinQueues.$resourceName = resQueue;
-                window.call_$resourceName = function(f) {
+                window.kotlinQueues$resourceIndex = resQueue;
+                window$callResourceIndex = function(f) {
                     resQueue.push(f);
                 }
             }
@@ -79,13 +81,13 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                     var script = document.createElement("script");
                     gen(script)
                     script.onload = function() {
-                        window.call_$resourceName = function(f) {f();};
-                        window.kotlinQueues.$resourceName.forEach(function(f) {f();});
-                        window.kotlinQueues.$resourceName = [];
+                        window$callResourceIndex = function(f) {f();};
+                        window.kotlinQueues$resourceIndex.forEach(function(f) {f();});
+                        window.kotlinQueues$resourceIndex = [];
                     };
                     script.onerror = function() {
-                        window.call_$resourceName = function(f) {};
-                        window.kotlinQueues.$resourceName = [];
+                        window$callResourceIndex = function(f) {};
+                        window.kotlinQueues$resourceIndex = [];
                         var div = document.createElement("div");
                         div.style.color = 'darkred';
                         div.textContent = 'Error loading resource $resourceName';

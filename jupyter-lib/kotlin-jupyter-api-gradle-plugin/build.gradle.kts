@@ -10,6 +10,7 @@ project.version = rootProject.version
 project.group = "org.jetbrains.kotlin"
 
 val junitVersion: String by rootProject
+val kotlinVersion: String by rootProject
 
 repositories {
     jcenter()
@@ -21,7 +22,7 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     implementation("com.google.code.gson:gson:2.8.6")
 
     testImplementation(kotlin("test"))
