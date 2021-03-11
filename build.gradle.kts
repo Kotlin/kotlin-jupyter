@@ -66,7 +66,7 @@ allprojects {
 
 dependencies {
     // Dependency on module with compiler.
-    implementation(project(":shared-compiler"))
+    api(project(":shared-compiler"))
 
     // Standard dependencies
     implementation(kotlin("stdlib"))
