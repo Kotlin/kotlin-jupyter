@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -478,7 +479,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
                 ex.stackTrace.map { it.toString() },
                 additionalInfo
             )
-        } catch (ex: ReplEvalRuntimeException) {
+        } catch (ex: ReplException) {
             forkedOut.flush()
 
             val stdErr = StringBuilder()
