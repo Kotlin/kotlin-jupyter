@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
@@ -13,7 +13,7 @@ open class SharedMagicsHandler(
         try {
             arg?.let { notNullArg ->
                 newLibraries.addAll(librariesProcessor.processNewLibraries(notNullArg))
-            } ?: throw ReplCompilerException("Need some arguments for 'use' command")
+            } ?: throw ReplPreprocessingException("Need some arguments for 'use' command")
         } catch (e: Exception) {
             if (!tryIgnoreErrors) throw e
         }

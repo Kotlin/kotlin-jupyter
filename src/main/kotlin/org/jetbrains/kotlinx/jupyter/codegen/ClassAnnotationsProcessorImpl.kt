@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
+import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import kotlin.reflect.KClass
 
 class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {

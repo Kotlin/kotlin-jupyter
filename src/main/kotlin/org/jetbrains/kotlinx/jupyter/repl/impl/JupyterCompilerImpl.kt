@@ -10,12 +10,12 @@ import org.jetbrains.kotlinx.jupyter.CheckResult
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
-import org.jetbrains.kotlinx.jupyter.compiler.util.getErrors
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.KotlinType
@@ -173,7 +173,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 
     override fun compileSync(snippet: SourceCode): JupyterCompiler.Result {
         when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfig) }) {
-            is ResultWithDiagnostics.Failure -> throw ReplCompilerException(resultWithDiagnostics)
+            is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, resultWithDiagnostics)
             is ResultWithDiagnostics.Success -> {
                 val result = resultWithDiagnostics.value
                 val compiledScript = result.get()
@@ -194,7 +194,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                 }
 
                 when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
-                    is ResultWithDiagnostics.Failure -> throw ReplCompilerException(kClassWithDiagnostics)
+                    is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, kClassWithDiagnostics)
                     is ResultWithDiagnostics.Success -> {
                         val kClass = kClassWithDiagnostics.value
                         classes.add(kClass)
@@ -203,7 +203,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                 }
             }
         }
-        throw ReplCompilerException("Impossible situation: this code should be unreachable")
+        throw ReplException("Impossible situation: this code should be unreachable")
     }
 }
 

@@ -7,7 +7,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -65,7 +65,7 @@ class ReplTests : AbstractReplTest() {
                 """.trimIndent()
             )
         } catch (ex: ReplCompilerException) {
-            val diag = ex.firstDiagnostics
+            val diag = ex.firstError
             val location = diag?.location ?: fail("Location should not be null")
             val message = ex.message
 

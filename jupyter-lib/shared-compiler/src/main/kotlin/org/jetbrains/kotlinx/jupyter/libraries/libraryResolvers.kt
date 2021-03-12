@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import java.nio.file.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
@@ -106,7 +106,7 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
     private val standardResolvers = listOf(
         byDirResolver,
         resolver<LibraryResolutionInfo.ByGitRef> { name ->
-            if (name == null) throw ReplCompilerException("Reference library resolver needs name to be specified")
+            if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
 
             val url = "$GitHubApiPrefix/contents/$LibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
             getLogger().info("Requesting library descriptor at $url")
@@ -147,7 +147,7 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(private val kClass: KCl
 private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolverFun: T.(String?) -> String?) = SpecificLibraryResolver(T::class, resolverFun)
 
 private val byDirResolver = resolver<LibraryResolutionInfo.ByDir> { name ->
-    if (name == null) throw ReplCompilerException("Directory library resolver needs library name to be specified")
+    if (name == null) throw ReplLibraryLoadingException(name, "Directory library resolver needs library name to be specified")
 
     val jsonFile = librariesDir.resolve("$name.$LibraryDescriptorExt")
     if (jsonFile.exists() && jsonFile.isFile) jsonFile.readText()

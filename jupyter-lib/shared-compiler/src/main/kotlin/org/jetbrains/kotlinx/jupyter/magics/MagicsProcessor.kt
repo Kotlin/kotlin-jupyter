@@ -4,7 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 
 class MagicsProcessor(
     private val handler: MagicsHandler,
@@ -24,14 +24,14 @@ class MagicsProcessor(
 
                 val magic = if (parseOnly) null else ReplLineMagic.valueOfOrNull(keyword)
                 if (magic == null && !parseOnly && !tryIgnoreErrors) {
-                    throw ReplCompilerException("Unknown line magic keyword: '$keyword'")
+                    throw ReplPreprocessingException("Unknown line magic keyword: '$keyword'")
                 }
 
                 if (magic != null) {
                     handler.handle(magic, arg, tryIgnoreErrors, parseOnly)
                 }
             } catch (e: Exception) {
-                throw ReplCompilerException("Failed to process '%$magicText' command. " + e.message)
+                throw ReplPreprocessingException("Failed to process '%$magicText' command. " + e.message)
             }
         }
 

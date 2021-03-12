@@ -124,7 +124,7 @@ class ExecuteTests : KernelServerTestsBase() {
             ioPubChecker = {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
-                assertStartsWith("java.io.IOException: Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
+                assertStartsWith("Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
             }
         )
     }
