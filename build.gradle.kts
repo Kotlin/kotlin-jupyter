@@ -7,6 +7,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     kotlin("jvm")
+    kotlin("jupyter.api") apply false
     kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")

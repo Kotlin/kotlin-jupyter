@@ -47,6 +47,7 @@ class ApiGradlePlugin : Plugin<Project> {
                     if (kaptKotlinTask != null) {
                         dependsOn(kaptKotlinTask)
                         kaptKotlinTask.dependsOn(cleanJupyterTask)
+                        kaptKotlinTask.outputs.dir(jupyterBuildPath)
                     }
                 }
             }
