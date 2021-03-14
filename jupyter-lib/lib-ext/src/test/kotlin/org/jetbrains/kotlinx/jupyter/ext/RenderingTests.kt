@@ -2,7 +2,6 @@ package org.jetbrains.kotlinx.jupyter.ext
 
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.io.FileOutputStream
 import java.io.StringWriter
 import kotlin.test.assertEquals
 
