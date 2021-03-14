@@ -13,11 +13,13 @@ import java.util.Base64
 
 class Image(private val attributes: List<HTMLAttr>) : Renderable {
     override fun render(notebook: Notebook): MimeTypedResult {
-        return HTML(
-            attributes.joinToString("", """<img""", """/>""") {
-                """ ${it.name}="${it.value}""""
-            }
-        )
+        return HTML(toHTML())
+    }
+
+    fun toHTML(): String {
+        return attributes.joinToString("", """<img""", """/>""") {
+            """ ${it.name}="${it.value}""""
+        }
     }
 
     constructor(url: String, embed: Boolean = false) : this(
@@ -30,7 +32,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
     constructor(file: File, embed: Boolean = false) : this(
         listOf(
             if (embed) embedSrc(loadData(file), detectMime(file.toURI()))
-            else referSrc(file.toURI().toASCIIString())
+            else referSrc(file.absolutePath.toString())
         )
     )
 
@@ -44,7 +46,9 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
     fun withAttr(name: String, value: String) = withAttr(HTMLAttr(name, value))
 
     fun withWidth(value: String) = withAttr("width", value)
+    fun withWidth(value: Int) = withAttr("width", value.toString())
     fun withHeight(value: String) = withAttr("height", value)
+    fun withHeight(value: Int) = withAttr("height", value.toString())
 
     companion object {
         private val formatToMime = mapOf(
