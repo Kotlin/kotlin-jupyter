@@ -11,8 +11,6 @@ import java.io.File
 import java.net.URI
 import java.util.Base64
 
-data class HTMLAttr(val name: String, val value: String)
-
 class Image(private val attributes: List<HTMLAttr>) : Renderable {
     override fun render(notebook: Notebook): MimeTypedResult {
         return HTML(
@@ -24,21 +22,21 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
 
     constructor(url: String, embed: Boolean = false) : this(
         listOf(
-            if (embed) embedSrc(downloadData(url), detectFormat(URI(url)))
+            if (embed) embedSrc(downloadData(url), detectMime(URI(url)))
             else referSrc(url)
         )
     )
 
     constructor(file: File, embed: Boolean = false) : this(
         listOf(
-            if (embed) embedSrc(loadData(file), detectFormat(file.toURI()))
+            if (embed) embedSrc(loadData(file), detectMime(file.toURI()))
             else referSrc(file.toURI().toASCIIString())
         )
     )
 
     constructor(data: ByteArray, format: String) : this(
         listOf(
-            embedSrc(data, format)
+            embedSrc(data, convertFormat(format))
         )
     )
 
@@ -49,6 +47,10 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
     fun withHeight(value: String) = withAttr("height", value)
 
     companion object {
+        private val formatToMime = mapOf(
+            "svg" to "svg+xml"
+        )
+
         fun referSrc(url: String): HTMLAttr {
             return HTMLAttr("src", url)
         }
@@ -75,8 +77,11 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             return file.readBytes()
         }
 
-        fun detectFormat(uri: URI): String {
-            return uri.toString().substringAfterLast('.', "")
+        fun detectMime(uri: URI): String {
+            val format = uri.toString().substringAfterLast('.', "")
+            return convertFormat(format)
         }
+
+        fun convertFormat(format: String) = format.toLowerCase().let { formatToMime[it] ?: it }
     }
 }
