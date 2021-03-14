@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.util.KotlinKernelVersionSerializer
 import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
@@ -61,16 +62,16 @@ class LibraryDescriptor(
             if (arguments.count() != 1) {
                 throw ReplPreprocessingException("Too many arguments")
             }
-            result[parameters[0].name] = arguments[0].value
+            result[parameters[0].name] = substituteKernelVars(arguments[0].value)
             return result
         }
 
         arguments.forEach {
-            result[it.name] = it.value
+            result[it.name] = substituteKernelVars(it.value)
         }
         parameters.forEach {
             if (!result.containsKey(it.name)) {
-                result[it.name] = it.value
+                result[it.name] = substituteKernelVars(it.value)
             }
         }
         return result
@@ -89,5 +90,15 @@ class LibraryDescriptor(
             minKernelVersion = minKernelVersion,
             originalDescriptorText = Json.encodeToString(this),
         )
+    }
+
+    companion object {
+        private val kernelVariables = mapOf(
+            "kernelVersion" to currentKernelVersion.toString()
+        )
+
+        fun substituteKernelVars(value: String): String {
+            return replaceVariables(value, kernelVariables)
+        }
     }
 }

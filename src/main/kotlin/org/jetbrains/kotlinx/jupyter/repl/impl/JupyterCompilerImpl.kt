@@ -12,7 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
-import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
+import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
@@ -100,7 +100,6 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
-    private val properties = readResourceAsIniFile("compiler.properties", JupyterCompilerImpl::class.java.classLoader)
 
     private val refinementCallbacks = mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
 
@@ -113,10 +112,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
         }
     }
 
-    override val version: KotlinKernelVersion =
-        KotlinKernelVersion.from(
-            properties["version"] ?: error("Compiler artifact should contain version")
-        )!!
+    override val version: KotlinKernelVersion = currentKernelVersion
 
     override val numberOfSnippets: Int
         get() = classes.size

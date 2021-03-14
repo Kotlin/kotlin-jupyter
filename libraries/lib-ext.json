@@ -1,7 +1,7 @@
 {
   "description": "Extended functionality for Jupyter kernel",
   "properties": {
-    "v": "0.8.3.286"
+    "v": "$kernelVersion"
   },
   "link": "https://github.com/Kotlin/kotlin-jupyter",
   "dependencies": [
