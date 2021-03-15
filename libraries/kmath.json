@@ -1,21 +1,20 @@
 {
   "description": "Experimental Kotlin algebra-based mathematical library",
   "properties": {
-    "v": "0.2.0"
+    "v": "0.2.1"
   },
   "link": "https://github.com/mipt-npm/kmath",
   "repositories": [
-    "https://dl.bintray.com/mipt-npm/kscience",
-    "https://dl.bintray.com/mipt-npm/dev"
+    "https://repo.kotlin.link"
   ],
   "dependencies": [
-    "kscience.kmath:kmath-commons:$v",
-    "kscience.kmath:kmath-for-real:$v"
+    "space.kscience:kmath-commons:$v",
+    "space.kscience:kmath-for-real-jvm:$v"
   ],
   "imports": [
-    "kscience.kmath.linear.*",
-    "kscience.kmath.operations.*",
-    "kscience.kmath.structures.*",
-    "kscience.kmath.real.*"
+    "space.kscience.kmath.linear.*",
+    "space.kscience.kmath.operations.*",
+    "space.kscience.kmath.structures.*",
+    "space.kscience.kmath.real.*"
   ]
 }
