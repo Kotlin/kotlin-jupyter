@@ -1,0 +1,10 @@
+{
+  "description": "Extended functionality for Jupyter kernel",
+  "properties": {
+    "v": "$kernelVersion"
+  },
+  "link": "https://github.com/Kotlin/kotlin-jupyter",
+  "dependencies": [
+    "org.jetbrains.kotlinx:kotlin-jupyter-lib-ext:$v"
+  ]
+}

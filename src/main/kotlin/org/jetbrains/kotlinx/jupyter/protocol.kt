@@ -14,12 +14,13 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.config.KernelStreams
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 import kotlin.system.exitProcess
@@ -134,7 +135,7 @@ class SocketDisplayHandler(
 
         notebook.currentCell?.displays?.update(id, display)
 
-        json.setDisplayId(id) ?: throw ReplEvalRuntimeException("`update_display_data` response should provide an id of data being updated")
+        json.setDisplayId(id) ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
 
         socket.send(
             makeReplyMessage(
@@ -330,7 +331,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
 }
 
 class CapturingOutputStream(
-    private val stdout: PrintStream,
+    private val stdout: PrintStream?,
     private val conf: OutputConfig,
     private val captureOutput: Boolean,
     val onCaptured: (String) -> Unit,
@@ -373,7 +374,7 @@ class CapturingOutputStream(
     @Synchronized
     override fun write(b: Int) {
         ++overallOutputSize
-        stdout.write(b)
+        stdout?.write(b)
 
         if (captureOutput && overallOutputSize <= conf.cellOutputMaxSize) {
             capturedNewLine.write(b)
@@ -418,7 +419,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     repl.notebook.beginEvalSession()
     val cell = { repl.notebook.currentCell }
 
-    fun getCapturingStream(stream: PrintStream, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
+    fun getCapturingStream(stream: PrintStream?, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
         return CapturingOutputStream(
             stream,
             config,
@@ -431,9 +432,16 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
 
     val forkedOut = getCapturingStream(out, JupyterOutType.STDOUT, config.captureOutput)
     val forkedError = getCapturingStream(err, JupyterOutType.STDERR, false)
+    val userError = getCapturingStream(null, JupyterOutType.STDERR, true)
 
-    System.setOut(PrintStream(forkedOut, false, "UTF-8"))
-    System.setErr(PrintStream(forkedError, false, "UTF-8"))
+    val printForkedOut = PrintStream(forkedOut, false, "UTF-8")
+    val printForkedErr = PrintStream(forkedError, false, "UTF-8")
+    val printUserError = PrintStream(userError, false, "UTF-8")
+
+    KernelStreams.setStreams(true, printForkedOut, printUserError)
+
+    System.setOut(printForkedOut)
+    System.setErr(printForkedErr)
 
     val `in` = System.`in`
     val allowStdIn = (srcMessage.content as? ExecuteRequest)?.allowStdin ?: true
@@ -446,6 +454,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             } else {
                 forkedOut.flush()
                 forkedError.flush()
+                userError.flush()
 
                 try {
                     val result = exec.resultValue?.toDisplayResult(repl.notebook)
@@ -454,60 +463,27 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
                     AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                 }
             }
-        } catch (ex: ReplCompilerException) {
+        } catch (ex: ReplException) {
             forkedOut.flush()
             forkedError.flush()
-
-            val firstDiagnostic = ex.firstDiagnostics
-            val additionalInfo = firstDiagnostic?.location?.let {
-                val errorMessage = firstDiagnostic.message
-                jsonObject(
-                    "lineStart" to Json.encodeToJsonElement(it.start.line),
-                    "colStart" to Json.encodeToJsonElement(it.start.col),
-                    "lineEnd" to Json.encodeToJsonElement(it.end?.line ?: -1),
-                    "colEnd" to Json.encodeToJsonElement(it.end?.col ?: -1),
-                    "message" to Json.encodeToJsonElement(errorMessage),
-                    "path" to Json.encodeToJsonElement(firstDiagnostic.sourcePath.orEmpty())
-                )
-            } ?: emptyJsonObject
+            userError.flush()
 
             ErrorResponseWithMessage(
-                ex.message,
+                ex.render(),
                 ex.javaClass.canonicalName,
                 ex.message ?: "",
                 ex.stackTrace.map { it.toString() },
-                additionalInfo
-            )
-        } catch (ex: ReplEvalRuntimeException) {
-            forkedOut.flush()
-
-            val stdErr = StringBuilder()
-            with(stdErr) {
-                val cause = ex.cause
-                if (cause == null) appendLine(ex.message)
-                else {
-                    when (cause) {
-                        is InvocationTargetException -> appendLine(cause.targetException.toString())
-                        else -> appendLine(cause.toString())
-                    }
-                    cause.stackTrace?.also {
-                        for (s in it)
-                            appendLine(s)
-                    }
-                }
-            }
-            ErrorResponseWithMessage(
-                stdErr.toString(),
-                ex.javaClass.canonicalName,
-                ex.message ?: "",
-                ex.stackTrace.map { it.toString() }
+                ex.getAdditionalInfoJson() ?: emptyJsonObject
             )
         }
     } finally {
         forkedOut.close()
         forkedError.close()
+        userError.close()
         System.setIn(`in`)
         System.setErr(err)
         System.setOut(out)
+
+        KernelStreams.setStreams(false, out, err)
     }
 }

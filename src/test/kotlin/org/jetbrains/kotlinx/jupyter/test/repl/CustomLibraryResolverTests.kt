@@ -8,13 +8,13 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
-import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
@@ -191,7 +191,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val libs = listOf(lib1).toLibraries()
         val replWithResolver = makeRepl(libs)
-        val exception = assertThrows<ReplCompilerException> { replWithResolver.eval("%use mylib") }
+        val exception = assertThrows<ReplPreprocessingException> { replWithResolver.eval("%use mylib") }
 
         val message = exception.message!!
         Assertions.assertTrue(message.contains(minRequiredVersion))

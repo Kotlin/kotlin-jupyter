@@ -9,9 +9,9 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.config.catchAll
+import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions

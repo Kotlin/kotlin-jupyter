@@ -8,9 +8,9 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
-import org.jetbrains.kotlinx.jupyter.compiler.util.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.compiler.util.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData

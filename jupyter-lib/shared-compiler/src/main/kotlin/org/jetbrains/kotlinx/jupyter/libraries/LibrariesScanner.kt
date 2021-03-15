@@ -13,9 +13,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesInstantiable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 
 class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
@@ -72,7 +72,7 @@ class LibrariesScanner(val notebook: Notebook) {
                 action()
             } catch (e: Throwable) {
                 val errorMessage = "Failed to load library integration class '${declaration.fqn}'"
-                log.errorForUser(errorMessage, e)
+                log.errorForUser(message = errorMessage, throwable = e)
                 throw ReplException(errorMessage, e)
             }
         }

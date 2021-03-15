@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.asSuccess
 
@@ -8,7 +8,7 @@ abstract class LibraryResolutionInfoParser(val name: String, private val paramet
     fun getInfo(args: List<Variable>): LibraryResolutionInfo {
         val map = when (val mapResult = substituteArguments(parameters, args)) {
             is ResultWithDiagnostics.Success -> mapResult.value
-            is ResultWithDiagnostics.Failure -> throw ReplCompilerException(mapResult)
+            is ResultWithDiagnostics.Failure -> throw ReplLibraryLoadingException(name, mapResult.reports.firstOrNull()?.message)
         }
 
         return getInfo(map)

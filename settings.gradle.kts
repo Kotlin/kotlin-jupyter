@@ -4,6 +4,7 @@ pluginManagement {
     val kotlinVersion: String by settings
     val shadowJarVersion: String by settings
     val ktlintGradleVersion: String by settings
+    val jupyterApiVersion: String by settings
 
     repositories {
         jcenter()
@@ -44,6 +45,7 @@ pluginManagement {
     plugins {
         kotlin("jvm") version kotlinVersion
         kotlin("plugin.serialization") version kotlinVersion
+        kotlin("jupyter.api") version jupyterApiVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
         id("org.jetbrains.kotlinx.jupyter.dependencies")
@@ -67,6 +69,8 @@ libSubproject("api")
 libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
+
+libSubproject("lib-ext")
 
 fun libSubproject(name: String, parentPath: String = "jupyter-lib/") {
     include(name)

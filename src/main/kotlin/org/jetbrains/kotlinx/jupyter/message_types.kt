@@ -22,7 +22,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic

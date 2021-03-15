@@ -7,6 +7,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     kotlin("jvm")
+    kotlin("jupyter.api") apply false
     kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
@@ -27,6 +28,11 @@ val docsRepo: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
+
+deploy.apply {
+    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json-jvm")
+    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
+}
 
 applyNexusPlugin()
 
@@ -61,7 +67,7 @@ allprojects {
 
 dependencies {
     // Dependency on module with compiler.
-    implementation(project(":shared-compiler"))
+    api(project(":shared-compiler"))
 
     // Standard dependencies
     implementation(kotlin("stdlib"))

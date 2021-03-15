@@ -67,7 +67,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
             val libraries = libraryFiles.toList().mapNotNull { file ->
                 val libraryName = file.nameWithoutExtension
                 log.info("Parsing descriptor for library '$libraryName'")
-                val descriptor = log.catchAll("Parsing descriptor for library '$libraryName' failed") {
+                val descriptor = log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
                     parseLibraryDescriptor(file.readText())
                 }
 

@@ -5,8 +5,8 @@ import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
@@ -83,21 +83,15 @@ internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluato
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
-                                buildString {
-                                    val cause = resultWithDiagnostics.reports.firstOrNull()?.exception
-                                    val stackTrace = cause?.stackTrace.orEmpty()
-                                    append("This snippet was not evaluated: ")
-                                    appendLine(cause.toString())
-                                    for (s in stackTrace)
-                                        appendLine(s)
-                                }
+                                "This snippet was not evaluated",
+                                resultWithDiagnostics.reports.firstOrNull()?.exception
                             )
                         }
                         else -> throw IllegalStateException("Unknown eval result type $this")
                     }
                 }
                 is ResultWithDiagnostics.Failure -> {
-                    throw ReplCompilerException(resultWithDiagnostics)
+                    throw ReplCompilerException(code, resultWithDiagnostics)
                 }
                 else -> throw IllegalStateException("Unknown result")
             }

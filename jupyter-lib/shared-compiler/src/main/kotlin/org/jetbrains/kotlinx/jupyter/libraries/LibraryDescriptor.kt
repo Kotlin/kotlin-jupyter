@@ -10,7 +10,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
-import org.jetbrains.kotlinx.jupyter.compiler.util.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.util.KotlinKernelVersionSerializer
 import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
@@ -56,21 +57,21 @@ class LibraryDescriptor(
         val result = mutableMapOf<String, String>()
         if (arguments.any { it.name.isEmpty() }) {
             if (parameters.count() != 1) {
-                throw ReplCompilerException("Unnamed argument is allowed only if library has a single property")
+                throw ReplPreprocessingException("Unnamed argument is allowed only if library has a single property")
             }
             if (arguments.count() != 1) {
-                throw ReplCompilerException("Too many arguments")
+                throw ReplPreprocessingException("Too many arguments")
             }
-            result[parameters[0].name] = arguments[0].value
+            result[parameters[0].name] = substituteKernelVars(arguments[0].value)
             return result
         }
 
         arguments.forEach {
-            result[it.name] = it.value
+            result[it.name] = substituteKernelVars(it.value)
         }
         parameters.forEach {
             if (!result.containsKey(it.name)) {
-                result[it.name] = it.value
+                result[it.name] = substituteKernelVars(it.value)
             }
         }
         return result
@@ -89,5 +90,15 @@ class LibraryDescriptor(
             minKernelVersion = minKernelVersion,
             originalDescriptorText = Json.encodeToString(this),
         )
+    }
+
+    companion object {
+        private val kernelVariables = mapOf(
+            "kernelVersion" to currentKernelVersion.toString()
+        )
+
+        fun substituteKernelVars(value: String): String {
+            return replaceVariables(value, kernelVariables)
+        }
     }
 }
