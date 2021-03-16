@@ -1,7 +1,5 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
 }
 
@@ -16,9 +14,11 @@ dependencies {
     implementation(kotlin("stdlib"))
 }
 
-addPublication {
-    publicationName = "common-dependencies"
-    artifactId = "kotlin-jupyter-common-dependencies"
-    description = "Notebook API entities used for building kernel documentation"
-    packageName = artifactId
+kotlinPublications {
+    add {
+        publicationName = "common-dependencies"
+        artifactId = "kotlin-jupyter-common-dependencies"
+        description = "Notebook API entities used for building kernel documentation"
+        packageName = artifactId
+    }
 }

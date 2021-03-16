@@ -1,9 +1,7 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
 }
 
 project.version = rootProject.version
@@ -38,9 +36,11 @@ tasks.test {
     }
 }
 
-addPublication {
-    publicationName = "lib-ext"
-    artifactId = "kotlin-jupyter-lib-ext"
-    description = "Extended functionality for Kotlin kernel"
-    packageName = artifactId
+kotlinPublications {
+    add {
+        publicationName = "lib-ext"
+        artifactId = "kotlin-jupyter-lib-ext"
+        description = "Extended functionality for Kotlin kernel"
+        packageName = artifactId
+    }
 }

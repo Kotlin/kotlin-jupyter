@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
 }
 
@@ -24,9 +23,11 @@ tasks.withType(KotlinCompile::class.java).all {
     }
 }
 
-addPublication {
-    publicationName = "api-annotations"
-    artifactId = "kotlin-jupyter-api-annotations"
-    description = "Annotations for adding Kotlin Jupyter notebooks support to Kotlin libraries"
-    packageName = artifactId
+kotlinPublications {
+    add {
+        publicationName = "api-annotations"
+        artifactId = "kotlin-jupyter-api-annotations"
+        description = "Annotations for adding Kotlin Jupyter notebooks support to Kotlin libraries"
+        packageName = artifactId
+    }
 }

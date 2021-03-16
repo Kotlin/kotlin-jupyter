@@ -1,9 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
 import org.jetbrains.kotlinx.jupyter.plugin.options
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-import org.jetbrains.kotlinx.jupyter.publishing.applyNexusPlugin
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import ru.ileasile.kotlin.apache2
+import ru.ileasile.kotlin.developer
+import ru.ileasile.kotlin.githubRepo
 
 plugins {
     kotlin("jvm")
@@ -12,8 +13,8 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
-    id("org.jetbrains.kotlinx.jupyter.publishing")
-    id("org.jetbrains.kotlinx.jupyter.doc")
+    id("ru.ileasile.kotlin.publisher")
+    id("ru.ileasile.kotlin.doc")
 }
 
 extra["isMainProject"] = true
@@ -33,8 +34,6 @@ deploy.apply {
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json-jvm")
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
 }
-
-applyNexusPlugin()
 
 fun KtlintExtension.setup() {
     version.set(ktlintVersion)
@@ -122,10 +121,6 @@ tasks.register("publishLocal") {
     )
 }
 
-tasks.named("closeRepository") {
-    mustRunAfter("publishToSonatype")
-}
-
 tasks.register("publishToSonatypeAndRelease") {
     group = "publishing"
 
@@ -194,11 +189,45 @@ tasks.check {
 
 tasks.publishDocs {
     docsRepoUrl.set(docsRepo)
+    branchName.set("master")
+    username.set("robot")
+    email.set("robot@jetbrains.com")
 }
 
-addPublication {
-    publicationName = "kernel"
-    artifactId = "kotlin-jupyter-kernel"
-    description = "Kotlin Jupyter kernel published as artifact"
-    packageName = artifactId
+kotlinPublications {
+    packageGroup = "org.jetbrains.kotlinx"
+
+    sonatypeSettings(
+        System.getenv("SONATYPE_USER"),
+        System.getenv("SONATYPE_PASSWORD"),
+        "kotlin-jupyter project, v. ${project.version}"
+    )
+
+    signingCredentials(
+        System.getenv("SIGN_KEY_ID"),
+        System.getenv("SIGN_KEY_PRIVATE"),
+        System.getenv("SIGN_KEY_PASSPHRASE")
+    )
+
+    pom {
+        githubRepo("Kotlin", "kotlin-jupyter")
+
+        inceptionYear.set("2021")
+
+        licenses {
+            apache2()
+        }
+
+        developers {
+            developer("nikitinas", "Anatoly Nikitin", "Anatoly.Nikitin@jetbrains.com")
+            developer("ileasile", "Ilya Muradyan", "Ilya.Muradyan@jetbrains.com")
+        }
+    }
+
+    add {
+        publicationName = "kernel"
+        artifactId = "kotlin-jupyter-kernel"
+        description = "Kotlin Jupyter kernel published as artifact"
+        packageName = artifactId
+    }
 }

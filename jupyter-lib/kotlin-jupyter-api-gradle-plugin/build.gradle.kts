@@ -3,7 +3,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
 }
 
 project.version = rootProject.version

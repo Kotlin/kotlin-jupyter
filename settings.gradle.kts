@@ -5,6 +5,7 @@ pluginManagement {
     val shadowJarVersion: String by settings
     val ktlintGradleVersion: String by settings
     val jupyterApiVersion: String by settings
+    val publishPluginVersion: String by settings
 
     repositories {
         jcenter()
@@ -49,6 +50,8 @@ pluginManagement {
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
         id("org.jetbrains.kotlinx.jupyter.dependencies")
+        id("ru.ileasile.kotlin.publisher") version publishPluginVersion
+        id("ru.ileasile.kotlin.doc") version publishPluginVersion
     }
 }
 
@@ -59,9 +62,7 @@ gradle.projectsLoaded {
 }
 
 val pluginProject = "kotlin-jupyter-plugin"
-val publishPluginProject = "kotlin-jupyter-publish"
 
-includeBuild(publishPluginProject)
 includeBuild(pluginProject)
 libSubproject("common-dependencies", "$pluginProject/")
 libSubproject("lib")

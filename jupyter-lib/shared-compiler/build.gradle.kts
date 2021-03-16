@@ -1,7 +1,5 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -79,9 +77,11 @@ tasks.processResources {
     dependsOn(buildProperties)
 }
 
-addPublication {
-    publicationName = "compiler"
-    artifactId = "kotlin-jupyter-shared-compiler"
-    description = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"
-    packageName = artifactId
+kotlinPublications {
+    add {
+        publicationName = "compiler"
+        artifactId = "kotlin-jupyter-shared-compiler"
+        description = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"
+        packageName = artifactId
+    }
 }

@@ -17,6 +17,7 @@ pluginManagement {
 
     val rootProperties = findRootProperties()
     val ktlintGradleVersion = rootProperties["ktlintGradleVersion"] as String
+    val publishPluginVersion = rootProperties["publishPluginVersion"] as String
 
     repositories {
         gradlePluginPortal()
@@ -32,8 +33,8 @@ pluginManagement {
 
     plugins {
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
+        id("ru.ileasile.kotlin.publisher") version publishPluginVersion
     }
 }
 
-includeBuild("../kotlin-jupyter-publish")
 include("common-dependencies")
