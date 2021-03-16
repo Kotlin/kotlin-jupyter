@@ -37,7 +37,7 @@ tasks.test {
 }
 
 kotlinPublications {
-    add {
+    publication {
         publicationName = "lib-ext"
         artifactId = "kotlin-jupyter-lib-ext"
         description = "Extended functionality for Kotlin kernel"

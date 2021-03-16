@@ -112,21 +112,6 @@ dependencies {
     deploy(kotlin("script-runtime"))
 }
 
-tasks.register("publishLocal") {
-    group = "publishing"
-
-    dependsOn(
-        tasks.condaPackage,
-        tasks.pyPiPackage
-    )
-}
-
-tasks.register("publishToSonatypeAndRelease") {
-    group = "publishing"
-
-    dependsOn("publishToSonatype", "closeAndReleaseRepository")
-}
-
 tasks.register("publishToPluginPortal") {
     group = "publishing"
 
@@ -224,10 +209,17 @@ kotlinPublications {
         }
     }
 
-    add {
+    publication {
         publicationName = "kernel"
         artifactId = "kotlin-jupyter-kernel"
         description = "Kotlin Jupyter kernel published as artifact"
         packageName = artifactId
     }
+}
+
+tasks.named("publishLocal") {
+    dependsOn(
+        tasks.condaPackage,
+        tasks.pyPiPackage
+    )
 }

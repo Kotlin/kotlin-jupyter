@@ -78,7 +78,7 @@ tasks.processResources {
 }
 
 kotlinPublications {
-    add {
+    publication {
         publicationName = "compiler"
         artifactId = "kotlin-jupyter-shared-compiler"
         description = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"

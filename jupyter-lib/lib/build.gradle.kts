@@ -12,7 +12,7 @@ dependencies {
 }
 
 kotlinPublications {
-    add {
+    publication {
         publicationName = "lib"
         artifactId = "kotlin-jupyter-lib"
         description = "Internal part of Kotlin Jupyter API used only inside notebook cells"

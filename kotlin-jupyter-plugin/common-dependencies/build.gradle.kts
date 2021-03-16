@@ -15,7 +15,7 @@ dependencies {
 }
 
 kotlinPublications {
-    add {
+    publication {
         publicationName = "common-dependencies"
         artifactId = "kotlin-jupyter-common-dependencies"
         description = "Notebook API entities used for building kernel documentation"

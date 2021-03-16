@@ -42,7 +42,7 @@ tasks {
 }
 
 kotlinPublications {
-    add {
+    publication {
         publicationName = "api"
         artifactId = "kotlin-jupyter-api"
         description = "API for libraries supporting Kotlin Jupyter notebooks"
