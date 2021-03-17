@@ -182,16 +182,18 @@ tasks.publishDocs {
 kotlinPublications {
     packageGroup = "org.jetbrains.kotlinx"
 
+    fun prop(name: String) = project.findProperty(name) as? String?
+
     sonatypeSettings(
-        System.getenv("SONATYPE_USER"),
-        System.getenv("SONATYPE_PASSWORD"),
+        prop("kds.sonatype.user"),
+        prop("kds.sonatype.password"),
         "kotlin-jupyter project, v. ${project.version}"
     )
 
     signingCredentials(
-        System.getenv("SIGN_KEY_ID"),
-        System.getenv("SIGN_KEY_PRIVATE"),
-        System.getenv("SIGN_KEY_PASSPHRASE")
+        prop("kds.sign.key.id"),
+        prop("kds.sign.key.private"),
+        prop("kds.sign.key.passphrase")
     )
 
     pom {
