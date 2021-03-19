@@ -3,11 +3,8 @@
   "properties": {
     "v": "0.7.2-dev-198-0.8.3.306"
   },
-  "repositories": [
-    "https://kotlin.bintray.com/kotlin-datascience"
-  ],
   "link": "https://github.com/nikitinas/dataframe",
   "dependencies": [
-    "org.jetbrains.kotlin:dataframe:$v"
+    "org.jetbrains.kotlinx:dataframe:$v"
   ]
 }
