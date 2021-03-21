@@ -31,7 +31,7 @@ class MagicsProcessor(
                     handler.handle(magic, arg, tryIgnoreErrors, parseOnly)
                 }
             } catch (e: Exception) {
-                throw ReplPreprocessingException("Failed to process '%$magicText' command. " + e.message)
+                throw ReplPreprocessingException("Failed to process '%$magicText' command. " + e.message, e)
             }
         }
 
