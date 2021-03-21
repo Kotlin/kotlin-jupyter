@@ -5,6 +5,9 @@ plugins {
 
 project.version = rootProject.version
 
+val http4kVersion: String by rootProject
+val kotlinxSerializationVersion: String by rootProject
+
 repositories {
     mavenCentral()
     jcenter()
@@ -12,6 +15,14 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+
+    // HTTP4K for resolving remote library dependencies
+    fun http4k(name: String) = api("org.http4k:http4k-$name:$http4kVersion")
+    http4k("core")
+    http4k("client-apache")
+
+    // Serialization implementation for kernel code
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
 
 kotlinPublications {

@@ -1,6 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.common.getHttp
+import org.jetbrains.kotlinx.jupyter.common.jsonObject
+import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import java.nio.file.Path

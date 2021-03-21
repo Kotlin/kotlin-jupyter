@@ -23,7 +23,6 @@ val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
-val khttpVersion: String by project
 
 val docsRepo: String by project
 

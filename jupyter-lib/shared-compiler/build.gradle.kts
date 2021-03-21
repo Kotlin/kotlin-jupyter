@@ -5,10 +5,8 @@ plugins {
 }
 
 project.version = rootProject.version
-val kotlinxSerializationVersion: String by rootProject
 val slf4jVersion: String by rootProject
 val junitVersion: String by rootProject
-val khttpVersion: String by rootProject
 
 repositories {
     mavenCentral()
@@ -37,12 +35,6 @@ dependencies {
 
     // Logging
     compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
-
-    // Khttp for resolving remote library dependencies
-    implementation("khttp:khttp:$khttpVersion")
-
-    // Serialization implementation for kernel code
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 
     // Testing dependencies: kotlin-test and JUnit 5
     testImplementation(kotlin("test"))

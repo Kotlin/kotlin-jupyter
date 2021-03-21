@@ -1,13 +1,22 @@
 package org.jetbrains.kotlinx.jupyter.build
 
-import khttp.structures.authorization.BasicAuthorization
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 import java.io.OutputStream
+import org.http4k.core.Method
+import org.http4k.core.Request
+import org.jetbrains.kotlinx.jupyter.common.jsonObject
+import org.jetbrains.kotlinx.jupyter.common.httpRequest
+import org.jetbrains.kotlinx.jupyter.common.text
+import org.jetbrains.kotlinx.jupyter.common.withBasicAuth
+import org.jetbrains.kotlinx.jupyter.common.withJson
 
 fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
     tasks.register("updateKotlinVersion") {
@@ -15,13 +24,14 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             val teamcityUrl = "https://teamcity.jetbrains.com"
             val requestEndpoint = "guestAuth/app/rest/builds"
             val locator = "buildType:(id:Kotlin_KotlinPublic_Aggregate),status:SUCCESS,branch:default:any,count:1"
-            val response = khttp.get(
-                "$teamcityUrl/$requestEndpoint/?locator=$locator",
-                headers = mapOf("accept" to "application/json")
+
+            val response = httpRequest(
+                Request(Method.GET, "$teamcityUrl/$requestEndpoint/?locator=$locator")
+                    .header("accept", "application/json")
             )
-            val builds = response.jsonObject["build"] as JSONArray
-            val lastBuild = builds[0] as JSONObject
-            val lastBuildNumber = lastBuild["number"]
+            val builds = response.jsonObject["build"] as JsonArray
+            val lastBuild = builds[0] as JsonObject
+            val lastBuildNumber = (lastBuild["number"] as JsonPrimitive).content
             println("Last Kotlin dev version: $lastBuildNumber")
 
             val kotlinVersionProp = "kotlinVersion"
@@ -85,19 +95,16 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
         doLast {
             val user = rootProject.property("jupyter.github.user") as String
             val password = rootProject.property("jupyter.github.token") as String
-            val auth = BasicAuthorization(user, password)
-            fun githubRequest(type: String, request: String, json: Map<String, Any>? = null): Int {
-                val response = khttp.request(
-                    type,
-                    "https://api.github.com/$request",
-                    json = json,
-                    auth = auth
+            fun githubRequest(method: Method, request: String, json: Map<String, String>? = null): Int {
+                val response = httpRequest(Request(method, "https://api.github.com/$request")
+                    .withJson(Json.encodeToJsonElement(json))
+                    .withBasicAuth(user, password)
                 )
                 println(response.text)
-                return response.statusCode
+                return response.status.code
             }
 
-            val code = githubRequest("POST", "repos/Kotlin/kotlin-jupyter/pulls", mapOf(
+            val code = githubRequest(Method.POST, "repos/Kotlin/kotlin-jupyter/pulls", mapOf(
                 "title" to "Update library versions",
                 "head" to updateLibBranchName!!,
                 "base" to "master"
