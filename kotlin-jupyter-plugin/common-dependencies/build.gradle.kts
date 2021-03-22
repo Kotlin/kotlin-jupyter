@@ -10,7 +10,6 @@ val kotlinxSerializationVersion: String by rootProject
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {

@@ -9,7 +9,6 @@ project.version = rootProject.version
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {

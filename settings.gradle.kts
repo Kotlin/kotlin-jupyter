@@ -8,12 +8,9 @@ pluginManagement {
     val publishPluginVersion: String by settings
 
     repositories {
-        jcenter()
         mavenLocal()
         mavenCentral()
         gradlePluginPortal()
-        // only when using Kotlin EAP releases ...
-        maven("https://dl.bintray.com/kotlin/kotlin-eap")
 
         class TeamcitySettings(
             val url: String,

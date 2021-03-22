@@ -13,7 +13,6 @@ val junitVersion: String by rootProject
 val kotlinVersion: String by rootProject
 
 repositories {
-    jcenter()
     mavenCentral()
     gradlePluginPortal()
 }

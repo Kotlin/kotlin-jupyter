@@ -12,7 +12,6 @@ val junitVersion: String by rootProject
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
