@@ -436,6 +436,11 @@ define(function(){
 
             console.log(content);
 
+            // If completion error occurs
+            if (matches === undefined) {
+                return;
+            }
+
             var cur = this.editor.getCursor();
 
             var paragraph = content.paragraph;

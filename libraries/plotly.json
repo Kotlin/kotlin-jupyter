@@ -1,23 +1,21 @@
 {
     "imports": [
-        "kscience.plotly.*",
-        "kscience.plotly.models.*",
-        "kscience.plotly.JupyterPlotly",
-        "hep.dataforge.meta.*",
+        "space.kscience.plotly.*",
+        "space.kscience.plotly.models.*",
+        "space.kscience.plotly.JupyterPlotly",
+        "space.kscience.dataforge.meta.*",
         "kotlinx.html.*"
     ],
     "repositories": [
-        "https://dl.bintray.com/mipt-npm/dataforge",
-        "https://dl.bintray.com/mipt-npm/kscience",
-        "https://dl.bintray.com/mipt-npm/dev"
+        "https://repo.kotlin.link"
     ],
     "properties": {
-        "v": "0.2.0"
+        "v": "0.3.1"
     },
     "link": "https://github.com/mipt-npm/plotly.kt",
     "description": "An experimental plotly.kt integration module. Supports static plots and HTML dashboards.",
     "dependencies": [
-        "kscience.plotlykt:plotlykt-core-jvm:$v"
+        "space.kscience:plotlykt-core-jvm:$v"
     ],
     "init": [
         "DISPLAY(HTML(JupyterPlotly.loadJs().toString()))",

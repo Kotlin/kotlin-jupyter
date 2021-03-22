@@ -1,33 +1,10 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.0.6-dev-14"
+    "v": "0.7.2-dev-200-0.8.3.312"
   },
-  "init": [
-    "fun krangl.typed.TypedDataFrame<*>.extractSchema(name: String? = null) = EXECUTE(getScheme(name))",
-    "fun krangl.typed.TypedDataFrame<*>.schema() = getScheme(null)"
-  ],
-  "imports": [
-    "krangl.*",
-    "krangl.typed.*"
-  ],
-  "renderers": {
-    "krangl.typed.TypedDataFrameImpl": "HTML(($it as TypedDataFrame<*>).toHTML())",
-    "krangl.typed.TypedDataFrameRowImpl": "($it as TypedDataFrameRow<*>).toDataFrame()"
-  },
-  "repositories": [
-    "https://kotlin.bintray.com/kotlin-datascience"
-  ],
-  "link": "https://github.com/nikitinas/krangl-typed",
+  "link": "https://github.com/nikitinas/dataframe",
   "dependencies": [
-    "org.jetbrains.kotlin:krangl-typed:$v"
-  ],
-  "typeConverters": {
-    "krangl.typed.TypedDataFrame<*>": "CodeGenerator.Default.generate($it, $property)",
-    "krangl.typed.DataFrameToListNamedStub": "CodeGenerator.Default.generate($it)",
-    "krangl.typed.DataFrameToListTypedStub": "CodeGenerator.Default.generate($it)"
-  },
-  "annotationHandlers": {
-    "krangl.typed.DataFrameType": "CodeGenerator.Default.generate($kclass)"
-  }
+    "org.jetbrains.kotlinx:dataframe:$v"
+  ]
 }

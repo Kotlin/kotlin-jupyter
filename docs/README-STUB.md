@@ -1,15 +1,15 @@
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![PyPI](https://img.shields.io/pypi/v/kotlin-jupyter-kernel?label=PyPi)](https://pypi.org/project/kotlin-jupyter-kernel/)
-[![Anaconda](https://img.shields.io/conda/v/jetbrains/kotlin-jupyter-kernel?label=Anaconda)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
+[![Anaconda](https://anaconda.org/jetbrains/kotlin-jupyter-kernel/badges/version.svg)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.4.0) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) ([[kotlin_version]]) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
-on Windows, Ubuntu Linux and MacOS. Using with Jupyter Console frontend is problematic now because of
+on Windows, Ubuntu Linux and macOS. Using with Jupyter Console frontend is problematic now because of
 logging which cannot be switched off. Tuning logging options is planned for future releases.
 
 ![Screenshot in Jupyter](Screenshot.png)
@@ -22,7 +22,7 @@ Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://myb
 
 ## Installation
 
-There are three ways to install kernel:
+There are three ways to install the kernel:
 
 ### Conda
 
@@ -51,14 +51,29 @@ Uninstall: `pip uninstall kotlin-jupyter-kernel`
 ### From sources
 
 ```bash
-git clone https://github.com/Kotlin/kotlin-jupyter.git
+git clone [[repo_url]]
 cd kotlin-jupyter
 ./gradlew install
 ```
 
-Default installation path is `~/.ipython/kernels/kotlin/`. To install to some other location use option `-PinstallPath=`, but note that Jupyter looks for kernel specs files only in predefined places
+Default installation path is `~/.ipython/kernels/kotlin/`.
+To install to some other location use option `-PinstallPath=`, but note that Jupyter
+looks for the kernel specs files only in predefined places. For more detailed info
+see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#kernel-specs).
 
-Uninstall: `./gradlew uninstall`  
+Uninstall: `./gradlew uninstall`
+
+### Troubleshooting
+
+There could be a problem with kernel spec detection because of different
+python environments and installation modes. If you are using pip or conda
+to install the package, try running post-install fixup script:
+```bash
+python -m kotlin_kernel fix-kernelspec-location
+```
+
+This script replaces kernel specs to the "user" path where they are always detected.
+Don't forget to re-run this script on the kernel update.
 
 ## Usage
 
@@ -73,13 +88,13 @@ To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a ne
 ### REPL commands
 
 The following REPL commands are supported:
- - `:help` - displays REPL commands help
- - `:classpath` - displays current classpath
+[[supported_commands]]
  
 ### Dependencies resolving annotations
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
- - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class directories or jars, ivy and maven artifacts represented by colon separated string
+ - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class 
+   directories or jars, ivy and maven artifacts represented by the colon separated string
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
  To specify Maven local, use `@file:Repository("*mavenLocal")`.
  
@@ -99,11 +114,7 @@ The following maven repositories are included by default:
 ### Line Magics
 
 The following line magics are supported:
- - `%use <lib1>, <lib2> ...` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
- - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
- - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
- - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
- - `%output [options]` - output capturing settings.
+[[magics]]
  
  See detailed info about line magics [here](magics.md).
  
@@ -118,7 +129,7 @@ When a library is included with `%use` keyword, the following functionality is a
 
 This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](../libraries) directory.
 A library descriptor may provide a set of properties with default values that can be overridden when library is included.
-The major use case for library properties is to specify particular version of library. If descriptor has only one property, it can be 
+The major use case for library properties is to specify a particular version of library. If descriptor has only one property, it can be 
 defined without naming:
 ```
 %use krangl(0.10)
@@ -131,7 +142,7 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's taken from the libraries directory
+You can also specify the source of library descriptor. By default, it's taken from the `libraries` directory
 of kernel installation. If you want to try descriptor from another revision, use the following syntax:
 ```
 // Specify some git tag from this repository
@@ -163,7 +174,7 @@ List of supported libraries:
 
 ### Rich output
   
-By default the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
+By default, the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
  to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function: 
 ```kotlin
 fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
@@ -193,44 +204,18 @@ an error message which can help you to fix the error.
 
 ## Debugging
 
-1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for debugger. Default port is 1044.
+1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for the debugger. Default port is 1044.
 2. Run `jupyter-notebook`
 3. Attach a remote debugger to JVM with specified port 
 
 ## Adding new libraries
 
-To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
+Read [this article](libraries.md) if you want to support new `JVM` library in the kernel.
 
-Check [libraries](../libraries) directory to see examples of library descriptors.
+## Documentation
 
-Library descriptor is a `<libName>.json` file with the following fields:
-- `properties`: a dictionary of properties that are used within library descriptor
-- `description`: a short library description which is used for generating libraries list in README
-- `link`: a link to library homepage. This link will be displayed in `:help` command
-- `minKernelVersion`: a minimal version of Kotlin kernel which may be used with this descriptor
-- `repositories`: a list of maven or ivy repositories to search for dependencies
-- `dependencies`: a list of library dependencies
-- `imports`: a list of default imports for library
-- `init`: a list of code snippets to be executed when library is included
-- `initCell`: a list of code snippets to be executed before execution of any cell
-- `shutdown`: a list of code snippets to be executed on kernel shutdown. Any cleanup code goes here
-- `renderers`: a list of type converters for special rendering of particular types
-
-*All fields are optional
-
-Fields for type renderer:
-- `class`: fully-qualified class name for the type to be rendered 
-- `result`: expression that produces output value. Source object is referenced as `$it`
-
-Name of the file is a library name that is passed to '%use' command
-
-Library properties can be used in any parts of library descriptor as `$property`
-
-To register new library descriptor:
-1. For private usage - create it anywhere on your computer and reference it using file syntax.
-2. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
-
-If you are maintaining some library and want to update your library descriptor, create pull request with your update. 
-After your request is accepted, new version of your library will be available to all Kotlin Jupyter users 
-immediately on next kernel startup (no kernel update is needed) - but only if they use `useLatestDescriptors` magic.
-If not, kernel update is needed.
+There is a [site](https://ileasile.github.io/kotlin-jupyter-docs) with rendered KDoc comments from the codebase.
+If you are a library author you may be interested in `api` module
+(see [adding new libraries](#adding-new-libraries)). There is also a `lib` module which contains entities
+available from the Notebook cells and `shared-compiler` module which may be used for Jupyter REPL integration
+into standalone application or IDEA plugin.

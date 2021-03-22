@@ -4,6 +4,7 @@
       <w>ajalt</w>
       <w>alnum</w>
       <w>autocompletion</w>
+      <w>bdist</w>
       <w>beust</w>
       <w>cacheable</w>
       <w>clikt</w>
@@ -18,6 +19,8 @@
       <w>evalue</w>
       <w>foob</w>
       <w>foobaz</w>
+      <w>fqns</w>
+      <w>geotools</w>
       <w>ggplot</w>
       <w>githubusercontent</w>
       <w>gral</w>
@@ -31,6 +34,8 @@
       <w>jetbrains</w>
       <w>jlleitschuh</w>
       <w>johnrengelman</w>
+      <w>kaliningraph</w>
+      <w>kclass</w>
       <w>khttp</w>
       <w>kmath</w>
       <w>koma</w>
@@ -47,11 +52,15 @@
       <w>mllib</w>
       <w>mpicbg</w>
       <w>mylib</w>
+      <w>nbconvert</w>
       <w>noarch</w>
+      <w>numpy</w>
       <w>pygments</w>
+      <w>renderable</w>
       <w>scicomp</w>
       <w>signable</w>
       <w>sonatype</w>
+      <w>xopt</w>
       <w>zeromq</w>
     </words>
   </dictionary>

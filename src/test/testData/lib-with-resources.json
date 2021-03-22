@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "currentDir": "."
+  },
+  "resources": [
+    {
+      "type": "JS",
+      "name": "Lib",
+      "bundles": [
+        [
+          {
+            "path": "https://cdn.plot.ly/plotly-latest.min.js",
+            "type": "URL"
+          }
+        ],
+        {
+          "path": "$currentDir/src/test/testData/js-lib.js",
+          "type": "LOCAL_PATH"
+        }
+      ]
+    }
+  ]
+}

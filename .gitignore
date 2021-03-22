@@ -13,17 +13,24 @@
 
 # Folders with build files
 out/
-**/build/
-artifacts/
+/build/
+/*jupyter*/build/
+/*jupyter*/*/build/
+/teamcity-artifacts/
 
 # Gradle caches and internal files
 .gradle/
 
 # Project Python virtual environments
 /venv/
+/distrib/venv/
 
 # Jupyter notebooks checkpoints
 **/.ipynb_checkpoints
 
+# Jupyter log files
+samples/debug.log
+
 # MacOS attributes files
 *.DS_Store
+/buildSrc/
