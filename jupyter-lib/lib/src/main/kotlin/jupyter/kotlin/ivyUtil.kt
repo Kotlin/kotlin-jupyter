@@ -2,7 +2,7 @@ package jupyter.kotlin
 
 import java.io.File
 
-fun clearIvyCache()= deleteCacheDir()
+fun clearIvyCache() = deleteCacheDir()
 fun clearIvyCache(group: String) = deleteCacheDir(group)
 fun clearIvyCache(group: String, artifact: String) = deleteCacheDir(group, artifact)
 fun clearIvyCache(group: String, artifact: String, version: String) = deleteCacheDir(group, artifact, version)
