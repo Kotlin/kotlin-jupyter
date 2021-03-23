@@ -205,8 +205,8 @@ class ExecuteTests : KernelServerTestsBase() {
         assertNull(res)
     }
 
-    @Test
     // TODO: investigate, why this test is hanging
+    @Test
     fun testReadLine() {
         val code =
             """

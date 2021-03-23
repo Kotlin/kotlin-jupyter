@@ -17,7 +17,7 @@
 * Add support for minKernelVersion field in library descriptors
 * Formalise kernel versions format and ordering
 * Add possibility to provide shutdown hooks in library descriptors ([#87][i87])
-* Switch to the stable version of Kotlin (1.4.30)
+* Switch to the stable version of Kotlin (1.4.32)
 
 ### Bugs
 * Fix completion bug in Notebook client ([#113][i113])
