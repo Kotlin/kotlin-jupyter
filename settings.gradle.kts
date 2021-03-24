@@ -70,6 +70,8 @@ libSubproject("shared-compiler")
 
 libSubproject("lib-ext")
 
+libSubproject("getting-started", "api-examples/")
+
 fun libSubproject(name: String, parentPath: String = "jupyter-lib/") {
     include(name)
     project(":$name").projectDir = file("$parentPath$name")
