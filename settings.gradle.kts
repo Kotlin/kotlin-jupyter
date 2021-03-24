@@ -17,8 +17,8 @@ pluginManagement {
             val projectId: String
         )
         val teamcityRepos = listOf(
-            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Aggregate"),
-            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Aggregate")
+            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Artifacts"),
+            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Artifacts")
         )
         for (teamcity in teamcityRepos) {
             maven("${teamcity.url}/guestAuth/app/rest/builds/buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
