@@ -2,6 +2,7 @@
 [![PyPI](https://img.shields.io/pypi/v/kotlin-jupyter-kernel?label=PyPi)](https://pypi.org/project/kotlin-jupyter-kernel/)
 [![Anaconda](https://anaconda.org/jetbrains/kotlin-jupyter-kernel/badges/version.svg)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
 [![Gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/jetbrains/kotlin/kotlin-jupyter-api-gradle-plugin/maven-metadata.xml.svg?label=Gradle+plugin)](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jupyter.api)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlin-jupyter-kernel?color=blue&label=Maven%20artifacts)](https://search.maven.org/search?q=kotlin-jupyter)
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
