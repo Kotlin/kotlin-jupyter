@@ -1,4 +1,4 @@
-# 0.9.0 (planned)
+# 0.9.0
 ### Features
 * Main feature of this release is an API for Kotlin libraries
   that simplifies a kernel integration for them ([#99][p99]).
@@ -17,7 +17,7 @@
 * Add support for minKernelVersion field in library descriptors
 * Formalise kernel versions format and ordering
 * Add possibility to provide shutdown hooks in library descriptors ([#87][i87])
-* Switch to the stable version of Kotlin (1.4.32)
+* Switch to the latest development version of Kotlin 1.5
 
 ### Bugs
 * Fix completion bug in Notebook client ([#113][i113])
