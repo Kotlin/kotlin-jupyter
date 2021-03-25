@@ -94,7 +94,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.*
 @JupyterLibrary
 internal class Integration : JupyterIntegration() {
     
-    override fun Builder.onLoaded(notebook: Notebook?) {
+    override fun Builder.onLoaded() {
         render<MyClass> { HTML(it.toHTML()) }
         import("org.my.lib.*")
         import("org.my.lib.io.*")
