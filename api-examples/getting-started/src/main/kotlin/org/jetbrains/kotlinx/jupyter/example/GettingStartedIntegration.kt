@@ -51,5 +51,20 @@ class GettingStartedIntegration : JupyterIntegration() {
                 println("Class ${it.simpleName} was marked!")
             }
         }
+
+        /**
+         * Before each cell execution this code will be evaluated
+         */
+        beforeCellExecution {
+            println("Before cell callback")
+        }
+
+        /**
+         * After each cell execution this code will be evaluated
+         * Here we may use the execution cell results
+         */
+        afterCellExecution { _, result ->
+            println("Cell [${notebook.currentCell?.id}] was evaluated, result is $result")
+        }
     }
 }
