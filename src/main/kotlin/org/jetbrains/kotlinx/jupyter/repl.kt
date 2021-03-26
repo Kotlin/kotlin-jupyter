@@ -19,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
@@ -434,7 +435,7 @@ class ReplForJupyterImpl(
         )
 
     private fun doComplete(args: CompletionArgs): CompletionResult {
-        if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
+        if (looksLikeReplCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
 
         val preprocessed = magics.processMagics(args.code, true).code
         return completer.complete(
@@ -452,7 +453,7 @@ class ReplForJupyterImpl(
         doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
 
     private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
-        if (isCommand(args.code)) return reportCommandErrors(args.code)
+        if (looksLikeReplCommand(args.code)) return reportCommandErrors(args.code)
 
         val preprocessed = magics.processMagics(args.code, true).code
 

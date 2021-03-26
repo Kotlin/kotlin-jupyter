@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
+import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
@@ -281,7 +282,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = ExecutionInputReply(code, count)
                 )
             )
-            val res: Response = if (isCommand(code)) {
+            val res: Response = if (looksLikeReplCommand(code)) {
                 runCommand(code, repl)
             } else {
                 connection.evalWithIO(repl, msg) {
@@ -312,7 +313,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
         }
         is IsCompleteRequest -> {
-            val resStr = if (isCommand(content.code)) "complete" else {
+            val resStr = if (looksLikeReplCommand(content.code)) "complete" else {
                 val result = try {
                     val check = repl.checkComplete(content.code)
                     when {

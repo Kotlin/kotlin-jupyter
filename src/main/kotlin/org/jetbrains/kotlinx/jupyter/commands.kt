@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
+import org.jetbrains.kotlinx.jupyter.common.assertLooksLikeReplCommand
+import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
@@ -16,13 +18,10 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
-fun isCommand(code: String): Boolean = code.startsWith(":")
-
 fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n    ", prefix = "    ", transform = transform)
 
 fun reportCommandErrors(code: String): ListErrorsResult {
-    val commandString = code.trim().substring(1)
-    val command = ReplCommand.valueOfOrNull(commandString)
+    val (command, commandString) = replCommandOrNull(code)
     if (command != null) return ListErrorsResult(code)
 
     val sourceCode = SourceCodeImpl(0, code)
@@ -39,6 +38,7 @@ fun reportCommandErrors(code: String): ListErrorsResult {
 }
 
 fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
+    assertLooksLikeReplCommand(code)
     val prefix = code.substring(1, cursor)
     val suitableCommands = ReplCommand.values().filter { it.nameForUser.startsWith(prefix) }
     val completions = suitableCommands.map {
@@ -48,6 +48,7 @@ fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
 }
 
 fun runCommand(code: String, repl: ReplForJupyter): Response {
+    assertLooksLikeReplCommand(code)
     val args = code.trim().substring(1).split(" ")
     val cmd = ReplCommand.valueOfOrNull(args[0]) ?: return AbortResponseWithMessage("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
