@@ -166,7 +166,9 @@ tasks.processResources {
 }
 
 tasks.check {
-    dependsOn(tasks.checkReadme)
+    if (!getFlag("skipReadmeCheck", false)) {
+        dependsOn(tasks.checkReadme)
+    }
 }
 
 tasks.publishDocs {
