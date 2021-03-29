@@ -29,7 +29,7 @@ const val protocolVersion = "5.3"
 internal val log by lazy { getLogger() }
 
 fun setLevelForAllLoggers(level: Level) {
-    val mainLogger = log as ch.qos.logback.classic.Logger
+    val mainLogger = log as? ch.qos.logback.classic.Logger ?: return
     val allLoggers = mainLogger.loggerContext.loggerList
     allLoggers.forEach { logger ->
         logger.level = level
@@ -39,7 +39,7 @@ fun setLevelForAllLoggers(level: Level) {
 fun disableLogging() = setLevelForAllLoggers(Level.OFF)
 
 fun mainLoggerLevel(): Level {
-    val mainLogger = log as ch.qos.logback.classic.Logger
+    val mainLogger = log as? ch.qos.logback.classic.Logger ?: return Level.DEBUG
     return mainLogger.effectiveLevel
 }
 
