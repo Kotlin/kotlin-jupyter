@@ -180,9 +180,11 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
             tasksList.add(taskSpecGetter(taskSpec).taskName)
         }
 
-        tasksList.add("publishToPluginPortal")
-        tasksList.add("publishToSonatypeAndRelease")
-        tasksList.add("publishDocs")
+        if (infix == "Dev") {
+            tasksList.add("publishToPluginPortal")
+            tasksList.add("publishToSonatypeAndRelease")
+            tasksList.add("publishDocs")
+        }
 
         tasks.register("aggregate${infix}Upload") {
             group = distribGroup
