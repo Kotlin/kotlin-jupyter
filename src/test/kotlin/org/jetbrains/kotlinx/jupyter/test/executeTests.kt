@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import ch.qos.logback.classic.Level.DEBUG
+import ch.qos.logback.classic.Level.OFF
 import jupyter.kotlin.KotlinKernelHostProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -10,6 +12,8 @@ import org.jetbrains.kotlinx.jupyter.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.InputReply
+import org.jetbrains.kotlinx.jupyter.IsCompleteReply
+import org.jetbrains.kotlinx.jupyter.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.KernelStatus
 import org.jetbrains.kotlinx.jupyter.Message
@@ -18,6 +22,7 @@ import org.jetbrains.kotlinx.jupyter.StatusReply
 import org.jetbrains.kotlinx.jupyter.StreamResponse
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.jsonObject
+import org.jetbrains.kotlinx.jupyter.mainLoggerLevel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -116,7 +121,7 @@ class ExecuteTests : KernelServerTestsBase() {
         }
     }
 
-    private fun testWithNoStdin(code: String) {
+    private fun executeWithNoStdin(code: String) {
         doExecute(
             code,
             hasResult = false,
@@ -127,6 +132,22 @@ class ExecuteTests : KernelServerTestsBase() {
                 assertStartsWith("Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
             }
         )
+    }
+
+    private fun doIsComplete(code: String): String {
+        try {
+            val shell = this.shell!!
+            shell.sendMessage(MessageType.IS_COMPLETE_REQUEST, content = IsCompleteRequest(code))
+
+            val responseMsg = shell.receiveMessage()
+            assertEquals(MessageType.IS_COMPLETE_REPLY, responseMsg.type)
+
+            val content = responseMsg.content as IsCompleteReply
+            return content.status
+        } catch (e: Throwable) {
+            afterEach()
+            throw e
+        }
     }
 
     @Test
@@ -293,11 +314,18 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testReadLineWithNoStdin() {
-        testWithNoStdin("readLine() ?: \"blah\"")
+        executeWithNoStdin("readLine() ?: \"blah\"")
     }
 
     @Test
     fun testStdinReadWithNoStdin() {
-        testWithNoStdin("System.`in`.read()")
+        executeWithNoStdin("System.`in`.read()")
+    }
+
+    @Test
+    fun testIsComplete() {
+        assertEquals("complete", doIsComplete("2 + 2"))
+        assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
+        assertEquals(if (runInSeparateProcess) DEBUG else OFF, mainLoggerLevel())
     }
 }

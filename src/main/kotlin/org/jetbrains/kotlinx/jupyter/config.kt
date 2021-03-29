@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import ch.qos.logback.classic.Level
 import jupyter.kotlin.JavaRuntime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -26,6 +27,21 @@ import java.io.File
 const val protocolVersion = "5.3"
 
 internal val log by lazy { getLogger() }
+
+fun setLevelForAllLoggers(level: Level) {
+    val mainLogger = log as ch.qos.logback.classic.Logger
+    val allLoggers = mainLogger.loggerContext.loggerList
+    allLoggers.forEach { logger ->
+        logger.level = level
+    }
+}
+
+fun disableLogging() = setLevelForAllLoggers(Level.OFF)
+
+fun mainLoggerLevel(): Level {
+    val mainLogger = log as ch.qos.logback.classic.Logger
+    return mainLogger.effectiveLevel
+}
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))

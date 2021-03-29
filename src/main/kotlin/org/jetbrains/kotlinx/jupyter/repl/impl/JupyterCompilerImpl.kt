@@ -35,6 +35,7 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.refineOnAnnotations
+import kotlin.script.experimental.api.valueOr
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.api.with
@@ -44,8 +45,6 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.util.isError
-import kotlin.script.experimental.jvm.util.isIncomplete
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -217,11 +216,10 @@ class JupyterCompilerWithCompletionImpl(
         code: Code
     ): CheckResult {
         val result = analyze(code)
-        return when {
-            result.isIncomplete() -> CheckResult(false)
-            result.isError() -> throw ReplException(result.getErrors())
-            else -> CheckResult(true)
-        }
+        val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
+        val diagnostics = analysisResult[ReplAnalyzerResult.analysisDiagnostics]!!
+        val isComplete = diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
+        return CheckResult(isComplete)
     }
 
     private fun analyze(

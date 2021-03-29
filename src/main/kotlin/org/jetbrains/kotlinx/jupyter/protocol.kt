@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import ch.qos.logback.classic.Level
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -313,6 +314,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
         }
         is IsCompleteRequest -> {
+            // We are in console mode, so switch off all the loggers
+            if (mainLoggerLevel() != Level.OFF) disableLogging()
+
             val resStr = if (looksLikeReplCommand(content.code)) "complete" else {
                 val result = try {
                     val check = repl.checkComplete(content.code)
@@ -325,7 +329,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
                 result
             }
-            sendWrapped(msg, makeReplyMessage(msg, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
+            send(makeReplyMessage(msg, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
         }
         else -> send(makeReplyMessage(msg, MessageType.NONE))
     }

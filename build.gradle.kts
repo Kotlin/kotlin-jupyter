@@ -23,6 +23,7 @@ val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
+val logbackVersion: String by project
 
 val docsRepo: String by project
 
@@ -88,7 +89,7 @@ dependencies {
 
     // Logging
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     // ZeroMQ library for implementing messaging protocol
     implementation("org.zeromq:jeromq:0.5.2")
