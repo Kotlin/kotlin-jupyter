@@ -24,7 +24,8 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStreamWriter
 import javax.swing.JLabel
 
-fun renderLatex(latex: String, fontAsShapes: Boolean = true): Image {
+@Suppress("FunctionName")
+fun LATEX(latex: String, fontAsShapes: Boolean = true): Image {
     val data = latexToSvgData(latex, fontAsShapes)
     return Image(data, "svg")
 }

@@ -37,7 +37,7 @@ class RenderingTests {
             \]
         """.trimIndent()
 
-        renderLatex(latex)
+        LATEX(latex)
 
         // Rendered image is platform-dependent, skip this assertion
         // assertHtmlEquals("test2.html") {
