@@ -10,8 +10,11 @@ import org.jetbrains.kotlinx.jupyter.receiveMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
 
+@Execution(ExecutionMode.SAME_THREAD)
 class KernelServerTest : KernelServerTestsBase() {
 
     @Test
