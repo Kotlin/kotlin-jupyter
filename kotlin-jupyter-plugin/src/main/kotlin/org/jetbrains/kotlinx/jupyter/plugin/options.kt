@@ -34,6 +34,8 @@ fun Project.options(): AllOptions {
 
             override val artifactsDir: Path
 
+            val pythonVersion: String
+
             init {
                 val artifactsPathStr = rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
                 artifactsDir = rootPath.resolve(artifactsPathStr)
@@ -45,11 +47,12 @@ fun Project.options(): AllOptions {
                 project.extra.set("localPublicationsRepo", artifactsDir.resolve("maven"))
 
 
-                val pythonVersion = detectVersion(baseVersion, artifactsDir, versionFileName)
+                pythonVersion = detectVersion(baseVersion, artifactsDir, versionFileName)
                 val mavenVersion = pythonVersion.toMavenVersion()
                 project.version = mavenVersion
                 project.extra.set("pythonVersion", pythonVersion)
                 println("##teamcity[buildNumber '$pythonVersion']")
+                println("##teamcity[setParameter name='mavenVersion' value='$mavenVersion']")
             }
 
             override val readmePath: Path = rootPath.resolve("docs").resolve("README.md")
@@ -120,7 +123,7 @@ fun Project.options(): AllOptions {
 
                 val condaPackageSettings = object : DistributionPackageSettings {
                     override val dir = "conda-package"
-                    override val fileName by lazy { "$packageName-$version-py_0.tar.bz2" }
+                    override val fileName by lazy { "$packageName-$pythonVersion-py_0.tar.bz2" }
                 }
 
                 val condaCredentials = CondaCredentials(condaUserStable, condaPasswordStable)
@@ -148,7 +151,7 @@ fun Project.options(): AllOptions {
                 val pyPiPackageSettings = object : DistributionPackageSettings {
                     override val dir = "pip-package"
                     override val fileName by lazy {
-                        "${packageName.replace("-", "_")}-$version-py3-none-any.whl"
+                        "${packageName.replace("-", "_")}-$pythonVersion-py3-none-any.whl"
                     }
                 }
 
