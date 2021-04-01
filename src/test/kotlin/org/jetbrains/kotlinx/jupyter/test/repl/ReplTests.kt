@@ -96,6 +96,22 @@ class ReplTests : AbstractReplTest() {
     }
 
     @Test
+    fun testImportResolutionAfterFailure() {
+        val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
+        assertEquals(1, errorsRes.errors.toList().size)
+
+        val res = repl.eval(
+            """
+            @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
+            import net.pearx.kasechange.*
+            1
+            """.trimIndent()
+        )
+
+        assertEquals(1, res.resultValue)
+    }
+
+    @Test
     fun testDependsOnAnnotationCompletion() {
         repl.eval(
             """
@@ -104,12 +120,7 @@ class ReplTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        val res = runBlocking {
-            var res2: CompletionResult? = null
-            repl.complete("import com.github.", 18) { res2 = it }
-            res2
-        }
-        when (res) {
+        when (val res = repl.completeBlocking("import com.github.", 18)) {
             is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
             else -> fail("Completion should be successful")
         }
