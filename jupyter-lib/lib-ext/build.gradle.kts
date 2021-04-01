@@ -8,11 +8,10 @@ project.version = rootProject.version
 
 val http4kVersion: String by rootProject
 val junitVersion: String by rootProject
-val stableKotlinVersion: String by rootProject
 
 dependencies {
-    implementation(kotlin("stdlib", stableKotlinVersion))
-    implementation(kotlin("reflect", stableKotlinVersion))
+    implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
 
     compileOnly(project(":api"))
     implementation(project(":api-annotations"))

@@ -2,6 +2,7 @@
 
 pluginManagement {
     val kotlinVersion: String by settings
+    val stableKotlinVersion: String by settings
     val shadowJarVersion: String by settings
     val ktlintGradleVersion: String by settings
     val jupyterApiVersion: String by settings
@@ -41,8 +42,8 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm") version kotlinVersion
-        kotlin("plugin.serialization") version kotlinVersion
+        kotlin("jvm") version stableKotlinVersion
+        kotlin("plugin.serialization") version stableKotlinVersion
         kotlin("jupyter.api") version jupyterApiVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion

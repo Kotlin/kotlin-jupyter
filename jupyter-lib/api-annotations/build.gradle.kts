@@ -7,15 +7,13 @@ plugins {
 
 project.version = rootProject.version
 
-val stableKotlinVersion: String by rootProject
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compileOnly(kotlin("stdlib", stableKotlinVersion))
-    compileOnly(kotlin("reflect", stableKotlinVersion))
+    compileOnly(kotlin("stdlib"))
+    compileOnly(kotlin("reflect"))
 }
 
 tasks.withType(KotlinCompile::class.java).all {

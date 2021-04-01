@@ -8,7 +8,6 @@ plugins {
 
 project.version = rootProject.version
 val kotlinxSerializationVersion: String by rootProject
-val stableKotlinVersion: String by rootProject
 val junitVersion: String by rootProject
 
 repositories {
@@ -16,8 +15,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly(kotlin("stdlib", stableKotlinVersion))
-    compileOnly(kotlin("reflect", stableKotlinVersion))
+    compileOnly(kotlin("stdlib"))
+    compileOnly(kotlin("reflect"))
 
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion") {
         excludeKotlinDependencies(
