@@ -31,22 +31,33 @@ class KotlinKernelVersion private constructor(
         return components.hashCode()
     }
 
-    override fun toString(): String {
-        return buildString {
-            append(major); append(SEP)
-            append(minor); append(SEP)
-            append(micro)
-            build?.also {
-                append(SEP); append(build)
-                dev?.also {
-                    append(SEP); append(DEV_PREFIX); append(dev)
-                }
+    override fun toString() = buildString {
+        append(major); append(SEP)
+        append(minor); append(SEP)
+        append(micro)
+        build?.also {
+            append(SEP); append(build)
+            dev?.also {
+                append(SEP); append(DEV_PREFIX); append(dev)
+            }
+        }
+    }
+
+    fun toMavenVersion() = buildString {
+        append(major); append(SEP)
+        append(minor); append(SEP)
+        append(micro)
+        build?.also {
+            append(DEV_SEP); append(build)
+            dev?.also {
+                append(DEV_SEP); append(dev)
             }
         }
     }
 
     companion object {
         const val SEP = '.'
+        const val DEV_SEP = '-'
         const val DEV_PREFIX = "dev"
 
         fun KotlinKernelVersion?.toMaybeUnspecifiedString() = this?.toString() ?: "unspecified"

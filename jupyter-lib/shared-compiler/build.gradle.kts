@@ -64,7 +64,7 @@ tasks {
 }
 
 val buildProperties by tasks.registering {
-    inputs.property("version", version)
+    inputs.property("version", rootProject.findProperty("pythonVersion"))
 
     val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
     outputs.dir(outputDir)

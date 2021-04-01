@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.build.getFlag
 import org.jetbrains.kotlinx.jupyter.build.getOrInitProperty
 import org.jetbrains.kotlinx.jupyter.build.getSubDir
 import org.jetbrains.kotlinx.jupyter.build.stringPropOrEmpty
+import org.jetbrains.kotlinx.jupyter.build.toMavenVersion
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -43,8 +44,12 @@ fun Project.options(): AllOptions {
 
                 project.extra.set("localPublicationsRepo", artifactsDir.resolve("maven"))
 
-                project.version = detectVersion(baseVersion, artifactsDir, versionFileName)
-                println("##teamcity[buildNumber '$version']")
+
+                val pythonVersion = detectVersion(baseVersion, artifactsDir, versionFileName)
+                val mavenVersion = pythonVersion.toMavenVersion()
+                project.version = mavenVersion
+                project.extra.set("pythonVersion", pythonVersion)
+                println("##teamcity[buildNumber '$pythonVersion']")
             }
 
             override val readmePath: Path = rootPath.resolve("docs").resolve("README.md")

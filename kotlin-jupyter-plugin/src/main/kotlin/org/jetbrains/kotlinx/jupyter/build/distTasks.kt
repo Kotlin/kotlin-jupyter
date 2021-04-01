@@ -57,7 +57,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
         dependsOn("cleanInstallDirDistrib", "copyDistribFiles")
         doLast {
             val versionFilePath = distribBuildPath.resolve(versionFileName)
-            versionFilePath.toFile().writeText(version as String)
+            versionFilePath.toFile().writeText(project.findProperty("pythonVersion") as String)
             project.copy {
                 from(versionFilePath)
                 into(artifactsDir)
