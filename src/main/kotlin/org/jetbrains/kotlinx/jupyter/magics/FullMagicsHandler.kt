@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import ch.qos.logback.classic.Level
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
@@ -9,9 +10,11 @@ import com.github.ajalt.clikt.parameters.types.long
 import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplOptions
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.setLevelForAllLoggers
 
 class FullMagicsHandler(
     private val repl: ReplOptions,
@@ -66,5 +69,17 @@ class FullMagicsHandler(
 
     override fun handleOutput() {
         repl.outputConfig = updateOutputConfig(repl.outputConfig, (arg ?: "").split(" "))
+    }
+
+    override fun handleLogLevel() {
+        val level = when (val levelStr = arg?.trim()) {
+            "off" -> Level.OFF
+            "error" -> Level.ERROR
+            "warn" -> Level.WARN
+            "info" -> Level.INFO
+            "debug" -> Level.DEBUG
+            else -> throw ReplException("Unknown log level: '$levelStr'")
+        }
+        setLevelForAllLoggers(level)
     }
 }

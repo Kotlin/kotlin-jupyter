@@ -122,6 +122,7 @@ The following line magics are supported:
  - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support.
  - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used. Usage example: `%useLatestDescriptors -[on|off]`
  - `%output` - output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`
+ - `%logLevel` - set logging level. Usage example: `%logLevel [off|error|warn|info|debug]`
  
  See detailed info about line magics [here](magics.md).
  

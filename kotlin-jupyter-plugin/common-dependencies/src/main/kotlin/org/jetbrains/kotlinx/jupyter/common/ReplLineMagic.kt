@@ -6,7 +6,8 @@ enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, v
     TRACK_EXECUTION("logs pieces of code that are going to be executed. Useful for debugging of libraries support"),
     DUMP_CLASSES_FOR_SPARK("stores compiled repl classes in special folder for Spark integration", visibleInHelp = false),
     USE_LATEST_DESCRIPTORS("use latest versions of library descriptors available. By default, bundled descriptors are used", "-[on|off]"),
-    OUTPUT("output capturing settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400");
+    OUTPUT("output capturing settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400"),
+    LOG_LEVEL("set logging level", "[off|error|warn|info|debug]");
 
     val nameForUser = getNameForUser(name)
 
