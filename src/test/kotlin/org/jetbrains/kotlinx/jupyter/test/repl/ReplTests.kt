@@ -156,7 +156,8 @@ class ReplTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        assertTrue(res.newClasspath.size >= 2)
+        val newClasspath = res.metadata.newClasspath
+        assertTrue(newClasspath.size >= 2)
 
         val htmlLibPath = listOf(
             "org.jetbrains.kotlinx",
@@ -164,7 +165,7 @@ class ReplTests : AbstractReplTest() {
             "jars",
             "kotlinx-html-jvm"
         ).joinToString(File.separator)
-        assertTrue(res.newClasspath.any { htmlLibPath in it })
+        assertTrue(newClasspath.any { htmlLibPath in it })
     }
 
     @Test

@@ -20,7 +20,7 @@ import org.jetbrains.kotlinx.jupyter.Message
 import org.jetbrains.kotlinx.jupyter.MessageType
 import org.jetbrains.kotlinx.jupyter.StatusReply
 import org.jetbrains.kotlinx.jupyter.StreamResponse
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.jsonObject
 import org.jetbrains.kotlinx.jupyter.mainLoggerLevel
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -253,9 +253,10 @@ class ExecuteTests : KernelServerTestsBase() {
             executeReplyChecker = { message ->
                 val metadata = message.data.metadata
                 assertTrue(metadata is JsonObject)
-                val compiledData = Json.decodeFromJsonElement<SerializedCompiledScriptsData?>(
-                    metadata["compiled_data"] ?: JsonNull
+                val snippetMetadata = Json.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
+                    metadata["eval_metadata"] ?: JsonNull
                 )
+                val compiledData = snippetMetadata?.compiledData
                 assertNotNull(compiledData)
 
                 val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()

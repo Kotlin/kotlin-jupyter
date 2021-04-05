@@ -95,7 +95,7 @@ class IntegrationApiTests {
     @Test
     fun `after cell execution`() {
         val lib = "mylib" to library {
-            afterCellExecution { snippet, result ->
+            afterCellExecution { _, _ ->
                 execute("2")
             }
         }

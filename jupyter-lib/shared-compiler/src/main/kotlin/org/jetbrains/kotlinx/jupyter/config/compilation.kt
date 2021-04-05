@@ -6,6 +6,7 @@ import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
@@ -33,6 +34,7 @@ fun getCompilationConfiguration(
     scriptReceivers: List<Any> = emptyList(),
     compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
+    importsCollector: ScriptImportsCollector = ScriptImportsCollector.NoOp,
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
     return ScriptCompilationConfiguration {
@@ -63,7 +65,8 @@ fun getCompilationConfiguration(
         compilerOptions(compilerArgsConfigurator.getArgs())
 
         refineConfiguration {
-            beforeCompiling { (_, config, _) ->
+            beforeCompiling { (source, config, _) ->
+                importsCollector.collect(source)
                 config.with {
                     compilerOptions(compilerArgsConfigurator.getArgs())
                 }.asSuccess()

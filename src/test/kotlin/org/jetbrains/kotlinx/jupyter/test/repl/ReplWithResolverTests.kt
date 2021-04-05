@@ -139,7 +139,7 @@ class ReplWithResolverTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        Assertions.assertTrue(res.newClasspath.size >= 2)
+        Assertions.assertTrue(res.metadata.newClasspath.size >= 2)
     }
 
     @Test
@@ -305,7 +305,11 @@ class ReplWithResolverTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        Assertions.assertTrue(res.newClasspath.size >= 10)
+        with(res.metadata) {
+            assertTrue(newClasspath.size >= 10)
+            assertTrue(newImports.size >= 5)
+            assertTrue("jetbrains.letsPlot.*" in newImports)
+        }
     }
 
     companion object {

@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
@@ -57,8 +57,7 @@ abstract class Response(
 
 class OkResponseWithMessage(
     private val result: DisplayResult?,
-    private val newClasspath: Classpath = emptyList(),
-    private val compiledData: SerializedCompiledScriptsData? = null,
+    private val metadata: EvaluatedSnippetMetadata? = null,
     stdOut: String? = null,
     stdErr: String? = null,
 ) : Response(stdOut, stdErr) {
@@ -90,8 +89,7 @@ class OkResponseWithMessage(
                     "engine" to Json.encodeToJsonElement(requestMsg.data.header?.session),
                     "status" to Json.encodeToJsonElement("ok"),
                     "started" to Json.encodeToJsonElement(startedTime),
-                    "compiled_data" to Json.encodeToJsonElement(compiledData),
-                    "new_classpath" to Json.encodeToJsonElement(newClasspath),
+                    "eval_metadata" to Json.encodeToJsonElement(metadata),
                 ),
                 content = ExecuteReply(
                     MessageStatus.OK,
@@ -463,7 +461,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
 
                 try {
                     val result = exec.resultValue?.toDisplayResult(repl.notebook)
-                    OkResponseWithMessage(result, exec.newClasspath, exec.compiledData)
+                    OkResponseWithMessage(result, exec.metadata)
                 } catch (e: Exception) {
                     AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                 }
