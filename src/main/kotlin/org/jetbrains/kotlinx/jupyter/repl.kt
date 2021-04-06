@@ -17,7 +17,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsTypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
@@ -307,7 +307,11 @@ class ReplForJupyterImpl(
         executedCodeLogging != ExecutedCodeLogging.Off
     )
 
-    private val typeRenderersProcessor: TypeRenderersProcessor = TypeRenderersProcessorImpl(contextUpdater)
+    private val typeRenderersProcessor: ResultsTypeRenderersProcessor = run {
+        val processor = TypeRenderersProcessorImpl(contextUpdater)
+        notebook.typeRenderersProcessor = processor
+        processor
+    }
 
     private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
 
@@ -421,11 +425,11 @@ class ReplForJupyterImpl(
         currentClasspath.addAll(newClasspath)
         if (trackClasspath) {
             val sb = StringBuilder()
-            if (newClasspath.count() > 0) {
+            if (newClasspath.isNotEmpty()) {
                 sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
                 newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
             }
-            if (oldClasspath.count() > 0) {
+            if (oldClasspath.isNotEmpty()) {
                 sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
                 oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
             }

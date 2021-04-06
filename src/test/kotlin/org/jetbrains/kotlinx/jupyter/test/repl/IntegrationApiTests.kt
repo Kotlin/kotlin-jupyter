@@ -122,4 +122,23 @@ class IntegrationApiTests {
         assertEquals("1. 420", repl.eval("42.1").resultValue)
         assertEquals("2. 150", repl.eval("15").resultValue)
     }
+
+    @Test
+    fun `rendering processor should work fine`() {
+        val repl = makeRepl()
+        repl.eval(
+            """
+            class A
+            class B(val a: A)
+            
+            USE {
+                render<A> { "iA" }
+                renderWithHost<B> { host, value -> "iB: " + notebook!!.renderersProcessor.renderValue(host, value.a) }
+            }
+            """.trimIndent()
+        )
+
+        val result = repl.eval("B(A())")
+        assertEquals("iB: iA", result.resultValue)
+    }
 }

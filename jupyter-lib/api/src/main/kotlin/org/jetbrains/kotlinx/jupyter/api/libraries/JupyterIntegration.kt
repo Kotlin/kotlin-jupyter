@@ -71,10 +71,14 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) {
-            val execution = ResultHandlerExecution { _, property ->
+            return renderWithHost { _, value: T -> renderer(this, value) }
+        }
+
+        inline fun <reified T : Any> renderWithHost(noinline renderer: CodeCell.(ExecutionHost, T) -> Any) {
+            val execution = ResultHandlerExecution { host, property ->
                 val currentCell = notebook.currentCell
                     ?: throw IllegalStateException("Current cell should not be null on renderer invocation")
-                FieldValue(renderer(currentCell, property.value as T), property.name)
+                FieldValue(renderer(currentCell, host, property.value as T), property.name)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
         }
