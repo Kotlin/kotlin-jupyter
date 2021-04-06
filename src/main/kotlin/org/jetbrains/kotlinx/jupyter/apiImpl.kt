@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.TypeRenderersProcessor
 import java.lang.IllegalStateException
 
 class DisplayResultWrapper private constructor(
@@ -98,6 +99,7 @@ class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
 ) : Notebook {
     private val cells = hashMapOf<Int, CodeCellImpl>()
+    internal var typeRenderersProcessor: TypeRenderersProcessor? = null
 
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
@@ -156,4 +158,7 @@ class NotebookImpl(
 
     override val lastCell: CodeCellImpl?
         get() = history(1)
+
+    override val renderersProcessor: TypeRenderersProcessor
+        get() = typeRenderersProcessor ?: throw IllegalStateException("Type renderers processor is not initialized yet")
 }
