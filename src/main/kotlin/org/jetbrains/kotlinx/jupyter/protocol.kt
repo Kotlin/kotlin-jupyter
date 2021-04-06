@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MutableJsonObject

@@ -16,13 +16,13 @@ import org.jetbrains.kotlinx.jupyter.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.KernelStatus
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.Message
 import org.jetbrains.kotlinx.jupyter.MessageType
 import org.jetbrains.kotlinx.jupyter.StatusReply
 import org.jetbrains.kotlinx.jupyter.StreamResponse
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.jsonObject
-import org.jetbrains.kotlinx.jupyter.mainLoggerLevel
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
+import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -331,5 +332,23 @@ class ExecuteTests : KernelServerTestsBase() {
         assertEquals("complete", doIsComplete("2 + 2"))
         assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
         assertEquals(if (runInSeparateProcess) DEBUG else OFF, mainLoggerLevel())
+    }
+
+    @Test
+    fun testLoggerAppender() {
+        val file = File.createTempFile("kotlin-jupyter-logger-appender-test", ".txt")
+        doExecute("%logHandler add f1 --file ${file.absolutePath}", false)
+        val result1 = doExecute("2 + 2")
+        assertEquals(jsonObject("text/plain" to "4"), result1)
+
+        doExecute("%logHandler remove f1", false)
+        val result2 = doExecute("3 + 4")
+        assertEquals(jsonObject("text/plain" to "7"), result2)
+
+        val logText = file.readText()
+        assertTrue("2 + 2" in logText)
+        assertTrue("3 + 4" !in logText)
+
+        file.delete()
     }
 }

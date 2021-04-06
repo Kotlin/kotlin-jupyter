@@ -18,6 +18,7 @@ abstract class AbstractMagicsHandler : MagicsHandler {
         ReplLineMagic.USE_LATEST_DESCRIPTORS to ::handleUseLatestDescriptors,
         ReplLineMagic.OUTPUT to ::handleOutput,
         ReplLineMagic.LOG_LEVEL to ::handleLogLevel,
+        ReplLineMagic.LOG_HANDLER to ::handleLogHandler,
     )
 
     override fun handle(magic: ReplLineMagic, arg: String?, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
@@ -43,4 +44,5 @@ abstract class AbstractMagicsHandler : MagicsHandler {
     open fun handleUseLatestDescriptors() {}
     open fun handleOutput() {}
     open fun handleLogLevel() {}
+    open fun handleLogHandler() {}
 }
