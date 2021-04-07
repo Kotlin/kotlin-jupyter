@@ -199,6 +199,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
+ - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
