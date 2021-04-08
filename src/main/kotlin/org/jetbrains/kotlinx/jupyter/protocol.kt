@@ -192,7 +192,7 @@ class ErrorResponseWithMessage(
 fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
     when (msg.content) {
         is InterruptRequest -> {
-            log.warn("Interruption is not yet supported!")
+            connection.interruptExecution()
             send(makeReplyMessage(msg, MessageType.INTERRUPT_REPLY, content = msg.content))
         }
         is ShutdownRequest -> {
@@ -439,6 +439,12 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     val forkedError = getCapturingStream(err, JupyterOutType.STDERR, false)
     val userError = getCapturingStream(null, JupyterOutType.STDERR, true)
 
+    fun flushStreams() {
+        forkedOut.flush()
+        forkedError.flush()
+        userError.flush()
+    }
+
     val printForkedOut = PrintStream(forkedOut, false, "UTF-8")
     val printForkedErr = PrintStream(forkedError, false, "UTF-8")
     val printUserError = PrintStream(userError, false, "UTF-8")
@@ -453,26 +459,30 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
         return try {
-            val exec = body()
-            if (exec == null) {
-                AbortResponseWithMessage("NO REPL!")
-            } else {
-                forkedOut.flush()
-                forkedError.flush()
-                userError.flush()
-
-                try {
-                    val result = exec.resultValue?.toDisplayResult(repl.notebook)
-                    OkResponseWithMessage(result, exec.metadata)
-                } catch (e: Exception) {
-                    AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
+            val (exec, execException, executionInterrupted) = runExecution(body)
+            when {
+                executionInterrupted -> {
+                    flushStreams()
+                    AbortResponseWithMessage("The execution was interrupted")
+                }
+                execException != null -> {
+                    throw execException
+                }
+                exec == null -> {
+                    AbortResponseWithMessage("NO REPL!")
+                }
+                else -> {
+                    flushStreams()
+                    try {
+                        val result = exec.resultValue?.toDisplayResult(repl.notebook)
+                        OkResponseWithMessage(result, exec.metadata)
+                    } catch (e: Exception) {
+                        AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
+                    }
                 }
             }
         } catch (ex: ReplException) {
-            forkedOut.flush()
-            forkedError.flush()
-            userError.flush()
-
+            flushStreams()
             ErrorResponseWithMessage(
                 ex.render(),
                 ex.javaClass.canonicalName,
@@ -482,9 +492,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             )
         }
     } finally {
-        forkedOut.close()
-        forkedError.close()
-        userError.close()
+        flushStreams()
         System.setIn(`in`)
         System.setErr(err)
         System.setOut(out)
