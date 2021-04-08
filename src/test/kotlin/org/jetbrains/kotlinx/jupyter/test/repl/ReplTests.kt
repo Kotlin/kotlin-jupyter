@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -95,6 +96,7 @@ class ReplTests : AbstractReplTest() {
         repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
+    @Disabled
     @Test
     fun testImportResolutionAfterFailure() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")

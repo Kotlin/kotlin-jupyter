@@ -25,6 +25,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.parallel.Execution
@@ -327,6 +328,7 @@ class ExecuteTests : KernelServerTestsBase() {
         executeWithNoStdin("System.`in`.read()")
     }
 
+    @Disabled
     @Test
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
