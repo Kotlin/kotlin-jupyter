@@ -4,11 +4,8 @@
   "properties": {
     "v": "0.1.1"
   },
-  "repositories": [
-    "https://kotlin.bintray.com/kotlin-datascience"
-  ],
   "dependencies": [
-    "org.jetbrains.kotlin-deeplearning:api:$v"
+    "org.jetbrains.kotlinx:kotlin-deeplearning-api:$v"
   ],
   "imports": [
     "org.jetbrains.kotlinx.dl.api.core.*",
