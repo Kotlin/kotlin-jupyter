@@ -25,7 +25,9 @@
     "jetbrains.letsPlot.export.*",
     "jetbrains.letsPlot.tooltips.layer_tooltips",
     "jetbrains.letsPlot.tooltips.tooltips_none",
-    "jetbrains.letsPlot.bistro.corr.CorrPlot"
+    "jetbrains.letsPlot.bistro.corr.CorrPlot",
+    "jetbrains.letsPlot.tooltips.layerTooltips",
+    "jetbrains.letsPlot.tooltips.tooltipsNone"
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",
