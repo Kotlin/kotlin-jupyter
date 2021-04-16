@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
@@ -5,14 +7,25 @@ plugins {
 }
 
 project.version = rootProject.version
+
+val kotlinVersion: String by rootProject
 val slf4jVersion: String by rootProject
 val junitVersion: String by rootProject
+
+tasks.withType(KotlinCompile::class.java) {
+    val kotlinLanguageLevel: String by rootProject
+    kotlinOptions {
+        languageVersion = kotlinLanguageLevel
+    }
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    fun compileOnlyKotlin(module: String, version: String? = kotlinVersion) = compileOnly(kotlin(module, version))
+
     // Internal dependencies
     api(project(":api"))
     api(project(":lib"))
@@ -24,13 +37,13 @@ dependencies {
     compileOnly(kotlin("reflect"))
 
     // Scripting and compilation-related dependencies
-    compileOnly(kotlin("scripting-common"))
-    compileOnly(kotlin("scripting-jvm"))
-    compileOnly(kotlin("scripting-compiler-impl"))
-    implementation(kotlin("scripting-dependencies") as String) { isTransitive = false }
+    compileOnlyKotlin("scripting-common")
+    compileOnlyKotlin("scripting-jvm")
+    compileOnlyKotlin("scripting-compiler-impl")
+    implementation(kotlin("scripting-dependencies", kotlinVersion) as String) { isTransitive = false }
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
-    compileOnly(kotlin("serialization-unshaded"))
+    compileOnlyKotlin("serialization-unshaded")
 
     // Logging
     compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
@@ -51,7 +64,7 @@ tasks {
 }
 
 val buildProperties by tasks.registering {
-    inputs.property("version", version)
+    inputs.property("version", rootProject.findProperty("pythonVersion"))
 
     val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
     outputs.dir(outputDir)

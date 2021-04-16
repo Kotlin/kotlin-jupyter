@@ -78,7 +78,7 @@ fun ProjectWithOptions.prepareReadmeTasks() {
 
     val readmeFile = readmePath.toFile()
     val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
-    val librariesDir = File(librariesPath)
+    val librariesDir = File(rootProject.projectDir, librariesPath)
     val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
 
     val generateReadme by tasks.registering {

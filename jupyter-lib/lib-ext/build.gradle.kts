@@ -27,6 +27,11 @@ dependencies {
     fun http4k(name: String) = implementation("org.http4k:http4k-$name:$http4kVersion")
     http4k("core")
     http4k("client-apache")
+
+    implementation("org.scilab.forge:jlatexmath:1.0.7")
+    implementation("org.apache.xmlgraphics:fop:2.6")
+    implementation("org.apache.xmlgraphics:batik-codec:1.14")
+    implementation("org.apache.xmlgraphics:xmlgraphics-commons:2.6")
 }
 
 tasks.test {

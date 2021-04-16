@@ -48,7 +48,7 @@ open class KernelServerTestsBase {
     protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
 
     // Set to false to debug kernel execution
-    private val runInSeparateProcess = true
+    protected val runInSeparateProcess = true
     private var serverProcess: Process? = null
     private var serverThread: Thread? = null
 

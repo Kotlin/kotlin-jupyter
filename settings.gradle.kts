@@ -2,6 +2,7 @@
 
 pluginManagement {
     val kotlinVersion: String by settings
+    val stableKotlinVersion: String by settings
     val shadowJarVersion: String by settings
     val ktlintGradleVersion: String by settings
     val jupyterApiVersion: String by settings
@@ -17,8 +18,8 @@ pluginManagement {
             val projectId: String
         )
         val teamcityRepos = listOf(
-            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Aggregate"),
-            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Aggregate")
+            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Artifacts"),
+            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Artifacts")
         )
         for (teamcity in teamcityRepos) {
             maven("${teamcity.url}/guestAuth/app/rest/builds/buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
@@ -41,8 +42,8 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm") version kotlinVersion
-        kotlin("plugin.serialization") version kotlinVersion
+        kotlin("jvm") version stableKotlinVersion
+        kotlin("plugin.serialization") version stableKotlinVersion
         kotlin("jupyter.api") version jupyterApiVersion
         id("com.github.johnrengelman.shadow") version shadowJarVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
@@ -69,6 +70,8 @@ libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
 
 libSubproject("lib-ext")
+
+libSubproject("getting-started", "api-examples/")
 
 fun libSubproject(name: String, parentPath: String = "jupyter-lib/") {
     include(name)

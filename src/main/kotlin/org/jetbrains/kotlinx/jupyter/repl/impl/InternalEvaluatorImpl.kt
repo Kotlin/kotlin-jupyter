@@ -5,6 +5,8 @@ import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
@@ -13,13 +15,32 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
+import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
-internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluator: BasicJvmReplEvaluator, val contextUpdater: ContextUpdater, override var logExecution: Boolean) :
+internal class InternalEvaluatorImpl(
+    val compiler: JupyterCompiler,
+    private val evaluator: BasicJvmReplEvaluator,
+    private val contextUpdater: ContextUpdater,
+    override var logExecution: Boolean,
+) :
     InternalEvaluator {
 
     private var classWriter: ClassWriter? = null
 
     private val scriptsSerializer = CompiledScriptsSerializer()
+
+    private val registeredCompiledScripts = arrayListOf<SerializedCompiledScript>()
+
+    private fun serializeAndRegisterScript(compiledScript: KJvmCompiledScript) {
+        val serializedData = scriptsSerializer.serialize(compiledScript)
+        registeredCompiledScripts.addAll(serializedData.scripts)
+    }
+
+    override fun popAddedCompiledScripts(): SerializedCompiledScriptsData {
+        val scripts = registeredCompiledScripts.toList()
+        registeredCompiledScripts.clear()
+        return SerializedCompiledScriptsData(scripts)
+    }
 
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
@@ -72,13 +93,17 @@ internal class InternalEvaluatorImpl(val compiler: JupyterCompiler, val evaluato
                             resultValue.error
                         )
                         is ResultValue.Unit -> {
-                            InternalEvalResult(FieldValue(Unit, null), resultValue.scriptInstance!!, scriptsSerializer.serialize(compiledScript))
+                            serializeAndRegisterScript(compiledScript)
+                            InternalEvalResult(
+                                FieldValue(Unit, null),
+                                resultValue.scriptInstance!!
+                            )
                         }
                         is ResultValue.Value -> {
+                            serializeAndRegisterScript(compiledScript)
                             InternalEvalResult(
                                 FieldValue(resultValue.value, pureResult.compiledSnippet.resultField?.first), // TODO: replace with resultValue.name
-                                resultValue.scriptInstance!!,
-                                scriptsSerializer.serialize(compiledScript)
+                                resultValue.scriptInstance!!
                             )
                         }
                         is ResultValue.NotEvaluated -> {

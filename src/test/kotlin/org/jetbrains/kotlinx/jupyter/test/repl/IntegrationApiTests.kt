@@ -1,6 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
@@ -95,7 +98,7 @@ class IntegrationApiTests {
     @Test
     fun `after cell execution`() {
         val lib = "mylib" to library {
-            afterCellExecution { snippet, result ->
+            afterCellExecution { _, _ ->
                 execute("2")
             }
         }
@@ -106,6 +109,28 @@ class IntegrationApiTests {
         assertEquals(2, repl.executedCodes.size)
         assertEquals(1, repl.results[0])
         assertEquals(2, repl.results[1])
+    }
+
+    @Test
+    fun `renderable objects`() {
+        val repl = makeRepl()
+        repl.eval(
+            """
+            @file:DependsOn("src/test/testData/notebook-api-test-0.0.15.jar")
+            """.trimIndent()
+        )
+
+        val res = repl.eval(
+            """
+            ses.visualizeColor("red")
+            """.trimIndent()
+        )
+
+        val result = res.resultValue as Renderable
+        val json = result.render(repl.notebook).toJson()
+        val jsonData = json["data"] as JsonObject
+        val htmlString = jsonData["text/html"] as JsonPrimitive
+        kotlin.test.assertEquals("""<span style="color:red">red</span>""", htmlString.content)
     }
 
     @Test
@@ -121,5 +146,24 @@ class IntegrationApiTests {
 
         assertEquals("1. 420", repl.eval("42.1").resultValue)
         assertEquals("2. 150", repl.eval("15").resultValue)
+    }
+
+    @Test
+    fun `rendering processor should work fine`() {
+        val repl = makeRepl()
+        repl.eval(
+            """
+            class A
+            class B(val a: A)
+            
+            USE {
+                render<A> { "iA" }
+                renderWithHost<B> { host, value -> "iB: " + notebook!!.renderersProcessor.renderValue(host, value.a) }
+            }
+            """.trimIndent()
+        )
+
+        val result = repl.eval("B(A())")
+        assertEquals("iB: iA", result.resultValue)
     }
 }

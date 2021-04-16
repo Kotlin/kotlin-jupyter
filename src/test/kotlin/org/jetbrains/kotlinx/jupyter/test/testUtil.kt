@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.TypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -59,7 +60,7 @@ fun assertStartsWith(expectedPrefix: String, actual: String) {
 }
 
 fun Collection<Pair<String, String>>.toLibraries(): LibraryResolver {
-    val libJsons = map { it.first to it.second }.toMap()
+    val libJsons = associate { it.first to it.second }
     return getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
 }
 
@@ -163,6 +164,9 @@ object NotebookMock : Notebook {
         get() = defaultRuntimeProperties.version!!
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+
+    override val renderersProcessor: TypeRenderersProcessor
+        get() = error("Not supposed to be called")
 }
 
 fun library(builder: JupyterIntegration.Builder.() -> Unit): LibraryDefinition {

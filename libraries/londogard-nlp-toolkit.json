@@ -1,0 +1,23 @@
+{
+  "description": "A Natural Language Processing (NLP) toolkit for Kotlin on the JVM",
+  "link": "https://github.com/londogard/londogard-nlp-toolkit",
+  "properties": {
+    "v": "v1.0.0"
+  },
+  "repositories": [
+    "https://jitpack.io"
+  ],
+  "dependencies": [
+    "com.londogard:londogard-nlp-toolkit:$v"
+  ],
+  "imports": [
+    "com.londogard.nlp.embeddings.*",
+    "com.londogard.nlp.embeddings.sentence.*",
+    "com.londogard.nlp.wordfreq.*",
+    "com.londogard.nlp.tokenizer.*",
+    "com.londogard.nlp.stopwords.*",
+    "com.londogard.nlp.stemmer.*",
+    "com.londogard.nlp.utils.LanguageSupport",
+    "com.londogard.nlp.utils.LanguageSupport.*"
+  ]
+}

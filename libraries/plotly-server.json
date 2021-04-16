@@ -7,9 +7,7 @@
         "kotlinx.html.*"
     ],
     "repositories": [
-        "https://dl.bintray.com/mipt-npm/dataforge",
-        "https://dl.bintray.com/mipt-npm/kscience",
-        "https://dl.bintray.com/mipt-npm/dev"
+        "https://repo.kotlin.link"
     ],
     "properties": {
         "v": "0.3.1",

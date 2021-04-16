@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsTypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
@@ -16,7 +16,7 @@ internal data class SharedReplContext(
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,
-    val typeRenderersProcessor: TypeRenderersProcessor,
+    val typeRenderersProcessor: ResultsTypeRenderersProcessor,
     val magicsProcessor: MagicsProcessor,
     val resourcesProcessor: LibraryResourcesProcessor,
     val librariesScanner: LibrariesScanner,

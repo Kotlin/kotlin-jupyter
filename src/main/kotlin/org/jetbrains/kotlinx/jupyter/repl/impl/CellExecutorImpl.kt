@@ -52,7 +52,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             } else code
 
             if (preprocessedCode.isBlank()) {
-                return InternalEvalResult(FieldValue(null, null), Unit, null)
+                return InternalEvalResult(FieldValue(null, null), Unit)
             }
 
             val result = baseHost.withHost(context) {

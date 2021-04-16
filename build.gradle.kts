@@ -19,10 +19,12 @@ plugins {
 
 extra["isMainProject"] = true
 
+val kotlinVersion: String by project
 val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
+val logbackVersion: String by project
 
 val docsRepo: String by project
 
@@ -52,14 +54,21 @@ subprojects {
 }
 
 allprojects {
-    val kotlinLanguageLevel: String by rootProject
+    val stableKotlinLanguageLevel: String by rootProject
     val jvmTarget: String by rootProject
 
     tasks.withType(KotlinCompile::class.java).all {
         kotlinOptions {
-            languageVersion = kotlinLanguageLevel
+            languageVersion = stableKotlinLanguageLevel
             this.jvmTarget = jvmTarget
         }
+    }
+}
+
+tasks.withType(KotlinCompile::class.java) {
+    val kotlinLanguageLevel: String by rootProject
+    kotlinOptions {
+        languageVersion = kotlinLanguageLevel
     }
 }
 
@@ -67,28 +76,30 @@ dependencies {
     // Dependency on module with compiler.
     api(project(":shared-compiler"))
 
+    fun implKotlin(module: String, version: String? = kotlinVersion) = implementation(kotlin(module, version))
+
     // Standard dependencies
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
-    implementation(kotlin("stdlib-jdk8"))
+    implKotlin("stdlib", null)
+    implKotlin("reflect", null)
+    implKotlin("stdlib-jdk8", null)
     implementation("org.jetbrains:annotations:20.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // Embedded compiler and scripting dependencies
-    implementation(kotlin("compiler-embeddable"))
-    implementation(kotlin("scripting-compiler-impl-embeddable"))
-    implementation(kotlin("scripting-compiler-embeddable"))
-    implementation(kotlin("scripting-ide-services"))
-    implementation(kotlin("main-kts"))
-    implementation(kotlin("script-util"))
-    implementation(kotlin("scripting-common"))
+    implKotlin("compiler-embeddable")
+    implKotlin("scripting-compiler-impl-embeddable")
+    implKotlin("scripting-compiler-embeddable")
+    implKotlin("scripting-ide-services")
+    implKotlin("main-kts")
+    implKotlin("script-util")
+    implKotlin("scripting-common")
 
     // Embedded version of serialization plugin for notebook code
-    implementation(kotlin("serialization"))
+    implKotlin("serialization")
 
     // Logging
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     // ZeroMQ library for implementing messaging protocol
     implementation("org.zeromq:jeromq:0.5.2")
@@ -108,15 +119,13 @@ dependencies {
 
     deploy(project(":lib"))
     deploy(project(":api"))
-    deploy(kotlin("script-runtime"))
+    deploy(kotlin("script-runtime", kotlinVersion))
 }
 
 tasks.register("publishToPluginPortal") {
     group = "publishing"
 
-    dependsOn(
-        ":kotlin-jupyter-api-gradle-plugin:publishPlugins"
-    )
+    dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
 }
 
 tasks.jar {
@@ -168,7 +177,9 @@ tasks.processResources {
 }
 
 tasks.check {
-    dependsOn(tasks.checkReadme)
+    if (!getFlag("skipReadmeCheck", false)) {
+        dependsOn(tasks.checkReadme)
+    }
 }
 
 tasks.publishDocs {

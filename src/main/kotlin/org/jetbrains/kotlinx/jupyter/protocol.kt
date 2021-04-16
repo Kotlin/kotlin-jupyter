@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import ch.qos.logback.classic.Level
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -7,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MutableJsonObject
@@ -14,7 +17,8 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
+import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
@@ -55,8 +59,7 @@ abstract class Response(
 
 class OkResponseWithMessage(
     private val result: DisplayResult?,
-    private val newClasspath: Classpath = emptyList(),
-    private val compiledData: SerializedCompiledScriptsData? = null,
+    private val metadata: EvaluatedSnippetMetadata? = null,
     stdOut: String? = null,
     stdErr: String? = null,
 ) : Response(stdOut, stdErr) {
@@ -88,8 +91,7 @@ class OkResponseWithMessage(
                     "engine" to Json.encodeToJsonElement(requestMsg.data.header?.session),
                     "status" to Json.encodeToJsonElement("ok"),
                     "started" to Json.encodeToJsonElement(startedTime),
-                    "compiled_data" to Json.encodeToJsonElement(compiledData),
-                    "new_classpath" to Json.encodeToJsonElement(newClasspath),
+                    "eval_metadata" to Json.encodeToJsonElement(metadata),
                 ),
                 content = ExecuteReply(
                     MessageStatus.OK,
@@ -190,7 +192,7 @@ class ErrorResponseWithMessage(
 fun JupyterConnection.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
     when (msg.content) {
         is InterruptRequest -> {
-            log.warn("Interruption is not yet supported!")
+            connection.interruptExecution()
             send(makeReplyMessage(msg, MessageType.INTERRUPT_REPLY, content = msg.content))
         }
         is ShutdownRequest -> {
@@ -281,7 +283,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = ExecutionInputReply(code, count)
                 )
             )
-            val res: Response = if (isCommand(code)) {
+            val res: Response = if (looksLikeReplCommand(code)) {
                 runCommand(code, repl)
             } else {
                 connection.evalWithIO(repl, msg) {
@@ -312,7 +314,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
         }
         is IsCompleteRequest -> {
-            val resStr = if (isCommand(content.code)) "complete" else {
+            // We are in console mode, so switch off all the loggers
+            if (mainLoggerLevel() != Level.OFF) disableLogging()
+
+            val resStr = if (looksLikeReplCommand(content.code)) "complete" else {
                 val result = try {
                     val check = repl.checkComplete(content.code)
                     when {
@@ -324,7 +329,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
                 result
             }
-            sendWrapped(msg, makeReplyMessage(msg, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
+            send(makeReplyMessage(msg, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
         }
         else -> send(makeReplyMessage(msg, MessageType.NONE))
     }
@@ -434,6 +439,12 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     val forkedError = getCapturingStream(err, JupyterOutType.STDERR, false)
     val userError = getCapturingStream(null, JupyterOutType.STDERR, true)
 
+    fun flushStreams() {
+        forkedOut.flush()
+        forkedError.flush()
+        userError.flush()
+    }
+
     val printForkedOut = PrintStream(forkedOut, false, "UTF-8")
     val printForkedErr = PrintStream(forkedError, false, "UTF-8")
     val printUserError = PrintStream(userError, false, "UTF-8")
@@ -448,26 +459,30 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
         return try {
-            val exec = body()
-            if (exec == null) {
-                AbortResponseWithMessage("NO REPL!")
-            } else {
-                forkedOut.flush()
-                forkedError.flush()
-                userError.flush()
-
-                try {
-                    val result = exec.resultValue?.toDisplayResult(repl.notebook)
-                    OkResponseWithMessage(result, exec.newClasspath, exec.compiledData)
-                } catch (e: Exception) {
-                    AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
+            val (exec, execException, executionInterrupted) = runExecution(body)
+            when {
+                executionInterrupted -> {
+                    flushStreams()
+                    AbortResponseWithMessage("The execution was interrupted")
+                }
+                execException != null -> {
+                    throw execException
+                }
+                exec == null -> {
+                    AbortResponseWithMessage("NO REPL!")
+                }
+                else -> {
+                    flushStreams()
+                    try {
+                        val result = exec.resultValue?.toDisplayResult(repl.notebook)
+                        OkResponseWithMessage(result, exec.metadata)
+                    } catch (e: Exception) {
+                        AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
+                    }
                 }
             }
         } catch (ex: ReplException) {
-            forkedOut.flush()
-            forkedError.flush()
-            userError.flush()
-
+            flushStreams()
             ErrorResponseWithMessage(
                 ex.render(),
                 ex.javaClass.canonicalName,
@@ -477,9 +492,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             )
         }
     } finally {
-        forkedOut.close()
-        forkedError.close()
-        userError.close()
+        flushStreams()
         System.setIn(`in`)
         System.setErr(err)
         System.setOut(out)
