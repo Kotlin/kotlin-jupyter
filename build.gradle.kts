@@ -57,15 +57,20 @@ allprojects {
     val stableKotlinLanguageLevel: String by rootProject
     val jvmTarget: String by rootProject
 
-    tasks.withType(KotlinCompile::class.java).all {
+    tasks.withType<KotlinCompile> {
         kotlinOptions {
             languageVersion = stableKotlinLanguageLevel
             this.jvmTarget = jvmTarget
         }
     }
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = jvmTarget
+        targetCompatibility = jvmTarget
+    }
 }
 
-tasks.withType(KotlinCompile::class.java) {
+tasks.withType<KotlinCompile> {
     val kotlinLanguageLevel: String by rootProject
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
