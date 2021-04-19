@@ -9,7 +9,7 @@
     "https://repo.osgeo.org/repository/release"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:$api",
+    "org.jetbrains.lets-plot:lets-plot-kotlin-geotools:$api",
     "org.geotools:gt-geojson:$gt"
   ],
   "imports": [
