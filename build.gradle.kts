@@ -150,6 +150,13 @@ tasks.shadowJar {
     }
 }
 
+// Workaround for https://github.com/johnrengelman/shadow/issues/651
+components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
+    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
+        skip()
+    }
+}
+
 tasks.test {
     val doParallelTesting = getFlag("test.parallel", true)
 
@@ -237,6 +244,6 @@ kotlinPublications {
 tasks.named("publishLocal") {
     dependsOn(
         tasks.condaPackage,
-        tasks.pyPiPackage
+        tasks.pyPiPackage,
     )
 }
