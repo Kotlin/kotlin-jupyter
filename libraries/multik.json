@@ -1,0 +1,16 @@
+{
+  "description": "Multidimensional array library for Kotlin",
+  "properties": {
+    "v": "0.0.1"
+  },
+  "link": "https://github.com/Kotlin/multik",
+  "dependencies": [
+    "org.jetbrains.kotlinx:multik-api:$v",
+    "org.jetbrains.kotlinx:multik-default:$v"
+  ],
+  "imports": [
+    "org.jetbrains.kotlinx.multik.api.*",
+    "org.jetbrains.kotlinx.multik.ndarray.data.*",
+    "org.jetbrains.kotlinx.multik.ndarray.operations.*"
+  ]
+}
