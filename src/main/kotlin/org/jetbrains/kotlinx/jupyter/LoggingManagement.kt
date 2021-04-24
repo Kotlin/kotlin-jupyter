@@ -11,9 +11,13 @@ import org.slf4j.LoggerFactory
 object LoggingManagement {
     private val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as? Logger
 
+    private val loggerContext
+        get() = rootLogger?.loggerContext
+
     private val basicEncoder = run {
+        if (loggerContext == null) return@run null
         val encoder = PatternLayoutEncoder()
-        encoder.context = rootLogger?.loggerContext
+        encoder.context = loggerContext
         encoder.pattern = "%-4relative [%thread] %-5level %logger{35} - %msg %n"
         encoder.start()
         encoder
@@ -38,8 +42,10 @@ object LoggingManagement {
     }
 
     fun addAppender(name: String, appender: Appender<ILoggingEvent>) {
+        if (loggerContext == null || basicEncoder == null) return
+
         appender.name = name
-        appender.context = rootLogger?.loggerContext
+        appender.context = loggerContext
         (appender as? OutputStreamAppender)?.encoder = basicEncoder
         appender.start()
         rootLogger?.addAppender(appender)
