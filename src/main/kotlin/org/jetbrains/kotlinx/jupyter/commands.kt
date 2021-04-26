@@ -50,7 +50,7 @@ fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
 fun runCommand(code: String, repl: ReplForJupyter): Response {
     assertLooksLikeReplCommand(code)
     val args = code.trim().substring(1).split(" ")
-    val cmd = ReplCommand.valueOfOrNull(args[0]) ?: return AbortResponseWithMessage("Unknown command: $code\nTo see available commands, enter :help")
+    val cmd = ReplCommand.valueOfOrNull(args[0])?.value ?: return AbortResponseWithMessage("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
         ReplCommand.CLASSPATH -> {
             val cp = repl.currentClasspath

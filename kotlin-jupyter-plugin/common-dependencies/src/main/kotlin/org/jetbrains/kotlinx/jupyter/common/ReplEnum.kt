@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.common
 
 interface ReplEnum<T : Enum<*>> {
     val codeInsightValues: List<CodeInsightValue<T>>
-    fun valueOfOrNull(name: String): T?
+    fun valueOfOrNull(name: String): CodeInsightValue<T>?
 
     class CodeInsightValue<V : Enum<*>>(
         val value: V,

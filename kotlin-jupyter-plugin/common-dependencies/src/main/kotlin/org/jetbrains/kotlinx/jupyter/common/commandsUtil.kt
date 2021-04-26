@@ -23,5 +23,5 @@ fun assertLooksLikeReplCommand(code: String) {
 fun replCommandOrNull(code: String): Pair<ReplCommand?, String> {
     assertLooksLikeReplCommand(code)
     val commandString = code.trim().substring(1)
-    return ReplCommand.valueOfOrNull(commandString) to commandString
+    return ReplCommand.valueOfOrNull(commandString)?.value to commandString
 }

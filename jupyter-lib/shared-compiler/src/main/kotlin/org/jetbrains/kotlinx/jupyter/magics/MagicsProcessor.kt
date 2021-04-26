@@ -22,7 +22,7 @@ class MagicsProcessor(
                 val keyword = parts[0]
                 val arg = if (parts.count() > 1) parts[1] else null
 
-                val magic = if (parseOnly) null else ReplLineMagic.valueOfOrNull(keyword)
+                val magic = if (parseOnly) null else ReplLineMagic.valueOfOrNull(keyword)?.value
                 if (magic == null && !parseOnly && !tryIgnoreErrors) {
                     throw ReplPreprocessingException("Unknown line magic keyword: '$keyword'")
                 }
