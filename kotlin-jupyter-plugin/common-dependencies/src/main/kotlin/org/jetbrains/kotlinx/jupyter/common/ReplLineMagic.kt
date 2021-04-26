@@ -12,9 +12,17 @@ enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, v
 
     val nameForUser = getNameForUser(name)
 
-    companion object {
+    companion object : ReplEnum<ReplLineMagic> {
         private val names = values().associateBy { it.nameForUser }
 
-        fun valueOfOrNull(name: String): ReplLineMagic? = names[name]
+        val type = object : ReplEnum.Type {
+            override val name = "magic"
+        }
+
+        override val codeInsightValues by lazy {
+            names.map { (userName, value) -> ReplEnum.CodeInsightValue(value, userName, value.desc, type) }
+        }
+
+        override fun valueOfOrNull(name: String) = names[name]
     }
 }

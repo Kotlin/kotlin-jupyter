@@ -6,9 +6,17 @@ enum class ReplCommand(val desc: String) {
 
     val nameForUser = getNameForUser(name)
 
-    companion object {
-        private val names = values().map { it.nameForUser to it }.toMap()
+    companion object : ReplEnum<ReplCommand> {
+        private val names = values().associateBy { it.nameForUser }
 
-        fun valueOfOrNull(name: String): ReplCommand? = names[name]
+        val type = object : ReplEnum.Type {
+            override val name = "command"
+        }
+
+        override val codeInsightValues by lazy {
+            names.map { (userName, value) -> ReplEnum.CodeInsightValue(value, userName, value.desc, type) }
+        }
+
+        override fun valueOfOrNull(name: String) = names[name]
     }
 }
