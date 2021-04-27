@@ -12,10 +12,11 @@ val kotlinVersion: String by rootProject
 val slf4jVersion: String by rootProject
 val junitVersion: String by rootProject
 
-tasks.withType(KotlinCompile::class.java) {
+tasks.withType<KotlinCompile> {
     val kotlinLanguageLevel: String by rootProject
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
+        freeCompilerArgs = listOf("-Xskip-prerelease-check")
     }
 }
 

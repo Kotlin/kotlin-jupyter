@@ -74,6 +74,7 @@ tasks.withType<KotlinCompile> {
     val kotlinLanguageLevel: String by rootProject
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
+        freeCompilerArgs = listOf("-Xskip-prerelease-check")
     }
 }
 
