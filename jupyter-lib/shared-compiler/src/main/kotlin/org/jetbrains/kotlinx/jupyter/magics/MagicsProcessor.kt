@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
+import kotlin.script.experimental.jvm.util.determineSep
 
 class MagicsProcessor(
     private val handler: MagicsHandler,
@@ -15,7 +16,7 @@ class MagicsProcessor(
 
         for (magicRange in magics) {
             if (code[magicRange.from] != MAGICS_SIGN) continue
-            val magicText = code.substring(magicRange.from + 1, magicRange.to)
+            val magicText = code.substring(magicRange.from + 1, magicRange.to).trim()
 
             try {
                 val parts = magicText.split(' ', limit = 2)
@@ -35,15 +36,17 @@ class MagicsProcessor(
             }
         }
 
-        val codes = codeIntervals(code, magics)
+        val codes = codeIntervals(code, magics, true)
         val preprocessedCode = codes.joinToString("") { code.substring(it.from, it.to) }
         return MagicProcessingResult(preprocessedCode, handler.getLibraries())
     }
 
     fun codeIntervals(
         code: String,
-        magicsIntervals: Sequence<CodeInterval> = magicsIntervals(code)
+        magicsIntervals: Sequence<CodeInterval> = magicsIntervals(code),
+        preserveLinesEnumeration: Boolean = false,
     ) = sequence {
+        val newlineLength = code.determineSep().length
         var codeStart = 0
 
         for (interval in magicsIntervals) {
@@ -51,6 +54,9 @@ class MagicsProcessor(
                 yield(CodeInterval(codeStart, interval.from))
             }
             codeStart = interval.to
+            if (preserveLinesEnumeration && codeStart > 0 && code[codeStart - 1] == '\n') {
+                codeStart -= newlineLength
+            }
         }
 
         if (codeStart != code.length) {
@@ -59,11 +65,18 @@ class MagicsProcessor(
     }
 
     fun magicsIntervals(code: String): Sequence<CodeInterval> {
+        val newlineLength = code.determineSep().length
         val maybeFirstMatch = if (parseOutCellMarker) CELL_MARKER_REGEX.find(code, 0) else null
         val seed = maybeFirstMatch ?: MAGICS_REGEX.find(code, 0)
         return generateSequence(seed) {
             MAGICS_REGEX.find(code, it.range.last + 1)
-        }.map { CodeInterval(it.range.first, it.range.last + 1) }
+        }.map {
+            val start = it.range.first
+            val endOfLine = it.range.last + 1
+            // Include newline after this magic line in case it exists
+            val end = if (endOfLine + newlineLength <= code.length) endOfLine + newlineLength else endOfLine
+            CodeInterval(start, end)
+        }
     }
 
     data class MagicProcessingResult(val code: Code, val libraries: List<LibraryDefinitionProducer>)

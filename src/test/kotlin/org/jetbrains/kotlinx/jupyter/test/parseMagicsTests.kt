@@ -159,6 +159,12 @@ class ParseMagicsTests {
         return magicsIntervals.toList() to codeIntervals.toList()
     }
 
+    private fun getParsedText(code: String, intervals: List<CodeInterval>): String {
+        return intervals.joinToString("") {
+            code.substring(it.from, it.to)
+        }
+    }
+
     @Test
     fun `single magic`() {
         test("%use krangl", "") { libs ->
@@ -275,8 +281,7 @@ class ParseMagicsTests {
 
     @Test
     fun `cell marker in the middle is not recognised`() {
-        val (magicsIntervals, codeIntervals) = intervals(
-            """
+        val text = """
             #%% some cell description
             
             fun f() = "pay respect"
@@ -284,12 +289,22 @@ class ParseMagicsTests {
             #%% some another description - not recognised
             val x = 42
             %some another magic
-            """.trimIndent(),
-            true
-        )
+        """.trimIndent()
+
+        val (magicsIntervals, codeIntervals) = intervals(text, true)
 
         assertEquals(3, magicsIntervals.size)
         assertEquals(2, codeIntervals.size)
+
+        val parsedMagics = getParsedText(text, magicsIntervals)
+        assertEquals(
+            """
+            #%% some cell description
+            % some magic
+            %some another magic
+            """.trimIndent(),
+            parsedMagics
+        )
     }
 
     @Test
@@ -311,7 +326,7 @@ class ParseMagicsTests {
     }
 
     @Test
-    fun `% sign alone is parsed well`() {
+    fun `percent sign alone is parsed well`() {
         val (magicsIntervals, codeIntervals) = intervals(
             "%",
             false
