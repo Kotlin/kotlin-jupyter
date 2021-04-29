@@ -2,8 +2,9 @@ package org.jetbrains.kotlinx.jupyter.common
 
 private val enumNameRegex = Regex("_(.)")
 
+@OptIn(ExperimentalStdlibApi::class)
 fun getNameForUser(name: String): String {
-    return enumNameRegex.replace(name.toLowerCase()) { match ->
-        match.groupValues[1].toUpperCase()
+    return enumNameRegex.replace(name.lowercase()) { match ->
+        match.groupValues[1].uppercase()
     }
 }

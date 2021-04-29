@@ -26,7 +26,6 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 import kotlin.system.exitProcess
@@ -37,7 +36,7 @@ enum class ResponseState {
 
 enum class JupyterOutType {
     STDOUT, STDERR;
-    fun optionName() = name.lowercase(Locale.getDefault())
+    fun optionName() = name.lowercase()
 }
 
 abstract class Response(

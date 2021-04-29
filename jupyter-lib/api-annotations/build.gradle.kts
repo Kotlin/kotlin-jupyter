@@ -16,8 +16,12 @@ dependencies {
     compileOnly(kotlin("reflect"))
 }
 
-tasks.withType(KotlinCompile::class.java).all {
+tasks.withType<KotlinCompile> {
     kotlinOptions {
+        // 1.3 is compatible with Gradle 6.*
+        // 1.4 is only compatible with Gradle 7.*
+        // Keep that in mind while updating this version
+        apiVersion = "1.3"
         languageVersion = "1.3"
     }
 }

@@ -17,7 +17,9 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
         apiVersion = kotlinLanguageLevel
-        freeCompilerArgs = listOf("-Xskip-prerelease-check")
+
+        @Suppress("SuspiciousCollectionReassignment")
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
     }
 }
 

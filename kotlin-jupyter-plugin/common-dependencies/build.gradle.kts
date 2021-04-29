@@ -24,6 +24,16 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        apiVersion = "1.4"
+        languageVersion = "1.4"
+
+        @Suppress("SuspiciousCollectionReassignment")
+        freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+    }
+}
+
 kotlinPublications {
     publication {
         publicationName = "common-dependencies"

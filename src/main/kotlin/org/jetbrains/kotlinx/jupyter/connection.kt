@@ -15,7 +15,6 @@ import org.zeromq.ZMQ
 import java.io.Closeable
 import java.io.IOException
 import java.security.SignatureException
-import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.concurrent.thread
@@ -237,7 +236,7 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
 
 fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
     val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
-    val sig = recvStr().lowercase(Locale.getDefault())
+    val sig = recvStr().lowercase()
     val header = recv()
     val parentHeader = recv()
     val metadata = recv()

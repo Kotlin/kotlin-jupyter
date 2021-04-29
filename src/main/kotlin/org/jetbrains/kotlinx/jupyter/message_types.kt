@@ -84,7 +84,7 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     LIST_ERRORS_REPLY(ListErrorsReply::class);
 
     val type: String
-        get() = name.toLowerCase()
+        get() = name.lowercase()
 }
 
 @Serializable

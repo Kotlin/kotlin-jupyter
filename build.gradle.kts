@@ -62,6 +62,7 @@ allprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
+            apiVersion = stableKotlinLanguageLevel
             languageVersion = stableKotlinLanguageLevel
             this.jvmTarget = jvmTarget
         }
@@ -78,7 +79,9 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
         apiVersion = kotlinLanguageLevel
-        freeCompilerArgs = listOf("-Xskip-prerelease-check")
+
+        @Suppress("SuspiciousCollectionReassignment")
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
     }
 }
 
