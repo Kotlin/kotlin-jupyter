@@ -726,6 +726,8 @@ define(function(){
                 var errors = content.errors;
                 this.highlightErrors(errors);
                 this.errorsList = errors;
+
+                cm.scrollIntoView(null)
             });
         };
 
