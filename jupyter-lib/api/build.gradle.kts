@@ -1,8 +1,7 @@
 import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
 
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -13,7 +12,6 @@ val junitVersion: String by rootProject
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
@@ -42,9 +40,11 @@ tasks {
     }
 }
 
-addPublication {
-    publicationName = "api"
-    artifactId = "kotlin-jupyter-api"
-    description = "API for libraries supporting Kotlin Jupyter notebooks"
-    packageName = artifactId
+kotlinPublications {
+    publication {
+        publicationName = "api"
+        artifactId = "kotlin-jupyter-api"
+        description = "API for libraries supporting Kotlin Jupyter notebooks"
+        packageName = artifactId
+    }
 }

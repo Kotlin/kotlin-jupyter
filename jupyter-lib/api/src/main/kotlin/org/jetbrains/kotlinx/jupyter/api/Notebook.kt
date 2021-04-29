@@ -63,4 +63,10 @@ interface Notebook {
      * Current JRE info
      */
     val jreInfo: JREInfoProvider
+
+    /**
+     * Renderers processor gives an ability to render values and
+     * and add new renderers
+     */
+    val renderersProcessor: TypeRenderersProcessor
 }

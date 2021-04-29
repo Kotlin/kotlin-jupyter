@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.common.getHttp
+import org.jetbrains.kotlinx.jupyter.common.text
 import java.io.File
 import java.io.IOException
 

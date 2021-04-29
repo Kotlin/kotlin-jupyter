@@ -57,7 +57,7 @@ fun ProjectWithOptions.prepareDistributionTasks() {
         dependsOn("cleanInstallDirDistrib", "copyDistribFiles")
         doLast {
             val versionFilePath = distribBuildPath.resolve(versionFileName)
-            versionFilePath.toFile().writeText(version as String)
+            versionFilePath.toFile().writeText(project.findProperty("pythonVersion") as String)
             project.copy {
                 from(versionFilePath)
                 into(artifactsDir)
@@ -180,9 +180,11 @@ fun ProjectWithOptions.prepareAggregateUploadTasks() {
             tasksList.add(taskSpecGetter(taskSpec).taskName)
         }
 
-        tasksList.add("publishToPluginPortal")
-        tasksList.add("publishToSonatypeAndRelease")
-        tasksList.add("publishDocs")
+        if (infix == "Dev") {
+            tasksList.add("publishToPluginPortal")
+            tasksList.add("publishToSonatypeAndRelease")
+            tasksList.add("publishDocs")
+        }
 
         tasks.register("aggregate${infix}Upload") {
             group = distribGroup

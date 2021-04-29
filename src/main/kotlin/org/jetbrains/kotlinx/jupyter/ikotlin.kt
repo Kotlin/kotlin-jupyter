@@ -113,35 +113,41 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
 
         val mainThread = Thread.currentThread()
 
-        val controlThread = thread {
+        fun socketLoop(
+            interruptedMessage: String,
+            vararg threadsToInterrupt: Thread,
+            loopBody: () -> Unit
+        ) {
             while (true) {
                 try {
-                    conn.heartbeat.onData { send(it, 0) }
-                    conn.control.onMessage { controlMessagesHandler(it, repl) }
-
-                    Thread.sleep(config.pollingIntervalMillis)
+                    loopBody()
                 } catch (e: InterruptedException) {
-                    log.debug("Control: Interrupted")
-                    mainThread.interrupt()
+                    log.debug(interruptedMessage)
+                    threadsToInterrupt.forEach { it.interrupt() }
                     break
                 }
             }
         }
 
-        while (true) {
-            try {
-                conn.shell.onMessage { message -> shellMessagesHandler(message, repl, executionCount) }
-
-                Thread.sleep(config.pollingIntervalMillis)
-            } catch (e: InterruptedException) {
-                log.debug("Main: Interrupted")
-                controlThread.interrupt()
-                break
+        val controlThread = thread {
+            socketLoop("Control: Interrupted", mainThread) {
+                conn.control.onMessage { controlMessagesHandler(it, repl) }
             }
+        }
+
+        val hbThread = thread {
+            socketLoop("Heartbeat: Interrupted", mainThread) {
+                conn.heartbeat.onData { send(it, 0) }
+            }
+        }
+
+        socketLoop("Main: Interrupted", controlThread, hbThread) {
+            conn.shell.onMessage { message -> shellMessagesHandler(message, repl, executionCount) }
         }
 
         try {
             controlThread.join()
+            hbThread.join()
         } catch (e: InterruptedException) {
         }
 

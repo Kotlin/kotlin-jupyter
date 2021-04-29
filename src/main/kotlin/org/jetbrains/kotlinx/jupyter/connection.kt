@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
@@ -16,6 +17,7 @@ import java.io.IOException
 import java.security.SignatureException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.concurrent.thread
 import kotlin.math.min
 
 class JupyterConnection(val config: KernelConfig) : Closeable {
@@ -36,9 +38,9 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             log.debug("[$name] listen: ${config.transport}://*:$port")
         }
 
-        inline fun onData(body: Socket.(ByteArray) -> Unit) = recv(ZMQ.DONTWAIT)?.let { body(it) }
+        inline fun onData(body: Socket.(ByteArray) -> Unit) = recv()?.let { body(it) }
 
-        inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
+        inline fun onMessage(body: Socket.(Message) -> Unit) = recv()?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
 
         fun sendStatus(status: KernelStatus, msg: Message) {
             connection.iopub.send(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
@@ -144,6 +146,49 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
 
     var contextMessage: Message? = null
 
+    private val currentExecutions = HashSet<Thread>()
+
+    data class ConnectionExecutionResult<T>(
+        val result: T?,
+        val throwable: Throwable?,
+        val isInterrupted: Boolean,
+    )
+
+    fun <T> runExecution(body: () -> T): ConnectionExecutionResult<T> {
+        var execRes: T? = null
+        var execException: Throwable? = null
+        val execThread = thread {
+            try {
+                execRes = body()
+            } catch (e: Throwable) {
+                execException = e
+            }
+        }
+        currentExecutions.add(execThread)
+        execThread.join()
+        currentExecutions.remove(execThread)
+
+        val exception = execException
+        val isInterrupted = exception is ThreadDeath ||
+            (exception is ReplException && exception.cause is ThreadDeath)
+        return ConnectionExecutionResult(execRes, exception, isInterrupted)
+    }
+
+    /**
+     * We cannot use [Thread.interrupt] here because we have no way
+     * to control the code user executes. [Thread.interrupt] will do nothing for
+     * the simple calculation (like `while (true) 1`). Consider replacing with
+     * something more smart in the future.
+     */
+    fun interruptExecution() {
+        @Suppress("deprecation")
+        while (currentExecutions.isNotEmpty()) {
+            val execution = currentExecutions.firstOrNull()
+            execution?.stop()
+            currentExecutions.remove(execution)
+        }
+    }
+
     override fun close() {
         heartbeat.close()
         shell.close()
@@ -191,7 +236,7 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
 
 fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
     val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
-    val sig = recvStr().toLowerCase()
+    val sig = recvStr().lowercase()
     val header = recv()
     val parentHeader = recv()
     val metadata = recv()

@@ -124,7 +124,6 @@ data class KernelConfig(
     val transport: String,
     val signatureScheme: String,
     val signatureKey: String,
-    val pollingIntervalMillis: Long = 100,
     val scriptClasspath: List<File> = emptyList(),
     val homeDir: File?,
     val resolverConfig: ResolverConfig?,

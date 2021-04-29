@@ -1,18 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import khttp.responses.Response
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.common.getHttp
+import org.jetbrains.kotlinx.jupyter.common.jsonArray
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getLogger
-import org.json.JSONObject
-import java.io.IOException
-
-fun getHttp(url: String): Response {
-    val response = khttp.get(url)
-    if (response.statusCode != 200) {
-        throw IOException("Http request failed. Url = $url. Response = $response")
-    }
-    return response
-}
 
 fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<String, String>? {
     val logger = getLogger()
@@ -23,7 +16,7 @@ fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<Strin
         }
         logger.info("Checking for new commits to library descriptors at $url")
         val arr = getHttp(url).jsonArray
-        if (arr.length() == 0) {
+        if (arr.isEmpty()) {
             if (sinceTimestamp != null) {
                 getLatestCommitToLibraries(ref, null)
             } else {
@@ -31,9 +24,9 @@ fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<Strin
                 null
             }
         } else {
-            val commit = arr[0] as JSONObject
-            val sha = commit["sha"] as String
-            val timestamp = ((commit["commit"] as JSONObject)["committer"] as JSONObject)["date"] as String
+            val commit = arr[0] as JsonObject
+            val sha = (commit["sha"] as JsonPrimitive).content
+            val timestamp = (((commit["commit"] as JsonObject)["committer"] as JsonObject)["date"] as JsonPrimitive).content
             sha to timestamp
         }
     }

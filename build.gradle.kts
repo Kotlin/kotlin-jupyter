@@ -1,9 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
 import org.jetbrains.kotlinx.jupyter.plugin.options
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-import org.jetbrains.kotlinx.jupyter.publishing.applyNexusPlugin
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import ru.ileasile.kotlin.apache2
+import ru.ileasile.kotlin.developer
+import ru.ileasile.kotlin.githubRepo
 
 plugins {
     kotlin("jvm")
@@ -12,17 +13,18 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
-    id("org.jetbrains.kotlinx.jupyter.publishing")
-    id("org.jetbrains.kotlinx.jupyter.doc")
+    id("ru.ileasile.kotlin.publisher")
+    id("ru.ileasile.kotlin.doc")
 }
 
 extra["isMainProject"] = true
 
+val kotlinVersion: String by project
 val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
 val junitVersion: String by project
 val slf4jVersion: String by project
-val khttpVersion: String by project
+val logbackVersion: String by project
 
 val docsRepo: String by project
 
@@ -34,8 +36,6 @@ deploy.apply {
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
 }
 
-applyNexusPlugin()
-
 fun KtlintExtension.setup() {
     version.set(ktlintVersion)
     enableExperimentalRules.set(true)
@@ -43,6 +43,9 @@ fun KtlintExtension.setup() {
 
 ktlint {
     setup()
+    filter {
+        exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
+    }
 }
 
 subprojects {
@@ -54,14 +57,31 @@ subprojects {
 }
 
 allprojects {
-    val kotlinLanguageLevel: String by rootProject
+    val stableKotlinLanguageLevel: String by rootProject
     val jvmTarget: String by rootProject
 
-    tasks.withType(KotlinCompile::class.java).all {
+    tasks.withType<KotlinCompile> {
         kotlinOptions {
-            languageVersion = kotlinLanguageLevel
+            apiVersion = stableKotlinLanguageLevel
+            languageVersion = stableKotlinLanguageLevel
             this.jvmTarget = jvmTarget
         }
+    }
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = jvmTarget
+        targetCompatibility = jvmTarget
+    }
+}
+
+tasks.withType<KotlinCompile> {
+    val kotlinLanguageLevel: String by rootProject
+    kotlinOptions {
+        languageVersion = kotlinLanguageLevel
+        apiVersion = kotlinLanguageLevel
+
+        @Suppress("SuspiciousCollectionReassignment")
+        freeCompilerArgs += listOf("-Xskip-prerelease-check")
     }
 }
 
@@ -69,28 +89,30 @@ dependencies {
     // Dependency on module with compiler.
     api(project(":shared-compiler"))
 
+    fun implKotlin(module: String, version: String? = kotlinVersion) = implementation(kotlin(module, version))
+
     // Standard dependencies
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
-    implementation(kotlin("stdlib-jdk8"))
+    implKotlin("stdlib", null)
+    implKotlin("reflect", null)
+    implKotlin("stdlib-jdk8", null)
     implementation("org.jetbrains:annotations:20.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // Embedded compiler and scripting dependencies
-    implementation(kotlin("compiler-embeddable"))
-    implementation(kotlin("scripting-compiler-impl-embeddable"))
-    implementation(kotlin("scripting-compiler-embeddable"))
-    implementation(kotlin("scripting-ide-services"))
-    implementation(kotlin("main-kts"))
-    implementation(kotlin("script-util"))
-    implementation(kotlin("scripting-common"))
+    implKotlin("compiler-embeddable")
+    implKotlin("scripting-compiler-impl-embeddable")
+    implKotlin("scripting-compiler-embeddable")
+    implKotlin("scripting-ide-services")
+    implKotlin("main-kts")
+    implKotlin("script-util")
+    implKotlin("scripting-common")
 
     // Embedded version of serialization plugin for notebook code
-    implementation(kotlin("serialization"))
+    implKotlin("serialization")
 
     // Logging
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     // ZeroMQ library for implementing messaging protocol
     implementation("org.zeromq:jeromq:0.5.2")
@@ -110,34 +132,13 @@ dependencies {
 
     deploy(project(":lib"))
     deploy(project(":api"))
-    deploy(kotlin("script-runtime"))
-}
-
-tasks.register("publishLocal") {
-    group = "publishing"
-
-    dependsOn(
-        tasks.condaPackage,
-        tasks.pyPiPackage
-    )
-}
-
-tasks.named("closeRepository") {
-    mustRunAfter("publishToSonatype")
-}
-
-tasks.register("publishToSonatypeAndRelease") {
-    group = "publishing"
-
-    dependsOn("publishToSonatype", "closeAndReleaseRepository")
+    deploy(kotlin("script-runtime", kotlinVersion))
 }
 
 tasks.register("publishToPluginPortal") {
     group = "publishing"
 
-    dependsOn(
-        ":kotlin-jupyter-api-gradle-plugin:publishPlugins"
-    )
+    dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
 }
 
 tasks.jar {
@@ -154,6 +155,13 @@ tasks.shadowJar {
 
     manifest {
         attributes(tasks.jar.get().manifest.attributes)
+    }
+}
+
+// Workaround for https://github.com/johnrengelman/shadow/issues/651
+components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
+    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
+        skip()
     }
 }
 
@@ -189,16 +197,61 @@ tasks.processResources {
 }
 
 tasks.check {
-    dependsOn(tasks.checkReadme)
+    if (!getFlag("skipReadmeCheck", false)) {
+        dependsOn(tasks.checkReadme)
+    }
 }
 
 tasks.publishDocs {
     docsRepoUrl.set(docsRepo)
+    branchName.set("master")
+    username.set("robot")
+    email.set("robot@jetbrains.com")
 }
 
-addPublication {
-    publicationName = "kernel"
-    artifactId = "kotlin-jupyter-kernel"
-    description = "Kotlin Jupyter kernel published as artifact"
-    packageName = artifactId
+kotlinPublications {
+    packageGroup = "org.jetbrains.kotlinx"
+
+    fun prop(name: String) = project.findProperty(name) as? String?
+
+    sonatypeSettings(
+        prop("kds.sonatype.user"),
+        prop("kds.sonatype.password"),
+        "kotlin-jupyter project, v. ${project.version}"
+    )
+
+    signingCredentials(
+        prop("kds.sign.key.id"),
+        prop("kds.sign.key.private"),
+        prop("kds.sign.key.passphrase")
+    )
+
+    pom {
+        githubRepo("Kotlin", "kotlin-jupyter")
+
+        inceptionYear.set("2021")
+
+        licenses {
+            apache2()
+        }
+
+        developers {
+            developer("nikitinas", "Anatoly Nikitin", "Anatoly.Nikitin@jetbrains.com")
+            developer("ileasile", "Ilya Muradyan", "Ilya.Muradyan@jetbrains.com")
+        }
+    }
+
+    publication {
+        publicationName = "kernel"
+        artifactId = "kotlin-jupyter-kernel"
+        description = "Kotlin Jupyter kernel published as artifact"
+        packageName = artifactId
+    }
+}
+
+tasks.named("publishLocal") {
+    dependsOn(
+        tasks.condaPackage,
+        tasks.pyPiPackage,
+    )
 }

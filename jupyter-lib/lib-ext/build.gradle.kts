@@ -1,9 +1,7 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
 }
 
 project.version = rootProject.version
@@ -29,6 +27,11 @@ dependencies {
     fun http4k(name: String) = implementation("org.http4k:http4k-$name:$http4kVersion")
     http4k("core")
     http4k("client-apache")
+
+    implementation("org.scilab.forge:jlatexmath:1.0.7")
+    implementation("org.apache.xmlgraphics:fop:2.6")
+    implementation("org.apache.xmlgraphics:batik-codec:1.14")
+    implementation("org.apache.xmlgraphics:xmlgraphics-commons:2.6")
 }
 
 tasks.test {
@@ -38,9 +41,11 @@ tasks.test {
     }
 }
 
-addPublication {
-    publicationName = "lib-ext"
-    artifactId = "kotlin-jupyter-lib-ext"
-    description = "Extended functionality for Kotlin kernel"
-    packageName = artifactId
+kotlinPublications {
+    publication {
+        publicationName = "lib-ext"
+        artifactId = "kotlin-jupyter-lib-ext"
+        description = "Extended functionality for Kotlin kernel"
+        packageName = artifactId
+    }
 }

@@ -1,19 +1,18 @@
 {
   "description": "ggplot-like interactive visualization for Kotlin",
   "properties": {
-    "api": "1.2.0",
-    "lib": "1.5.6",
-    "js": "1.5.6",
+    "api": "2.0.1",
+    "lib": "2.0.2",
+    "js": "2.0.2",
     "isolatedFrame": ""
   },
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
-  "repositories": [
-    "https://jetbrains.bintray.com/lets-plot-maven/"
-  ],
   "dependencies": [
-    "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api-kernel:$api",
+    "org.jetbrains.lets-plot:lets-plot-kotlin-api-kernel:$api",
     "org.jetbrains.lets-plot:lets-plot-common:$lib",
-    "org.jetbrains.lets-plot:lets-plot-image-export:$lib"
+    "org.jetbrains.lets-plot:lets-plot-image-export:$lib",
+
+    "io.github.microutils:kotlin-logging-jvm:2.0.5"
   ],
   "imports": [
     "jetbrains.letsPlot.*",
@@ -26,7 +25,9 @@
     "jetbrains.letsPlot.export.*",
     "jetbrains.letsPlot.tooltips.layer_tooltips",
     "jetbrains.letsPlot.tooltips.tooltips_none",
-    "jetbrains.letsPlot.bistro.corr.CorrPlot"
+    "jetbrains.letsPlot.bistro.corr.CorrPlot",
+    "jetbrains.letsPlot.tooltips.layerTooltips",
+    "jetbrains.letsPlot.tooltips.tooltipsNone"
   ],
   "init": [
     "import jetbrains.letsPlot.LetsPlot",

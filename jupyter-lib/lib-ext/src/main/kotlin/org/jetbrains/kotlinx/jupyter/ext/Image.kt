@@ -86,6 +86,6 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             return convertFormat(format)
         }
 
-        fun convertFormat(format: String) = format.toLowerCase().let { formatToMime[it] ?: it }
+        fun convertFormat(format: String) = format.lowercase().let { formatToMime[it] ?: it }
     }
 }

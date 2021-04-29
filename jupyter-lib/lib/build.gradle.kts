@@ -1,7 +1,5 @@
-import org.jetbrains.kotlinx.jupyter.publishing.addPublication
-
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
 }
 
@@ -13,9 +11,11 @@ dependencies {
     implementation(kotlin("reflect"))
 }
 
-addPublication {
-    publicationName = "lib"
-    artifactId = "kotlin-jupyter-lib"
-    description = "Internal part of Kotlin Jupyter API used only inside notebook cells"
-    packageName = artifactId
+kotlinPublications {
+    publication {
+        publicationName = "lib"
+        artifactId = "kotlin-jupyter-lib"
+        description = "Internal part of Kotlin Jupyter API used only inside notebook cells"
+        packageName = artifactId
+    }
 }

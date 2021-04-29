@@ -55,9 +55,9 @@ class ReadmeGenerator(
 
     private fun processMagics(): String {
         return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString("\n") {
-            val description = " - `%${it.nameForUser}` - ${it.desc}"
+            val description = " - `%${it.nameForUser}` - ${it.desc}."
             val usage = if (it.argumentsUsage == null) ""
-            else "\n\tUsage example: %${it.nameForUser} ${it.argumentsUsage}"
+            else " Usage example: `%${it.nameForUser} ${it.argumentsUsage}`"
 
             description + usage
         }
@@ -78,7 +78,7 @@ fun ProjectWithOptions.prepareReadmeTasks() {
 
     val readmeFile = readmePath.toFile()
     val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
-    val librariesDir = File(librariesPath)
+    val librariesDir = File(rootProject.projectDir, librariesPath)
     val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
 
     val generateReadme by tasks.registering {

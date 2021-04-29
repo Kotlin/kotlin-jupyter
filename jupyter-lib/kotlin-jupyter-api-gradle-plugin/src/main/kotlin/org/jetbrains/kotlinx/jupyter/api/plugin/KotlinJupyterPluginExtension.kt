@@ -5,6 +5,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.findByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
+import java.util.Locale
 
 private fun Project.configureDependency(scope: String, dependencyNotation: Any) {
     // apply configuration to JVM-only project
@@ -20,7 +21,7 @@ private fun Project.configureDependency(scope: String, dependencyNotation: Any) 
         extensions.findByType<KotlinMultiplatformExtension>()?.apply {
             val jvmTargetName = targets.filterIsInstance<KotlinJvmTarget>().firstOrNull()?.name
                 ?: error("Single JVM target not found in a multiplatform project")
-            val configuration = project.configurations.findByName(jvmTargetName + scope.capitalize())
+            val configuration = project.configurations.findByName(jvmTargetName + scope.capitalize(Locale.ROOT))
                 ?: error("$scope configuration is not resolved for a multiplatform project")
             dependencies {
                 configuration.invoke(dependencyNotation)

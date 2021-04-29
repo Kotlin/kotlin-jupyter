@@ -2,15 +2,14 @@
   "description": "Lets-Plot visualisation for GeoTools toolkit",
   "link": "https://github.com/JetBrains/lets-plot-kotlin",
   "properties": {
-    "api": "1.1.0",
+    "api": "2.0.1",
     "gt": "[23,)"
   },
   "repositories": [
-    "https://repo.osgeo.org/repository/release",
-    "https://jetbrains.bintray.com/lets-plot-maven"
+    "https://repo.osgeo.org/repository/release"
   ],
   "dependencies": [
-    "org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:$api",
+    "org.jetbrains.lets-plot:lets-plot-kotlin-geotools:$api",
     "org.geotools:gt-geojson:$gt"
   ],
   "imports": [

@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 
 class TypeRenderersProcessorImpl(
     private val contextUpdater: ContextUpdater,
-) : TypeRenderersProcessor {
+) : ResultsTypeRenderersProcessor {
     private var counter = 0
     private val typeRenderers: MutableList<HandlerWithInfo> = mutableListOf()
 
@@ -35,8 +35,20 @@ class TypeRenderersProcessorImpl(
         }
     }
 
+    override fun renderValue(host: ExecutionHost, value: Any?): Any? {
+        return renderResult(host, FieldValue(value, null))
+    }
+
     override fun register(renderer: RendererTypeHandler): Code? {
-        if (renderer !is PrecompiledRendererTypeHandler || !renderer.mayBePrecompiled) {
+        return register(renderer, true)
+    }
+
+    override fun registerWithoutOptimizing(renderer: RendererTypeHandler) {
+        register(renderer, false)
+    }
+
+    private fun register(renderer: RendererTypeHandler, doOptimization: Boolean): Code? {
+        if (!doOptimization || renderer !is PrecompiledRendererTypeHandler || !renderer.mayBePrecompiled) {
             typeRenderers.add(HandlerWithInfo(renderer, null))
             return null
         }

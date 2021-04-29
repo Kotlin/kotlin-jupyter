@@ -1,16 +1,17 @@
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![PyPI](https://img.shields.io/pypi/v/kotlin-jupyter-kernel?label=PyPi)](https://pypi.org/project/kotlin-jupyter-kernel/)
 [![Anaconda](https://anaconda.org/jetbrains/kotlin-jupyter-kernel/badges/version.svg)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
+[![Gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/jetbrains/kotlin/kotlin-jupyter-api-gradle-plugin/maven-metadata.xml.svg?label=Gradle+plugin)](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jupyter.api)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlin-jupyter-kernel?color=blue&label=Maven%20artifacts)](https://search.maven.org/search?q=kotlin-jupyter)
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.4.31) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.5.20-dev-5817) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
-on Windows, Ubuntu Linux and macOS. Using with Jupyter Console frontend is problematic now because of
-logging which cannot be switched off. Tuning logging options is planned for future releases.
+on Windows, Ubuntu Linux and macOS.
 
 ![Screenshot in Jupyter](Screenshot.png)
 
@@ -115,14 +116,12 @@ The following maven repositories are included by default:
 ### Line Magics
 
 The following line magics are supported:
- - `%use` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers
-	Usage example: %use klaxon(5.0.1), lets-plot
- - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures
- - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support
- - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used
-	Usage example: %useLatestDescriptors -[on|off]
- - `%output` - output capturing settings
-	Usage example: %output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400
+ - `%use` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers. Usage example: `%use klaxon(5.0.1), lets-plot`
+ - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures.
+ - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support.
+ - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used. Usage example: `%useLatestDescriptors -[on|off]`
+ - `%output` - output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`
+ - `%logLevel` - set logging level. Usage example: `%logLevel [off|error|warn|info|debug]`
  
  See detailed info about line magics [here](magics.md).
  
@@ -177,7 +176,7 @@ Other options are resolving library descriptor from a local file or from remote 
 %use @file[lib.json]
 ```
 
-List of supported libraries:
+#### List of supported libraries:
  - [dataframe](https://github.com/nikitinas/dataframe) - Kotlin framework for structured data processing
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
  - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
@@ -199,8 +198,9 @@ List of supported libraries:
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
+ - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
+ - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
- - [numpy](https://github.com/Kotlin/kotlin-numpy) - Kotlin wrapper for Python NumPy package
  - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.
  - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization

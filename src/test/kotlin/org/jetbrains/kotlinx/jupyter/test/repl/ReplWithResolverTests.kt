@@ -1,11 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoName
@@ -100,28 +97,6 @@ class ReplWithResolverTests : AbstractReplTest() {
     }
 
     @Test
-    fun testLibraryFromClasspath() {
-        repl.eval(
-            """
-            @file:Repository("https://dl.bintray.com/ileasile/kotlin-datascience-ileasile")
-            @file:DependsOn("org.jetbrains.test.kotlinx.jupyter.api:notebook-api-test:0.0.15")
-            """.trimIndent()
-        )
-
-        val res = repl.eval(
-            """
-            ses.visualizeColor("red")
-            """.trimIndent()
-        )
-
-        val result = res.resultValue as Renderable
-        val json = result.render(repl.notebook).toJson()
-        val jsonData = json["data"] as JsonObject
-        val htmlString = jsonData["text/html"] as JsonPrimitive
-        assertEquals("""<span style="color:red">red</span>""", htmlString.content)
-    }
-
-    @Test
     fun testResolverRepoOrder() {
         val repl = getReplWithStandardResolver()
 
@@ -139,7 +114,7 @@ class ReplWithResolverTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        Assertions.assertTrue(res.newClasspath.size >= 2)
+        Assertions.assertTrue(res.metadata.newClasspath.size >= 2)
     }
 
     @Test
@@ -305,7 +280,11 @@ class ReplWithResolverTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        Assertions.assertTrue(res.newClasspath.size >= 10)
+        with(res.metadata) {
+            assertTrue(newClasspath.size >= 10)
+            assertTrue(newImports.size >= 5)
+            assertTrue("jetbrains.letsPlot.*" in newImports)
+        }
     }
 
     companion object {

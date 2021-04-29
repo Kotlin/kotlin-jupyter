@@ -94,7 +94,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.*
 @JupyterLibrary
 internal class Integration : JupyterIntegration() {
     
-    override fun Builder.onLoaded(notebook: Notebook?) {
+    override fun Builder.onLoaded() {
         render<MyClass> { HTML(it.toHTML()) }
         import("org.my.lib.*")
         import("org.my.lib.io.*")
@@ -130,3 +130,28 @@ tasks.processJupyterApiResources {
     libraryProducers = listOf("org.my.lib.Integration")
 }
 ```
+
+### Integration using other build systems
+
+If you don't use Gradle as a build system, there is an alternative way.
+
+First, add `org.jetbrains.kotlinx:kotlin-jupyter-api:<jupyterApiVersion>` as
+a compile dependency. See configuration instructions for different build systems
+[here](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlin-jupyter-api/0.9.0-17/jar)
+
+Then add one or more integration classes. They may be derived from
+`LibraryDefinitionProducer` or from `LibraryDefinition` as described above.
+Note that you don't need `@JupyterLibrary` annotation in this scenario.
+
+Finally, add file `META-INF/kotlin-jupyter-libraries/libraries.json` to the JAR
+resources. This file should contain FQNs of all integration classes in the JSON form:
+```json
+{
+  "definitions":[],
+  "producers": [
+    { "fqn" : "org.jetbrains.kotlinx.jupyter.example.GettingStartedIntegration" }
+  ]
+}
+```
+Classes derived from `LibraryDefinition` should be added to the `definitions` array.
+Classes derived from `LibraryDefinitionProducer` should be added to the `producers` array.

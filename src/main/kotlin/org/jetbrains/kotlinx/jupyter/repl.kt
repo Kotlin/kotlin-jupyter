@@ -17,10 +17,14 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsTypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
+import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
+import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
@@ -48,9 +52,12 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.jvm.JvmInline
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
@@ -67,12 +74,9 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 
-typealias Classpath = List<String>
-
 data class EvalResult(
     val resultValue: Any?,
-    val newClasspath: Classpath,
-    val compiledData: SerializedCompiledScriptsData?,
+    val metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY
 )
 
 data class CheckResult(val isComplete: Boolean = true)
@@ -227,12 +231,15 @@ class ReplForJupyterImpl(
         )
     )
 
+    private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
+
     // Used for various purposes, i.e. completion and listing errors
     private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
             scriptReceivers,
             compilerArgsConfigurator,
+            importsCollector = importsCollector
         ).with {
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
@@ -302,7 +309,11 @@ class ReplForJupyterImpl(
         executedCodeLogging != ExecutedCodeLogging.Off
     )
 
-    private val typeRenderersProcessor: TypeRenderersProcessor = TypeRenderersProcessorImpl(contextUpdater)
+    private val typeRenderersProcessor: ResultsTypeRenderersProcessor = run {
+        val processor = TypeRenderersProcessorImpl(contextUpdater)
+        notebook.typeRenderersProcessor = processor
+        processor
+    }
 
     private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
 
@@ -354,8 +365,15 @@ class ReplForJupyterImpl(
 
             var cell: CodeCellImpl? = null
 
-            val result = executor.execute(code, displayHandler) { internalId, codeToExecute ->
-                cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
+            val compiledData: SerializedCompiledScriptsData
+            val newImports: List<String>
+            val result = try {
+                executor.execute(code, displayHandler) { internalId, codeToExecute ->
+                    cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
+                }
+            } finally {
+                compiledData = internalEvaluator.popAddedCompiledScripts()
+                newImports = importsCollector.popAddedImports()
             }
 
             cell?.resultVal = result.result.value
@@ -374,7 +392,7 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            EvalResult(rendered, newClasspath, result.compiledData)
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports))
         }
     }
 
@@ -391,7 +409,7 @@ class ReplForJupyterImpl(
                     executor.execute(it)
                 }
             }
-            EvalResult(res, emptyList(), null)
+            EvalResult(res)
         }
     }
 
@@ -409,11 +427,11 @@ class ReplForJupyterImpl(
         currentClasspath.addAll(newClasspath)
         if (trackClasspath) {
             val sb = StringBuilder()
-            if (newClasspath.count() > 0) {
+            if (newClasspath.isNotEmpty()) {
                 sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
                 newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
             }
-            if (oldClasspath.count() > 0) {
+            if (oldClasspath.isNotEmpty()) {
                 sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
                 oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
             }
@@ -434,7 +452,7 @@ class ReplForJupyterImpl(
         )
 
     private fun doComplete(args: CompletionArgs): CompletionResult {
-        if (isCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
+        if (looksLikeReplCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
 
         val preprocessed = magics.processMagics(args.code, true).code
         return completer.complete(
@@ -452,7 +470,7 @@ class ReplForJupyterImpl(
         doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
 
     private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
-        if (isCommand(args.code)) return reportCommandErrors(args.code)
+        if (looksLikeReplCommand(args.code)) return reportCommandErrors(args.code)
 
         val preprocessed = magics.processMagics(args.code, true).code
 
@@ -469,9 +487,9 @@ class ReplForJupyterImpl(
     ) {
         queue.add(args)
 
-        val result = synchronized(this) {
+        val result = synchronized(queue) {
             val lastArgs = queue.get()
-            if (lastArgs != args) {
+            if (lastArgs !== args) {
                 default
             } else {
                 action(args)
@@ -493,17 +511,16 @@ class ReplForJupyterImpl(
     private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) :
         LockQueueArgs<ListErrorsResult>
 
-    private class LockQueue<T, Args : LockQueueArgs<T>> {
-        private var args: Args? = null
-
+    @JvmInline
+    private value class LockQueue<T, Args : LockQueueArgs<T>>(
+        private val args: AtomicReference<Args?> = AtomicReference()
+    ) {
         fun add(args: Args) {
-            synchronized(this) {
-                this.args = args
-            }
+            this.args.set(args)
         }
 
         fun get(): Args {
-            return args!!
+            return args.get()!!
         }
     }
 

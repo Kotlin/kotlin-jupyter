@@ -3,7 +3,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("org.jetbrains.kotlinx.jupyter.publishing")
+    id("ru.ileasile.kotlin.publisher")
 }
 
 project.version = rootProject.version
@@ -11,9 +11,9 @@ project.group = "org.jetbrains.kotlin"
 
 val junitVersion: String by rootProject
 val kotlinVersion: String by rootProject
+val stableKotlinVersion: String by rootProject
 
 repositories {
-    jcenter()
     mavenCentral()
     gradlePluginPortal()
 }
@@ -22,7 +22,7 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$stableKotlinVersion")
     implementation("com.google.code.gson:gson:2.8.6")
 
     testImplementation(kotlin("test"))

@@ -1,6 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.common.getHttp
+import org.jetbrains.kotlinx.jupyter.common.jsonObject
+import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import java.nio.file.Path
@@ -112,7 +116,7 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
             getLogger().info("Requesting library descriptor at $url")
             val response = getHttp(url).jsonObject
 
-            val downloadURL = response["download_url"].toString()
+            val downloadURL = (response["download_url"] as JsonPrimitive).content
             val res = getHttp(downloadURL)
             res.text
         },

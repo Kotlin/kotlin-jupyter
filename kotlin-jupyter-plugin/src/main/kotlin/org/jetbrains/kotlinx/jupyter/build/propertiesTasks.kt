@@ -5,7 +5,7 @@ fun ProjectWithOptions.preparePropertiesTask() {
         group = buildGroup
         val outputDir = file(getSubDir(buildDir.toPath(), resourcesDir, mainSourceSetDir))
 
-        inputs.property("version", version)
+        inputs.property("version", rootProject.findProperty("pythonVersion"))
         inputs.property("currentBranch", getCurrentBranch())
         inputs.property("currentSha", getCurrentCommitSha())
         rootProject.findProperty("jvmTargetForSnippets")?.let {

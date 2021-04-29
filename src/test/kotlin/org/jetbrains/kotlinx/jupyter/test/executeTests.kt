@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import ch.qos.logback.classic.Level.DEBUG
+import ch.qos.logback.classic.Level.OFF
 import jupyter.kotlin.KotlinKernelHostProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -10,19 +12,23 @@ import org.jetbrains.kotlinx.jupyter.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.InputReply
+import org.jetbrains.kotlinx.jupyter.IsCompleteReply
+import org.jetbrains.kotlinx.jupyter.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.KernelStatus
+import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.Message
 import org.jetbrains.kotlinx.jupyter.MessageType
 import org.jetbrains.kotlinx.jupyter.StatusReply
 import org.jetbrains.kotlinx.jupyter.StreamResponse
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.zeromq.ZMQ
+import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -116,7 +122,7 @@ class ExecuteTests : KernelServerTestsBase() {
         }
     }
 
-    private fun testWithNoStdin(code: String) {
+    private fun executeWithNoStdin(code: String) {
         doExecute(
             code,
             hasResult = false,
@@ -127,6 +133,22 @@ class ExecuteTests : KernelServerTestsBase() {
                 assertStartsWith("Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
             }
         )
+    }
+
+    private fun doIsComplete(code: String): String {
+        try {
+            val shell = this.shell!!
+            shell.sendMessage(MessageType.IS_COMPLETE_REQUEST, content = IsCompleteRequest(code))
+
+            val responseMsg = shell.receiveMessage()
+            assertEquals(MessageType.IS_COMPLETE_REPLY, responseMsg.type)
+
+            val content = responseMsg.content as IsCompleteReply
+            return content.status
+        } catch (e: Throwable) {
+            afterEach()
+            throw e
+        }
     }
 
     @Test
@@ -205,8 +227,8 @@ class ExecuteTests : KernelServerTestsBase() {
         assertNull(res)
     }
 
-    @Test
     // TODO: investigate, why this test is hanging
+    @Test
     fun testReadLine() {
         val code =
             """
@@ -229,9 +251,10 @@ class ExecuteTests : KernelServerTestsBase() {
             executeReplyChecker = { message ->
                 val metadata = message.data.metadata
                 assertTrue(metadata is JsonObject)
-                val compiledData = Json.decodeFromJsonElement<SerializedCompiledScriptsData?>(
-                    metadata["compiled_data"] ?: JsonNull
+                val snippetMetadata = Json.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
+                    metadata["eval_metadata"] ?: JsonNull
                 )
+                val compiledData = snippetMetadata?.compiledData
                 assertNotNull(compiledData)
 
                 val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
@@ -293,11 +316,36 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testReadLineWithNoStdin() {
-        testWithNoStdin("readLine() ?: \"blah\"")
+        executeWithNoStdin("readLine() ?: \"blah\"")
     }
 
     @Test
     fun testStdinReadWithNoStdin() {
-        testWithNoStdin("System.`in`.read()")
+        executeWithNoStdin("System.`in`.read()")
+    }
+
+    @Test
+    fun testIsComplete() {
+        assertEquals("complete", doIsComplete("2 + 2"))
+        assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
+        assertEquals(if (runInSeparateProcess) DEBUG else OFF, mainLoggerLevel())
+    }
+
+    @Test
+    fun testLoggerAppender() {
+        val file = File.createTempFile("kotlin-jupyter-logger-appender-test", ".txt")
+        doExecute("%logHandler add f1 --file ${file.absolutePath}", false)
+        val result1 = doExecute("2 + 2")
+        assertEquals(jsonObject("text/plain" to "4"), result1)
+
+        doExecute("%logHandler remove f1", false)
+        val result2 = doExecute("3 + 4")
+        assertEquals(jsonObject("text/plain" to "7"), result2)
+
+        val logText = file.readText()
+        assertTrue("2 + 2" in logText)
+        assertTrue("3 + 4" !in logText)
+
+        file.delete()
     }
 }

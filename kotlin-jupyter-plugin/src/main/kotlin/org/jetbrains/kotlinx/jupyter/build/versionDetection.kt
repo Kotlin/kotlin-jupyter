@@ -52,6 +52,18 @@ fun Project.isProtectedBranch(): Boolean {
     return branch.substring(branch.lastIndexOf("/") + 1) == "master"
 }
 
+private val buildNumberRegex = Regex("""(?<base>\d+\.\d+\.\d+)\.(?<counter>\d+)(\.dev(?<devCounter>\d+))?""")
+
+fun String.toMavenVersion(): String {
+    val match = buildNumberRegex.find(this)!!
+    val base = match.groups["base"]!!.value
+    val counter = match.groups["counter"]!!.value
+    val devCounter = match.groups["devCounter"]?.value
+    val devAddition = if (devCounter == null) "" else "-$devCounter"
+
+    return "$base-$counter$devAddition"
+}
+
 fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileName: String): String {
     val isOnProtectedBranch by extra(isProtectedBranch())
     val buildCounterStr = rootProject.findProperty("build.counter") as String? ?: "100500"
@@ -62,10 +74,8 @@ fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileNa
     val devAddition = if (isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
 
     val defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
-    val buildNumberRegex =
-        """\d+(\.\d+){3}(\.dev\d+)?"""
 
-    return if (!buildNumber.matches(Regex(buildNumberRegex))) {
+    return if (!buildNumber.matches(buildNumberRegex)) {
         val versionFile = artifactsDir.resolve(versionFileName).toFile()
         if (versionFile.exists()) {
             val lines = versionFile.readLines()

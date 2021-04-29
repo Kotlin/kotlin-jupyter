@@ -96,6 +96,22 @@ class ReplTests : AbstractReplTest() {
     }
 
     @Test
+    fun testImportResolutionAfterFailure() {
+        val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
+        assertEquals(1, errorsRes.errors.toList().size)
+
+        val res = repl.eval(
+            """
+            @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
+            import net.pearx.kasechange.*
+            1
+            """.trimIndent()
+        )
+
+        assertEquals(1, res.resultValue)
+    }
+
+    @Test
     fun testDependsOnAnnotationCompletion() {
         repl.eval(
             """
@@ -104,12 +120,7 @@ class ReplTests : AbstractReplTest() {
             """.trimIndent()
         )
 
-        val res = runBlocking {
-            var res2: CompletionResult? = null
-            repl.complete("import com.github.", 18) { res2 = it }
-            res2
-        }
-        when (res) {
+        when (val res = repl.completeBlocking("import com.github.", 18)) {
             is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
             else -> fail("Completion should be successful")
         }
@@ -140,12 +151,13 @@ class ReplTests : AbstractReplTest() {
         val res = repl.eval(
             """
             @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
-            @file:Repository("https://dl.bintray.com/kotlin/kotlinx")
+            @file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
             @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
             """.trimIndent()
         )
 
-        assertTrue(res.newClasspath.size >= 2)
+        val newClasspath = res.metadata.newClasspath
+        assertTrue(newClasspath.size >= 2)
 
         val htmlLibPath = listOf(
             "org.jetbrains.kotlinx",
@@ -153,7 +165,7 @@ class ReplTests : AbstractReplTest() {
             "jars",
             "kotlinx-html-jvm"
         ).joinToString(File.separator)
-        assertTrue(res.newClasspath.any { htmlLibPath in it })
+        assertTrue(newClasspath.any { htmlLibPath in it })
     }
 
     @Test

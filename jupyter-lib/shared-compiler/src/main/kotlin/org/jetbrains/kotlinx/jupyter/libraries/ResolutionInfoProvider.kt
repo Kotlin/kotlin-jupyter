@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.common.getHttp
 import java.io.File
 import java.net.URL
 
@@ -41,8 +42,8 @@ class StandardResolutionInfoProvider(override var fallback: LibraryResolutionInf
     }
 
     private fun tryGetAsRef(ref: String): LibraryResolutionInfo? {
-        val response = khttp.get("$GitHubApiPrefix/contents/$LibrariesDir?ref=$ref")
-        return if (response.statusCode == 200) LibraryResolutionInfo.getInfoByRef(ref) else null
+        val response = getHttp("$GitHubApiPrefix/contents/$LibrariesDir?ref=$ref")
+        return if (response.status.successful) LibraryResolutionInfo.getInfoByRef(ref) else null
     }
 
     private fun tryGetAsDir(dirName: String): LibraryResolutionInfo? {
@@ -56,7 +57,7 @@ class StandardResolutionInfoProvider(override var fallback: LibraryResolutionInf
     }
 
     private fun tryGetAsURL(url: String): LibraryResolutionInfo? {
-        val response = khttp.get(url)
-        return if (response.statusCode == 200) LibraryResolutionInfo.ByURL(URL(url)) else null
+        val response = getHttp(url)
+        return if (response.status.successful) LibraryResolutionInfo.ByURL(URL(url)) else null
     }
 }
