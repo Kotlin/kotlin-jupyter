@@ -1,30 +1,13 @@
 {
-    "imports": [
-        "space.kscience.plotly.*",
-        "space.kscience.plotly.models.*",
-        "space.kscience.plotly.JupyterPlotly",
-        "space.kscience.dataforge.meta.*",
-        "kotlinx.html.*"
-    ],
-    "repositories": [
-        "https://repo.kotlin.link"
-    ],
-    "properties": {
-        "v": "0.3.1"
-    },
-    "link": "https://github.com/mipt-npm/plotly.kt",
-    "description": "An experimental plotly.kt integration module. Supports static plots and HTML dashboards.",
-    "dependencies": [
-        "space.kscience:plotlykt-core-jvm:$v"
-    ],
-    "init": [
-        "DISPLAY(HTML(JupyterPlotly.loadJs().toString()))",
-        "DISPLAY(HTML(\"<p>Plotly.kt jupyter integration is in the development phase. Expect glitches! Classic jupyter notebook is not fully supported.</p>\"))"
-    ],
-    "renderers": {
-        "kscience.plotly.HtmlFragment": "HTML($it.toString())",
-        "kscience.plotly.Plot": "HTML(JupyterPlotly.renderPlot($it))",
-        "kscience.plotly.PlotlyFragment": "HTML(JupyterPlotly.renderFragment($it))",
-        "kscience.plotly.PlotlyPage": "HTML(JupyterPlotly.renderPage($it), true)"
-    }
+  "description": "[beta] Plotly.kt jupyter integration for static plots.",
+  "properties": {
+    "v": "0.4.0"
+  },
+  "link": "https://github.com/mipt-npm/plotly.kt",
+  "repositories": [
+    "https://repo.kotlin.link"
+  ],
+  "dependencies": [
+    "space.kscience:plotlykt-jupyter:$v"
+  ]
 }
