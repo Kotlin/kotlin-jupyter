@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
 import ch.qos.logback.classic.Level
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -25,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.timer
 import kotlin.system.exitProcess
@@ -35,7 +37,7 @@ enum class ResponseState {
 
 enum class JupyterOutType {
     STDOUT, STDERR;
-    fun optionName() = name.toLowerCase()
+    fun optionName() = name.lowercase(Locale.getDefault())
 }
 
 abstract class Response(
@@ -300,14 +302,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
         is CompleteRequest -> {
-            GlobalScope.launch {
+            GlobalScope.launch(Dispatchers.Default) {
                 repl.complete(content.code, content.cursorPos) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.COMPLETE_REPLY, content = result.message))
                 }
             }
         }
         is ListErrorsRequest -> {
-            GlobalScope.launch {
+            GlobalScope.launch(Dispatchers.Default) {
                 repl.listErrors(content.code) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.LIST_ERRORS_REPLY, content = result.message))
                 }

@@ -15,6 +15,7 @@ import org.zeromq.ZMQ
 import java.io.Closeable
 import java.io.IOException
 import java.security.SignatureException
+import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.concurrent.thread
@@ -38,9 +39,9 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             log.debug("[$name] listen: ${config.transport}://*:$port")
         }
 
-        inline fun onData(body: Socket.(ByteArray) -> Unit) = recv(ZMQ.DONTWAIT)?.let { body(it) }
+        inline fun onData(body: Socket.(ByteArray) -> Unit) = recv()?.let { body(it) }
 
-        inline fun onMessage(body: Socket.(Message) -> Unit) = recv(ZMQ.DONTWAIT)?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
+        inline fun onMessage(body: Socket.(Message) -> Unit) = recv()?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
 
         fun sendStatus(status: KernelStatus, msg: Message) {
             connection.iopub.send(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
@@ -236,7 +237,7 @@ fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
 
 fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
     val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
-    val sig = recvStr().toLowerCase()
+    val sig = recvStr().lowercase(Locale.getDefault())
     val header = recv()
     val parentHeader = recv()
     val metadata = recv()

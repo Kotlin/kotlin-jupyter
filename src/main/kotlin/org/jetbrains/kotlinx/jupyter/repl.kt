@@ -56,6 +56,8 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.jvm.JvmInline
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
@@ -485,9 +487,9 @@ class ReplForJupyterImpl(
     ) {
         queue.add(args)
 
-        val result = synchronized(this) {
+        val result = synchronized(queue) {
             val lastArgs = queue.get()
-            if (lastArgs != args) {
+            if (lastArgs !== args) {
                 default
             } else {
                 action(args)
@@ -509,17 +511,16 @@ class ReplForJupyterImpl(
     private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) :
         LockQueueArgs<ListErrorsResult>
 
-    private class LockQueue<T, Args : LockQueueArgs<T>> {
-        private var args: Args? = null
-
+    @JvmInline
+    private value class LockQueue<T, Args : LockQueueArgs<T>>(
+        private val args: AtomicReference<Args?> = AtomicReference()
+    ) {
         fun add(args: Args) {
-            synchronized(this) {
-                this.args = args
-            }
+            this.args.set(args)
         }
 
         fun get(): Args {
-            return args!!
+            return args.get()!!
         }
     }
 

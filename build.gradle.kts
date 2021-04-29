@@ -43,6 +43,9 @@ fun KtlintExtension.setup() {
 
 ktlint {
     setup()
+    filter {
+        exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
+    }
 }
 
 subprojects {
@@ -74,6 +77,7 @@ tasks.withType<KotlinCompile> {
     val kotlinLanguageLevel: String by rootProject
     kotlinOptions {
         languageVersion = kotlinLanguageLevel
+        apiVersion = kotlinLanguageLevel
         freeCompilerArgs = listOf("-Xskip-prerelease-check")
     }
 }
