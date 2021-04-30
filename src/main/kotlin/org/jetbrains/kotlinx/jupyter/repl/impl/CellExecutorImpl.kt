@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.PropertyDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -20,6 +21,9 @@ import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import java.util.LinkedList
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.withNullability
 
 interface BaseKernelHost {
     fun <T> withHost(currentHost: KotlinKernelHost, callback: () -> T): T
@@ -160,6 +164,35 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
         override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
             return callback(ExecutionContext(sharedContext, displayHandler, executor))
+        }
+
+        override fun declareProperties(properties: Iterable<PropertyDeclaration>) {
+            val tempDeclarations = properties.joinToString(
+                "\n",
+                "object $TEMP_OBJECT_NAME {\n",
+                "\n}\n$TEMP_OBJECT_NAME"
+            ) {
+                it.tempDeclaration
+            }
+            val result = execute(tempDeclarations).value as Any
+            val resultClass = result::class
+            val propertiesMap = resultClass.declaredMemberProperties.associateBy { it.name }
+
+            val declarations = properties.joinToString("\n") {
+                @Suppress("UNCHECKED_CAST")
+                val prop = propertiesMap[it.name] as KMutableProperty1<Any, Any?>
+                prop.set(result, it.value)
+                it.declaration
+            }
+            execute(declarations)
+        }
+
+        companion object {
+            private const val TEMP_OBJECT_NAME = "___temp_declarations"
+
+            private val PropertyDeclaration.mutabilityQualifier get() = if (isMutable) "var" else "val"
+            private val PropertyDeclaration.declaration get() = """$mutabilityQualifier `$name`: $type = $TEMP_OBJECT_NAME.`$name` as $type"""
+            private val PropertyDeclaration.tempDeclaration get() = """var `$name`: ${type.withNullability(true)} = null"""
         }
     }
 }

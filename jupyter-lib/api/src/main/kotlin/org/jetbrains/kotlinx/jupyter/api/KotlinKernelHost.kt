@@ -34,4 +34,9 @@ interface KotlinKernelHost {
      * Adds a new library via its definition. Fully interchangeable with `%use` approach
      */
     fun addLibrary(library: LibraryDefinition)
+
+    /**
+     * Declares the given properties. They may be used in the notebook cells
+     */
+    fun declareProperties(properties: Iterable<PropertyDeclaration>)
 }
