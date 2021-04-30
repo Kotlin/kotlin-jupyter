@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
 import java.io.File
 import java.net.URLClassLoader
@@ -42,6 +44,7 @@ fun JsonObject.string(key: String): String {
 }
 
 @Timeout(100, unit = TimeUnit.SECONDS)
+@Execution(ExecutionMode.SAME_THREAD)
 class ExecuteTests : KernelServerTestsBase() {
     private var context: ZMQ.Context? = null
     private var shell: ClientSocket? = null
