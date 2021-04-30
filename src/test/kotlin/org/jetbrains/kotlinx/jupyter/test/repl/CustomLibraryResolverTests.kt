@@ -6,6 +6,8 @@ import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.PropertyDeclaration
+import org.jetbrains.kotlinx.jupyter.api.declareProperties
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.io.File
+import kotlin.reflect.typeOf
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -423,5 +426,36 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             repl.eval("7")
         }
         assertEquals(LibraryProblemPart.BEFORE_CELL_CALLBACKS, e.part)
+    }
+
+    @Test
+    @ExperimentalStdlibApi
+    fun testLibraryProperties() {
+        val mutProp = arrayListOf(1)
+
+        val repl = testOneLibUsage(
+            library {
+                onLoaded {
+                    declareProperties(
+                        "x1" to 22,
+                        "x2" to 20
+                    )
+
+                    declareProperties(
+                        PropertyDeclaration("x3", mutProp, typeOf<ArrayList<Int>>())
+                    )
+                }
+            }
+        )
+
+        val result = repl.eval(
+            """
+            x3.add(2)
+            x1 + x2
+            """.trimIndent()
+        ).resultValue
+
+        assertEquals(42, result)
+        assertEquals(listOf(1, 2), mutProp)
     }
 }
