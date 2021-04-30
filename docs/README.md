@@ -201,8 +201,8 @@ Other options are resolving library descriptor from a local file or from remote 
  - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
- - [plotly](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt integration module. Supports static plots and HTML dashboards.
- - [plotly-server](https://github.com/mipt-npm/plotly.kt) - An experimental plotly.kt-server integration module. Allows dynamic rendering of changing plots.
+ - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
+ - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
  - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
