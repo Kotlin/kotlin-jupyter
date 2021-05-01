@@ -487,7 +487,7 @@ class ReplForJupyterImpl(
     ) {
         queue.add(args)
 
-        val result = synchronized(queue) {
+        val result = synchronized(this) {
             val lastArgs = queue.get()
             if (lastArgs !== args) {
                 default
