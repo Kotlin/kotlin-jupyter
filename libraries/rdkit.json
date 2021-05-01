@@ -1,0 +1,10 @@
+{
+  "description": "Open-Source Cheminformatics Software",
+  "properties": {
+    "v": "1.0.0"
+  },
+  "link": "https://www.rdkit.org/",
+  "dependencies": [
+    "org.jetbrains.kotlinx:rdkit-jupyter:$v"
+  ]
+}
