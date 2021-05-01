@@ -5,6 +5,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.StringWriter
 import java.io.Writer
+import javax.imageio.ImageIO
 import kotlin.test.assertEquals
 
 class RenderingTests {
@@ -16,6 +17,9 @@ class RenderingTests {
         val image2 = Image(pngFileRelative, false)
         val image3 = image2.withHeight(200)
 
+        val bufferedImage = ImageIO.read(pngFile)
+        val image4 = Image(bufferedImage)
+
         val svgFile = objectsDir.resolve("svg_ex.svg")
         val svg1 = Image(svgFile, true)
 
@@ -24,6 +28,7 @@ class RenderingTests {
             appendLine(image2.toHTML())
             appendLine(image3.toHTML())
             appendLine(svg1.toHTML())
+            appendLine(image4.toHTML())
         }
     }
 

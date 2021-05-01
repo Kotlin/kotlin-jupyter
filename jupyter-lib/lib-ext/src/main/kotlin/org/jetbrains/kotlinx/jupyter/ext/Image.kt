@@ -7,9 +7,12 @@ import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.URI
 import java.util.Base64
+import javax.imageio.ImageIO
 
 class Image(private val attributes: List<HTMLAttr>) : Renderable {
     override fun render(notebook: Notebook): MimeTypedResult {
@@ -42,6 +45,9 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
         )
     )
 
+    constructor(data: BufferedImage, outputFormat: String = "png") :
+        this(data.toByteArray(outputFormat), outputFormat)
+
     fun withAttr(attr: HTMLAttr) = Image(attributes + attr)
     fun withAttr(name: String, value: String) = withAttr(HTMLAttr(name, value))
 
@@ -54,6 +60,12 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
         private val formatToMime = mapOf(
             "svg" to "svg+xml"
         )
+
+        private fun BufferedImage.toByteArray(format: String): ByteArray {
+            val stream = ByteArrayOutputStream()
+            ImageIO.write(this, format, stream)
+            return stream.toByteArray()
+        }
 
         fun referSrc(url: String): HTMLAttr {
             return HTMLAttr("src", url)
