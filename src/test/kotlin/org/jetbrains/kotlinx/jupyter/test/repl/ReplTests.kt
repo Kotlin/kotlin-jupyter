@@ -415,4 +415,23 @@ class ReplTests : AbstractReplTest() {
         val result = repl.eval("2.0.pow(2.0)").resultValue
         assertEquals(4.0, result)
     }
+
+    @Test
+    fun testNativeLibrary() {
+        val libName = "GraphMolWrap"
+        val testDataPath = "src/test/testData/nativeTest"
+        val jarPath = "$testDataPath/org.RDKit.jar"
+
+        val res = repl.eval(
+            """
+            @file:DependsOn("$jarPath")
+            import org.RDKit.RWMol
+            import org.RDKit.RWMol.MolFromSmiles
+            Native.loadLibrary(RWMol::class, "$libName", "$testDataPath")
+            MolFromSmiles("c1ccccc1")
+            """.trimIndent()
+        ).resultValue
+
+        assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
+    }
 }
