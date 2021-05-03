@@ -109,7 +109,6 @@ and try again.
 ### Default repositories
 
 The following maven repositories are included by default:
- - [Bintray JCenter](https://jcenter.bintray.com)
  - [Maven Central](https://repo.maven.apache.org/maven2)
  - [JitPack](https://jitpack.io/)
 
