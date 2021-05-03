@@ -1,12 +1,9 @@
 {
   "description": "Kotlin DSL for data wrangling",
   "properties": {
-    "v": "-SNAPSHOT"
+    "v": "0.16.2"
   },
   "link": "https://github.com/holgerbrandl/krangl",
-  "repositories": [
-    "https://jitpack.io"
-  ],
   "dependencies": [
     "com.github.holgerbrandl:krangl:$v"
   ],

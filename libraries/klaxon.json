@@ -1,7 +1,7 @@
 {
   "description": "JSON parser for Kotlin",
   "properties": {
-    "v": "5.2"
+    "v": "5.5"
   },
   "link": "https://github.com/cbeust/klaxon",
   "dependencies": [

@@ -106,9 +106,9 @@ class ReplWithResolverTests : AbstractReplTest() {
             @file:DependsOn("org.geotools:gt-shapefile:[23,)")
             @file:DependsOn("org.geotools:gt-cql:[23,)")
             
-            %use lets-plot@f98400094c0650d3497f3fda9910dd86705ee655(api=1.1.0)
+            %use lets-plot@cfcf8257116ad3753b176a9f779eaaea4619dacd(api=2.0.1)
             
-            @file:DependsOn("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-geotools:1.1.0")
+            @file:DependsOn("org.jetbrains.lets-plot:lets-plot-kotlin-geotools:2.0.1")
             
             import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
             """.trimIndent()
@@ -140,7 +140,7 @@ class ReplWithResolverTests : AbstractReplTest() {
 
         val res = repl.eval(
             """
-            %use krangl(0.13)
+            %use krangl(0.16.2)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
             """.trimIndent()
@@ -167,7 +167,7 @@ class ReplWithResolverTests : AbstractReplTest() {
     fun testUseFileUrlRef() {
         val repl = getReplWithStandardResolver()
 
-        val commit = "561ce1a324a9434d3481456b11678851b48a3132"
+        val commit = "cfcf8257116ad3753b176a9f779eaaea4619dacd"
         val libraryPath = "src/test/testData/test-init.json"
 
         val res1 = repl.eval(
@@ -237,7 +237,7 @@ class ReplWithResolverTests : AbstractReplTest() {
     fun testRuntimeDepsResolution() {
         val res = repl.eval(
             """
-            %use krangl(0.13)
+            %use krangl(0.16.2)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
             """.trimIndent()
@@ -258,7 +258,9 @@ class ReplWithResolverTests : AbstractReplTest() {
     fun testKlaxonClasspathDoesntLeak() {
         val res = repl.eval(
             """
-            %use klaxon(2.1.8)
+            @file:DependsOn("src/test/testData/klaxon-2.1.8.jar")
+            import com.beust.klaxon.*
+            
             class Person (val name: String, var age: Int = 23)
             val klaxon = Klaxon()
             val parseRes = klaxon.parse<Person>(""${'"'}
