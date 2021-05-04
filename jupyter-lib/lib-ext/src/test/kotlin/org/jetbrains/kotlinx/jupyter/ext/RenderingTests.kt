@@ -1,5 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.ext
 
+import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
+import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
+import org.jetbrains.kotlinx.jupyter.ext.graph.visualization.toHTML
+import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.fromClass
+import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.fromClassLoader
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileOutputStream
@@ -7,6 +12,7 @@ import java.io.StringWriter
 import java.io.Writer
 import javax.imageio.ImageIO
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RenderingTests {
     @Test
@@ -48,6 +54,14 @@ class RenderingTests {
         // assertHtmlEquals("test2.html") {
         //     appendLine(img.toHTML())
         // }
+    }
+
+    @Test
+    fun testGraphVisualization() {
+        val html1 = Graph.of(GraphNode.fromClass<StringWriter>()).toHTML()
+        assertTrue(html1.length > 1000)
+        val html2 = Graph.of(GraphNode.fromClassLoader<RenderingTests>()).toHTML()
+        assertTrue(html2.length > 1000)
     }
 
     private fun assertHtmlEquals(

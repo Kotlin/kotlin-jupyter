@@ -10,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.api.PropertyDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declareProperties
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
-import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
@@ -21,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.test.library
+import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -41,7 +41,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         classpathWithTestLib,
         homeDir,
         ResolverConfig(
-            defaultRepositories,
+            testRepositories,
             libs
         )
     )

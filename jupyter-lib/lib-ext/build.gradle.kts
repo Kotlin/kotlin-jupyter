@@ -32,6 +32,8 @@ dependencies {
     implementation("org.apache.xmlgraphics:fop:2.6")
     implementation("org.apache.xmlgraphics:batik-codec:1.14")
     implementation("org.apache.xmlgraphics:xmlgraphics-commons:2.6")
+
+    implementation("guru.nidi:graphviz-java:0.18.1")
 }
 
 tasks.test {

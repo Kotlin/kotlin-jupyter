@@ -2,7 +2,6 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.mainKts.impl.IvyResolver
-import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -15,7 +14,7 @@ class ResolverTests {
     private val log: Logger by lazy { LoggerFactory.getLogger("resolver") }
 
     private fun ExternalDependenciesResolver.doResolve(artifact: String): List<File> {
-        defaultRepositories.forEach { addRepository(it) }
+        testRepositories.forEach { addRepository(it) }
         assertTrue(acceptsArtifact(artifact))
         val result = runBlocking { resolve(artifact) }
         assertTrue(result is ResultWithDiagnostics.Success)
