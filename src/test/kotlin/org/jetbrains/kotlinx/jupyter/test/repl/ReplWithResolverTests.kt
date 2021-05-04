@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoName
 import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoOwner
@@ -16,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.testResolverConfig
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -32,7 +32,7 @@ class ReplWithResolverTests : AbstractReplTest() {
 
     private fun getReplWithStandardResolver(): ReplForJupyterImpl {
         val standardResolutionInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
-        val config = ResolverConfig(defaultRepositories, getStandardResolver(".", standardResolutionInfoProvider))
+        val config = ResolverConfig(testRepositories, getStandardResolver(".", standardResolutionInfoProvider))
         return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, config, standardResolverRuntimeProperties)
     }
 

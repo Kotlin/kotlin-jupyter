@@ -32,6 +32,8 @@ import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 
 const val standardResolverBranch = "master"
 
+val testRepositories = defaultRepositories
+
 val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaultRuntimeProperties {
     override val currentBranch: String
         get() = standardResolverBranch
@@ -49,7 +51,7 @@ val classpath = scriptCompilationClasspathFromContext(
 
 val testResolverConfig: ResolverConfig
     get() = ResolverConfig(
-        defaultRepositories,
+        testRepositories,
         getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
     )
 
