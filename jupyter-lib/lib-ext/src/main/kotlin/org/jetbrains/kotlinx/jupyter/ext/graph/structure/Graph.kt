@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.ext.graph.structure
 
 import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
 
-interface Graph<T> : MultiGraph<T> {
+interface Graph<out T> : MultiGraph<T> {
     override val directedEdges: Set<DirectedEdge<T>>
     override val undirectedEdges: Set<UndirectedEdge<T>>
 

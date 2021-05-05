@@ -10,7 +10,7 @@ package org.jetbrains.kotlinx.jupyter.api.graphs
  *
  * @param T Underlying object type
  */
-interface GraphNode<T> {
+interface GraphNode<out T> {
     /**
      * Node label with all required information
      */

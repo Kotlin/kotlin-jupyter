@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.ext.graph.structure
 
 import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
 
-interface MultiGraph<T> {
+interface MultiGraph<out T> {
     val nodes: Set<GraphNode<T>>
     val directedEdges: Collection<DirectedEdge<T>>
     val undirectedEdges: Collection<UndirectedEdge<T>>

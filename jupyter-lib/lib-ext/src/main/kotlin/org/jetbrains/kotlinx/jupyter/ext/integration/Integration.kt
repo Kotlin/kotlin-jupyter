@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.ext.integration
 
 import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
+import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNodes
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
 import org.jetbrains.kotlinx.jupyter.ext.graph.structure.MultiGraph
@@ -12,14 +13,20 @@ import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.KClassNode
 class Integration : JupyterIntegration() {
     override fun Builder.onLoaded() {
         import("org.jetbrains.kotlinx.jupyter.ext.*")
-        importPackage<GraphNode<*>>()
+        importPackage<Graph<*>>()
         importPackage<KClassNode>()
 
         render<MultiGraph<*>> {
             it.render()
         }
-        renderWithHost<GraphNode<*>> { host, value ->
-            notebook.renderersProcessor.renderValue(host, Graph.of(value)) ?: "null"
+
+        renderWithDefinedRenderers<GraphNode<*>> { Graph.of(it) }
+        renderWithDefinedRenderers<GraphNodes<*>> { Graph.of(it.nodes) }
+    }
+
+    private inline fun <reified T : Any> Builder.renderWithDefinedRenderers(crossinline getValue: (T) -> Any?) {
+        renderWithHost<T> { host, value ->
+            notebook.renderersProcessor.renderValue(host, getValue(value)) ?: "null"
         }
     }
 }
