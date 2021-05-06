@@ -8,8 +8,8 @@ import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.util.KotlinKernelVersionSerializer
@@ -78,18 +78,18 @@ class LibraryDescriptor(
     }
 
     private fun processDescriptor(mapping: Map<String, String>): LibraryDefinition {
-        return LibraryDefinitionImpl(
-            dependencies = dependencies.replaceVariables(mapping),
-            repositories = repositories.replaceVariables(mapping),
-            imports = imports.replaceVariables(mapping),
-            init = init.replaceVariables(mapping),
-            shutdown = shutdown.replaceVariables(mapping),
-            initCell = initCell.replaceVariables(mapping),
-            renderers = renderers.replaceVariables(mapping),
-            resources = resources.replaceVariables(mapping),
-            minKernelVersion = minKernelVersion,
-            originalDescriptorText = Json.encodeToString(this),
-        )
+        return libraryDefinition {
+            it.dependencies = dependencies.replaceVariables(mapping)
+            it.repositories = repositories.replaceVariables(mapping)
+            it.imports = imports.replaceVariables(mapping)
+            it.init = init.replaceVariables(mapping)
+            it.shutdown = shutdown.replaceVariables(mapping)
+            it.initCell = initCell.replaceVariables(mapping)
+            it.renderers = renderers.replaceVariables(mapping)
+            it.resources = resources.replaceVariables(mapping)
+            it.minKernelVersion = minKernelVersion
+            it.originalDescriptorText = Json.encodeToString(this)
+        }
     }
 
     companion object {

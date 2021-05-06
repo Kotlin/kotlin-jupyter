@@ -116,7 +116,7 @@ class IntegrationApiTests {
         val repl = makeRepl()
         repl.eval(
             """
-            @file:DependsOn("src/test/testData/notebook-api-test-0.0.15.jar")
+            @file:DependsOn("src/test/testData/kotlin-jupyter-api-test-0.0.16.jar")
             """.trimIndent()
         )
 
@@ -165,5 +165,20 @@ class IntegrationApiTests {
 
         val result = repl.eval("B(A())")
         assertEquals("iB: iA", result.resultValue)
+    }
+
+    @Test
+    fun `code preprocessing`() {
+        val repl = makeRepl()
+        repl.eval(
+            """
+            USE {
+                preprocessCode { it.replace('b', 'x') }
+            }
+            """.trimIndent()
+        )
+
+        val result = repl.eval("\"abab\"")
+        assertEquals("axax", result.resultValue)
     }
 }

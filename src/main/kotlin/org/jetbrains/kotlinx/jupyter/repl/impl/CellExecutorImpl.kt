@@ -45,7 +45,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             log.debug("Executing code:\n$code")
             val preprocessedCode = if (processMagics) {
-                val processedMagics = magicsProcessor.processMagics(code)
+                val processedMagics = codePreprocessor.process(code, context)
 
                 log.debug("Adding ${processedMagics.libraries.size} libraries")
                 processedMagics.libraries.getDefinitions(notebook).forEach {
@@ -128,6 +128,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
             library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
             sharedContext.afterCellExecution.addAll(library.afterCellExecution)
+            sharedContext.codePreprocessor.addAll(library.codePreprocessors)
 
             val classLoader = sharedContext.evaluator.lastClassLoader
             rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
