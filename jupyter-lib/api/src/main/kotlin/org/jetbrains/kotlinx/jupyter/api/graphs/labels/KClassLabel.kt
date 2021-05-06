@@ -10,4 +10,6 @@ class KClassLabel(private val kClass: KClass<*>) : RecordTableLabel() {
 
     override val properties: Collection<Iterable<String>>
         get() = kClass.members.map { listOf(it.name, it.returnType.toString()) }
+
+    override val attributes = TableAttributes.build { cellspacing = 0 }
 }
