@@ -3,12 +3,12 @@ package org.jetbrains.kotlinx.jupyter.test
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
+import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.execute
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
@@ -45,8 +45,8 @@ class TestFunList<T>(private val head: T, private val tail: TestFunList<T>?) {
  * Used for [EmbedReplTest.testSubtypeRenderer]
  */
 @Suppress("unused")
-val testLibraryDefinition1 = LibraryDefinitionImpl(
-    renderers = listOf(
+val testLibraryDefinition1 = libraryDefinition {
+    it.renderers = listOf(
         SubtypeRendererTypeHandler(
             TestSum::class,
             ResultHandlerCodeExecution("\$it.a + \$it.b")
@@ -56,14 +56,14 @@ val testLibraryDefinition1 = LibraryDefinitionImpl(
             ResultHandlerCodeExecution("\$it.render()")
         )
     )
-)
+}
 
 /**
  * Used for [EmbedReplTest.testJsResources]
  */
 @Suppress("unused")
-val testLibraryDefinition2 = LibraryDefinitionImpl(
-    resources = listOf(
+val testLibraryDefinition2 = libraryDefinition {
+    it.resources = listOf(
         LibraryResource(
             listOf(
                 ResourceFallbacksBundle(
@@ -83,7 +83,7 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
             "testLib2"
         )
     )
-)
+}
 
 class EmbedReplTest : AbstractSingleReplTest() {
     override val repl = makeEmbeddedRepl()

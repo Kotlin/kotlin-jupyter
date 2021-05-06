@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
@@ -83,6 +84,12 @@ interface LibraryDefinition {
      * List of library resources
      */
     val resources: List<LibraryResource>
+        get() = emptyList()
+
+    /**
+     * List of code preprocessors
+     */
+    val codePreprocessors: List<CodePreprocessor>
         get() = emptyList()
 
     /**

@@ -7,6 +7,7 @@ import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -40,6 +41,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
@@ -231,6 +233,8 @@ class ReplForJupyterImpl(
         )
     )
 
+    private val codePreprocessor = CompoundCodePreprocessor(magics)
+
     private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
 
     // Used for various purposes, i.e. completion and listing errors
@@ -328,7 +332,7 @@ class ReplForJupyterImpl(
         fileAnnotationsProcessor,
         fieldsProcessor,
         typeRenderersProcessor,
-        magics,
+        codePreprocessor,
         resourcesProcessor,
         librariesScanner,
         notebook,

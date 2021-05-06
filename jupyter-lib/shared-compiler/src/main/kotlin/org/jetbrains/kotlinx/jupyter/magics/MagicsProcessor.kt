@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
-import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
@@ -10,8 +10,8 @@ import kotlin.script.experimental.jvm.util.determineSep
 class MagicsProcessor(
     private val handler: MagicsHandler,
     private val parseOutCellMarker: Boolean = false,
-) {
-    fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): MagicProcessingResult {
+) : CodePreprocessor {
+    fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): CodePreprocessor.Result {
         val magics = magicsIntervals(code)
 
         for (magicRange in magics) {
@@ -38,7 +38,7 @@ class MagicsProcessor(
 
         val codes = codeIntervals(code, magics, true)
         val preprocessedCode = codes.joinToString("") { code.substring(it.from, it.to) }
-        return MagicProcessingResult(preprocessedCode, handler.getLibraries())
+        return CodePreprocessor.Result(preprocessedCode, handler.getLibraries())
     }
 
     fun codeIntervals(
@@ -79,7 +79,9 @@ class MagicsProcessor(
         }
     }
 
-    data class MagicProcessingResult(val code: Code, val libraries: List<LibraryDefinitionProducer>)
+    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+        return processMagics(code)
+    }
 
     companion object {
         private const val MAGICS_SIGN = '%'

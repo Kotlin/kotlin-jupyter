@@ -3,7 +3,9 @@ package org.jetbrains.kotlinx.jupyter.api.libraries
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.ClassDeclarationsCallback
+import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
@@ -54,6 +56,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val repositories = mutableListOf<String>()
 
+        private val codePreprocessors = mutableListOf<CodePreprocessor>()
+
         fun addRenderer(handler: RendererTypeHandler) {
             renderers.add(handler)
         }
@@ -68,6 +72,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         fun addFileAnnotationHanlder(handler: FileAnnotationHandler) {
             fileAnnotations.add(handler)
+        }
+
+        fun addCodePreprocessor(preprocessor: CodePreprocessor) {
+            codePreprocessors.add(preprocessor)
         }
 
         inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) {
@@ -152,21 +160,34 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             addFileAnnotationHanlder(FileAnnotationHandler(T::class, callback))
         }
 
+        fun preprocessCodeWithLibraries(callback: KotlinKernelHost.(Code) -> CodePreprocessor.Result) {
+            addCodePreprocessor(object : CodePreprocessor {
+                override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+                    return host.callback(code)
+                }
+            })
+        }
+
+        fun preprocessCode(callback: KotlinKernelHost.(Code) -> Code) {
+            preprocessCodeWithLibraries { CodePreprocessor.Result(this.callback(it)) }
+        }
+
         internal fun getDefinition() =
-            LibraryDefinitionImpl(
-                init = init,
-                renderers = renderers,
-                converters = converters,
-                imports = imports,
-                dependencies = dependencies,
-                repositories = repositories,
-                initCell = beforeCellExecution,
-                afterCellExecution = afterCellExecution,
-                shutdown = shutdownCallbacks,
-                classAnnotations = classAnnotations,
-                fileAnnotations = fileAnnotations,
-                resources = resources,
-            )
+            libraryDefinition {
+                it.init = init
+                it.renderers = renderers
+                it.converters = converters
+                it.imports = imports
+                it.dependencies = dependencies
+                it.repositories = repositories
+                it.initCell = beforeCellExecution
+                it.afterCellExecution = afterCellExecution
+                it.shutdown = shutdownCallbacks
+                it.classAnnotations = classAnnotations
+                it.fileAnnotations = fileAnnotations
+                it.resources = resources
+                it.codePreprocessors = codePreprocessors
+            }
     }
 
     override fun getDefinitions(notebook: Notebook): List<LibraryDefinition> {

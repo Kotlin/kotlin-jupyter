@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsTypeRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
-import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
+import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 
 internal data class SharedReplContext(
@@ -17,7 +17,7 @@ internal data class SharedReplContext(
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,
     val typeRenderersProcessor: ResultsTypeRenderersProcessor,
-    val magicsProcessor: MagicsProcessor,
+    val codePreprocessor: CompoundCodePreprocessor,
     val resourcesProcessor: LibraryResourcesProcessor,
     val librariesScanner: LibrariesScanner,
     val notebook: Notebook,
