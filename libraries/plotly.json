@@ -5,7 +5,8 @@
   },
   "link": "https://github.com/mipt-npm/plotly.kt",
   "repositories": [
-    "https://repo.kotlin.link"
+    "https://repo.kotlin.link",
+    "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers"
   ],
   "dependencies": [
     "space.kscience:plotlykt-jupyter:$v"

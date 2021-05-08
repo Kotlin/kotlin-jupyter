@@ -1,10 +1,13 @@
 {
   "description": "HTTP networking library",
   "properties": {
-    "v": "1.0.0"
+    "v": "39f76b4186"
   },
   "link": "https://github.com/jkcclemens/khttp",
+  "repositories": [
+    "https://jitpack.io"
+  ],
   "dependencies": [
-    "khttp:khttp:$v"
+    "com.github.jkcclemens:khttp:$v"
   ]
 }

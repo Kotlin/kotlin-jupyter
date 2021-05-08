@@ -1,7 +1,7 @@
 {
   "description": "Kotlin grammar for data visualization",
   "properties": {
-    "v": "0.7"
+    "v": "0.7.4"
   },
   "link": "https://github.com/holgerbrandl/kravis",
   "dependencies": [
