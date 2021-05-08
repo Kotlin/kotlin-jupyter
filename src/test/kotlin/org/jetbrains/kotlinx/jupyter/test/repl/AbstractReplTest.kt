@@ -2,10 +2,18 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.test.testRepositories
+import org.jetbrains.kotlinx.jupyter.test.testResolverConfig
 import java.io.File
 
 abstract class AbstractReplTest {
@@ -29,6 +37,25 @@ abstract class AbstractReplTest {
             }
             res!!
         }
+    }
+
+    protected fun makeSimpleRepl(): ReplForJupyter {
+        return ReplForJupyterImpl(resolutionInfoProvider, classpath)
+    }
+
+    protected fun makeReplWithTestResolver(): ReplForJupyter {
+        return ReplForJupyterImpl(resolutionInfoProvider, classpath, homeDir, testResolverConfig)
+    }
+
+    protected fun makeReplWithStandardResolver(): ReplForJupyter {
+        val standardResolutionInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
+        val config = ResolverConfig(testRepositories, getStandardResolver(".", standardResolutionInfoProvider))
+        return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, config, standardResolverRuntimeProperties)
+    }
+
+    protected fun makeEmbeddedRepl(): ReplForJupyter {
+        val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
+        return ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true)
     }
 
     companion object {

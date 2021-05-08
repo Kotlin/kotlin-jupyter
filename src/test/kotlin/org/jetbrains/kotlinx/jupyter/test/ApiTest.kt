@@ -1,17 +1,16 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.EvalResult
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
-import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
+import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ApiTest : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(resolutionInfoProvider, classpath)
+class ApiTest : AbstractSingleReplTest() {
+    override val repl = makeSimpleRepl()
 
     private fun jEval(jupyterId: Int, code: String): EvalResult {
         return repl.eval(code, jupyterId = jupyterId)

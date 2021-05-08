@@ -126,6 +126,7 @@ dependencies {
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
     testImplementation("io.kotlintest:kotlintest-assertions:3.1.6")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
@@ -194,6 +195,25 @@ tasks.test {
 
 tasks.processResources {
     dependsOn(tasks.buildProperties)
+}
+
+val createTestResources: Task by tasks.creating {
+    val jupyterApiVersion: String by project
+
+    inputs.property("jupyterApiVersion", jupyterApiVersion)
+
+    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("test"))
+    outputs.dir(outputDir)
+
+    doLast {
+        outputDir.mkdirs()
+        val propertiesFile = outputDir.resolve("PUBLISHED_JUPYTER_API_VERSION")
+        propertiesFile.writeText(jupyterApiVersion)
+    }
+}
+
+tasks.processTestResources {
+    dependsOn(createTestResources)
 }
 
 tasks.check {

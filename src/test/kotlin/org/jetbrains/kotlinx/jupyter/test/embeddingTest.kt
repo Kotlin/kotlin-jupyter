@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
@@ -11,9 +10,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.execute
-import org.jetbrains.kotlinx.jupyter.test.repl.AbstractReplTest
+import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
-import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -87,29 +85,26 @@ val testLibraryDefinition2 = LibraryDefinitionImpl(
     )
 )
 
-class EmbedReplTest : AbstractReplTest() {
-    private val repl = run {
-        val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true)
-    }
+class EmbedReplTest : AbstractSingleReplTest() {
+    override val repl = makeEmbeddedRepl()
 
     @Test
     fun testSharedStaticVariables() {
-        var res = repl.eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
+        var res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
         assertEquals(false, res.resultValue)
 
         SomeSingleton.initialized = true
 
-        res = repl.eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
+        res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
         assertEquals(true, res.resultValue)
     }
 
     @Test
     fun testCustomClasses() {
-        repl.eval("class Point(val x: Int, val y: Int)")
-        repl.eval("val p = Point(1,1)")
+        eval("class Point(val x: Int, val y: Int)")
+        eval("val p = Point(1,1)")
 
-        val res = repl.eval("p.x")
+        val res = eval("p.x")
         assertEquals(1, res.resultValue)
     }
 
@@ -118,9 +113,9 @@ class EmbedReplTest : AbstractReplTest() {
         repl.execute {
             addLibrary(testLibraryDefinition1)
         }
-        val result1 = repl.eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
+        val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
         assertEquals(13, result1.resultValue)
-        val result2 = repl.eval(
+        val result2 = eval(
             """
             import org.jetbrains.kotlinx.jupyter.test.TestFunList
             TestFunList(12, TestFunList(13, TestFunList(14, null)))
@@ -132,7 +127,7 @@ class EmbedReplTest : AbstractReplTest() {
     @Test
     fun testJsResources() {
         val displayHandler = TestDisplayHandler()
-        val res = repl.eval(
+        val res = eval(
             "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
             displayHandler
         )

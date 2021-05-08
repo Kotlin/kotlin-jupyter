@@ -1,18 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.JavaRuntime
-import jupyter.kotlin.receivers.ConstReceiver
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.OutputConfig
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
-import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,13 +20,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.fail
 
-class ReplTests : AbstractReplTest() {
-    private val repl = ReplForJupyterImpl(resolutionInfoProvider, classpath)
+class ReplTests : AbstractSingleReplTest() {
+    override val repl = makeSimpleRepl()
 
     @Test
     fun testRepl() {
-        repl.eval("val x = 3")
-        val res = repl.eval("x*2")
+        eval("val x = 3")
+        val res = eval("x*2")
         assertEquals(6, res.resultValue)
     }
 
@@ -41,7 +38,7 @@ class ReplTests : AbstractReplTest() {
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
         assertThrows<ReplCompilerException> {
-            repl.eval(
+            eval(
                 """
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1
@@ -56,7 +53,7 @@ class ReplTests : AbstractReplTest() {
     @Test
     fun testError() {
         try {
-            repl.eval(
+            eval(
                 """
                 val foobar = 78
                 val foobaz = "dsdsda"
@@ -82,17 +79,8 @@ class ReplTests : AbstractReplTest() {
     }
 
     @Test
-    fun testReplWithReceiver() {
-        val value = 5
-        val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
-        val repl = ReplForJupyterImpl(resolutionInfoProvider, cp, null, scriptReceivers = listOf(ConstReceiver(value)))
-        val res = repl.eval("value")
-        assertEquals(value, res.resultValue)
-    }
-
-    @Test
     fun testDependsOnAnnotation() {
-        repl.eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
+        eval("@file:DependsOn(\"de.erichseifert.gral:gral-core:0.11\")")
     }
 
     @Test
@@ -100,7 +88,7 @@ class ReplTests : AbstractReplTest() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
         assertEquals(1, errorsRes.errors.toList().size)
 
-        val res = repl.eval(
+        val res = eval(
             """
             @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
             import net.pearx.kasechange.*
@@ -113,7 +101,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testDependsOnAnnotationCompletion() {
-        repl.eval(
+        eval(
             """
             @file:Repository("https://repo1.maven.org/maven2/")
             @file:DependsOn("com.github.doyaaaaaken:kotlin-csv-jvm:0.7.3")
@@ -128,7 +116,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testExternalStaticFunctions() {
-        val res = repl.eval(
+        val res = eval(
             """
             @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
             import pack.*
@@ -142,13 +130,13 @@ class ReplTests : AbstractReplTest() {
     @Test
     fun testScriptIsolation() {
         assertFails {
-            repl.eval("org.jetbrains.kotlinx.jupyter.ReplLineMagics.use")
+            eval("org.jetbrains.kotlinx.jupyter.ReplLineMagics.use")
         }
     }
 
     @Test
     fun testDependsOnAnnotations() {
-        val res = repl.eval(
+        val res = eval(
             """
             @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
             @file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
@@ -170,8 +158,8 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testCompletionSimple() {
-        repl.eval("val foobar = 42")
-        repl.eval("var foobaz = 43")
+        eval("val foobar = 42")
+        eval("var foobaz = 43")
 
         runBlocking {
             repl.complete("val t = foo", 11) {
@@ -201,7 +189,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testCompletionForImplicitReceivers() {
-        repl.eval(
+        eval(
             """
             class AClass(val c_prop_x: Int) {
                 fun filter(xxx: (AClass).() -> Boolean): AClass {
@@ -229,7 +217,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testErrorsList() {
-        repl.eval(
+        eval(
             """
             data class AClass(val memx: Int, val memy: String)
             data class BClass(val memz: String, val mema: AClass)
@@ -267,7 +255,7 @@ class ReplTests : AbstractReplTest() {
     @Test
     fun testFreeCompilerArg() {
         runBlocking {
-            val res = repl.eval(
+            val res = eval(
                 """
                 @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
                 """.trimIndent()
@@ -315,7 +303,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testCompletionWithMagic() {
-        repl.eval("val foobar = 42")
+        eval("val foobar = 42")
 
         runBlocking {
             val code =
@@ -369,15 +357,15 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testOut() {
-        repl.eval("1+1", null, 1)
-        val res = repl.eval("Out[1]")
+        eval("1+1", null, 1)
+        val res = eval("Out[1]")
         assertEquals(2, res.resultValue)
-        assertFails { repl.eval("Out[3]") }
+        assertFails { eval("Out[3]") }
     }
 
     @Test
     fun testOutputMagic() {
-        repl.eval("%output --max-cell-size=100500 --no-stdout")
+        eval("%output --max-cell-size=100500 --no-stdout")
         assertEquals(
             OutputConfig(
                 cellOutputMaxSize = 100500,
@@ -386,7 +374,7 @@ class ReplTests : AbstractReplTest() {
             repl.outputConfig
         )
 
-        repl.eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
+        eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
         assertEquals(
             OutputConfig(
                 cellOutputMaxSize = 100500,
@@ -398,13 +386,13 @@ class ReplTests : AbstractReplTest() {
             repl.outputConfig
         )
 
-        repl.eval("%output --reset-to-defaults")
+        eval("%output --reset-to-defaults")
         assertEquals(OutputConfig(), repl.outputConfig)
     }
 
     @Test
     fun testJavaRuntimeUtils() {
-        val result = repl.eval("JavaRuntimeUtils.version")
+        val result = eval("JavaRuntimeUtils.version")
         val resultVersion = result.resultValue
         val expectedVersion = JavaRuntime.version
         assertEquals(expectedVersion, resultVersion)
@@ -412,7 +400,7 @@ class ReplTests : AbstractReplTest() {
 
     @Test
     fun testKotlinMath() {
-        val result = repl.eval("2.0.pow(2.0)").resultValue
+        val result = eval("2.0.pow(2.0)").resultValue
         assertEquals(4.0, result)
     }
 
@@ -422,7 +410,7 @@ class ReplTests : AbstractReplTest() {
         val testDataPath = "src/test/testData/nativeTest"
         val jarPath = "$testDataPath/org.RDKit.jar"
 
-        val res = repl.eval(
+        val res = eval(
             """
             @file:DependsOn("$jarPath")
             import org.RDKit.RWMol
