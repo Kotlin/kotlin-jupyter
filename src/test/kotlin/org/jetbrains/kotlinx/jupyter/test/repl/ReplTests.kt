@@ -148,12 +148,7 @@ class ReplTests : AbstractSingleReplTest() {
         val newClasspath = res.metadata.newClasspath
         assertTrue(newClasspath.size >= 2)
 
-        val htmlLibPath = listOf(
-            "org.jetbrains.kotlinx",
-            "kotlinx-html-jvm",
-            "jars",
-            "kotlinx-html-jvm"
-        ).joinToString(File.separator)
+        val htmlLibPath = "org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.2/kotlinx-html-jvm".replace('/', File.separatorChar)
         assertTrue(newClasspath.any { htmlLibPath in it })
     }
 

@@ -7,7 +7,6 @@ import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -59,7 +58,6 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.jvm.JvmInline
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext

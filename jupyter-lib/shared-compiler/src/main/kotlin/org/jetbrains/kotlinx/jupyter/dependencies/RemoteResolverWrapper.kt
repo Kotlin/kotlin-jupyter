@@ -38,11 +38,9 @@ class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesReso
                     val path = "$HOME_PATH/.ivy2/cache"
                     path.toURLString()
                 },
-            )
-                .map {
-                    "$PREFIX${it.shortcut}" to it
-                }
-                .toMap()
+            ).associateBy {
+                "$PREFIX${it.shortcut}"
+            }
 
         fun hasRepository(repository: RepositoryCoordinates): Boolean {
             return repositories.containsKey(repository.string)

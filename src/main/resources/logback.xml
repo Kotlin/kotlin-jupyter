@@ -11,4 +11,8 @@
     <root level="DEBUG">
         <appender-ref ref="STDERR" />
     </root>
+
+    <logger name="org.apache" level="ERROR" />
+    <logger name="httpclient" level="ERROR" />
+    <logger name="org.eclipse.aether" level="INFO" />
 </configuration>

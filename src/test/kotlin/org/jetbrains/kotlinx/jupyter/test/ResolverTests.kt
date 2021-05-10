@@ -1,13 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
+import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.test.assertTrue
 
 class ResolverTests {
@@ -23,7 +23,7 @@ class ResolverTests {
 
     @Test
     fun resolveSparkMlLibTest() {
-        val files = IvyResolver().doResolve("org.apache.spark:spark-mllib_2.11:2.4.4")
+        val files = MavenDependenciesResolver().doResolve("org.apache.spark:spark-mllib_2.11:2.4.4")
         log.debug("Downloaded files: ${files.count()}")
         files.forEach {
             log.debug(it.toString())

@@ -103,7 +103,7 @@ dependencies {
     implKotlin("scripting-compiler-impl-embeddable")
     implKotlin("scripting-compiler-embeddable")
     implKotlin("scripting-ide-services")
-    implKotlin("main-kts")
+    implKotlin("scripting-dependencies-maven")
     implKotlin("script-util")
     implKotlin("scripting-common")
 
