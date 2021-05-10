@@ -373,6 +373,10 @@
     line-height: var(--jp-private-completer-item-height);
 }
 
+.jp-Completer-item .jp-Completer-match.jp-Completer-deprecated {
+    text-decoration: line-through;
+}
+
 .jp-Completer-item .jp-Completer-type {
     display: table-cell;
     box-sizing: border-box;

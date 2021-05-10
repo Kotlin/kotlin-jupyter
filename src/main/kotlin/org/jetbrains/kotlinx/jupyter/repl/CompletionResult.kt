@@ -42,7 +42,8 @@ abstract class CompletionResult {
                             it.text,
                             it.displayText,
                             it.icon,
-                            it.tail
+                            it.tail,
+                            it.deprecationLevel?.name,
                         )
                     }
                 )
@@ -50,6 +51,9 @@ abstract class CompletionResult {
 
         @TestOnly
         fun sortedMatches(): List<String> = matches.sorted()
+
+        @TestOnly
+        fun sortedRaw(): List<SourceCodeCompletionVariant> = metadata.sortedBy { it.text }
     }
 
     class Empty(

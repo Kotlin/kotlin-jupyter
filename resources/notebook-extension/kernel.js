@@ -477,6 +477,7 @@ define(function(){
                     tail: info.tail,
                     icon: info.icon,
                     type: "introspection",
+                    deprecation: info.deprecation,
                     from: from,
                     to: to
                 });
@@ -521,6 +522,10 @@ define(function(){
                     .attr('data-color-index', typeColorIndex);
 
                 var matchTag = $('<span/>').text(displayText).addClass('jp-Completer-match');
+                if (comp.deprecation != null) {
+                    matchTag.addClass('jp-Completer-deprecated');
+                }
+
                 var typeTag = $('<span/>').text(tail).addClass('jp-Completer-typeExtended');
 
                 var opt = $('<li/>').addClass('jp-Completer-item');

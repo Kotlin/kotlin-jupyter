@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -163,12 +164,7 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             repl.complete("val t = foo", 11) {
-                result ->
-                if (result is CompletionResult.Success) {
-                    assertEquals(arrayListOf("foobar", "foobaz"), result.sortedMatches())
-                } else {
-                    fail("Result should be success")
-                }
+                assertEquals(arrayListOf("foobar", "foobaz"), it.getOrFail().sortedMatches())
             }
         }
     }
@@ -177,12 +173,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testNoCompletionAfterNumbers() {
         runBlocking {
             repl.complete("val t = 42", 10) {
-                result ->
-                if (result is CompletionResult.Success) {
-                    assertEquals(emptyList(), result.sortedMatches())
-                } else {
-                    fail("Result should be success")
-                }
+                assertEquals(emptyList(), it.getOrFail().sortedMatches())
             }
         }
     }
@@ -206,11 +197,41 @@ class ReplTests : AbstractSingleReplTest() {
         )
         runBlocking {
             repl.complete("df.filter { c_ }", 14) { result ->
-                if (result is CompletionResult.Success) {
-                    assertEquals(arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"), result.sortedMatches())
-                } else {
-                    fail("Result should be success")
-                }
+                assertEquals(
+                    arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"),
+                    result.getOrFail().sortedMatches()
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testParametersCompletion() {
+        eval("fun f(xyz: Int) = xyz * 2")
+
+        runBlocking {
+            repl.complete("val t = f(x", 11) {
+                assertEquals(arrayListOf("xyz = "), it.getOrFail().sortedMatches())
+            }
+        }
+    }
+
+    @Test
+    fun testDeprecationCompletion() {
+        eval(
+            """
+            @Deprecated("use id() function instead")
+            fun id_deprecated(x: Int) = x
+            """.trimIndent()
+        )
+
+        runBlocking {
+            repl.complete("val t = id_d", 12) { result ->
+                assertTrue(
+                    result.getOrFail().sortedRaw().any {
+                        it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+                    }
+                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotlintest.fail
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.CodeCellImpl
@@ -27,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 
@@ -89,6 +91,11 @@ fun readLibraries(basePath: String? = null): Map<String, String> {
         }
         .orEmpty()
         .toMap()
+}
+
+fun CompletionResult.getOrFail(): CompletionResult.Success = when (this) {
+    is CompletionResult.Success -> this
+    else -> fail("Result should be success")
 }
 
 class InMemoryLibraryResolver(

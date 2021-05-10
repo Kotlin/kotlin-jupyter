@@ -326,6 +326,7 @@ class CompleteReply(
         val displayText: String,
         val icon: String,
         val tail: String,
+        val deprecation: String?,
     )
 }
 
