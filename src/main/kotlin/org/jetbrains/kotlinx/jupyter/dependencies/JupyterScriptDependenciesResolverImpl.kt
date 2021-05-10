@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.dependencies
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
@@ -18,6 +17,7 @@ import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.dependencies.impl.DependenciesResolverOptionsName
 import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesResolverOptions
+import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
 open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?) : JupyterScriptDependenciesResolver {
 
@@ -36,7 +36,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
     init {
         resolver = CompoundDependenciesResolver(
             FileSystemDependenciesResolver(),
-            RemoteResolverWrapper(IvyResolver())
+            RemoteResolverWrapper(MavenDependenciesResolver())
         )
         resolverConfig?.repositories?.forEach { addRepository(it) }
     }
