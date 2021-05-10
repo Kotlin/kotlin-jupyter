@@ -168,6 +168,7 @@ components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
 
 tasks.test {
     val doParallelTesting = getFlag("test.parallel", true)
+    maxHeapSize = "2048m"
 
     /**
      *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
