@@ -6,8 +6,8 @@ import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import org.jetbrains.kotlinx.jupyter.api.PropertyDeclaration
-import org.jetbrains.kotlinx.jupyter.api.declareProperties
+import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
+import org.jetbrains.kotlinx.jupyter.api.declare
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
@@ -436,13 +436,13 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val repl = testOneLibUsage(
             library {
                 onLoaded {
-                    declareProperties(
+                    declare(
                         "x1" to 22,
                         "x2" to 20
                     )
 
-                    declareProperties(
-                        PropertyDeclaration("x3", mutProp, typeOf<ArrayList<Int>>())
+                    declare(
+                        VariableDeclaration("x3", mutProp, typeOf<ArrayList<Int>>())
                     )
                 }
             }

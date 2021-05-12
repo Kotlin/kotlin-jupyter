@@ -38,7 +38,7 @@ class FieldHandlerByClass(
     override fun acceptsType(type: KType) = type.isSubtypeOf(kClass.starProjectedType)
 }
 
-data class PropertyDeclaration(
+data class VariableDeclaration(
     val name: VariableName,
     val value: Any?,
     val type: KType,
@@ -56,5 +56,5 @@ data class PropertyDeclaration(
     )
 }
 
-fun KotlinKernelHost.declareProperties(vararg properties: PropertyDeclaration) = declareProperties(properties.toList())
-fun KotlinKernelHost.declareProperties(vararg properties: Pair<VariableName, Any?>) = declareProperties(properties.map { PropertyDeclaration(it.first, it.second) })
+fun KotlinKernelHost.declare(vararg variables: VariableDeclaration) = declare(variables.toList())
+fun KotlinKernelHost.declare(vararg variables: Pair<VariableName, Any?>) = declare(variables.map { VariableDeclaration(it.first, it.second) })

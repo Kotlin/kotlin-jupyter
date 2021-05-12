@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.api.PropertyDeclaration
+import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -167,8 +167,8 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             return callback(ExecutionContext(sharedContext, displayHandler, executor))
         }
 
-        override fun declareProperties(properties: Iterable<PropertyDeclaration>) {
-            val tempDeclarations = properties.joinToString(
+        override fun declare(variables: Iterable<VariableDeclaration>) {
+            val tempDeclarations = variables.joinToString(
                 "\n",
                 "object $TEMP_OBJECT_NAME {\n",
                 "\n}\n$TEMP_OBJECT_NAME"
@@ -179,7 +179,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             val resultClass = result::class
             val propertiesMap = resultClass.declaredMemberProperties.associateBy { it.name }
 
-            val declarations = properties.joinToString("\n") {
+            val declarations = variables.joinToString("\n") {
                 @Suppress("UNCHECKED_CAST")
                 val prop = propertiesMap[it.name] as KMutableProperty1<Any, Any?>
                 prop.set(result, it.value)
@@ -191,9 +191,9 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         companion object {
             private const val TEMP_OBJECT_NAME = "___temp_declarations"
 
-            private val PropertyDeclaration.mutabilityQualifier get() = if (isMutable) "var" else "val"
-            private val PropertyDeclaration.declaration get() = """$mutabilityQualifier `$name`: $type = $TEMP_OBJECT_NAME.`$name` as $type"""
-            private val PropertyDeclaration.tempDeclaration get() = """var `$name`: ${type.withNullability(true)} = null"""
+            private val VariableDeclaration.mutabilityQualifier get() = if (isMutable) "var" else "val"
+            private val VariableDeclaration.declaration get() = """$mutabilityQualifier `$name`: $type = $TEMP_OBJECT_NAME.`$name` as $type"""
+            private val VariableDeclaration.tempDeclaration get() = """var `$name`: ${type.withNullability(true)} = null"""
         }
     }
 }

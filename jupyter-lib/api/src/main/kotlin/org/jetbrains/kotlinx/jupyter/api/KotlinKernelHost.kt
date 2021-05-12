@@ -36,7 +36,7 @@ interface KotlinKernelHost {
     fun addLibrary(library: LibraryDefinition)
 
     /**
-     * Declares the given properties. They may be used in the notebook cells
+     * Declares global variables for notebook
      */
-    fun declareProperties(properties: Iterable<PropertyDeclaration>)
+    fun declare(variables: Iterable<VariableDeclaration>)
 }
