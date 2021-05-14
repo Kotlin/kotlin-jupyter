@@ -1,7 +1,7 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.7.3-dev-239-0.10.0.8"
+    "v": "0.7.3-dev-243-0.10.0.13"
   },
   "link": "https://github.com/nikitinas/dataframe",
   "dependencies": [
