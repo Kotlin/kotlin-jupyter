@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import kotlin.reflect.KType
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
@@ -107,4 +108,16 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     }
 
     fun ensureStorageCreation(address: K) = cellVariables.putIfAbsent(address, mutableSetOf())
+}
+
+fun <K, V> MutableMap<K, V>.putOrThrow(key: K, value: V, message: (V) -> String) {
+    val oldValue = get(key)
+    if (oldValue != null) throw IllegalArgumentException(message(oldValue))
+    put(key, value)
+}
+
+fun MutableMap<KType, Any>.putImplicitReceiver(receiver: Any, type: KType) {
+    putOrThrow(type, receiver) { oldReceiver ->
+        "Cannot add a receiver `$receiver` with type `$type`: another receiver `$oldReceiver` with the same type has been added"
+    }
 }

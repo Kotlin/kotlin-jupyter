@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import kotlin.reflect.KType
 
 internal data class SharedReplContext(
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
@@ -23,8 +24,9 @@ internal data class SharedReplContext(
     val notebook: Notebook,
     val beforeCellExecution: MutableList<ExecutionCallback<*>>,
     val shutdownCodes: MutableList<ExecutionCallback<*>>,
+    val implicitReceivers: MutableMap<KType, Any>,
     val evaluator: InternalEvaluator,
-    val baseHost: BaseKernelHost
+    val baseHost: BaseKernelHost,
 ) {
     val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 }

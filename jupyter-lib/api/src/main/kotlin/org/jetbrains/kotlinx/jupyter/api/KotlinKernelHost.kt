@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import kotlin.reflect.KType
 
 /**
  * Interface representing kernel engine, the core facility for compiling and executing code snippets
@@ -39,4 +40,14 @@ interface KotlinKernelHost {
      * Declares global variables for notebook
      */
     fun declare(variables: Iterable<VariableDeclaration>)
+
+    /**
+     * Add an implicit receiver [receiver] to all subsequent cells. [type] is a type which will be used for completion
+     */
+    fun withReceiver(receiver: Any, type: KType)
+
+    /**
+     * Remove receiver with the given type from subsequent cells
+     */
+    fun removeReceiver(type: KType)
 }

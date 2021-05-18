@@ -31,7 +31,7 @@ import kotlin.script.experimental.jvm.updateClasspath
 
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
-    scriptReceivers: List<Any> = emptyList(),
+    receiverTypesProvider: (() -> List<KotlinType>)? = null,
     compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
     importsCollector: ScriptImportsCollector = ScriptImportsCollector.NoOp,
@@ -58,16 +58,16 @@ fun getCompilationConfiguration(
             updateClasspath(scriptClasspath)
         }
 
-        val receiversTypes = scriptReceivers.map { KotlinType(it.javaClass.canonicalName) }
-        implicitReceivers(receiversTypes)
-        skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
-
         compilerOptions(compilerArgsConfigurator.getArgs())
 
         refineConfiguration {
             beforeCompiling { (source, config, _) ->
                 importsCollector.collect(source)
                 config.with {
+                    receiverTypesProvider?.invoke()?.let { receiversTypes ->
+                        implicitReceivers(receiversTypes)
+                        skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
+                    }
                     compilerOptions(compilerArgsConfigurator.getArgs())
                 }.asSuccess()
             }

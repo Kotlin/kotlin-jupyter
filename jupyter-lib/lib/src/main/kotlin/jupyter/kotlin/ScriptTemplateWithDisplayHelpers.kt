@@ -10,6 +10,8 @@ abstract class ScriptTemplateWithDisplayHelpers(
     val notebook: Notebook,
     private val hostProvider: KotlinKernelHostProvider
 ) {
+    val HOST get() = hostProvider.host!!
+
     fun DISPLAY(value: Any) = hostProvider.host!!.display(value)
 
     fun EXECUTE(code: String) = hostProvider.host!!.scheduleExecution(CodeExecution(code).toExecutionCallback())
