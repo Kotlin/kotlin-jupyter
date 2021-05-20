@@ -4,7 +4,6 @@ import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
@@ -438,32 +437,5 @@ class ReplTests : AbstractSingleReplTest() {
         ).resultValue
 
         assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
-    }
-
-    @Test
-    fun testEqualsNan() {
-        @Language("kts")
-        val res = eval(
-            """
-            fun f(x: List<Double>): Boolean {
-                return x[0].equals(Double.NaN)
-            }
-            f(listOf(2.2, 3.1))
-            """.trimIndent()
-        ).resultValue
-        assertEquals(false, res)
-    }
-
-    @Test
-    fun testInlineClasses() {
-        val res = eval(
-            """
-            inline class V(val i: Int) {
-                operator fun plus(other: V) = V(i + other.i)
-            }
-            V(22) + V(20)
-            """.trimIndent()
-        ).resultValue
-        assertEquals(42, res)
     }
 }
