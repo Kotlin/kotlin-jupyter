@@ -103,6 +103,17 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testHttpRedirection() {
+        val res = eval(
+            """
+            %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
+            1
+            """.trimIndent()
+        ).resultValue
+        assertEquals(1, res)
+    }
+
+    @Test
     fun testLocalLibrariesStorage() {
         @Language("json")
         val descriptorText = """
