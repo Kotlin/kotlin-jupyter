@@ -12,6 +12,7 @@ class DefaultCompilerArgsConfigurator(
         "-jvm-target",
         jvmTargetVersion,
         "-no-stdlib",
+        "-Xuse-ir",
     )
 
     override fun getArgs(): List<String> {
