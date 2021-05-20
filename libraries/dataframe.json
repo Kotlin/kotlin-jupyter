@@ -1,8 +1,12 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.7.3-dev-250-0.10.0.17"
+    "v": "0.7.3-dev-256"
   },
+  "repositories": [
+    "https://oss.sonatype.org/service/local/repo_groups/public/content"
+  ],
+  "init": ["%use lets-plot-dataframe"],
   "link": "https://github.com/nikitinas/dataframe",
   "dependencies": [
     "org.jetbrains.kotlinx:dataframe:$v"
