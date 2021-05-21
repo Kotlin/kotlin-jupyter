@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.getFlag
 import org.jetbrains.kotlinx.jupyter.plugin.options
@@ -103,6 +104,7 @@ dependencies {
     implKotlin("scripting-compiler-impl-embeddable")
     implKotlin("scripting-compiler-embeddable")
     implKotlin("scripting-ide-services")
+    implKotlin("scripting-dependencies")
     implKotlin("scripting-dependencies-maven")
     implKotlin("script-util")
     implKotlin("scripting-common")
@@ -153,6 +155,7 @@ tasks.shadowJar {
     archiveBaseName.set(taskOptions.packageName)
     archiveClassifier.set("")
     mergeServiceFiles()
+    transform(ComponentsXmlResourceTransformer())
 
     manifest {
         attributes(tasks.jar.get().manifest.attributes)

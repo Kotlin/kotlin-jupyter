@@ -1,5 +1,5 @@
 plugins {
-    id("com.gradle.plugin-publish") version "0.12.0"
+    id("com.gradle.plugin-publish")
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`

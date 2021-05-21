@@ -35,7 +35,7 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             when (requested.id.id) {
-                "com.github.johnrengelman.shadow" -> useModule("com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion")
+                "com.github.johnrengelman.shadow" -> useModule("gradle.plugin.com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion")
                 "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintGradleVersion")
             }
         }
