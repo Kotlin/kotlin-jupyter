@@ -19,17 +19,11 @@ annotation class DependsOn(val value: String = "")
  * @property value Can be one of the following:
  * - Maven repository URL
  * - Local directory in which JARs are stored
- * @property username In case of private Maven repositories, username which is used for authentication
- * @property password In case of private Maven repositories, password which is used for authentication
  */
 @Target(AnnotationTarget.FILE)
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
-annotation class Repository(
-    val value: String = "",
-    val username: String = "",
-    val password: String = "",
-)
+annotation class Repository(val value: String = "")
 
 /**
  * Describes compilation arguments used for the compilation of this and all following snippets

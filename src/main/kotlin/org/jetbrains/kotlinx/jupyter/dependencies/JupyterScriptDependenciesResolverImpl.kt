@@ -13,12 +13,10 @@ import kotlin.script.experimental.api.makeFailureResult
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
-import kotlin.script.experimental.dependencies.ExternalDependenciesResolver.Options
 import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.dependencies.impl.DependenciesResolverOptionsName
 import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesResolverOptions
-import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
 open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?) : JupyterScriptDependenciesResolver {
@@ -26,11 +24,13 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
     private val log = getLogger("resolver")
 
     private val resolver: ExternalDependenciesResolver
-    private val resolverOptions = buildOptions(
-        DependenciesResolverOptionsName.SCOPE to "compile,runtime"
+    private val resolverOptions = makeExternalDependenciesResolverOptions(
+        mapOf(
+            DependenciesResolverOptionsName.SCOPE.key to "compile,runtime"
+        )
     )
 
-    private val repositories = arrayListOf<Repo>()
+    private val repositories = arrayListOf<RepositoryCoordinates>()
     private val addedClasspath = arrayListOf<File>()
 
     init {
@@ -38,23 +38,15 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
             FileSystemDependenciesResolver(),
             RemoteResolverWrapper(MavenDependenciesResolver())
         )
-        resolverConfig?.repositories?.forEach { addRepository(Repo(it)) }
+        resolverConfig?.repositories?.forEach { addRepository(it) }
     }
 
-    private fun buildOptions(vararg options: Pair<DependenciesResolverOptionsName, String>): Options {
-        return makeExternalDependenciesResolverOptions(
-            mutableMapOf<String, String>().apply {
-                for (option in options) this[option.first] = option.second
-            }
-        )
-    }
-
-    private fun addRepository(repo: Repo): Boolean {
-        val repoIndex = repositories.indexOfFirst { it.coordinates.string == repo.coordinates.string }
+    private fun addRepository(repository: RepositoryCoordinates): Boolean {
+        val repoIndex = repositories.indexOfFirst { it.string == repository.string }
         if (repoIndex != -1) repositories.removeAt(repoIndex)
-        repositories.add(repo)
+        repositories.add(repository)
 
-        return resolver.addRepository(repo.coordinates, repo.options).valueOrNull() == true
+        return resolver.addRepository(repository).valueOrNull() == true
     }
 
     fun popAddedClasspath(): List<File> {
@@ -66,7 +58,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
     override fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>> {
         val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
         val classpath = mutableListOf<File>()
-        var existingRepositories: List<Repo>? = null
+        var existingRepositories: List<RepositoryCoordinates>? = null
 
         script.annotations.forEach { annotation ->
             when (annotation) {
@@ -76,17 +68,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
                         existingRepositories = ArrayList(repositories)
                     }
 
-                    val options = if (annotation.username.isNotEmpty() || annotation.password.isNotEmpty()) {
-                        buildOptions(
-                            DependenciesResolverOptionsName.USERNAME to annotation.username,
-                            DependenciesResolverOptionsName.PASSWORD to annotation.password,
-                        )
-                    } else {
-                        Options.Empty
-                    }
-                    val repo = Repo(RepositoryCoordinates(annotation.value), options)
-
-                    if (!addRepository(repo)) {
+                    if (!addRepository(RepositoryCoordinates(annotation.value))) {
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
                     }
 
@@ -113,7 +95,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
                         scriptDiagnostics.add(diagnostic)
                     }
                     // Hack: after first resolution add "standard" Central repo to the end of the list, giving it the lowest priority
-                    addRepository(CENTRAL_REPO)
+                    addRepository(CENTRAL_REPO_COORDINATES)
                 }
                 else -> throw Exception("Unknown annotation ${annotation.javaClass}")
             }
@@ -123,13 +105,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
         else makeFailureResult(scriptDiagnostics)
     }
 
-    private class Repo(
-        val coordinates: RepositoryCoordinates,
-        val options: Options = Options.Empty
-    )
-
     companion object {
-        private val CENTRAL_REPO_COORDINATES = RepositoryCoordinates("https://repo1.maven.org/maven2/")
-        private val CENTRAL_REPO = Repo(CENTRAL_REPO_COORDINATES)
+        val CENTRAL_REPO_COORDINATES = RepositoryCoordinates("https://repo1.maven.org/maven2/")
     }
 }
