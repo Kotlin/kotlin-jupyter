@@ -10,7 +10,10 @@ class ReplCompilerException(
     val errorResult: ResultWithDiagnostics.Failure? = null,
     message: String? = null
 ) :
-    ReplException(message ?: errorResult?.getErrors() ?: "") {
+    ReplException(
+        message ?: errorResult?.getErrors() ?: "",
+        errorResult?.reports?.map { it.exception }?.firstOrNull()
+    ) {
 
     val firstError = errorResult?.reports?.firstOrNull {
         it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
