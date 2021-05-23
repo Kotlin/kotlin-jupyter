@@ -3,11 +3,11 @@ package org.jetbrains.kotlinx.jupyter.api
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 
 /**
- * [TypeRenderersProcessor] is responsible for rendering objects.
+ * [RenderersProcessor] is responsible for rendering objects.
  * You may use it to render values exactly like notebook renders results,
  * and also register new renderers in runtime.
  */
-interface TypeRenderersProcessor {
+interface RenderersProcessor {
     /**
      * Renders [value] in context of this execution [host]
      */
@@ -17,5 +17,5 @@ interface TypeRenderersProcessor {
      * Adds new [renderer] for this notebook.
      * Don't turn on the optimizations for [PrecompiledRendererTypeHandler]
      */
-    fun registerWithoutOptimizing(renderer: RendererTypeHandler)
+    fun registerWithoutOptimizing(renderer: RendererHandler)
 }

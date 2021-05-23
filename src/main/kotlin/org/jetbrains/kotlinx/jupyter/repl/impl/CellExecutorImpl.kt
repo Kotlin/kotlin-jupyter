@@ -56,7 +56,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             } else code
 
             if (preprocessedCode.isBlank()) {
-                return InternalEvalResult(FieldValue(null, null), Unit)
+                return InternalEvalResult(FieldValue(Unit, null), Unit)
             }
 
             val result = baseHost.withHost(context) {
@@ -123,7 +123,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             rethrowAsLibraryException(LibraryProblemPart.INIT) {
                 library.init.forEach(::runChild)
             }
-            library.renderers.mapNotNull(sharedContext.typeRenderersProcessor::register).joinToLines().let(::runChild)
+            library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
             library.converters.forEach(sharedContext.fieldsProcessor::register)
             library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
             library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)

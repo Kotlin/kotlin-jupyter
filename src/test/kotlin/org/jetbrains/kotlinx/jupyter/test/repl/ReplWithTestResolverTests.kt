@@ -2,12 +2,12 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
+import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -25,7 +25,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val res1 = eval(code1, displayHandler)
         assertEquals(1, displays.count())
         displays.clear()
-        assertNull(res1.resultValue)
+        assertUnit(res1.resultValue)
         val res2 = eval(code2, displayHandler)
         assertEquals(0, displays.count())
         val mime = res2.resultValue as? MimeTypedResult

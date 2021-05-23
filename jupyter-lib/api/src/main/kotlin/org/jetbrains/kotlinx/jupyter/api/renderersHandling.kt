@@ -37,19 +37,30 @@ class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
 }
 
 /**
- * Type handler for result renderers
+ * [RendererHandler] renders results for which [accepts] returns `true`
  */
-interface RendererTypeHandler : VariablesSubstitutionAware<RendererTypeHandler> {
+interface RendererHandler : VariablesSubstitutionAware<RendererHandler> {
     /**
-     * Returns true if this renderer accepts [type], false otherwise
+     * Returns true if this renderer accepts [value], false otherwise
      */
-    fun acceptsType(type: KClass<*>): Boolean
+    fun accepts(value: Any?): Boolean
 
     /**
      * Execution to handle result.
-     * Should not throw if [acceptsType] returns true
+     * Should not throw if [accepts] returns true
      */
     val execution: ResultHandlerExecution
+}
+
+/**
+ * [RendererTypeHandler] handles results for which runtime types [acceptsType] returns `true`
+ */
+interface RendererTypeHandler : RendererHandler {
+    fun acceptsType(type: KClass<*>): Boolean
+
+    override fun accepts(value: Any?): Boolean {
+        return if (value == null) false else acceptsType(value::class)
+    }
 }
 
 /**

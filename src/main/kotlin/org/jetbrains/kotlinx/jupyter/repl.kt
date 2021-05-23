@@ -17,8 +17,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.ResultsTypeRenderersProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.TypeRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -311,8 +311,8 @@ class ReplForJupyterImpl(
         executedCodeLogging != ExecutedCodeLogging.Off
     )
 
-    private val typeRenderersProcessor: ResultsTypeRenderersProcessor = run {
-        val processor = TypeRenderersProcessorImpl(contextUpdater)
+    private val renderersProcessor: ResultsRenderersProcessor = run {
+        val processor = RenderersProcessorImpl(contextUpdater)
         notebook.typeRenderersProcessor = processor
         processor
     }
@@ -329,7 +329,7 @@ class ReplForJupyterImpl(
         classAnnotationsProcessor,
         fileAnnotationsProcessor,
         fieldsProcessor,
-        typeRenderersProcessor,
+        renderersProcessor,
         codePreprocessor,
         resourcesProcessor,
         librariesScanner,
@@ -382,7 +382,7 @@ class ReplForJupyterImpl(
 
             val rendered = result.result.let {
                 log.catchAll {
-                    typeRenderersProcessor.renderResult(executor, it)
+                    renderersProcessor.renderResult(executor, it)
                 }
             }?.let {
                 log.catchAll {

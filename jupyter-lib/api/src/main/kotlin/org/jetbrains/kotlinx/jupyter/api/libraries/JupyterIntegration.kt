@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
@@ -32,7 +33,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
     class Builder(val notebook: Notebook) {
 
-        private val renderers = mutableListOf<RendererTypeHandler>()
+        private val renderers = mutableListOf<RendererHandler>()
 
         private val init = mutableListOf<ExecutionCallback<*>>()
 
@@ -58,6 +59,11 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val codePreprocessors = mutableListOf<CodePreprocessor>()
 
+        fun addRenderer(handler: RendererHandler) {
+            renderers.add(handler)
+        }
+
+        // Left for ABI compatibility
         fun addRenderer(handler: RendererTypeHandler) {
             renderers.add(handler)
         }

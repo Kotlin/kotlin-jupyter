@@ -12,7 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -31,6 +31,7 @@ import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
+import kotlin.test.assertEquals
 
 const val standardResolverBranch = "master"
 
@@ -56,6 +57,8 @@ val testResolverConfig: ResolverConfig
         testRepositories,
         getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
     )
+
+fun assertUnit(value: Any?) = assertEquals(Unit, value)
 
 fun assertStartsWith(expectedPrefix: String, actual: String) {
     if (actual.startsWith(expectedPrefix)) return
@@ -174,7 +177,7 @@ object NotebookMock : Notebook {
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
-    override val renderersProcessor: TypeRenderersProcessor
+    override val renderersProcessor: RenderersProcessor
         get() = error("Not supposed to be called")
 }
 

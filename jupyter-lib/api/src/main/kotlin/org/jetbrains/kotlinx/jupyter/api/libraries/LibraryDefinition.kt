@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 
 /**
  * Library definition represents "library" concept in Kotlin kernel.
@@ -59,7 +59,7 @@ interface LibraryDefinition {
      * List of type renderers. Consider using [org.jetbrains.kotlinx.jupyter.api.Renderable]
      * as it's generally more convenient
      */
-    val renderers: List<RendererTypeHandler>
+    val renderers: List<RendererHandler>
         get() = emptyList()
 
     /**

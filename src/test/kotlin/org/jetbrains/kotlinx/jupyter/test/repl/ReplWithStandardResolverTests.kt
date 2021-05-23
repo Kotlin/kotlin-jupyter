@@ -8,12 +8,12 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.LocalSettingsPath
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
+import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverTests : AbstractSingleReplTest() {
@@ -90,7 +90,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         val res3 = eval("%use lets-plot@$commit", handler)
         assertEquals(1, displays.count())
-        assertNull(res3.resultValue)
+        assertUnit(res3.resultValue)
         displays.clear()
 
         val res4 = eval(

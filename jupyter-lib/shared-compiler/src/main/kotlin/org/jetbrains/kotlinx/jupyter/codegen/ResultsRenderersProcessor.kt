@@ -3,11 +3,11 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.TypeRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 
-interface ResultsTypeRenderersProcessor : TypeRenderersProcessor {
+interface ResultsRenderersProcessor : RenderersProcessor {
     /**
      * Renders cell result [field] represented as [FieldValue] in the [host] context
      */
@@ -18,5 +18,5 @@ interface ResultsTypeRenderersProcessor : TypeRenderersProcessor {
      * Returns code to be executed on execution host
      * for [PrecompiledRendererTypeHandler]'s.
      */
-    fun register(renderer: RendererTypeHandler): Code?
+    fun register(renderer: RendererHandler): Code?
 }

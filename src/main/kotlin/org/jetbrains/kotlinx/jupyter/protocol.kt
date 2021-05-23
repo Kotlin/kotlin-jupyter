@@ -411,7 +411,8 @@ class CapturingOutputStream(
     }
 }
 
-fun Any.toDisplayResult(notebook: Notebook): DisplayResult? = when (this) {
+fun Any?.toDisplayResult(notebook: Notebook): DisplayResult? = when (this) {
+    null -> textResult("null")
     is DisplayResult -> this
     is Renderable -> this.render(notebook)
     is Unit -> null
@@ -475,7 +476,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
                 else -> {
                     flushStreams()
                     try {
-                        val result = exec.resultValue?.toDisplayResult(repl.notebook)
+                        val result = exec.resultValue.toDisplayResult(repl.notebook)
                         OkResponseWithMessage(result, exec.metadata)
                     } catch (e: Exception) {
                         AbortResponseWithMessage("error:  Unable to convert result to a string: $e")

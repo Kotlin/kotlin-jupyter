@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 
 /**
  * Trivial implementation of [LibraryDefinition] - simple container.
@@ -20,7 +20,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var initCell: List<ExecutionCallback<*>> = emptyList()
     override var afterCellExecution: List<AfterCellExecutionCallback> = emptyList()
     override var shutdown: List<ExecutionCallback<*>> = emptyList()
-    override var renderers: List<RendererTypeHandler> = emptyList()
+    override var renderers: List<RendererHandler> = emptyList()
     override var converters: List<FieldHandler> = emptyList()
     override var classAnnotations: List<ClassAnnotationHandler> = emptyList()
     override var fileAnnotations: List<FileAnnotationHandler> = emptyList()

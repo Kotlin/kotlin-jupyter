@@ -68,5 +68,5 @@ interface Notebook {
      * Renderers processor gives an ability to render values and
      * and add new renderers
      */
-    val renderersProcessor: TypeRenderersProcessor
+    val renderersProcessor: RenderersProcessor
 }
