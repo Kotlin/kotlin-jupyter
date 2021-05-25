@@ -58,7 +58,6 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
-import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KType
 import kotlin.reflect.full.starProjectedType
@@ -153,7 +152,7 @@ fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
 
 class ReplForJupyterImpl(
     override val resolutionInfoProvider: ResolutionInfoProvider,
-    private val scriptClasspath: List<File> = emptyList(),
+    scriptClasspath: List<File> = emptyList(),
     override val homeDir: File? = null,
     override val resolverConfig: ResolverConfig? = null,
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
@@ -298,9 +297,7 @@ class ReplForJupyterImpl(
                     ).any { fqn.startsWith(it) } ||
                         (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
                 }
-                val scriptClassloader =
-                    URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
-                baseClassLoader(scriptClassloader)
+                baseClassLoader(filteringClassLoader)
             }
         }
         constructorArgs(notebook, this@ReplForJupyterImpl)
