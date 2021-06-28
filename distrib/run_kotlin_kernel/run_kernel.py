@@ -39,7 +39,14 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
-        subprocess.call(['java', '-jar'] + debug_list +
+        java_home = os.getenv("JAVA_HOME")
+
+        if java_home is None:
+            java = "java"
+        else:
+            java = os.path.join(java_home, "bin", "java")
+
+        subprocess.call([java, '-jar'] + debug_list +
                         [main_jar_path,
                          '-classpath=' + class_path_arg,
                          connection_file,
