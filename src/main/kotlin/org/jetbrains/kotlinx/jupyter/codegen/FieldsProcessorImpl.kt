@@ -37,6 +37,7 @@ class FieldsProcessorImpl(
             val notNullType = propertyType.withNullability(false)
             val handler = handlers.asIterable().firstOrNull { it.acceptsType(notNullType) }
             if (handler != null) {
+                @Suppress("UNCHECKED_CAST")
                 val execution = handler.execution as FieldHandlerExecution<Any>
                 rethrowAsLibraryException(LibraryProblemPart.CONVERTERS) {
                     execution.execute(host, value, property)

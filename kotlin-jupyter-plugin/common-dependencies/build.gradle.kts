@@ -7,13 +7,14 @@ project.version = rootProject.version
 
 val http4kVersion: String by rootProject
 val kotlinxSerializationVersion: String by rootProject
+val gradleKotlinVersion: String by rootProject
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(kotlin("stdlib"))
+    implementation(kotlin("stdlib", gradleKotlinVersion))
 
     // HTTP4K for resolving remote library dependencies
     fun http4k(name: String) = api("org.http4k:http4k-$name:$http4kVersion")

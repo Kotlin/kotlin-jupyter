@@ -103,7 +103,7 @@ fun ProjectWithOptions.prepareReadmeTasks() {
         inputs.file(readmeFile)
 
         doLast {
-            val tempFile = createTempFile("kotlin-jupyter-readme")
+            val tempFile = File.createTempFile("kotlin-jupyter-readme", "")
             tempFile.deleteOnExit()
             readmeGenerator.generate(readmeStubFile, tempFile)
             if (tempFile.readText() != readmeFile.readText()) {

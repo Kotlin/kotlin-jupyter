@@ -198,7 +198,6 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                 }
             }
         }
-        throw ReplException("Impossible situation: this code should be unreachable")
     }
 }
 

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
+
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
@@ -24,7 +26,10 @@ dependencies {
 
     testImplementation(project(":api"))
 
-    fun http4k(name: String) = implementation("org.http4k:http4k-$name:$http4kVersion")
+    fun http4k(name: String) =
+        implementation("org.http4k:http4k-$name:$http4kVersion") {
+            excludeKotlinDependencies("stdlib-jdk8")
+        }
     http4k("core")
     http4k("client-apache")
 

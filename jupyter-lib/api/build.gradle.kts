@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
 
 plugins {
@@ -9,14 +10,15 @@ plugins {
 project.version = rootProject.version
 val kotlinxSerializationVersion: String by rootProject
 val junitVersion: String by rootProject
+val gradleKotlinVersion: String by rootProject
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compileOnly(kotlin("stdlib"))
-    compileOnly(kotlin("reflect"))
+    compileOnly(kotlin("stdlib", gradleKotlinVersion))
+    compileOnly(kotlin("reflect", gradleKotlinVersion))
 
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion") {
         excludeKotlinDependencies(
@@ -25,10 +27,17 @@ dependencies {
         )
     }
 
-    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test", gradleKotlinVersion))
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        apiVersion = "1.4"
+        languageVersion = "1.4"
+    }
 }
 
 tasks {

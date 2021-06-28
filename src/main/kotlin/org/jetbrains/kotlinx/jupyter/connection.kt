@@ -199,7 +199,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     }
 }
 
-private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.toByte() }.toByteArray()
+private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 
 class HMAC(algorithm: String, key: String?) {
     private val mac = if (key?.isNotBlank() == true) Mac.getInstance(algorithm) else null
