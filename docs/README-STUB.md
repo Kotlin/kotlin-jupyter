@@ -84,6 +84,20 @@ Don't forget to re-run this script on the kernel update.
 
 To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
 
+### JDK Versions
+
+The default kernel will use the JDK pointed to by the environment variable `KOTLIN_JUPYTER_JAVA_HOME`, 
+or `JAVA_HOME` if the first is not set.
+
+To create a kernel for a specific JDK, you can use the `add-jdk` script:
+```bash
+python -m kotlin_kernel add-jdk <jdk_home> [kernel_name]
+```
+
+If `kernel_name` is not specified it will be `$version $vendor` detected from the JDK.
+The actual name of the kernel will be `Kotlin ($kernel_name)`, and the directory will be
+`kotlin_$kernel_name` with the spaces in `kernel_name` replaced by underscores.
+
 ## Supported functionality
 
 ### REPL commands
