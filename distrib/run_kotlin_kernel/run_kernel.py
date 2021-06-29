@@ -39,7 +39,7 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
-        java_home = os.getenv("JAVA_HOME")
+        java_home = os.getenv("KOTLIN_JUPYTER_JAVA_HOME") or os.getenv("JAVA_HOME")
 
         if java_home is None:
             java = "java"
