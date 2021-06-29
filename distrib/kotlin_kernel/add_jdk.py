@@ -1,4 +1,3 @@
-import glob
 import json
 import os.path
 import platform
@@ -6,7 +5,7 @@ import subprocess
 import sys
 from typing import Optional
 
-from kotlin_kernel.install_user import get_user_juypyter_path
+from kotlin_kernel.install_user import get_user_jupyter_path
 
 from kotlin_kernel.install_user import install_base_kernel
 
@@ -28,7 +27,7 @@ def add_jdk(jdk: str, name: Optional[str]):
         name = version + " " + dist
 
     kernel_name = "kotlin_" + name.replace(" ", "_")
-    kernel_location = os.path.join(get_user_juypyter_path(), "kernels", kernel_name)
+    kernel_location = os.path.join(get_user_jupyter_path(), "kernels", kernel_name)
     if os.path.exists(kernel_location):
         print("There is already a kernel with name " + kernel_name + ", use a different name", file=sys.stderr)
         exit(1)

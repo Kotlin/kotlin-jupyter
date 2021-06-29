@@ -6,7 +6,7 @@ import sys
 from os import path, environ
 
 
-def get_user_juypyter_path() -> str:
+def get_user_jupyter_path() -> str:
     platform_name = platform.system()
 
     if platform_name == 'Linux':
@@ -27,7 +27,7 @@ def install_base_kernel(kernel_name: str):
     sys_location = path.join(sys.prefix, data_relative_path)
     src_paths = [user_location, sys_location]
 
-    user_jupyter_path = get_user_juypyter_path()
+    user_jupyter_path = get_user_jupyter_path()
 
     dst = path.join(user_jupyter_path, 'kernels/' + kernel_name)
     for src in src_paths:
