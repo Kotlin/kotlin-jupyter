@@ -21,7 +21,7 @@ def add_jdk(jdk: str, name: Optional[str]):
         exit(1)
 
     if name is None:
-        version_spec = subprocess.check_output([java, "--version"]).decode().splitlines()[0].split(" ")
+        version_spec = subprocess.check_output([java, "--version"], text=True).splitlines()[0].split(" ")
         dist = version_spec[0]
         version = version_spec[1]
         name = version + " " + dist
@@ -37,7 +37,7 @@ def add_jdk(jdk: str, name: Optional[str]):
     with open(os.path.join(kernel_location, "kernel.json")) as kernel_file:
         kernelspec = json.load(kernel_file)
 
-    kernelspec["display_name"] = "Kotlin (" + name + ")"
+    kernelspec["display_name"] = "Kotlin (JDK " + name + ")"
     if "env" in kernelspec:
         kernelspec["env"]["KOTLIN_JUPYTER_JAVA_HOME"] = jdk
     else:

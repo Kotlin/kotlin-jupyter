@@ -91,12 +91,12 @@ or `JAVA_HOME` if the first is not set.
 
 To create a kernel for a specific JDK, you can use the `add-jdk` script:
 ```bash
-python -m kotlin_kernel add-jdk <jdk_home> [kernel_name]
+python -m kotlin_kernel add-jdk <jdk_home> [jdk_name]
 ```
 
-If `kernel_name` is not specified it will be `$version $vendor` detected from the JDK.
-The actual name of the kernel will be `Kotlin ($kernel_name)`, and the directory will be
-`kotlin_$kernel_name` with the spaces in `kernel_name` replaced by underscores.
+If `jdk_name` is not specified it will be `$version $vendor` detected from the JDK.
+The actual name of the kernel will be `Kotlin (JDK $jdk_name)`, and the directory will be
+`kotlin_$jdk_name` with the spaces in `jdk_name` replaced by underscores.
 
 ## Supported functionality
 
