@@ -32,6 +32,7 @@ import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.refineBeforeEvaluation
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.refineOnAnnotations
@@ -188,12 +189,14 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                     }
                 }
 
-                when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
+                val refinedConfiguration = newEvaluationConfiguration.refineBeforeEvaluation(compiledScript).valueOrThrow()
+
+                when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(refinedConfiguration) }) {
                     is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, kClassWithDiagnostics)
                     is ResultWithDiagnostics.Success -> {
                         val kClass = kClassWithDiagnostics.value
                         classes.add(kClass)
-                        return JupyterCompiler.Result(result, newEvaluationConfiguration)
+                        return JupyterCompiler.Result(result, refinedConfiguration)
                     }
                 }
             }

@@ -17,11 +17,12 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.JupyterScriptClassGetter
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
@@ -56,8 +57,10 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
-import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KType
+import kotlin.reflect.full.starProjectedType
+import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
@@ -68,6 +71,7 @@ import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.refineConfigurationBeforeEvaluate
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
@@ -147,11 +151,11 @@ fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
 
 class ReplForJupyterImpl(
     override val resolutionInfoProvider: ResolutionInfoProvider,
-    private val scriptClasspath: List<File> = emptyList(),
+    scriptClasspath: List<File> = emptyList(),
     override val homeDir: File? = null,
     override val resolverConfig: ResolverConfig? = null,
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
-    private val scriptReceivers: List<Any> = emptyList(),
+    implicitReceivers: List<Any> = emptyList(),
     override val isEmbedded: Boolean = false,
 ) : ReplForJupyter, ReplOptions, BaseKernelHost, KotlinKernelHostProvider {
 
@@ -169,6 +173,14 @@ class ReplForJupyterImpl(
             scriptReceivers,
             config.embedded
         )
+
+    private val scriptReceivers = HashMap<KType, Any>().apply {
+        for (receiver in implicitReceivers) {
+            putImplicitReceiver(receiver, receiver::class.starProjectedType)
+        }
+    }
+
+    private val scriptReceiversList get() = scriptReceivers.values.toList()
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
@@ -239,8 +251,9 @@ class ReplForJupyterImpl(
     private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
-            scriptReceivers,
+            { scriptReceivers.keys.map(::KotlinType) },
             compilerArgsConfigurator,
+            JupyterScriptClassGetter { jupyterCompiler.previousScriptsClasses.map(::KotlinType) },
             importsCollector = importsCollector
         ).with {
             refineConfiguration {
@@ -273,7 +286,6 @@ class ReplForJupyterImpl(
     }
 
     private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        implicitReceivers.invoke(v = scriptReceivers)
         if (!isEmbedded) {
             jvm {
                 val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) { fqn ->
@@ -284,12 +296,15 @@ class ReplForJupyterImpl(
                     ).any { fqn.startsWith(it) } ||
                         (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
                 }
-                val scriptClassloader =
-                    URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
-                baseClassLoader(scriptClassloader)
+                baseClassLoader(filteringClassLoader)
             }
         }
         constructorArgs(notebook, this@ReplForJupyterImpl)
+        refineConfigurationBeforeEvaluate { context ->
+            context.evaluationConfiguration.with {
+                this.implicitReceivers.invoke(v = scriptReceiversList)
+            }.asSuccess()
+        }
     }
 
     private val jupyterCompiler by lazy {
@@ -336,6 +351,7 @@ class ReplForJupyterImpl(
         notebook,
         beforeCellExecution,
         shutdownCodes,
+        scriptReceivers,
         internalEvaluator,
         this
     )

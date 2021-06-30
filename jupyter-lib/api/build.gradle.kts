@@ -47,6 +47,13 @@ tasks {
             events("passed", "skipped", "failed")
         }
     }
+
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            @Suppress("SuspiciousCollectionReassignment")
+            freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+        }
+    }
 }
 
 kotlinPublications {

@@ -17,11 +17,13 @@ import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.putImplicitReceiver
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import java.util.LinkedList
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
 
@@ -186,6 +188,14 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 it.declaration
             }
             execute(declarations)
+        }
+
+        override fun withReceiver(receiver: Any, type: KType) {
+            sharedContext.implicitReceivers.putImplicitReceiver(receiver, type)
+        }
+
+        override fun removeReceiver(type: KType) {
+            sharedContext.implicitReceivers.remove(type)
         }
 
         companion object {
