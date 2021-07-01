@@ -87,7 +87,7 @@ To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a ne
 The default kernel will use the JDK pointed to by the environment variable `KOTLIN_JUPYTER_JAVA_HOME`,
 or `JAVA_HOME` if the first is not set.
 
-JVM arguments will be set from the enviroment variable `KOTLIN_JUPYTER_JAVA_OPTS` or `JAVA_OPTS` if the first is not set.
+JVM arguments will be set from the environment variable `KOTLIN_JUPYTER_JAVA_OPTS` or `JAVA_OPTS` if the first is not set.
 Additionally, arguments from `KOTLIN_JUPYTER_JAVA_OPS_EXTRA` will be added.
 Arguments are parsed using [`shlex.split`](https://docs.python.org/3/library/shlex.html).
 
