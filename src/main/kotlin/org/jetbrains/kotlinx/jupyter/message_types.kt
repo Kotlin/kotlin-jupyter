@@ -6,6 +6,7 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -135,6 +136,15 @@ enum class KernelStatus {
 }
 
 object MessageTypeSerializer : KSerializer<MessageType> {
+    private val cache: MutableMap<String, MessageType> = hashMapOf()
+
+    private fun getMessageType(type: String): MessageType {
+        return cache.computeIfAbsent(type) { newType ->
+            MessageType.values().firstOrNull { it.type == newType }
+                ?: throw SerializationException("Unknown message type: $newType")
+        }
+    }
+
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
             MessageType::class.qualifiedName!!,
@@ -142,8 +152,7 @@ object MessageTypeSerializer : KSerializer<MessageType> {
         )
 
     override fun deserialize(decoder: Decoder): MessageType {
-        val type = decoder.decodeString()
-        return MessageType.values().first { it.type == type }
+        return getMessageType(decoder.decodeString())
     }
 
     override fun serialize(encoder: Encoder, value: MessageType) {
@@ -152,6 +161,15 @@ object MessageTypeSerializer : KSerializer<MessageType> {
 }
 
 object DetailsLevelSerializer : KSerializer<DetailLevel> {
+    private val cache: MutableMap<Int, DetailLevel> = hashMapOf()
+
+    private fun getDetailsLevel(type: Int): DetailLevel {
+        return cache.computeIfAbsent(type) { newLevel ->
+            DetailLevel.values().firstOrNull { it.level == newLevel }
+                ?: throw SerializationException("Unknown details level: $newLevel")
+        }
+    }
+
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
             DetailLevel::class.qualifiedName!!,
@@ -159,8 +177,7 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
         )
 
     override fun deserialize(decoder: Decoder): DetailLevel {
-        val level = decoder.decodeInt()
-        return DetailLevel.values().first { it.level == level }
+        return getDetailsLevel(decoder.decodeInt())
     }
 
     override fun serialize(encoder: Encoder, value: DetailLevel) {
