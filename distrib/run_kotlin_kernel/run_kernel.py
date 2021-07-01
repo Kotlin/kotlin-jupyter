@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import sys
 from typing import List
@@ -46,7 +47,18 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         else:
             java = os.path.join(java_home, "bin", "java")
 
-        subprocess.call([java, '-jar'] + debug_list +
+        jvm_arg_str = os.getenv("KOTLIN_JUPYTER_JAVA_OPTS") or os.getenv("JAVA_OPTS") or ""
+        extra_args = os.getenv("KOTLIN_JUPYTER_JAVA_OPS_EXTRA")
+        if extra_args is not None:
+            jvm_arg_str += " " + extra_args
+
+        kernel_args = os.getenv("KOTLIN_JUPYTER_KERNEL_EXTRA_JVM_OPTS")
+        if kernel_args is not None:
+            jvm_arg_str += " " + kernel_args
+
+        jvm_args = shlex.split(jvm_arg_str)
+
+        subprocess.call([java] + jvm_args + ['-jar'] + debug_list +
                         [main_jar_path,
                          '-classpath=' + class_path_arg,
                          connection_file,
