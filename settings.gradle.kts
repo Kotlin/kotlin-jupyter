@@ -13,6 +13,9 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
 
+        // Kotlin Dev releases are published here every night
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+
         class TeamcitySettings(
             val url: String,
             val projectId: String
