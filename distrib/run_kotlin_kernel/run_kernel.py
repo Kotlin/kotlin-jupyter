@@ -4,6 +4,7 @@ import shlex
 import subprocess
 import sys
 from typing import List
+from kotlin_kernel import constants
 
 
 def run_kernel(*args) -> None:
@@ -40,19 +41,19 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
-        java_home = os.getenv("KOTLIN_JUPYTER_JAVA_HOME") or os.getenv("JAVA_HOME")
+        java_home = os.getenv(constants.KERNEL_JAVA_HOME) or os.getenv(constants.JAVA_HOME)
 
         if java_home is None:
             java = "java"
         else:
             java = os.path.join(java_home, "bin", "java")
 
-        jvm_arg_str = os.getenv("KOTLIN_JUPYTER_JAVA_OPTS") or os.getenv("JAVA_OPTS") or ""
-        extra_args = os.getenv("KOTLIN_JUPYTER_JAVA_OPS_EXTRA")
+        jvm_arg_str = os.getenv(constants.KERNEL_JAVA_OPTS) or os.getenv(constants.JAVA_OPTS) or ""
+        extra_args = os.getenv(constants.KERNEL_EXTRA_JAVA_OPTS)
         if extra_args is not None:
             jvm_arg_str += " " + extra_args
 
-        kernel_args = os.getenv("KOTLIN_JUPYTER_KERNEL_EXTRA_JVM_OPTS")
+        kernel_args = os.getenv(constants.KERNEL_INTERNAL_ADDED_JAVA_OPTS)
         if kernel_args is not None:
             jvm_arg_str += " " + kernel_args
 

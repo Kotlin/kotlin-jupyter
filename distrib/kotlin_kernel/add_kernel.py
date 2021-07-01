@@ -6,19 +6,13 @@ import shutil
 import subprocess
 import sys
 
+from kotlin_kernel import constants
 from kotlin_kernel.install_user import get_user_jupyter_path
 from kotlin_kernel.install_user import install_base_kernel
 
-java_opts = "JAVA_OPTS"
-kernel_java_opts = "KOTLIN_JUPYTER_JAVA_OPTS"
-kernel_extra_java_opts = "KOTLIN_JUPYTER_JAVA_OPTS_EXTRA"
-kernel_added_java_opts = "KOTLIN_JUPYTER_KERNEL_EXTRA_JVM_OPTS"
-
-java_home = "JAVA_OPTS"
-kernel_java_home = "KOTLIN_JUPYTER_JAVA_HOME"
-
 
 def add_kernel():
+
     parser = argparse.ArgumentParser(
         prog="add-kernel",
         description="Add a kernel with specified JDK, JVM args, and environment",
@@ -51,7 +45,8 @@ def add_kernel():
     name = args.name
     env = {e[0]: e[1] for e in args.env}
 
-    for arg in [java_home, kernel_java_home, java_opts, kernel_extra_java_opts, kernel_added_java_opts]:
+    for arg in [constants.JAVA_HOME, constants.KERNEL_JAVA_HOME, constants.JAVA_OPTS,
+                constants.KERNEL_EXTRA_JAVA_OPTS, constants.KERNEL_INTERNAL_ADDED_JAVA_OPTS]:
         if arg in env:
             print(
                 "Specified environment variable " + arg + ", will be ignored.  "
@@ -59,12 +54,12 @@ def add_kernel():
             del env[arg]
 
     if args.set_jvm_args:
-        env[kernel_java_opts] = " ".join(args.jvm_arg)
+        env[constants.KERNEL_JAVA_OPTS] = " ".join(args.jvm_arg)
     else:
-        env[kernel_added_java_opts] = " ".join(args.jvm_arg)
+        env[constants.KERNEL_INTERNAL_ADDED_JAVA_OPTS] = " ".join(args.jvm_arg)
 
     if jdk is not None:
-        env[kernel_java_home] = jdk
+        env[constants.KERNEL_JAVA_HOME] = jdk
         if platform.system() == 'Windows':
             java = os.path.join(jdk, "bin/java.exe")
         else:
