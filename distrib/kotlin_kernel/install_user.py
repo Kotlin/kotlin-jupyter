@@ -18,7 +18,7 @@ def get_user_jupyter_path() -> str:
     else:
         raise OSError("Unknown platform: " + platform_name)
 
-    return os.path.expanduser(jupyter_path)
+    return os.path.abspath(os.path.expanduser(jupyter_path))
 
 
 def install_base_kernel(kernel_name: str):

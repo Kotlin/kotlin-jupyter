@@ -2,9 +2,9 @@ import argparse
 import json
 import os.path
 import platform
+import shutil
 import subprocess
 import sys
-import warnings
 
 from kotlin_kernel.install_user import get_user_jupyter_path
 from kotlin_kernel.install_user import install_base_kernel
@@ -19,37 +19,49 @@ kernel_java_home = "KOTLIN_JUPYTER_JAVA_HOME"
 
 
 def add_kernel():
-    parser = argparse.ArgumentParser(description="Add a kernel with specified JDK, JVM args, and environment")
-    parser.add_argument("name", nargs='?',
+    parser = argparse.ArgumentParser(
+        prog="add-kernel",
+        description="Add a kernel with specified JDK, JVM args, and environment",
+        fromfile_prefix_chars='@')
+    parser.add_argument("--name",
                         help="The kernel's sub-name.  The kernel will be named \"Kotlin ($name)\".  "
                              "Will be autodetected if JDK is specified, otherwise required.  "
                              "Must be file system compatible.")
     parser.add_argument("--jdk",
                         help="The home directory of the JDK to use")
-    parser.add_argument("--jvm_arg", action='append', default=[],
+    parser.add_argument("--jvm-arg", action='append', default=[],
                         help="Add a JVM argument")
     parser.add_argument("--env", action='append', nargs=2, default=[],
                         help="Add an environment variable")
-    parser.add_argument("--add_jvm_args", action="store_true", default=False,
-                        help="If present, adds JVM args instead of setting them.")
+    parser.add_argument("--set-jvm-args", action="store_true", default=False,
+                        help="Set JVM args instead of adding them.")
+    parser.add_argument("--force", action="store_true", default=False,
+                        help="Overwrite an existing kernel with the same name.")
+
+    if len(sys.argv) == 2:
+        parser.print_usage()
+        exit(0)
 
     args = parser.parse_args(sys.argv[2:])
 
     jdk = args.jdk
+    if jdk is not None:
+        jdk = os.path.abspath(os.path.expanduser(jdk))
+
     name = args.name
     env = {e[0]: e[1] for e in args.env}
 
     for arg in [java_home, kernel_java_home, java_opts, kernel_extra_java_opts, kernel_added_java_opts]:
         if arg in env:
-            warnings.warn(
+            print(
                 "Specified environment variable " + arg + ", will be ignored.  "
-                                                          "Use the corresponding arguments instead.")
+                                                          "Use the corresponding arguments instead.", file=sys.stderr)
             del env[arg]
 
-    if args.add_jvm_args:
-        env[kernel_added_java_opts] = " ".join(args.jvm_arg)
-    else:
+    if args.set_jvm_args:
         env[kernel_java_opts] = " ".join(args.jvm_arg)
+    else:
+        env[kernel_added_java_opts] = " ".join(args.jvm_arg)
 
     if jdk is not None:
         env[kernel_java_home] = jdk
@@ -74,9 +86,18 @@ def add_kernel():
 
     kernel_name = "kotlin_" + name.replace(" ", "_")
     kernel_location = os.path.join(get_user_jupyter_path(), "kernels", kernel_name)
+
+    print("Installing kernel to", kernel_location)
+
     if os.path.exists(kernel_location):
-        print("There is already a kernel with name " + kernel_name + ", specify a different name", file=sys.stderr)
-        exit(1)
+        if args.force:
+            print("Overwriting existing kernel at " + kernel_location, file=sys.stderr)
+            shutil.rmtree(kernel_location)
+        else:
+            print("There is already a kernel with name " + kernel_name + ", specify a different name "
+                                                                         "or use --force to overwrite it",
+                  file=sys.stderr)
+            exit(1)
 
     install_base_kernel(kernel_name)
 
