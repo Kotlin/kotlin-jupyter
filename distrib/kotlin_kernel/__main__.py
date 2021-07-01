@@ -8,3 +8,10 @@ if __name__ == "__main__":
         install_user()
     elif len(sys.argv) >= 2 and sys.argv[1] == "add-kernel":
         add_kernel()
+    else:
+        if len(sys.argv) < 2:
+            print("Must specify a command", file=sys.stderr)
+        else:
+            print("Unknown command " + sys.argv[1] + ", known commands are fix-kernelspec-location and add-kernel.",
+                  file=sys.stderr)
+        exit(1)
