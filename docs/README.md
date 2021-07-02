@@ -88,7 +88,7 @@ The default kernel will use the JDK pointed to by the environment variable `KOTL
 or `JAVA_HOME` if the first is not set.
 
 JVM arguments will be set from the environment variable `KOTLIN_JUPYTER_JAVA_OPTS` or `JAVA_OPTS` if the first is not set.
-Additionally, arguments from `KOTLIN_JUPYTER_JAVA_OPS_EXTRA` will be added.
+Additionally, arguments from `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA` will be added.
 Arguments are parsed using [`shlex.split`](https://docs.python.org/3/library/shlex.html).
 
 ### Creating Kernels
@@ -107,7 +107,7 @@ and the directory will be `kotlin_$name` with the spaces in `name` replaced by u
 
 JVM arguments are joined with a `' '`, so multiple JVM arguments in the same argument are supported.
 The arguments will be added to existing ones (see above section) unless `--set-jvm-args` is present, in which case they
-will be set to `KOTLIN_JUPYTER_JAVA_OPTS`.  Note that both adding and setting work fine alongside `KOTLIN_JUPYTER_JAVA_OPS_EXTRA`.
+will be set to `KOTLIN_JUPYTER_JAVA_OPTS`.  Note that both adding and setting work fine alongside `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA`.
 
 While jupyter kernel environment variable substitutions are supported in `env`, note that if the used environment 
 variable doesn't exist, nothing will be replaced.
