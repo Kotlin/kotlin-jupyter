@@ -19,6 +19,7 @@ import java.io.File
 import kotlin.script.experimental.api.SourceCode
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFalse
 import kotlin.test.fail
 
 class ReplTests : AbstractSingleReplTest() {
@@ -437,5 +438,51 @@ class ReplTests : AbstractSingleReplTest() {
         ).resultValue
 
         assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
+    }
+
+    @Test
+    fun testStateConsistency() {
+        assertTrue(repl.notebook.variablesMap.isEmpty())
+        val varsUpdate = mutableMapOf<String, String>(
+                "x" to "1", "y" to "0",
+                "z" to "47"
+        )
+        repl.notebook.updateVarsState(varsUpdate)
+        assertFalse(repl.notebook.variablesMap.isEmpty())
+        val varsState = repl.notebook.variablesMap
+        assertEquals("1", varsState["x"])
+        assertEquals("0", varsState["y"])
+        assertEquals("47", varsState["z"])
+
+        varsUpdate["z"] = "0"
+        repl.notebook.updateVarsState(varsUpdate)
+        assertEquals("0", varsState["z"])
+    }
+
+    @Test
+    fun testEmptyState() {
+        val res = eval("3+2")
+        val state = repl.notebook.variablesMap
+        assertTrue(state.isEmpty())
+        assertEquals(res.metadata.variablesMap, state)
+    }
+
+    @Test
+    fun testVarsCapture() {
+        val res = eval(
+        """
+            val x = 1 
+            val y = "abc"
+            val z = x
+        """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesMap
+        assertTrue(varsState.isNotEmpty())
+
+        val returnedState = res.metadata.variablesMap
+        assertEquals(varsState, returnedState)
+        assertEquals("1", varsState["x"])
+        assertEquals("abc", varsState["y"])
+        assertEquals("1", varsState["z"])
     }
 }

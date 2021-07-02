@@ -12,6 +12,7 @@ interface InternalEvaluator {
     val lastKClass: KClass<*>
     val lastClassLoader: ClassLoader
 
+    val variablesMap : MutableMap<String, String>
     /**
      * Executes code snippet
      * @throws IllegalStateException if this method was invoked recursively

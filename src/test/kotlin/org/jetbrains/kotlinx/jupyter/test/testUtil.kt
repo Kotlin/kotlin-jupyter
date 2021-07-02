@@ -147,6 +147,7 @@ object NotebookMock : Notebook {
 
     override val cellsList: Collection<CodeCell>
         get() = emptyList()
+    override val variablesMap = mutableMapOf<String, String>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(

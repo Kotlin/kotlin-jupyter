@@ -2,7 +2,8 @@ package org.jetbrains.kotlinx.jupyter.common
 
 enum class ReplCommand(val desc: String) {
     HELP("display help"),
-    CLASSPATH("show current classpath");
+    CLASSPATH("show current classpath"),
+    GETVARS("get visible variables values");
 
     val nameForUser = getNameForUser(name)
 

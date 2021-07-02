@@ -44,6 +44,8 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val lastClassLoader: ClassLoader = ClassLoader.getSystemClassLoader()
     override val executedCodes = mutableListOf<Code>()
 
+    override val variablesMap = mutableMapOf<String, String>()
+
     override val results: List<Any?>
         get() = executedCodes.map { null }
 

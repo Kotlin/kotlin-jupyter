@@ -12,6 +12,8 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
@@ -57,6 +59,8 @@ internal class InternalEvaluatorImpl(
 
     override val lastClassLoader get() = compiler.lastClassLoader
 
+    override val variablesMap = mutableMapOf<String, String>()
+
     private var isExecuting = false
 
     override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
@@ -92,8 +96,12 @@ internal class InternalEvaluatorImpl(
                             resultValue.error.message.orEmpty(),
                             resultValue.error
                         )
+                        //todo: unifying refactor
                         is ResultValue.Unit -> {
                             serializeAndRegisterScript(compiledScript)
+                            updateVariablesMap(resultValue)
+                            traverseSeenVarsNaive()
+
                             InternalEvalResult(
                                 FieldValue(Unit, null),
                                 resultValue.scriptInstance!!
@@ -101,8 +109,11 @@ internal class InternalEvaluatorImpl(
                         }
                         is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
+                            updateVariablesMap(resultValue)
+                            traverseSeenVarsNaive()
+
                             InternalEvalResult(
-                                FieldValue(resultValue.value, pureResult.compiledSnippet.resultField?.first), // TODO: replace with resultValue.name
+                                FieldValue(resultValue.value, resultValue.name),
                                 resultValue.scriptInstance!!
                             )
                         }
@@ -123,5 +134,52 @@ internal class InternalEvaluatorImpl(
         } finally {
             isExecuting = false
         }
+    }
+
+    // should it be 1-way pass?
+    private fun updateVariablesMap(target: ResultValue, seenVars: MutableSet<String>? = null) {
+        getVisibleVariables(target).forEach {
+            if (variablesMap.containsKey(it.key)) {
+                if (seenVars != null) {
+                    if (seenVars.contains(it.key)) {
+                        return
+                    }
+                }
+                variablesMap.replace(it.key, it.value)
+            } else {
+                variablesMap[it.key] = it.value
+                seenVars?.add(it.key)
+            }
+        }
+    }
+
+    fun getVisibleVariables(target: ResultValue) : Map<String, String> {
+        val klass = target.scriptClass ?: return emptyMap()
+        val klassInstance = target.scriptInstance!!
+
+        val fields = klass.declaredMemberProperties
+        val ans = mutableMapOf<String, String>()
+        fields.forEach {
+            val casted = it as KProperty1<Any, *>
+            ans[casted.name] = if (casted.get(klassInstance) == null) {
+                "null"
+            } else {
+                casted.get(klassInstance).toString()
+            }
+        }
+        return ans
+    }
+
+    // this is the O(n) implementation
+    // todo: tree-structure?
+    private fun traverseSeenVarsNaive() {
+        var lastSnipped = evaluator.lastEvaluatedSnippet?.previous ?: return
+        val seenVars = mutableSetOf<String>()
+        do {
+            val target = lastSnipped.get().result
+            updateVariablesMap(target, seenVars)
+            lastSnipped = lastSnipped.previous ?: break
+        }
+        while (true)
     }
 }

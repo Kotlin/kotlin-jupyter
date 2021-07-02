@@ -1,15 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlinx.jupyter.api.CodeCell
-import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
-import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
-import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
-import java.lang.IllegalStateException
+import org.jetbrains.kotlinx.jupyter.api.*
 
 class DisplayResultWrapper private constructor(
     val display: DisplayResult,
@@ -104,6 +96,8 @@ class NotebookImpl(
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
 
+    override val variablesMap = mutableMapOf<String, String>()
+
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"
@@ -131,6 +125,19 @@ class NotebookImpl(
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+
+    fun updateVarsState(varsMap: Map<String, String>) {
+        variablesMap += varsMap
+    }
+
+    fun varsAsString() : String {
+        if (variablesMap.isEmpty()) return ""
+        val stringBuilder = StringBuilder("Visible vars: \n")
+        variablesMap.forEach { (t, u) ->
+            stringBuilder.append("\t$t : $u\n")
+        }
+        return stringBuilder.append('\n').toString()
+    }
 
     fun addCell(
         internalId: Int,

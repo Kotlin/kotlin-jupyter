@@ -1,24 +1,10 @@
 package org.jetbrains.kotlinx.jupyter
 
-import jupyter.kotlin.CompilerArgs
-import jupyter.kotlin.DependsOn
-import jupyter.kotlin.KotlinContext
-import jupyter.kotlin.KotlinKernelHostProvider
-import jupyter.kotlin.Repository
+import jupyter.kotlin.*
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.codegen.*
+import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -34,41 +20,16 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHand
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.libraries.*
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
-import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
-import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
-import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
-import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
-import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
-import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
-import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
-import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
-import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
-import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
-import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.*
+import org.jetbrains.kotlinx.jupyter.repl.impl.*
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.constructorArgs
-import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.fileExtension
-import kotlin.script.experimental.api.implicitReceivers
-import kotlin.script.experimental.api.refineConfiguration
-import kotlin.script.experimental.api.with
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
@@ -360,6 +321,12 @@ class ReplForJupyterImpl(
         else context.compilationConfiguration.asSuccess()
     }
 
+    /**
+     * Used for debug purposes.
+     * @see ReplCommand
+     */
+    private fun printVars() = log.debug(notebook.varsAsString())
+
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
@@ -370,6 +337,7 @@ class ReplForJupyterImpl(
 
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
+            val varsMap : Map<String, String>
             val result = try {
                 executor.execute(code, displayHandler) { internalId, codeToExecute ->
                     cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
@@ -377,6 +345,7 @@ class ReplForJupyterImpl(
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
+                varsMap = internalEvaluator.variablesMap
             }
 
             cell?.resultVal = result.result.value
@@ -395,7 +364,10 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports))
+            notebook.updateVarsState(varsMap)
+            printVars()
+
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, varsMap))
         }
     }
 
