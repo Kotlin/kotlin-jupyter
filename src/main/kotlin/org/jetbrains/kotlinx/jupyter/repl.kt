@@ -17,8 +17,9 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -360,6 +361,27 @@ class ReplForJupyterImpl(
         else context.compilationConfiguration.asSuccess()
     }
 
+    /**
+     * Used for debug purposes.
+     * @see ReplCommand
+     */
+    private fun printVariables(isHtmlFormat: Boolean = false) = log.debug(
+        if (isHtmlFormat) notebook.variablesReportAsHTML() else notebook.variablesReport()
+    )
+
+    private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>?) {
+        log.debug(buildString {
+            if (usedVariables == null || usedVariables.isEmpty()) {
+                append("No usages for cell $cellId")
+                return@buildString
+            }
+            append("Usages for cell $cellId:\n")
+            usedVariables.forEach {
+                append(it + "\n")
+            }
+        })
+    }
+
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
@@ -371,14 +393,14 @@ class ReplForJupyterImpl(
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
             val result = try {
-                executor.execute(code, displayHandler) { internalId, codeToExecute ->
+                log.debug("Current cell id: $jupyterId")
+                executor.execute(code, displayHandler, currentCellId = jupyterId - 1) { internalId, codeToExecute ->
                     cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
                 }
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
             }
-
             cell?.resultVal = result.result.value
 
             val rendered = result.result.let {
@@ -395,7 +417,13 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports))
+            notebook.updateVariablesState(internalEvaluator)
+            // printVars()
+            // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
+
+
+            val variablesStateUpdate = notebook.variablesState.mapValues { it.value.stringValue }
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate))
         }
     }
 

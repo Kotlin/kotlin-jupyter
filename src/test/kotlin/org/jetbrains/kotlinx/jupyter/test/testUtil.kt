@@ -13,6 +13,8 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -102,6 +104,14 @@ fun CompletionResult.getOrFail(): CompletionResult.Success = when (this) {
     else -> fail("Result should be success")
 }
 
+fun Map<String, VariableState>.getStringValue(variableName: String): String? {
+    return get(variableName)?.stringValue
+}
+
+fun Map<String, VariableState>.getValue(variableName: String): Any? {
+    return get(variableName)?.value
+}
+
 class InMemoryLibraryResolver(
     parent: LibraryResolver?,
     initialDescriptorsCache: Map<LibraryReference, LibraryDescriptor>? = null,
@@ -147,6 +157,8 @@ object NotebookMock : Notebook {
 
     override val cellsList: Collection<CodeCell>
         get() = emptyList()
+    override val variablesState = mutableMapOf<String, VariableStateImpl>()
+    override val cellVariables = mapOf<Int, Set<String>>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(

@@ -2,8 +2,11 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
@@ -12,6 +15,9 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
@@ -57,9 +63,16 @@ internal class InternalEvaluatorImpl(
 
     override val lastClassLoader get() = compiler.lastClassLoader
 
+    override val variablesHolder = mutableMapOf<String, VariableState>()
+
+    override val cellVariables: Map<Int, Set<String>>
+        get() = variablesWatcher.cellVariables
+
+    private val variablesWatcher: VariablesUsagesPerCellWatcher<Int, String> = VariablesUsagesPerCellWatcher()
+
     private var isExecuting = false
 
-    override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         try {
             if (isExecuting) {
                 error("Recursive execution is not supported")
@@ -92,19 +105,22 @@ internal class InternalEvaluatorImpl(
                             resultValue.error.message.orEmpty(),
                             resultValue.error
                         )
-                        is ResultValue.Unit -> {
+                        is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
-                            InternalEvalResult(
-                                FieldValue(Unit, null),
-                                resultValue.scriptInstance!!
-                            )
-                        }
-                        is ResultValue.Value -> {
-                            serializeAndRegisterScript(compiledScript)
-                            InternalEvalResult(
-                                FieldValue(resultValue.value, pureResult.compiledSnippet.resultField?.first), // TODO: replace with resultValue.name
-                                resultValue.scriptInstance!!
-                            )
+                            updateDataAfterExecution(cellId, resultValue)
+
+                            if (resultValue is ResultValue.Unit) {
+                                InternalEvalResult(
+                                    FieldValue(Unit, null),
+                                    resultValue.scriptInstance!!
+                                )
+                            } else {
+                                resultValue as ResultValue.Value
+                                InternalEvalResult(
+                                    FieldValue(resultValue.value, resultValue.name),
+                                    resultValue.scriptInstance!!
+                                )
+                            }
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
@@ -123,5 +139,50 @@ internal class InternalEvaluatorImpl(
         } finally {
             isExecuting = false
         }
+    }
+
+    private fun updateVariablesState(cellId: Int) {
+        variablesWatcher.removeOldUsages(cellId)
+
+        variablesHolder.forEach {
+            val state = it.value as VariableStateImpl
+            val oldValue = state.stringValue
+            state.update()
+
+            if (state.stringValue != oldValue) {
+                variablesWatcher.addUsage(cellId, it.key)
+            }
+        }
+    }
+
+    private fun getVisibleVariables(target: ResultValue, cellId: Int): Map<String, VariableStateImpl> {
+        val kClass = target.scriptClass ?: return emptyMap()
+        val cellClassInstance = target.scriptInstance!!
+
+        val fields = kClass.declaredMemberProperties
+        val ans = mutableMapOf<String, VariableStateImpl>()
+        fields.forEach { property ->
+            property as KProperty1<Any, *>
+            val state = VariableStateImpl(property, cellClassInstance)
+            variablesWatcher.addDeclaration(cellId, property.name)
+
+            // it was val, now it's var
+            if (property is KMutableProperty1) {
+                variablesHolder.remove(property.name)
+            } else {
+                variablesHolder[property.name] = state
+                return@forEach
+            }
+
+            ans[property.name] = state
+        }
+        return ans
+    }
+
+    private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
+        variablesWatcher.ensureStorageCreation(lastExecutionCellId)
+        variablesHolder += getVisibleVariables(resultValue, lastExecutionCellId)
+
+        updateVariablesState(lastExecutionCellId)
     }
 }

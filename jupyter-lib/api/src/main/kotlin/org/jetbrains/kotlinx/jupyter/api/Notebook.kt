@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import kotlin.jvm.Throws
-
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
  */
@@ -10,6 +8,19 @@ interface Notebook {
      * All executed cells of this notebook
      */
     val cellsList: Collection<CodeCell>
+
+    /**
+     * Current state of visible variables
+     */
+    val variablesState: Map<String, VariableState>
+
+    /**
+     * Stores info about useful variables in a cell.
+     * Key: cellId;
+     * Value: set of variable names.
+     * Useful <==> declarations + modifying references
+     */
+    val cellVariables: Map<Int, Set<String>>
 
     /**
      * Mapping allowing to get cell by execution number

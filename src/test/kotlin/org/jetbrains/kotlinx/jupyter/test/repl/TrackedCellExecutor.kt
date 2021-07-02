@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
@@ -44,10 +45,13 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val lastClassLoader: ClassLoader = ClassLoader.getSystemClassLoader()
     override val executedCodes = mutableListOf<Code>()
 
+    override val variablesHolder = mutableMapOf<String, VariableState>()
+    override val cellVariables = mutableMapOf<Int, MutableSet<String>>()
+
     override val results: List<Any?>
         get() = executedCodes.map { null }
 
-    override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         return InternalEvalResult(FieldValue(null, null), Unit)
     }
@@ -59,9 +63,9 @@ internal class TrackedInternalEvaluatorImpl(private val baseEvaluator: InternalE
 
     override val results = mutableListOf<Any?>()
 
-    override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
-        val res = baseEvaluator.eval(code, onInternalIdGenerated)
+        val res = baseEvaluator.eval(code, onInternalIdGenerated = onInternalIdGenerated)
         results.add(res.result.value)
         return res
     }

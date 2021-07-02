@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.EvalResult
+import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
+import org.jetbrains.kotlinx.jupyter.varsTableStyleClass
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -40,5 +42,57 @@ class ApiTest : AbstractSingleReplTest() {
         )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
+    }
+
+    @Test
+    fun testVarsReportFormat() {
+        val res = eval(
+            """
+            val x = 1
+            val y = "abc"
+            val z = 47
+            """.trimIndent()
+        )
+
+        val varsUpdate = mutableMapOf<String, String>(
+            "x" to "1",
+            "y" to "abc",
+            "z" to "47"
+        )
+        assertEquals(res.metadata.evaluatedVariablesState, varsUpdate)
+        val htmlText = generateHTMLVarsReport(repl.notebook.variablesState)
+        assertEquals(
+            """
+            <style>
+            table.$varsTableStyleClass, .$varsTableStyleClass th, .$varsTableStyleClass td {
+              border: 1px solid black;
+              border-collapse: collapse;
+              text-align:center;
+            }
+            .$varsTableStyleClass th, .$varsTableStyleClass td {
+              padding: 5px;
+            }
+            </style>
+            <h2 style="text-align:center;">Variables State</h2>
+            <table class="$varsTableStyleClass" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
+              <tr>
+                <th>Variable</th>
+                <th>Value</th>
+              </tr>
+            <tr>
+                <td>x</td>
+                <td>1</td>
+            </tr><tr>
+                <td>y</td>
+                <td>abc</td>
+            </tr><tr>
+                <td>z</td>
+                <td>47</td>
+            </tr>
+            </table>
+            
+            """.trimIndent(),
+            htmlText
+        )
     }
 }

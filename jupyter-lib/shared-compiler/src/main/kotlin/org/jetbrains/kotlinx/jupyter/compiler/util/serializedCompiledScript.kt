@@ -25,6 +25,7 @@ class EvaluatedSnippetMetadata(
     val newClasspath: Classpath = emptyList(),
     val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,
     val newImports: List<String> = emptyList(),
+    val evaluatedVariablesState: Map<String, String?> = mutableMapOf()
 ) {
     companion object {
         val EMPTY = EvaluatedSnippetMetadata()
