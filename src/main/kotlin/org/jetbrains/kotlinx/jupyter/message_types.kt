@@ -81,6 +81,10 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     COMM_INFO_REQUEST(CommInfoRequest::class),
     COMM_INFO_REPLY(CommInfoReply::class),
 
+    COMM_OPEN(CommOpen::class),
+    COMM_MSG(CommMsg::class),
+    COMM_CLOSE(CommClose::class),
+
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
     LIST_ERRORS_REPLY(ListErrorsReply::class);
 
@@ -529,6 +533,29 @@ class Comm(
 @Serializable
 class CommInfoReply(
     val comms: Map<String, Comm>
+) : MessageContent()
+
+@Serializable
+class CommOpen(
+    @SerialName("comm_id")
+    val commId: String,
+    @SerialName("target_name")
+    val targetName: String,
+    val data: JsonObject? = null
+) : MessageContent()
+
+@Serializable
+class CommMsg(
+    @SerialName("comm_id")
+    val commId: String,
+    val data: JsonObject? = null
+) : MessageContent()
+
+@Serializable
+class CommClose(
+    @SerialName("comm_id")
+    val commId: String,
+    val data: JsonObject? = null
 ) : MessageContent()
 
 @Serializable
