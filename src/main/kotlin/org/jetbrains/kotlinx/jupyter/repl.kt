@@ -313,6 +313,7 @@ class ReplForJupyterImpl(
 
     private val renderersProcessor: ResultsRenderersProcessor = run {
         val processor = RenderersProcessorImpl(contextUpdater)
+        processor.registerDefaultRenderers()
         notebook.typeRenderersProcessor = processor
         processor
     }

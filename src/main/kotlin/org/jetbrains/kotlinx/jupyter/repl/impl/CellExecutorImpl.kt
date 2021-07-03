@@ -134,7 +134,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
                 library.resources.forEach {
                     val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
-                    displayHandler?.handleDisplay(HTML(htmlText))
+                    displayHandler?.handleDisplay(HTML(htmlText), this)
                 }
             }
 
@@ -145,11 +145,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false).result
 
         override fun display(value: Any) {
-            displayHandler?.handleDisplay(value)
+            displayHandler?.handleDisplay(value, this)
         }
 
         override fun updateDisplay(value: Any, id: String?) {
-            displayHandler?.handleUpdate(value, id)
+            displayHandler?.handleUpdate(value, this, id)
         }
 
         override fun scheduleExecution(execution: ExecutionCallback<*>) {

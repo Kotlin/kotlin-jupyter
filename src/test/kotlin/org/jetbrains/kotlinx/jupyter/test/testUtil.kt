@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
@@ -132,11 +133,11 @@ class InMemoryLibraryResolver(
 }
 
 class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
-    override fun handleDisplay(value: Any) {
+    override fun handleDisplay(value: Any, host: ExecutionHost) {
         list.add(value)
     }
 
-    override fun handleUpdate(value: Any, id: String?) {
+    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
         // TODO: Implement correct updating
     }
 }

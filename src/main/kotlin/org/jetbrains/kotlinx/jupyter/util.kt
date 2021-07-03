@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
@@ -61,4 +63,8 @@ fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCod
     }
 
     return SourceCode.Position(pos.line, abs - absLineStart + 1, abs)
+}
+
+fun ResultsRenderersProcessor.registerDefaultRenderers() {
+    register(bufferedImageRenderer)
 }

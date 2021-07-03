@@ -13,9 +13,9 @@ import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import org.jetbrains.kotlinx.jupyter.api.MutableJsonObject
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
@@ -104,8 +104,8 @@ class OkResponseWithMessage(
 }
 
 interface DisplayHandler {
-    fun handleDisplay(value: Any)
-    fun handleUpdate(value: Any, id: String? = null)
+    fun handleDisplay(value: Any, host: ExecutionHost)
+    fun handleUpdate(value: Any, host: ExecutionHost, id: String? = null)
 }
 
 class SocketDisplayHandler(
@@ -113,8 +113,13 @@ class SocketDisplayHandler(
     private val notebook: NotebookImpl,
     private val message: Message,
 ) : DisplayHandler {
-    override fun handleDisplay(value: Any) {
-        val display = value.toDisplayResult(notebook) ?: return
+    private fun render(host: ExecutionHost, value: Any): DisplayResult? {
+        val renderedValue = notebook.renderersProcessor.renderValue(host, value)
+        return renderedValue.toDisplayResult(notebook)
+    }
+
+    override fun handleDisplay(value: Any, host: ExecutionHost) {
+        val display = render(host, value) ?: return
         val json = display.toJson()
 
         notebook.currentCell?.addDisplay(display)
@@ -132,9 +137,9 @@ class SocketDisplayHandler(
         )
     }
 
-    override fun handleUpdate(value: Any, id: String?) {
-        val display = value.toDisplayResult(notebook) ?: return
-        val json: MutableJsonObject = display.toJson().toMutableMap()
+    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+        val display = render(host, value) ?: return
+        val json = display.toJson().toMutableMap()
 
         notebook.currentCell?.displays?.update(id, display)
 
