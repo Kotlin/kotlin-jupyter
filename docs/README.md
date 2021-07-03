@@ -244,7 +244,7 @@ Other options are resolving library descriptor from a local file or from remote 
 By default, the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
  to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function: 
 ```kotlin
-fun MIME(vararg mimeToData: Pair<String, Any>): MimeTypedResult 
+fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult 
 ```
 E.g.:
 ```kotlin
