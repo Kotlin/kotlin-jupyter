@@ -84,6 +84,39 @@ Don't forget to re-run this script on the kernel update.
 
 To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
 
+The default kernel will use the JDK pointed to by the environment variable `KOTLIN_JUPYTER_JAVA_HOME`,
+or `JAVA_HOME` if the first is not set.
+
+JVM arguments will be set from the environment variable `KOTLIN_JUPYTER_JAVA_OPTS` or `JAVA_OPTS` if the first is not set.
+Additionally, arguments from `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA` will be added.
+Arguments are parsed using [`shlex.split`](https://docs.python.org/3/library/shlex.html).
+
+### Creating Kernels
+
+To create a kernel for a specific JDK, JVM arguments, and environment variables, you can use the `add-kernel` script:
+```bash
+python -m kotlin_kernel add-kernel [--name name] [--jdk jdk_home_dir] [--set-jvm-args] [--jvm-arg arg]* [--env KEY VALUE]* [--force]
+```
+The command uses `argparse`, so `--help`, `@argfile` (you will need to escape the `@` in powershell), and `--opt=value` are all supported.  `--jvm-arg=arg` in particular
+is needed when passing JVM arguments that start with `-`.
+
+If `jdk` not specified, `name` is required.  If `name` is not specified but `jdk` is the name will be 
+`JDK $vendor $version` detected from the JDK.  Regardless, the actual name of the kernel will be `Kotlin ($name)`, 
+and the directory will be `kotlin_$name` with the spaces in `name` replaced by underscores 
+(so make sure it's compatible with your file system).
+
+JVM arguments are joined with a `' '`, so multiple JVM arguments in the same argument are supported.
+The arguments will be added to existing ones (see above section) unless `--set-jvm-args` is present, in which case they
+will be set to `KOTLIN_JUPYTER_JAVA_OPTS`.  Note that both adding and setting work fine alongside `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA`.
+
+While jupyter kernel environment variable substitutions are supported in `env`, note that if the used environment 
+variable doesn't exist, nothing will be replaced.
+
+An example:
+```bash
+python -m kotlin_kernel add-kernel --name "JDK 15 Big 2 GPU" --jdk ~/.jdks/openjdk-15.0.2 --jvm-arg=-Xmx8G --env CUDA_VISIBLE_DEVICES 0,1
+```
+
 ## Supported functionality
 
 ### REPL commands
