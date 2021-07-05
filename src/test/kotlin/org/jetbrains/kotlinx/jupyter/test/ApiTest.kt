@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.EvalResult
+import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
@@ -40,5 +41,58 @@ class ApiTest : AbstractSingleReplTest() {
         )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
+    }
+
+    @Test
+    fun testVarsReportFormat() {
+        val res = eval("""
+            val x = 1
+            val y = "abc"
+            val z = 47
+        """.trimIndent())
+
+        val varsUpdate = mutableMapOf<String, String>(
+                "x" to "1", "y" to "abc",
+                "z" to "47"
+        )
+        assertEquals(res.metadata.variablesMap, varsUpdate)
+        val htmlText = generateHTMLVarsReport(repl.notebook.variablesMap)
+        assertEquals(
+                """
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+              text-align:center;
+            }
+            th, td {
+              padding: 5px;
+            }
+            </style>
+            </head>
+            <body>
+            <h2 style="text-align:center">Variables State</h2>
+            <table style="width:80%" align="center">
+              <tr>
+                <th>Variable</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>x</td>
+                <td>1</td>
+            </tr><tr>
+                <td>y</td>
+                <td>abc</td>
+            </tr><tr>
+                <td>z</td>
+                <td>47</td>
+            </tr>
+            </table>
+            </body>
+            </html>
+        """.trimIndent(), htmlText)
     }
 }

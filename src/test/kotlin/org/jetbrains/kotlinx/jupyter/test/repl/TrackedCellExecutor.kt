@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
@@ -44,7 +45,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val lastClassLoader: ClassLoader = ClassLoader.getSystemClassLoader()
     override val executedCodes = mutableListOf<Code>()
 
-    override val variablesMap = mutableMapOf<String, String>()
+    override val variablesMap = mutableMapOf<String, VariableState>()
 
     override val results: List<Any?>
         get() = executedCodes.map { null }

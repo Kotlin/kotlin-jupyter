@@ -325,7 +325,9 @@ class ReplForJupyterImpl(
      * Used for debug purposes.
      * @see ReplCommand
      */
-    private fun printVars() = log.debug(notebook.varsAsString())
+    private fun printVars(isHtmlFormat: Boolean = false) = log.debug(
+            if (isHtmlFormat) notebook.varsAsHtmlTable() else notebook.varsAsString()
+    )
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         return withEvalContext {
@@ -337,7 +339,7 @@ class ReplForJupyterImpl(
 
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
-            val varsMap : Map<String, String>
+            val varsMap : Map<String, VariableState>
             val result = try {
                 executor.execute(code, displayHandler) { internalId, codeToExecute ->
                     cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
@@ -367,7 +369,15 @@ class ReplForJupyterImpl(
             notebook.updateVarsState(varsMap)
             printVars()
 
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, varsMap))
+            //todo: perhaps redundant
+            // would send serializable version
+            val mapToSend = mutableMapOf<String, String>()
+            varsMap.forEach {
+                val value = it.value.stringValue
+                mapToSend[it.key] = value
+            }
+
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, mapToSend))
         }
     }
 

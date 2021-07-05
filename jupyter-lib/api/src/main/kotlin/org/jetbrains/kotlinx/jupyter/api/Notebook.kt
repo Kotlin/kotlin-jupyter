@@ -12,7 +12,7 @@ interface Notebook {
     /**
      * Current state of visible variables
      */
-    val variablesMap: MutableMap<String, String>
+    val variablesMap: MutableMap<String, VariableState>
 
     /**
      * Mapping allowing to get cell by execution number

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import kotlin.reflect.KClass
 
@@ -12,7 +13,7 @@ interface InternalEvaluator {
     val lastKClass: KClass<*>
     val lastClassLoader: ClassLoader
 
-    val variablesMap : MutableMap<String, String>
+    val variablesMap : MutableMap<String, VariableState>
     /**
      * Executes code snippet
      * @throws IllegalStateException if this method was invoked recursively

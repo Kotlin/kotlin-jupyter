@@ -96,7 +96,7 @@ class NotebookImpl(
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
 
-    override val variablesMap = mutableMapOf<String, String>()
+    override val variablesMap = mutableMapOf<String, VariableState>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
@@ -126,15 +126,19 @@ class NotebookImpl(
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
-    fun updateVarsState(varsMap: Map<String, String>) {
+    fun updateVarsState(varsMap: Map<String, VariableState>) {
         variablesMap += varsMap
+    }
+
+    fun varsAsHtmlTable() : String {
+        return generateHTMLVarsReport(variablesMap)
     }
 
     fun varsAsString() : String {
         if (variablesMap.isEmpty()) return ""
         val stringBuilder = StringBuilder("Visible vars: \n")
         variablesMap.forEach { (t, u) ->
-            stringBuilder.append("\t$t : $u\n")
+            stringBuilder.append("\t$t : ${u.stringValue}\n")
         }
         return stringBuilder.append('\n').toString()
     }

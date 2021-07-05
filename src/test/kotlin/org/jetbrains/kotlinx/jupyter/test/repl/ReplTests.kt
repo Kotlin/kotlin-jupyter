@@ -443,28 +443,38 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testStateConsistency() {
         assertTrue(repl.notebook.variablesMap.isEmpty())
+        val res = eval ("""
+            val x = 1 
+            val y = 0
+            val z = 47
+        """.trimIndent())
+
         val varsUpdate = mutableMapOf<String, String>(
                 "x" to "1", "y" to "0",
                 "z" to "47"
         )
-        repl.notebook.updateVarsState(varsUpdate)
+        assertEquals(res.metadata.variablesMap, varsUpdate)
         assertFalse(repl.notebook.variablesMap.isEmpty())
         val varsState = repl.notebook.variablesMap
-        assertEquals("1", varsState["x"])
-        assertEquals("0", varsState["y"])
-        assertEquals("47", varsState["z"])
+        assertEquals("1", varsState["x"]!!.stringValue)
+        assertEquals("0", varsState["y"]!!.stringValue)
+        assertEquals("47", varsState["z"]!!.stringValue)
 
-        varsUpdate["z"] = "0"
-        repl.notebook.updateVarsState(varsUpdate)
-        assertEquals("0", varsState["z"])
+        varsState["z"]!!.stringValue = "0"
+        repl.notebook.updateVarsState(varsState)
+        assertEquals("0", varsState["z"]!!.stringValue)
     }
 
     @Test
     fun testEmptyState() {
         val res = eval("3+2")
         val state = repl.notebook.variablesMap
+        val strState = mutableMapOf<String, String>()
+        state.forEach {
+            strState[it.key] = it.value.stringValue
+        }
         assertTrue(state.isEmpty())
-        assertEquals(res.metadata.variablesMap, state)
+        assertEquals(res.metadata.variablesMap, strState)
     }
 
     @Test
@@ -478,11 +488,15 @@ class ReplTests : AbstractSingleReplTest() {
         )
         val varsState = repl.notebook.variablesMap
         assertTrue(varsState.isNotEmpty())
+        val strState = mutableMapOf<String, String>()
+        varsState.forEach {
+            strState[it.key] = it.value.stringValue
+        }
 
         val returnedState = res.metadata.variablesMap
-        assertEquals(varsState, returnedState)
-        assertEquals("1", varsState["x"])
-        assertEquals("abc", varsState["y"])
-        assertEquals("1", varsState["z"])
+        assertEquals(strState, returnedState)
+        assertEquals("1", varsState["x"]!!.stringValue)
+        assertEquals("abc", varsState["y"]!!.stringValue)
+        assertEquals("1", varsState["z"]!!.stringValue)
     }
 }

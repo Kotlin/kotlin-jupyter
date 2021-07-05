@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
@@ -59,7 +60,9 @@ internal class InternalEvaluatorImpl(
 
     override val lastClassLoader get() = compiler.lastClassLoader
 
-    override val variablesMap = mutableMapOf<String, String>()
+    override val variablesMap = mutableMapOf<String, VariableState>()
+
+    val variablesMap_ = mutableMapOf<String, String>()
 
     private var isExecuting = false
 
@@ -96,26 +99,25 @@ internal class InternalEvaluatorImpl(
                             resultValue.error.message.orEmpty(),
                             resultValue.error
                         )
-                        //todo: unifying refactor
-                        is ResultValue.Unit -> {
+                        is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
-                            updateVariablesMap(resultValue)
-                            traverseSeenVarsNaive()
 
-                            InternalEvalResult(
-                                FieldValue(Unit, null),
-                                resultValue.scriptInstance!!
-                            )
-                        }
-                        is ResultValue.Value -> {
-                            serializeAndRegisterScript(compiledScript)
-                            updateVariablesMap(resultValue)
-                            traverseSeenVarsNaive()
+                            variablesMap += getVisibleVariables(resultValue)
+                            updateVariablesState()
 
-                            InternalEvalResult(
-                                FieldValue(resultValue.value, resultValue.name),
-                                resultValue.scriptInstance!!
-                            )
+                            if (resultValue is ResultValue.Unit) {
+                                InternalEvalResult(
+                                        FieldValue(Unit, null),
+                                        resultValue.scriptInstance!!
+                                )
+                            }
+                            else {
+                                resultValue as ResultValue.Value
+                                InternalEvalResult(
+                                        FieldValue(resultValue.value, resultValue.name),
+                                        resultValue.scriptInstance!!
+                                )
+                            }
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
@@ -136,42 +138,55 @@ internal class InternalEvaluatorImpl(
         }
     }
 
+    private fun updateVariablesState() {
+        variablesMap.forEach {
+            val state = it.value
+            val property = state.propertyKlass
+            val newValue = property.get(state.scriptInstance) ?: return@forEach
+
+            if (state.stringValue != newValue) {
+                state.stringValue = newValue.toString()
+            }
+        }
+    }
+
     // should it be 1-way pass?
     private fun updateVariablesMap(target: ResultValue, seenVars: MutableSet<String>? = null) {
         getVisibleVariables(target).forEach {
-            if (variablesMap.containsKey(it.key)) {
+            if (variablesMap_.containsKey(it.key)) {
                 if (seenVars != null) {
                     if (seenVars.contains(it.key)) {
                         return
                     }
                 }
-                variablesMap.replace(it.key, it.value)
+                variablesMap_.replace(it.key, it.value.stringValue)
             } else {
-                variablesMap[it.key] = it.value
+                variablesMap_[it.key] = it.value.stringValue
                 seenVars?.add(it.key)
             }
         }
     }
 
-    fun getVisibleVariables(target: ResultValue) : Map<String, String> {
+    private fun getVisibleVariables(target: ResultValue) : Map<String, VariableState> {
         val klass = target.scriptClass ?: return emptyMap()
-        val klassInstance = target.scriptInstance!!
+        val cellKlassInstance = target.scriptInstance!!
 
         val fields = klass.declaredMemberProperties
-        val ans = mutableMapOf<String, String>()
+        val ans = mutableMapOf<String, VariableState>()
         fields.forEach {
             val casted = it as KProperty1<Any, *>
-            ans[casted.name] = if (casted.get(klassInstance) == null) {
-                "null"
+            ans[casted.name] = if (casted.get(cellKlassInstance) == null) {
+                return@forEach
             } else {
-                casted.get(klassInstance).toString()
+                val stringVal = casted.get(cellKlassInstance).toString()
+                VariableState(casted, cellKlassInstance, stringVal)
             }
         }
         return ans
     }
 
     // this is the O(n) implementation
-    // todo: tree-structure?
+    @Deprecated("Back-propagation def search", ReplaceWith("updateVariablesState"))
     private fun traverseSeenVarsNaive() {
         var lastSnipped = evaluator.lastEvaluatedSnippet?.previous ?: return
         val seenVars = mutableSetOf<String>()
