@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
@@ -21,18 +22,23 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
-    val compiler: JupyterCompiler,
-    private val evaluator: BasicJvmReplEvaluator,
-    private val contextUpdater: ContextUpdater,
-    override var logExecution: Boolean,
+        val compiler: JupyterCompiler,
+        private val evaluator: BasicJvmReplEvaluator,
+        private val contextUpdater: ContextUpdater,
+        override var logExecution: Boolean,
 ) :
-    InternalEvaluator {
+        InternalEvaluator {
 
     private var classWriter: ClassWriter? = null
 
     private val scriptsSerializer = CompiledScriptsSerializer()
 
     private val registeredCompiledScripts = arrayListOf<SerializedCompiledScript>()
+
+    /**
+     * stores cache for val values
+     */
+    private val variablesCache = mutableMapOf<String, VariableState>()
 
     private fun serializeAndRegisterScript(compiledScript: KJvmCompiledScript) {
         val serializedData = scriptsSerializer.serialize(compiledScript)
@@ -61,8 +67,6 @@ internal class InternalEvaluatorImpl(
     override val lastClassLoader get() = compiler.lastClassLoader
 
     override val variablesMap = mutableMapOf<String, VariableState>()
-
-    val variablesMap_ = mutableMapOf<String, String>()
 
     private var isExecuting = false
 
@@ -96,8 +100,8 @@ internal class InternalEvaluatorImpl(
                     val pureResult = resultWithDiagnostics.value.get()
                     return when (val resultValue = pureResult.result) {
                         is ResultValue.Error -> throw ReplEvalRuntimeException(
-                            resultValue.error.message.orEmpty(),
-                            resultValue.error
+                                resultValue.error.message.orEmpty(),
+                                resultValue.error
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
@@ -110,8 +114,7 @@ internal class InternalEvaluatorImpl(
                                         FieldValue(Unit, null),
                                         resultValue.scriptInstance!!
                                 )
-                            }
-                            else {
+                            } else {
                                 resultValue as ResultValue.Value
                                 InternalEvalResult(
                                         FieldValue(resultValue.value, resultValue.name),
@@ -121,8 +124,8 @@ internal class InternalEvaluatorImpl(
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
-                                "This snippet was not evaluated",
-                                resultWithDiagnostics.reports.firstOrNull()?.exception
+                                    "This snippet was not evaluated",
+                                    resultWithDiagnostics.reports.firstOrNull()?.exception
                             )
                         }
                         else -> throw IllegalStateException("Unknown eval result type $this")
@@ -150,24 +153,8 @@ internal class InternalEvaluatorImpl(
         }
     }
 
-    // should it be 1-way pass?
-    private fun updateVariablesMap(target: ResultValue, seenVars: MutableSet<String>? = null) {
-        getVisibleVariables(target).forEach {
-            if (variablesMap_.containsKey(it.key)) {
-                if (seenVars != null) {
-                    if (seenVars.contains(it.key)) {
-                        return
-                    }
-                }
-                variablesMap_.replace(it.key, it.value.stringValue)
-            } else {
-                variablesMap_[it.key] = it.value.stringValue
-                seenVars?.add(it.key)
-            }
-        }
-    }
 
-    private fun getVisibleVariables(target: ResultValue) : Map<String, VariableState> {
+    private fun getVisibleVariables(target: ResultValue): Map<String, VariableState> {
         val klass = target.scriptClass ?: return emptyMap()
         val cellKlassInstance = target.scriptInstance!!
 
@@ -179,7 +166,14 @@ internal class InternalEvaluatorImpl(
                 return@forEach
             } else {
                 val stringVal = casted.get(cellKlassInstance).toString()
-                VariableState(casted, cellKlassInstance, stringVal)
+                val state = VariableState(casted, cellKlassInstance, stringVal)
+                // invariant with changes: cache --> varsMap, other way is not allowed
+                if (it !is KMutableProperty1) {
+                    variablesCache[casted.name] = state
+                    variablesMap[casted.name] = state
+                    return@forEach
+                }
+                state
             }
         }
         return ans
@@ -192,9 +186,9 @@ internal class InternalEvaluatorImpl(
         val seenVars = mutableSetOf<String>()
         do {
             val target = lastSnipped.get().result
-            updateVariablesMap(target, seenVars)
+//            updateVariablesMap(target, seenVars)
             lastSnipped = lastSnipped.previous ?: break
-        }
-        while (true)
+        } while (true)
     }
+
 }
