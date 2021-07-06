@@ -316,6 +316,8 @@ class ReplForJupyterImpl(
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
+    internal var actualExecutionId: Int = 0
+
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) fileAnnotationsProcessor.process(context, currentKernelHost!!)
         else context.compilationConfiguration.asSuccess()
@@ -329,6 +331,14 @@ class ReplForJupyterImpl(
             if (isHtmlFormat) notebook.varsAsHtmlTable() else notebook.varsAsString()
     )
 
+    // todo: causes some tests to fail. perhaps, due to exhausting log calling
+    private fun printUsage(cellId: Int, usedVars: Set<String>) {
+        log.debug("Usages for cell $cellId:")
+        usedVars.forEach {
+            log.debug(it)
+        }
+    }
+
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
@@ -340,7 +350,10 @@ class ReplForJupyterImpl(
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
             val varsMap : Map<String, VariableState>
+            val usageMap: Map<Int, Set<String>>
+            internalEvaluator.lastExecutedCellId = jupyterId - 1
             val result = try {
+                log.debug("jupyter id: $jupyterId") // == cell id
                 executor.execute(code, displayHandler) { internalId, codeToExecute ->
                     cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
                 }
@@ -348,6 +361,7 @@ class ReplForJupyterImpl(
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
                 varsMap = internalEvaluator.variablesMap
+                usageMap = internalEvaluator.usageMap
             }
 
             cell?.resultVal = result.result.value
@@ -368,6 +382,7 @@ class ReplForJupyterImpl(
 
             notebook.updateVarsState(varsMap)
             printVars()
+//            printUsage(jupyterId, usageMap[jupyterId - 1]!!)
 
             //todo: perhaps redundant
             // would send serializable version

@@ -45,20 +45,23 @@ class ApiTest : AbstractSingleReplTest() {
 
     @Test
     fun testVarsReportFormat() {
-        val res = eval("""
+        val res = eval(
+            """
             val x = 1
             val y = "abc"
             val z = 47
-        """.trimIndent())
+            """.trimIndent()
+        )
 
         val varsUpdate = mutableMapOf<String, String>(
-                "x" to "1", "y" to "abc",
-                "z" to "47"
+            "x" to "1",
+            "y" to "abc",
+            "z" to "47"
         )
         assertEquals(res.metadata.variablesMap, varsUpdate)
         val htmlText = generateHTMLVarsReport(repl.notebook.variablesMap)
         assertEquals(
-                """
+            """
             <!DOCTYPE html>
             <html>
             <head>
@@ -93,6 +96,8 @@ class ApiTest : AbstractSingleReplTest() {
             </table>
             </body>
             </html>
-        """.trimIndent(), htmlText)
+            """.trimIndent(),
+            htmlText
+        )
     }
 }

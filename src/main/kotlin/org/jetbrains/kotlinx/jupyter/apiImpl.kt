@@ -1,7 +1,15 @@
 package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.api.CodeCell
+import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
+import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.VariableState
 
 class DisplayResultWrapper private constructor(
     val display: DisplayResult,
@@ -130,11 +138,11 @@ class NotebookImpl(
         variablesMap += varsMap
     }
 
-    fun varsAsHtmlTable() : String {
+    fun varsAsHtmlTable(): String {
         return generateHTMLVarsReport(variablesMap)
     }
 
-    fun varsAsString() : String {
+    fun varsAsString(): String {
         if (variablesMap.isEmpty()) return ""
         val stringBuilder = StringBuilder("Visible vars: \n")
         variablesMap.forEach { (t, u) ->

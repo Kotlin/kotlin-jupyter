@@ -13,7 +13,13 @@ interface InternalEvaluator {
     val lastKClass: KClass<*>
     val lastClassLoader: ClassLoader
 
-    val variablesMap : MutableMap<String, VariableState>
+    val variablesMap: MutableMap<String, VariableState>
+
+    val usageMap: MutableMap<Int, MutableSet<String>>
+
+    // todo: perhaps, better to be stateless
+    var lastExecutedCellId: Int
+
     /**
      * Executes code snippet
      * @throws IllegalStateException if this method was invoked recursively

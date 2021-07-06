@@ -22,12 +22,12 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
-        val compiler: JupyterCompiler,
-        private val evaluator: BasicJvmReplEvaluator,
-        private val contextUpdater: ContextUpdater,
-        override var logExecution: Boolean,
+    val compiler: JupyterCompiler,
+    private val evaluator: BasicJvmReplEvaluator,
+    private val contextUpdater: ContextUpdater,
+    override var logExecution: Boolean,
 ) :
-        InternalEvaluator {
+    InternalEvaluator {
 
     private var classWriter: ClassWriter? = null
 
@@ -36,7 +36,7 @@ internal class InternalEvaluatorImpl(
     private val registeredCompiledScripts = arrayListOf<SerializedCompiledScript>()
 
     /**
-     * stores cache for val values
+     * Stores cache for val values
      */
     private val variablesCache = mutableMapOf<String, VariableState>()
 
@@ -67,6 +67,15 @@ internal class InternalEvaluatorImpl(
     override val lastClassLoader get() = compiler.lastClassLoader
 
     override val variablesMap = mutableMapOf<String, VariableState>()
+
+    override val usageMap = mutableMapOf<Int, MutableSet<String>>()
+
+    override var lastExecutedCellId: Int = 0
+
+    /**
+     * Tells in which cell a variable was declared
+     */
+    private val containingMap: MutableMap<String, Int> = mutableMapOf()
 
     private var isExecuting = false
 
@@ -100,32 +109,41 @@ internal class InternalEvaluatorImpl(
                     val pureResult = resultWithDiagnostics.value.get()
                     return when (val resultValue = pureResult.result) {
                         is ResultValue.Error -> throw ReplEvalRuntimeException(
-                                resultValue.error.message.orEmpty(),
-                                resultValue.error
+                            resultValue.error.message.orEmpty(),
+                            resultValue.error
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
+                            if (!usageMap.containsKey(lastExecutedCellId)) {
+                                usageMap[lastExecutedCellId] = mutableSetOf()
+                            }
+                            val visibleDeclarations = getVisibleVariables(resultValue, lastExecutedCellId)
+                            visibleDeclarations.forEach {
+                                val cellSet = usageMap[lastExecutedCellId] ?: return@forEach
+                                containingMap[it.key] = lastExecutedCellId
+                                cellSet += it.key
+                            }
+                            variablesMap += visibleDeclarations
 
-                            variablesMap += getVisibleVariables(resultValue)
-                            updateVariablesState()
+                            updateVariablesState(lastExecutedCellId)
 
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(
-                                        FieldValue(Unit, null),
-                                        resultValue.scriptInstance!!
+                                    FieldValue(Unit, null),
+                                    resultValue.scriptInstance!!
                                 )
                             } else {
                                 resultValue as ResultValue.Value
                                 InternalEvalResult(
-                                        FieldValue(resultValue.value, resultValue.name),
-                                        resultValue.scriptInstance!!
+                                    FieldValue(resultValue.value, resultValue.name),
+                                    resultValue.scriptInstance!!
                                 )
                             }
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
-                                    "This snippet was not evaluated",
-                                    resultWithDiagnostics.reports.firstOrNull()?.exception
+                                "This snippet was not evaluated",
+                                resultWithDiagnostics.reports.firstOrNull()?.exception
                             )
                         }
                         else -> throw IllegalStateException("Unknown eval result type $this")
@@ -141,20 +159,25 @@ internal class InternalEvaluatorImpl(
         }
     }
 
-    private fun updateVariablesState() {
+    private fun updateVariablesState(cellId: Int) {
+        // remove known modifying usages in this cell
+        usageMap[cellId]?.removeIf {
+            containingMap[it] != cellId
+        }
+
         variablesMap.forEach {
             val state = it.value
             val property = state.propertyKlass
             val newValue = property.get(state.scriptInstance) ?: return@forEach
 
-            if (state.stringValue != newValue) {
+            if (state.stringValue != newValue.toString()) {
+                usageMap[cellId]?.add(it.key)
                 state.stringValue = newValue.toString()
             }
         }
     }
 
-
-    private fun getVisibleVariables(target: ResultValue): Map<String, VariableState> {
+    private fun getVisibleVariables(target: ResultValue, cellId: Int): Map<String, VariableState> {
         val klass = target.scriptClass ?: return emptyMap()
         val cellKlassInstance = target.scriptInstance!!
 
@@ -169,6 +192,14 @@ internal class InternalEvaluatorImpl(
                 val state = VariableState(casted, cellKlassInstance, stringVal)
                 // invariant with changes: cache --> varsMap, other way is not allowed
                 if (it !is KMutableProperty1) {
+                    // it is a replacement
+                    if (variablesCache.containsKey(casted.name)) {
+                        val oldCellID = containingMap[casted.name]
+                        usageMap[oldCellID]?.remove(casted.name)
+                    }
+                    containingMap[casted.name] = cellId
+                    usageMap[cellId]?.add(casted.name)
+
                     variablesCache[casted.name] = state
                     variablesMap[casted.name] = state
                     return@forEach
@@ -190,5 +221,4 @@ internal class InternalEvaluatorImpl(
             lastSnipped = lastSnipped.previous ?: break
         } while (true)
     }
-
 }

@@ -443,15 +443,18 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testStateConsistency() {
         assertTrue(repl.notebook.variablesMap.isEmpty())
-        val res = eval ("""
+        val res = eval(
+            """
             val x = 1 
             val y = 0
             val z = 47
-        """.trimIndent())
+            """.trimIndent()
+        )
 
         val varsUpdate = mutableMapOf<String, String>(
-                "x" to "1", "y" to "0",
-                "z" to "47"
+            "x" to "1",
+            "y" to "0",
+            "z" to "47"
         )
         assertEquals(res.metadata.variablesMap, varsUpdate)
         assertFalse(repl.notebook.variablesMap.isEmpty())
@@ -480,11 +483,11 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testVarsCapture() {
         val res = eval(
-        """
+            """
             val x = 1 
             val y = "abc"
             val z = x
-        """.trimIndent()
+            """.trimIndent()
         )
         val varsState = repl.notebook.variablesMap
         assertTrue(varsState.isNotEmpty())

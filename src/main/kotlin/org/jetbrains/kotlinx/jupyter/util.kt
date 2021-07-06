@@ -11,8 +11,8 @@ import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 fun List<String>.joinToLines() = joinToString("\n")
 
-//todo : perhaps, create factory class
-fun generateHTMLVarsReport(variablesMap: Map<String, VariableState>) : String {
+// todo : perhaps, create factory class
+fun generateHTMLVarsReport(variablesMap: Map<String, VariableState>): String {
     val stringBuilder = StringBuilder(
         """
             <!DOCTYPE html>
@@ -36,9 +36,9 @@ fun generateHTMLVarsReport(variablesMap: Map<String, VariableState>) : String {
     return stringBuilder.toString()
 }
 
-//todo: text is not aligning in a center
-fun generateStyleSection(borderPx: Int = 1, paddingPx : Int = 5) : String {
-    return    """
+// todo: text is not aligning in a center
+fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
+    return """
     <style>
     table, th, td {
       border: ${borderPx}px solid black;
@@ -52,28 +52,31 @@ fun generateStyleSection(borderPx: Int = 1, paddingPx : Int = 5) : String {
     """.trimIndent()
 }
 
-fun generateVarsTable(variablesMap: Map<String, VariableState>) : String {
-    val tableBuilder = StringBuilder("""
+fun generateVarsTable(variablesMap: Map<String, VariableState>): String {
+    val tableBuilder = StringBuilder(
+        """
     <table style="width:80%" align="center">
       <tr>
         <th>Variable</th>
         <th>Value</th>
       </tr>
       
-    """.trimIndent())
+        """.trimIndent()
+    )
 
     variablesMap.entries.forEach {
-        tableBuilder.append("""
+        tableBuilder.append(
+            """
         <tr>
             <td>${it.key}</td>
             <td>${it.value.stringValue}</td>
         </tr>
-        """.trimIndent())
+            """.trimIndent()
+        )
     }
 
     return tableBuilder.append("\n</table>\n").toString()
 }
-
 
 fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, message: String, severity: String) =
     ScriptDiagnostic(
