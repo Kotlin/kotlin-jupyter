@@ -23,7 +23,7 @@ class ResourcesTaskTests {
         val buildFile = projectDir.resolve("build.gradle")
         val taskSetupIndented = taskSetup.prependIndent("    ".repeat(2))
         val buildFileText = """
-            $PLUGINS_BLOCK
+            ${pluginsBlock()}
             
             tasks {
                 $JUPYTER_RESOURCES_TASK_NAME {
@@ -34,12 +34,15 @@ class ResourcesTaskTests {
         buildFile.writeText(buildFileText)
     }
 
-    private fun runResourcesTask(args: Array<String>? = null): BuildResult {
+    private fun runResourcesTask(args: Array<String>? = null, type: String = ""): BuildResult {
         val arguments = args?.toMutableList() ?: mutableListOf(
             "-Pkotlin.jupyter.add.api=false",
-            "-Pkotlin.jupyter.add.scanner=false"
+            "-Pkotlin.jupyter.add.scanner=false",
+            "--stacktrace",
+            "--info"
         )
-        arguments.add(0, RESOURCES_TASK_NAME)
+        val taskName = RESOURCES_TASK_NAME.withPrefix(type)
+        arguments.add(0, taskName)
 
         return GradleRunner.create()
             .withProjectDir(projectDir)
@@ -49,8 +52,8 @@ class ResourcesTaskTests {
             .build()
     }
 
-    private fun assertLibrariesJsonContents(expected: LibrariesScanResult) {
-        val librariesJsonText = projectDir.resolve(BUILD_LIBRARIES_JSON_PATH).readText()
+    private fun assertLibrariesJsonContents(expected: LibrariesScanResult, type: String = "") {
+        val librariesJsonText = projectDir.resolve(buildLibrariesJsonPath(type)).readText()
         val libraryInfo = Json.decodeFromString<LibrariesScanResult>(librariesJsonText)
 
         assertEquals(expected, libraryInfo)
@@ -111,7 +114,7 @@ class ResourcesTaskTests {
         val apiAnnotations = jarFile("api-annotations")
         buildFile.writeText(
             """
-            $PLUGINS_BLOCK
+            ${pluginsBlock()}
             
             dependencies {
                 implementation(files("$apiJar"))
@@ -150,6 +153,89 @@ class ResourcesTaskTests {
     }
 
     @Test
+    fun `check annotations in MPP`() {
+        val version = ClassLoader.getSystemClassLoader().getResource("VERSION")?.readText().orEmpty()
+
+        val propertiesFile = projectDir.resolve("properties.gradle")
+        propertiesFile.writeText(
+            """
+            kapt.verbose=true
+            """.trimIndent()
+        )
+
+        val buildFile = projectDir.resolve("build.gradle.kts")
+
+        fun jarFile(name: String): String {
+            return File("../$name/build/libs/$name-$version.jar").canonicalFile.absolutePath.replace("\\", "/")
+        }
+
+        val apiJar = jarFile("api")
+        val apiAnnotations = jarFile("api-annotations")
+        buildFile.writeText(
+            """
+            plugins {
+                kotlin("multiplatform") version "$KOTLIN_VERSION"
+                id("org.jetbrains.kotlin.jupyter.api")
+            }
+            
+            kotlin {
+                jvm {
+                    compilations.all {
+                        kotlinOptions.jvmTarget = "11"
+                    }
+                }
+                js(LEGACY) {
+                    binaries.executable()
+                    browser()
+                }
+                sourceSets {
+                    val commonMain by getting
+                    val commonTest by getting
+                    val jvmMain by getting {
+                        dependencies {
+                            implementation(files("$apiJar"))
+                            implementation(files("$apiAnnotations"))
+                        }
+                        dependencies.add("kapt", files("$apiAnnotations"))
+                    }
+                    val jvmTest by getting
+                    val jsMain by getting
+                    val jsTest by getting
+                }
+            }
+            """.trimIndent()
+        )
+
+        val srcDir = projectDir.resolve("src/jvmMain/kotlin")
+        srcDir.mkdirs()
+
+        val integrationKt = srcDir.resolve("pack").resolve("Integration.kt")
+        integrationKt.parentFile.mkdirs()
+        integrationKt.writeText(
+            """
+            package pack
+            
+            import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
+            import org.jetbrains.kotlinx.jupyter.api.*
+            import org.jetbrains.kotlinx.jupyter.api.libraries.*
+            
+            @JupyterLibrary
+            class Integration : JupyterIntegration({            
+                import("org.my.lib.*")
+            })
+            """.trimIndent()
+        )
+        runResourcesTask(type = "jvm")
+
+        assertLibrariesJsonContents(
+            LibrariesScanResult(
+                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration)
+            ),
+            "jvm"
+        )
+    }
+
+    @Test
     fun `check extension`() {
         val version = "0.8.3.202"
 
@@ -157,7 +243,7 @@ class ResourcesTaskTests {
 
         buildFile.writeText(
             """
-            $PLUGINS_BLOCK
+            ${pluginsBlock()}
             
             kotlinJupyter {
                 addApiDependency("$version")
@@ -195,17 +281,27 @@ class ResourcesTaskTests {
     }
 
     companion object {
+        private const val KOTLIN_VERSION = "1.5.20"
         private const val RESOURCES_TASK_NAME = "processResources"
         private const val JUPYTER_RESOURCES_TASK_NAME = "processJupyterApiResources"
 
-        private const val MAIN_SOURCE_SET_BUILD_RESOURCES_PATH = "build/resources/main"
-        private const val BUILD_LIBRARIES_JSON_PATH = "$MAIN_SOURCE_SET_BUILD_RESOURCES_PATH/$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME"
+        private fun mainSourceSetBuildResourcesPath(type: String = ""): String {
+            return if (type.isEmpty()) {
+                "build/resources/main"
+            } else {
+                "build/processedResources/$type/main"
+            }
+        }
+        private fun buildLibrariesJsonPath(type: String = "") = "${mainSourceSetBuildResourcesPath(type)}/$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME"
 
-        private val PLUGINS_BLOCK = """
+        private fun pluginsBlock(ktPluginId: String = "jvm") = """
             plugins {
-                id 'org.jetbrains.kotlin.jvm' version '1.4.20'
+                id 'org.jetbrains.kotlin.$ktPluginId' version '$KOTLIN_VERSION'
                 id 'org.jetbrains.kotlin.jupyter.api'
             }
         """.trimIndent()
+
+        private fun String.withPrefix(prefix: String) =
+            if (prefix.isEmpty()) this else prefix + capitalize()
     }
 }

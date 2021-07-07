@@ -5,6 +5,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.findByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
+import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.whenAdded
 import java.util.Locale
 
 private fun Project.configureDependency(scope: String, dependencyNotation: Any) {
@@ -19,13 +20,17 @@ private fun Project.configureDependency(scope: String, dependencyNotation: Any) 
     // apply only to multiplatform plugin
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         extensions.findByType<KotlinMultiplatformExtension>()?.apply {
-            val jvmTargetName = targets.filterIsInstance<KotlinJvmTarget>().firstOrNull()?.name
-                ?: error("Single JVM target not found in a multiplatform project")
-            val configuration = project.configurations.findByName(jvmTargetName + scope.capitalize(Locale.ROOT))
-                ?: error("$scope configuration is not resolved for a multiplatform project")
-            dependencies {
-                configuration.invoke(dependencyNotation)
-            }
+            targets.whenAdded(
+                { it is KotlinJvmTarget },
+                {
+                    val jvmTargetName = it.name
+                    val configuration = project.configurations.findByName(jvmTargetName + scope.capitalize(Locale.ROOT))
+                        ?: error("$scope configuration is not resolved for a multiplatform project")
+                    dependencies {
+                        configuration.invoke(dependencyNotation)
+                    }
+                }
+            )
         }
     }
 }
@@ -39,13 +44,14 @@ class KotlinJupyterPluginExtension(
     }
 
     fun addScannerDependency(version: String? = null) = with(project) {
-        val kaptConf = configurations.findByName("kapt") ?: return
-        val apiVersion = version ?: apiVersion()
-        val mavenCoordinates = "$GROUP_ID:kotlin-jupyter-api-annotations:$apiVersion"
-        dependencies {
-            kaptConf(mavenCoordinates)
+        configurations.whenAdded({ it.name == "kapt" }) { kaptConf ->
+            val apiVersion = version ?: apiVersion()
+            val mavenCoordinates = "$GROUP_ID:kotlin-jupyter-api-annotations:$apiVersion"
+            dependencies {
+                kaptConf(mavenCoordinates)
+            }
+            configureDependency("implementation", mavenCoordinates)
         }
-        configureDependency("implementation", mavenCoordinates)
     }
 
     internal fun addDependenciesIfNeeded() {
