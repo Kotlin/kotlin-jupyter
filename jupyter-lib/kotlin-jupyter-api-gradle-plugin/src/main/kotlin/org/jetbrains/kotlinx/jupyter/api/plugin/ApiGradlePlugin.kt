@@ -2,8 +2,10 @@ package org.jetbrains.kotlinx.jupyter.api.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -11,6 +13,7 @@ import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin
 import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.JupyterApiResourcesTask
+import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.whenAdded
 
 class ApiGradlePlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
@@ -41,37 +44,50 @@ class ApiGradlePlugin : Plugin<Project> {
             }
 
             val resourcesTaskName = "processJupyterApiResources"
-            fun registerResourceTask() {
-                register<JupyterApiResourcesTask>(resourcesTaskName) {
-                    val kaptKotlinTask = findByName("kaptKotlin")
-                    if (kaptKotlinTask != null) {
-                        dependsOn(kaptKotlinTask)
-                        kaptKotlinTask.dependsOn(cleanJupyterTask)
-                        kaptKotlinTask.outputs.dir(jupyterBuildPath)
-                    }
+            fun registerResourceTask(): JupyterApiResourcesTask {
+                findByName(resourcesTaskName) ?: register<JupyterApiResourcesTask>(resourcesTaskName)
+                return named<JupyterApiResourcesTask>(resourcesTaskName).get()
+            }
+
+            fun dependOnProcessingTask(processTaskName: String) {
+                val jupyterTask = registerResourceTask()
+                tasks.named<Copy>(processTaskName) {
+                    dependsOn(resourcesTaskName)
+                    from(jupyterTask.outputDir)
                 }
+            }
+
+            fun dependOnKapt(kaptTaskName: String) {
+                registerResourceTask()
+                tasks.whenAdded(
+                    { it.name == kaptTaskName },
+                    {
+                        tasks.named(resourcesTaskName) {
+                            dependsOn(it)
+                            it.dependsOn(cleanJupyterTask)
+                            it.outputs.dir(jupyterBuildPath)
+                        }
+                    }
+                )
             }
 
             // apply configuration to JVM-only project
             plugins.withId("org.jetbrains.kotlin.jvm") {
-                // Task should be registered after plugin is applied
-                registerResourceTask()
-                named("processResources") {
-                    dependsOn(resourcesTaskName)
-                }
+                dependOnProcessingTask("processResources")
+                dependOnKapt("kaptKotlin")
             }
 
             // apply only to multiplatform plugin
             plugins.withId("org.jetbrains.kotlin.multiplatform") {
-                // Task should be registered after plugin is applied
-                registerResourceTask()
                 extensions.findByType<KotlinMultiplatformExtension>()?.apply {
-                    val jvmTargetName = targets.filterIsInstance<KotlinJvmTarget>().firstOrNull()?.name
-                        ?: error("Single JVM target not found in a multiplatform project")
-                    named(jvmTargetName + "ProcessResources") {
-                        dependsOn(resourcesTaskName)
-                    }
+                    targets.whenAdded(
+                        { (it is KotlinJvmTarget) },
+                        {
+                            dependOnProcessingTask(it.name + "ProcessResources")
+                        }
+                    )
                 }
+                dependOnKapt("kaptKotlinJvm")
             }
         }
     }
