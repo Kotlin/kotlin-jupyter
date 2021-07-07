@@ -106,6 +106,8 @@ class NotebookImpl(
 
     override val variablesMap = mutableMapOf<String, VariableState>()
 
+    override var usageMap = mapOf<Int, Set<String>>()
+
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"

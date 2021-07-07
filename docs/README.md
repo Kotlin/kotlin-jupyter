@@ -124,6 +124,7 @@ python -m kotlin_kernel add-kernel --name "JDK 15 Big 2 GPU" --jdk ~/.jdks/openj
 The following REPL commands are supported:
  - `:help` - display help
  - `:classpath` - show current classpath
+ - `:vars` - get visible variables values
  
 ### Dependencies resolving annotations
 

@@ -32,25 +32,6 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import java.io.File
-import kotlin.collections.Collection
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableList
-import kotlin.collections.associate
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.emptyList
-import kotlin.collections.filter
-import kotlin.collections.forEach
-import kotlin.collections.hashMapOf
-import kotlin.collections.map
-import kotlin.collections.mapKeys
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.orEmpty
-import kotlin.collections.set
-import kotlin.collections.single
-import kotlin.collections.toMap
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.test.assertEquals
 
@@ -168,6 +149,7 @@ object NotebookMock : Notebook {
     override val cellsList: Collection<CodeCell>
         get() = emptyList()
     override val variablesMap = mutableMapOf<String, VariableState>()
+    override var usageMap = mapOf<Int, Set<String>>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(

@@ -13,18 +13,15 @@ interface InternalEvaluator {
     val lastKClass: KClass<*>
     val lastClassLoader: ClassLoader
 
-    val variablesMap: MutableMap<String, VariableState>
+    val variablesHolder: MutableMap<String, VariableState>
 
-    val usageMap: MutableMap<Int, MutableSet<String>>
-
-    // todo: perhaps, better to be stateless
-    var lastExecutedCellId: Int
+    val varsUsagePerCell: MutableMap<Int, MutableSet<String>>
 
     /**
      * Executes code snippet
      * @throws IllegalStateException if this method was invoked recursively
      */
-    fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)? = null): InternalEvalResult
+    fun eval(code: Code, cellId: Int = 1, onInternalIdGenerated: ((Int) -> Unit)? = null): InternalEvalResult
 
     /**
      * Pop a serialized form of recently added compiled scripts

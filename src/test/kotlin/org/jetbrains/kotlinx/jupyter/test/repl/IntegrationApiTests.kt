@@ -104,7 +104,7 @@ class IntegrationApiTests {
         }
         val repl = makeRepl(lib).trackExecution()
 
-        repl.execute("%use mylib\n1")
+        repl.execute(code = "%use mylib\n1")
 
         assertEquals(2, repl.executedCodes.size)
         assertEquals(1, repl.results[0])

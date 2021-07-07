@@ -36,7 +36,8 @@ internal class InternalEvaluatorImpl(
     private val registeredCompiledScripts = arrayListOf<SerializedCompiledScript>()
 
     /**
-     * Stores cache for val values
+     * Stores cache for val values.
+     * Its contents is a part of variablesHolder.
      */
     private val variablesCache = mutableMapOf<String, VariableState>()
 
@@ -66,20 +67,18 @@ internal class InternalEvaluatorImpl(
 
     override val lastClassLoader get() = compiler.lastClassLoader
 
-    override val variablesMap = mutableMapOf<String, VariableState>()
+    override val variablesHolder = mutableMapOf<String, VariableState>()
 
-    override val usageMap = mutableMapOf<Int, MutableSet<String>>()
-
-    override var lastExecutedCellId: Int = 0
+    override val varsUsagePerCell = mutableMapOf<Int, MutableSet<String>>()
 
     /**
      * Tells in which cell a variable was declared
      */
-    private val containingMap: MutableMap<String, Int> = mutableMapOf()
+    private val varsDeclarationInfo: MutableMap<String, Int> = mutableMapOf()
 
     private var isExecuting = false
 
-    override fun eval(code: Code, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         try {
             if (isExecuting) {
                 error("Recursive execution is not supported")
@@ -114,18 +113,7 @@ internal class InternalEvaluatorImpl(
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript)
-                            if (!usageMap.containsKey(lastExecutedCellId)) {
-                                usageMap[lastExecutedCellId] = mutableSetOf()
-                            }
-                            val visibleDeclarations = getVisibleVariables(resultValue, lastExecutedCellId)
-                            visibleDeclarations.forEach {
-                                val cellSet = usageMap[lastExecutedCellId] ?: return@forEach
-                                containingMap[it.key] = lastExecutedCellId
-                                cellSet += it.key
-                            }
-                            variablesMap += visibleDeclarations
-
-                            updateVariablesState(lastExecutedCellId)
+                            updateDataAfterExecution(cellId, resultValue)
 
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(
@@ -161,64 +149,66 @@ internal class InternalEvaluatorImpl(
 
     private fun updateVariablesState(cellId: Int) {
         // remove known modifying usages in this cell
-        usageMap[cellId]?.removeIf {
-            containingMap[it] != cellId
+        varsUsagePerCell[cellId]?.removeIf {
+            varsDeclarationInfo[it] != cellId
         }
 
-        variablesMap.forEach {
+        variablesHolder.forEach {
             val state = it.value
-            val property = state.propertyKlass
-            val newValue = property.get(state.scriptInstance) ?: return@forEach
+            val oldValue = state.stringValue
+            state.update()
 
-            if (state.stringValue != newValue.toString()) {
-                usageMap[cellId]?.add(it.key)
-                state.stringValue = newValue.toString()
+            if (state.stringValue != oldValue) {
+                varsUsagePerCell[cellId]?.add(it.key)
             }
         }
     }
 
     private fun getVisibleVariables(target: ResultValue, cellId: Int): Map<String, VariableState> {
-        val klass = target.scriptClass ?: return emptyMap()
+        val kClass = target.scriptClass ?: return emptyMap()
         val cellKlassInstance = target.scriptInstance!!
 
-        val fields = klass.declaredMemberProperties
+        val fields = kClass.declaredMemberProperties
         val ans = mutableMapOf<String, VariableState>()
-        fields.forEach {
-            val casted = it as KProperty1<Any, *>
-            ans[casted.name] = if (casted.get(cellKlassInstance) == null) {
-                return@forEach
-            } else {
-                val stringVal = casted.get(cellKlassInstance).toString()
-                val state = VariableState(casted, cellKlassInstance, stringVal)
-                // invariant with changes: cache --> varsMap, other way is not allowed
-                if (it !is KMutableProperty1) {
-                    // it is a replacement
-                    if (variablesCache.containsKey(casted.name)) {
-                        val oldCellID = containingMap[casted.name]
-                        usageMap[oldCellID]?.remove(casted.name)
-                    }
-                    containingMap[casted.name] = cellId
-                    usageMap[cellId]?.add(casted.name)
+        fields.forEach { property ->
+            property as KProperty1<Any, *>
+            val state = VariableState(property, cellKlassInstance)
 
-                    variablesCache[casted.name] = state
-                    variablesMap[casted.name] = state
-                    return@forEach
+            // redeclaration of any type
+            if (varsDeclarationInfo.containsKey(property.name)) {
+                val oldCellId = varsDeclarationInfo[property.name]
+                if (oldCellId != cellId) {
+                    varsUsagePerCell[oldCellId]?.remove(property.name)
                 }
-                state
             }
+            // it was val, now it's var
+            if (property is KMutableProperty1) {
+                variablesCache.remove(property.name)
+            }
+            varsDeclarationInfo[property.name] = cellId
+            varsUsagePerCell[cellId]?.add(property.name)
+            // invariant with changes: cache --> varsMap, other way is not allowed
+            if (property !is KMutableProperty1) {
+                variablesCache[property.name] = state
+                variablesHolder[property.name] = state
+                return@forEach
+            }
+            ans[property.name] = state
         }
         return ans
     }
 
-    // this is the O(n) implementation
-    @Deprecated("Back-propagation def search", ReplaceWith("updateVariablesState"))
-    private fun traverseSeenVarsNaive() {
-        var lastSnipped = evaluator.lastEvaluatedSnippet?.previous ?: return
-        val seenVars = mutableSetOf<String>()
-        do {
-            val target = lastSnipped.get().result
-//            updateVariablesMap(target, seenVars)
-            lastSnipped = lastSnipped.previous ?: break
-        } while (true)
+    private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
+        varsUsagePerCell.putIfAbsent(lastExecutionCellId, mutableSetOf())
+
+        val visibleDeclarations = getVisibleVariables(resultValue, lastExecutionCellId)
+        visibleDeclarations.forEach {
+            val cellSet = varsUsagePerCell[lastExecutionCellId] ?: return@forEach
+            varsDeclarationInfo[it.key] = lastExecutionCellId
+            cellSet += it.key
+        }
+        variablesHolder += visibleDeclarations
+
+        updateVariablesState(lastExecutionCellId)
     }
 }

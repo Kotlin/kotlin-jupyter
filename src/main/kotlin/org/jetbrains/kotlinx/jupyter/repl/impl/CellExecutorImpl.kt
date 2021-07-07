@@ -38,6 +38,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         processAnnotations: Boolean,
         processMagics: Boolean,
         invokeAfterCallbacks: Boolean,
+        currentCellId: Int,
         callback: ExecutionStartedCallback?
     ): InternalEvalResult {
         with(replContext) {
@@ -60,7 +61,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
 
             val result = baseHost.withHost(context) {
-                evaluator.eval(preprocessedCode) { internalId ->
+                evaluator.eval(preprocessedCode, currentCellId) { internalId ->
                     if (callback != null) callback(internalId, preprocessedCode)
                 }
             }

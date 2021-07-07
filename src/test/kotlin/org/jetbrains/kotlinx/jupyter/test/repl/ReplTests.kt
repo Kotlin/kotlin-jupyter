@@ -439,9 +439,13 @@ class ReplTests : AbstractSingleReplTest() {
 
         assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
     }
+}
+
+class ReplVarsTest : AbstractSingleReplTest() {
+    override val repl = makeSimpleRepl()
 
     @Test
-    fun testStateConsistency() {
+    fun testVarsStateConsistency() {
         assertTrue(repl.notebook.variablesMap.isEmpty())
         val res = eval(
             """
@@ -463,18 +467,18 @@ class ReplTests : AbstractSingleReplTest() {
         assertEquals("0", varsState["y"]!!.stringValue)
         assertEquals("47", varsState["z"]!!.stringValue)
 
-        varsState["z"]!!.stringValue = "0"
+        varsState["z"]!!.update()
         repl.notebook.updateVarsState(varsState)
-        assertEquals("0", varsState["z"]!!.stringValue)
+        assertEquals("47", varsState["z"]!!.stringValue)
     }
 
     @Test
-    fun testEmptyState() {
+    fun testVarsEmptyState() {
         val res = eval("3+2")
         val state = repl.notebook.variablesMap
         val strState = mutableMapOf<String, String>()
         state.forEach {
-            strState[it.key] = it.value.stringValue
+            strState[it.key] = it.value.stringValue ?: return@forEach
         }
         assertTrue(state.isEmpty())
         assertEquals(res.metadata.variablesMap, strState)
@@ -493,7 +497,7 @@ class ReplTests : AbstractSingleReplTest() {
         assertTrue(varsState.isNotEmpty())
         val strState = mutableMapOf<String, String>()
         varsState.forEach {
-            strState[it.key] = it.value.stringValue
+            strState[it.key] = it.value.stringValue ?: return@forEach
         }
 
         val returnedState = res.metadata.variablesMap
@@ -501,5 +505,152 @@ class ReplTests : AbstractSingleReplTest() {
         assertEquals("1", varsState["x"]!!.stringValue)
         assertEquals("abc", varsState["y"]!!.stringValue)
         assertEquals("1", varsState["z"]!!.stringValue)
+    }
+
+    @Test
+    fun testVarsCaptureSeparateCells() {
+        eval(
+            """
+            val x = 1 
+            val y = "abc"
+            val z = x
+            """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesMap
+        assertTrue(varsState.isNotEmpty())
+        eval(
+            """
+            val x = "abc" 
+            var y = 123
+            val z = x
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("abc", varsState["x"]!!.stringValue)
+        assertEquals("123", varsState["y"]!!.stringValue)
+        assertEquals("abc", varsState["z"]!!.stringValue)
+
+        eval(
+            """
+            val x = 1024 
+            y += 123
+            """.trimIndent(),
+            jupyterId = 2
+        )
+
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("1024", varsState["x"]!!.stringValue)
+        assertEquals("${123 * 2}", varsState["y"]!!.stringValue)
+        assertEquals("abc", varsState["z"]!!.stringValue)
+    }
+
+    @Test
+    fun testVarsUsageConsistency() {
+        eval("3+2")
+        val state = repl.notebook.usageMap
+        assertTrue(state.values.size == 1)
+        assertTrue(state.values.first().isEmpty())
+        val setOfNextCell = setOf<String>()
+        assertEquals(state.values.first(), setOfNextCell)
+    }
+
+    @Test
+    fun testVarsDefsUsage() {
+        eval(
+            """
+            val x = 1
+            val z = "abcd"
+            var f = 47
+            """.trimIndent()
+        )
+        val state = repl.notebook.usageMap
+        assertTrue(state.isNotEmpty())
+        assertTrue(state.values.first().isNotEmpty())
+        val setOfCell = setOf("z", "f", "x")
+        assertTrue(state.containsValue(setOfCell))
+    }
+
+    @Test
+    fun testVarsDefNRefUsage() {
+        eval(
+            """
+            val x = "abcd"
+            var f = 47
+            """.trimIndent()
+        )
+        val state = repl.notebook.usageMap
+        assertTrue(state.isNotEmpty())
+        eval(
+            """
+            val z = 1
+            f += f
+            """.trimIndent()
+        )
+        assertTrue(state.isNotEmpty())
+
+        val setOfCell = setOf("z", "f", "x")
+        assertTrue(state.containsValue(setOfCell))
+    }
+
+    @Test
+    fun testSeparateDefsUsage() {
+        eval(
+            """
+            val x = "abcd"
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.usageMap
+        assertTrue(state[0]!!.contains("x"))
+
+        eval(
+            """
+            val x = 341
+            var f = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertTrue(state[0]!!.isEmpty())
+        assertTrue(state[1]!!.contains("x"))
+
+        val setOfPrevCell = setOf<String>()
+        val setOfNextCell = setOf("x", "f")
+        assertEquals(state[0], setOfPrevCell)
+        assertEquals(state[1], setOfNextCell)
+    }
+
+    @Test
+    fun testSeparateCellsUsage() {
+        eval(
+            """
+            val x = "abcd"
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.usageMap
+        assertTrue(state[0]!!.contains("x"))
+
+        eval(
+            """
+            val x = 341
+            f += x
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertTrue(state[0]!!.isNotEmpty())
+        assertFalse(state[0]!!.contains("x"))
+        assertTrue(state[1]!!.contains("x"))
+
+        val setOfPrevCell = setOf("f")
+        val setOfNextCell = setOf("x", "f")
+        assertEquals(state[0], setOfPrevCell)
+        assertEquals(state[1], setOfNextCell)
     }
 }

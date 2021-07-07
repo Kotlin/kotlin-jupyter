@@ -17,6 +17,7 @@ interface CellExecutor : ExecutionHost {
         processAnnotations: Boolean = true,
         processMagics: Boolean = true,
         invokeAfterCallbacks: Boolean = true,
+        currentCellId: Int = 1,
         callback: ExecutionStartedCallback? = null
     ): InternalEvalResult
 }

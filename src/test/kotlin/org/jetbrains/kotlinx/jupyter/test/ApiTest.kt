@@ -83,7 +83,7 @@ class ApiTest : AbstractSingleReplTest() {
                 <th>Variable</th>
                 <th>Value</th>
               </tr>
-              <tr>
+            <tr>
                 <td>x</td>
                 <td>1</td>
             </tr><tr>

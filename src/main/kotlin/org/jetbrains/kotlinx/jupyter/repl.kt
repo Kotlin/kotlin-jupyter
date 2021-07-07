@@ -1,9 +1,25 @@
 package org.jetbrains.kotlinx.jupyter
 
-import jupyter.kotlin.*
+import jupyter.kotlin.CompilerArgs
+import jupyter.kotlin.DependsOn
+import jupyter.kotlin.KotlinContext
+import jupyter.kotlin.KotlinKernelHostProvider
+import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlinx.jupyter.api.*
-import org.jetbrains.kotlinx.jupyter.codegen.*
+import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
@@ -20,16 +36,41 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHand
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
-import org.jetbrains.kotlinx.jupyter.libraries.*
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
-import org.jetbrains.kotlinx.jupyter.repl.*
-import org.jetbrains.kotlinx.jupyter.repl.impl.*
+import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
+import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
+import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
+import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
+import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.constructorArgs
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.fileExtension
+import kotlin.script.experimental.api.implicitReceivers
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
@@ -316,8 +357,6 @@ class ReplForJupyterImpl(
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
-    internal var actualExecutionId: Int = 0
-
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) fileAnnotationsProcessor.process(context, currentKernelHost!!)
         else context.compilationConfiguration.asSuccess()
@@ -328,10 +367,10 @@ class ReplForJupyterImpl(
      * @see ReplCommand
      */
     private fun printVars(isHtmlFormat: Boolean = false) = log.debug(
-            if (isHtmlFormat) notebook.varsAsHtmlTable() else notebook.varsAsString()
+        if (isHtmlFormat) notebook.varsAsHtmlTable() else notebook.varsAsString()
     )
 
-    // todo: causes some tests to fail. perhaps, due to exhausting log calling
+    // TODO: causes some tests to fail. perhaps, due to exhausting log calling
     private fun printUsage(cellId: Int, usedVars: Set<String>) {
         log.debug("Usages for cell $cellId:")
         usedVars.forEach {
@@ -349,20 +388,18 @@ class ReplForJupyterImpl(
 
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
-            val varsMap : Map<String, VariableState>
-            val usageMap: Map<Int, Set<String>>
-            internalEvaluator.lastExecutedCellId = jupyterId - 1
             val result = try {
-                log.debug("jupyter id: $jupyterId") // == cell id
-                executor.execute(code, displayHandler) { internalId, codeToExecute ->
+                log.debug("Current cell id: $jupyterId")
+                executor.execute(code, displayHandler, currentCellId = jupyterId - 1) { internalId, codeToExecute ->
                     cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
                 }
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
-                varsMap = internalEvaluator.variablesMap
-                usageMap = internalEvaluator.usageMap
+
             }
+            val varsMap = internalEvaluator.variablesHolder
+            val usageMap = internalEvaluator.varsUsagePerCell
 
             cell?.resultVal = result.result.value
 
@@ -381,18 +418,14 @@ class ReplForJupyterImpl(
             } ?: emptyList()
 
             notebook.updateVarsState(varsMap)
-            printVars()
-//            printUsage(jupyterId, usageMap[jupyterId - 1]!!)
+            notebook.usageMap = usageMap
+            // printVars()
+            // printUsage(jupyterId, usageMap[jupyterId - 1]!!)
 
-            //todo: perhaps redundant
-            // would send serializable version
-            val mapToSend = mutableMapOf<String, String>()
-            varsMap.forEach {
-                val value = it.value.stringValue
-                mapToSend[it.key] = value
-            }
-
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, mapToSend))
+            // TODO: perhaps redundant
+            // send serializable version
+            val varsStateUpdate = varsMap.mapValues { it.value.stringValue }
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, varsStateUpdate))
         }
     }
 
