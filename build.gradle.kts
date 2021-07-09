@@ -93,9 +93,8 @@ dependencies {
     fun implKotlin(module: String, version: String? = kotlinVersion) = implementation(kotlin(module, version))
 
     // Standard dependencies
-    implKotlin("stdlib", null)
-    implKotlin("reflect", null)
-    implKotlin("stdlib-jdk8", null)
+    implKotlin("reflect")
+    implKotlin("stdlib-jdk8")
     implementation("org.jetbrains:annotations:20.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.build
 
 import groovy.json.JsonSlurper
+import org.gradle.api.Task
 import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.registering
@@ -81,13 +82,19 @@ fun ProjectWithOptions.prepareReadmeTasks() {
     val librariesDir = File(rootProject.projectDir, librariesPath)
     val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
 
+    fun Task.defineInputs() {
+        inputs.file(readmeStubFile)
+        inputs.dir(librariesDir)
+        inputs.property("kotlinVersion", kotlinVersion)
+        inputs.property("projectRepoUrl", projectRepoUrl)
+    }
+
     val generateReadme by tasks.registering {
         group = buildGroup
 
         readmeFile.parentFile.mkdirs()
 
-        inputs.file(readmeStubFile)
-        inputs.dir(librariesDir)
+        defineInputs()
         outputs.file(readmeFile)
 
         doLast {
@@ -98,8 +105,7 @@ fun ProjectWithOptions.prepareReadmeTasks() {
     tasks.register("checkReadme") {
         group = "verification"
 
-        inputs.file(readmeStubFile)
-        inputs.dir(librariesDir)
+        defineInputs()
         inputs.file(readmeFile)
 
         doLast {

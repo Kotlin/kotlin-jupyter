@@ -13,7 +13,6 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -166,7 +165,6 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    @Disabled("Fix completion for this case ASAP")
     fun testNoCompletionAfterNumbers() {
         runBlocking {
             repl.complete("val t = 42", 10) {
