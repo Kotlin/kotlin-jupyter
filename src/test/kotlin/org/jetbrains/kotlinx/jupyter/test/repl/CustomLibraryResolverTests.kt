@@ -244,7 +244,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             %use lib1
             5
         """.trimIndent()
-        repl.execute(code = code)
+        repl.execute(code)
 
         val expectedCodes = listOf(
             "import java.*",

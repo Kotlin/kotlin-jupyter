@@ -12,15 +12,15 @@ interface Notebook {
     /**
      * Current state of visible variables
      */
-    val variablesMap: Map<String, VariableState>
+    val variablesState: Map<String, VariableState>
 
     /**
      * Stores info about useful variables in a cell.
      * Key: cellId;
-     * Value: set of variables names.
+     * Value: set of variable names.
      * Useful <==> declarations + modifying references
      */
-    var usageMap: Map<Int, Set<String>>
+    var cellVariables: Map<Int, Set<String>>
 
     /**
      * Mapping allowing to get cell by execution number

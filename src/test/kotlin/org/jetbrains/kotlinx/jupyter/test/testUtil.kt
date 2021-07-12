@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
-import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -148,8 +148,8 @@ object NotebookMock : Notebook {
 
     override val cellsList: Collection<CodeCell>
         get() = emptyList()
-    override val variablesMap = mutableMapOf<String, VariableState>()
-    override var usageMap = mapOf<Int, Set<String>>()
+    override val variablesState = mutableMapOf<String, VariableStateImpl>()
+    override var cellVariables = mapOf<Int, Set<String>>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(

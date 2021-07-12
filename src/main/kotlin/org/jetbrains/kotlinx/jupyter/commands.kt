@@ -58,7 +58,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
             OkResponseWithMessage(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommand.VARS -> {
-            OkResponseWithMessage(htmlResult(repl.notebook.varsAsHtmlTable()))
+            OkResponseWithMessage(htmlResult(repl.notebook.variablesReportAsHTML()))
         }
         ReplCommand.HELP -> {
             val commands = ReplCommand.values().asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }

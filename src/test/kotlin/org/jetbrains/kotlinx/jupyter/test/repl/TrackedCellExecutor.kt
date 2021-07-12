@@ -46,7 +46,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val executedCodes = mutableListOf<Code>()
 
     override val variablesHolder = mutableMapOf<String, VariableState>()
-    override val varsUsagePerCell = mutableMapOf<Int, MutableSet<String>>()
+    override val cellVariables = mutableMapOf<Int, MutableSet<String>>()
 
     override val results: List<Any?>
         get() = executedCodes.map { null }

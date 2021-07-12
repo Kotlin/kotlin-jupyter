@@ -58,8 +58,8 @@ class ApiTest : AbstractSingleReplTest() {
             "y" to "abc",
             "z" to "47"
         )
-        assertEquals(res.metadata.variablesMap, varsUpdate)
-        val htmlText = generateHTMLVarsReport(repl.notebook.variablesMap)
+        assertEquals(res.metadata.evaluatedVariablesState, varsUpdate)
+        val htmlText = generateHTMLVarsReport(repl.notebook.variablesState)
         assertEquals(
             """
             <!DOCTYPE html>

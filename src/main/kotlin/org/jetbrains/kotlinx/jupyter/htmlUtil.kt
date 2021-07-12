@@ -3,9 +3,9 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 
 // TODO : perhaps, create factory class
-fun generateHTMLVarsReport(variablesMap: Map<String, VariableState>): String {
+fun generateHTMLVarsReport(variablesState: Map<String, VariableState>): String {
     return buildString {
-        this.append(
+        append(
             """
             <!DOCTYPE html>
             <html>
@@ -13,23 +13,23 @@ fun generateHTMLVarsReport(variablesMap: Map<String, VariableState>): String {
             
             """.trimIndent()
         )
-        this.append(generateStyleSection())
-        this.append("\n</head>\n<body>\n")
-        this.append("<h2 style=\"text-align:center\">Variables State</h2>\n")
+        append(generateStyleSection())
+        append("\n</head>\n<body>\n")
+        append("<h2 style=\"text-align:center\">Variables State</h2>\n")
 
-        if (variablesMap.isEmpty()) {
+        if (variablesState.isEmpty()) {
             this.append("<p>Empty state</p>\n\n")
             this.append("</body>\n</html>")
             return this.toString()
         }
 
-        this.append(generateVarsTable(variablesMap))
+        append(generateVarsTable(variablesState))
 
-        this.append("</body>\n</html>")
+        append("</body>\n</html>")
     }
 }
 
-// TODO: text is not aligning in a center
+// TODO: text is not aligned in the center
 fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
     //language=HTML
     val styleSection = """
@@ -47,9 +47,9 @@ fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
     return styleSection
 }
 
-fun generateVarsTable(variablesMap: Map<String, VariableState>): String {
+fun generateVarsTable(variablesState: Map<String, VariableState>): String {
     return buildString {
-        this.append(
+        append(
             """
         <table style="width:80%" align="center">
           <tr>
@@ -60,8 +60,8 @@ fun generateVarsTable(variablesMap: Map<String, VariableState>): String {
             """.trimIndent()
         )
 
-        variablesMap.entries.forEach {
-            this.append(
+        variablesState.entries.forEach {
+            append(
                 """
             <tr>
                 <td>${it.key}</td>
@@ -71,6 +71,6 @@ fun generateVarsTable(variablesMap: Map<String, VariableState>): String {
             )
         }
 
-        this.append("\n</table>\n")
+        append("\n</table>\n")
     }
 }

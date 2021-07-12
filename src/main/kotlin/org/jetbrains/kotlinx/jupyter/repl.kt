@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
@@ -366,14 +365,14 @@ class ReplForJupyterImpl(
      * Used for debug purposes.
      * @see ReplCommand
      */
-    private fun printVars(isHtmlFormat: Boolean = false) = log.debug(
-        if (isHtmlFormat) notebook.varsAsHtmlTable() else notebook.varsAsString()
+    private fun printVariables(isHtmlFormat: Boolean = false) = log.debug(
+        if (isHtmlFormat) notebook.variablesReportAsHTML() else notebook.variablesReport()
     )
 
     // TODO: causes some tests to fail. perhaps, due to exhausting log calling
-    private fun printUsage(cellId: Int, usedVars: Set<String>) {
+    private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>) {
         log.debug("Usages for cell $cellId:")
-        usedVars.forEach {
+        usedVariables.forEach {
             log.debug(it)
         }
     }
@@ -396,10 +395,9 @@ class ReplForJupyterImpl(
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
-
             }
-            val varsMap = internalEvaluator.variablesHolder
-            val usageMap = internalEvaluator.varsUsagePerCell
+            val variablesState = internalEvaluator.variablesHolder
+            val cellVariables = internalEvaluator.cellVariables
 
             cell?.resultVal = result.result.value
 
@@ -417,15 +415,14 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            notebook.updateVarsState(varsMap)
-            notebook.usageMap = usageMap
+            notebook.updateVariablesState(variablesState)
+            notebook.cellVariables = cellVariables
             // printVars()
             // printUsage(jupyterId, usageMap[jupyterId - 1]!!)
 
-            // TODO: perhaps redundant
-            // send serializable version
-            val varsStateUpdate = varsMap.mapValues { it.value.stringValue }
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, varsStateUpdate))
+
+            val variablesStateUpdate = variablesState.mapValues { it.value.stringValue }
+            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate))
         }
     }
 

@@ -104,9 +104,9 @@ class NotebookImpl(
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
 
-    override val variablesMap = mutableMapOf<String, VariableState>()
+    override val variablesState = mutableMapOf<String, VariableState>()
 
-    override var usageMap = mapOf<Int, Set<String>>()
+    override var cellVariables = mapOf<Int, Set<String>>()
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
@@ -136,21 +136,25 @@ class NotebookImpl(
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
-    fun updateVarsState(varsMap: Map<String, VariableState>) {
-        variablesMap += varsMap
+    fun updateVariablesState(varsStateUpdate: Map<String, VariableState>) {
+        variablesState += varsStateUpdate
     }
 
-    fun varsAsHtmlTable(): String {
-        return generateHTMLVarsReport(variablesMap)
+    fun variablesReportAsHTML(): String {
+        return generateHTMLVarsReport(variablesState)
     }
 
-    fun varsAsString(): String {
-        if (variablesMap.isEmpty()) return ""
-        val stringBuilder = StringBuilder("Visible vars: \n")
-        variablesMap.forEach { (t, u) ->
-            stringBuilder.append("\t$t : ${u.stringValue}\n")
+    fun variablesReport(): String {
+        return if (variablesState.isEmpty()) ""
+        else {
+            buildString {
+                append("Visible vars: \n")
+                variablesState.forEach { (name, currentState) ->
+                    append("\t$name : ${currentState.stringValue}\n")
+                }
+                append('\n')
+            }
         }
-        return stringBuilder.append('\n').toString()
     }
 
     fun addCell(
