@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
@@ -64,12 +65,10 @@ internal class InternalEvaluatorImpl(
 
     override val variablesHolder = mutableMapOf<String, VariableState>()
 
-    override val cellVariables = mutableMapOf<Int, MutableSet<String>>()
+    override val cellVariables: Map<Int, Set<String>>
+        get() = variablesWatcher.cellVariables
 
-    /**
-     * Tells in which cell a variable was declared
-     */
-    private val varsDeclarationInfo: MutableMap<String, Int> = mutableMapOf()
+    private val variablesWatcher: VariablesUsagesPerCellWatcher<Int, String> = VariablesUsagesPerCellWatcher()
 
     private var isExecuting = false
 
@@ -143,10 +142,7 @@ internal class InternalEvaluatorImpl(
     }
 
     private fun updateVariablesState(cellId: Int) {
-        // remove known modifying usages in this cell
-        cellVariables[cellId]?.removeIf {
-            varsDeclarationInfo[it] != cellId
-        }
+        variablesWatcher.removeOldUsages(cellId)
 
         variablesHolder.forEach {
             val state = it.value as VariableStateImpl
@@ -154,7 +150,7 @@ internal class InternalEvaluatorImpl(
             state.update()
 
             if (state.stringValue != oldValue) {
-                cellVariables[cellId]?.add(it.key)
+                variablesWatcher.addUsage(cellId, it.key)
             }
         }
     }
@@ -168,21 +164,13 @@ internal class InternalEvaluatorImpl(
         fields.forEach { property ->
             property as KProperty1<Any, *>
             val state = VariableStateImpl(property, cellClassInstance)
+            variablesWatcher.addDeclaration(cellId, property.name)
 
-            // redeclaration of any type
-            if (varsDeclarationInfo.containsKey(property.name)) {
-                val oldCellId = varsDeclarationInfo[property.name]
-                if (oldCellId != cellId) {
-                    cellVariables[oldCellId]?.remove(property.name)
-                }
-            }
             // it was val, now it's var
             if (property is KMutableProperty1) {
                 variablesHolder.remove(property.name)
             }
-            varsDeclarationInfo[property.name] = cellId
-            cellVariables[cellId]?.add(property.name)
-            // invariant with changes: cache --> varsMap, other way is not allowed
+
             if (property !is KMutableProperty1) {
                 variablesHolder[property.name] = state
                 return@forEach
@@ -193,15 +181,8 @@ internal class InternalEvaluatorImpl(
     }
 
     private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
-        cellVariables.putIfAbsent(lastExecutionCellId, mutableSetOf())
-
-        val visibleDeclarations = getVisibleVariables(resultValue, lastExecutionCellId)
-        visibleDeclarations.forEach {
-            val cellSet = cellVariables[lastExecutionCellId] ?: return@forEach
-            varsDeclarationInfo[it.key] = lastExecutionCellId
-            cellSet += it.key
-        }
-        variablesHolder += visibleDeclarations
+        variablesWatcher.ensureStorageCreation(lastExecutionCellId)
+        variablesHolder += getVisibleVariables(resultValue, lastExecutionCellId)
 
         updateVariablesState(lastExecutionCellId)
     }

@@ -68,3 +68,43 @@ fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCod
 fun ResultsRenderersProcessor.registerDefaultRenderers() {
     register(bufferedImageRenderer)
 }
+
+/**
+ * Stores info about where a variable Y was declared and info about what are they at the address X.
+ * T: key, stands for a way of addressing variables, e.g. address.
+ * V: value, from Variable, choose any suitable type for your variable reference.
+ * Default: Int, String
+ */
+class VariablesUsagesPerCellWatcher<T : Any, U : Any> {
+    val cellVariables = mutableMapOf<T, MutableSet<U>>()
+
+    /**
+     * Tells in which cell a variable was declared
+     */
+    private val variablesDeclarationInfo: MutableMap<U, T> = mutableMapOf()
+
+    fun addDeclaration(address: T, variableRef: U) {
+        ensureStorageCreation(address)
+
+        // redeclaration of any type
+        if (variablesDeclarationInfo.containsKey(variableRef)) {
+            val oldCellId = variablesDeclarationInfo[variableRef]
+            if (oldCellId != address) {
+                cellVariables[oldCellId]?.remove(variableRef)
+            }
+        }
+        variablesDeclarationInfo[variableRef] = address
+        cellVariables[address]?.add(variableRef)
+    }
+
+    fun addUsage(address: T, variableRef: U) = cellVariables[address]?.add(variableRef)
+
+    fun removeOldUsages(newAddress: T) {
+        // remove known modifying usages in this cell
+        cellVariables[newAddress]?.removeIf {
+            variablesDeclarationInfo[it] != newAddress
+        }
+    }
+
+    fun ensureStorageCreation(address: T) = cellVariables.putIfAbsent(address, mutableSetOf())
+}

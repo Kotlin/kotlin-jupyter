@@ -571,7 +571,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
         assertEquals("1", varsState["z"]!!.stringValue)
     }
 
-
     @Test
     fun testPrivateVarsCaptureSeparateCells() {
         eval(

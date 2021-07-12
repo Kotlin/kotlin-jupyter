@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.EvalResult
 import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
+import org.jetbrains.kotlinx.jupyter.varsTableStyleClass
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -62,23 +63,18 @@ class ApiTest : AbstractSingleReplTest() {
         val htmlText = generateHTMLVarsReport(repl.notebook.variablesState)
         assertEquals(
             """
-            <!DOCTYPE html>
-            <html>
-            <head>
             <style>
-            table, th, td {
+            table.$varsTableStyleClass, .$varsTableStyleClass th, .$varsTableStyleClass td {
               border: 1px solid black;
               border-collapse: collapse;
               text-align:center;
             }
-            th, td {
+            .$varsTableStyleClass th, .$varsTableStyleClass td {
               padding: 5px;
             }
             </style>
-            </head>
-            <body>
-            <h2 style="text-align:center">Variables State</h2>
-            <table style="width:80%" align="center">
+            <h2 style="text-align:center;">Variables State</h2>
+            <table class="$varsTableStyleClass" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
               <tr>
                 <th>Variable</th>
                 <th>Value</th>
@@ -94,8 +90,7 @@ class ApiTest : AbstractSingleReplTest() {
                 <td>47</td>
             </tr>
             </table>
-            </body>
-            </html>
+            
             """.trimIndent(),
             htmlText
         )
