@@ -8,6 +8,9 @@ fun ProjectWithOptions.prepareLocalTasks() {
         group = localGroup
         dependsOn("cleanInstallDirLocal")
         from(distributionPath.resolve(runKernelDir).resolve(runKernelPy))
+        from(distributionPath.resolve(kotlinKernelModule)) {
+            into(kotlinKernelModule)
+        }
         into(installPathLocal)
     }
 

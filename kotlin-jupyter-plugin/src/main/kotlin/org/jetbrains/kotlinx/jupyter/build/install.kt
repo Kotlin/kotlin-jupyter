@@ -36,6 +36,7 @@ interface InstallOptions {
     val jarArgsFile: String
     val runKernelDir: String
     val runKernelPy: String
+    val kotlinKernelModule: String
     val setupPy: String
     val kernelFile: String
     val mainClassFQN: String

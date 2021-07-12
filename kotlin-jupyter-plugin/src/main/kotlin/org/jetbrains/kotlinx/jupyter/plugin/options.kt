@@ -76,6 +76,7 @@ fun Project.options(): AllOptions {
             // Straight slash is used 'cause it's universal across the platforms, and is used in jar_args config
             override val jarArgsFile = "$configDir/jar_args.json"
             override val runKernelPy = "run_kernel.py"
+            override val kotlinKernelModule = "kotlin_kernel"
             override val kernelFile = "kernel.json"
             override val mainClassFQN = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
             override val installKernelTaskPrefix = "installKernel"
