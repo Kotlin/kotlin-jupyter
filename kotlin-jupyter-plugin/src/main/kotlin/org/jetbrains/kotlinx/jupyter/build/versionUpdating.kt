@@ -61,11 +61,12 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
     val pushChangesTask = tasks.register("pushChanges") {
         dependsOn(updateLibraryParamTask)
 
+        val librariesDir = projectDir.resolve(librariesPath)
         fun execGit(vararg args: String, configure: ExecSpec.() -> Unit = {}): ExecResult {
             return exec {
                 this.executable = "git"
                 this.args = args.asList()
-                this.workingDir = projectDir
+                this.workingDir = librariesDir
 
                 configure()
             }
@@ -78,8 +79,13 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             execGit("add", ".")
             execGit("commit", "-m", "[AUTO] Update library version")
 
-            val repoUrl = rootProject.property("pushRepoUrl") as String
-            execGit("push", "--force", "-u", repoUrl, getCurrentBranch() + ":" + updateLibBranchName!!) {
+            val repoUrl = rootProject.property("librariesRepoUrl") as String
+            val currentBranch = getPropertyByCommand(
+                "build.libraries.branch",
+                arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
+                librariesDir,
+            )
+            execGit("push", "--force", "-u", repoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!) {
                 this.standardOutput = object: OutputStream() {
                     override fun write(b: Int) { }
                 }
@@ -95,6 +101,7 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
         doLast {
             val user = rootProject.property("jupyter.github.user") as String
             val password = rootProject.property("jupyter.github.token") as String
+            val repoUserAndName = rootProject.property("librariesRepoUserAndName") as String
             fun githubRequest(method: Method, request: String, json: Map<String, String>? = null): Int {
                 val response = httpRequest(Request(method, "https://api.github.com/$request")
                     .withJson(Json.encodeToJsonElement(json))
@@ -104,7 +111,7 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
                 return response.status.code
             }
 
-            val code = githubRequest(Method.POST, "repos/Kotlin/kotlin-jupyter/pulls", mapOf(
+            val code = githubRequest(Method.POST, "repos/$repoUserAndName/pulls", mapOf(
                 "title" to "Update library versions",
                 "head" to updateLibBranchName!!,
                 "base" to "master"
