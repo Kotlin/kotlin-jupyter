@@ -1,7 +1,7 @@
 {
   "description": "Kotlin framework for structured data processing",
   "properties": {
-    "v": "0.8.0-dev-296-0.10.0.91"
+    "v": "0.8.0-dev-297-0.10.0.114"
   },
   "repositories": [
     "https://oss.sonatype.org/service/local/repo_groups/public/content"
