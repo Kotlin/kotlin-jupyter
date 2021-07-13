@@ -4,7 +4,6 @@ import org.jetbrains.kotlinx.jupyter.api.VariableState
 
 const val varsTableStyleClass = "variables_table"
 
-// TODO : perhaps, create factory class
 fun generateHTMLVarsReport(variablesState: Map<String, VariableState>): String {
     return buildString {
         append(generateStyleSection())
@@ -18,7 +17,6 @@ fun generateHTMLVarsReport(variablesState: Map<String, VariableState>): String {
     }
 }
 
-// TODO: text is not aligned in the center
 fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
     //language=HTML
     val styleSection = """
@@ -41,11 +39,11 @@ fun generateVarsTable(variablesState: Map<String, VariableState>): String {
     return buildString {
         append(
             """
-        <table class="$varsTableStyleClass" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
-          <tr>
-            <th>Variable</th>
-            <th>Value</th>
-          </tr>
+            <table class="$varsTableStyleClass" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
+              <tr>
+                <th>Variable</th>
+                <th>Value</th>
+              </tr>
       
             """.trimIndent()
         )
@@ -53,10 +51,10 @@ fun generateVarsTable(variablesState: Map<String, VariableState>): String {
         variablesState.entries.forEach {
             append(
                 """
-            <tr>
-                <td>${it.key}</td>
-                <td>${it.value.stringValue}</td>
-            </tr>
+                <tr>
+                    <td>${it.key}</td>
+                    <td>${it.value.stringValue}</td>
+                </tr>
                 """.trimIndent()
             )
         }

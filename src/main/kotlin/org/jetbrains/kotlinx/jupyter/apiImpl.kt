@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 
 class DisplayResultWrapper private constructor(
     val display: DisplayResult,
@@ -106,7 +107,8 @@ class NotebookImpl(
 
     override val variablesState = mutableMapOf<String, VariableState>()
 
-    override var cellVariables = mapOf<Int, Set<String>>()
+    override val cellVariables: Map<Int, Set<String>>
+        get() = currentCellVariables
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
@@ -118,6 +120,7 @@ class NotebookImpl(
         return getCell(id).result
     }
 
+    private var currentCellVariables = mapOf<Int, Set<String>>()
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
 
@@ -135,6 +138,11 @@ class NotebookImpl(
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+
+    fun updateVariablesState(evaluator: InternalEvaluator) {
+        variablesState += evaluator.variablesHolder
+        currentCellVariables = evaluator.cellVariables
+    }
 
     fun updateVariablesState(varsStateUpdate: Map<String, VariableState>) {
         variablesState += varsStateUpdate

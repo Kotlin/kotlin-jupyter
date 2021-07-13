@@ -169,12 +169,11 @@ internal class InternalEvaluatorImpl(
             // it was val, now it's var
             if (property is KMutableProperty1) {
                 variablesHolder.remove(property.name)
-            }
-
-            if (property !is KMutableProperty1) {
+            } else {
                 variablesHolder[property.name] = state
                 return@forEach
             }
+
             ans[property.name] = state
         }
         return ans

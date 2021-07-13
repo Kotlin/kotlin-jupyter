@@ -12,6 +12,8 @@ import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
+import org.jetbrains.kotlinx.jupyter.test.getStringValue
+import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -464,13 +466,13 @@ class ReplVarsTest : AbstractSingleReplTest() {
         assertEquals(res.metadata.evaluatedVariablesState, varsUpdate)
         assertFalse(repl.notebook.variablesState.isEmpty())
         val varsState = repl.notebook.variablesState
-        assertEquals("1", varsState["x"]!!.stringValue)
-        assertEquals("0", varsState["y"]!!.stringValue)
-        assertEquals("47", varsState["z"]!!.stringValue)
+        assertEquals("1", varsState.getStringValue("x"))
+        assertEquals("0", varsState.getStringValue("y"))
+        assertEquals(47, varsState.getValue("z"))
 
         (varsState["z"]!! as VariableStateImpl).update()
         repl.notebook.updateVariablesState(varsState)
-        assertEquals("47", varsState["z"]!!.stringValue)
+        assertEquals(47, varsState.getValue("z"))
     }
 
     @Test
@@ -503,9 +505,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
         val returnedState = res.metadata.evaluatedVariablesState
         assertEquals(strState, returnedState)
-        assertEquals("1", varsState["x"]!!.stringValue)
-        assertEquals("abc", varsState["y"]!!.stringValue)
-        assertEquals("1", varsState["z"]!!.stringValue)
+        assertEquals(1, varsState.getValue("x"))
+        assertEquals("abc", varsState.getStringValue("y"))
+        assertEquals("1", varsState.getStringValue("z"))
     }
 
     @Test
@@ -529,9 +531,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
         )
         assertTrue(varsState.isNotEmpty())
         assertEquals(3, varsState.size)
-        assertEquals("abc", varsState["x"]!!.stringValue)
-        assertEquals("123", varsState["y"]!!.stringValue)
-        assertEquals("abc", varsState["z"]!!.stringValue)
+        assertEquals("abc", varsState.getStringValue("x"))
+        assertEquals(123, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
 
         eval(
             """
@@ -543,9 +545,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
         assertTrue(varsState.isNotEmpty())
         assertEquals(3, varsState.size)
-        assertEquals("1024", varsState["x"]!!.stringValue)
-        assertEquals("${123 * 2}", varsState["y"]!!.stringValue)
-        assertEquals("abc", varsState["z"]!!.stringValue)
+        assertEquals("1024", varsState.getStringValue("x"))
+        assertEquals("${123 * 2}", varsState.getStringValue("y"))
+        assertEquals("abc", varsState.getValue("z"))
     }
 
     @Test
@@ -566,9 +568,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
         val returnedState = res.metadata.evaluatedVariablesState
         assertEquals(strState, returnedState)
-        assertEquals("1", varsState["x"]!!.stringValue)
-        assertEquals("abc", varsState["y"]!!.stringValue)
-        assertEquals("1", varsState["z"]!!.stringValue)
+        assertEquals(1, varsState.getValue("x"))
+        assertEquals("abc", varsState.getStringValue("y"))
+        assertEquals("1", varsState.getStringValue("z"))
     }
 
     @Test
@@ -592,9 +594,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
         )
         assertTrue(varsState.isNotEmpty())
         assertEquals(3, varsState.size)
-        assertEquals("abc", varsState["x"]!!.stringValue)
-        assertEquals("123", varsState["y"]!!.stringValue)
-        assertEquals("abc", varsState["z"]!!.stringValue)
+        assertEquals("abc", varsState.getStringValue("x"))
+        assertEquals(123, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
 
         eval(
             """
@@ -606,9 +608,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
         assertTrue(varsState.isNotEmpty())
         assertEquals(3, varsState.size)
-        assertEquals("1024", varsState["x"]!!.stringValue)
-        assertEquals("${123 + 1024}", varsState["y"]!!.stringValue)
-        assertEquals("abc", varsState["z"]!!.stringValue)
+        assertEquals("1024", varsState.getStringValue("x"))
+        assertEquals(123 + 1024, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
     }
 
     @Test

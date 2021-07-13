@@ -20,7 +20,7 @@ interface Notebook {
      * Value: set of variable names.
      * Useful <==> declarations + modifying references
      */
-    var cellVariables: Map<Int, Set<String>>
+    val cellVariables: Map<Int, Set<String>>
 
     /**
      * Mapping allowing to get cell by execution number

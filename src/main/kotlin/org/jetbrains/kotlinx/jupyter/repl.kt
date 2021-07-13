@@ -369,12 +369,17 @@ class ReplForJupyterImpl(
         if (isHtmlFormat) notebook.variablesReportAsHTML() else notebook.variablesReport()
     )
 
-    // TODO: causes some tests to fail. perhaps, due to exhausting log calling
-    private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>) {
-        log.debug("Usages for cell $cellId:")
-        usedVariables.forEach {
-            log.debug(it)
-        }
+    private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>?) {
+        log.debug(buildString {
+            if (usedVariables == null || usedVariables.isEmpty()) {
+                append("No usages for cell $cellId")
+                return@buildString
+            }
+            append("Usages for cell $cellId:\n")
+            usedVariables.forEach {
+                append(it + "\n")
+            }
+        })
     }
 
     override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
@@ -396,9 +401,6 @@ class ReplForJupyterImpl(
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
             }
-            val variablesState = internalEvaluator.variablesHolder
-            val cellVariables = internalEvaluator.cellVariables
-
             cell?.resultVal = result.result.value
 
             val rendered = result.result.let {
@@ -415,13 +417,12 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
-            notebook.updateVariablesState(variablesState)
-            notebook.cellVariables = cellVariables
+            notebook.updateVariablesState(internalEvaluator)
             // printVars()
-            // printUsage(jupyterId, usageMap[jupyterId - 1]!!)
+            // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
 
 
-            val variablesStateUpdate = variablesState.mapValues { it.value.stringValue }
+            val variablesStateUpdate = notebook.variablesState.mapValues { it.value.stringValue }
             EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate))
         }
     }
