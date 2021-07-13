@@ -1,0 +1,3 @@
+[submodule "libraries"]
+	path = libraries
+	url = https://github.com/Kotlin/kotlin-jupyter-libraries.git

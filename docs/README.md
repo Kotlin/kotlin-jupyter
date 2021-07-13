@@ -52,7 +52,7 @@ Uninstall: `pip uninstall kotlin-jupyter-kernel`
 ### From sources
 
 ```bash
-git clone https://github.com/Kotlin/kotlin-jupyter.git
+git clone --recurse-submodules https://github.com/Kotlin/kotlin-jupyter.git
 cd kotlin-jupyter
 ./gradlew install
 ```

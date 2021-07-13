@@ -31,9 +31,6 @@ private val Project.libParamValue get() = prop<String>("jupyter.lib.param.value"
 private val Project.prGithubUser get() = prop<String>("jupyter.github.user")
 private val Project.prGithubToken get() = prop<String>("jupyter.github.token")
 
-private val Project.githubRepoOwner get() = prop<String>("githubRepoUser")
-private val Project.githubRepoName get() = prop<String>("githubRepoName")
-
 @Serializable
 class NewPrData(
     val title: String,
@@ -89,11 +86,12 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
     val pushChangesTask = tasks.register("pushChanges") {
         dependsOn(updateLibraryParamTask)
 
+        val librariesDir = projectDir.resolve(librariesPath)
         fun execGit(vararg args: String, configure: ExecSpec.() -> Unit = {}): ExecResult {
             return exec {
                 this.executable = "git"
                 this.args = args.asList()
-                this.workingDir = projectDir
+                this.workingDir = librariesDir
 
                 configure()
             }
@@ -106,8 +104,13 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             execGit("add", ".")
             execGit("commit", "-m", "[AUTO] Update library version")
 
-            val repoUrl = rootProject.property("pushRepoUrl") as String
-            execGit("push", "--force", "-u", repoUrl, getCurrentBranch() + ":refs/heads/" + updateLibBranchName!!) {
+            val repoUrl = rootProject.property("librariesRepoUrl") as String
+            val currentBranch = getPropertyByCommand(
+                "build.libraries.branch",
+                arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
+                librariesDir,
+            )
+            execGit("push", "--force", "-u", repoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!) {
                 this.standardOutput = object : OutputStream() {
                     override fun write(b: Int) { }
                 }
@@ -123,6 +126,7 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
         doLast {
             val user = rootProject.prGithubUser
             val password = rootProject.prGithubToken
+            val repoUserAndName = rootProject.property("librariesRepoUserAndName") as String
             fun githubRequest(
                 method: Method,
                 request: String,
@@ -141,9 +145,8 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
                 return response
             }
 
-            val fullRepo = "${rootProject.githubRepoOwner}/${rootProject.githubRepoName}"
             val prResponse = githubRequest(
-                Method.POST, "repos/$fullRepo/pulls",
+                Method.POST, "repos/$repoUserAndName/pulls",
                 Json.encodeToJsonElement(
                     NewPrData(
                         title = "Update `${rootProject.libName}` library to `${rootProject.libParamValue}`",
@@ -157,7 +160,7 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
 
             val prNumber = (prResponse.jsonObject["number"] as JsonPrimitive).int
             githubRequest(
-                Method.POST, "repos/$fullRepo/issues/$prNumber/labels",
+                Method.POST, "repos/$repoUserAndName/issues/$prNumber/labels",
                 Json.encodeToJsonElement(
                     SetLabelsData(listOf("no-changelog", "library-descriptors"))
                 )
