@@ -4,9 +4,14 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.file.Path
 
-fun Project.getPropertyByCommand(propName: String, cmdArgs: Array<String>): String {
+fun Project.getPropertyByCommand(
+    propName: String,
+    cmdArgs: Array<String>,
+    workingDir: File? = null,
+): String {
     val prop = project.findProperty(propName) as String?
 
     if (prop != null) {
@@ -17,6 +22,7 @@ fun Project.getPropertyByCommand(propName: String, cmdArgs: Array<String>): Stri
     val result = exec {
         commandLine(*cmdArgs)
         standardOutput = outputStream
+        workingDir?.let { this.workingDir = it }
     }
 
     val output = outputStream.toString()
