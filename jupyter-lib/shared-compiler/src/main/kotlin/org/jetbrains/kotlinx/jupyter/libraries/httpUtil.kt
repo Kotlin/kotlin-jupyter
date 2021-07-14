@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jupyter.config.getLogger
 fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<String, String>? {
     val logger = getLogger()
     return logger.catchAll {
-        var url = "$GitHubApiPrefix/commits?path=$LibrariesDir&sha=$ref"
+        var url = "$GitHubApiPrefix/commits?path=$RemoteLibrariesDir&sha=$ref"
         if (sinceTimestamp != null) {
             url += "&since=$sinceTimestamp"
         }
@@ -20,7 +20,7 @@ fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): Pair<Strin
             if (sinceTimestamp != null) {
                 getLatestCommitToLibraries(ref, null)
             } else {
-                logger.info("Didn't find any commits to '$LibrariesDir' at $url")
+                logger.info("Didn't find any commits to libraries at $url")
                 null
             }
         } else {
