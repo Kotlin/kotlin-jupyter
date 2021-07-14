@@ -167,7 +167,7 @@ When a library is included with `%use` keyword, the following functionality is a
  - library initialization code
  - renderers for special types, e.g. charts and data frames
 
-This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](../libraries) directory.
+This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](https://github.com/Kotlin/kotlin-jupyter-libraries) repository.
 A library descriptor may provide a set of properties with default values that can be overridden when library is included.
 The major use case for library properties is to specify a particular version of library. If descriptor has only one property, it can be 
 defined without naming:
@@ -182,8 +182,7 @@ Several libraries can be included in single `%use` statement, separated by `,`:
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's taken from the `libraries` directory
-of kernel installation. If you want to try descriptor from another revision, use the following syntax:
+You can also specify the source of library descriptor. By default, it's taken from the [libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries). If you want to try descriptor from another revision, use the following syntax:
 ```
 // Specify some git tag from this repository
 %use lets-plot@0.8.2.5

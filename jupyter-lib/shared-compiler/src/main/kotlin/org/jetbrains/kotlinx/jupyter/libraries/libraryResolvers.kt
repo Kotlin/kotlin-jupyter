@@ -112,7 +112,7 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
         resolver<LibraryResolutionInfo.ByGitRef> { name ->
             if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
 
-            val url = "$GitHubApiPrefix/contents/$LibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
+            val url = "$GitHubApiPrefix/contents/$RemoteLibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
             getLogger().info("Requesting library descriptor at $url")
             val response = getHttp(url).jsonObject
 

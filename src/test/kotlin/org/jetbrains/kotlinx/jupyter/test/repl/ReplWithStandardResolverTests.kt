@@ -1,8 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoName
-import org.jetbrains.kotlinx.jupyter.libraries.GitHubRepoOwner
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
@@ -27,7 +25,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             @file:DependsOn("org.geotools:gt-shapefile:[23,)")
             @file:DependsOn("org.geotools:gt-cql:[23,)")
             
-            %use lets-plot@cfcf8257116ad3753b176a9f779eaaea4619dacd(api=2.0.1)
+            %use lets-plot@f2bb7075b316e7181ff8fddb1e045c4ed2c26442(api=2.0.1)
             
             @file:DependsOn("org.jetbrains.lets-plot:lets-plot-kotlin-geotools:2.0.1")
             
@@ -67,6 +65,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     fun testUseFileUrlRef() {
         val commit = "cfcf8257116ad3753b176a9f779eaaea4619dacd"
+        val libsCommit = "f2bb7075b316e7181ff8fddb1e045c4ed2c26442"
         val libraryPath = "src/test/testData/test-init.json"
 
         val res1 = eval(
@@ -79,7 +78,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         val res2 = eval(
             """
-            %use @url[https://raw.githubusercontent.com/$GitHubRepoOwner/$GitHubRepoName/$commit/$libraryPath](name=y, value=43)
+            %use @url[https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/$commit/$libraryPath](name=y, value=43)
             y
             """.trimIndent()
         )
@@ -88,7 +87,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val displays = mutableListOf<Any>()
         val handler = TestDisplayHandler(displays)
 
-        val res3 = eval("%use lets-plot@$commit", handler)
+        val res3 = eval("%use lets-plot@$libsCommit", handler)
         assertEquals(1, displays.count())
         assertUnit(res3.resultValue)
         displays.clear()

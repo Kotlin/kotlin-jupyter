@@ -8,7 +8,7 @@ Generally, there are two ways of adding new library:
 
 To support new `JVM` library and make it available via `%use` magic command you need to create a library descriptor for it.
 
-Check [libraries](../libraries) directory to see examples of library descriptors.
+Check [libraries][libs-repo] repository to see examples of library descriptors.
 
 Library descriptor is a `<libName>.json` file with the following fields:
 - `properties`: a dictionary of properties that are used within library descriptor
@@ -37,7 +37,7 @@ To register new library descriptor:
 1. For private usage - create it anywhere on your computer and reference it using file syntax.
 2. Alternative way for private usage - create descriptor in `.jupyter_kotlin/libraries` folder and reference
    it using "default" syntax
-3. For sharing with community - commit it to [libraries](../libraries) directory and create pull request.
+3. For sharing with community - commit it to [libraries][libs-repo] repository and create pull request.
 
 If you are maintaining some library and want to update your library descriptor, create pull request with your update.
 After your request is accepted, new version of your library will be available to all Kotlin Jupyter users
@@ -155,3 +155,5 @@ resources. This file should contain FQNs of all integration classes in the JSON 
 ```
 Classes derived from `LibraryDefinition` should be added to the `definitions` array.
 Classes derived from `LibraryDefinitionProducer` should be added to the `producers` array.
+
+[libs-repo]: https://github.com/Kotlin/kotlin-jupyter-libraries
