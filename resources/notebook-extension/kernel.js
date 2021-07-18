@@ -645,6 +645,38 @@ define(function(){
             return /^[A-Z0-9.:"]$/i.test(key);
         }
 
+        function _processCompletionOnChange(cm, changes, completer) {
+            var close_completion = false
+            for (var i = 0; i < changes.length; ++i) {
+                var change = changes[i];
+                if (change.origin === "+input") {
+                    for (var j = 0; j < change.text.length; ++j) {
+                        var t = change.text[j];
+                        for (var k = 0; k < t.length; ++k) {
+                            if (_isCompletionKey(t[k])) {
+                                completer.startCompletion(false);
+                                return;
+                            }
+                        }
+                    }
+                } else {
+                    var line = change.from.line;
+                    var ch = change.from.ch;
+                    if (ch === 0) continue;
+                    var removed = change.removed;
+                    if (removed.length > 1 || removed[0].length > 0) {
+                        var prevChar = cm.getRange({line: line, ch: ch - 1}, change.from);
+                        if (_isCompletionKey(prevChar)) {
+                            completer.startCompletion(false);
+                            return;
+                        }
+                        else close_completion = true;
+                    }
+                }
+            }
+            if (close_completion) completer.close();
+        }
+
         Completer.prototype.keypress = function (event) {
             /**
              * FIXME: This is a band-aid.
@@ -658,7 +690,7 @@ define(function(){
             var code = event.keyCode;
 
             // don't handle keypress if it's not a character (arrows on FF)
-            // or ENTER/TAB
+            // or ENTER/TAB/BACKSPACE
             if (event.charCode === 0 ||
                 code == keycodes.tab ||
                 code == keycodes.enter ||
@@ -719,6 +751,8 @@ define(function(){
         }
 
         CodeCell.prototype._handle_change = function(cm, changes) {
+            _processCompletionOnChange(cm, changes, this.completer)
+
             clearAllErrors(this.notebook);
             this.kernel.listErrors(cm.getValue(), (msg) => {
                 var content = msg.content;
@@ -851,22 +885,11 @@ define(function(){
                     // is empty.  In this case, let CodeMirror handle indentation.
                     return false;
                 } else {
-                    event.preventDefault();
-                    event.codemirrorIgnore = true;
-
-                    var doAutoPrint = event.keyCode === keycodes.tab;
-
-                    if (!doAutoPrint && event.key.length === 1) {
-                        editor.replaceRange(event.key, cur, cur);
-                    } else if (event.keyCode === keycodes.backspace) {
-                        var fromInd = this.code_mirror.indexFromPos(cur) - 1;
-
-                        if (fromInd >= 0) {
-                            editor.replaceRange("", this.code_mirror.posFromIndex(fromInd), cur);
-                        }
+                    if (event.keyCode === keycodes.tab) {
+                        event.preventDefault();
+                        event.codemirrorIgnore = true;
+                        this.completer.startCompletion(true);
                     }
-
-                    this.completer.startCompletion(doAutoPrint);
                     return true;
                 }
             }
