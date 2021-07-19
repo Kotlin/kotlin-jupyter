@@ -2,6 +2,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
+    kotlin("plugin.serialization")
 }
 
 repositories {

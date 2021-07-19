@@ -7,6 +7,7 @@ pluginManagement {
     val ktlintGradleVersion: String by settings
     val jupyterApiVersion: String by settings
     val publishPluginVersion: String by settings
+    val changelogPluginVersion: String by settings
 
     repositories {
         mavenLocal()
@@ -53,6 +54,7 @@ pluginManagement {
         id("org.jetbrains.kotlinx.jupyter.dependencies")
         id("ru.ileasile.kotlin.publisher") version publishPluginVersion
         id("ru.ileasile.kotlin.doc") version publishPluginVersion
+        id("org.hildan.github.changelog") version changelogPluginVersion
     }
 }
 

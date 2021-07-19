@@ -1,22 +1,50 @@
 package org.jetbrains.kotlinx.jupyter.build
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.int
+import org.gradle.api.Project
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
-import java.io.File
-import java.io.OutputStream
 import org.http4k.core.Method
 import org.http4k.core.Request
-import org.jetbrains.kotlinx.jupyter.common.jsonObject
+import org.http4k.core.Response
+import org.jetbrains.kotlinx.jupyter.common.ResponseWrapper
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
+import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.common.withBasicAuth
 import org.jetbrains.kotlinx.jupyter.common.withJson
+import java.io.File
+import java.io.OutputStream
+
+private val Project.libName get() = prop<String>("jupyter.lib.name")
+private val Project.libParamName get() = prop<String>("jupyter.lib.param.name")
+private val Project.libParamValue get() = prop<String>("jupyter.lib.param.value")
+
+private val Project.prGithubUser get() = prop<String>("jupyter.github.user")
+private val Project.prGithubToken get() = prop<String>("jupyter.github.token")
+
+private val Project.githubRepoOwner get() = prop<String>("githubRepoUser")
+private val Project.githubRepoName get() = prop<String>("githubRepoName")
+
+@Serializable
+class NewPrData(
+    val title: String,
+    val head: String,
+    val base: String,
+)
+
+@Serializable
+class SetLabelsData(
+    val labels: List<String>,
+)
 
 fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
     tasks.register("updateKotlinVersion") {
@@ -49,9 +77,9 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
 
     val updateLibraryParamTask = tasks.register("updateLibraryParam") {
         doLast {
-            val libName = project.property("jupyter.lib.name") as String
-            val paramName = project.property("jupyter.lib.param.name") as String
-            val paramValue = project.property("jupyter.lib.param.value") as String
+            val libName = project.libName
+            val paramName = project.libParamName
+            val paramValue = project.libParamValue
 
             updateLibBranchName = "update-$libName-$paramName-$paramValue"
             updateLibraryParam(libName, paramName, paramValue)
@@ -79,8 +107,8 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             execGit("commit", "-m", "[AUTO] Update library version")
 
             val repoUrl = rootProject.property("pushRepoUrl") as String
-            execGit("push", "--force", "-u", repoUrl, getCurrentBranch() + ":" + updateLibBranchName!!) {
-                this.standardOutput = object: OutputStream() {
+            execGit("push", "--force", "-u", repoUrl, getCurrentBranch() + ":refs/heads/" + updateLibBranchName!!) {
+                this.standardOutput = object : OutputStream() {
                     override fun write(b: Int) { }
                 }
             }
@@ -93,24 +121,48 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
         dependsOn(pushChangesTask)
 
         doLast {
-            val user = rootProject.property("jupyter.github.user") as String
-            val password = rootProject.property("jupyter.github.token") as String
-            fun githubRequest(method: Method, request: String, json: Map<String, String>? = null): Int {
-                val response = httpRequest(Request(method, "https://api.github.com/$request")
-                    .withJson(Json.encodeToJsonElement(json))
-                    .withBasicAuth(user, password)
+            val user = rootProject.prGithubUser
+            val password = rootProject.prGithubToken
+            fun githubRequest(
+                method: Method,
+                request: String,
+                json: JsonElement,
+                onFailure: (Response) -> Unit,
+            ): ResponseWrapper {
+                val response = httpRequest(
+                    Request(method, "https://api.github.com/$request")
+                        .withJson(json)
+                        .withBasicAuth(user, password)
                 )
                 println(response.text)
-                return response.status.code
+                if (!response.status.successful) {
+                    onFailure(response)
+                }
+                return response
             }
 
-            val code = githubRequest(Method.POST, "repos/Kotlin/kotlin-jupyter/pulls", mapOf(
-                "title" to "Update library versions",
-                "head" to updateLibBranchName!!,
-                "base" to "master"
-            ))
-            if(code != 200 && code != 201) {
-                throw BuildException("Creating PR failed with code $code", null)
+            val fullRepo = "${rootProject.githubRepoOwner}/${rootProject.githubRepoName}"
+            val prResponse = githubRequest(
+                Method.POST, "repos/$fullRepo/pulls",
+                Json.encodeToJsonElement(
+                    NewPrData(
+                        title = "Update ${rootProject.libName} library to ${rootProject.libParamValue}",
+                        head = updateLibBranchName!!,
+                        base = "master"
+                    )
+                )
+            ) { response ->
+                throw BuildException("Creating PR failed with code ${response.status.code}", null)
+            }
+
+            val prNumber = (prResponse.jsonObject["number"] as JsonPrimitive).int
+            githubRequest(
+                Method.POST, "repos/$fullRepo/issues/$prNumber/labels",
+                Json.encodeToJsonElement(
+                    SetLabelsData(listOf("no-changelog", "library-descriptors"))
+                )
+            ) { response ->
+                throw BuildException("Cannot setup labels for created PR: ${response.text}", null)
             }
         }
     }

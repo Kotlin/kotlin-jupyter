@@ -25,6 +25,7 @@ pluginManagement {
 
     val ktlintGradleVersion = rootProperties["ktlintGradleVersion"] as String
     val publishPluginVersion = rootProperties["publishPluginVersion"] as String
+    val stableKotlinVersion = rootProperties["stableKotlinVersion"] as String
 
     repositories {
         gradlePluginPortal()
@@ -39,6 +40,7 @@ pluginManagement {
     }
 
     plugins {
+        kotlin("plugin.serialization") version stableKotlinVersion
         id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
         id("ru.ileasile.kotlin.publisher") version publishPluginVersion
     }
