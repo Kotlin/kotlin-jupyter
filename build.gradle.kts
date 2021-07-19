@@ -16,6 +16,7 @@ plugins {
     id("org.jetbrains.kotlinx.jupyter.dependencies")
     id("ru.ileasile.kotlin.publisher")
     id("ru.ileasile.kotlin.doc")
+    id("org.hildan.github.changelog")
 }
 
 extra["isMainProject"] = true
@@ -28,6 +29,8 @@ val slf4jVersion: String by project
 val logbackVersion: String by project
 
 val docsRepo: String by project
+val githubRepoUser: String by project
+val githubRepoName: String by project
 
 val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
@@ -229,6 +232,12 @@ tasks.publishDocs {
     branchName.set("master")
     username.set("robot")
     email.set("robot@jetbrains.com")
+}
+
+changelog {
+    githubUser = githubRepoUser
+    githubRepository = githubRepoName
+    excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
 }
 
 kotlinPublications {

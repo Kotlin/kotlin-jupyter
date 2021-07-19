@@ -25,6 +25,11 @@ fun writeJson(json: Map<String, Any>, path: Path) {
 
 fun Path.deleteDir() = toFile().deleteRecursively()
 
+fun <T> Project.prop(name: String): T {
+    @Suppress("UNCHECKED_CAST")
+    return property(name) as T
+}
+
 fun Project.stringPropOrEmpty(name: String) = rootProject.findProperty(name) as String? ?: ""
 
 interface AllOptions : BuildOptions, InstallOptions, DistribOptions
