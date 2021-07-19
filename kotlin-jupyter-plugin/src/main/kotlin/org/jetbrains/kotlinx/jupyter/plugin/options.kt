@@ -46,7 +46,6 @@ fun Project.options(): AllOptions {
 
                 project.extra.set("localPublicationsRepo", artifactsDir.resolve("maven"))
 
-
                 pythonVersion = detectVersion(baseVersion, artifactsDir, versionFileName)
                 val mavenVersion = pythonVersion.toMavenVersion()
                 project.version = mavenVersion
