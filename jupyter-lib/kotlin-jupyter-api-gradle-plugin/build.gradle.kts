@@ -48,6 +48,11 @@ val saveVersion by tasks.registering {
     }
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 tasks {
     processResources {
         dependsOn(saveVersion)
@@ -58,11 +63,6 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
-    }
-
-    register<Jar>("sourceJar") {
-        archiveClassifier.set("sources")
-        from(sourceSets.named("main").get().allSource)
     }
 }
 
@@ -97,12 +97,6 @@ pluginBundle {
 }
 
 publishing {
-    publications {
-        withType<MavenPublication> {
-            artifact(tasks["sourceJar"])
-        }
-    }
-
     repositories {
         (rootProject.findProperty("localPublicationsRepo") as? java.nio.file.Path)?.let {
             maven {
