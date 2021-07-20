@@ -77,7 +77,8 @@ data class KernelJupyterParams(
     val sigScheme: String?,
     val key: String?,
     val ports: List<Int>,
-    val transport: String?
+    val transport: String?,
+    val ip: String?
 ) {
     companion object {
         fun fromFile(cfgFile: File): KernelJupyterParams {
@@ -102,7 +103,8 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
                 val fieldName = "${socket.nameForUser}_port"
                 map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
             },
-            map["transport"]?.content ?: "tcp"
+            map["transport"]?.content ?: "tcp",
+            map["ip"]?.content
         )
     }
 
@@ -110,7 +112,8 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
         val map = mutableMapOf(
             "signature_scheme" to JsonPrimitive(value.sigScheme),
             "key" to JsonPrimitive(value.key),
-            "transport" to JsonPrimitive(value.transport)
+            "transport" to JsonPrimitive(value.transport),
+            "ip" to JsonPrimitive(value.ip)
         )
         JupyterSockets.values().forEach {
             map["${it.nameForUser}_port"] = JsonPrimitive(value.ports[it.ordinal])
@@ -122,6 +125,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 data class KernelConfig(
     val ports: List<Int>,
     val transport: String,
+    val ip: String,
     val signatureScheme: String,
     val signatureKey: String,
     val scriptClasspath: List<File> = emptyList(),
@@ -131,7 +135,7 @@ data class KernelConfig(
     val embedded: Boolean = false,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
-        val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
+        val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport, ip)
 
         val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
         cfgFile.deleteOnExit()
@@ -152,6 +156,7 @@ data class KernelConfig(
             return KernelConfig(
                 ports = cfg.ports,
                 transport = cfg.transport ?: "tcp",
+                ip = cfg.ip ?: "*",
                 signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
                 signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
                 scriptClasspath = scriptClasspath,

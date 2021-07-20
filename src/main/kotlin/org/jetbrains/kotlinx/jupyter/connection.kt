@@ -26,7 +26,8 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
         val name: String get() = socket.name
         init {
             val port = config.ports[socket.ordinal]
-            bind("${config.transport}://*:$port")
+            val address = "${config.transport}://${config.ip}${if (config.transport == "ipc") "-" else ":"}$port"
+            bind(address)
             if (type == SocketType.PUB) {
                 // Workaround to prevent losing few first messages on kernel startup
                 // For more information on losing messages see this scheme:
@@ -35,7 +36,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
                 // doesn't support this. Value of 500 ms was chosen experimentally.
                 Thread.sleep(500)
             }
-            log.debug("[$name] listen: ${config.transport}://*:$port")
+            log.debug("[$name] listen: $address")
         }
 
         inline fun onData(body: Socket.(ByteArray) -> Unit) = recv()?.let { body(it) }

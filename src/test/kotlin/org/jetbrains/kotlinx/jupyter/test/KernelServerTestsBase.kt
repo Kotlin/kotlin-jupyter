@@ -35,6 +35,7 @@ open class KernelServerTestsBase {
     private val config = KernelConfig(
         ports = JupyterSockets.values().map { randomPort() },
         transport = "tcp",
+        ip = "127.0.0.1",
         signatureScheme = "hmac1-sha256",
         signatureKey = "",
         scriptClasspath = classpath,
@@ -114,7 +115,7 @@ open class KernelServerTestsBase {
     }
 
     inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSockets) : ZMQ.Socket(context, socket.zmqClientType) {
-        fun connect() = connect("${config.transport}://*:${config.ports[socket.ordinal]}")
+        fun connect() = connect("${config.transport}://${config.ip}${if (config.transport == "ipc") "-" else ":"}${config.ports[socket.ordinal]}")
     }
 
     fun ZMQ.Socket.sendMessage(msgType: MessageType, content: MessageContent) {
