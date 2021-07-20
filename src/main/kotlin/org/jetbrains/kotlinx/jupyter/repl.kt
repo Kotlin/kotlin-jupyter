@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
@@ -451,7 +452,7 @@ class ReplForJupyterImpl(
                 rendered,
                 result.scriptInstance,
                 result.result.name,
-                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate),
+                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, SerializedVariablesState()),
             )
         }
     }

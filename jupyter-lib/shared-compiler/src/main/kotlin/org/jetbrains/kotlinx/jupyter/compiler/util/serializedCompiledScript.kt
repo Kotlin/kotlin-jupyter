@@ -21,11 +21,22 @@ data class SerializedCompiledScriptsData(
 }
 
 @Serializable
+data class SerializedVariablesState(
+    val name: String = "",
+    val type: String = "",
+    val value: String? = null,
+    val isContainer: Boolean = false
+) {
+    val fieldDescriptor: MutableMap<String, SerializedVariablesState?> = mutableMapOf()
+}
+
+
+@Serializable
 class EvaluatedSnippetMetadata(
     val newClasspath: Classpath = emptyList(),
     val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,
     val newImports: List<String> = emptyList(),
-    val evaluatedVariablesState: Map<String, String?> = mutableMapOf()
+    val evaluatedVariablesState: SerializedVariablesState = SerializedVariablesState()
 ) {
     companion object {
         val EMPTY = EvaluatedSnippetMetadata()
