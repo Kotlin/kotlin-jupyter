@@ -1,5 +1,6 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
+import build.excludeKotlinDependencies
+import build.withLanguageLevel
+import build.withTests
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
@@ -23,28 +24,10 @@ dependencies {
             "stdlib-common"
         )
     }
-
-    testImplementation(libs.kotlin.gradle.test)
-
-    testImplementation(libs.test.junit.api)
-    testRuntimeOnly(libs.test.junit.engine)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        apiVersion = "1.4"
-        languageVersion = "1.4"
-    }
-}
-
-tasks {
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
-    }
-}
+withLanguageLevel("1.4")
+withTests()
 
 kotlinPublications {
     publication {

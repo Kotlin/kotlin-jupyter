@@ -1,4 +1,6 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import build.withCompilerArgs
+import build.withLanguageLevel
+import build.withTests
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
@@ -8,15 +10,11 @@ plugins {
 
 project.version = rootProject.version
 
-tasks.withType<KotlinCompile> {
-    val kotlinLanguageLevel: String by rootProject
-    kotlinOptions {
-        languageVersion = kotlinLanguageLevel
-        apiVersion = kotlinLanguageLevel
+val kotlinLanguageLevel: String by rootProject
+withLanguageLevel(kotlinLanguageLevel)
 
-        @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
-    }
+withCompilerArgs {
+    skipPrereleaseCheck()
 }
 
 repositories {
@@ -45,21 +43,9 @@ dependencies {
 
     // Logging
     compileOnly(libs.logging.slf4j.api)
-
-    // Testing dependencies: kotlin-test and JUnit 5
-    testImplementation(libs.kotlin.stable.test)
-    testImplementation(libs.test.junit.api)
-    testRuntimeOnly(libs.test.junit.engine)
 }
 
-tasks {
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
-    }
-}
+withTests()
 
 val buildProperties by tasks.registering {
     inputs.property("version", rootProject.findProperty("pythonVersion"))

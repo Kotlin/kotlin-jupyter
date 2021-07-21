@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 import groovy.json.JsonSlurper
 import org.gradle.api.Task
@@ -74,7 +74,7 @@ class ReadmeGenerator(
 }
 
 fun ProjectWithOptions.prepareReadmeTasks() {
-    val kotlinVersion: String by project
+    val kotlinVersion = defaultVersionCatalog.versions.devKotlin
     val projectRepoUrl: String by project
 
     val readmeFile = readmePath.toFile()

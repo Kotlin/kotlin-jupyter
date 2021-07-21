@@ -14,7 +14,7 @@
 # Folders with build files
 out/
 /build/
-/*jupyter*/build/
+/build-tools/*/build/
 /*jupyter*/*/build/
 /api-examples/*/build/
 /teamcity-artifacts/

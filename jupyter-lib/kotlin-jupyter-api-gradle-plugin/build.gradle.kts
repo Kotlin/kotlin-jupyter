@@ -1,3 +1,5 @@
+import build.withTests
+
 plugins {
     id("com.gradle.plugin-publish")
     id("org.jlleitschuh.gradle.ktlint")
@@ -21,11 +23,6 @@ dependencies {
     implementation(libs.kotlin.gradle.gradlePlugin)
     implementation(libs.gson)
 
-    testImplementation(libs.kotlin.gradle.test)
-
-    testImplementation(libs.test.junit.api)
-    testRuntimeOnly(libs.test.junit.engine)
-
     testImplementation(projects.api)
     testImplementation(projects.apiAnnotations)
 }
@@ -48,16 +45,11 @@ java {
     withJavadocJar()
 }
 
+withTests()
+
 tasks {
     processResources {
         dependsOn(saveVersion)
-    }
-
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
     }
 }
 

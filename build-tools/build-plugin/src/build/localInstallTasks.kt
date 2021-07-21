@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.register

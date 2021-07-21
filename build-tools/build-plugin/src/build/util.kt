@@ -1,11 +1,13 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 import groovy.json.JsonOutput
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.extra
 import java.nio.file.Path
+import java.util.Optional
 
 fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
 
@@ -68,4 +70,14 @@ fun ModuleDependency.excludeKotlinDependencies(vararg dependencyNames: String) {
     dependencyNames.forEach {
         exclude("org.jetbrains.kotlin", "kotlin-$it")
     }
+}
+
+fun <T> Optional<T>.getOrNull(): T? {
+    var result: T? = null
+    ifPresent { result = it }
+    return result
+}
+
+inline fun <reified T: Any> ExtensionContainer.getOrCreate(name: String, initializer: () -> T): T {
+    return (findByName(name) as? T) ?: initializer().also { ext -> add(name, ext) }
 }

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra

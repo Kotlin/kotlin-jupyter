@@ -1,4 +1,5 @@
-import org.jetbrains.kotlinx.jupyter.build.excludeKotlinDependencies
+import build.excludeKotlinDependencies
+import build.withTests
 
 plugins {
     kotlin("jvm")
@@ -16,11 +17,6 @@ dependencies {
     implementation(projects.apiAnnotations)
     kapt(projects.apiAnnotations)
 
-    testImplementation(libs.kotlin.stable.test)
-
-    testImplementation(libs.test.junit.api)
-    testRuntimeOnly(libs.test.junit.engine)
-
     testImplementation(projects.api)
 
     implementation(libs.bundles.http4k) {
@@ -35,12 +31,7 @@ dependencies {
     implementation(libs.ext.graphviz)
 }
 
-tasks.test {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-    }
-}
+withTests()
 
 kotlinPublications {
     publication {

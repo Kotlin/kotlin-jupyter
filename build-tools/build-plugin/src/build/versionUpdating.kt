@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -59,11 +59,11 @@ fun ProjectWithInstallOptions.prepareKotlinVersionUpdateTasks() {
             val lastBuildNumber = (lastBuild["number"] as JsonPrimitive).content
             println("Last Kotlin dev version: $lastBuildNumber")
 
-            val kotlinVersionProp = "kotlinVersion"
-            val gradlePropertiesFile = File("gradle.properties")
+            val kotlinVersionProp = "kotlin"
+            val gradlePropertiesFile = File("gradle/libs.versions.toml")
             val gradleProperties = gradlePropertiesFile.readLines()
             val updatedGradleProperties = gradleProperties.map {
-                if (it.startsWith("$kotlinVersionProp=")) "$kotlinVersionProp=$lastBuildNumber"
+                if (it.startsWith("$kotlinVersionProp = ")) "$kotlinVersionProp = \"$lastBuildNumber\""
                 else it
             }
             gradlePropertiesFile.writeText(updatedGradleProperties.joinToString("\n", "", "\n"))

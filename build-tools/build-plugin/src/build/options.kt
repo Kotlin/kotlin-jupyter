@@ -1,22 +1,22 @@
-package org.jetbrains.kotlinx.jupyter.plugin
+package build
 
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.provideDelegate
-import org.jetbrains.kotlinx.jupyter.build.AllOptions
-import org.jetbrains.kotlinx.jupyter.build.CondaCredentials
-import org.jetbrains.kotlinx.jupyter.build.CondaTaskSpec
-import org.jetbrains.kotlinx.jupyter.build.DistributionPackageSettings
-import org.jetbrains.kotlinx.jupyter.build.PyPiTaskSpec
-import org.jetbrains.kotlinx.jupyter.build.UploadTaskSpecs
-import org.jetbrains.kotlinx.jupyter.build.detectVersion
-import org.jetbrains.kotlinx.jupyter.build.getFlag
-import org.jetbrains.kotlinx.jupyter.build.getOrInitProperty
-import org.jetbrains.kotlinx.jupyter.build.getSubDir
-import org.jetbrains.kotlinx.jupyter.build.stringPropOrEmpty
-import org.jetbrains.kotlinx.jupyter.build.toMavenVersion
+import build.AllOptions
+import build.CondaCredentials
+import build.CondaTaskSpec
+import build.DistributionPackageSettings
+import build.PyPiTaskSpec
+import build.UploadTaskSpecs
+import build.detectVersion
+import build.getFlag
+import build.getOrInitProperty
+import build.getSubDir
+import build.stringPropOrEmpty
+import build.toMavenVersion
 import java.nio.file.Path
 import java.nio.file.Paths
 

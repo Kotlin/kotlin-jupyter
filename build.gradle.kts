@@ -1,19 +1,21 @@
+import build.getFlag
+import build.options
+import build.withCompilerArgs
+import build.withJvmTarget
+import build.withLanguageLevel
+import build.withTests
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlinx.jupyter.build.getFlag
-import org.jetbrains.kotlinx.jupyter.plugin.options
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import ru.ileasile.kotlin.apache2
 import ru.ileasile.kotlin.developer
 import ru.ileasile.kotlin.githubRepo
 
 plugins {
-    id("org.jetbrains.kotlinx.jupyter.dependencies")
+    id("build.plugins.main")
 }
 
 extra["isMainProject"] = true
 
-val ktlintVersion: String by project
 val docsRepo: String by project
 val githubRepoUser: String by project
 val githubRepoName: String by project
@@ -27,7 +29,7 @@ deploy.apply {
 }
 
 fun KtlintExtension.setup() {
-    version.set(ktlintVersion)
+    version.set(libs.versions.ktlint)
     enableExperimentalRules.set(true)
 }
 
@@ -50,29 +52,14 @@ allprojects {
     val stableKotlinLanguageLevel: String by rootProject
     val jvmTarget: String by rootProject
 
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            apiVersion = stableKotlinLanguageLevel
-            languageVersion = stableKotlinLanguageLevel
-            this.jvmTarget = jvmTarget
-        }
-    }
-
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = jvmTarget
-        targetCompatibility = jvmTarget
-    }
+    withJvmTarget(jvmTarget)
+    withLanguageLevel(stableKotlinLanguageLevel)
 }
 
-tasks.withType<KotlinCompile> {
-    val kotlinLanguageLevel: String by rootProject
-    kotlinOptions {
-        languageVersion = kotlinLanguageLevel
-        apiVersion = kotlinLanguageLevel
-
-        @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
-    }
+val kotlinLanguageLevel: String by rootProject
+withLanguageLevel(kotlinLanguageLevel)
+withCompilerArgs {
+    skipPrereleaseCheck()
 }
 
 dependencies {
@@ -111,17 +98,15 @@ dependencies {
     implementation(libs.serialization.json)
 
     // Test dependencies: kotlin-test and Junit 5
-    testImplementation(libs.kotlin.stable.test)
-    testImplementation(libs.test.junit.api)
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
-
-    testRuntimeOnly(libs.test.junit.engine)
 
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.kotlin.dev.scriptRuntime.get())
 }
+
+withTests()
 
 tasks.register("publishToPluginPortal") {
     group = "publishing"
@@ -163,11 +148,6 @@ tasks.test {
      */
     val useShadowedJar = getFlag("test.useShadowed", false)
 
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-    }
-
     if (useShadowedJar) {
         dependsOn(tasks.shadowJar.get())
         classpath = files(tasks.shadowJar.get()) + classpath
@@ -187,7 +167,7 @@ tasks.processResources {
 }
 
 val createTestResources: Task by tasks.creating {
-    val jupyterApiVersion: String by project
+    val jupyterApiVersion = libs.versions.jupyterApi.get()
 
     inputs.property("jupyterApiVersion", jupyterApiVersion)
 

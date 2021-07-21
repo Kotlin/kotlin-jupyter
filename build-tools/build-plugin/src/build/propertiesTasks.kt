@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.build
+package build
 
 fun ProjectWithOptions.preparePropertiesTask() {
     tasks.register("buildProperties") {

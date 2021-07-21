@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.6.0-dev-903"
+kotlin = "1.6.0-dev-1489"
 stableKotlin = "1.5.20"
 gradleKotlin = "1.4.31"
 shadowJar = "7.0.0"
@@ -13,7 +13,7 @@ publishPlugin = "0.0.38-dev"
 slf4j = "1.7.30"
 logback = "1.2.3"
 http4k = "4.9.8.0"
-jupyterApi = "0.9.1-45"
+jupyterApi = "0.10.0-140"
 jetbrainsAnnotations = "20.1.0"
 
 junit = "5.7.1"
@@ -124,6 +124,12 @@ plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref =
 
 # id("org.hildan.github.changelog") version changelogPlugin
 plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
+
+
+# Published artifacts of this project as binary dependencies
+jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
+jupyter-apiAnnotations = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api-annotations", version.ref = "jupyterApi" }
+jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-common-dependencies", version.ref = "jupyterApi" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]
