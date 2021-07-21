@@ -8,37 +8,31 @@ plugins {
 
 project.version = rootProject.version
 
-val http4kVersion: String by rootProject
-val junitVersion: String by rootProject
-
 dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    implementation(libs.kotlin.stable.stdlib)
+    implementation(libs.kotlin.stable.reflect)
 
-    compileOnly(project(":api"))
-    implementation(project(":api-annotations"))
-    kapt(project(":api-annotations"))
+    compileOnly(projects.api)
+    implementation(projects.apiAnnotations)
+    kapt(projects.apiAnnotations)
 
-    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlin.stable.test)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
 
-    testImplementation(project(":api"))
+    testImplementation(projects.api)
 
-    fun http4k(name: String) =
-        implementation("org.http4k:http4k-$name:$http4kVersion") {
-            excludeKotlinDependencies("stdlib-jdk8")
-        }
-    http4k("core")
-    http4k("client-apache")
+    implementation(libs.bundles.http4k) {
+        excludeKotlinDependencies("stdlib-jdk8")
+    }
 
-    implementation("org.scilab.forge:jlatexmath:1.0.7")
-    implementation("org.apache.xmlgraphics:fop:2.6")
-    implementation("org.apache.xmlgraphics:batik-codec:1.14")
-    implementation("org.apache.xmlgraphics:xmlgraphics-commons:2.6")
+    implementation(libs.ext.jlatex)
+    implementation(libs.ext.xmlgraphics.fop)
+    implementation(libs.ext.xmlgraphics.batikCodec)
+    implementation(libs.ext.xmlgraphics.commons)
 
-    implementation("guru.nidi:graphviz-java:0.18.1")
+    implementation(libs.ext.graphviz)
 }
 
 tasks.test {

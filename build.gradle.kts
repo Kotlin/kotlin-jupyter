@@ -8,26 +8,12 @@ import ru.ileasile.kotlin.developer
 import ru.ileasile.kotlin.githubRepo
 
 plugins {
-    kotlin("jvm")
-    kotlin("jupyter.api") apply false
-    kotlin("plugin.serialization")
-    id("com.github.johnrengelman.shadow")
-    id("org.jlleitschuh.gradle.ktlint")
     id("org.jetbrains.kotlinx.jupyter.dependencies")
-    id("ru.ileasile.kotlin.publisher")
-    id("ru.ileasile.kotlin.doc")
-    id("org.hildan.github.changelog")
 }
 
 extra["isMainProject"] = true
 
-val kotlinVersion: String by project
-val kotlinxSerializationVersion: String by project
 val ktlintVersion: String by project
-val junitVersion: String by project
-val slf4jVersion: String by project
-val logbackVersion: String by project
-
 val docsRepo: String by project
 val githubRepoUser: String by project
 val githubRepoName: String by project
@@ -91,52 +77,50 @@ tasks.withType<KotlinCompile> {
 
 dependencies {
     // Dependency on module with compiler.
-    api(project(":shared-compiler"))
-
-    fun implKotlin(module: String, version: String? = kotlinVersion) = implementation(kotlin(module, version))
+    api(projects.sharedCompiler)
 
     // Standard dependencies
-    implKotlin("reflect")
-    implKotlin("stdlib-jdk8")
-    implementation("org.jetbrains:annotations:20.1.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.dev.stdlibJdk8)
+    implementation(libs.jetbrains.annotations)
+    implementation(libs.coroutines.core)
 
     // Embedded compiler and scripting dependencies
-    implKotlin("compiler-embeddable")
-    implKotlin("scripting-compiler-impl-embeddable")
-    implKotlin("scripting-compiler-embeddable")
-    implKotlin("scripting-ide-services")
-    implKotlin("scripting-dependencies-maven")
-    implKotlin("script-util")
-    implKotlin("scripting-common")
+    implementation(libs.kotlin.dev.compilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingIdeServices)
+    implementation(libs.kotlin.dev.scriptingDependenciesMaven)
+    implementation(libs.kotlin.dev.scriptUtil)
+    implementation(libs.kotlin.dev.scriptingCommon)
 
     // Embedded version of serialization plugin for notebook code
-    implKotlin("serialization")
+    implementation(libs.serialization.dev.embeddedPlugin)
 
     // Logging
-    implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation(libs.logging.slf4j.api)
+    implementation(libs.logging.logback.classic)
 
     // ZeroMQ library for implementing messaging protocol
-    implementation("org.zeromq:jeromq:0.5.2")
+    implementation(libs.zeromq)
 
     // Clikt library for parsing output magics
-    implementation("com.github.ajalt:clikt:2.8.0")
+    implementation(libs.clikt)
 
     // Serialization implementation for kernel code
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    implementation(libs.serialization.json)
 
     // Test dependencies: kotlin-test and Junit 5
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-    testImplementation("io.kotlintest:kotlintest-assertions:3.1.6")
+    testImplementation(libs.kotlin.stable.test)
+    testImplementation(libs.test.junit.api)
+    testImplementation(libs.test.junit.params)
+    testImplementation(libs.test.kotlintest.assertions)
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testRuntimeOnly(libs.test.junit.engine)
 
-    deploy(project(":lib"))
-    deploy(project(":api"))
-    deploy(kotlin("script-runtime", kotlinVersion))
+    deploy(projects.lib)
+    deploy(projects.api)
+    deploy(libs.kotlin.dev.scriptRuntime.get())
 }
 
 tasks.register("publishToPluginPortal") {

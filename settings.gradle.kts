@@ -1,13 +1,10 @@
 @file:Suppress("UnstableApiUsage")
 
+enableFeaturePreview("VERSION_CATALOGS")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     val kotlinVersion: String by settings
-    val stableKotlinVersion: String by settings
-    val shadowJarVersion: String by settings
-    val ktlintGradleVersion: String by settings
-    val jupyterApiVersion: String by settings
-    val publishPluginVersion: String by settings
-    val changelogPluginVersion: String by settings
 
     repositories {
         mavenLocal()
@@ -35,27 +32,6 @@ pluginManagement {
             maven(m2LocalPath.toURI())
         }
     }
-
-    resolutionStrategy {
-        eachPlugin {
-            when (requested.id.id) {
-                "com.github.johnrengelman.shadow" -> useModule("gradle.plugin.com.github.jengelman.gradle.plugins:shadow:$shadowJarVersion")
-                "org.jlleitschuh.gradle.ktlint" -> useModule("org.jlleitschuh.gradle:ktlint-gradle:$ktlintGradleVersion")
-            }
-        }
-    }
-
-    plugins {
-        kotlin("jvm") version stableKotlinVersion
-        kotlin("plugin.serialization") version stableKotlinVersion
-        kotlin("jupyter.api") version jupyterApiVersion
-        id("com.github.johnrengelman.shadow") version shadowJarVersion
-        id("org.jlleitschuh.gradle.ktlint") version ktlintGradleVersion
-        id("org.jetbrains.kotlinx.jupyter.dependencies")
-        id("ru.ileasile.kotlin.publisher") version publishPluginVersion
-        id("ru.ileasile.kotlin.doc") version publishPluginVersion
-        id("org.hildan.github.changelog") version changelogPluginVersion
-    }
 }
 
 gradle.projectsLoaded {
@@ -64,21 +40,22 @@ gradle.projectsLoaded {
     }
 }
 
-val pluginProject = "kotlin-jupyter-plugin"
+includeBuild("kotlin-jupyter-plugin")
 
-includeBuild(pluginProject)
-libSubproject("common-dependencies", "$pluginProject/")
+libSubproject("common-dependencies")
 libSubproject("lib")
 libSubproject("api")
 libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
-
 libSubproject("lib-ext")
 
-libSubproject("getting-started", "api-examples/")
+exampleSubproject("getting-started")
 
-fun libSubproject(name: String, parentPath: String = "jupyter-lib/") {
+fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
+fun exampleSubproject(name: String) = subproject(name, "api-examples/")
+
+fun subproject(name: String, parentPath: String) {
     include(name)
-    project(":$name").projectDir = file("$parentPath$name")
+    project(":$name").projectDir = file("$parentPath$name").absoluteFile
 }

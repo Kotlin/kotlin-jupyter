@@ -12,8 +12,8 @@ kotlinJupyter {
 project.version = rootProject.version
 
 dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    implementation(libs.kotlin.stable.stdlib)
+    implementation(libs.kotlin.stable.reflect)
 }
 
 kotlinPublications {

@@ -9,11 +9,6 @@ plugins {
 project.version = rootProject.version
 project.group = "org.jetbrains.kotlin"
 
-val junitVersion: String by rootProject
-val kotlinVersion: String by rootProject
-val stableKotlinVersion: String by rootProject
-val gradleKotlinVersion: String by rootProject
-
 repositories {
     mavenCentral()
     gradlePluginPortal()
@@ -23,16 +18,16 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$gradleKotlinVersion")
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation(libs.kotlin.gradle.gradlePlugin)
+    implementation(libs.gson)
 
-    testImplementation(kotlin("test", gradleKotlinVersion))
+    testImplementation(libs.kotlin.gradle.test)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
 
-    testImplementation(project(":api"))
-    testImplementation(project(":api-annotations"))
+    testImplementation(projects.api)
+    testImplementation(projects.apiAnnotations)
 }
 
 val saveVersion by tasks.registering {

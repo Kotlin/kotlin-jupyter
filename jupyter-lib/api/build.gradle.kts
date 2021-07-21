@@ -8,29 +8,26 @@ plugins {
 }
 
 project.version = rootProject.version
-val kotlinxSerializationVersion: String by rootProject
-val junitVersion: String by rootProject
-val gradleKotlinVersion: String by rootProject
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compileOnly(kotlin("stdlib", gradleKotlinVersion))
-    compileOnly(kotlin("reflect", gradleKotlinVersion))
+    compileOnly(libs.kotlin.gradle.stdlib)
+    compileOnly(libs.kotlin.gradle.reflect)
 
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion") {
+    api(libs.serialization.json) {
         excludeKotlinDependencies(
             "stdlib",
             "stdlib-common"
         )
     }
 
-    testImplementation(kotlin("test", gradleKotlinVersion))
+    testImplementation(libs.kotlin.gradle.test)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
 }
 
 tasks.withType<KotlinCompile> {

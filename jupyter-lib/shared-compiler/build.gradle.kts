@@ -8,10 +8,6 @@ plugins {
 
 project.version = rootProject.version
 
-val kotlinVersion: String by rootProject
-val slf4jVersion: String by rootProject
-val junitVersion: String by rootProject
-
 tasks.withType<KotlinCompile> {
     val kotlinLanguageLevel: String by rootProject
     kotlinOptions {
@@ -28,34 +24,32 @@ repositories {
 }
 
 dependencies {
-    fun compileOnlyKotlin(module: String, version: String? = kotlinVersion) = compileOnly(kotlin(module, version))
-
     // Internal dependencies
-    api(project(":api"))
-    api(project(":lib"))
-    api(project(":common-dependencies"))
+    api(projects.api)
+    api(projects.lib)
+    api(projects.commonDependencies)
 
     // Standard dependencies
-    compileOnly(kotlin("stdlib"))
-    compileOnly(kotlin("stdlib-jdk8"))
-    compileOnly(kotlin("reflect"))
+    compileOnly(libs.kotlin.stable.stdlib)
+    compileOnly(libs.kotlin.stable.stdlibJdk8)
+    compileOnly(libs.kotlin.stable.reflect)
 
     // Scripting and compilation-related dependencies
-    compileOnlyKotlin("scripting-common")
-    compileOnlyKotlin("scripting-jvm")
-    compileOnlyKotlin("scripting-compiler-impl")
-    implementation(kotlin("scripting-dependencies", kotlinVersion) as String) { isTransitive = false }
+    compileOnly(libs.kotlin.dev.scriptingCommon)
+    compileOnly(libs.kotlin.dev.scriptingJvm)
+    compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
+    implementation(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
-    compileOnlyKotlin("serialization-unshaded")
+    compileOnly(libs.serialization.dev.unshadedPlugin)
 
     // Logging
-    compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
+    compileOnly(libs.logging.slf4j.api)
 
     // Testing dependencies: kotlin-test and JUnit 5
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation(libs.kotlin.stable.test)
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
 }
 
 tasks {

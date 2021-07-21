@@ -6,9 +6,9 @@ plugins {
 project.version = rootProject.version
 
 dependencies {
-    implementation(project(":api"))
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    implementation(projects.api)
+    implementation(libs.kotlin.stable.stdlib)
+    implementation(libs.kotlin.stable.reflect)
 }
 
 kotlinPublications {
