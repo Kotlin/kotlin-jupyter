@@ -95,7 +95,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     fun testRuntimeDepsResolution() {
         val res = eval(
             """
-            %use krangl(0.16.2)
+            %use krangl(0.17)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
             """.trimIndent()
