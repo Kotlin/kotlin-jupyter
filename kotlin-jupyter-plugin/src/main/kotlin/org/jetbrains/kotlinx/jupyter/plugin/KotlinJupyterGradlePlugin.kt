@@ -16,6 +16,18 @@ import org.jetbrains.kotlinx.jupyter.build.prepareReadmeTasks
 
 class KotlinJupyterGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+
+        with(project.plugins) {
+            apply("org.jetbrains.kotlin.jvm")
+            apply("com.github.johnrengelman.shadow")
+            apply("org.jetbrains.kotlin.plugin.serialization")
+            apply("org.jlleitschuh.gradle.ktlint")
+            apply("org.jetbrains.kotlinx.jupyter.dependencies")
+            apply("ru.ileasile.kotlin.publisher")
+            apply("ru.ileasile.kotlin.doc")
+            apply("org.hildan.github.changelog")
+        }
+
         with(ProjectWithOptionsImpl(project, project.options())) {
             /****** Helper tasks ******/
             prepareReadmeTasks()

@@ -7,10 +7,12 @@ plugins {
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
-    implementation(project(":common-dependencies"))
+    implementation(projects.commonDependencies)
+    api(libs.bundles.allGradlePlugins)
 }
 
 gradlePlugin {
