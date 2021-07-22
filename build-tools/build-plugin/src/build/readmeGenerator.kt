@@ -1,10 +1,6 @@
 package build
 
 import groovy.json.JsonSlurper
-import org.gradle.api.Task
-import org.gradle.kotlin.dsl.getValue
-import org.gradle.kotlin.dsl.provideDelegate
-import org.gradle.kotlin.dsl.registering
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import java.io.File
@@ -34,9 +30,7 @@ class ReadmeGenerator(
         val libraryFiles =
             librariesDir.listFiles { file -> file.isFile && file.name.endsWith(".json") } ?: emptyArray()
 
-        val sortedMap = sortedMapOf<String, String>()
-
-        return libraryFiles.toList().map { file ->
+        return libraryFiles.toList().associateTo(sortedMapOf()) { file ->
             val libraryName = file.nameWithoutExtension
             val json = JsonSlurper().parse(file) as Map<*, *>
             val link = json["link"] as? String
@@ -45,7 +39,7 @@ class ReadmeGenerator(
             val namePart = if (link == null) libraryName else "[$libraryName]($link)"
             val descriptionPart = if (description == null) "" else " - $description"
             libraryName to " - $namePart$descriptionPart"
-        }.toMap(sortedMap).values.joinToString("\n")
+        }.values.joinToString("\n")
     }
 
     private fun processCommands(): String {
@@ -70,51 +64,5 @@ class ReadmeGenerator(
 
     private fun processRepoUrl(): String {
         return "$repoUrl.git"
-    }
-}
-
-fun ProjectWithOptions.prepareReadmeTasks() {
-    val kotlinVersion = defaultVersionCatalog.versions.devKotlin
-    val projectRepoUrl: String by project
-
-    val readmeFile = readmePath.toFile()
-    val readmeStubFile = rootPath.resolve("docs").resolve("README-STUB.md").toFile()
-    val librariesDir = File(rootProject.projectDir, librariesPath)
-    val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
-
-    fun Task.defineInputs() {
-        inputs.file(readmeStubFile)
-        inputs.dir(librariesDir)
-        inputs.property("kotlinVersion", kotlinVersion)
-        inputs.property("projectRepoUrl", projectRepoUrl)
-    }
-
-    val generateReadme by tasks.registering {
-        group = buildGroup
-
-        readmeFile.parentFile.mkdirs()
-
-        defineInputs()
-        outputs.file(readmeFile)
-
-        doLast {
-            readmeGenerator.generate(readmeStubFile, readmeFile)
-        }
-    }
-
-    tasks.register("checkReadme") {
-        group = "verification"
-
-        defineInputs()
-        inputs.file(readmeFile)
-
-        doLast {
-            val tempFile = File.createTempFile("kotlin-jupyter-readme", "")
-            tempFile.deleteOnExit()
-            readmeGenerator.generate(readmeStubFile, tempFile)
-            if (tempFile.readText() != readmeFile.readText()) {
-                throw AssertionError("Readme is not regenerated. Regenerate it using `./gradlew ${generateReadme.name}` command")
-            }
-        }
     }
 }

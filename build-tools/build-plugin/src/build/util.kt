@@ -34,12 +34,6 @@ fun <T> Project.prop(name: String): T {
 
 fun Project.stringPropOrEmpty(name: String) = rootProject.findProperty(name) as String? ?: ""
 
-interface AllOptions : BuildOptions, InstallOptions, DistribOptions
-interface ProjectWithOptions : ProjectWithBuildOptions, ProjectWithInstallOptions, ProjectWithDistribOptions
-
-class ProjectWithOptionsImpl(private val p: Project, private val opt: AllOptions) :
-    Project by p, InstallOptions by opt, DistribOptions by opt, BuildOptions by opt, ProjectWithOptions
-
 fun readProperties(propertiesFile: Path): Map<String, String> =
     propertiesFile.toFile().readText().lineSequence()
         .map { it.split("=") }

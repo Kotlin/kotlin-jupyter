@@ -1,4 +1,5 @@
 import build.excludeKotlinDependencies
+import build.withCompilerArgs
 import build.withLanguageLevel
 import build.withTests
 
@@ -28,6 +29,9 @@ dependencies {
 
 withLanguageLevel("1.4")
 withTests()
+withCompilerArgs {
+    requiresOptIn()
+}
 
 kotlinPublications {
     publication {

@@ -1,10 +1,8 @@
 import build.getFlag
-import build.options
 import build.withCompilerArgs
 import build.withJvmTarget
 import build.withLanguageLevel
 import build.withTests
-import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import ru.ileasile.kotlin.apache2
 import ru.ileasile.kotlin.developer
@@ -20,7 +18,6 @@ val docsRepo: String by project
 val githubRepoUser: String by project
 val githubRepoName: String by project
 
-val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
 
 deploy.apply {
@@ -109,27 +106,9 @@ dependencies {
 withTests()
 
 tasks.register("publishToPluginPortal") {
-    group = "publishing"
+    group = build.PUBLISHING_GROUP
 
     dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
-}
-
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = taskOptions.mainClassFQN
-        attributes["Implementation-Version"] = project.version
-    }
-}
-
-tasks.shadowJar {
-    archiveBaseName.set(taskOptions.packageName)
-    archiveClassifier.set("")
-    mergeServiceFiles()
-    transform(ComponentsXmlResourceTransformer())
-
-    manifest {
-        attributes(tasks.jar.get().manifest.attributes)
-    }
 }
 
 // Workaround for https://github.com/johnrengelman/shadow/issues/651
@@ -162,10 +141,6 @@ tasks.test {
     )
 }
 
-tasks.processResources {
-    dependsOn(tasks.buildProperties)
-}
-
 val createTestResources: Task by tasks.creating {
     val jupyterApiVersion = libs.versions.jupyterApi.get()
 
@@ -183,12 +158,6 @@ val createTestResources: Task by tasks.creating {
 
 tasks.processTestResources {
     dependsOn(createTestResources)
-}
-
-tasks.check {
-    if (!getFlag("skipReadmeCheck", false)) {
-        dependsOn(tasks.checkReadme)
-    }
 }
 
 tasks.publishDocs {
@@ -242,11 +211,4 @@ kotlinPublications {
         description = "Kotlin Jupyter kernel published as artifact"
         packageName = artifactId
     }
-}
-
-tasks.named("publishLocal") {
-    dependsOn(
-        tasks.condaPackage,
-        tasks.pyPiPackage,
-    )
 }

@@ -41,10 +41,6 @@ class MyVersionCatalogsExtension(
 
 private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSION_PREFIX + name.capitalize()
 
-fun Project.addVersionCatalogExtension(name: String = DEFAULT_VERSION_CATALOG) {
-    extensions.add(versionCatalogExtensionName(name), MyVersionCatalogsExtension(this, name))
-}
-
 fun Project.versionCatalog(name: String): MyVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { MyVersionCatalogsExtension(this, name) }
 val Project.defaultVersionCatalog get(): MyVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
 

@@ -1,42 +1,16 @@
 package build
 
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.InputFile
+import org.gradle.kotlin.dsl.getByType
 import java.nio.file.Path
-
-interface DistribOptions {
-    val isOnProtectedBranch: Boolean
-    val cleanInstallDirDistrib: Task
-
-    val condaGroup: String
-    val pyPiGroup: String
-    val buildGroup: String
-
-    val condaTaskSpecs: UploadTaskSpecs<CondaTaskSpec>
-    val pyPiTaskSpecs: UploadTaskSpecs<PyPiTaskSpec>
-
-    val distribKernelDir: String
-    val distributionPath: Path
-
-    val distribUtilsPath: Path
-    val distribUtilRequirementsPath: Path
-    val distribUtilRequirementsHintsRemPath: Path
-    val removeTypeHints: Boolean
-    val typeHintsRemover: Path
-}
-
-interface ProjectWithDistribOptions : Project, DistribOptions
 
 open class TaskSpec(
     var taskName: String = ""
 )
 
-interface DistributionPackageSettings {
-    val dir: String
-    val fileName: String
-}
+class DistributionPackageSettings(val dir: String, val fileName: String)
 
 class UploadTaskSpecs <T : TaskSpec>(
     val packageSettings: DistributionPackageSettings,
@@ -52,19 +26,18 @@ class UploadTaskSpecs <T : TaskSpec>(
 
     private fun taskName(type: String) = repoName + "Upload" + type
 
-    fun createTasks(project: ProjectWithDistribOptions, taskCreationAction: (T) -> Unit) {
-        with(project) {
-            if (isOnProtectedBranch) {
-                taskCreationAction(stable)
-            }
-            taskCreationAction(dev)
+    fun createTasks(project: Project, taskCreationAction: (T) -> Unit) {
+        val opts = project.extensions.getByType<KernelBuildExtension>()
+        if (opts.isOnProtectedBranch) {
+            taskCreationAction(stable)
+        }
+        taskCreationAction(dev)
 
-            project.task(taskName("Protected")) {
-                dependsOn(cleanInstallDirDistrib)
-                group = taskGroup
-                if (isOnProtectedBranch) {
-                    dependsOn(dev.taskName)
-                }
+        project.task(taskName("Protected")) {
+            dependsOn(opts.cleanInstallDirDistrib)
+            group = taskGroup
+            if (opts.isOnProtectedBranch) {
+                dependsOn(dev.taskName)
             }
         }
     }
