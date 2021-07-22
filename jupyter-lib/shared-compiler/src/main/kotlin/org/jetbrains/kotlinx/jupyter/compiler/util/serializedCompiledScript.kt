@@ -36,7 +36,7 @@ class EvaluatedSnippetMetadata(
     val newClasspath: Classpath = emptyList(),
     val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,
     val newImports: List<String> = emptyList(),
-    val evaluatedVariablesState: SerializedVariablesState = SerializedVariablesState()
+    val evaluatedVariablesState: Map<String, SerializedVariablesState> = emptyMap()
 ) {
     companion object {
         val EMPTY = EvaluatedSnippetMetadata()

@@ -416,6 +416,275 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testOutVarRendering() {
+        val res = eval("Out").resultValue
+        assertNotNull(res)
+    }
+}
+
+class ReplVarsTest : AbstractSingleReplTest() {
+    override val repl = makeSimpleRepl()
+
+    @Test
+    fun testVarsStateConsistency() {
+        assertTrue(repl.notebook.variablesState.isEmpty())
+        eval(
+            """
+            val x = 1 
+            val y = 0
+            val z = 47
+            """.trimIndent()
+        )
+
+        val varsUpdate = mutableMapOf(
+            "x" to "1",
+            "y" to "0",
+            "z" to "47"
+        )
+        assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
+        assertFalse(repl.notebook.variablesState.isEmpty())
+        val varsState = repl.notebook.variablesState
+        assertEquals("1", varsState.getStringValue("x"))
+        assertEquals("0", varsState.getStringValue("y"))
+        assertEquals(47, varsState.getValue("z"))
+
+        (varsState["z"]!! as VariableStateImpl).update()
+        repl.notebook.updateVariablesState(varsState)
+        assertEquals(47, varsState.getValue("z"))
+    }
+
+    @Test
+    fun testVarsEmptyState() {
+        val res = eval("3+2")
+        val state = repl.notebook.variablesState
+        val strState = mutableMapOf<String, String>()
+        state.forEach {
+            strState[it.key] = it.value.stringValue ?: return@forEach
+        }
+        assertTrue(state.isEmpty())
+        assertEquals(res.metadata.evaluatedVariablesState, strState)
+    }
+
+    @Test
+    fun testVarsCapture() {
+        eval(
+            """
+            val x = 1 
+            val y = "abc"
+            val z = x
+            """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesState
+        assertTrue(varsState.isNotEmpty())
+        val strState = varsState.mapToStringValues()
+
+        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
+        assertEquals(strState, goalState)
+        assertEquals(1, varsState.getValue("x"))
+        assertEquals("abc", varsState.getStringValue("y"))
+        assertEquals("1", varsState.getStringValue("z"))
+    }
+
+    @Test
+    fun testVarsCaptureSeparateCells() {
+        eval(
+            """
+            val x = 1 
+            val y = "abc"
+            val z = x
+            """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesState
+        assertTrue(varsState.isNotEmpty())
+        eval(
+            """
+            val x = "abc" 
+            var y = 123
+            val z = x
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("abc", varsState.getStringValue("x"))
+        assertEquals(123, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
+
+        eval(
+            """
+            val x = 1024 
+            y += 123
+            """.trimIndent(),
+            jupyterId = 2
+        )
+
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("1024", varsState.getStringValue("x"))
+        assertEquals("${123 * 2}", varsState.getStringValue("y"))
+        assertEquals("abc", varsState.getValue("z"))
+    }
+
+    @Test
+    fun testPrivateVarsCapture() {
+        eval(
+            """
+            private val x = 1 
+            private val y = "abc"
+            val z = x
+            """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesState
+        assertTrue(varsState.isNotEmpty())
+        val strState = varsState.mapValues { it.value.stringValue }
+
+        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
+        assertEquals(strState, goalState)
+        assertEquals(1, varsState.getValue("x"))
+        assertEquals("abc", varsState.getStringValue("y"))
+        assertEquals("1", varsState.getStringValue("z"))
+    }
+
+    @Test
+    fun testPrivateVarsCaptureSeparateCells() {
+        eval(
+            """
+            private val x = 1 
+            private val y = "abc"
+            private val z = x
+            """.trimIndent()
+        )
+        val varsState = repl.notebook.variablesState
+        assertTrue(varsState.isNotEmpty())
+        eval(
+            """
+            private val x = "abc" 
+            var y = 123
+            private val z = x
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("abc", varsState.getStringValue("x"))
+        assertEquals(123, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
+
+        eval(
+            """
+            private val x = 1024 
+            y += x
+            """.trimIndent(),
+            jupyterId = 2
+        )
+
+        assertTrue(varsState.isNotEmpty())
+        assertEquals(3, varsState.size)
+        assertEquals("1024", varsState.getStringValue("x"))
+        assertEquals(123 + 1024, varsState.getValue("y"))
+        assertEquals("abc", varsState.getStringValue("z"))
+    }
+
+    @Test
+    fun testVarsUsageConsistency() {
+        eval("3+2")
+        val state = repl.notebook.cellVariables
+        assertTrue(state.values.size == 1)
+        assertTrue(state.values.first().isEmpty())
+        val setOfNextCell = setOf<String>()
+        assertEquals(state.values.first(), setOfNextCell)
+    }
+
+    @Test
+    fun testVarsDefsUsage() {
+        eval(
+            """
+            val x = 1
+            val z = "abcd"
+            var f = 47
+            """.trimIndent()
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state.isNotEmpty())
+        assertTrue(state.values.first().isNotEmpty())
+        val setOfCell = setOf("z", "f", "x")
+        assertTrue(state.containsValue(setOfCell))
+    }
+
+    @Test
+    fun testVarsDefNRefUsage() {
+        eval(
+            """
+            val x = "abcd"
+            var f = 47
+            """.trimIndent()
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state.isNotEmpty())
+        eval(
+            """
+            val z = 1
+            f += f
+            """.trimIndent()
+        )
+        assertTrue(state.isNotEmpty())
+
+        val setOfCell = setOf("z", "f", "x")
+        assertTrue(state.containsValue(setOfCell))
+    }
+
+    @Test
+    fun testPrivateVarsDefNRefUsage() {
+        eval(
+            """
+            val x = 124
+            private var f = "abcd"
+            """.trimIndent()
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state.isNotEmpty())
+        eval(
+            """
+            private var z = 1
+            z += x
+            """.trimIndent()
+        )
+        assertTrue(state.isNotEmpty())
+
+        val setOfCell = setOf("z", "f", "x")
+        assertTrue(state.containsValue(setOfCell))
+    }
+
+    @Test
+    fun testSeparateDefsUsage() {
+        eval(
+            """
+            val x = "abcd"
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state[0]!!.contains("x"))
+
+        eval(
+            """
+            val x = 341
+            var f = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertTrue(state[0]!!.isEmpty())
+        assertTrue(state[1]!!.contains("x"))
+
+        val setOfPrevCell = setOf<String>()
+        val setOfNextCell = setOf("x", "f")
+        assertEquals(state[0], setOfPrevCell)
+        assertEquals(state[1], setOfNextCell)
+    }
+
+    @Test
     fun testAnonymousObjectRendering() {
         eval("42")
         eval("val sim = object : ArrayList<String>() {}")
@@ -440,4 +709,115 @@ class ReplTests : AbstractSingleReplTest() {
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
+}
+
+
+class ReplVarsSerializationTest : AbstractSingleReplTest() {
+    override val repl = makeSimpleRepl()
+
+    @Test
+    fun simpleContainerSerialization() {
+        val res = eval(
+            """
+            val x = listOf(1, 2, 3, 4)
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(2, varsData.size)
+        assertTrue(varsData.containsKey("x"))
+        assertTrue(varsData.containsKey("f"))
+
+        val listData = varsData["x"]!!
+        assertTrue(listData.isContainer)
+        assertEquals(2, listData.fieldDescriptor.size)
+        val listDescriptors = listData.fieldDescriptor
+
+        assertEquals("4", listDescriptors["size"]!!.value)
+        assertFalse(listDescriptors["size"]!!.isContainer)
+
+        val actualContainer = listDescriptors.entries.first().value!!
+        assertEquals(2, actualContainer.fieldDescriptor.size)
+        assertTrue(actualContainer.isContainer)
+        assertEquals(listOf(1,2,3,4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
+    }
+
+    @Test
+    fun moreThanDefaultDepthContainerSerialization() {
+        val res = eval(
+            """
+            val x = listOf(listOf(1), listOf(2), listOf(3), listOf(4))
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        assertTrue(varsData.containsKey("x"))
+
+        val listData = varsData["x"]!!
+        assertTrue(listData.isContainer)
+        assertEquals(2, listData.fieldDescriptor.size)
+        val listDescriptors = listData.fieldDescriptor
+
+        assertEquals("4", listDescriptors["size"]!!.value)
+        assertFalse(listDescriptors["size"]!!.isContainer)
+
+        val actualContainer = listDescriptors.entries.first().value!!
+        assertEquals(2, actualContainer.fieldDescriptor.size)
+        assertTrue(actualContainer.isContainer)
+
+        actualContainer.fieldDescriptor.forEach { (name, serializedState) ->
+            if (name == "size") {
+                assertEquals("null", serializedState!!.value)
+            } else {
+                assertEquals(0, serializedState!!.fieldDescriptor.size)
+                assertTrue(serializedState!!.isContainer)
+            }
+        }
+    }
+
+
+    @Test
+    fun incrementalUpdateTest() {
+        val res = eval(
+            """
+            val x = listOf(listOf(1), listOf(2), listOf(3), listOf(4))
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+
+        val listData = varsData["x"]!!
+        assertTrue(listData.isContainer)
+        assertEquals(2, listData.fieldDescriptor.size)
+        val actualContainer = listData.fieldDescriptor.entries.first().value!!
+        val serializer = repl.variablesSerializer
+
+        val newData = serializer.doIncrementalSerialization(0, actualContainer.name, actualContainer)
+        var receivedDescriptor = newData.fieldDescriptor
+        assertEquals(2, receivedDescriptor.size)
+        assertTrue(receivedDescriptor.containsKey("size"))
+
+        val innerList = receivedDescriptor.entries.last().value!!
+        assertTrue(innerList.isContainer)
+        receivedDescriptor = innerList.fieldDescriptor
+        assertEquals(5, receivedDescriptor.size)
+
+        var values = 1
+        receivedDescriptor.forEach { (name, state) ->
+            if (name == "size") {
+                assertFalse(state!!.isContainer)
+                assertTrue(state!!.fieldDescriptor.isEmpty())
+                return@forEach
+            }
+            val fieldDescriptor = state!!.fieldDescriptor
+            assertEquals(0, fieldDescriptor.size)
+            assertTrue(state.isContainer)
+            assertEquals("${values++}", state.value)
+        }
+
+    }
+
 }

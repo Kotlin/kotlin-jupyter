@@ -29,7 +29,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
@@ -153,6 +152,8 @@ interface ReplForJupyter {
 
     val notebook: NotebookImpl
 
+    val variablesSerializer: VariablesSerializer
+
     val fileExtension: String
 
     val isEmbedded: Boolean
@@ -204,7 +205,9 @@ class ReplForJupyterImpl(
 
     override val notebook = NotebookImpl(runtimeProperties)
 
-    val librariesScanner = LibrariesScanner(notebook)
+    override val variablesSerializer = VariablesSerializer()
+
+    private val librariesScanner = LibrariesScanner(notebook)
     private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
     override var outputConfig
@@ -446,13 +449,21 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
+            notebook.updateVariablesState(internalEvaluator)
+            // printVars()
+            // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
+            val entry = notebook.variablesState.entries.lastOrNull()
+            val serializedVarsState =  variablesSerializer.serializeVariableState(jupyterId - 1, entry?.key, entry?.value)
+            val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState)
+
+
             val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(
                 result.result.value,
                 rendered,
                 result.scriptInstance,
                 result.result.name,
-                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, SerializedVariablesState()),
+                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, serializedData),
             )
         }
     }
