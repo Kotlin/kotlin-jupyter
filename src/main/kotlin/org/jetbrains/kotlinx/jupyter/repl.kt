@@ -452,8 +452,6 @@ class ReplForJupyterImpl(
             notebook.updateVariablesState(internalEvaluator)
             // printVars()
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
-            val entry = notebook.variablesState.entries.lastOrNull()
-            val serializedVarsState =  variablesSerializer.serializeVariableState(jupyterId - 1, entry?.key, entry?.value)
             val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState)
 
 

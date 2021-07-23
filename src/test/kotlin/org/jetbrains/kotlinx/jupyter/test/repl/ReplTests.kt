@@ -711,7 +711,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
     }
 }
 
-
 class ReplVarsSerializationTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
 
@@ -740,7 +739,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val actualContainer = listDescriptors.entries.first().value!!
         assertEquals(2, actualContainer.fieldDescriptor.size)
         assertTrue(actualContainer.isContainer)
-        assertEquals(listOf(1,2,3,4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
+        assertEquals(listOf(1, 2, 3, 4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
     }
 
     @Test
@@ -777,6 +776,34 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         }
     }
 
+    @Test
+    fun cyclicReferenceTest() {
+        val res = eval(
+            """
+            class C {
+                inner class Inner;
+                val i = Inner()
+                val counter = 0
+            }                
+            val c = C()
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        assertTrue(varsData.containsKey("c"))
+
+        val serializedState = varsData["c"]!!
+        assertTrue(serializedState.isContainer)
+        val descriptor = serializedState.fieldDescriptor
+        assertEquals(2, descriptor.size)
+        assertEquals("0", descriptor["counter"]!!.value)
+
+        val serializer = repl.variablesSerializer
+
+        val newData = serializer.doIncrementalSerialization(0, "i", descriptor["i"]!!)
+        val a = 1
+    }
 
     @Test
     fun incrementalUpdateTest() {
@@ -795,7 +822,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val actualContainer = listData.fieldDescriptor.entries.first().value!!
         val serializer = repl.variablesSerializer
 
-        val newData = serializer.doIncrementalSerialization(0, actualContainer.name, actualContainer)
+        val newData = serializer.doIncrementalSerialization(0, listData.fieldDescriptor.entries.first().key, actualContainer)
         var receivedDescriptor = newData.fieldDescriptor
         assertEquals(2, receivedDescriptor.size)
         assertTrue(receivedDescriptor.containsKey("size"))
@@ -817,7 +844,5 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             assertTrue(state.isContainer)
             assertEquals("${values++}", state.value)
         }
-
     }
-
 }

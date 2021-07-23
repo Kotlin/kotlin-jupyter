@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -75,6 +76,10 @@ fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCod
 
 fun ResultsRenderersProcessor.registerDefaultRenderers() {
     register(bufferedImageRenderer)
+}
+
+fun Map<String, SerializedVariablesState>.getValuesToString(): Map<String, String?> {
+    return this.mapValues { it.value.value }
 }
 
 /**

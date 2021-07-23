@@ -12,6 +12,8 @@ plugins {
 
 val deploy: Configuration by configurations.creating
 
+val serializationFlagProperty = "jupyter.serialization.enabled"
+
 deploy.apply {
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json-jvm")
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
@@ -114,7 +116,8 @@ tasks {
 
             "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
             "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
+            serializationFlagProperty to "true"
         )
     }
 

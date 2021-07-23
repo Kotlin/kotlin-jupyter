@@ -22,14 +22,12 @@ data class SerializedCompiledScriptsData(
 
 @Serializable
 data class SerializedVariablesState(
-    val name: String = "",
     val type: String = "",
     val value: String? = null,
     val isContainer: Boolean = false
 ) {
     val fieldDescriptor: MutableMap<String, SerializedVariablesState?> = mutableMapOf()
 }
-
 
 @Serializable
 class EvaluatedSnippetMetadata(
