@@ -1,10 +1,8 @@
 package build
 
-import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.InputFile
-import org.gradle.kotlin.dsl.getByType
-import java.nio.file.Path
+import java.io.File
 
 open class TaskSpec(
     var taskName: String = ""
@@ -26,17 +24,17 @@ class UploadTaskSpecs <T : TaskSpec>(
 
     private fun taskName(type: String) = repoName + "Upload" + type
 
-    fun createTasks(project: Project, taskCreationAction: (T) -> Unit) {
-        val opts = project.extensions.getByType<KernelBuildExtension>()
-        if (opts.isOnProtectedBranch) {
+    fun createTasks(options: KernelBuildExtension, taskCreationAction: (T) -> Unit) {
+        val project = options.project
+        if (options.isOnProtectedBranch) {
             taskCreationAction(stable)
         }
         taskCreationAction(dev)
 
         project.task(taskName("Protected")) {
-            dependsOn(opts.cleanInstallDirDistrib)
+            dependsOn(project.tasks.getByName(CLEAN_INSTALL_DIR_DISTRIB_TASK))
             group = taskGroup
-            if (opts.isOnProtectedBranch) {
+            if (options.isOnProtectedBranch) {
                 dependsOn(dev.taskName)
             }
         }
@@ -61,7 +59,7 @@ class PyPiTaskSpec(
 
 abstract class PipInstallReq : Exec() {
     @get:InputFile
-    var requirementsFile: Path? = null
+    var requirementsFile: File? = null
         set(value) {
             commandLine("python", "-m", "pip", "install", "-r", value)
             field = value

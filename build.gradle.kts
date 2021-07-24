@@ -1,4 +1,5 @@
 import build.getFlag
+import build.typedProperty
 import build.withCompilerArgs
 import build.withJvmTarget
 import build.withLanguageLevel
@@ -11,12 +12,6 @@ import ru.ileasile.kotlin.githubRepo
 plugins {
     id("build.plugins.main")
 }
-
-extra["isMainProject"] = true
-
-val docsRepo: String by project
-val githubRepoUser: String by project
-val githubRepoName: String by project
 
 val deploy: Configuration by configurations.creating
 
@@ -46,15 +41,11 @@ subprojects {
 }
 
 allprojects {
-    val stableKotlinLanguageLevel: String by rootProject
-    val jvmTarget: String by rootProject
-
-    withJvmTarget(jvmTarget)
-    withLanguageLevel(stableKotlinLanguageLevel)
+    withJvmTarget(rootProject.options.jvmTarget)
+    withLanguageLevel(rootProject.options.stableKotlinLanguageLevel)
 }
 
-val kotlinLanguageLevel: String by rootProject
-withLanguageLevel(kotlinLanguageLevel)
+withLanguageLevel(options.kotlinLanguageLevel)
 withCompilerArgs {
     skipPrereleaseCheck()
 }
@@ -161,33 +152,32 @@ tasks.processTestResources {
 }
 
 tasks.publishDocs {
-    docsRepoUrl.set(docsRepo)
+    docsRepoUrl.set(options.docsRepo)
     branchName.set("master")
     username.set("robot")
     email.set("robot@jetbrains.com")
 }
 
 changelog {
-    githubUser = githubRepoUser
-    githubRepository = githubRepoName
+    githubUser = options.githubRepoUser
+    githubRepository = options.githubRepoName
     excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
 }
 
 kotlinPublications {
-    packageGroup = "org.jetbrains.kotlinx"
-
-    fun prop(name: String) = project.findProperty(name) as? String?
+    packageGroup.set("org.jetbrains.kotlinx")
+    defaultArtifactIdPrefix.set("kotlin-jupyter-")
 
     sonatypeSettings(
-        prop("kds.sonatype.user"),
-        prop("kds.sonatype.password"),
+        typedProperty("kds.sonatype.user"),
+        typedProperty("kds.sonatype.password"),
         "kotlin-jupyter project, v. ${project.version}"
     )
 
     signingCredentials(
-        prop("kds.sign.key.id"),
-        prop("kds.sign.key.private"),
-        prop("kds.sign.key.passphrase")
+        typedProperty("kds.sign.key.id"),
+        typedProperty("kds.sign.key.private"),
+        typedProperty("kds.sign.key.passphrase")
     )
 
     pom {
@@ -205,10 +195,12 @@ kotlinPublications {
         }
     }
 
+    repositories {
+        defaultLocalRepository()
+    }
+
     publication {
-        publicationName = "kernel"
-        artifactId = "kotlin-jupyter-kernel"
-        description = "Kotlin Jupyter kernel published as artifact"
-        packageName = artifactId
+        publicationName.set("kernel")
+        description.set("Kotlin Jupyter kernel published as artifact")
     }
 }

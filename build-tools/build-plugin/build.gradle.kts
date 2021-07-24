@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("build.plugins.versions")
     `kotlin-dsl`
@@ -17,6 +19,12 @@ dependencies {
 sourceSets {
     main {
         java.setSrcDirs(listOf("src"))
+    }
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + listOf("-Xopt-in=kotlin.RequiresOptIn")
     }
 }
 

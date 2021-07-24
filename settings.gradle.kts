@@ -3,6 +3,8 @@
 enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+rootProject.name = "kotlin-jupyter-kernel"
+
 includeBuild("build-tools/build-plugin")
 
 libSubproject("common-dependencies")

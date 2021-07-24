@@ -8,7 +8,7 @@ kotlinxSerialization = "1.1.0"
 kotlinxCoroutines = "1.4.2"
 ktlintGradle = "10.0.0"
 ktlint = "0.40.0"
-publishPlugin = "0.0.38-dev"
+publishPlugin = "0.0.50-dev"
 
 slf4j = "1.7.30"
 logback = "1.2.3"

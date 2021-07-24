@@ -15,9 +15,7 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
@@ -34,18 +32,10 @@ import org.jetbrains.kotlinx.jupyter.common.withJson
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.OutputStream
-import java.nio.file.Path
 
 fun Project.configureKernelBuild() {
     KernelBuildConfigurator(this).configure()
 }
-
-private val Project.libName get() = prop<String>("jupyter.lib.name")
-private val Project.libParamName get() = prop<String>("jupyter.lib.param.name")
-private val Project.libParamValue get() = prop<String>("jupyter.lib.param.value")
-
-private val Project.prGithubUser get() = prop<String>("jupyter.github.user")
-private val Project.prGithubToken get() = prop<String>("jupyter.github.token")
 
 @Serializable
 class NewPrData(
@@ -63,7 +53,9 @@ class SetLabelsData(
 )
 
 private class KernelBuildConfigurator(private val project: Project) {
-    private val opts = project.extensions.create(KernelBuildExtension.NAME, KernelBuildExtension::class.java)
+    private val opts = project.extensions.getOrCreate(KernelBuildExtension.NAME) { KernelBuildExtension(project) }
+
+    private val rootProject = project.rootProject
     private val tasks = project.tasks
     private val configurations = project.configurations
     private val projectDir = project.projectDir
@@ -80,8 +72,6 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
 
         project.version = opts.mavenVersion
-        project.extra.set("localPublicationsRepo", opts.localPublicationsRepo)
-        project.extra.set("pythonVersion", opts.pythonVersion)
         println("##teamcity[buildNumber '${opts.pythonVersion}']")
         println("##teamcity[setParameter name='mavenVersion' value='${opts.mavenVersion}']")
 
@@ -114,7 +104,6 @@ private class KernelBuildConfigurator(private val project: Project) {
 
 
         prepareJarTasks()
-        prepareFinalTasks()
     }
 
     fun createCleanTasks() {
@@ -123,7 +112,7 @@ private class KernelBuildConfigurator(private val project: Project) {
             project.task(makeTaskName(opts.cleanInstallDirTaskPrefix, local)) {
                 group = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
                 doLast {
-                    if (!dir.deleteDir()) {
+                    if (!dir.deleteRecursively()) {
                         throw Exception("Cannot delete $dir")
                     }
                 }
@@ -131,7 +120,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun createInstallTasks(local: Boolean, specPath: Path, mainInstallPath: Path) {
+    fun createInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = tasks.getByName(makeTaskName(opts.cleanInstallDirTaskPrefix, local))
         val shadowJar = tasks.getByName(SHADOW_JAR_TASK)
@@ -163,7 +152,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun createTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: Path, mainInstallPath: Path): String {
+    fun createTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
         val taskName = makeTaskName(if (debug) "createDebugSpecs" else "createSpecs", local)
         tasks.register(taskName) {
             this.group = group
@@ -192,7 +181,7 @@ private class KernelBuildConfigurator(private val project: Project) {
 
         val dependencies = listOf(
             makeTaskName(opts.cleanInstallDirTaskPrefix, local),
-            if (local) opts.copyRunKernelPy else opts.prepareDistributionDir,
+            if (local) tasks.getByName(COPY_RUN_KERNEL_PY_TASK) else tasks.getByName(PREPARE_DISTRIBUTION_DIR_TASK),
             makeTaskName(opts.installKernelTaskPrefix, local),
             makeTaskName(opts.installLibsTaskPrefix, local),
             specsTaskName,
@@ -205,7 +194,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun makeKernelSpec(installPath: Path, localInstall: Boolean) {
+    fun makeKernelSpec(installPath: File, localInstall: Boolean) {
         val argv = if (localInstall) {
             listOf(
                 "python",
@@ -235,7 +224,7 @@ private class KernelBuildConfigurator(private val project: Project) {
     }
 
     fun makeJarArgs(
-        installPath: Path,
+        installPath: File,
         kernelJarPath: String,
         mainClassFQN: String,
         classPath: List<String>,
@@ -254,12 +243,12 @@ private class KernelBuildConfigurator(private val project: Project) {
 
 
 
-    private fun removeTypeHintsIfNeeded(files: List<Path>) {
+    private fun removeTypeHintsIfNeeded(files: List<File>) {
         if (!opts.removeTypeHints)
             return
 
         files.forEach {
-            val fileName = it.toAbsolutePath().toString()
+            val fileName = it.absolutePath
             project.exec {
                 commandLine("python", opts.typeHintsRemover, fileName, fileName)
             }
@@ -288,9 +277,9 @@ private class KernelBuildConfigurator(private val project: Project) {
             into(opts.distribBuildPath)
             exclude(".idea/**", "venv/**")
 
-            val pythonFiles = mutableListOf<Path>()
+            val pythonFiles = mutableListOf<File>()
             eachFile {
-                val absPath = opts.distribBuildPath.resolve(this.path).toAbsolutePath()
+                val absPath = opts.distribBuildPath.resolve(this.path).absoluteFile
                 if (this.path.endsWith(".py"))
                     pythonFiles.add(absPath)
             }
@@ -305,14 +294,13 @@ private class KernelBuildConfigurator(private val project: Project) {
             dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK, COPY_DISTRIB_FILES_TASK)
             doLast {
                 val versionFilePath = opts.distribBuildPath.resolve(opts.versionFileName)
-                versionFilePath.toFile().writeText(project.findProperty("pythonVersion") as String)
+                versionFilePath.writeText(opts.pythonVersion)
                 project.copy {
                     from(versionFilePath)
                     into(opts.artifactsDir)
                 }
 
-                val repoUrl = project.rootProject.property("projectRepoUrl") as String
-                opts.distribBuildPath.resolve("REPO_URL").toFile().writeText(repoUrl)
+                opts.distribBuildPath.resolve("REPO_URL").writeText(opts.projectRepoUrl)
             }
         }
     }
@@ -332,12 +320,16 @@ private class KernelBuildConfigurator(private val project: Project) {
                 }
             }
 
-            opts.condaTaskSpecs.createTasks(project) { taskSpec ->
+            tasks.named(PUBLISH_LOCAL_TASK) {
+                dependsOn(CONDA_PACKAGE_TASK)
+            }
+
+            createTasks(opts) { taskSpec ->
                 project.task(taskSpec.taskName) {
                     group = CONDA_GROUP
                     val artifactPath = opts.artifactsDir.resolve(packageSettings.fileName)
 
-                    if (!artifactPath.toFile().exists()) {
+                    if (!artifactPath.exists()) {
                         dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK, CONDA_PACKAGE_TASK)
                     }
 
@@ -391,7 +383,11 @@ private class KernelBuildConfigurator(private val project: Project) {
                 }
             }
 
-            opts.pyPiTaskSpecs.createTasks(project) { taskSpec ->
+            tasks.named(PUBLISH_LOCAL_TASK) {
+                dependsOn(PYPI_PACKAGE_TASK)
+            }
+
+            createTasks(opts) { taskSpec ->
                 tasks.register<Exec>(taskSpec.taskName) {
                     group = PYPI_GROUP
                     workingDir(opts.artifactsDir)
@@ -400,7 +396,7 @@ private class KernelBuildConfigurator(private val project: Project) {
                     if (opts.isLocalBuild) {
                         dependsOn(INSTALL_COMMON_REQUIREMENTS_TASK)
                     }
-                    if (!artifactPath.toFile().exists()) {
+                    if (!artifactPath.exists()) {
                         dependsOn(PYPI_PACKAGE_TASK)
                     }
 
@@ -469,12 +465,12 @@ private class KernelBuildConfigurator(private val project: Project) {
     fun prepareKotlinVersionUpdateTasks() {
         tasks.register(UPDATE_KOTLIN_VERSION_TASK) {
             doLast {
-                val teamcityUrl = "https://teamcity.jetbrains.com"
-                val requestEndpoint = "guestAuth/app/rest/builds"
-                val locator = "buildType:(id:Kotlin_KotlinPublic_Aggregate),status:SUCCESS,branch:default:any,count:1"
+                val teamcityProject = PUBLIC_KOTLIN_TEAMCITY
+                val teamcityUrl = teamcityProject.url
+                val locator = "buildType:(id:${teamcityProject.projectId}),status:SUCCESS,branch:default:any,count:1"
 
                 val response = httpRequest(
-                    Request(Method.GET, "$teamcityUrl/$requestEndpoint/?locator=$locator")
+                    Request(Method.GET, "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator")
                         .header("accept", "application/json")
                 )
                 val builds = response.jsonObject["build"] as JsonArray
@@ -483,7 +479,7 @@ private class KernelBuildConfigurator(private val project: Project) {
                 println("Last Kotlin dev version: $lastBuildNumber")
 
                 val kotlinVersionProp = "kotlin"
-                val gradlePropertiesFile = File("gradle/libs.versions.toml")
+                val gradlePropertiesFile = project.projectDir.resolve("gradle/libs.versions.toml")
                 val gradleProperties = gradlePropertiesFile.readLines()
                 val updatedGradleProperties = gradleProperties.map {
                     if (it.startsWith("$kotlinVersionProp = ")) "$kotlinVersionProp = \"$lastBuildNumber\""
@@ -497,9 +493,9 @@ private class KernelBuildConfigurator(private val project: Project) {
 
         val updateLibraryParamTask = tasks.register(UPDATE_LIBRARY_PARAM_TASK) {
             doLast {
-                val libName = project.libName
-                val paramName = project.libParamName
-                val paramValue = project.libParamValue
+                val libName = opts.libName
+                val paramName = opts.libParamName
+                val paramValue = opts.libParamValue
 
                 updateLibBranchName = "update-$libName-$paramName-$paramValue"
                 updateLibraryParam(libName, paramName, paramValue)
@@ -527,13 +523,12 @@ private class KernelBuildConfigurator(private val project: Project) {
                 execGit("add", ".")
                 execGit("commit", "-m", "[AUTO] Update library version")
 
-                val repoUrl = project.rootProject.property("librariesRepoUrl") as String
                 val currentBranch = project.getPropertyByCommand(
                     "build.libraries.branch",
                     arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
                     librariesDir,
                 )
-                execGit("push", "--force", "-u", repoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!) {
+                execGit("push", "--force", "-u", opts.librariesRepoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!) {
                     this.standardOutput = object : OutputStream() {
                         override fun write(b: Int) { }
                     }
@@ -547,9 +542,9 @@ private class KernelBuildConfigurator(private val project: Project) {
             dependsOn(pushChangesTask)
 
             doLast {
-                val user = project.rootProject.prGithubUser
-                val password = project.rootProject.prGithubToken
-                val repoUserAndName = project.rootProject.property("librariesRepoUserAndName") as String
+                val user = opts.prGithubUser
+                val password = opts.prGithubToken
+                val repoUserAndName = opts.librariesRepoUserAndName
                 fun githubRequest(
                     method: Method,
                     request: String,
@@ -572,7 +567,7 @@ private class KernelBuildConfigurator(private val project: Project) {
                     Method.POST, "repos/$repoUserAndName/pulls",
                     Json.encodeToJsonElement(
                         NewPrData(
-                            title = "Update `${project.rootProject.libName}` library to `${project.rootProject.libParamValue}`",
+                            title = "Update `${opts.libName}` library to `${opts.libParamValue}`",
                             head = updateLibBranchName!!,
                             base = "master"
                         )
@@ -595,7 +590,7 @@ private class KernelBuildConfigurator(private val project: Project) {
     }
 
     fun updateLibraryParam(libName: String, paramName: String, paramValue: String) {
-        val libFile = File(opts.librariesPath).resolve("$libName.json")
+        val libFile = project.file(opts.librariesPath).resolve("$libName.json")
         val libText = libFile.readText()
         val paramRegex = Regex("""^([ \t]*"$paramName"[ \t]*:[ \t]*")(.*)("[ \t]*,?)$""", RegexOption.MULTILINE)
         val newText = libText.replace(paramRegex, "$1$paramValue$3")
@@ -607,10 +602,10 @@ private class KernelBuildConfigurator(private val project: Project) {
             group = BUILD_GROUP
             val outputDir = project.file(getSubDir(project.buildDir.toPath(), opts.resourcesDir, opts.mainSourceSetDir))
 
-            inputs.property("version", project.rootProject.findProperty("pythonVersion"))
+            inputs.property("version", opts.pythonVersion)
             inputs.property("currentBranch", project.getCurrentBranch())
             inputs.property("currentSha", project.getCurrentCommitSha())
-            project.rootProject.findProperty("jvmTargetForSnippets")?.let {
+            opts.jvmTargetForSnippets?.let {
                 inputs.property("jvmTargetForSnippets", it)
             }
 
@@ -631,22 +626,25 @@ private class KernelBuildConfigurator(private val project: Project) {
                 propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
             }
         }
+
+        tasks.named(PROCESS_RESOURCES_TASK) {
+            dependsOn(BUILD_PROPERTIES_TASK)
+        }
     }
 
     fun prepareReadmeTasks() {
         val kotlinVersion = project.defaultVersionCatalog.versions.devKotlin
-        val projectRepoUrl: String by project
 
-        val readmeFile = opts.readmePath.toFile()
-        val readmeStubFile = opts.rootPath.resolve("docs").resolve("README-STUB.md").toFile()
-        val librariesDir = File(project.rootProject.projectDir, opts.librariesPath)
-        val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, projectRepoUrl)
+        val readmeFile = opts.readmePath
+        val readmeStubFile = project.rootDir.resolve("docs").resolve("README-STUB.md")
+        val librariesDir = rootProject.projectDir.resolve(opts.librariesPath)
+        val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, opts.projectRepoUrl)
 
         fun Task.defineInputs() {
             inputs.file(readmeStubFile)
             inputs.dir(librariesDir)
             inputs.property("kotlinVersion", kotlinVersion)
-            inputs.property("projectRepoUrl", projectRepoUrl)
+            inputs.property("projectRepoUrl", opts.projectRepoUrl)
         }
 
         val generateReadme = tasks.register(GENERATE_README_TASK) {
@@ -677,6 +675,12 @@ private class KernelBuildConfigurator(private val project: Project) {
                 }
             }
         }
+
+        tasks.named(CHECK_TASK) {
+            if (!opts.skipReadmeCheck) {
+                dependsOn(CHECK_README_TASK)
+            }
+        }
     }
 
     fun prepareJarTasks() {
@@ -698,24 +702,5 @@ private class KernelBuildConfigurator(private val project: Project) {
             }
         }
 
-    }
-
-    fun prepareFinalTasks() {
-        tasks.named(PROCESS_RESOURCES_TASK) {
-            dependsOn(BUILD_PROPERTIES_TASK)
-        }
-
-        tasks.named(CHECK_TASK) {
-            if (!project.getFlag("skipReadmeCheck", false)) {
-                dependsOn(CHECK_README_TASK)
-            }
-        }
-
-        tasks.named(PUBLISH_LOCAL_TASK) {
-            dependsOn(
-                CONDA_PACKAGE_TASK,
-                PYPI_PACKAGE_TASK,
-            )
-        }
     }
 }

@@ -3,7 +3,19 @@ package build
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.maven
 import org.gradle.kotlin.dsl.repositories
-import java.io.File
+
+const val INTERNAL_TEAMCITY_URL = "https://buildserver.labs.intellij.net"
+const val PUBLIC_TEAMCITY_URL = "https://teamcity.jetbrains.com"
+
+class TeamcityProject(
+    val url: String,
+    val projectId: String
+)
+
+val INTERNAL_KOTLIN_TEAMCITY = TeamcityProject(INTERNAL_TEAMCITY_URL, "Kotlin_KotlinDev_Artifacts")
+val PUBLIC_KOTLIN_TEAMCITY = TeamcityProject(PUBLIC_TEAMCITY_URL, "Kotlin_KotlinPublic_Artifacts")
+
+const val TEAMCITY_REQUEST_ENDPOINT = "guestAuth/app/rest/builds"
 
 fun Project.addAllBuildRepositories() {
     val kotlinVersion = rootProject.defaultVersionCatalog.versions.devKotlin
@@ -16,20 +28,13 @@ fun Project.addAllBuildRepositories() {
         // Kotlin Dev releases are published here every night
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 
-        class TeamcitySettings(
-            val url: String,
-            val projectId: String
-        )
-        val teamcityRepos = listOf(
-            TeamcitySettings("https://teamcity.jetbrains.com", "Kotlin_KotlinPublic_Artifacts"),
-            TeamcitySettings("https://buildserver.labs.intellij.net", "Kotlin_KotlinDev_Artifacts")
-        )
-        for (teamcity in teamcityRepos) {
-            maven("${teamcity.url}/guestAuth/app/rest/builds/buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven")
+        for (teamcity in listOf(INTERNAL_KOTLIN_TEAMCITY, PUBLIC_KOTLIN_TEAMCITY)) {
+            val locator = "buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven"
+            maven("${teamcity.url}/$TEAMCITY_REQUEST_ENDPOINT/$locator")
         }
 
         // Used for TeamCity build
-        val m2LocalPath = File(".m2/repository")
+        val m2LocalPath = file(".m2/repository")
         if (m2LocalPath.exists()) {
             maven(m2LocalPath.toURI())
         }

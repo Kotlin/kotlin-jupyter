@@ -1,3 +1,4 @@
+import build.options
 import build.withCompilerArgs
 import build.withLanguageLevel
 import build.withTests
@@ -10,8 +11,7 @@ plugins {
 
 project.version = rootProject.version
 
-val kotlinLanguageLevel: String by rootProject
-withLanguageLevel(kotlinLanguageLevel)
+withLanguageLevel(rootProject.options.kotlinLanguageLevel)
 
 withCompilerArgs {
     skipPrereleaseCheck()
@@ -48,7 +48,7 @@ dependencies {
 withTests()
 
 val buildProperties by tasks.registering {
-    inputs.property("version", rootProject.findProperty("pythonVersion"))
+    inputs.property("version", rootProject.options.pythonVersion)
 
     val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
     outputs.dir(outputDir)
@@ -67,9 +67,7 @@ tasks.processResources {
 
 kotlinPublications {
     publication {
-        publicationName = "compiler"
-        artifactId = "kotlin-jupyter-shared-compiler"
-        description = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"
-        packageName = artifactId
+        publicationName.set("compiler")
+        description.set("Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)")
     }
 }

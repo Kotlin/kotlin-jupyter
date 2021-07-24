@@ -31,9 +31,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 kotlinPublications {
     publication {
-        publicationName = "common-dependencies"
-        artifactId = "kotlin-jupyter-common-dependencies"
-        description = "Notebook API entities used for building kernel documentation"
-        packageName = artifactId
+        publicationName.set("common-dependencies")
+        description.set("Notebook API entities used for building kernel documentation")
     }
 }

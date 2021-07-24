@@ -82,23 +82,3 @@ pluginBundle {
         groupId = "org.jetbrains.kotlin"
     }
 }
-
-publishing {
-    repositories {
-        (rootProject.findProperty("localPublicationsRepo") as? java.nio.file.Path)?.let {
-            maven {
-                name = "LocalBuild"
-                url = it.toUri()
-            }
-        }
-    }
-}
-
-if (rootProject.findProperty("isMainProject") == true) {
-    val thisProjectName = project.name
-    rootProject.tasks {
-        named("publishLocal") {
-            dependsOn(":$thisProjectName:publishAllPublicationsToLocalBuildRepository")
-        }
-    }
-}

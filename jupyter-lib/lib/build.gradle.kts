@@ -13,9 +13,7 @@ dependencies {
 
 kotlinPublications {
     publication {
-        publicationName = "lib"
-        artifactId = "kotlin-jupyter-lib"
-        description = "Internal part of Kotlin Jupyter API used only inside notebook cells"
-        packageName = artifactId
+        publicationName.set("lib")
+        description.set("Internal part of Kotlin Jupyter API used only inside notebook cells")
     }
 }

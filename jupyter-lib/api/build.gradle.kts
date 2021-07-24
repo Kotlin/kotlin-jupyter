@@ -35,9 +35,7 @@ withCompilerArgs {
 
 kotlinPublications {
     publication {
-        publicationName = "api"
-        artifactId = "kotlin-jupyter-api"
-        description = "API for libraries supporting Kotlin Jupyter notebooks"
-        packageName = artifactId
+        publicationName.set("api")
+        description.set("API for libraries supporting Kotlin Jupyter notebooks")
     }
 }

@@ -29,12 +29,12 @@ const val CLEAN_INSTALL_DIR_DISTRIB_TASK = "cleanInstallDirDistrib"
 const val CLEAN_INSTALL_DIR_LOCAL_TASK = "cleanInstallDirLocal"
 const val PREPARE_DISTRIBUTION_DIR_TASK = "prepareDistributionDir"
 
-const val PUSH_CHANGES_TASK = "pushChanges";
-const val UPDATE_LIBRARY_PARAM_TASK = "updateLibraryParam";
-const val UPDATE_KOTLIN_VERSION_TASK = "updateKotlinVersion";
-const val COPY_NB_EXTENSION_TASK = "copyNbExtension";
-const val COPY_RUN_KERNEL_PY_TASK = "copyRunKernelPy";
-const val UNINSTALL_TASK = "uninstall";
+const val PUSH_CHANGES_TASK = "pushChanges"
+const val UPDATE_LIBRARY_PARAM_TASK = "updateLibraryParam"
+const val UPDATE_KOTLIN_VERSION_TASK = "updateKotlinVersion"
+const val COPY_NB_EXTENSION_TASK = "copyNbExtension"
+const val COPY_RUN_KERNEL_PY_TASK = "copyRunKernelPy"
+const val UNINSTALL_TASK = "uninstall"
 
 const val MAKE_CHANGES_PR_TASK = "makeChangesPR"
 const val PREPARE_PACKAGE_TASK = "preparePackage"

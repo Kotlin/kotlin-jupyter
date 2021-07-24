@@ -5,22 +5,48 @@ import org.gradle.api.Task
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.provideDelegate
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.io.File
 
-open class KernelBuildExtension(
-    private val project: Project
+class KernelBuildExtension(
+    val project: Project
 ) {
-    var packageName = "kotlin-jupyter-kernel"
+    var kotlinLanguageLevel by project.prop<String>()
+    var stableKotlinLanguageLevel by project.prop<String>()
+    var jvmTarget by project.prop<String>()
 
-    val versionFileName = "VERSION"
-    val rootPath: Path = project.rootDir.toPath()
+    var githubRepoUser by project.prop<String>()
+    var githubRepoName by project.prop<String>()
+    var projectRepoUrl by project.prop<String>()
+    var docsRepo by project.prop<String>()
+    var librariesRepoUrl by project.prop<String>()
+    var librariesRepoUserAndName by project.prop<String>()
 
-    val isLocalBuild = project.getFlag("build.isLocal")
+    var skipReadmeCheck by project.prop<Boolean>()
 
-    val artifactsDir: Path = run {
-        val artifactsPathStr = project.rootProject.findProperty("artifactsPath") as? String ?: "artifacts"
-        val artifactsDir = rootPath.resolve(artifactsPathStr)
+    val buildCounter by project.prop("build.counter", "100500")
+    val buildNumber by project.prop("build.number", "")
+
+    val devCounter by project.prop<String?>("build.devCounter")
+
+    var libName by project.prop<String>("jupyter.lib.name")
+    var libParamName by project.prop<String>("jupyter.lib.param.name")
+    var libParamValue by project.prop<String>("jupyter.lib.param.value")
+
+    var prGithubUser by project.prop<String>("jupyter.github.user")
+    var prGithubToken by project.prop<String>("jupyter.github.token")
+
+    var baseVersion by project.prop<String>()
+    var isLocalBuild by project.prop<Boolean>("build.isLocal")
+
+    var jvmTargetForSnippets by project.prop<String?>()
+
+    var packageName: String = project.rootProject.name
+
+    var versionFileName = "VERSION"
+
+    val artifactsDir: File = run {
+        val artifactsPath by project.prop(default = "artifacts")
+        val artifactsDir = project.rootDir.resolve(artifactsPath)
 
         if (isLocalBuild) {
             project.delete(artifactsDir)
@@ -28,29 +54,25 @@ open class KernelBuildExtension(
         return@run artifactsDir
     }
 
-    val localPublicationsRepo: Path = artifactsDir.resolve("maven")
-
-    val baseVersion = project.prop<String>("baseVersion")
-
-    val pythonVersion: String = project.detectVersion(baseVersion, artifactsDir, versionFileName)
+    val pythonVersion: String = project.detectVersion(this)
 
     val mavenVersion = pythonVersion.toMavenVersion()
 
-    val readmePath: Path = rootPath.resolve("docs").resolve("README.md")
+    val readmePath: File = project.rootDir.resolve("docs").resolve("README.md")
 
-    private val installPath = project.prop<String?>("installPath")
+    private val installPath = project.typedProperty<String?>("installPath")
 
     val librariesPath = "libraries"
-    val librariesPropertiesPath: Path = rootPath.resolve(librariesPath).resolve(".properties")
+    val librariesPropertiesPath: File = project.rootDir.resolve(librariesPath).resolve(".properties")
 
-    val installPathLocal: Path = if (installPath != null) Paths.get(installPath)
-    else Paths.get(System.getProperty("user.home").toString(), ".ipython", "kernels", "kotlin")
+    val installPathLocal: File = if (installPath != null) project.file(installPath)
+    else project.file(System.getProperty("user.home").toString()).resolve(".ipython/kernels/kotlin")
 
     val resourcesDir = "resources"
-    val distribBuildPath: Path = rootPath.resolve("build").resolve("distrib-build")
-    val logosPath = getSubDir(rootPath, resourcesDir, "logos")
-    val nbExtensionPath = getSubDir(rootPath, resourcesDir, "notebook-extension")
-    val distributionPath: Path by project.extra(rootPath.resolve("distrib"))
+    val distribBuildPath: File = project.rootDir.resolve("build").resolve("distrib-build")
+    val logosPath = project.rootDir.resolve(resourcesDir).resolve("logos")
+    val nbExtensionPath = project.rootDir.resolve(resourcesDir).resolve("notebook-extension")
+    val distributionPath: File by project.extra(project.rootDir.resolve("distrib"))
     val jarsPath = "jars"
     val configDir = "config"
 
@@ -75,22 +97,15 @@ open class KernelBuildExtension(
     val runKernelDir = "run_kotlin_kernel"
     val setupPy = "setup.py"
 
-    val copyRunKernelPy: Task
-        get() = project.tasks.getByName("copyRunKernelPy")
-    val prepareDistributionDir: Task
-        get() = project.tasks.getByName("prepareDistributionDir")
-    val cleanInstallDirDistrib: Task
-        get() = project.tasks.getByName("cleanInstallDirDistrib")
-
     val isOnProtectedBranch: Boolean
         get() = project.extra["isOnProtectedBranch"] as Boolean
 
-    val distribUtilsPath: Path = rootPath.resolve("distrib-util")
-    val distribUtilRequirementsPath: Path = distribUtilsPath.resolve("requirements-common.txt")
-    val distribUtilRequirementsHintsRemPath: Path =
+    private val distribUtilsPath: File = project.rootDir.resolve("distrib-util")
+    val distribUtilRequirementsPath: File = distribUtilsPath.resolve("requirements-common.txt")
+    val distribUtilRequirementsHintsRemPath: File =
         distribUtilsPath.resolve("requirements-hints-remover.txt")
     val removeTypeHints = true
-    val typeHintsRemover: Path = distribUtilsPath.resolve("remove_type_hints.py")
+    val typeHintsRemover: File = distribUtilsPath.resolve("remove_type_hints.py")
 
     val condaTaskSpecs by lazy {
         val condaUserStable = project.stringPropOrEmpty("condaUserStable")
@@ -143,6 +158,6 @@ open class KernelBuildExtension(
     }
 
     companion object {
-        const val NAME = "kernelBuild"
+        const val NAME = "options"
     }
 }

@@ -18,10 +18,8 @@ dependencies {
 
 kotlinPublications {
     publication {
-        publicationName = "example-getting-started"
-        artifactId = "kotlin-jupyter-example-getting-started"
-        description = "Basic API usage example"
-        packageName = artifactId
-        publishToSonatype = false
+        publicationName.set("example-getting-started")
+        description.set("Basic API usage example")
+        publishToSonatype.set(false)
     }
 }

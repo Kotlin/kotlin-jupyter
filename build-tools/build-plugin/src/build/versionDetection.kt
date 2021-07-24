@@ -5,14 +5,13 @@ import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.invoke
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.file.Path
 
 fun Project.getPropertyByCommand(
     propName: String,
     cmdArgs: Array<String>,
     workingDir: File? = null,
 ): String {
-    val prop = project.findProperty(propName) as String?
+    val prop = project.typedProperty<String?>(propName)
 
     if (prop != null) {
         return prop
@@ -70,19 +69,19 @@ fun String.toMavenVersion(): String {
     return "$base-$counter$devAddition"
 }
 
-fun Project.detectVersion(baseVersion: String, artifactsDir: Path, versionFileName: String): String {
+fun Project.detectVersion(options: KernelBuildExtension): String {
     val isOnProtectedBranch by extra(isProtectedBranch())
-    val buildCounterStr = rootProject.findProperty("build.counter") as String? ?: "100500"
-    val buildNumber = rootProject.findProperty("build.number") as String? ?: ""
+    val buildCounterStr = options.buildCounter
+    val buildNumber = options.buildNumber
 
-    val devCounterOrNull = rootProject.findProperty("build.devCounter") as String?
+    val devCounterOrNull = options.devCounter
     val devCounter = devCounterOrNull ?: "1"
     val devAddition = if (isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
 
-    val defaultBuildNumber = "$baseVersion.$buildCounterStr$devAddition"
+    val defaultBuildNumber = "${options.baseVersion}.$buildCounterStr$devAddition"
 
     return if (!buildNumber.matches(buildNumberRegex)) {
-        val versionFile = artifactsDir.resolve(versionFileName).toFile()
+        val versionFile = options.artifactsDir.resolve(options.versionFileName)
         if (versionFile.exists()) {
             val lines = versionFile.readLines()
             assert(lines.isNotEmpty()) { "There should be at least one line in VERSION file" }

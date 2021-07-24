@@ -35,9 +35,7 @@ withTests()
 
 kotlinPublications {
     publication {
-        publicationName = "lib-ext"
-        artifactId = "kotlin-jupyter-lib-ext"
-        description = "Extended functionality for Kotlin kernel"
-        packageName = artifactId
+        publicationName.set("lib-ext")
+        description.set("Extended functionality for Kotlin kernel")
     }
 }
