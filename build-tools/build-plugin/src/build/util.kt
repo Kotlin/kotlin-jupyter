@@ -7,6 +7,7 @@ import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.extra
 import org.gradle.tooling.BuildException
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import java.io.File
 import java.nio.file.Path
 import java.util.Optional
@@ -14,6 +15,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
+
+val BUILD_LIBRARIES = LibraryDescriptorsManager.getInstance()
 
 fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
 

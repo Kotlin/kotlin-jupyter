@@ -36,3 +36,5 @@ const val UNINSTALL_TASK = "uninstall"
 
 const val MAKE_CHANGES_PR_TASK = "makeChangesPR"
 const val PREPARE_PACKAGE_TASK = "preparePackage"
+
+const val UPDATE_LIBRARIES_TASK_NAME = "updateLibraryDescriptors"

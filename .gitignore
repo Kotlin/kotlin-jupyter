@@ -14,10 +14,14 @@
 # Folders with build files
 out/
 /build/
+/build-tools/*/.idea/
 /build-tools/*/build/
 /*jupyter*/*/build/
 /api-examples/*/build/
 /teamcity-artifacts/
+
+# Folder with library descriptors
+libraries/
 
 # Gradle caches and internal files
 .gradle/

@@ -41,6 +41,7 @@ import java.io.OutputStream
 
 @Serializable
 class NewPrData(
+    @Suppress("unused")
     val title: String,
     @Suppress("unused")
     val head: String,
@@ -74,6 +75,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
         setupVersionsPlugin()
         setupKtLintForAllProjects()
+
+        setupUpdateLibrariesTask()
 
         println("##teamcity[buildNumber '${opts.pyPackageVersion}']")
         println("##teamcity[setParameter name='mavenVersion' value='${opts.mavenVersion}']")
@@ -138,6 +141,10 @@ internal class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
+    private fun setupUpdateLibrariesTask() {
+        UpdateLibrariesTask.getOrCreate(project)
+    }
+
     private fun createCleanTasks() {
         listOf(true, false).forEach { local ->
             val dir = if (local) opts.localInstallDir else opts.distribBuildDir
@@ -156,9 +163,10 @@ internal class KernelBuildConfigurator(private val project: Project) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = tasks.getByName(makeTaskName(opts.cleanInstallDirTaskPrefix, local))
         val shadowJar = tasks.getByName(SHADOW_JAR_TASK)
+        val updateLibrariesTask = tasks.named(UPDATE_LIBRARIES_TASK_NAME)
 
         tasks.register<Copy>(makeTaskName(opts.copyLibrariesTaskPrefix, local)) {
-            dependsOn(cleanDirTask)
+            dependsOn(cleanDirTask, updateLibrariesTask)
             group = groupName
             from(opts.librariesDir)
             into(mainInstallPath.resolve(opts.librariesDir))
@@ -610,7 +618,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun updateLibraryParam(libName: String, paramName: String, paramValue: String) {
-        val libFile = project.file(opts.librariesDir).resolve("$libName.json")
+        val libFile = project.file(opts.librariesDir).resolve(BUILD_LIBRARIES.descriptorFileName(libName))
         val libText = libFile.readText()
         val paramRegex = Regex("""^([ \t]*"$paramName"[ \t]*:[ \t]*")(.*)("[ \t]*,?)$""", RegexOption.MULTILINE)
         val newText = libText.replace(paramRegex, "$1$paramValue$3")
@@ -625,7 +633,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
             opts.jvmTargetForSnippets?.let {
                 add("jvmTargetForSnippets" to it)
             }
-            val librariesProperties = readProperties(opts.librariesPropertiesFile)
+            BUILD_LIBRARIES.downloadLatestPropertiesFile()
+            val librariesProperties = readProperties(BUILD_LIBRARIES.localPropertiesFile)
             add("librariesFormatVersion" to librariesProperties["formatVersion"].orEmpty())
         }
 
@@ -636,6 +645,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun prepareReadmeTasks() {
+        val updateTask = tasks.named(UPDATE_LIBRARIES_TASK_NAME)
+
         val kotlinVersion = project.defaultVersionCatalog.versions.devKotlin
 
         val readmeFile = opts.readmeFile
@@ -648,6 +659,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
             inputs.dir(librariesDir)
             inputs.property("kotlinVersion", kotlinVersion)
             inputs.property("projectRepoUrl", opts.projectRepoUrl)
+
+            dependsOn(updateTask)
         }
 
         val generateReadme = tasks.register(GENERATE_README_TASK) {

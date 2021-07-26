@@ -11,8 +11,7 @@ repositories {
 }
 
 dependencies {
-    // implementation(projects.commonDependencies)
-    implementation(libs.jupyter.commonDependencies)
+    implementation(projects.commonDependencies)
     api(libs.bundles.allGradlePlugins)
 }
 

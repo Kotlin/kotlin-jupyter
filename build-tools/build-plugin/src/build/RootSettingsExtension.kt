@@ -52,8 +52,7 @@ class RootSettingsExtension(
     val readmeFile: File = project.rootDir.resolve("docs").resolve("README.md")
     val readmeStubFile: File = project.rootDir.resolve("docs").resolve("README-STUB.md")
 
-    val librariesDir: File = project.rootDir.resolve("libraries")
-    val librariesPropertiesFile: File = librariesDir.resolve(".properties")
+    val librariesDir: File = BUILD_LIBRARIES.localLibrariesDir
 
     val localInstallDir: File = run {
         val installPath = project.typedProperty<String?>("installPath")
