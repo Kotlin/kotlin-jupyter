@@ -24,7 +24,7 @@ class UploadTaskSpecs <T : TaskSpec>(
 
     private fun taskName(type: String) = repoName + "Upload" + type
 
-    fun createTasks(options: KernelBuildExtension, taskCreationAction: (T) -> Unit) {
+    fun createTasks(options: RootSettingsExtension, taskCreationAction: (T) -> Unit) {
         val project = options.project
         if (options.isOnProtectedBranch) {
             taskCreationAction(stable)
@@ -32,7 +32,7 @@ class UploadTaskSpecs <T : TaskSpec>(
         taskCreationAction(dev)
 
         project.task(taskName("Protected")) {
-            dependsOn(project.tasks.getByName(CLEAN_INSTALL_DIR_DISTRIB_TASK))
+            dependsOn(project.tasks.getByName(makeTaskName(options.cleanInstallDirTaskPrefix, false)))
             group = taskGroup
             if (options.isOnProtectedBranch) {
                 dependsOn(dev.taskName)

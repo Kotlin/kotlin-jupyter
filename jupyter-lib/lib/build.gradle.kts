@@ -3,8 +3,6 @@ plugins {
     kotlin("jvm")
 }
 
-project.version = rootProject.version
-
 dependencies {
     implementation(projects.api)
     implementation(libs.kotlin.stable.stdlib)

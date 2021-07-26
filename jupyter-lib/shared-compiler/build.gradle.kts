@@ -1,20 +1,9 @@
-import build.options
-import build.withCompilerArgs
-import build.withLanguageLevel
-import build.withTests
+import build.CreateResourcesTask
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
     kotlin("plugin.serialization")
-}
-
-project.version = rootProject.version
-
-withLanguageLevel(rootProject.options.kotlinLanguageLevel)
-
-withCompilerArgs {
-    skipPrereleaseCheck()
 }
 
 repositories {
@@ -45,24 +34,22 @@ dependencies {
     compileOnly(libs.logging.slf4j.api)
 }
 
-withTests()
-
-val buildProperties by tasks.registering {
-    inputs.property("version", rootProject.options.pythonVersion)
-
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val properties = inputs.properties.entries.map { it.toPair() }.toMutableList()
-        val propertiesFile = outputDir.resolve("compiler.properties")
-        propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
     }
+    withTests()
 }
 
-tasks.processResources {
-    dependsOn(buildProperties)
+val buildProperties by tasks.creating(CreateResourcesTask::class) {
+    setupDependencies(tasks.processResources)
+    addPropertiesFile(
+        "compiler.properties",
+        mapOf(
+            "version" to rootSettings.pyPackageVersion
+        )
+    )
 }
 
 kotlinPublications {

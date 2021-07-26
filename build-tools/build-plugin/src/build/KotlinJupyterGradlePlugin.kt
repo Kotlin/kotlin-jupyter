@@ -5,6 +5,6 @@ import org.gradle.api.Project
 
 class KernelBuildPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        project.configureKernelBuild()
+        KernelBuildConfigurator(project).configure()
     }
 }

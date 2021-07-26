@@ -1,14 +1,12 @@
-import build.withTests
+import build.CreateResourcesTask
 
 plugins {
     id("com.gradle.plugin-publish")
-    id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
     id("ru.ileasile.kotlin.publisher")
 }
 
-project.version = rootProject.version
 project.group = "org.jetbrains.kotlin"
 
 repositories {
@@ -27,17 +25,9 @@ dependencies {
     testImplementation(projects.apiAnnotations)
 }
 
-val saveVersion by tasks.registering {
-    inputs.property("version", version)
-
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val propertiesFile = outputDir.resolve("VERSION")
-        propertiesFile.writeText(version.toString())
-    }
+val saveVersion by tasks.creating(CreateResourcesTask::class) {
+    setupDependencies(tasks.processResources)
+    addSingleValueFile("VERSION", rootSettings.pyPackageVersion)
 }
 
 java {
@@ -45,12 +35,8 @@ java {
     withJavadocJar()
 }
 
-withTests()
-
-tasks {
-    processResources {
-        dependsOn(saveVersion)
-    }
+buildSettings {
+    withTests()
 }
 
 val pluginName = "apiGradlePlugin"
@@ -66,8 +52,8 @@ gradlePlugin {
 
 pluginBundle {
     // These settings are set for the whole plugin bundle
-    website = "https://github.com/Kotlin/kotlin-jupyter"
-    vcsUrl = "https://github.com/Kotlin/kotlin-jupyter"
+    website = rootSettings.projectRepoUrl
+    vcsUrl = rootSettings.projectRepoUrl
 
     (plugins) {
         pluginName {
@@ -79,6 +65,6 @@ pluginBundle {
     }
 
     mavenCoordinates {
-        groupId = "org.jetbrains.kotlin"
+        groupId = project.group.toString()
     }
 }

@@ -1,10 +1,7 @@
+import build.CreateResourcesTask
+import build.PUBLISHING_GROUP
 import build.getFlag
 import build.typedProperty
-import build.withCompilerArgs
-import build.withJvmTarget
-import build.withLanguageLevel
-import build.withTests
-import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import ru.ileasile.kotlin.apache2
 import ru.ileasile.kotlin.developer
 import ru.ileasile.kotlin.githubRepo
@@ -20,34 +17,10 @@ deploy.apply {
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
 }
 
-fun KtlintExtension.setup() {
-    version.set(libs.versions.ktlint)
-    enableExperimentalRules.set(true)
-}
-
 ktlint {
-    setup()
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
     }
-}
-
-subprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-
-    ktlint {
-        setup()
-    }
-}
-
-allprojects {
-    withJvmTarget(rootProject.options.jvmTarget)
-    withLanguageLevel(rootProject.options.stableKotlinLanguageLevel)
-}
-
-withLanguageLevel(options.kotlinLanguageLevel)
-withCompilerArgs {
-    skipPrereleaseCheck()
 }
 
 dependencies {
@@ -94,12 +67,12 @@ dependencies {
     deploy(libs.kotlin.dev.scriptRuntime.get())
 }
 
-withTests()
-
-tasks.register("publishToPluginPortal") {
-    group = build.PUBLISHING_GROUP
-
-    dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
+    }
+    withTests()
 }
 
 // Workaround for https://github.com/johnrengelman/shadow/issues/651
@@ -109,63 +82,57 @@ components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
     }
 }
 
-tasks.test {
-    val doParallelTesting = getFlag("test.parallel", true)
-    maxHeapSize = "2048m"
+tasks {
+    register("publishToPluginPortal") {
+        group = PUBLISHING_GROUP
 
-    /**
-     *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
-     */
-    val useShadowedJar = getFlag("test.useShadowed", false)
-
-    if (useShadowedJar) {
-        dependsOn(tasks.shadowJar.get())
-        classpath = files(tasks.shadowJar.get()) + classpath
+        dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
     }
 
-    systemProperties = mutableMapOf(
-        "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
+    test {
+        val doParallelTesting = getFlag("test.parallel", true)
+        maxHeapSize = "2048m"
 
-        "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-        "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-        "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
-    )
-}
+        /**
+         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
+         */
+        val useShadowedJar = getFlag("test.useShadowed", false)
 
-val createTestResources: Task by tasks.creating {
-    val jupyterApiVersion = libs.versions.jupyterApi.get()
+        if (useShadowedJar) {
+            dependsOn(shadowJar.get())
+            classpath = files(shadowJar.get()) + classpath
+        }
 
-    inputs.property("jupyterApiVersion", jupyterApiVersion)
+        systemProperties = mutableMapOf(
+            "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
 
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("test"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val propertiesFile = outputDir.resolve("PUBLISHED_JUPYTER_API_VERSION")
-        propertiesFile.writeText(jupyterApiVersion)
+            "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+            "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+        )
     }
-}
 
-tasks.processTestResources {
-    dependsOn(createTestResources)
-}
+    create("createTestResources", CreateResourcesTask::class) {
+        setupDependencies(processTestResources)
+        addSingleValueFile("PUBLISHED_JUPYTER_API_VERSION", libs.versions.jupyterApi.get())
+    }
 
-tasks.publishDocs {
-    docsRepoUrl.set(options.docsRepo)
-    branchName.set("master")
-    username.set("robot")
-    email.set("robot@jetbrains.com")
+    publishDocs {
+        docsRepoUrl.set(rootSettings.docsRepo)
+        branchName.set("master")
+        username.set("robot")
+        email.set("robot@jetbrains.com")
+    }
 }
 
 changelog {
-    githubUser = options.githubRepoUser
-    githubRepository = options.githubRepoName
+    githubUser = rootSettings.githubRepoUser
+    githubRepository = rootSettings.githubRepoName
     excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
 }
 
 kotlinPublications {
-    packageGroup.set("org.jetbrains.kotlinx")
+    defaultGroup.set("org.jetbrains.kotlinx")
     defaultArtifactIdPrefix.set("kotlin-jupyter-")
 
     sonatypeSettings(
@@ -195,8 +162,8 @@ kotlinPublications {
         }
     }
 
-    repositories {
-        defaultLocalRepository()
+    localRepositories {
+        defaultLocalMavenRepository()
     }
 
     publication {

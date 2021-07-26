@@ -15,7 +15,10 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import org.gradle.jvm.tasks.Jar
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
@@ -29,13 +32,10 @@ import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.common.withBasicAuth
 import org.jetbrains.kotlinx.jupyter.common.withJson
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.OutputStream
-
-fun Project.configureKernelBuild() {
-    KernelBuildConfigurator(this).configure()
-}
 
 @Serializable
 class NewPrData(
@@ -52,8 +52,8 @@ class SetLabelsData(
     val labels: List<String>,
 )
 
-private class KernelBuildConfigurator(private val project: Project) {
-    private val opts = project.extensions.getOrCreate(KernelBuildExtension.NAME) { KernelBuildExtension(project) }
+internal class KernelBuildConfigurator(private val project: Project) {
+    private val opts = project.getOrCreateExtension(RootSettingsExtension)
 
     private val rootProject = project.rootProject
     private val tasks = project.tasks
@@ -65,18 +65,28 @@ private class KernelBuildConfigurator(private val project: Project) {
             apply("org.jetbrains.kotlin.jvm")
             apply("com.github.johnrengelman.shadow")
             apply("org.jetbrains.kotlin.plugin.serialization")
-            apply("org.jlleitschuh.gradle.ktlint")
             apply("ru.ileasile.kotlin.publisher")
             apply("ru.ileasile.kotlin.doc")
             apply("org.hildan.github.changelog")
         }
 
-        project.version = opts.mavenVersion
-        println("##teamcity[buildNumber '${opts.pythonVersion}']")
+        setupKtLintForAllProjects()
+
+        println("##teamcity[buildNumber '${opts.pyPackageVersion}']")
         println("##teamcity[setParameter name='mavenVersion' value='${opts.mavenVersion}']")
 
+        project.subprojects {
+            // Give to subprojects an ability to access build options
+            extensions.add(RootSettingsExtension.name, opts)
+        }
+
         project.allprojects {
+            version = opts.mavenVersion
             addAllBuildRepositories()
+            getOrCreateExtension(BuildSettingsExtension).apply {
+                withJvmTarget(opts.jvmTarget)
+                withLanguageLevel(opts.stableKotlinLanguageLevel)
+            }
         }
 
         project.afterEvaluate {
@@ -97,18 +107,29 @@ private class KernelBuildConfigurator(private val project: Project) {
 
         /****** Distribution ******/
         prepareDistributionTasks()
-        createInstallTasks(false, opts.distribBuildPath.resolve(opts.distribKernelDir), opts.distribBuildPath.resolve(opts.runKernelDir))
+        createInstallTasks(false, opts.distribBuildDir.resolve(opts.distribKernelDir), opts.distribBuildDir.resolve(opts.runKernelDir))
         prepareCondaTasks()
         preparePyPiTasks()
         prepareAggregateUploadTasks()
 
-
         prepareJarTasks()
     }
 
-    fun createCleanTasks() {
+    private fun setupKtLintForAllProjects() {
+        val ktlintVersion = project.defaultVersionCatalog.versions.ktlint
+        project.allprojects {
+            plugins.apply("org.jlleitschuh.gradle.ktlint")
+
+            extensions.configure<KtlintExtension> {
+                version.set(ktlintVersion)
+                enableExperimentalRules.set(true)
+            }
+        }
+    }
+
+    private fun createCleanTasks() {
         listOf(true, false).forEach { local ->
-            val dir = if (local) opts.installPathLocal else opts.distribBuildPath
+            val dir = if (local) opts.localInstallDir else opts.distribBuildDir
             project.task(makeTaskName(opts.cleanInstallDirTaskPrefix, local)) {
                 group = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
                 doLast {
@@ -120,7 +141,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun createInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
+    private fun createInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = tasks.getByName(makeTaskName(opts.cleanInstallDirTaskPrefix, local))
         val shadowJar = tasks.getByName(SHADOW_JAR_TASK)
@@ -128,8 +149,8 @@ private class KernelBuildConfigurator(private val project: Project) {
         tasks.register<Copy>(makeTaskName(opts.copyLibrariesTaskPrefix, local)) {
             dependsOn(cleanDirTask)
             group = groupName
-            from(opts.librariesPath)
-            into(mainInstallPath.resolve(opts.librariesPath))
+            from(opts.librariesDir)
+            into(mainInstallPath.resolve(opts.librariesDir))
         }
 
         tasks.register<Copy>(makeTaskName(opts.installLibsTaskPrefix, local)) {
@@ -152,7 +173,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun createTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
+    private fun createTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
         val taskName = makeTaskName(if (debug) "createDebugSpecs" else "createSpecs", local)
         tasks.register(taskName) {
             this.group = group
@@ -166,14 +187,22 @@ private class KernelBuildConfigurator(private val project: Project) {
                 makeDirs(mainInstallPath.resolve(opts.configDir))
                 makeDirs(specPath)
 
-                makeJarArgs(mainInstallPath, kernelFile.name, opts.mainClassFQN, libsCp, if (debug) opts.debuggerConfig else "")
+                writeJson(
+                    mapOf(
+                        "mainJar" to kernelFile.name,
+                        "mainClass" to opts.mainClassFQN,
+                        "classPath" to libsCp,
+                        "debuggerConfig" to if (debug) opts.debuggerConfig else ""
+                    ),
+                    mainInstallPath.resolve(opts.jarArgsFile)
+                )
                 makeKernelSpec(specPath, local)
             }
         }
         return taskName
     }
 
-    fun createMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
+    private fun createMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
         val taskNamePrefix = if (local) "install" else "prepare"
         val taskNameMiddle = if (debug) "Debug" else ""
         val taskNameSuffix = if (local) "" else "Package"
@@ -194,7 +223,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun makeKernelSpec(installPath: File, localInstall: Boolean) {
+    private fun makeKernelSpec(installPath: File, localInstall: Boolean) {
         val argv = if (localInstall) {
             listOf(
                 "python",
@@ -218,30 +247,10 @@ private class KernelBuildConfigurator(private val project: Project) {
         )
 
         project.copy {
-            from(opts.nbExtensionPath, opts.logosPath)
+            from(opts.nbExtensionDir, opts.logosDir)
             into(installPath)
         }
     }
-
-    fun makeJarArgs(
-        installPath: File,
-        kernelJarPath: String,
-        mainClassFQN: String,
-        classPath: List<String>,
-        debuggerConfig: String = ""
-    ) {
-        writeJson(
-            mapOf(
-                "mainJar" to kernelJarPath,
-                "mainClass" to mainClassFQN,
-                "classPath" to classPath,
-                "debuggerConfig" to debuggerConfig
-            ),
-            installPath.resolve(opts.jarArgsFile)
-        )
-    }
-
-
 
     private fun removeTypeHintsIfNeeded(files: List<File>) {
         if (!opts.removeTypeHints)
@@ -255,31 +264,31 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun prepareDistributionTasks() {
+    private fun prepareDistributionTasks() {
         tasks.register<PipInstallReq>(INSTALL_COMMON_REQUIREMENTS_TASK) {
             group = DISTRIBUTION_GROUP
-            requirementsFile = opts.distribUtilRequirementsPath
+            requirementsFile = opts.distribUtilRequirementsFile
         }
 
         tasks.register<PipInstallReq>(INSTALL_HINT_REMOVER_REQUIREMENTS_TASK) {
             group = DISTRIBUTION_GROUP
-            requirementsFile = opts.distribUtilRequirementsHintsRemPath
+            requirementsFile = opts.distribUtilRequirementsHintsRemoverFile
         }
 
         tasks.register<Copy>(COPY_DISTRIB_FILES_TASK) {
             group = DISTRIBUTION_GROUP
-            dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK)
+            dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, false))
             if (opts.removeTypeHints) {
                 dependsOn(INSTALL_HINT_REMOVER_REQUIREMENTS_TASK)
             }
-            from(opts.distributionPath)
-            from(opts.readmePath)
-            into(opts.distribBuildPath)
+            from(opts.distributionDir)
+            from(opts.readmeFile)
+            into(opts.distribBuildDir)
             exclude(".idea/**", "venv/**")
 
             val pythonFiles = mutableListOf<File>()
             eachFile {
-                val absPath = opts.distribBuildPath.resolve(this.path).absoluteFile
+                val absPath = opts.distribBuildDir.resolve(this.path).absoluteFile
                 if (this.path.endsWith(".py"))
                     pythonFiles.add(absPath)
             }
@@ -291,30 +300,30 @@ private class KernelBuildConfigurator(private val project: Project) {
 
         project.task(PREPARE_DISTRIBUTION_DIR_TASK) {
             group = DISTRIBUTION_GROUP
-            dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK, COPY_DISTRIB_FILES_TASK)
+            dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, false), COPY_DISTRIB_FILES_TASK)
             doLast {
-                val versionFilePath = opts.distribBuildPath.resolve(opts.versionFileName)
-                versionFilePath.writeText(opts.pythonVersion)
+                val versionFilePath = opts.distribBuildDir.resolve(opts.versionFileName)
+                versionFilePath.writeText(opts.pyPackageVersion)
                 project.copy {
                     from(versionFilePath)
                     into(opts.artifactsDir)
                 }
 
-                opts.distribBuildPath.resolve("REPO_URL").writeText(opts.projectRepoUrl)
+                opts.distribBuildDir.resolve("REPO_URL").writeText(opts.projectRepoUrl)
             }
         }
     }
 
-    fun prepareCondaTasks() {
+    private fun prepareCondaTasks() {
         with(opts.condaTaskSpecs) {
             tasks.register<Exec>(CONDA_PACKAGE_TASK) {
                 group = CONDA_GROUP
-                dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK, PREPARE_PACKAGE_TASK)
+                dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, false), PREPARE_PACKAGE_TASK)
                 commandLine("conda-build", "conda", "--output-folder", packageSettings.dir)
-                workingDir(opts.distribBuildPath)
+                workingDir(opts.distribBuildDir)
                 doLast {
                     project.copy {
-                        from(opts.distribBuildPath.resolve(packageSettings.dir).resolve("noarch").resolve(packageSettings.fileName))
+                        from(opts.distribBuildDir.resolve(packageSettings.dir).resolve("noarch").resolve(packageSettings.fileName))
                         into(opts.artifactsDir)
                     }
                 }
@@ -330,7 +339,7 @@ private class KernelBuildConfigurator(private val project: Project) {
                     val artifactPath = opts.artifactsDir.resolve(packageSettings.fileName)
 
                     if (!artifactPath.exists()) {
-                        dependsOn(CLEAN_INSTALL_DIR_DISTRIB_TASK, CONDA_PACKAGE_TASK)
+                        dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, false), CONDA_PACKAGE_TASK)
                     }
 
                     doLast {
@@ -356,7 +365,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun preparePyPiTasks() {
+    private fun preparePyPiTasks() {
         with(opts.pyPiTaskSpecs) {
             tasks.register<Exec>(PYPI_PACKAGE_TASK) {
                 group = PYPI_GROUP
@@ -373,11 +382,11 @@ private class KernelBuildConfigurator(private val project: Project) {
                     "--dist-dir",
                     packageSettings.dir
                 )
-                workingDir(opts.distribBuildPath)
+                workingDir(opts.distribBuildDir)
 
                 doLast {
                     project.copy {
-                        from(opts.distribBuildPath.resolve(packageSettings.dir).resolve(packageSettings.fileName))
+                        from(opts.distribBuildDir.resolve(packageSettings.dir).resolve(packageSettings.fileName))
                         into(opts.artifactsDir)
                     }
                 }
@@ -412,7 +421,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun prepareAggregateUploadTasks() {
+    private fun prepareAggregateUploadTasks() {
         val infixToSpec = mapOf<String, (UploadTaskSpecs<*>) -> TaskSpec>(
             "Dev" to { it.dev },
             "Stable" to { it.stable }
@@ -437,32 +446,32 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun prepareLocalTasks() {
+    private fun prepareLocalTasks() {
         tasks.register<Copy>(COPY_RUN_KERNEL_PY_TASK) {
             group = LOCAL_INSTALL_GROUP
-            dependsOn(CLEAN_INSTALL_DIR_LOCAL_TASK)
-            from(opts.distributionPath.resolve(opts.runKernelDir).resolve(opts.runKernelPy))
-            from(opts.distributionPath.resolve(opts.kotlinKernelModule)) {
+            dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, true))
+            from(opts.distributionDir.resolve(opts.runKernelDir).resolve(opts.runKernelPy))
+            from(opts.distributionDir.resolve(opts.kotlinKernelModule)) {
                 into(opts.kotlinKernelModule)
             }
-            into(opts.installPathLocal)
+            into(opts.localInstallDir)
         }
 
         tasks.register<Copy>(COPY_NB_EXTENSION_TASK) {
             group = LOCAL_INSTALL_GROUP
-            from(opts.nbExtensionPath)
-            into(opts.installPathLocal)
+            from(opts.nbExtensionDir)
+            into(opts.localInstallDir)
         }
 
-        createInstallTasks(true, opts.installPathLocal, opts.installPathLocal)
+        createInstallTasks(true, opts.localInstallDir, opts.localInstallDir)
 
         project.task(UNINSTALL_TASK) {
             group = LOCAL_INSTALL_GROUP
-            dependsOn(CLEAN_INSTALL_DIR_LOCAL_TASK)
+            dependsOn(makeTaskName(opts.cleanInstallDirTaskPrefix, false))
         }
     }
 
-    fun prepareKotlinVersionUpdateTasks() {
+    private fun prepareKotlinVersionUpdateTasks() {
         tasks.register(UPDATE_KOTLIN_VERSION_TASK) {
             doLast {
                 val teamcityProject = PUBLIC_KOTLIN_TEAMCITY
@@ -505,7 +514,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         val pushChangesTask = tasks.register(PUSH_CHANGES_TASK) {
             dependsOn(updateLibraryParamTask)
 
-            val librariesDir = projectDir.resolve(opts.librariesPath)
+            val librariesDir = projectDir.resolve(opts.librariesDir)
             fun execGit(vararg args: String, configure: ExecSpec.() -> Unit = {}): ExecResult {
                 return project.exec {
                     this.executable = "git"
@@ -589,55 +598,38 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun updateLibraryParam(libName: String, paramName: String, paramValue: String) {
-        val libFile = project.file(opts.librariesPath).resolve("$libName.json")
+    private fun updateLibraryParam(libName: String, paramName: String, paramValue: String) {
+        val libFile = project.file(opts.librariesDir).resolve("$libName.json")
         val libText = libFile.readText()
         val paramRegex = Regex("""^([ \t]*"$paramName"[ \t]*:[ \t]*")(.*)("[ \t]*,?)$""", RegexOption.MULTILINE)
         val newText = libText.replace(paramRegex, "$1$paramValue$3")
         libFile.writeText(newText)
     }
 
-    fun preparePropertiesTask() {
-        tasks.register(BUILD_PROPERTIES_TASK) {
-            group = BUILD_GROUP
-            val outputDir = project.file(getSubDir(project.buildDir.toPath(), opts.resourcesDir, opts.mainSourceSetDir))
-
-            inputs.property("version", opts.pythonVersion)
-            inputs.property("currentBranch", project.getCurrentBranch())
-            inputs.property("currentSha", project.getCurrentCommitSha())
+    private fun preparePropertiesTask() {
+        val properties = buildProperties {
+            add("version" to opts.pyPackageVersion)
+            add("currentBranch" to project.getCurrentBranch())
+            add("currentSha" to project.getCurrentCommitSha())
             opts.jvmTargetForSnippets?.let {
-                inputs.property("jvmTargetForSnippets", it)
+                add("jvmTargetForSnippets" to it)
             }
-
-            inputs.file(opts.librariesPropertiesPath)
-
-            outputs.dir(outputDir)
-
-            doLast {
-                outputDir.mkdirs()
-                val propertiesFile = project.file(getSubDir(outputDir.toPath(), opts.runtimePropertiesFile))
-
-                val properties = inputs.properties.entries.map { it.toPair() }.toMutableList()
-                properties.apply {
-                    val librariesProperties = readProperties(opts.librariesPropertiesPath)
-                    add("librariesFormatVersion" to librariesProperties["formatVersion"])
-                }
-
-                propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
-            }
+            val librariesProperties = readProperties(opts.librariesPropertiesFile)
+            add("librariesFormatVersion" to librariesProperties["formatVersion"].orEmpty())
         }
 
-        tasks.named(PROCESS_RESOURCES_TASK) {
-            dependsOn(BUILD_PROPERTIES_TASK)
+        tasks.create<CreateResourcesTask>(BUILD_PROPERTIES_TASK) {
+            addPropertiesFile(opts.runtimePropertiesFile, properties)
+            setupDependencies(tasks.named<Copy>(PROCESS_RESOURCES_TASK))
         }
     }
 
-    fun prepareReadmeTasks() {
+    private fun prepareReadmeTasks() {
         val kotlinVersion = project.defaultVersionCatalog.versions.devKotlin
 
-        val readmeFile = opts.readmePath
-        val readmeStubFile = project.rootDir.resolve("docs").resolve("README-STUB.md")
-        val librariesDir = rootProject.projectDir.resolve(opts.librariesPath)
+        val readmeFile = opts.readmeFile
+        val readmeStubFile = opts.readmeStubFile
+        val librariesDir = rootProject.projectDir.resolve(opts.librariesDir)
         val readmeGenerator = ReadmeGenerator(librariesDir, kotlinVersion, opts.projectRepoUrl)
 
         fun Task.defineInputs() {
@@ -683,7 +675,7 @@ private class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    fun prepareJarTasks() {
+    private fun prepareJarTasks() {
         val jarTask = tasks.named(JAR_TASK, Jar::class.java) {
             manifest {
                 attributes["Main-Class"] = opts.mainClassFQN
@@ -701,6 +693,5 @@ private class KernelBuildConfigurator(private val project: Project) {
                 attributes(jarTask.get().manifest.attributes)
             }
         }
-
     }
 }

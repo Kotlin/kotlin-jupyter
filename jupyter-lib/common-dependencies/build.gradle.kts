@@ -3,8 +3,6 @@ plugins {
     kotlin("jvm")
 }
 
-project.version = rootProject.version
-
 repositories {
     mavenCentral()
 }

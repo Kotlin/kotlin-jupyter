@@ -25,8 +25,6 @@ const val PUBLISH_LOCAL_TASK = "publishLocal"
 const val INSTALL_COMMON_REQUIREMENTS_TASK = "installCommonRequirements"
 const val INSTALL_HINT_REMOVER_REQUIREMENTS_TASK = "installHintRemoverRequirements"
 const val COPY_DISTRIB_FILES_TASK = "copyDistribFiles"
-const val CLEAN_INSTALL_DIR_DISTRIB_TASK = "cleanInstallDirDistrib"
-const val CLEAN_INSTALL_DIR_LOCAL_TASK = "cleanInstallDirLocal"
 const val PREPARE_DISTRIBUTION_DIR_TASK = "prepareDistributionDir"
 
 const val PUSH_CHANGES_TASK = "pushChanges"

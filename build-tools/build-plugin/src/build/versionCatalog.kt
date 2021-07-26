@@ -44,11 +44,10 @@ private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSIO
 fun Project.versionCatalog(name: String): MyVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { MyVersionCatalogsExtension(this, name) }
 val Project.defaultVersionCatalog get(): MyVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
 
-
 val MyVersionCatalogsExtension.Versions.devKotlin get() = get("kotlin")
 val MyVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotlin")
 val MyVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
-
+val MyVersionCatalogsExtension.Versions.ktlint get() = get("ktlint")
 
 val MyVersionCatalogsExtension.Dependencies.junitApi get() = get("test-junit-api")
 val MyVersionCatalogsExtension.Dependencies.junitEngine get() = get("test-junit-engine")

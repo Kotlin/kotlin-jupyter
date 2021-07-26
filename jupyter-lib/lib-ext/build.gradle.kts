@@ -1,13 +1,10 @@
 import build.excludeKotlinDependencies
-import build.withTests
 
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
     id("ru.ileasile.kotlin.publisher")
 }
-
-project.version = rootProject.version
 
 dependencies {
     implementation(libs.kotlin.stable.stdlib)
@@ -31,7 +28,9 @@ dependencies {
     implementation(libs.ext.graphviz)
 }
 
-withTests()
+buildSettings {
+    withTests()
+}
 
 kotlinPublications {
     publication {

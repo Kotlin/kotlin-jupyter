@@ -1,15 +1,10 @@
 import build.excludeKotlinDependencies
-import build.withCompilerArgs
-import build.withLanguageLevel
-import build.withTests
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
-
-project.version = rootProject.version
 
 repositories {
     mavenCentral()
@@ -27,10 +22,12 @@ dependencies {
     }
 }
 
-withLanguageLevel("1.4")
-withTests()
-withCompilerArgs {
-    requiresOptIn()
+buildSettings {
+    withLanguageLevel("1.4")
+    withTests()
+    withCompilerArgs {
+        requiresOptIn()
+    }
 }
 
 kotlinPublications {

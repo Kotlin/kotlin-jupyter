@@ -9,8 +9,6 @@ kotlinJupyter {
     addScannerDependency()
 }
 
-project.version = rootProject.version
-
 dependencies {
     implementation(libs.kotlin.stable.stdlib)
     implementation(libs.kotlin.stable.reflect)

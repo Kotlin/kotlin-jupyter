@@ -8,7 +8,7 @@ kotlinxSerialization = "1.1.0"
 kotlinxCoroutines = "1.4.2"
 ktlintGradle = "10.0.0"
 ktlint = "0.40.0"
-publishPlugin = "0.0.50-dev"
+publishPlugin = "0.0.52-dev"
 
 slf4j = "1.7.30"
 logback = "1.2.3"
@@ -107,22 +107,22 @@ ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava
 # kotlin("jvm")
 plugin-kotlinJvm = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "stableKotlin" }
 
-# kotlin("plugin.serialization") version stableKotlin
+# kotlin("plugin.serialization")
 plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "stableKotlin" }
 
-# kotlin("jupyter.api") version jupyterApi
+# kotlin("jupyter.api")
 plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
 
-# id("com.github.johnrengelman.shadow") version shadowJar
+# id("com.github.johnrengelman.shadow")
 plugin-shadowJar = { module = "gradle.plugin.com.github.jengelman.gradle.plugins:shadow", version.ref = "shadowJar" }
 
-# id("org.jlleitschuh.gradle.ktlint") version ktlintGradle
+# id("org.jlleitschuh.gradle.ktlint")
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 
-# id("ru.ileasile.kotlin.publisher") version publishPlugin
+# id("ru.ileasile.kotlin.publisher")
 plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref = "publishPlugin" }
 
-# id("org.hildan.github.changelog") version changelogPlugin
+# id("org.hildan.github.changelog")
 plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
 
 

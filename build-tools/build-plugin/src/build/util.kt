@@ -6,7 +6,6 @@ import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.extra
-import org.gradle.kotlin.dsl.getByType
 import org.gradle.tooling.BuildException
 import java.io.File
 import java.nio.file.Path
@@ -114,7 +113,7 @@ fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
     }
 }
 
-val Any.booleanValueOrNull get() = when(this) {
+val Any.booleanValueOrNull get() = when (this) {
     "true", true -> true
     "false", false -> false
     else -> null
@@ -139,8 +138,15 @@ fun <T> Optional<T>.getOrNull(): T? {
     return result
 }
 
-inline fun <reified T: Any> ExtensionContainer.getOrCreate(name: String, initializer: () -> T): T {
+inline fun <reified T : Any> ExtensionContainer.getOrCreate(name: String, initializer: () -> T): T {
     return (findByName(name) as? T) ?: initializer().also { ext -> add(name, ext) }
 }
 
-val Project.options get() = extensions.getByType<KernelBuildExtension>()
+inline fun <reified T : Any> Project.getOrCreateExtension(extension: SingleInstanceExtensionCompanion<T>): T {
+    return extensions.getOrCreate(extension.name) { extension.createInstance(this) }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+fun buildProperties(builderAction: MutableList<Pair<String, String>>.() -> Unit): List<Pair<String, String>> {
+    return buildList(builderAction)
+}
