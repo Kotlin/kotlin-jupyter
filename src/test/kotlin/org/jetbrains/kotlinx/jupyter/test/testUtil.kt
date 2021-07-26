@@ -21,9 +21,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
@@ -89,8 +88,8 @@ fun getResolverFromNamesMap(
 }
 
 fun readLibraries(basePath: String? = null): Map<String, String> {
-    return File(basePath, LibrariesDir)
-        .listFiles()?.filter { it.extension == LibraryDescriptorExt }
+    return KERNEL_LIBRARIES.homeLibrariesDir(basePath?.let(::File))
+        .listFiles()?.filter(KERNEL_LIBRARIES::isLibraryDescriptor)
         ?.map {
             log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
             it.nameWithoutExtension to it.readText()

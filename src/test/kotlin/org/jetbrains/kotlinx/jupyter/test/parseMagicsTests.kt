@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
@@ -125,7 +125,7 @@ class ParseMagicsTests {
     private class TestReplOptions : ReplOptions {
         override val currentBranch: String
             get() = standardResolverBranch
-        override val librariesDir = File(LibrariesDir)
+        override val librariesDir = KERNEL_LIBRARIES.localLibrariesDir
         override var trackClasspath = false
         override var executedCodeLogging = ExecutedCodeLogging.Off
         override var writeCompiledClasses = false

@@ -8,8 +8,7 @@ import org.jetbrains.kotlinx.jupyter.common.assertLooksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
@@ -67,8 +66,9 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
                 s
             }
-            val libraryFiles =
-                repl.homeDir?.resolve(LibrariesDir)?.listFiles { file -> file.isFile && file.name.endsWith(".$LibraryDescriptorExt") } ?: emptyArray()
+            val libraryFiles = repl.homeDir?.let { homeDir ->
+                KERNEL_LIBRARIES.homeLibrariesDir(homeDir).listFiles(KERNEL_LIBRARIES::isLibraryDescriptor)
+            } ?: emptyArray()
             val libraries = libraryFiles.toList().mapNotNull { file ->
                 val libraryName = file.nameWithoutExtension
                 log.info("Parsing descriptor for library '$libraryName'")

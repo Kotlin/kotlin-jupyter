@@ -4,14 +4,12 @@ import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.parseIniConfig
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryPropertiesFile
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.log
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.io.File
 import kotlin.test.assertNotNull
 
 class ConfigTest {
@@ -36,7 +34,7 @@ class ConfigTest {
         log.debug("Runtime libs format is: $format")
 
         assertTrue(format in 2..1000)
-        val localProperties = File("$LibrariesDir/$LibraryPropertiesFile").readText().parseIniConfig()
+        val localProperties = KERNEL_LIBRARIES.localPropertiesFile.readText().parseIniConfig()
         assertEquals(localProperties["formatVersion"], format.toString())
     }
 

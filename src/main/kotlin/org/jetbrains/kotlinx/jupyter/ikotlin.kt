@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
@@ -68,7 +68,7 @@ fun main(vararg args: String) {
     try {
         log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val libraryPath = (kernelArgs.homeDir ?: File("")).resolve(LibrariesDir)
+        val libraryPath = KERNEL_LIBRARIES.homeLibrariesDir(kernelArgs.homeDir)
         val libraryInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(libraryPath)
         val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryInfoProvider)
         kernelServer(kernelConfig)

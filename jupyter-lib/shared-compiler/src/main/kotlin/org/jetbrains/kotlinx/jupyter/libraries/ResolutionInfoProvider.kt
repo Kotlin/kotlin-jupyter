@@ -42,8 +42,7 @@ class StandardResolutionInfoProvider(override var fallback: LibraryResolutionInf
     }
 
     private fun tryGetAsRef(ref: String): LibraryResolutionInfo? {
-        val response = getHttp("$GitHubApiPrefix/contents/$RemoteLibrariesDir?ref=$ref")
-        return if (response.status.successful) LibraryResolutionInfo.getInfoByRef(ref) else null
+        return if (KERNEL_LIBRARIES.checkRefExistence(ref)) LibraryResolutionInfo.getInfoByRef(ref) else null
     }
 
     private fun tryGetAsDir(dirName: String): LibraryResolutionInfo? {
