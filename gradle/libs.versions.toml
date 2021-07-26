@@ -1,26 +1,27 @@
 [versions]
-kotlin = "1.6.0-dev-1489"
-stableKotlin = "1.5.20"
+kotlin = "1.6.0-dev-1733"
+stableKotlin = "1.5.21"
 gradleKotlin = "1.4.31"
 shadowJar = "7.0.0"
 changelogPlugin = "1.7.0"
-kotlinxSerialization = "1.1.0"
-kotlinxCoroutines = "1.4.2"
+kotlinxSerialization = "1.2.2"
+kotlinxCoroutines = "1.5.1"
 ktlintGradle = "10.0.0"
 ktlint = "0.40.0"
-publishPlugin = "0.0.52-dev"
+publishPlugin = "0.0.53-dev"
+versionsPlugin = "0.39.0"
 
-slf4j = "1.7.30"
-logback = "1.2.3"
-http4k = "4.9.8.0"
-jupyterApi = "0.10.0-140"
-jetbrainsAnnotations = "20.1.0"
+slf4j = "1.7.32"
+logback = "1.2.4"
+http4k = "4.10.1.0"
+jupyterApi = "0.10.0-146"
+jetbrainsAnnotations = "21.0.1"
 
-junit = "5.7.1"
-kotlinTest = "3.1.6"
+junit = "5.7.2"
+kotlinTest = "3.4.2"
 clikt = "2.8.0"
 zeromq = "0.5.2"
-gson = "2.8.6"
+gson = "2.8.7"
 
 jlatexmath = "1.0.7"
 xmlgraphicsFop = "2.6"
@@ -125,6 +126,8 @@ plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref =
 # id("org.hildan.github.changelog")
 plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
 
+# id("com.github.ben-manes.versions")
+plugin-versionsPlugin = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "versionsPlugin" }
 
 # Published artifacts of this project as binary dependencies
 jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
@@ -141,4 +144,5 @@ allGradlePlugins = [
     "plugin-ktlint",
     "plugin-publisher",
     "plugin-changelog",
+    "plugin-versionsPlugin",
 ]

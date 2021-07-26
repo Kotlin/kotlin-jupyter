@@ -27,7 +27,7 @@ dependencies {
 
 val saveVersion by tasks.creating(CreateResourcesTask::class) {
     setupDependencies(tasks.processResources)
-    addSingleValueFile("VERSION", rootSettings.pyPackageVersion)
+    addSingleValueFile("VERSION", rootSettings.mavenVersion)
 }
 
 java {

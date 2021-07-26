@@ -44,12 +44,7 @@ buildSettings {
 
 val buildProperties by tasks.creating(CreateResourcesTask::class) {
     setupDependencies(tasks.processResources)
-    addPropertiesFile(
-        "compiler.properties",
-        mapOf(
-            "version" to rootSettings.pyPackageVersion
-        )
-    )
+    addPropertiesFile("compiler.properties", mapOf("version" to rootSettings.pyPackageVersion))
 }
 
 kotlinPublications {

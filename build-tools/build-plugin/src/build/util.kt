@@ -150,3 +150,7 @@ inline fun <reified T : Any> Project.getOrCreateExtension(extension: SingleInsta
 fun buildProperties(builderAction: MutableList<Pair<String, String>>.() -> Unit): List<Pair<String, String>> {
     return buildList(builderAction)
 }
+
+fun isNonStableVersion(version: String): Boolean {
+    return listOf("dev", "M", "alpha", "beta", "-").any { version.contains(it) }
+}

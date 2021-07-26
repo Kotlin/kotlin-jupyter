@@ -1,5 +1,6 @@
 package build
 
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import kotlinx.serialization.Serializable
@@ -20,6 +21,7 @@ import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.withType
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
@@ -70,6 +72,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
             apply("org.hildan.github.changelog")
         }
 
+        setupVersionsPlugin()
         setupKtLintForAllProjects()
 
         println("##teamcity[buildNumber '${opts.pyPackageVersion}']")
@@ -115,11 +118,19 @@ internal class KernelBuildConfigurator(private val project: Project) {
         prepareJarTasks()
     }
 
+    private fun setupVersionsPlugin() {
+        project.plugins.apply("com.github.ben-manes.versions")
+        tasks.withType<DependencyUpdatesTask> {
+            rejectVersionIf {
+                isNonStableVersion(candidate.version) && !isNonStableVersion(currentVersion)
+            }
+        }
+    }
+
     private fun setupKtLintForAllProjects() {
         val ktlintVersion = project.defaultVersionCatalog.versions.ktlint
         project.allprojects {
             plugins.apply("org.jlleitschuh.gradle.ktlint")
-
             extensions.configure<KtlintExtension> {
                 version.set(ktlintVersion)
                 enableExperimentalRules.set(true)
