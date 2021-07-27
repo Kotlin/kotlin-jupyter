@@ -1,5 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
+rootProject.name = "plugin-versions"
+
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {

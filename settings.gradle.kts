@@ -5,9 +5,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "kotlin-jupyter-kernel"
 
-includeBuild("build-tools/build-plugin")
+includeBuild("build-plugin")
 
-libSubproject("common-dependencies")
+subproject("common-dependencies", "build-plugin/")
 libSubproject("lib")
 libSubproject("api")
 libSubproject("api-annotations")
@@ -22,5 +22,5 @@ fun exampleSubproject(name: String) = subproject(name, "api-examples/")
 
 fun subproject(name: String, parentPath: String) {
     include(name)
-    project(":$name").projectDir = file("$parentPath$name").absoluteFile
+    project(":$name").projectDir = file("$parentPath$name")
 }

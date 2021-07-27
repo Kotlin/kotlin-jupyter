@@ -18,6 +18,10 @@ sourceSets {
     main {
         java.setSrcDirs(listOf("src"))
     }
+    test {
+        allJava.setSrcDirs(emptyList<String>())
+        resources.setSrcDirs(emptyList<String>())
+    }
 }
 
 gradlePlugin {

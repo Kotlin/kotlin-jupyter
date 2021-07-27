@@ -17,6 +17,16 @@ dependencies {
     api(libs.serialization.json)
 }
 
+sourceSets {
+    main {
+        java.setSrcDirs(listOf("src"))
+    }
+    test {
+        allJava.setSrcDirs(emptyList<String>())
+        resources.setSrcDirs(emptyList<String>())
+    }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         apiVersion = "1.4"
