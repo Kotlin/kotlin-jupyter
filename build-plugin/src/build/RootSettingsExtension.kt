@@ -1,5 +1,15 @@
 package build
 
+import build.util.BUILD_LIBRARIES
+import build.util.CondaCredentials
+import build.util.CondaTaskSpec
+import build.util.DistributionPackageSettings
+import build.util.PyPiTaskSpec
+import build.util.UploadTaskSpecs
+import build.util.isProtectedBranch
+import build.util.prop
+import build.util.stringPropOrEmpty
+import build.util.typedProperty
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.provideDelegate
 import java.io.File
@@ -7,33 +17,33 @@ import java.io.File
 class RootSettingsExtension(
     val project: Project
 ) {
-    var kotlinLanguageLevel by project.prop<String>()
-    var stableKotlinLanguageLevel by project.prop<String>()
-    var jvmTarget by project.prop<String>()
+    val kotlinLanguageLevel by project.prop<String>()
+    val stableKotlinLanguageLevel by project.prop<String>()
+    val jvmTarget by project.prop<String>()
 
-    var githubRepoUser by project.prop<String>()
-    var githubRepoName by project.prop<String>()
-    var projectRepoUrl by project.prop<String>()
-    var docsRepo by project.prop<String>()
-    var librariesRepoUrl by project.prop<String>()
-    var librariesRepoUserAndName by project.prop<String>()
+    val githubRepoUser by project.prop<String>()
+    val githubRepoName by project.prop<String>()
+    val projectRepoUrl by project.prop<String>()
+    val docsRepo by project.prop<String>()
+    val librariesRepoUrl by project.prop<String>()
+    val librariesRepoUserAndName by project.prop<String>()
 
-    var skipReadmeCheck by project.prop<Boolean>()
+    val skipReadmeCheck by project.prop<Boolean>()
 
-    var libName by project.prop<String>("jupyter.lib.name")
-    var libParamName by project.prop<String>("jupyter.lib.param.name")
-    var libParamValue by project.prop<String>("jupyter.lib.param.value")
+    val libName by project.prop<String>("jupyter.lib.name")
+    val libParamName by project.prop<String>("jupyter.lib.param.name")
+    val libParamValue by project.prop<String>("jupyter.lib.param.value")
 
-    var prGithubUser by project.prop<String>("jupyter.github.user")
-    var prGithubToken by project.prop<String>("jupyter.github.token")
+    val prGithubUser by project.prop<String>("jupyter.github.user")
+    val prGithubToken by project.prop<String>("jupyter.github.token")
 
-    var isLocalBuild by project.prop("build.isLocal", false)
+    val isLocalBuild by project.prop("build.isLocal", false)
 
-    var jvmTargetForSnippets by project.prop<String?>()
+    val jvmTargetForSnippets by project.prop<String?>()
 
-    var packageName: String = project.rootProject.name
+    val packageName: String = project.rootProject.name
 
-    var versionFileName: String = "VERSION"
+    val versionFileName: String = "VERSION"
 
     val artifactsDir: File = run {
         val artifactsPath by project.prop(default = "artifacts")
@@ -62,6 +72,8 @@ class RootSettingsExtension(
 
     val resourcesDir: File = project.file("resources")
     val distribBuildDir: File = project.buildDir.resolve("distrib-build")
+    val distribKernelDir: File = distribBuildDir.resolve("kernel")
+    val runKernelDir: File = distribBuildDir.resolve("run_kotlin_kernel")
     val logosDir: File = resourcesDir.resolve("logos")
     val nbExtensionDir: File = resourcesDir.resolve("notebook-extension")
     val distributionDir: File = project.file("distrib")
@@ -74,8 +86,6 @@ class RootSettingsExtension(
     val runKernelPy: String = "run_kernel.py"
     val kotlinKernelModule: String = "kotlin_kernel"
     val kernelFile: String = "kernel.json"
-    val distribKernelDir: String = "kernel"
-    val runKernelDir: String = "run_kotlin_kernel"
     val setupPy: String = "setup.py"
 
     val installKernelTaskPrefix: String = "installKernel"

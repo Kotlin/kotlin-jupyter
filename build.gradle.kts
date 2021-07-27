@@ -1,7 +1,7 @@
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
-import build.getFlag
-import build.typedProperty
+import build.util.getFlag
+import build.util.typedProperty
 import ru.ileasile.kotlin.apache2
 import ru.ileasile.kotlin.developer
 import ru.ileasile.kotlin.githubRepo

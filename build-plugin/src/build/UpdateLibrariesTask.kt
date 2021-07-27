@@ -1,5 +1,6 @@
 package build
 
+import build.util.BUILD_LIBRARIES
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.provider.Property

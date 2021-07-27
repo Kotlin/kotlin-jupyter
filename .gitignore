@@ -16,6 +16,7 @@ out/
 /build/
 /build-plugin/**/.idea/
 /build-plugin/**/build/
+!/build-plugin/**/src/build/
 /*jupyter*/*/build/
 /api-examples/*/build/
 /teamcity-artifacts/

@@ -1,20 +1,71 @@
 package build
 
+import build.util.defaultVersionCatalog
+import build.util.devKotlin
+import build.util.taskTempFile
 import groovy.json.JsonSlurper
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.tooling.BuildException
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import java.io.File
 
 class ReadmeGenerator(
-    private val librariesDir: File,
-    private val kotlinVersion: String,
-    private val repoUrl: String
+    private val project: Project,
+    private val settings: RootSettingsExtension,
 ) {
-    fun generate(stub: File, destination: File) {
-        var result = stub.readText()
+    fun registerTasks(configuration: Task.() -> Unit) {
+        fun Task.defineInputs() {
+            inputs.file(settings.readmeStubFile)
+            inputs.dir(settings.librariesDir)
+            inputs.property("kotlinVersion", project.defaultVersionCatalog.versions.devKotlin)
+            inputs.property("projectRepoUrl", settings.projectRepoUrl)
+        }
+
+        project.tasks.register(GENERATE_README_TASK) {
+            group = BUILD_GROUP
+
+            defineInputs()
+            outputs.file(settings.readmeFile)
+
+            doLast {
+                generateTo(settings.readmeFile)
+            }
+
+            configuration()
+        }
+
+        project.tasks.register(CHECK_README_TASK) {
+            group = VERIFICATION_GROUP
+
+            defineInputs()
+            inputs.file(settings.readmeFile)
+
+            doLast {
+                val tempFile = taskTempFile("generatedReadme.md")
+                generateTo(tempFile)
+                if (tempFile.readText() != settings.readmeFile.readText()) {
+                    throw BuildException("Readme is not regenerated. Regenerate it using `./gradlew $GENERATE_README_TASK` command", null)
+                }
+            }
+
+            configuration()
+        }
+
+        project.tasks.named(CHECK_TASK) {
+            if (!settings.skipReadmeCheck) {
+                dependsOn(CHECK_README_TASK)
+            }
+        }
+    }
+
+    private fun generateTo(destination: File) {
+        var result = settings.readmeStubFile.readText()
         for ((stubName, processor) in processors) {
             result = result.replace("[[$stubName]]", processor())
         }
+        destination.parentFile.mkdirs()
         destination.writeText(result)
     }
 
@@ -28,7 +79,7 @@ class ReadmeGenerator(
 
     private fun processSupportedLibraries(): String {
         val libraryFiles =
-            librariesDir.listFiles { file -> file.isFile && file.name.endsWith(".json") } ?: emptyArray()
+            settings.librariesDir.listFiles { file -> file.isFile && file.name.endsWith(".json") } ?: emptyArray()
 
         return libraryFiles.toList().associateTo(sortedMapOf()) { file ->
             val libraryName = file.nameWithoutExtension
@@ -59,10 +110,10 @@ class ReadmeGenerator(
     }
 
     private fun processKotlinVersion(): String {
-        return kotlinVersion
+        return project.defaultVersionCatalog.versions.devKotlin
     }
 
     private fun processRepoUrl(): String {
-        return "$repoUrl.git"
+        return "${settings.projectRepoUrl}.git"
     }
 }

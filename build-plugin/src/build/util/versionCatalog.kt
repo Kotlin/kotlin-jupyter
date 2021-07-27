@@ -1,4 +1,4 @@
-package build
+package build.util
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
@@ -6,11 +6,11 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.getByType
 
-const val DEFAULT_VERSION_CATALOG = "libs"
+private const val DEFAULT_VERSION_CATALOG = "libs"
 private const val VERSION_CATALOG_EXTENSION_PREFIX = "versionCatalogExtFor"
 
 @Suppress("UnstableApiUsage")
-class MyVersionCatalogsExtension(
+class NamedVersionCatalogsExtension(
     private val project: Project,
     private val catalogName: String,
 ) {
@@ -41,14 +41,14 @@ class MyVersionCatalogsExtension(
 
 private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSION_PREFIX + name.capitalize()
 
-fun Project.versionCatalog(name: String): MyVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { MyVersionCatalogsExtension(this, name) }
-val Project.defaultVersionCatalog get(): MyVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
+fun Project.versionCatalog(name: String): NamedVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { NamedVersionCatalogsExtension(this, name) }
+val Project.defaultVersionCatalog get(): NamedVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
 
-val MyVersionCatalogsExtension.Versions.devKotlin get() = get("kotlin")
-val MyVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotlin")
-val MyVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
-val MyVersionCatalogsExtension.Versions.ktlint get() = get("ktlint")
+val NamedVersionCatalogsExtension.Versions.devKotlin get() = get("kotlin")
+val NamedVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotlin")
+val NamedVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
+val NamedVersionCatalogsExtension.Versions.ktlint get() = get("ktlint")
 
-val MyVersionCatalogsExtension.Dependencies.junitApi get() = get("test-junit-api")
-val MyVersionCatalogsExtension.Dependencies.junitEngine get() = get("test-junit-engine")
-val MyVersionCatalogsExtension.Dependencies.kotlinTest get() = get("kotlin-stable-test")
+val NamedVersionCatalogsExtension.Dependencies.junitApi get() = get("test-junit-api")
+val NamedVersionCatalogsExtension.Dependencies.junitEngine get() = get("test-junit-engine")
+val NamedVersionCatalogsExtension.Dependencies.kotlinTest get() = get("kotlin-stable-test")

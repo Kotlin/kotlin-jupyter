@@ -1,5 +1,11 @@
 package build
 
+import build.util.defaultVersionCatalog
+import build.util.junitApi
+import build.util.junitEngine
+import build.util.kotlinTest
+import build.util.testImplementation
+import build.util.testRuntimeOnly
 import org.gradle.api.Project
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test

@@ -1,7 +1,9 @@
-package build
+package build.util
 
+import build.SingleInstanceExtensionCompanion
 import groovy.json.JsonOutput
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.kotlin.dsl.exclude
@@ -126,6 +128,13 @@ val Any.booleanValue get() = booleanValueOrNull ?: throw IllegalArgumentExceptio
 
 fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
     return rootProject.findProperty(propertyName)?.booleanValueOrNull ?: default
+}
+
+fun Task.taskTempFile(path: String): File {
+    return temporaryDir.resolve(path).apply {
+        createNewFile()
+        deleteOnExit()
+    }
 }
 
 @Suppress("unused")

@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package build
+package build.util
 
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.provider.Provider

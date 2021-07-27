@@ -1,4 +1,4 @@
-package build
+package build.util
 
 import org.gradle.api.Project
 import java.io.ByteArrayOutputStream

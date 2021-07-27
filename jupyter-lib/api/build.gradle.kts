@@ -1,4 +1,4 @@
-import build.excludeKotlinDependencies
+import build.util.excludeKotlinDependencies
 
 plugins {
     id("ru.ileasile.kotlin.publisher")

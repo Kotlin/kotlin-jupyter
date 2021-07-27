@@ -1,5 +1,6 @@
-package build
+package build.util
 
+import build.RootSettingsExtension
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.InputFile
 import java.io.File
