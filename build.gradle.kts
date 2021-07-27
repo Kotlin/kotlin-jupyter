@@ -165,7 +165,7 @@ kotlinPublications {
     }
 
     localRepositories {
-        defaultLocalMavenRepository()
+        localMavenRepository(rootSettings.artifactsDir.resolve("maven"))
     }
 
     publication {

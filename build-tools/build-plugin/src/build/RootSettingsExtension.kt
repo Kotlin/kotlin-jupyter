@@ -27,7 +27,7 @@ class RootSettingsExtension(
     var prGithubUser by project.prop<String>("jupyter.github.user")
     var prGithubToken by project.prop<String>("jupyter.github.token")
 
-    var isLocalBuild by project.prop<Boolean>("build.isLocal")
+    var isLocalBuild by project.prop("build.isLocal", false)
 
     var jvmTargetForSnippets by project.prop<String?>()
 
