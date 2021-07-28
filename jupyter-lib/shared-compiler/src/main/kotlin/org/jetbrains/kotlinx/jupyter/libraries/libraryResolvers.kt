@@ -1,13 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.common.getHttp
-import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
-import java.nio.file.Path
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
@@ -39,9 +37,9 @@ abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = 
 class DefaultInfoLibraryResolver(
     private val parent: LibraryResolver,
     private val infoProvider: ResolutionInfoProvider,
-    paths: List<Path> = emptyList(),
+    paths: List<File> = emptyList(),
 ) : LibraryResolver {
-    private val resolutionInfos = paths.map { LibraryResolutionInfo.ByDir(it.toFile()) }
+    private val resolutionInfos = paths.map { LibraryResolutionInfo.ByDir(it) }
 
     override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         val referenceInfo = reference.info
@@ -62,15 +60,15 @@ class DefaultInfoLibraryResolver(
 
 class LocalLibraryResolver(
     parent: LibraryResolver?,
-    mainLibrariesDir: Path?
+    mainLibrariesDir: File?
 ) : LibraryDescriptorResolver(parent) {
     private val logger = getLogger()
-    private val pathsToCheck: List<Path>
+    private val pathsToCheck: List<File>
 
     init {
         val paths = mutableListOf(
-            LocalSettingsPath.resolve(LocalCacheDir),
-            LocalSettingsPath.resolve(LibrariesDir)
+            KERNEL_LIBRARIES.userCacheDir,
+            KERNEL_LIBRARIES.userLibrariesDir,
         )
         mainLibrariesDir?.let { paths.add(it) }
 
@@ -103,7 +101,7 @@ class LocalLibraryResolver(
         file.writeText(text)
     }
 
-    private fun LibraryReference.getFile(dir: Path) = dir.resolve("$key.$LibraryDescriptorExt").toFile()
+    private fun LibraryReference.getFile(dir: File) = dir.resolve(KERNEL_LIBRARIES.descriptorFileName(key))
 }
 
 object FallbackLibraryResolver : LibraryDescriptorResolver() {
@@ -111,14 +109,7 @@ object FallbackLibraryResolver : LibraryDescriptorResolver() {
         byDirResolver,
         resolver<LibraryResolutionInfo.ByGitRef> { name ->
             if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
-
-            val url = "$GitHubApiPrefix/contents/$RemoteLibrariesDir/$name.$LibraryDescriptorExt?ref=$sha"
-            getLogger().info("Requesting library descriptor at $url")
-            val response = getHttp(url).jsonObject
-
-            val downloadURL = (response["download_url"] as JsonPrimitive).content
-            val res = getHttp(downloadURL)
-            res.text
+            KERNEL_LIBRARIES.downloadLibraryDescriptor(sha, name)
         },
         resolver<LibraryResolutionInfo.ByFile> {
             file.readText()
@@ -153,7 +144,7 @@ private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolve
 private val byDirResolver = resolver<LibraryResolutionInfo.ByDir> { name ->
     if (name == null) throw ReplLibraryLoadingException(name, "Directory library resolver needs library name to be specified")
 
-    val jsonFile = librariesDir.resolve("$name.$LibraryDescriptorExt")
+    val jsonFile = librariesDir.resolve(KERNEL_LIBRARIES.descriptorFileName(name))
     if (jsonFile.exists() && jsonFile.isFile) jsonFile.readText()
     else null
 }

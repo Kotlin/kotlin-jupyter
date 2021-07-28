@@ -162,6 +162,7 @@ internal class InternalEvaluatorImpl(
         val fields = kClass.declaredMemberProperties
         val ans = mutableMapOf<String, VariableStateImpl>()
         fields.forEach { property ->
+            @Suppress("UNCHECKED_CAST")
             property as KProperty1<Any, *>
             val state = VariableStateImpl(property, cellClassInstance)
             variablesWatcher.addDeclaration(cellId, property.name)

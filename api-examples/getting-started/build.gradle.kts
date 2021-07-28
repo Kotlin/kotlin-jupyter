@@ -9,19 +9,15 @@ kotlinJupyter {
     addScannerDependency()
 }
 
-project.version = rootProject.version
-
 dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    implementation(libs.kotlin.stable.stdlib)
+    implementation(libs.kotlin.stable.reflect)
 }
 
 kotlinPublications {
     publication {
-        publicationName = "example-getting-started"
-        artifactId = "kotlin-jupyter-example-getting-started"
-        description = "Basic API usage example"
-        packageName = artifactId
-        publishToSonatype = false
+        publicationName.set("example-getting-started")
+        description.set("Basic API usage example")
+        publishToSonatype.set(false)
     }
 }

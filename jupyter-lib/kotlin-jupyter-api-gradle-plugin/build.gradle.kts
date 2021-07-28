@@ -1,18 +1,13 @@
+import build.CreateResourcesTask
+
 plugins {
     id("com.gradle.plugin-publish")
-    id("org.jlleitschuh.gradle.ktlint")
     `java-gradle-plugin`
     `kotlin-dsl`
     id("ru.ileasile.kotlin.publisher")
 }
 
-project.version = rootProject.version
 project.group = "org.jetbrains.kotlin"
-
-val junitVersion: String by rootProject
-val kotlinVersion: String by rootProject
-val stableKotlinVersion: String by rootProject
-val gradleKotlinVersion: String by rootProject
 
 repositories {
     mavenCentral()
@@ -23,29 +18,15 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$gradleKotlinVersion")
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation(libs.kotlin.gradle.gradlePlugin)
+    implementation(libs.gson)
 
-    testImplementation(kotlin("test", gradleKotlinVersion))
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-
-    testImplementation(project(":api"))
-    testImplementation(project(":api-annotations"))
+    testImplementation(projects.api)
+    testImplementation(projects.apiAnnotations)
 }
 
-val saveVersion by tasks.registering {
-    inputs.property("version", version)
-
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val propertiesFile = outputDir.resolve("VERSION")
-        propertiesFile.writeText(version.toString())
-    }
+CreateResourcesTask.register(project, "saveVersion", tasks.processResources) {
+    addSingleValueFile("VERSION", rootSettings.mavenVersion)
 }
 
 java {
@@ -53,17 +34,8 @@ java {
     withJavadocJar()
 }
 
-tasks {
-    processResources {
-        dependsOn(saveVersion)
-    }
-
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
-    }
+buildSettings {
+    withTests()
 }
 
 val pluginName = "apiGradlePlugin"
@@ -79,8 +51,8 @@ gradlePlugin {
 
 pluginBundle {
     // These settings are set for the whole plugin bundle
-    website = "https://github.com/Kotlin/kotlin-jupyter"
-    vcsUrl = "https://github.com/Kotlin/kotlin-jupyter"
+    website = rootSettings.projectRepoUrl
+    vcsUrl = rootSettings.projectRepoUrl
 
     (plugins) {
         pluginName {
@@ -92,26 +64,6 @@ pluginBundle {
     }
 
     mavenCoordinates {
-        groupId = "org.jetbrains.kotlin"
-    }
-}
-
-publishing {
-    repositories {
-        (rootProject.findProperty("localPublicationsRepo") as? java.nio.file.Path)?.let {
-            maven {
-                name = "LocalBuild"
-                url = it.toUri()
-            }
-        }
-    }
-}
-
-if (rootProject.findProperty("isMainProject") == true) {
-    val thisProjectName = project.name
-    rootProject.tasks {
-        named("publishLocal") {
-            dependsOn(":$thisProjectName:publishAllPublicationsToLocalBuildRepository")
-        }
+        groupId = project.group.toString()
     }
 }

@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -48,7 +48,7 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeReplWithStandardResolver(): ReplForJupyter {
-        val standardResolutionInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(homeDir.resolve(LibrariesDir))
+        val standardResolutionInfoProvider = ResolutionInfoProvider.withDefaultDirectoryResolution(KERNEL_LIBRARIES.homeLibrariesDir(homeDir))
         val config = ResolverConfig(testRepositories, getStandardResolver(".", standardResolutionInfoProvider))
         return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, config, standardResolverRuntimeProperties)
     }

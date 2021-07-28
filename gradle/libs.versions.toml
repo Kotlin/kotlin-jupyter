@@ -1,0 +1,148 @@
+[versions]
+kotlin = "1.6.0-dev-1733"
+stableKotlin = "1.5.21"
+gradleKotlin = "1.4.31"
+shadowJar = "7.0.0"
+changelogPlugin = "1.7.0"
+kotlinxSerialization = "1.2.2"
+kotlinxCoroutines = "1.5.1"
+ktlintGradle = "10.0.0"
+ktlint = "0.40.0"
+publishPlugin = "0.0.53-dev"
+versionsPlugin = "0.39.0"
+
+slf4j = "1.7.32"
+logback = "1.2.4"
+http4k = "4.10.1.0"
+jupyterApi = "0.10.0-146"
+jetbrainsAnnotations = "21.0.1"
+
+junit = "5.7.2"
+kotlinTest = "3.4.2"
+clikt = "2.8.0"
+zeromq = "0.5.2"
+gson = "2.8.7"
+
+jlatexmath = "1.0.7"
+xmlgraphicsFop = "2.6"
+xmlgraphicsBatikCodec = "1.14"
+xmlgraphicsCommons = "2.6"
+graphvizJava = "0.18.1"
+
+[libraries]
+
+# Dev Kotlin dependencies
+kotlin-dev-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+kotlin-dev-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlin-dev-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+
+kotlin-dev-compilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-dev-scriptingCompilerImplUnshaded = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl", version.ref = "kotlin" }
+kotlin-dev-scriptingCompilerImplEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl-embeddable", version.ref = "kotlin" }
+kotlin-dev-scriptingCompilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version.ref = "kotlin" }
+kotlin-dev-scriptingIdeServices = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-ide-services", version.ref = "kotlin" }
+kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies", version.ref = "kotlin" }
+kotlin-dev-scriptingDependenciesMaven = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven", version.ref = "kotlin" }
+kotlin-dev-scriptUtil = { group = "org.jetbrains.kotlin", name = "kotlin-script-util", version.ref = "kotlin" }
+kotlin-dev-scriptingCommon = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-common", version.ref = "kotlin" }
+kotlin-dev-scriptingJvm = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version.ref = "kotlin" }
+kotlin-dev-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
+
+# Stable Kotlin dependencies
+kotlin-stable-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "stableKotlin" }
+kotlin-stable-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "stableKotlin" }
+kotlin-stable-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "stableKotlin" }
+kotlin-stable-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "stableKotlin" }
+
+# Gradle-compatible Kotlin dependencies
+kotlin-gradle-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "gradleKotlin" }
+kotlin-gradle-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "gradleKotlin" }
+kotlin-gradle-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "gradleKotlin" }
+kotlin-gradle-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "gradleKotlin" }
+kotlin-gradle-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "gradleKotlin" }
+
+# Serialization compiler plugin (for Dev Kotlin)
+serialization-dev-embeddedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
+serialization-dev-unshadedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-unshaded", version.ref = "kotlin" }
+
+# Serialization runtime
+serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+
+# JetBrains libraries
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations"}
+
+# Coroutines
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+
+# Logging
+logging-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+logging-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
+# Network
+zeromq = { module = "org.zeromq:jeromq", version.ref = "zeromq" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
+http4k-clientApache = { module = "org.http4k:http4k-client-apache", version.ref = "http4k" }
+
+# Parsing console arguments
+clikt = { module = "com.github.ajalt:clikt", version.ref = "clikt" }
+
+# Testing
+test-junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+test-junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
+test-junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+test-kotlintest-assertions = { module = "io.kotlintest:kotlintest-assertions", version.ref = "kotlinTest" }
+
+# Different libraries
+ext-jlatex = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
+
+ext-xmlgraphics-fop = { module = "org.apache.xmlgraphics:fop", version.ref = "xmlgraphicsFop" }
+ext-xmlgraphics-batikCodec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "xmlgraphicsBatikCodec" }
+ext-xmlgraphics-commons = { module = "org.apache.xmlgraphics:xmlgraphics-commons", version.ref = "xmlgraphicsCommons" }
+
+ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava" }
+
+# Gradle Plugins
+
+# kotlin("jvm")
+plugin-kotlinJvm = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "stableKotlin" }
+
+# kotlin("plugin.serialization")
+plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "stableKotlin" }
+
+# kotlin("jupyter.api")
+plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
+
+# id("com.github.johnrengelman.shadow")
+plugin-shadowJar = { module = "gradle.plugin.com.github.jengelman.gradle.plugins:shadow", version.ref = "shadowJar" }
+
+# id("org.jlleitschuh.gradle.ktlint")
+plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
+
+# id("ru.ileasile.kotlin.publisher")
+plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref = "publishPlugin" }
+
+# id("org.hildan.github.changelog")
+plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
+
+# id("com.github.ben-manes.versions")
+plugin-versionsPlugin = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "versionsPlugin" }
+
+# Published artifacts of this project as binary dependencies
+jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
+jupyter-apiAnnotations = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api-annotations", version.ref = "jupyterApi" }
+jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-common-dependencies", version.ref = "jupyterApi" }
+
+[bundles]
+http4k = [ "http4k-core", "http4k-clientApache" ]
+allGradlePlugins = [
+    "plugin-kotlinJvm",
+    "plugin-serialization",
+    "plugin-kotlinJupyterApi",
+    "plugin-shadowJar",
+    "plugin-ktlint",
+    "plugin-publisher",
+    "plugin-changelog",
+    "plugin-versionsPlugin",
+]

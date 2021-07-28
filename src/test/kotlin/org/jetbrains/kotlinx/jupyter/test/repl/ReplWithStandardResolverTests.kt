@@ -1,10 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
-import org.jetbrains.kotlinx.jupyter.libraries.LocalSettingsPath
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Assertions
@@ -124,7 +122,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         """.trimIndent()
 
         val libName = "test-local"
-        val file = LocalSettingsPath.resolve(LibrariesDir).resolve("$libName.$LibraryDescriptorExt").toFile()
+        val file = KERNEL_LIBRARIES.userLibrariesDir.resolve(KERNEL_LIBRARIES.descriptorFileName(libName))
         file.delete()
 
         file.parentFile.mkdirs()

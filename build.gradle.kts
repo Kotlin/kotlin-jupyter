@@ -1,38 +1,15 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlinx.jupyter.build.getFlag
-import org.jetbrains.kotlinx.jupyter.plugin.options
-import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import build.CreateResourcesTask
+import build.PUBLISHING_GROUP
+import build.util.getFlag
+import build.util.typedProperty
 import ru.ileasile.kotlin.apache2
 import ru.ileasile.kotlin.developer
 import ru.ileasile.kotlin.githubRepo
 
 plugins {
-    kotlin("jvm")
-    kotlin("jupyter.api") apply false
-    kotlin("plugin.serialization")
-    id("com.github.johnrengelman.shadow")
-    id("org.jlleitschuh.gradle.ktlint")
-    id("org.jetbrains.kotlinx.jupyter.dependencies")
-    id("ru.ileasile.kotlin.publisher")
-    id("ru.ileasile.kotlin.doc")
-    id("org.hildan.github.changelog")
+    id("build.plugins.main")
 }
 
-extra["isMainProject"] = true
-
-val kotlinVersion: String by project
-val kotlinxSerializationVersion: String by project
-val ktlintVersion: String by project
-val junitVersion: String by project
-val slf4jVersion: String by project
-val logbackVersion: String by project
-
-val docsRepo: String by project
-val githubRepoUser: String by project
-val githubRepoName: String by project
-
-val taskOptions = project.options()
 val deploy: Configuration by configurations.creating
 
 deploy.apply {
@@ -40,127 +17,62 @@ deploy.apply {
     exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
 }
 
-fun KtlintExtension.setup() {
-    version.set(ktlintVersion)
-    enableExperimentalRules.set(true)
-}
-
 ktlint {
-    setup()
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
     }
 }
 
-subprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-
-    ktlint {
-        setup()
-    }
-}
-
-allprojects {
-    val stableKotlinLanguageLevel: String by rootProject
-    val jvmTarget: String by rootProject
-
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            apiVersion = stableKotlinLanguageLevel
-            languageVersion = stableKotlinLanguageLevel
-            this.jvmTarget = jvmTarget
-        }
-    }
-
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = jvmTarget
-        targetCompatibility = jvmTarget
-    }
-}
-
-tasks.withType<KotlinCompile> {
-    val kotlinLanguageLevel: String by rootProject
-    kotlinOptions {
-        languageVersion = kotlinLanguageLevel
-        apiVersion = kotlinLanguageLevel
-
-        @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
-    }
-}
-
 dependencies {
     // Dependency on module with compiler.
-    api(project(":shared-compiler"))
-
-    fun implKotlin(module: String, version: String? = kotlinVersion) = implementation(kotlin(module, version))
+    api(projects.sharedCompiler)
 
     // Standard dependencies
-    implKotlin("reflect")
-    implKotlin("stdlib-jdk8")
-    implementation("org.jetbrains:annotations:20.1.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.dev.stdlibJdk8)
+    implementation(libs.jetbrains.annotations)
+    implementation(libs.coroutines.core)
 
     // Embedded compiler and scripting dependencies
-    implKotlin("compiler-embeddable")
-    implKotlin("scripting-compiler-impl-embeddable")
-    implKotlin("scripting-compiler-embeddable")
-    implKotlin("scripting-ide-services")
-    implKotlin("scripting-dependencies-maven")
-    implKotlin("script-util")
-    implKotlin("scripting-common")
+    implementation(libs.kotlin.dev.compilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingIdeServices)
+    implementation(libs.kotlin.dev.scriptingDependenciesMaven)
+    implementation(libs.kotlin.dev.scriptUtil)
+    implementation(libs.kotlin.dev.scriptingCommon)
 
     // Embedded version of serialization plugin for notebook code
-    implKotlin("serialization")
+    implementation(libs.serialization.dev.embeddedPlugin)
 
     // Logging
-    implementation("org.slf4j:slf4j-api:$slf4jVersion")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation(libs.logging.slf4j.api)
+    implementation(libs.logging.logback.classic)
 
     // ZeroMQ library for implementing messaging protocol
-    implementation("org.zeromq:jeromq:0.5.2")
+    implementation(libs.zeromq)
 
     // Clikt library for parsing output magics
-    implementation("com.github.ajalt:clikt:2.8.0")
+    implementation(libs.clikt)
 
     // Serialization implementation for kernel code
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+    implementation(libs.serialization.json)
 
     // Test dependencies: kotlin-test and Junit 5
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-    testImplementation("io.kotlintest:kotlintest-assertions:3.1.6")
+    testImplementation(libs.test.junit.params)
+    testImplementation(libs.test.kotlintest.assertions)
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-
-    deploy(project(":lib"))
-    deploy(project(":api"))
-    deploy(kotlin("script-runtime", kotlinVersion))
+    deploy(projects.lib)
+    deploy(projects.api)
+    deploy(libs.kotlin.dev.scriptRuntime.get())
 }
 
-tasks.register("publishToPluginPortal") {
-    group = "publishing"
-
-    dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
-}
-
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = taskOptions.mainClassFQN
-        attributes["Implementation-Version"] = project.version
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
     }
-}
-
-tasks.shadowJar {
-    archiveBaseName.set(taskOptions.packageName)
-    archiveClassifier.set("")
-    mergeServiceFiles()
-    transform(ComponentsXmlResourceTransformer())
-
-    manifest {
-        attributes(tasks.jar.get().manifest.attributes)
-    }
+    withTests()
 }
 
 // Workaround for https://github.com/johnrengelman/shadow/issues/651
@@ -170,91 +82,70 @@ components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
     }
 }
 
-tasks.test {
-    val doParallelTesting = getFlag("test.parallel", true)
-    maxHeapSize = "2048m"
+tasks {
+    register("publishToPluginPortal") {
+        group = PUBLISHING_GROUP
 
-    /**
-     *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
-     */
-    val useShadowedJar = getFlag("test.useShadowed", false)
-
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
+        dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
     }
 
-    if (useShadowedJar) {
-        dependsOn(tasks.shadowJar.get())
-        classpath = files(tasks.shadowJar.get()) + classpath
+    test {
+        val doParallelTesting = getFlag("test.parallel", true)
+        maxHeapSize = "2048m"
+
+        /**
+         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
+         */
+        val useShadowedJar = getFlag("test.useShadowed", false)
+
+        if (useShadowedJar) {
+            dependsOn(shadowJar.get())
+            classpath = files(shadowJar.get()) + classpath
+        }
+
+        dependsOn(updateLibraryDescriptors.get())
+
+        systemProperties = mutableMapOf(
+            "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
+
+            "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+            "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+        )
     }
 
-    systemProperties = mutableMapOf(
-        "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
-
-        "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-        "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-        "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
-    )
-}
-
-tasks.processResources {
-    dependsOn(tasks.buildProperties)
-}
-
-val createTestResources: Task by tasks.creating {
-    val jupyterApiVersion: String by project
-
-    inputs.property("jupyterApiVersion", jupyterApiVersion)
-
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("test"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val propertiesFile = outputDir.resolve("PUBLISHED_JUPYTER_API_VERSION")
-        propertiesFile.writeText(jupyterApiVersion)
+    CreateResourcesTask.register(project, "createTestResources", processTestResources) {
+        addSingleValueFile("PUBLISHED_JUPYTER_API_VERSION", libs.versions.jupyterApi.get())
     }
-}
 
-tasks.processTestResources {
-    dependsOn(createTestResources)
-}
-
-tasks.check {
-    if (!getFlag("skipReadmeCheck", false)) {
-        dependsOn(tasks.checkReadme)
+    publishDocs {
+        docsRepoUrl.set(rootSettings.docsRepo)
+        branchName.set("master")
+        username.set("robot")
+        email.set("robot@jetbrains.com")
     }
-}
-
-tasks.publishDocs {
-    docsRepoUrl.set(docsRepo)
-    branchName.set("master")
-    username.set("robot")
-    email.set("robot@jetbrains.com")
 }
 
 changelog {
-    githubUser = githubRepoUser
-    githubRepository = githubRepoName
+    githubUser = rootSettings.githubRepoUser
+    githubRepository = rootSettings.githubRepoName
     excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
 }
 
 kotlinPublications {
-    packageGroup = "org.jetbrains.kotlinx"
-
-    fun prop(name: String) = project.findProperty(name) as? String?
+    defaultGroup.set("org.jetbrains.kotlinx")
+    defaultArtifactIdPrefix.set("kotlin-jupyter-")
 
     sonatypeSettings(
-        prop("kds.sonatype.user"),
-        prop("kds.sonatype.password"),
+        typedProperty("kds.sonatype.user"),
+        typedProperty("kds.sonatype.password"),
         "kotlin-jupyter project, v. ${project.version}"
     )
 
     signingCredentials(
-        prop("kds.sign.key.id"),
-        prop("kds.sign.key.private"),
-        prop("kds.sign.key.passphrase")
+        typedProperty("kds.sign.key.id"),
+        typedProperty("kds.sign.key.private"),
+        typedProperty("kds.sign.key.passphrase")
     )
 
     pom {
@@ -272,17 +163,12 @@ kotlinPublications {
         }
     }
 
-    publication {
-        publicationName = "kernel"
-        artifactId = "kotlin-jupyter-kernel"
-        description = "Kotlin Jupyter kernel published as artifact"
-        packageName = artifactId
+    localRepositories {
+        localMavenRepository(rootSettings.artifactsDir.resolve("maven"))
     }
-}
 
-tasks.named("publishLocal") {
-    dependsOn(
-        tasks.condaPackage,
-        tasks.pyPiPackage,
-    )
+    publication {
+        publicationName.set("kernel")
+        description.set("Kotlin Jupyter kernel published as artifact")
+    }
 }

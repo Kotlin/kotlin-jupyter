@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorExt
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -10,8 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.util.stream.Stream
-import kotlin.io.path.Path
-import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
 /**
@@ -56,8 +53,8 @@ class AllLibrariesTest : AbstractSingleReplTest() {
 
         @JvmStatic
         fun libraryNames(): Stream<String> {
-            return Files.walk(Path(LibrariesDir), 1)
-                .filter { it.extension == LibraryDescriptorExt }
+            return Files.walk(KERNEL_LIBRARIES.localLibrariesDir.toPath(), 1)
+                .filter { KERNEL_LIBRARIES.isLibraryDescriptor(it.toFile()) }
                 .map { it.nameWithoutExtension }
         }
 

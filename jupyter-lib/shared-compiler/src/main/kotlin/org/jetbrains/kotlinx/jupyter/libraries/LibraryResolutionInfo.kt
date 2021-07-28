@@ -31,7 +31,7 @@ abstract class LibraryResolutionInfo(
             get() = sha
 
         val sha: String by lazy {
-            val (resolvedSha, _) = getLatestCommitToLibraries(ref, null) ?: return@lazy ref
+            val (resolvedSha, _) = KERNEL_LIBRARIES.getLatestCommitToLibraries(ref, null) ?: return@lazy ref
             resolvedSha
         }
 

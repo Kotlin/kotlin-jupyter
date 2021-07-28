@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import build.CreateResourcesTask
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
@@ -6,90 +6,49 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-project.version = rootProject.version
-
-val kotlinVersion: String by rootProject
-val slf4jVersion: String by rootProject
-val junitVersion: String by rootProject
-
-tasks.withType<KotlinCompile> {
-    val kotlinLanguageLevel: String by rootProject
-    kotlinOptions {
-        languageVersion = kotlinLanguageLevel
-        apiVersion = kotlinLanguageLevel
-
-        @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf("-Xskip-prerelease-check")
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    fun compileOnlyKotlin(module: String, version: String? = kotlinVersion) = compileOnly(kotlin(module, version))
-
     // Internal dependencies
-    api(project(":api"))
-    api(project(":lib"))
-    api(project(":common-dependencies"))
+    api(projects.api)
+    api(projects.lib)
+    api(projects.commonDependencies)
 
     // Standard dependencies
-    compileOnly(kotlin("stdlib"))
-    compileOnly(kotlin("stdlib-jdk8"))
-    compileOnly(kotlin("reflect"))
+    compileOnly(libs.kotlin.stable.stdlib)
+    compileOnly(libs.kotlin.stable.stdlibJdk8)
+    compileOnly(libs.kotlin.stable.reflect)
 
     // Scripting and compilation-related dependencies
-    compileOnlyKotlin("scripting-common")
-    compileOnlyKotlin("scripting-jvm")
-    compileOnlyKotlin("scripting-compiler-impl")
-    implementation(kotlin("scripting-dependencies", kotlinVersion) as String) { isTransitive = false }
+    compileOnly(libs.kotlin.dev.scriptingCommon)
+    compileOnly(libs.kotlin.dev.scriptingJvm)
+    compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
+    implementation(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
-    compileOnlyKotlin("serialization-unshaded")
+    compileOnly(libs.serialization.dev.unshadedPlugin)
 
     // Logging
-    compileOnly("org.slf4j:slf4j-api:$slf4jVersion")
-
-    // Testing dependencies: kotlin-test and JUnit 5
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    compileOnly(libs.logging.slf4j.api)
 }
 
-tasks {
-    test {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-        }
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
     }
+    withTests()
 }
 
-val buildProperties by tasks.registering {
-    inputs.property("version", rootProject.findProperty("pythonVersion"))
-
-    val outputDir = file(project.buildDir.toPath().resolve("resources").resolve("main"))
-    outputs.dir(outputDir)
-
-    doLast {
-        outputDir.mkdirs()
-        val properties = inputs.properties.entries.map { it.toPair() }.toMutableList()
-        val propertiesFile = outputDir.resolve("compiler.properties")
-        propertiesFile.writeText(properties.joinToString("") { "${it.first}=${it.second}\n" })
-    }
-}
-
-tasks.processResources {
-    dependsOn(buildProperties)
+CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
+    addPropertiesFile("compiler.properties", mapOf("version" to rootSettings.pyPackageVersion))
 }
 
 kotlinPublications {
     publication {
-        publicationName = "compiler"
-        artifactId = "kotlin-jupyter-shared-compiler"
-        description = "Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)"
-        packageName = artifactId
+        publicationName.set("compiler")
+        description.set("Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)")
     }
 }

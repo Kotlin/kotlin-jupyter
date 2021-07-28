@@ -40,4 +40,4 @@ private val defaultParsers = listOf(
     LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
         LibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
     },
-).map { it.name to it }.toMap()
+).associateBy { it.name }

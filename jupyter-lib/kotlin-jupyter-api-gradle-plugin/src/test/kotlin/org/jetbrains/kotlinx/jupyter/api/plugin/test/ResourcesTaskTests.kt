@@ -281,7 +281,7 @@ class ResourcesTaskTests {
     }
 
     companion object {
-        private const val KOTLIN_VERSION = "1.5.20"
+        private const val KOTLIN_VERSION = "1.5.21"
         private const val RESOURCES_TASK_NAME = "processResources"
         private const val JUPYTER_RESOURCES_TASK_NAME = "processJupyterApiResources"
 

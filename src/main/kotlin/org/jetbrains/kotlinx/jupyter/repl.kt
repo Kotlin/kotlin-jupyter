@@ -35,7 +35,7 @@ import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHand
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesDir
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
@@ -173,7 +173,7 @@ class ReplForJupyterImpl(
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
-    override val librariesDir: File = homeDir?.resolve(LibrariesDir) ?: File(LibrariesDir)
+    override val librariesDir: File = KERNEL_LIBRARIES.homeLibrariesDir(homeDir)
 
     private val libraryInfoSwitcher = ResolutionInfoSwitcher.default(
         resolutionInfoProvider,
