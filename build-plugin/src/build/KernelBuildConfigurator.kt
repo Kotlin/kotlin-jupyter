@@ -18,6 +18,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.named
@@ -44,13 +45,11 @@ internal class KernelBuildConfigurator(private val project: Project) {
         setupVersionsPlugin()
         setupKtLintForAllProjects()
 
-        registerUpdateLibrariesTask()
-
         println("##teamcity[buildNumber '${settings.pyPackageVersion}']")
         println("##teamcity[setParameter name='mavenVersion' value='${settings.mavenVersion}']")
 
         project.subprojects {
-            // Give to subprojects an ability to access build options
+            // Give to subprojects an ability to access build settings
             extensions.add(RootSettingsExtension.name, settings)
         }
 
@@ -69,6 +68,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun configureTasks() {
+        registerUpdateLibrariesTask()
         registerReadmeTasks()
         registerKotlinVersionUpdateTask()
         registerLibrariesUpdateTasks()
@@ -112,6 +112,9 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
     private fun registerUpdateLibrariesTask() {
         project.tasks.register<UpdateLibrariesTask>(UPDATE_LIBRARIES_TASK)
+        project.tasks.withType<Test> {
+            dependsOn(UPDATE_LIBRARIES_TASK)
+        }
     }
 
     private fun registerCleanTasks() {

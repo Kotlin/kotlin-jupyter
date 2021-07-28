@@ -103,8 +103,6 @@ tasks {
             classpath = files(shadowJar.get()) + classpath
         }
 
-        dependsOn(updateLibraryDescriptors.get())
-
         systemProperties = mutableMapOf(
             "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
 

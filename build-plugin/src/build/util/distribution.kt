@@ -34,7 +34,7 @@ class UploadTaskSpecs <T : TaskSpec>(
 
         project.tasks.register(taskName("Protected")) {
             group = taskGroup
-            dependsOn(project.tasks.getByName(makeTaskName(options.cleanInstallDirTaskPrefix, false)))
+            dependsOn(project.tasks.named(makeTaskName(options.cleanInstallDirTaskPrefix, false)))
             if (options.isOnProtectedBranch) {
                 dependsOn(dev.taskName)
             }
