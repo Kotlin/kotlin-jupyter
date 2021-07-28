@@ -48,7 +48,7 @@ CreateResourcesTask.register(project, "buildProperties", tasks.processResources)
 
 kotlinPublications {
     publication {
-        publicationName.set("compiler")
+        publicationName.set("shared-compiler")
         description.set("Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)")
     }
 }
