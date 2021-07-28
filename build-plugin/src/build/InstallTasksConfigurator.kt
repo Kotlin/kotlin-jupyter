@@ -4,8 +4,8 @@ import build.util.makeDirs
 import build.util.makeTaskName
 import build.util.writeJson
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.register
 import java.io.File
@@ -41,8 +41,8 @@ class InstallTasksConfigurator(
 
     fun registerInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
-        val cleanDirTask = project.tasks.getByName(makeTaskName(settings.cleanInstallDirTaskPrefix, local))
-        val shadowJar = project.tasks.getByName(SHADOW_JAR_TASK)
+        val cleanDirTask = project.tasks.named(makeTaskName(settings.cleanInstallDirTaskPrefix, local))
+        val shadowJar = project.tasks.named(SHADOW_JAR_TASK)
         val updateLibrariesTask = project.tasks.named(UPDATE_LIBRARIES_TASK)
 
         project.tasks.register<Copy>(makeTaskName(settings.copyLibrariesTaskPrefix, local)) {
@@ -62,7 +62,7 @@ class InstallTasksConfigurator(
         project.tasks.register<Copy>(makeTaskName(settings.installKernelTaskPrefix, local)) {
             dependsOn(cleanDirTask, shadowJar)
             group = groupName
-            from(shadowJar.outputs)
+            from(shadowJar.get().outputs)
             into(mainInstallPath.resolve(settings.jarsPath))
         }
 
@@ -72,7 +72,7 @@ class InstallTasksConfigurator(
         }
     }
 
-    private fun registerTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
+    private fun registerTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: TaskProvider<*>, shadowJar: TaskProvider<*>, specPath: File, mainInstallPath: File): String {
         val taskName = makeTaskName(if (debug) "createDebugSpecs" else "createSpecs", local)
         project.tasks.register(taskName) {
             this.group = group
@@ -107,18 +107,16 @@ class InstallTasksConfigurator(
         val taskNameSuffix = if (local) "" else "Package"
         val taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
 
-        val dependencies = listOf(
-            makeTaskName(settings.cleanInstallDirTaskPrefix, local),
-            if (local) project.tasks.getByName(COPY_RUN_KERNEL_PY_TASK) else project.tasks.getByName(PREPARE_DISTRIBUTION_DIR_TASK),
-            makeTaskName(settings.installKernelTaskPrefix, local),
-            makeTaskName(settings.installLibsTaskPrefix, local),
-            specsTaskName,
-            makeTaskName(settings.copyLibrariesTaskPrefix, local)
-        )
-
         project.tasks.register(taskName) {
             this.group = group
-            dependsOn(dependencies)
+            dependsOn(
+                makeTaskName(settings.cleanInstallDirTaskPrefix, local),
+                if (local) COPY_RUN_KERNEL_PY_TASK else PREPARE_DISTRIBUTION_DIR_TASK,
+                makeTaskName(settings.installKernelTaskPrefix, local),
+                makeTaskName(settings.installLibsTaskPrefix, local),
+                specsTaskName,
+                makeTaskName(settings.copyLibrariesTaskPrefix, local),
+            )
         }
     }
 
