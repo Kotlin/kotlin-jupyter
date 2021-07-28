@@ -175,17 +175,10 @@ class RootSettingsExtension(
 
         val defaultBuildNumber = "$baseVersion.$buildCounter$devAddition"
 
-        return if (!buildNumber.matches(BUILD_NUMBER_REGEX)) {
-            val versionFile = artifactsDir.resolve(versionFileName)
-            if (versionFile.exists()) {
-                val lines = versionFile.readLines()
-                assert(lines.isNotEmpty()) { "There should be at least one line in VERSION file" }
-                lines.first().trim()
-            } else {
-                defaultBuildNumber
-            }
-        } else {
+        return if (buildNumber.matches(BUILD_NUMBER_REGEX)) {
             buildNumber
+        } else {
+            defaultBuildNumber
         }
     }
 
