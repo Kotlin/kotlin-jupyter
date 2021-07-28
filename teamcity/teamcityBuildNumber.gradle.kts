@@ -6,14 +6,14 @@ tasks.register("detectVersionsForTC") {
     }
 }
 
-private fun readProperties(propertiesFile: java.io.File): Map<String, String> =
+fun readProperties(propertiesFile: java.io.File): Map<String, String> =
     propertiesFile.readText().lineSequence()
         .map { it.split("=") }
         .filter { it.size == 2 }
         .map { it[0].trim() to it[1].trim() }.toMap()
 
-private fun detectVersion(): String {
-    val baseVersion = readProperties("../gradle.properties")["baseVersion"]
+fun detectVersion(): String {
+    val baseVersion = readProperties(file("../gradle.properties"))["baseVersion"]
     val buildCounter = project.property("build.counter") as String
     val devCounter = project.findProperty("build.devCounter") as? String
     val isOnProtectedBranch = (project.property("build.branch") as String) == "master"
