@@ -1,9 +1,9 @@
 @file:Suppress("UnstableApiUsage")
 
+rootProject.name = "kotlin-jupyter-kernel"
+
 enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-rootProject.name = "kotlin-jupyter-kernel"
 
 includeBuild("build-plugin")
 

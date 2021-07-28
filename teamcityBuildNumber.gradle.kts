@@ -1,5 +1,3 @@
-
-
 tasks.register("detectVersionsForTC") {
     outputs.upToDateWhen { false }
 
