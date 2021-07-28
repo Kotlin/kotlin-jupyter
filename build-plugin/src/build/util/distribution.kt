@@ -25,16 +25,16 @@ class UploadTaskSpecs <T : TaskSpec>(
 
     private fun taskName(type: String) = repoName + "Upload" + type
 
-    fun createTasks(options: RootSettingsExtension, taskCreationAction: (T) -> Unit) {
+    fun registerTasks(options: RootSettingsExtension, taskCreationAction: (T) -> Unit) {
         val project = options.project
         if (options.isOnProtectedBranch) {
             taskCreationAction(stable)
         }
         taskCreationAction(dev)
 
-        project.task(taskName("Protected")) {
-            dependsOn(project.tasks.getByName(makeTaskName(options.cleanInstallDirTaskPrefix, false)))
+        project.tasks.register(taskName("Protected")) {
             group = taskGroup
+            dependsOn(project.tasks.getByName(makeTaskName(options.cleanInstallDirTaskPrefix, false)))
             if (options.isOnProtectedBranch) {
                 dependsOn(dev.taskName)
             }

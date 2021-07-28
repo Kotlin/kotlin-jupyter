@@ -1,6 +1,8 @@
 package build
 
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.OutputDirectory
@@ -54,14 +56,25 @@ abstract class CreateResourcesTask : DefaultTask() {
         addPropertiesFile(subPath, values.associate { it })
     }
 
-    fun setupDependencies(resourceTask: Copy) {
+    private fun setupDependencies(resourceTask: Copy) {
         resourceTask.apply {
             dependsOn(this@CreateResourcesTask)
             from(outputResourceDir)
         }
     }
 
-    fun setupDependencies(resourceTaskProvider: TaskProvider<out Copy>) {
-        setupDependencies(resourceTaskProvider.get())
+    companion object {
+        fun register(
+            project: Project,
+            name: String,
+            resourceTaskProvider: TaskProvider<out Copy>,
+            action: Action<CreateResourcesTask>,
+        ): TaskProvider<CreateResourcesTask> {
+            val task = project.tasks.register(name, CreateResourcesTask::class.java, action)
+            resourceTaskProvider.configure {
+                task.get().setupDependencies(this)
+            }
+            return task
+        }
     }
 }

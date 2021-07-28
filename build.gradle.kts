@@ -114,8 +114,7 @@ tasks {
         )
     }
 
-    create("createTestResources", CreateResourcesTask::class) {
-        setupDependencies(processTestResources)
+    CreateResourcesTask.register(project, "createTestResources", processTestResources) {
         addSingleValueFile("PUBLISHED_JUPYTER_API_VERSION", libs.versions.jupyterApi.get())
     }
 

@@ -42,8 +42,7 @@ buildSettings {
     withTests()
 }
 
-val buildProperties by tasks.creating(CreateResourcesTask::class) {
-    setupDependencies(tasks.processResources)
+CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
     addPropertiesFile("compiler.properties", mapOf("version" to rootSettings.pyPackageVersion))
 }
 

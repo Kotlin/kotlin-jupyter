@@ -14,7 +14,7 @@ class InstallTasksConfigurator(
     private val project: Project,
     private val settings: RootSettingsExtension,
 ) {
-    fun createLocalInstallTasks() {
+    fun registerLocalInstallTasks() {
         project.tasks.register<Copy>(COPY_RUN_KERNEL_PY_TASK) {
             group = LOCAL_INSTALL_GROUP
             dependsOn(makeTaskName(settings.cleanInstallDirTaskPrefix, true))
@@ -31,19 +31,19 @@ class InstallTasksConfigurator(
             into(settings.localInstallDir)
         }
 
-        createInstallTasks(true, settings.localInstallDir, settings.localInstallDir)
+        registerInstallTasks(true, settings.localInstallDir, settings.localInstallDir)
 
-        project.task(UNINSTALL_TASK) {
+        project.tasks.register(UNINSTALL_TASK) {
             group = LOCAL_INSTALL_GROUP
             dependsOn(makeTaskName(settings.cleanInstallDirTaskPrefix, false))
         }
     }
 
-    fun createInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
+    fun registerInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = project.tasks.getByName(makeTaskName(settings.cleanInstallDirTaskPrefix, local))
         val shadowJar = project.tasks.getByName(SHADOW_JAR_TASK)
-        val updateLibrariesTask = project.tasks.named(UPDATE_LIBRARIES_TASK_NAME)
+        val updateLibrariesTask = project.tasks.named(UPDATE_LIBRARIES_TASK)
 
         project.tasks.register<Copy>(makeTaskName(settings.copyLibrariesTaskPrefix, local)) {
             dependsOn(cleanDirTask, updateLibrariesTask)
@@ -67,12 +67,12 @@ class InstallTasksConfigurator(
         }
 
         listOf(true, false).forEach { debug ->
-            val specTaskName = createTaskForSpecs(debug, local, groupName, cleanDirTask, shadowJar, specPath, mainInstallPath)
-            createMainInstallTask(debug, local, groupName, specTaskName)
+            val specTaskName = registerTaskForSpecs(debug, local, groupName, cleanDirTask, shadowJar, specPath, mainInstallPath)
+            registerMainInstallTask(debug, local, groupName, specTaskName)
         }
     }
 
-    private fun createTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
+    private fun registerTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: Task, shadowJar: Task, specPath: File, mainInstallPath: File): String {
         val taskName = makeTaskName(if (debug) "createDebugSpecs" else "createSpecs", local)
         project.tasks.register(taskName) {
             this.group = group
@@ -101,7 +101,7 @@ class InstallTasksConfigurator(
         return taskName
     }
 
-    private fun createMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
+    private fun registerMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
         val taskNamePrefix = if (local) "install" else "prepare"
         val taskNameMiddle = if (debug) "Debug" else ""
         val taskNameSuffix = if (local) "" else "Package"
@@ -116,7 +116,7 @@ class InstallTasksConfigurator(
             makeTaskName(settings.copyLibrariesTaskPrefix, local)
         )
 
-        project.task(taskName) {
+        project.tasks.register(taskName) {
             this.group = group
             dependsOn(dependencies)
         }

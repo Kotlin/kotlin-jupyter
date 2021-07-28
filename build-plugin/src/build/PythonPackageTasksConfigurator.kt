@@ -35,7 +35,7 @@ class PythonPackageTasksConfigurator(
             dependsOn(CONDA_PACKAGE_TASK)
         }
 
-        specs.createTasks(settings) { taskSpec ->
+        specs.registerTasks(settings) { taskSpec ->
             project.tasks.register(taskSpec.taskName) {
                 group = CONDA_GROUP
                 val artifactPath = settings.artifactsDir.resolve(packageSettings.fileName)
@@ -98,7 +98,7 @@ class PythonPackageTasksConfigurator(
             dependsOn(PYPI_PACKAGE_TASK)
         }
 
-        specs.createTasks(settings) { taskSpec ->
+        specs.registerTasks(settings) { taskSpec ->
             project.tasks.register<Exec>(taskSpec.taskName) {
                 group = PYPI_GROUP
                 workingDir(settings.artifactsDir)

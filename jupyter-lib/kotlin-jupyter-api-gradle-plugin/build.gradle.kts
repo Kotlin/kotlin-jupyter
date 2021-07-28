@@ -25,8 +25,7 @@ dependencies {
     testImplementation(projects.apiAnnotations)
 }
 
-val saveVersion by tasks.creating(CreateResourcesTask::class) {
-    setupDependencies(tasks.processResources)
+CreateResourcesTask.register(project, "saveVersion", tasks.processResources) {
     addSingleValueFile("VERSION", rootSettings.mavenVersion)
 }
 

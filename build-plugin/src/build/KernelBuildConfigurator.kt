@@ -20,8 +20,8 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import kotlin.collections.component1
@@ -44,7 +44,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
         setupVersionsPlugin()
         setupKtLintForAllProjects()
 
-        createUpdateLibrariesTask()
+        registerUpdateLibrariesTask()
 
         println("##teamcity[buildNumber '${settings.pyPackageVersion}']")
         println("##teamcity[setParameter name='mavenVersion' value='${settings.mavenVersion}']")
@@ -74,16 +74,16 @@ internal class KernelBuildConfigurator(private val project: Project) {
         registerLibrariesUpdateTasks()
 
         /****** Build tasks ******/
-        createPropertiesTask()
+        registerPropertiesTask()
         registerCleanTasks()
 
         /****** Local install ******/
         val installTasksConfigurator = InstallTasksConfigurator(project, settings)
-        installTasksConfigurator.createLocalInstallTasks()
+        installTasksConfigurator.registerLocalInstallTasks()
 
         /****** Distribution ******/
         registerDistributionTasks()
-        installTasksConfigurator.createInstallTasks(false, settings.distribKernelDir, settings.runKernelDir)
+        installTasksConfigurator.registerInstallTasks(false, settings.distribKernelDir, settings.runKernelDir)
         registerPythonPackageTasks()
         registerAggregateUploadTasks()
 
@@ -110,8 +110,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
         }
     }
 
-    private fun createUpdateLibrariesTask() {
-        UpdateLibrariesTask.getOrCreate(project)
+    private fun registerUpdateLibrariesTask() {
+        project.tasks.register<UpdateLibrariesTask>(UPDATE_LIBRARIES_TASK)
     }
 
     private fun registerCleanTasks() {
@@ -169,7 +169,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
         LibraryUpdateTasksConfigurator(project, settings).registerTasks()
     }
 
-    private fun createPropertiesTask() {
+    private fun registerPropertiesTask() {
         val properties = buildProperties {
             add("version" to settings.pyPackageVersion)
             add("currentBranch" to project.getCurrentBranch())
@@ -182,15 +182,18 @@ internal class KernelBuildConfigurator(private val project: Project) {
             add("librariesFormatVersion" to librariesProperties["formatVersion"].orEmpty())
         }
 
-        project.tasks.create<CreateResourcesTask>(BUILD_PROPERTIES_TASK) {
+        CreateResourcesTask.register(
+            project,
+            BUILD_PROPERTIES_TASK,
+            project.tasks.named<Copy>(PROCESS_RESOURCES_TASK)
+        ) {
             addPropertiesFile(settings.runtimePropertiesFile, properties)
-            setupDependencies(this@KernelBuildConfigurator.project.tasks.named<Copy>(PROCESS_RESOURCES_TASK))
         }
     }
 
     private fun registerReadmeTasks() {
         ReadmeGenerator(project, settings).registerTasks {
-            dependsOn(UPDATE_LIBRARIES_TASK_NAME)
+            dependsOn(UPDATE_LIBRARIES_TASK)
         }
     }
 
