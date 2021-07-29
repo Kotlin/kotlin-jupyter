@@ -25,7 +25,7 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingCommon)
     compileOnly(libs.kotlin.dev.scriptingJvm)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
-    implementation(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
+    compileOnly(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
     compileOnly(libs.serialization.dev.unshadedPlugin)
