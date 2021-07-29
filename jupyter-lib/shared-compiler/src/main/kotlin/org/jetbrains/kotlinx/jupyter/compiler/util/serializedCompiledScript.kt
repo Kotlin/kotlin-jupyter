@@ -26,6 +26,7 @@ data class SerializedVariablesState(
     val value: String? = null,
     val isContainer: Boolean = false
 ) {
+    // todo: not null
     val fieldDescriptor: MutableMap<String, SerializedVariablesState?> = mutableMapOf()
 }
 

@@ -28,6 +28,24 @@ data class ProcessedDescriptorsState(
     val instancesPerState: MutableMap<SerializedVariablesState, Any?> = mutableMapOf()
 )
 
+// TODO: add as a key map
+data class RuntimeObjectWrapper(
+    val objectInstance: Any?
+) {
+    override fun equals(other: Any?): Boolean {
+        if (other == null) return objectInstance == null
+        if (objectInstance == null) return false
+        if (other is RuntimeObjectWrapper) return objectInstance === other.objectInstance
+        return objectInstance === other
+    }
+
+    override fun hashCode(): Int {
+        return objectInstance?.hashCode() ?: 0
+    }
+}
+
+fun Any?.toObjectWrapper(): RuntimeObjectWrapper = RuntimeObjectWrapper(this)
+
 class VariablesSerializer(private val serializationStep: Int = 2, private val serializationLimit: Int = 10000) {
 
     /**
@@ -36,7 +54,7 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
      * Second Key: actual value
      * Value: serialized VariableState
      */
-    private val seenObjectsPerCell: MutableMap<Int, MutableMap<Any, SerializedVariablesState>> = mutableMapOf()
+    private val seenObjectsPerCell: MutableMap<Int, MutableMap<RuntimeObjectWrapper, SerializedVariablesState>> = mutableMapOf()
 
     private var currentSerializeCount: Int = 0
 
@@ -96,15 +114,15 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
 
     private fun serializeVariableState(cellId: Int, name: String, property: Field?, value: Any?, isOverride: Boolean = true): SerializedVariablesState {
         val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value, isOverride)
+        return doActualSerialization(cellId, processedData, value.toObjectWrapper(), isOverride)
     }
 
     private fun serializeVariableState(cellId: Int, name: String, property: KProperty<*>, value: Any?, isOverride: Boolean = true): SerializedVariablesState {
         val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value, isOverride)
+        return doActualSerialization(cellId, processedData, value.toObjectWrapper(), isOverride)
     }
 
-    private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: Any?, isOverride: Boolean = true): SerializedVariablesState {
+    private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isOverride: Boolean = true): SerializedVariablesState {
         fun isCanBeComputed(fieldDescriptors: MutableMap<String, SerializedVariablesState?>): Boolean {
             return (fieldDescriptors.isEmpty() || (fieldDescriptors.isNotEmpty() && fieldDescriptors.entries.first().value?.fieldDescriptor!!.isEmpty()))
         }
@@ -120,7 +138,7 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
         currentCellDescriptors!!.processedSerializedVarsToKProperties[serializedVersion] = processedData.propertiesData
 //        currentCellDescriptors.processedSerializedVarsToJvmFields[serializedVersion] = processedData.jvmOnlyFields
 
-        if (value != null) {
+        if (value.objectInstance != null) {
             seenObjectsPerCell[cellId]!!.putIfAbsent(value, serializedVersion)
         }
         if (serializedVersion.isContainer) {
@@ -129,14 +147,14 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
                 val previouslySerializedState = seenObjectsPerCell[cellId]!![value] ?: return processedData.serializedVariablesState
                 serializedVersion.fieldDescriptor += previouslySerializedState.fieldDescriptor
                 if (isCanBeComputed(serializedVersion.fieldDescriptor)) {
-                    iterateThroughContainerMembers(cellId, value, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
+                    iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
                 }
             } else {
                 // add jvm descriptors
                 processedData.jvmOnlyFields?.forEach {
                     serializedVersion.fieldDescriptor[it.name] = serializeVariableState(cellId, it.name, it, value)
                 }
-                iterateThroughContainerMembers(cellId, value, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
+                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
             }
         }
         return processedData.serializedVariablesState
@@ -159,17 +177,17 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
             }
             it as KProperty1<Any, *>
             val name = it.name
-            val value = tryGetValueFromProperty(it, callInstance)
+            val value = tryGetValueFromProperty(it, callInstance).toObjectWrapper()
 
             if (!seenObjectsPerCell!!.containsKey(value)) {
                 serializedIteration[name] = createSerializeVariableState(name, getSimpleTypeNameFrom(it, value), value)
                 descriptor[name] = serializedIteration[name]!!.serializedVariablesState
             }
             if (descriptor[name] != null) {
-                instancesPerState[descriptor[name]!!] = value
+                instancesPerState[descriptor[name]!!] = value.objectInstance
             }
 
-            if (value != null && !seenObjectsPerCell.containsKey(value)) {
+            if (!seenObjectsPerCell.containsKey(value)) {
                 if (descriptor[name] != null) {
                     seenObjectsPerCell[value] = descriptor[name]!!
                 }
@@ -217,7 +235,7 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
                     else -> {
                         null
                     }
-                }
+                }.toObjectWrapper()
                 if (isArrayType) {
                     if (callInstance is List<*>) {
                         callInstance.forEach { arrayElem ->
@@ -249,14 +267,14 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
                 it.value.jvmOnlyFields?.forEach { field ->
                     serializedVariablesState.fieldDescriptor[field.name] = serializeVariableState(cellId, field.name, field, neededCallInstance)
                     val properInstance = serializedVariablesState.fieldDescriptor[field.name]
-                    instancesPerState[properInstance!!] = neededCallInstance
-                    seenObjectsPerCell?.set(neededCallInstance!!, serializedVariablesState)
+                    instancesPerState[properInstance!!] = neededCallInstance.objectInstance
+                    seenObjectsPerCell?.set(neededCallInstance, serializedVariablesState)
                 }
                 computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
 //                computedDescriptorsPerCell[cellId]!!.processedSerializedVarsToJvmFields[serializedVariablesState] = it.value.jvmOnlyFields
                 iterateThroughContainerMembers(
                     cellId,
-                    neededCallInstance,
+                    neededCallInstance.objectInstance,
                     serializedVariablesState.fieldDescriptor,
                     it.value.propertiesData,
                     currentDepth + 1
@@ -289,6 +307,14 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
     }
 
     private fun createSerializeVariableState(name: String, simpleTypeName: String?, value: Any?): ProcessedSerializedVarsState {
+        return doCreateSerializedVarsState(simpleTypeName, value)
+    }
+
+    private fun createSerializeVariableState(name: String, simpleTypeName: String?, value: RuntimeObjectWrapper): ProcessedSerializedVarsState {
+        return doCreateSerializedVarsState(simpleTypeName, value.objectInstance)
+    }
+
+    private fun doCreateSerializedVarsState(simpleTypeName: String?, value: Any?): ProcessedSerializedVarsState {
         // make it exception-safe
         val membersProperties = try {
             if (value != null) value::class.declaredMemberProperties else null

@@ -89,6 +89,9 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
     LIST_ERRORS_REPLY(ListErrorsReply::class);
 
+    // TODO: add custom commands
+    // this custom message should be supported on client-side. either JS or Idea Plugin
+
     val type: String
         get() = name.lowercase()
 }
