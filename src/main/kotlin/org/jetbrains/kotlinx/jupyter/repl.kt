@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
@@ -135,6 +136,8 @@ interface ReplForJupyter {
     suspend fun complete(code: Code, cursor: Int, callback: (CompletionResult) -> Unit)
 
     suspend fun listErrors(code: Code, callback: (ListErrorsResult) -> Unit)
+
+    suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
 
     val homeDir: File?
 
@@ -557,6 +560,20 @@ class ReplForJupyterImpl(
         return ListErrorsResult(args.code, errorsList)
     }
 
+    private val serializationQueue = LockQueue<SerializationReply, SerializationArgs>()
+    override suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
+        doWithLock(SerializationArgs(cellId, descriptorsState, callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
+    }
+
+    private fun doSerializeVariables(args: SerializationArgs): SerializationReply {
+        val resultMap = mutableMapOf<String, SerializedVariablesState>()
+        args.descriptorsState.forEach { (name, state) ->
+            resultMap[name] = variablesSerializer.doIncrementalSerialization(args.cellId - 1, name, state)
+        }
+        return SerializationReply(args.cellId, resultMap)
+    }
+
+
     private fun <T, Args : LockQueueArgs<T>> doWithLock(
         args: Args,
         queue: LockQueue<T, Args>,
@@ -588,6 +605,12 @@ class ReplForJupyterImpl(
 
     private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) :
         LockQueueArgs<ListErrorsResult>
+
+    private data class SerializationArgs(
+        val cellId: Int,
+        val descriptorsState: Map<String, SerializedVariablesState>,
+        override val callback: (SerializationReply) -> Unit
+    ) : LockQueueArgs<SerializationReply>
 
     @JvmInline
     private value class LockQueue<T, Args : LockQueueArgs<T>>(

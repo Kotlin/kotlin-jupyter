@@ -845,4 +845,47 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             assertEquals("${values++}", state.value)
         }
     }
+
+    @Test
+    fun testSerializationMessage() {
+        val res = eval(
+            """
+            val x = listOf(listOf(1), listOf(2), listOf(3), listOf(4))
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        val listData = varsData["x"]!!
+        assertTrue(listData.isContainer)
+        val actualContainer = listData.fieldDescriptor.entries.first().value!!
+        val propertyName = listData.fieldDescriptor.entries.first().key
+
+        runBlocking {
+            repl.serializeVariables(1, mapOf(propertyName to actualContainer)) { result ->
+                val data = result.descriptorsState
+                assertTrue(data.isNotEmpty())
+
+                val innerList = data.entries.last().value!!
+                assertTrue(innerList.isContainer)
+                var receivedDescriptor = innerList.fieldDescriptor
+                assertEquals(2, receivedDescriptor.size)
+                receivedDescriptor = receivedDescriptor.entries.last().value!!.fieldDescriptor
+
+                assertEquals(5, receivedDescriptor.size)
+                var values = 1
+                receivedDescriptor.forEach { (name, state) ->
+                    if (name == "size") {
+                        assertFalse(state!!.isContainer)
+                        assertTrue(state!!.fieldDescriptor.isEmpty())
+                        return@forEach
+                    }
+                    val fieldDescriptor = state!!.fieldDescriptor
+                    assertEquals(0, fieldDescriptor.size)
+                    assertTrue(state.isContainer)
+                    assertEquals("${values++}", state.value)
+                }
+            }
+        }
+    }
 }

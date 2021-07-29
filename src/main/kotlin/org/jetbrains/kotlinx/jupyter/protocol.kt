@@ -321,6 +321,13 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
             }
         }
+        is SerializationRequest -> {
+            GlobalScope.launch(Dispatchers.Default) {
+                repl.serializeVariables(content.cellId, content.descriptorsState) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
+                }
+            }
+        }
         is IsCompleteRequest -> {
             // We are in console mode, so switch off all the loggers
             if (mainLoggerLevel() != Level.OFF) disableLogging()

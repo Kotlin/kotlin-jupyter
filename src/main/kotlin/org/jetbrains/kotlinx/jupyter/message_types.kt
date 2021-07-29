@@ -23,6 +23,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import kotlin.reflect.KClass
@@ -87,7 +88,10 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     COMM_CLOSE(CommClose::class),
 
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
-    LIST_ERRORS_REPLY(ListErrorsReply::class);
+    LIST_ERRORS_REPLY(ListErrorsReply::class),
+
+    SERIALIZATION_REQUEST(SerializationRequest::class),
+    SERIALIZATION_REPLY(SerializationReply::class);
 
     // TODO: add custom commands
     // this custom message should be supported on client-side. either JS or Idea Plugin
@@ -553,6 +557,18 @@ class ListErrorsReply(
     val code: String,
 
     val errors: List<ScriptDiagnostic>
+) : MessageContent()
+
+@Serializable
+class SerializationRequest(
+    val cellId: Int,
+    val descriptorsState: Map<String, SerializedVariablesState>
+) : MessageContent()
+
+@Serializable
+class SerializationReply(
+    val cellId: Int,
+    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap()
 ) : MessageContent()
 
 @Serializable(MessageDataSerializer::class)
