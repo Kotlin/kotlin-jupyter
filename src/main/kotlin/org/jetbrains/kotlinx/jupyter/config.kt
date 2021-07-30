@@ -14,7 +14,6 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.common.getNameForUser
-import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
@@ -22,10 +21,16 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.zeromq.SocketType
 import java.io.File
+import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 const val protocolVersion = "5.3"
 
 internal val log by lazy { getLogger() }
+
+val defaultRepositories = listOf(
+    RepositoryCoordinates("https://repo.maven.apache.org/maven2/"),
+    RepositoryCoordinates("https://jitpack.io/"),
+)
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))

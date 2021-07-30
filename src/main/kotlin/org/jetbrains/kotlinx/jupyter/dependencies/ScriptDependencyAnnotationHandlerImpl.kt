@@ -8,10 +8,6 @@ import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.onSuccess
 import kotlin.script.experimental.jvm.withUpdatedClasspath
 
-interface ScriptDependencyAnnotationHandler {
-    fun configure(configuration: ScriptCompilationConfiguration, annotations: List<Annotation>): ResultWithDiagnostics<ScriptCompilationConfiguration>
-}
-
 open class ScriptDependencyAnnotationHandlerImpl(private val resolver: JupyterScriptDependenciesResolver) :
     ScriptDependencyAnnotationHandler {
     override fun configure(configuration: ScriptCompilationConfiguration, annotations: List<Annotation>): ResultWithDiagnostics<ScriptCompilationConfiguration> {

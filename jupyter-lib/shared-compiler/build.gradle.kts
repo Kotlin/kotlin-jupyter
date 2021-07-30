@@ -25,7 +25,6 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingCommon)
     compileOnly(libs.kotlin.dev.scriptingJvm)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
-    compileOnly(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
 
     // Serialization runtime
     compileOnly(libs.serialization.json)
