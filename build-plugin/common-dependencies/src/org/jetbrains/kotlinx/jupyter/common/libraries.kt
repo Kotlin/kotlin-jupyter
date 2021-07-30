@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.IOException
 
 fun interface ExceptionsHandler {
     fun handle(logger: Logger, message: String, exception: Throwable)
@@ -35,7 +36,7 @@ class LibraryDescriptorsManager private constructor(
     val localLibrariesDir = File(localPath)
     val defaultBranch = "master"
     val latestCommitOnDefaultBranch by lazy {
-        getLatestCommitToLibraries(defaultBranch)!!.first
+        getLatestCommitToLibraries(defaultBranch)?.first
     }
 
     fun homeLibrariesDir(homeDir: File? = null) = (homeDir ?: File("")).resolve(homePath)
@@ -62,7 +63,11 @@ class LibraryDescriptorsManager private constructor(
                 url += "&since=$sinceTimestamp"
             }
             logger.info("Checking for new commits to library descriptors at $url")
-            val arr = getHttp(url).jsonArray
+            val arr = getHttp(url).jsonArrayOrNull
+            if (arr == null) {
+                logger.error("Request for the latest commit in libraries failed")
+                return@catchAll null
+            }
             if (arr.isEmpty()) {
                 if (sinceTimestamp != null) {
                     getLatestCommitToLibraries(ref, null)
@@ -90,8 +95,12 @@ class LibraryDescriptorsManager private constructor(
         return response.status.successful
     }
 
-    fun checkIfRefUpToDate(remoteRef: String): Boolean {
+    fun checkIfRefUpToDate(remoteRef: String?): Boolean {
         if (!commitHashFile.exists()) return false
+        if (remoteRef == null) {
+            logger.warn("Considering reference up-to-date because getting the last reference failed")
+            return true
+        }
         val localRef = commitHashFile.readText()
         return localRef == remoteRef
     }
@@ -122,7 +131,12 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun downloadLatestPropertiesFile() {
-        val ref = latestCommitOnDefaultBranch
+        val ref = latestCommitOnDefaultBranch ?: if (localPropertiesFile.exists()) {
+            logger.warn("Cannot load $PROPERTIES_FILE file, but it exists locally")
+            return
+        } else {
+            throw IOException("Cannot load $PROPERTIES_FILE file")
+        }
         val url = "$apiPrefix/contents/$remotePath/$PROPERTIES_FILE?ref=$ref"
         logger.info("Requesting $PROPERTIES_FILE file at $url")
         val text = downloadSingleFile(url)

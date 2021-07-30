@@ -64,3 +64,12 @@ inline fun <reified T> ResponseWrapper.decodeJson(): T {
 val ResponseWrapper.json: JsonElement get() = decodeJson()
 val ResponseWrapper.jsonObject: JsonObject get() = decodeJson()
 val ResponseWrapper.jsonArray: JsonArray get() = decodeJson()
+
+inline fun <reified T> ResponseWrapper.decodeJsonIfSuccessfulOrNull(): T? {
+    return if (!status.successful) null
+    else Json.decodeFromString(text)
+}
+
+val ResponseWrapper.jsonOrNull: JsonElement? get() = decodeJsonIfSuccessfulOrNull()
+val ResponseWrapper.jsonObjectOrNull: JsonObject? get() = decodeJsonIfSuccessfulOrNull()
+val ResponseWrapper.jsonArrayOrNull: JsonArray? get() = decodeJsonIfSuccessfulOrNull()
