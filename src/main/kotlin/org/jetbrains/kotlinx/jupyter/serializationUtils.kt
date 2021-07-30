@@ -7,28 +7,39 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KTypeParameter
+import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.isAccessible
 
 typealias FieldDescriptor = Map<String, SerializedVariablesState?>
 typealias MutableFieldDescriptor = MutableMap<String, SerializedVariablesState?>
-typealias PropertiesData = Collection<KProperty1<out Any, *>>
+typealias KPropertiesData = Collection<KProperty1<out Any, *>>
+typealias PropertiesData = Array<Field>
+
+enum class PropertiesType {
+    KOTLIN,
+    JAVA,
+    MIXED
+}
 
 class ProcessedSerializedVarsState(
     val serializedVariablesState: SerializedVariablesState,
-    val propertiesData: PropertiesData?,
-    val jvmOnlyFields: Array<Field>? = null
-)
+    val propertiesData: PropertiesData? = null,
+    val kPropertiesData: Collection<KProperty1<out Any, *>>? = null
+) {
+    val propertiesType: PropertiesType = if (propertiesData == null && kPropertiesData != null) PropertiesType.KOTLIN
+    else if (propertiesData != null && kPropertiesData == null) PropertiesType.JAVA
+    else if (propertiesData != null && kPropertiesData != null) PropertiesType.MIXED
+    else PropertiesType.JAVA
+}
 
 data class ProcessedDescriptorsState(
-    val processedSerializedVarsToKProperties: MutableMap<SerializedVariablesState, PropertiesData?> = mutableMapOf(),
-    // do we need this? Probably, not
-    // val processedSerializedVarsToJvmFields: MutableMap<SerializedVariablesState, Array<Field>?> = mutableMapOf(),
+    val processedSerializedVarsToJavaProperties: MutableMap<SerializedVariablesState, PropertiesData?> = mutableMapOf(),
+    val processedSerializedVarsToKTProperties: MutableMap<SerializedVariablesState, KPropertiesData?> = mutableMapOf(),
     val instancesPerState: MutableMap<SerializedVariablesState, Any?> = mutableMapOf()
 )
 
-// TODO: add as a key map
 data class RuntimeObjectWrapper(
     val objectInstance: Any?
 ) {
@@ -46,7 +57,115 @@ data class RuntimeObjectWrapper(
 
 fun Any?.toObjectWrapper(): RuntimeObjectWrapper = RuntimeObjectWrapper(this)
 
-class VariablesSerializer(private val serializationStep: Int = 2, private val serializationLimit: Int = 10000) {
+class VariablesSerializer(private val serializationDepth: Int = 2, private val serializationLimit: Int = 10000) {
+
+    fun MutableMap<String, SerializedVariablesState?>.addDescriptor(value: Any?, name: String = value.toString()) {
+        this[name] = createSerializeVariableState(
+            name,
+            if (value != null) value::class.simpleName else "null",
+            value
+        ).serializedVariablesState
+    }
+
+    /**
+     * Its' aim to serialize everything in Kotlin reflection since it much more straightforward
+     */
+    inner class StandardContainersUtilizer {
+        private val containersTypes: Set<String> = setOf(
+            "List",
+            "SingletonList",
+            "LinkedList",
+            "Array",
+            "Map",
+            "Set",
+            "Collection"
+        )
+
+        fun isStandardType(type: String): Boolean = containersTypes.contains(type)
+
+        fun serializeContainer(simpleTypeName: String, value: Any?, isDescriptorsNeeded: Boolean = false): ProcessedSerializedVarsState {
+            return doSerialize(simpleTypeName, value, isDescriptorsNeeded)
+        }
+
+        private fun doSerialize(simpleTypeName: String, value: Any?, isDescriptorsNeeded: Boolean = false): ProcessedSerializedVarsState {
+            fun isArray(value: Any?): Boolean {
+                return value?.let {
+                    value::class.java.isArray
+                } == true
+            }
+
+            val kProperties = if (value != null) value::class.declaredMemberProperties else {
+                null
+            }
+            val serializedVersion = SerializedVariablesState(simpleTypeName, getProperString(value), true)
+            val descriptors = serializedVersion.fieldDescriptor
+            if (isDescriptorsNeeded) {
+                kProperties?.forEach { prop ->
+                    val name = prop.name
+                    val propValue = value?.let {
+                        try {
+                            prop as KProperty1<Any, *>
+                            val ans = if (prop.visibility == KVisibility.PUBLIC) {
+                                // https://youtrack.jetbrains.com/issue/KT-44418
+                                if (prop.name == "size") {
+                                    if (isArray(value)) {
+                                        value as Array<*>
+                                        value.size
+                                    } else {
+                                        value as Collection<*>
+                                        value.size
+                                    }
+                                } else {
+                                    prop.get(value)
+                                }
+                            } else {
+                                val wasAccessible = prop.isAccessible
+                                prop.isAccessible = true
+                                val res = prop.get(value)
+                                prop.isAccessible = wasAccessible
+                                res
+                            }
+                            ans
+                        } catch (ex: Exception) {
+                            null
+                        }
+                    }
+
+                    // might skip here redundant size always nullable
+                    /*
+                    if (propValue == null && name == "size" && isArray(value)) {
+                        return@forEach
+                    }
+                    */
+                    descriptors[name] = createSerializeVariableState(
+                        name,
+                        getSimpleTypeNameFrom(prop, propValue),
+                        propValue
+                    ).serializedVariablesState
+                }
+
+                /**
+                 * Note: standard arrays are used as storage in many classes with only one field - size.
+                 * Hence, create a custom descriptor data where would be actual values.
+                 */
+                if (descriptors.size == 1 && descriptors.entries.first().key == "size") {
+                    descriptors.addDescriptor(value, "data")
+                    /*
+                    if (value is Collection<*>) {
+                        value.forEach {
+                            iterateThrough(descriptors, it)
+                        }
+                    } else if (value is Array<*>) {
+                        value.forEach {
+                            iterateThrough(descriptors, it)
+                        }
+                    }*/
+                }
+            }
+
+            return ProcessedSerializedVarsState(serializedVersion, kPropertiesData = kProperties)
+        }
+    }
 
     /**
      * Map of Map of seen objects.
@@ -58,12 +177,26 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
 
     private var currentSerializeCount: Int = 0
 
+    private val standardContainersUtilizer = StandardContainersUtilizer()
+
+    private val primitiveWrappersSet: Set<Class<*>> = setOf(
+        Byte::class.java,
+        Short::class.java,
+        Int::class.java,
+        Integer::class.java,
+        Long::class.java,
+        Float::class.java,
+        Double::class.java,
+        Char::class.java,
+        Boolean::class.java
+    )
+
     /**
      * Stores info computed descriptors in a cell
      */
     private val computedDescriptorsPerCell: MutableMap<Int, ProcessedDescriptorsState> = mutableMapOf()
 
-    private val isSerializationActive: Boolean = System.getProperty(serializationEnvProperty)?.toBooleanStrictOrNull() ?: true
+    private val isSerializationActive: Boolean = System.getProperty(serializationSystemProperty)?.toBooleanStrictOrNull() ?: true
 
     fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>): Map<String, SerializedVariablesState> {
         if (!isSerializationActive) return emptyMap()
@@ -96,7 +229,7 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
         serializedVariablesState: SerializedVariablesState
     ): SerializedVariablesState {
         val value = evaluatedDescriptorsState.instancesPerState[serializedVariablesState]
-        val propertiesData = evaluatedDescriptorsState.processedSerializedVarsToKProperties[serializedVariablesState]
+        val propertiesData = evaluatedDescriptorsState.processedSerializedVarsToJavaProperties[serializedVariablesState]
         if (propertiesData == null && value != null && (value::class.java.isArray || value::class.java.isMemberClass)) {
             return serializeVariableState(cellId, propertyName, propertiesData, value, false)
         }
@@ -107,7 +240,7 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
         return serializeVariableState(cellId, propertyName, property, value, false)
     }
 
-    fun serializeVariableState(cellId: Int, name: String?, variableState: VariableState?, isOverride: Boolean = true): SerializedVariablesState {
+    private fun serializeVariableState(cellId: Int, name: String?, variableState: VariableState?, isOverride: Boolean = true): SerializedVariablesState {
         if (!isSerializationActive || variableState == null || name == null) return SerializedVariablesState()
         return serializeVariableState(cellId, name, variableState.property, variableState.value, isOverride)
     }
@@ -123,20 +256,16 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
     }
 
     private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isOverride: Boolean = true): SerializedVariablesState {
-        fun isCanBeComputed(fieldDescriptors: MutableMap<String, SerializedVariablesState?>): Boolean {
-            return (fieldDescriptors.isEmpty() || (fieldDescriptors.isNotEmpty() && fieldDescriptors.entries.first().value?.fieldDescriptor!!.isEmpty()))
-        }
-
         val serializedVersion = processedData.serializedVariablesState
 
         seenObjectsPerCell.putIfAbsent(cellId, mutableMapOf())
-        // always override?
+
         if (isOverride) {
             computedDescriptorsPerCell[cellId] = ProcessedDescriptorsState()
         }
         val currentCellDescriptors = computedDescriptorsPerCell[cellId]
-        currentCellDescriptors!!.processedSerializedVarsToKProperties[serializedVersion] = processedData.propertiesData
-//        currentCellDescriptors.processedSerializedVarsToJvmFields[serializedVersion] = processedData.jvmOnlyFields
+        currentCellDescriptors!!.processedSerializedVarsToJavaProperties[serializedVersion] = processedData.propertiesData
+        currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion] = processedData.kPropertiesData
 
         if (value.objectInstance != null) {
             seenObjectsPerCell[cellId]!!.putIfAbsent(value, serializedVersion)
@@ -146,22 +275,27 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
             if (seenObjectsPerCell[cellId]!!.containsKey(value)) {
                 val previouslySerializedState = seenObjectsPerCell[cellId]!![value] ?: return processedData.serializedVariablesState
                 serializedVersion.fieldDescriptor += previouslySerializedState.fieldDescriptor
-                if (isCanBeComputed(serializedVersion.fieldDescriptor)) {
-                    iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
-                }
-            } else {
-                // add jvm descriptors
-                processedData.jvmOnlyFields?.forEach {
-                    serializedVersion.fieldDescriptor[it.name] = serializeVariableState(cellId, it.name, it, value)
-                }
-                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToKProperties[serializedVersion])
             }
+            val type = processedData.propertiesType
+            if (type == PropertiesType.KOTLIN) {
+                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion])
+            } else {
+                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
+            }
+            iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
         }
         return processedData.serializedVariablesState
     }
 
-    private fun iterateThroughContainerMembers(cellId: Int, callInstance: Any?, descriptor: MutableFieldDescriptor, properties: PropertiesData?, currentDepth: Int = 0) {
-        if (properties == null || callInstance == null || currentDepth >= serializationStep) return
+    private fun iterateThroughContainerMembers(
+        cellId: Int,
+        callInstance: Any?,
+        descriptor: MutableFieldDescriptor,
+        properties: PropertiesData? = null,
+        kProperties: KPropertiesData? = null,
+        currentDepth: Int = 0
+    ) {
+        if ((properties == null && kProperties == null) || callInstance == null || currentDepth >= serializationDepth) return
 
         val serializedIteration = mutableMapOf<String, ProcessedSerializedVarsState>()
 
@@ -171,55 +305,30 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
         // ok, it's a copy on the left for some reason
         val instancesPerState = currentCellDescriptors.instancesPerState
 
-        for (it in properties) {
-            if (currentSerializeCount > serializationLimit) {
-                break
-            }
-            it as KProperty1<Any, *>
-            val name = it.name
-            val value = tryGetValueFromProperty(it, callInstance).toObjectWrapper()
-
-            if (!seenObjectsPerCell!!.containsKey(value)) {
-                serializedIteration[name] = createSerializeVariableState(name, getSimpleTypeNameFrom(it, value), value)
-                descriptor[name] = serializedIteration[name]!!.serializedVariablesState
-            }
-            if (descriptor[name] != null) {
-                instancesPerState[descriptor[name]!!] = value.objectInstance
-            }
-
-            if (!seenObjectsPerCell.containsKey(value)) {
-                if (descriptor[name] != null) {
-                    seenObjectsPerCell[value] = descriptor[name]!!
+        if (properties != null) {
+            for (it in properties) {
+                if (currentSerializeCount > serializationLimit) {
+                    break
                 }
+                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance)
+                currentSerializeCount++
             }
-            currentSerializeCount++
+        } else if (kProperties != null) {
+            for (it in kProperties) {
+                if (currentSerializeCount > serializationLimit) {
+                    break
+                }
+                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance)
+                currentSerializeCount++
+            }
         }
 
         if (currentSerializeCount > serializationLimit) {
             return
         }
 
-        val isArrayType = checkCreateForPossibleArray(callInstance, descriptor, serializedIteration)
+        val isArrayType = checkForPossibleArray(callInstance)
         computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
-
-        // check for seen
-        // for now it's O(c*n)
-        if (serializedIteration.isEmpty()) {
-            val processedVars = computedDescriptorsPerCell[cellId]!!.processedSerializedVarsToKProperties
-            descriptor.forEach { (_, state) ->
-                if (processedVars.containsKey(state)) {
-                    processedVars.entries.firstOrNull {
-                        val itValue = it.key
-                        if (itValue.value == state?.value && itValue.type == state?.value) {
-                            state?.fieldDescriptor?.put(itValue.type, itValue)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                }
-            }
-        }
 
         serializedIteration.forEach {
             val serializedVariablesState = it.value.serializedVariablesState
@@ -236,49 +345,71 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
                         null
                     }
                 }.toObjectWrapper()
-                if (isArrayType) {
-                    if (callInstance is List<*>) {
-                        callInstance.forEach { arrayElem ->
-                            iterateThroughContainerMembers(
-                                cellId,
-                                arrayElem,
-                                serializedVariablesState.fieldDescriptor,
-                                it.value.propertiesData,
-                                currentDepth + 1
-                            )
-                        }
-                    } else {
-                        callInstance as Array<*>
-                        callInstance.forEach { arrayElem ->
-                            iterateThroughContainerMembers(
-                                cellId,
-                                arrayElem,
-                                serializedVariablesState.fieldDescriptor,
-                                it.value.propertiesData,
-                                currentDepth + 1
-                            )
-                        }
-                    }
 
-                    return@forEach
-                }
-
-                // update state with JVMFields
-                it.value.jvmOnlyFields?.forEach { field ->
-                    serializedVariablesState.fieldDescriptor[field.name] = serializeVariableState(cellId, field.name, field, neededCallInstance)
-                    val properInstance = serializedVariablesState.fieldDescriptor[field.name]
-                    instancesPerState[properInstance!!] = neededCallInstance.objectInstance
-                    seenObjectsPerCell?.set(neededCallInstance, serializedVariablesState)
-                }
                 computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
-//                computedDescriptorsPerCell[cellId]!!.processedSerializedVarsToJvmFields[serializedVariablesState] = it.value.jvmOnlyFields
                 iterateThroughContainerMembers(
                     cellId,
                     neededCallInstance.objectInstance,
                     serializedVariablesState.fieldDescriptor,
                     it.value.propertiesData,
-                    currentDepth + 1
+                    currentDepth = currentDepth + 1
                 )
+            }
+        }
+
+        if (descriptor.size == 2 && descriptor.containsKey("data")) {
+            val listData = descriptor["data"]?.fieldDescriptor ?: return
+            if (callInstance is Collection<*>) {
+                callInstance.forEach {
+                    listData.addDescriptor(it)
+                }
+            } else if (callInstance is Array<*>) {
+                callInstance.forEach {
+                    listData.addDescriptor(it)
+                }
+            }
+        }
+    }
+
+    /**
+     * Really wanted to use contracts here, but all usages should be provided with this annotation and,
+     * perhaps, it may be a big overhead
+     */
+    private fun iterateThrough(
+        elem: Any,
+        seenObjectsPerCell: MutableMap<RuntimeObjectWrapper, SerializedVariablesState>?,
+        serializedIteration: MutableMap<String, ProcessedSerializedVarsState>,
+        descriptor: MutableFieldDescriptor,
+        instancesPerState: MutableMap<SerializedVariablesState, Any?>,
+        callInstance: Any
+    ) {
+        val name = if (elem is Field) elem.name else (elem as KProperty1<Any, *>).name
+        val value = if (elem is Field) tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
+        else {
+            elem as KProperty1<Any, *>
+            tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
+        }
+
+        if (!seenObjectsPerCell!!.containsKey(value)) {
+            val simpleType = if (elem is Field) getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
+            else {
+                elem as KProperty1<Any, *>
+                getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
+            }
+            serializedIteration[name] = if (standardContainersUtilizer.isStandardType(simpleType)) {
+                standardContainersUtilizer.serializeContainer(simpleType, value.objectInstance, true)
+            } else {
+                createSerializeVariableState(name, simpleType, value)
+            }
+            descriptor[name] = serializedIteration[name]!!.serializedVariablesState
+        }
+        if (descriptor[name] != null) {
+            instancesPerState[descriptor[name]!!] = value.objectInstance
+        }
+
+        if (!seenObjectsPerCell.containsKey(value)) {
+            if (descriptor[name] != null) {
+                seenObjectsPerCell[value] = descriptor[name]!!
             }
         }
     }
@@ -315,31 +446,27 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
     }
 
     private fun doCreateSerializedVarsState(simpleTypeName: String?, value: Any?): ProcessedSerializedVarsState {
-        // make it exception-safe
-        val membersProperties = try {
-            if (value != null) value::class.declaredMemberProperties else null
-        } catch (e: Throwable) {
-            null
-        }
         val javaClass = value?.javaClass
-        val jvmFields = if (javaClass != null && javaClass.isMemberClass) {
-            javaClass.declaredFields
-        } else { null }
+        val membersProperties = javaClass?.declaredFields?.filter {
+            !(it.name.startsWith("script$") || it.name.startsWith("serialVersionUID"))
+        }
 
         val isContainer = if (membersProperties != null) (
-            membersProperties.isNotEmpty() || value!!::class.java.isArray || (javaClass != null && javaClass.isMemberClass)
+            !primitiveWrappersSet.contains(javaClass) && membersProperties.isNotEmpty() || value::class.java.isArray || (javaClass.isMemberClass)
             ) else false
         val type = if (value != null && value::class.java.isArray) {
             "Array"
-        } else if (isContainer && value is List<*>) {
-            "SingletonList"
         } else {
             simpleTypeName.toString()
         }
 
+        if (value != null && standardContainersUtilizer.isStandardType(type)) {
+            return standardContainersUtilizer.serializeContainer(type, value)
+        }
+
         val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer)
 
-        return ProcessedSerializedVarsState(serializedVariablesState, membersProperties, jvmFields)
+        return ProcessedSerializedVarsState(serializedVariablesState, membersProperties?.toTypedArray())
     }
 
     private fun tryGetValueFromProperty(property: KProperty1<Any, *>, callInstance: Any): Any? {
@@ -364,20 +491,35 @@ class VariablesSerializer(private val serializationStep: Int = 2, private val se
         return value
     }
 
-    private fun checkCreateForPossibleArray(callInstance: Any, descriptorStorage: MutableFieldDescriptor, computedDescriptors: MutableMap<String, ProcessedSerializedVarsState>): Boolean {
-        // consider arrays and singleton lists
-        return if (computedDescriptors.size == 1 && (callInstance::class.java.isArray || callInstance is List<*>)) {
-            val name = callInstance.toString()
-            computedDescriptors[name] = createSerializeVariableState(name, null, callInstance)
-            descriptorStorage[name] = computedDescriptors[name]?.serializedVariablesState
+    private fun tryGetValueFromProperty(property: Field, callInstance: Any): Any? {
+        // some fields may be optimized out like array size. Thus, calling it.isAccessible would return error
+        val canAccess = try {
+            property.isAccessible
             true
-        } else {
+        } catch (e: Throwable) {
             false
         }
+        if (!canAccess) return null
+
+        val wasAccessible = property.isAccessible
+        property.isAccessible = true
+        val value = try {
+            property.get(callInstance)
+        } catch (e: Throwable) {
+            null
+        }
+        property.isAccessible = wasAccessible
+
+        return value
+    }
+
+    private fun checkForPossibleArray(callInstance: Any): Boolean {
+        // consider arrays and singleton lists
+        return callInstance::class.java.isArray || callInstance is List<*> || callInstance is Array<*>
     }
 
     companion object {
-        const val serializationEnvProperty = "jupyter.serialization.enabled"
+        const val serializationSystemProperty = "jupyter.serialization.enabled"
     }
 }
 
@@ -395,7 +537,7 @@ fun getProperString(value: Any?): String {
     val kClass = value::class
     val isFromJavaArray = kClass.java.isArray
     try {
-        if (isFromJavaArray || kClass.isSubclassOf(Array::class)) {
+        if (isFromJavaArray || kClass.isArray()) {
             value as Array<*>
             return buildString {
                 val size = value.size
@@ -404,7 +546,13 @@ fun getProperString(value: Any?): String {
                 }
             }
         }
-        val isCollection = kClass.isSubclassOf(Collection::class)
+        val isNumber = kClass.isNumber()
+        if (isNumber) {
+            value as Number
+            return value.toString()
+        }
+
+        val isCollection = kClass.isCollection()
 
         if (isCollection) {
             value as Collection<*>
@@ -415,9 +563,9 @@ fun getProperString(value: Any?): String {
                 }
             }
         }
-        val isMap = kClass.isSubclassOf(Map::class)
+        val isMap = kClass.isMap()
         if (isMap) {
-            value as Map<Any, Any?>
+            value as Map<*, *>
             return buildString {
                 value.forEach {
                     append(it.key, '=', it.value, "\n")
@@ -430,3 +578,8 @@ fun getProperString(value: Any?): String {
 
     return value.toString()
 }
+
+fun KClass<*>.isArray(): Boolean = this.isSubclassOf(Array::class)
+fun KClass<*>.isMap(): Boolean = this.isSubclassOf(Map::class)
+fun KClass<*>.isCollection(): Boolean = this.isSubclassOf(Collection::class)
+fun KClass<*>.isNumber(): Boolean = this.isSubclassOf(Number::class)

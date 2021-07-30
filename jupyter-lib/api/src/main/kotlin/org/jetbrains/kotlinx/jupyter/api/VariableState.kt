@@ -1,18 +1,20 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.isAccessible
+import java.lang.reflect.Field
 
 interface VariableState {
-    val property: KProperty<*>
+//    val property: KProperty<*>
+    val property: Field
     val scriptInstance: Any?
     val stringValue: String?
     val value: Result<Any?>
 }
 
 data class VariableStateImpl(
-    override val property: KProperty1<Any, *>,
+//    override val property: KProperty1<Any, *>,
+    override val property: Field,
     override val scriptInstance: Any,
 ) : VariableState {
     private val stringCache = VariableStateCache<String?> {

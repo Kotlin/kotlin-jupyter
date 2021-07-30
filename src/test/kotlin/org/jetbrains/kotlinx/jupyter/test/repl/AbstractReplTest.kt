@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -65,4 +66,8 @@ abstract class AbstractReplTest {
         @JvmStatic
         protected val homeDir = File("")
     }
+}
+
+fun Map<String, SerializedVariablesState>.mapValuesToStrings(): Map<String, String?> {
+    return this.mapValues { it.value.value }
 }

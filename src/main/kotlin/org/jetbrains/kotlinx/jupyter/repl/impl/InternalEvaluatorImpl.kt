@@ -15,6 +15,8 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -180,6 +182,10 @@ internal class InternalEvaluatorImpl(
                 put(property.name, state)
             }
         }
+    }
+
+    private fun isValField(property: Field): Boolean {
+        return property.modifiers and Modifier.FINAL != 0
     }
 
     private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {

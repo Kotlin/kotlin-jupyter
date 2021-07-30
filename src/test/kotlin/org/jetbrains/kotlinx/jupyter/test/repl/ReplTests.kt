@@ -768,10 +768,10 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         actualContainer.fieldDescriptor.forEach { (name, serializedState) ->
             if (name == "size") {
-                assertEquals("null", serializedState!!.value)
+                assertEquals("4", serializedState!!.value)
             } else {
                 assertEquals(0, serializedState!!.fieldDescriptor.size)
-                assertTrue(serializedState!!.isContainer)
+                assertTrue(serializedState.isContainer)
             }
         }
     }
@@ -830,20 +830,55 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val innerList = receivedDescriptor.entries.last().value!!
         assertTrue(innerList.isContainer)
         receivedDescriptor = innerList.fieldDescriptor
-        assertEquals(5, receivedDescriptor.size)
+        assertEquals(4, receivedDescriptor.size)
 
         var values = 1
         receivedDescriptor.forEach { (name, state) ->
-            if (name == "size") {
-                assertFalse(state!!.isContainer)
-                assertTrue(state!!.fieldDescriptor.isEmpty())
-                return@forEach
-            }
             val fieldDescriptor = state!!.fieldDescriptor
             assertEquals(0, fieldDescriptor.size)
             assertTrue(state.isContainer)
             assertEquals("${values++}", state.value)
         }
+    }
+
+    @Test
+    fun testMapContainer() {
+        val res = eval(
+            """
+            val x = mapOf(1 to "a", 2 to "b", 3 to "c", 4 to "c")
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        assertTrue(varsData.containsKey("x"))
+
+        val mapData = varsData["x"]!!
+        assertTrue(mapData.isContainer)
+        assertEquals(6, mapData.fieldDescriptor.size)
+        val listDescriptors = mapData.fieldDescriptor
+
+        assertTrue(listDescriptors.containsKey("values"))
+        assertTrue(listDescriptors.containsKey("entries"))
+        assertTrue(listDescriptors.containsKey("keys"))
+
+        val valuesDescriptor = listDescriptors["values"]!!
+        assertEquals("4", valuesDescriptor.fieldDescriptor["size"]!!.value)
+        assertTrue(valuesDescriptor.fieldDescriptor["data"]!!.isContainer)
+
+        val serializer = repl.variablesSerializer
+
+        val newData = serializer.doIncrementalSerialization(0, "values", valuesDescriptor)
+        val newDescriptor = newData.fieldDescriptor
+        assertEquals("4", newDescriptor["size"]!!.value)
+        assertEquals(3, newDescriptor["data"]!!.fieldDescriptor.size)
+        val ansSet = mutableSetOf("a", "b", "c")
+        newDescriptor["data"]!!.fieldDescriptor.forEach { (_, state) ->
+            assertTrue(state!!.isContainer)
+            assertTrue(ansSet.contains(state.value))
+            ansSet.remove(state.value)
+        }
+        assertTrue(ansSet.isEmpty())
     }
 
     @Test
@@ -866,20 +901,15 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
                 val data = result.descriptorsState
                 assertTrue(data.isNotEmpty())
 
-                val innerList = data.entries.last().value!!
+                val innerList = data.entries.last().value
                 assertTrue(innerList.isContainer)
                 var receivedDescriptor = innerList.fieldDescriptor
                 assertEquals(2, receivedDescriptor.size)
                 receivedDescriptor = receivedDescriptor.entries.last().value!!.fieldDescriptor
 
-                assertEquals(5, receivedDescriptor.size)
+                assertEquals(4, receivedDescriptor.size)
                 var values = 1
-                receivedDescriptor.forEach { (name, state) ->
-                    if (name == "size") {
-                        assertFalse(state!!.isContainer)
-                        assertTrue(state!!.fieldDescriptor.isEmpty())
-                        return@forEach
-                    }
+                receivedDescriptor.forEach { (_, state) ->
                     val fieldDescriptor = state!!.fieldDescriptor
                     assertEquals(0, fieldDescriptor.size)
                     assertTrue(state.isContainer)
