@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 
-open class SharedMagicsHandler(
+open class UseMagicsHandler(
     private val librariesProcessor: LibrariesProcessor,
     private val libraryResolutionInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
 ) : AbstractMagicsHandler() {

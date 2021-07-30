@@ -40,7 +40,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
@@ -175,7 +175,7 @@ class ReplForJupyterImpl(
         get() = runtimeProperties.currentBranch
     override val librariesDir: File = KERNEL_LIBRARIES.homeLibrariesDir(homeDir)
 
-    private val libraryInfoSwitcher = ResolutionInfoSwitcher.default(
+    private val libraryInfoSwitcher = getDefaultResolutionInfoSwitcher(
         resolutionInfoProvider,
         librariesDir,
         currentBranch

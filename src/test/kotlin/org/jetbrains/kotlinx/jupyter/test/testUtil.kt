@@ -21,11 +21,11 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
+import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
@@ -82,8 +82,8 @@ fun getResolverFromNamesMap(
 ): LibraryResolver {
     return InMemoryLibraryResolver(
         null,
-        descriptors?.mapKeys { entry -> LibraryReference(LibraryResolutionInfo.Default(), entry.key) },
-        definitions?.mapKeys { entry -> LibraryReference(LibraryResolutionInfo.Default(), entry.key) },
+        descriptors?.mapKeys { entry -> LibraryReference(AbstractLibraryResolutionInfo.Default(), entry.key) },
+        definitions?.mapKeys { entry -> LibraryReference(AbstractLibraryResolutionInfo.Default(), entry.key) },
     )
 }
 
@@ -115,7 +115,7 @@ class InMemoryLibraryResolver(
     parent: LibraryResolver?,
     initialDescriptorsCache: Map<LibraryReference, LibraryDescriptor>? = null,
     initialDefinitionsCache: Map<LibraryReference, LibraryDefinition>? = null,
-) : LibraryDescriptorResolver(parent) {
+) : ChainedLibraryResolver(parent) {
     private val definitionsCache = hashMapOf<LibraryReference, LibraryDefinition>()
     private val descriptorsCache = hashMapOf<LibraryReference, LibraryDescriptor>()
 

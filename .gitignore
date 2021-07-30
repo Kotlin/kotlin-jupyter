@@ -22,7 +22,7 @@ out/
 /teamcity-artifacts/
 
 # Folder with library descriptors
-libraries/
+/libraries/
 
 # Gradle caches and internal files
 .gradle/

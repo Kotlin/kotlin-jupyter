@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Assertions
@@ -51,10 +51,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val infoProvider = repl.resolutionInfoProvider
 
         val initialDefaultResolutionInfo = infoProvider.fallback
-        Assertions.assertTrue(initialDefaultResolutionInfo is LibraryResolutionInfo.ByDir)
+        Assertions.assertTrue(initialDefaultResolutionInfo is AbstractLibraryResolutionInfo.ByDir)
 
         eval("%useLatestDescriptors")
-        Assertions.assertTrue(infoProvider.fallback is LibraryResolutionInfo.ByGitRef)
+        Assertions.assertTrue(infoProvider.fallback is AbstractLibraryResolutionInfo.ByGitRef)
 
         eval("%useLatestDescriptors -off")
         Assertions.assertTrue(infoProvider.fallback === initialDefaultResolutionInfo)

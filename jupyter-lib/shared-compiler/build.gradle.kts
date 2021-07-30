@@ -12,9 +12,9 @@ repositories {
 
 dependencies {
     // Internal dependencies
-    api(projects.api)
-    api(projects.lib)
-    api(projects.commonDependencies)
+    api(projects.api) { isTransitive = false }
+    api(projects.lib) { isTransitive = false }
+    api(projects.commonDependencies) { isTransitive = false }
 
     // Standard dependencies
     compileOnly(libs.kotlin.stable.stdlib)
@@ -26,6 +26,9 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingJvm)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
     compileOnly(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
+
+    // Serialization runtime
+    compileOnly(libs.serialization.json)
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
     compileOnly(libs.serialization.dev.unshadedPlugin)

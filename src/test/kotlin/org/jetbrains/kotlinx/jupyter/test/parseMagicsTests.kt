@@ -7,16 +7,16 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.libraries.parseReferenceWithArgs
-import org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
+import org.jetbrains.kotlinx.jupyter.magics.NoopMagicsHandler
 import org.jetbrains.kotlinx.jupyter.toSourceCodePositionWithNewAbsolute
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -82,7 +82,7 @@ class ParseArgumentsTests {
         assertEquals("lib_name", ref.name)
 
         val info = ref.info
-        assertTrue(info is LibraryResolutionInfo.ByURL)
+        assertTrue(info is AbstractLibraryResolutionInfo.ByURL)
         assertEquals(requestUrl, info.url.toString())
         assertEquals(0, args.size)
     }
@@ -94,7 +94,7 @@ class ParseArgumentsTests {
         assertEquals("", ref.name)
 
         val info = ref.info
-        assertTrue(info is LibraryResolutionInfo.ByFile)
+        assertTrue(info is AbstractLibraryResolutionInfo.ByFile)
         assertEquals(file, info.file.toString())
         assertEquals(1, args.size)
         assertEquals("param", args[0].name)
@@ -107,7 +107,7 @@ class ParseArgumentsTests {
         assertEquals("krangl", ref.name)
 
         val info = ref.info
-        assertTrue(info is LibraryResolutionInfo.ByGitRef)
+        assertTrue(info is AbstractLibraryResolutionInfo.ByGitRef)
         assertEquals(40, info.sha.length, "Expected commit SHA, but was `${info.sha}`")
         assertEquals(0, args.size)
     }
@@ -116,7 +116,7 @@ class ParseArgumentsTests {
     fun testInfo4() {
         val (ref, _) = parseReferenceWithArgs("krangl@0.8.2.5")
         assertEquals("krangl", ref.name)
-        assertTrue(ref.info is LibraryResolutionInfo.Default)
+        assertTrue(ref.info is AbstractLibraryResolutionInfo.Default)
     }
 }
 
@@ -131,8 +131,6 @@ class ParseMagicsTests {
         override var writeCompiledClasses = false
         override var outputConfig = OutputConfig()
     }
-
-    private object NoOpMagicsHandler : AbstractMagicsHandler()
 
     private val options = TestReplOptions()
 
@@ -151,7 +149,7 @@ class ParseMagicsTests {
     }
 
     private fun intervals(code: String, parseOutCellMarker: Boolean): MagicsAndCodeIntervals {
-        val processor = MagicsProcessor(NoOpMagicsHandler, parseOutCellMarker)
+        val processor = MagicsProcessor(NoopMagicsHandler, parseOutCellMarker)
 
         val magicsIntervals = processor.magicsIntervals(code)
         val codeIntervals = processor.codeIntervals(code, magicsIntervals)

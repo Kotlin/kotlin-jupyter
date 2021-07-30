@@ -26,7 +26,7 @@ class FullMagicsHandler(
     private val repl: ReplOptions,
     librariesProcessor: LibrariesProcessor,
     switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
-) : SharedMagicsHandler(
+) : UseMagicsHandler(
     librariesProcessor,
     switcher,
 ) {

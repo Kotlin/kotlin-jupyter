@@ -9,41 +9,16 @@ import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-interface LibraryResolver {
-    fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition?
-}
-
-abstract class LibraryDescriptorResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
-    protected abstract fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition?
-    protected open fun save(reference: LibraryReference, definition: LibraryDefinition) {}
-    protected open fun shouldResolve(reference: LibraryReference): Boolean = true
-
-    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
-        val shouldBeResolved = shouldResolve(reference)
-        if (shouldBeResolved) {
-            val result = tryResolve(reference, arguments)
-            if (result != null) return result
-        }
-
-        val parentResult = parent?.resolve(reference, arguments) ?: return null
-        if (shouldBeResolved) {
-            save(reference, parentResult)
-        }
-
-        return parentResult
-    }
-}
-
 class DefaultInfoLibraryResolver(
     private val parent: LibraryResolver,
     private val infoProvider: ResolutionInfoProvider,
     paths: List<File> = emptyList(),
 ) : LibraryResolver {
-    private val resolutionInfos = paths.map { LibraryResolutionInfo.ByDir(it) }
+    private val resolutionInfos = paths.map { AbstractLibraryResolutionInfo.ByDir(it) }
 
     override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         val referenceInfo = reference.info
-        if (referenceInfo !is LibraryResolutionInfo.Default) return parent.resolve(reference, arguments)
+        if (referenceInfo !is AbstractLibraryResolutionInfo.Default) return parent.resolve(reference, arguments)
 
         val definitionText = resolutionInfos.asSequence().mapNotNull { byDirResolver.resolveRaw(it, reference.name) }.firstOrNull()
         if (definitionText != null) return parseLibraryDescriptor(definitionText).convertToDefinition(arguments)
@@ -52,7 +27,7 @@ class DefaultInfoLibraryResolver(
         return parent.resolve(newReference, arguments)
     }
 
-    private fun transformReference(referenceInfo: LibraryResolutionInfo.Default, referenceName: String?): LibraryReference {
+    private fun transformReference(referenceInfo: AbstractLibraryResolutionInfo.Default, referenceName: String?): LibraryReference {
         val transformedInfo = infoProvider.get(referenceInfo.string)
         return LibraryReference(transformedInfo, referenceName)
     }
@@ -61,7 +36,7 @@ class DefaultInfoLibraryResolver(
 class LocalLibraryResolver(
     parent: LibraryResolver?,
     mainLibrariesDir: File?
-) : LibraryDescriptorResolver(parent) {
+) : ChainedLibraryResolver(parent) {
     private val logger = getLogger()
     private val pathsToCheck: List<File>
 
@@ -104,22 +79,22 @@ class LocalLibraryResolver(
     private fun LibraryReference.getFile(dir: File) = dir.resolve(KERNEL_LIBRARIES.descriptorFileName(key))
 }
 
-object FallbackLibraryResolver : LibraryDescriptorResolver() {
+object FallbackLibraryResolver : ChainedLibraryResolver() {
     private val standardResolvers = listOf(
         byDirResolver,
-        resolver<LibraryResolutionInfo.ByGitRef> { name ->
+        resolver<AbstractLibraryResolutionInfo.ByGitRef> { name ->
             if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
             KERNEL_LIBRARIES.downloadLibraryDescriptor(sha, name)
         },
-        resolver<LibraryResolutionInfo.ByFile> {
+        resolver<AbstractLibraryResolutionInfo.ByFile> {
             file.readText()
         },
-        resolver<LibraryResolutionInfo.ByURL> {
+        resolver<AbstractLibraryResolutionInfo.ByURL> {
             val response = getHttp(url.toString())
             response.text
         },
-        resolver<LibraryResolutionInfo.ByNothing> { "{}" },
-        resolver<LibraryResolutionInfo.Default> { null }
+        resolver<ByNothingLibraryResolutionInfo> { "{}" },
+        resolver<AbstractLibraryResolutionInfo.Default> { null }
     )
 
     override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
@@ -141,7 +116,7 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(private val kClass: KCl
 
 private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolverFun: T.(String?) -> String?) = SpecificLibraryResolver(T::class, resolverFun)
 
-private val byDirResolver = resolver<LibraryResolutionInfo.ByDir> { name ->
+private val byDirResolver = resolver<AbstractLibraryResolutionInfo.ByDir> { name ->
     if (name == null) throw ReplLibraryLoadingException(name, "Directory library resolver needs library name to be specified")
 
     val jsonFile = librariesDir.resolve(KERNEL_LIBRARIES.descriptorFileName(name))
