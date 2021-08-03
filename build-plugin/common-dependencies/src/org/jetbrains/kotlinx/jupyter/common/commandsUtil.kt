@@ -1,9 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.common
 
+private val replCommandRegex = Regex("""^([\r\n\t ]*\n)?:([A-Za-z0-9]*)[\n\t\r ]*$""")
+
 /**
  * If this function returns true for the [code], it will be interpreted as Jupyter REPL command
  */
-fun looksLikeReplCommand(code: String): Boolean = code.startsWith(":")
+fun looksLikeReplCommand(code: String): Boolean = replCommandRegex.matches(code)
 
 /**
  * Throws [IllegalArgumentException] in case [looksLikeReplCommand] returns false for [code]
@@ -22,6 +24,7 @@ fun assertLooksLikeReplCommand(code: String) {
  */
 fun replCommandOrNull(code: String): Pair<ReplCommand?, String> {
     assertLooksLikeReplCommand(code)
-    val commandString = code.trim().substring(1)
+    val match = replCommandRegex.matchEntire(code)!!
+    val commandString = match.groupValues[2]
     return ReplCommand.valueOfOrNull(commandString)?.value to commandString
 }
