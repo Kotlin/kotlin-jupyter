@@ -93,9 +93,6 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     SERIALIZATION_REQUEST(SerializationRequest::class),
     SERIALIZATION_REPLY(SerializationReply::class);
 
-    // TODO: add custom commands
-    // this custom message should be supported on client-side. either JS or Idea Plugin
-
     val type: String
         get() = name.lowercase()
 }
@@ -562,12 +559,13 @@ class ListErrorsReply(
 @Serializable
 class SerializationRequest(
     val cellId: Int,
-    val descriptorsState: Map<String, SerializedVariablesState>
+    val descriptorsState: Map<String, SerializedVariablesState>,
+    val topLevelDescriptorName: String = ""
 ) : MessageContent()
 
 @Serializable
 class SerializationReply(
-    val cellId: Int,
+    val cellId: Int = 1,
     val descriptorsState: Map<String, SerializedVariablesState> = emptyMap()
 ) : MessageContent()
 

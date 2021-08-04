@@ -52,6 +52,10 @@ internal class InternalEvaluatorImpl(
         return SerializedCompiledScriptsData(scripts)
     }
 
+    override fun findVariableCell(variableName: String): Int {
+        return variablesWatcher.findDeclarationAddress(variableName) ?: -1
+    }
+
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
         set(value) {

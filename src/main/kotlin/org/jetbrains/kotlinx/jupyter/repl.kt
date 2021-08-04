@@ -139,6 +139,8 @@ interface ReplForJupyter {
 
     suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
 
+    suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
+
     val homeDir: File?
 
     val currentClasspath: Collection<String>
@@ -562,15 +564,26 @@ class ReplForJupyterImpl(
 
     private val serializationQueue = LockQueue<SerializationReply, SerializationArgs>()
     override suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
-        doWithLock(SerializationArgs(cellId, descriptorsState, callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
+        doWithLock(SerializationArgs(descriptorsState, cellId = cellId, callback = callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
+    }
+
+    override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
+        doWithLock(SerializationArgs(descriptorsState, topLevelVarName = topLevelVarName, callback = callback), serializationQueue, SerializationReply(), ::doSerializeVariables)
     }
 
     private fun doSerializeVariables(args: SerializationArgs): SerializationReply {
         val resultMap = mutableMapOf<String, SerializedVariablesState>()
-        args.descriptorsState.forEach { (name, state) ->
-            resultMap[name] = variablesSerializer.doIncrementalSerialization(args.cellId - 1, name, state)
+        val cellId = if (args.cellId != -1) args.cellId else {
+            val watcherInfo = internalEvaluator.findVariableCell(args.topLevelVarName) + 1
+            val finalAns = if (watcherInfo == - 1) 1 else watcherInfo
+            finalAns
         }
-        return SerializationReply(args.cellId, resultMap)
+        args.descriptorsState.forEach { (name, state) ->
+            resultMap[name] = variablesSerializer.doIncrementalSerialization(cellId - 1, name, state)
+        }
+        log.debug("Serialization cellID: $cellId")
+        log.debug("Serialization answer: ${resultMap.entries.first().value.fieldDescriptor}")
+        return SerializationReply(cellId, resultMap)
     }
 
 
@@ -607,10 +620,12 @@ class ReplForJupyterImpl(
         LockQueueArgs<ListErrorsResult>
 
     private data class SerializationArgs(
-        val cellId: Int,
         val descriptorsState: Map<String, SerializedVariablesState>,
+        var cellId: Int = -1,
+        val topLevelVarName: String = "",
         override val callback: (SerializationReply) -> Unit
     ) : LockQueueArgs<SerializationReply>
+
 
     @JvmInline
     private value class LockQueue<T, Args : LockQueueArgs<T>>(

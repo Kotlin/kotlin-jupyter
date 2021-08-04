@@ -31,6 +31,12 @@ data class SerializedVariablesState(
 }
 
 @Serializable
+class SerializationReply(
+    val cellId: Int = 1,
+    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap()
+)
+
+@Serializable
 class EvaluatedSnippetMetadata(
     val newClasspath: Classpath = emptyList(),
     val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,

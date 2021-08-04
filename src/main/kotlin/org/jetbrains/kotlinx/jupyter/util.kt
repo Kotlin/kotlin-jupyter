@@ -81,7 +81,7 @@ fun ResultsRenderersProcessor.registerDefaultRenderers() {
  * Stores info about where a variable Y was declared and info about what are they at the address X.
  * K: key, stands for a way of addressing variables, e.g. address.
  * V: value, from Variable, choose any suitable type for your variable reference.
- * Default: T=Int, V=String
+ * Default: K=Int, V=String
  */
 class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     val cellVariables = mutableMapOf<K, MutableSet<V>>()
@@ -113,6 +113,8 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
             variablesDeclarationInfo[it] != newAddress
         }
     }
+
+    fun findDeclarationAddress(variableRef: V) = variablesDeclarationInfo[variableRef]
 
     fun ensureStorageCreation(address: K) = cellVariables.putIfAbsent(address, mutableSetOf())
 }

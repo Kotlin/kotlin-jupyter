@@ -5,7 +5,6 @@ import kotlin.reflect.jvm.isAccessible
 import java.lang.reflect.Field
 
 interface VariableState {
-//    val property: KProperty<*>
     val property: Field
     val scriptInstance: Any?
     val stringValue: String?
@@ -13,7 +12,6 @@ interface VariableState {
 }
 
 data class VariableStateImpl(
-//    override val property: KProperty1<Any, *>,
     override val property: Field,
     override val scriptInstance: Any,
 ) : VariableState {

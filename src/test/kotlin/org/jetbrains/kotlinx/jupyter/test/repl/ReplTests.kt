@@ -740,6 +740,9 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertEquals(2, actualContainer.fieldDescriptor.size)
         assertTrue(actualContainer.isContainer)
         assertEquals(listOf(1, 2, 3, 4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
+
+        val serializer = repl.variablesSerializer
+        val newData = serializer.doIncrementalSerialization(0, "data", actualContainer)
     }
 
     @Test
@@ -839,6 +842,9 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             assertTrue(state.isContainer)
             assertEquals("${values++}", state.value)
         }
+
+        val depthMostNode = actualContainer.fieldDescriptor.entries.first { it.value!!.isContainer }
+        val serializationAns = serializer.doIncrementalSerialization(0, depthMostNode.key, depthMostNode.value!!)
     }
 
     @Test
@@ -898,6 +904,28 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         runBlocking {
             repl.serializeVariables(1, mapOf(propertyName to actualContainer)) { result ->
+                val data = result.descriptorsState
+                assertTrue(data.isNotEmpty())
+
+                val innerList = data.entries.last().value
+                assertTrue(innerList.isContainer)
+                var receivedDescriptor = innerList.fieldDescriptor
+                assertEquals(2, receivedDescriptor.size)
+                receivedDescriptor = receivedDescriptor.entries.last().value!!.fieldDescriptor
+
+                assertEquals(4, receivedDescriptor.size)
+                var values = 1
+                receivedDescriptor.forEach { (_, state) ->
+                    val fieldDescriptor = state!!.fieldDescriptor
+                    assertEquals(0, fieldDescriptor.size)
+                    assertTrue(state.isContainer)
+                    assertEquals("${values++}", state.value)
+                }
+            }
+        }
+
+        runBlocking {
+            repl.serializeVariables("x", mapOf(propertyName to actualContainer)) { result ->
                 val data = result.descriptorsState
                 assertTrue(data.isNotEmpty())
 

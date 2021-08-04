@@ -30,4 +30,14 @@ interface InternalEvaluator {
      * returns empty data or null
      */
     fun popAddedCompiledScripts(): SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY
+
+    /**
+     * Get a cellId where a particular variable is declared
+     */
+    fun findVariableCell(variableName: String): Int
+
+    /**
+     * Returns a set of unaffected variables after execution
+     */
+    fun getUnchangedVariables(): Set<String>
 }

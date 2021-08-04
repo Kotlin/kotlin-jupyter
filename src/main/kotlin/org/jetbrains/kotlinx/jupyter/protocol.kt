@@ -307,6 +307,21 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         is CommInfoRequest -> {
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
+        is CommOpen -> {
+            if (!content.commId.equals(MessageType.SERIALIZATION_REQUEST.name, ignoreCase = true)) {
+                send(makeReplyMessage(msg, MessageType.NONE))
+                return
+            }
+            log.debug("Message type in CommOpen: $msg, ${msg.type}")
+            val data = content.data ?: return sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY))
+
+            val messageContent = getVariablesDescriptorsFromJson(data)
+            GlobalScope.launch(Dispatchers.Default) {
+                repl.serializeVariables(messageContent.topLevelDescriptorName, messageContent.descriptorsState) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_OPEN, content = result))
+                }
+            }
+        }
         is CompleteRequest -> {
             connection.launchJob {
                 repl.complete(content.code, content.cursorPos) { result ->
@@ -323,8 +338,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         }
         is SerializationRequest -> {
             GlobalScope.launch(Dispatchers.Default) {
-                repl.serializeVariables(content.cellId, content.descriptorsState) { result ->
-                    sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
+                if (content.topLevelDescriptorName.isNotEmpty()) {
+                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState) { result ->
+                        sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
+                    }
+                } else {
+                    repl.serializeVariables(content.cellId, content.descriptorsState) { result ->
+                        sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
+                    }
                 }
             }
         }

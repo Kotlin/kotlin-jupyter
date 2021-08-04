@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
@@ -48,12 +49,27 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val variablesHolder = mutableMapOf<String, VariableState>()
     override val cellVariables = mutableMapOf<Int, MutableSet<String>>()
 
+    val variablesWatcher: VariablesUsagesPerCellWatcher<Int, String> = VariablesUsagesPerCellWatcher()
+
     override val results: List<Any?>
         get() = executedCodes.map { null }
 
     override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         return InternalEvalResult(FieldValue(null, null), Unit)
+    }
+
+    override fun findVariableCell(variableName: String): Int {
+        for (cellSet in cellVariables) {
+            if (cellSet.value.contains(variableName)) {
+                return cellSet.key
+            }
+        }
+        return -1
+    }
+
+    override fun getUnchangedVariables(): Set<String> {
+        return variablesWatcher.getUnchangedVariables()
     }
 }
 

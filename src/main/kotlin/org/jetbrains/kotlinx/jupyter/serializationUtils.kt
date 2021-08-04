@@ -1,8 +1,14 @@
 package org.jetbrains.kotlinx.jupyter
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import java.lang.reflect.Field
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -21,6 +27,16 @@ enum class PropertiesType {
     KOTLIN,
     JAVA,
     MIXED
+}
+
+@Serializable
+data class SerializedCommMessageContent(
+    val topLevelDescriptorName: String,
+    val descriptorsState: Map<String, SerializedVariablesState>
+)
+
+fun getVariablesDescriptorsFromJson(json: JsonObject): SerializedCommMessageContent {
+    return Json.decodeFromJsonElement<SerializedCommMessageContent>(json)
 }
 
 class ProcessedSerializedVarsState(
@@ -94,9 +110,11 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
                 } == true
             }
 
-            val kProperties = if (value != null) value::class.declaredMemberProperties else {
-                null
-            }
+            val kProperties = try {
+                if (value != null) value::class.declaredMemberProperties else {
+                    null
+                }
+            } catch (ex: Exception) {null}
             val serializedVersion = SerializedVariablesState(simpleTypeName, getProperString(value), true)
             val descriptors = serializedVersion.fieldDescriptor
             if (isDescriptorsNeeded) {
@@ -197,6 +215,11 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
     private val computedDescriptorsPerCell: MutableMap<Int, ProcessedDescriptorsState> = mutableMapOf()
 
     private val isSerializationActive: Boolean = System.getProperty(serializationSystemProperty)?.toBooleanStrictOrNull() ?: true
+
+    /**
+     * Cache for not recomputing unchanged variables
+     */
+    val serializedVariablesCache: MutableMap<String, SerializedVariablesState> = mutableMapOf()
 
     fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>): Map<String, SerializedVariablesState> {
         if (!isSerializationActive) return emptyMap()
@@ -375,6 +398,7 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
      * Really wanted to use contracts here, but all usages should be provided with this annotation and,
      * perhaps, it may be a big overhead
      */
+    @OptIn(ExperimentalContracts::class)
     private fun iterateThrough(
         elem: Any,
         seenObjectsPerCell: MutableMap<RuntimeObjectWrapper, SerializedVariablesState>?,
@@ -383,6 +407,10 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         instancesPerState: MutableMap<SerializedVariablesState, Any?>,
         callInstance: Any
     ) {
+        contract {
+            returns() implies (elem is Field || elem is KProperty1<*, *>)
+        }
+
         val name = if (elem is Field) elem.name else (elem as KProperty1<Any, *>).name
         val value = if (elem is Field) tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
         else {
@@ -491,6 +519,8 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         return value
     }
 
+    // use of Java 9 required
+    @SuppressWarnings("DEPRECATION")
     private fun tryGetValueFromProperty(property: Field, callInstance: Any): Any? {
         // some fields may be optimized out like array size. Thus, calling it.isAccessible would return error
         val canAccess = try {
