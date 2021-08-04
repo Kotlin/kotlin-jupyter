@@ -5,6 +5,7 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
@@ -19,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
-import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -47,6 +47,8 @@ import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
@@ -74,11 +76,6 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
-
-data class EvalResult(
-    val resultValue: Any?,
-    val metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY
-)
 
 data class CheckResult(val isComplete: Boolean = true)
 
@@ -187,7 +184,7 @@ class ReplForJupyterImpl(
 
     override val notebook = NotebookImpl(runtimeProperties)
 
-    private val librariesScanner = LibrariesScanner(notebook)
+    val librariesScanner = LibrariesScanner(notebook)
     private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
     override var outputConfig
@@ -343,7 +340,7 @@ class ReplForJupyterImpl(
     )
 
     private var evalContextEnabled = false
-    private fun withEvalContext(action: () -> EvalResult): EvalResult {
+    private fun <T> withEvalContext(action: () -> T): T {
         return synchronized(this) {
             evalContextEnabled = true
             try {
@@ -361,14 +358,14 @@ class ReplForJupyterImpl(
         else context.compilationConfiguration.asSuccess()
     }
 
-    /**
-     * Used for debug purposes.
-     * @see ReplCommand
-     */
+    @TestOnly
+    @Suppress("unused")
     private fun printVariables(isHtmlFormat: Boolean = false) = log.debug(
         if (isHtmlFormat) notebook.variablesReportAsHTML() else notebook.variablesReport()
     )
 
+    @TestOnly
+    @Suppress("unused")
     private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>?) {
         log.debug(buildString {
             if (usedVariables == null || usedVariables.isEmpty()) {
@@ -382,7 +379,7 @@ class ReplForJupyterImpl(
         })
     }
 
-    override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
+    fun evalEx(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResultEx {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
                 beforeCellExecution.forEach { executor.execute(it) }
@@ -423,8 +420,18 @@ class ReplForJupyterImpl(
 
 
             val variablesStateUpdate = notebook.variablesState.mapValues { it.value.stringValue }
-            EvalResult(rendered, EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate))
+            EvalResultEx(
+                result.result.value,
+                rendered,
+                result.scriptInstance,
+                result.result.name,
+                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate),
+            )
         }
+    }
+
+    override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int): EvalResult {
+        return evalEx(code, displayHandler, jupyterId).run { EvalResult(renderedValue, metadata) }
     }
 
     override fun <T> eval(execution: ExecutionCallback<T>): T {

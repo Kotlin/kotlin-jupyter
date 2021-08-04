@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.EvalResult
 import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
+import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.jetbrains.kotlinx.jupyter.varsTableStyleClass
@@ -54,7 +54,7 @@ class ApiTest : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        val varsUpdate = mutableMapOf<String, String>(
+        val varsUpdate = mutableMapOf(
             "x" to "1",
             "y" to "abc",
             "z" to "47"

@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin
 import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.JupyterApiResourcesTask
-import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.whenAdded
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.addMavenCentralIfDoesNotExist
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class ApiGradlePlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
@@ -29,7 +30,7 @@ class ApiGradlePlugin : Plugin<Project> {
         }
 
         repositories {
-            mavenCentral()
+            addMavenCentralIfDoesNotExist()
         }
 
         val pluginExtension = KotlinJupyterPluginExtension(target)

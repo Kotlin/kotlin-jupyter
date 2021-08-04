@@ -23,6 +23,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.toResponse
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -61,9 +63,7 @@ abstract class Response(
 class OkResponseWithMessage(
     private val result: DisplayResult?,
     private val metadata: EvaluatedSnippetMetadata? = null,
-    stdOut: String? = null,
-    stdErr: String? = null,
-) : Response(stdOut, stdErr) {
+) : Response(null, null) {
     override val state: ResponseState = ResponseState.Ok
 
     override fun sendBody(socket: JupyterConnection.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
@@ -481,8 +481,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
                 else -> {
                     flushStreams()
                     try {
-                        val result = exec.resultValue.toDisplayResult(repl.notebook)
-                        OkResponseWithMessage(result, exec.metadata)
+                        exec.toResponse(repl.notebook)
                     } catch (e: Exception) {
                         AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                     }

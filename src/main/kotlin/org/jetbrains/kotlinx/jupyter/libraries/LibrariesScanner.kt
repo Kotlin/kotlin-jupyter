@@ -21,13 +21,12 @@ class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
 
     private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
-        return filter { it.fqn !in processedFQNs }
+        return filter { processedFQNs.add(it.fqn) }
     }
 
     fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost) {
         val scanResult = scanForLibraries(classLoader)
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
-        updateProcessed(scanResult)
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
         log.debug("Number of detected definitions: ${libraries.size}")
         libraries.forEach { host.addLibrary(it) }
@@ -51,17 +50,6 @@ class LibrariesScanner(val notebook: Notebook) {
             definitions.filterProcessed(),
             producers.filterProcessed(),
         )
-    }
-
-    private fun updateProcessed(scanResult: LibrariesScanResult) {
-        scanResult.apply {
-            val instantiableData = producers + definitions
-            instantiableData.map {
-                it.fqn
-            }.let {
-                processedFQNs.addAll(it)
-            }
-        }
     }
 
     private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook): List<LibraryDefinition> {

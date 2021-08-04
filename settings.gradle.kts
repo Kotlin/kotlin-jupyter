@@ -14,6 +14,7 @@ libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
 libSubproject("lib-ext")
+libSubproject("test-kit")
 
 exampleSubproject("getting-started")
 

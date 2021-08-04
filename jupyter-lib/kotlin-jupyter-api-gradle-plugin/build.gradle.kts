@@ -1,4 +1,6 @@
 import build.CreateResourcesTask
+import build.util.defaultVersionCatalog
+import build.util.devKotlin
 
 plugins {
     id("com.gradle.plugin-publish")
@@ -27,6 +29,7 @@ dependencies {
 
 CreateResourcesTask.register(project, "saveVersion", tasks.processResources) {
     addSingleValueFile("VERSION", rootSettings.mavenVersion)
+    addSingleValueFile("KOTLIN_VERSION", rootProject.defaultVersionCatalog.versions.devKotlin)
 }
 
 java {

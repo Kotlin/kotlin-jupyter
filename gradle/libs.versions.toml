@@ -18,7 +18,7 @@ jupyterApi = "0.10.0-146"
 jetbrainsAnnotations = "21.0.1"
 
 junit = "5.7.2"
-kotlinTest = "3.4.2"
+kotlinTest = "4.6.1"
 clikt = "2.8.0"
 zeromq = "0.5.2"
 gson = "2.8.7"
@@ -92,7 +92,7 @@ clikt = { module = "com.github.ajalt:clikt", version.ref = "clikt" }
 test-junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 test-junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
 test-junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
-test-kotlintest-assertions = { module = "io.kotlintest:kotlintest-assertions", version.ref = "kotlinTest" }
+test-kotlintest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotlinTest" }
 
 # Different libraries
 ext-jlatex = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }

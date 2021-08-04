@@ -1,8 +1,8 @@
-package org.jetbrains.kotlinx.jupyter.api.plugin.tasks
+package org.jetbrains.kotlinx.jupyter.api.plugin.util
 
 import org.gradle.api.NamedDomainObjectCollection
 
-fun <T> NamedDomainObjectCollection<T>.whenAdded(condition: (T) -> Boolean, action: (T) -> Unit) {
+internal fun <T> NamedDomainObjectCollection<T>.whenAdded(condition: (T) -> Boolean, action: (T) -> Unit) {
     val element = find(condition)
     if (element != null) {
         action(element)

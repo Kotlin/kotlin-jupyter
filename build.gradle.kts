@@ -29,7 +29,6 @@ dependencies {
 
     // Standard dependencies
     implementation(libs.kotlin.dev.reflect)
-    implementation(libs.kotlin.dev.stdlibJdk8)
     implementation(libs.jetbrains.annotations)
     implementation(libs.coroutines.core)
 

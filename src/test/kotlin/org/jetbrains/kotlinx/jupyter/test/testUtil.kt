@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import io.kotlintest.fail
+import io.kotest.assertions.fail
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.CodeCellImpl
