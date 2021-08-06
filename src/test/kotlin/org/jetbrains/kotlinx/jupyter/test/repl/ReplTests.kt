@@ -709,6 +709,93 @@ class ReplVarsTest : AbstractSingleReplTest() {
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
+
+
+    @Test
+    fun testSeparatePrivateDefsUsage() {
+        eval(
+            """
+            private val x = "abcd"
+            private var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state[0]!!.contains("x"))
+
+        eval(
+            """
+            val x = 341
+            private var f = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertTrue(state[0]!!.isEmpty())
+        assertTrue(state[1]!!.contains("x"))
+
+        val setOfPrevCell = setOf<String>()
+        val setOfNextCell = setOf("x", "f")
+        assertEquals(state[0], setOfPrevCell)
+        assertEquals(state[1], setOfNextCell)
+    }
+
+    @Test
+    fun testRecursiveVarsState() {
+        eval(
+            """
+            val l = mutableListOf<Any>()
+            l.add(listOf(l))
+            
+            val m = mapOf(1 to l)
+            
+            val z = setOf(1, 2, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.variablesState
+        assertTrue(state.contains("l"))
+        assertTrue(state.contains("m"))
+        assertTrue(state.contains("z"))
+
+        assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
+        assertTrue(state["m"]!!.stringValue!!.contains(" recursive structure"))
+        assertEquals("[1, 2, 4]", state["z"]!!.stringValue)
+    }
+
+    @Test
+    fun testSeparatePrivateCellsUsage() {
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.cellVariables
+        assertTrue(state[0]!!.contains("x"))
+        assertTrue(state[0]!!.contains("z"))
+
+        eval(
+            """
+            private val x = 341
+            f += x
+            protected val z = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertTrue(state[0]!!.isNotEmpty())
+        assertFalse(state[0]!!.contains("x"))
+        assertFalse(state[0]!!.contains("z"))
+        assertTrue(state[1]!!.contains("x"))
+
+        val setOfPrevCell = setOf("f")
+        val setOfNextCell = setOf("x", "f", "z")
+        assertEquals(state[0], setOfPrevCell)
+        assertEquals(state[1], setOfNextCell)
+    }
 }
 
 class ReplVarsSerializationTest : AbstractSingleReplTest() {
@@ -945,5 +1032,44 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
                 }
             }
         }
+    }
+
+
+    @Test
+    fun testUnchangedVariables() {
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.unchangedVariables()
+        val setOfCell = setOf("x", "f", "z")
+        assertTrue(state.isNotEmpty())
+        assertEquals(setOfCell, state)
+
+        eval(
+            """
+            private val x = 341
+            f += x
+            protected val z = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isEmpty())
+        val setOfPrevCell = setOf("f")
+        assertNotEquals(setOfCell, setOfPrevCell)
+
+        eval(
+            """
+            private val x = 341
+            protected val z = "abcd"
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        assertTrue(state.isNotEmpty())
+        assertEquals(state, setOfPrevCell)
     }
 }

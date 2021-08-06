@@ -56,6 +56,10 @@ internal class InternalEvaluatorImpl(
         return variablesWatcher.findDeclarationAddress(variableName) ?: -1
     }
 
+    override fun getUnchangedVariables(): Set<String> {
+        return variablesWatcher.getUnchangedVariables()
+    }
+
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
         set(value) {

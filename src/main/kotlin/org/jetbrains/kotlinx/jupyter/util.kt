@@ -91,6 +91,9 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
      */
     private val variablesDeclarationInfo: MutableMap<V, K> = mutableMapOf()
 
+    private val unchangedVariables: MutableSet<V> = mutableSetOf()
+//    private val unchangedVariables: MutableSet<V> = mutableSetOf()
+
     fun addDeclaration(address: K, variableRef: V) {
         ensureStorageCreation(address)
 
@@ -99,20 +102,34 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
             val oldCellId = variablesDeclarationInfo[variableRef]
             if (oldCellId != address) {
                 cellVariables[oldCellId]?.remove(variableRef)
+                unchangedVariables.remove(variableRef)
             }
+        } else {
+            unchangedVariables.add(variableRef)
         }
         variablesDeclarationInfo[variableRef] = address
         cellVariables[address]?.add(variableRef)
     }
 
-    fun addUsage(address: K, variableRef: V) = cellVariables[address]?.add(variableRef)
+    fun addUsage(address: K, variableRef: V) {
+        cellVariables[address]?.add(variableRef)
+        if (variablesDeclarationInfo[variableRef] != address) {
+            unchangedVariables.remove(variableRef)
+        }
+    }
 
     fun removeOldUsages(newAddress: K) {
         // remove known modifying usages in this cell
         cellVariables[newAddress]?.removeIf {
-            variablesDeclarationInfo[it] != newAddress
+            val predicate = variablesDeclarationInfo[it] != newAddress
+            if (predicate) {
+                unchangedVariables.add(it)
+            }
+            predicate
         }
     }
+
+    fun getUnchangedVariables(): Set<V> = unchangedVariables
 
     fun findDeclarationAddress(variableRef: V) = variablesDeclarationInfo[variableRef]
 
