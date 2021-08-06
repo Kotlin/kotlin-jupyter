@@ -117,6 +117,17 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             } catch (ex: Exception) {null}
             val serializedVersion = SerializedVariablesState(simpleTypeName, getProperString(value), true)
             val descriptors = serializedVersion.fieldDescriptor
+
+            // only for set case
+            if (simpleTypeName == "Set" && kProperties == null) {
+                value as Set<*>
+                val size = value.size
+                descriptors["size"] = createSerializeVariableState(
+                    "size", "Int", size
+                ).serializedVariablesState
+                descriptors.addDescriptor(value, "data")
+            }
+
             if (isDescriptorsNeeded) {
                 kProperties?.forEach { prop ->
                     val name = prop.name
@@ -206,7 +217,8 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         Float::class.java,
         Double::class.java,
         Char::class.java,
-        Boolean::class.java
+        Boolean::class.java,
+        String::class.java
     )
 
     /**
@@ -219,9 +231,9 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
     /**
      * Cache for not recomputing unchanged variables
      */
-    val serializedVariablesCache: MutableMap<String, SerializedVariablesState> = mutableMapOf()
+    private val serializedVariablesCache: MutableMap<String, SerializedVariablesState> = mutableMapOf()
 
-    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>): Map<String, SerializedVariablesState> {
+    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
         if (!isSerializationActive) return emptyMap()
 
         if (seenObjectsPerCell.containsKey(cellId)) {
@@ -231,7 +243,12 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             return emptyMap()
         }
         currentSerializeCount = 0
-        return variablesState.mapValues { serializeVariableState(cellId, it.key, it.value) }
+
+        val neededEntries = variablesState.filterKeys { unchangedVariables.contains(it) }
+
+        val serializedData = neededEntries.mapValues { serializeVariableState(cellId, it.key, it.value) }
+        serializedVariablesCache.putAll(serializedData)
+        return serializedVariablesCache
     }
 
     fun doIncrementalSerialization(cellId: Int, propertyName: String, serializedVariablesState: SerializedVariablesState): SerializedVariablesState {
@@ -307,6 +324,7 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             }
             iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
         }
+
         return processedData.serializedVariablesState
     }
 
@@ -318,7 +336,19 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         kProperties: KPropertiesData? = null,
         currentDepth: Int = 0
     ) {
-        if ((properties == null && kProperties == null) || callInstance == null || currentDepth >= serializationDepth) return
+        fun iterateAndStoreValues(callInstance: Any, descriptorsState: MutableMap<String, SerializedVariablesState?>) {
+            if (callInstance is Collection<*>) {
+                callInstance.forEach {
+                    descriptorsState.addDescriptor(it)
+                }
+            } else if (callInstance is Array<*>) {
+                callInstance.forEach {
+                    descriptorsState.addDescriptor(it)
+                }
+            }
+        }
+
+        if ((properties == null && kProperties == null && callInstance !is Set<*>) || callInstance == null || currentDepth >= serializationDepth) return
 
         val serializedIteration = mutableMapOf<String, ProcessedSerializedVarsState>()
 
@@ -353,6 +383,17 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         val isArrayType = checkForPossibleArray(callInstance)
         computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
 
+        if (descriptor.size == 2 && descriptor.containsKey("data")) {
+            val listData = descriptor["data"]?.fieldDescriptor ?: return
+            if (descriptor.containsKey("size") && descriptor["size"]?.value == "null") {
+                descriptor.remove("size")
+                descriptor.remove("data")
+                iterateAndStoreValues(callInstance, descriptor)
+            } else {
+                iterateAndStoreValues(callInstance, listData)
+            }
+        }
+
         serializedIteration.forEach {
             val serializedVariablesState = it.value.serializedVariablesState
             val name = it.key
@@ -379,7 +420,7 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
                 )
             }
         }
-
+        /*
         if (descriptor.size == 2 && descriptor.containsKey("data")) {
             val listData = descriptor["data"]?.fieldDescriptor ?: return
             if (callInstance is Collection<*>) {
@@ -391,7 +432,7 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
                     listData.addDescriptor(it)
                 }
             }
-        }
+        }*/
     }
 
     /**
@@ -480,7 +521,7 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         }
 
         val isContainer = if (membersProperties != null) (
-            !primitiveWrappersSet.contains(javaClass) && membersProperties.isNotEmpty() || value::class.java.isArray || (javaClass.isMemberClass)
+            !primitiveWrappersSet.contains(javaClass) && membersProperties.isNotEmpty() || value is Set<*> || value::class.java.isArray || javaClass.isMemberClass
             ) else false
         val type = if (value != null && value::class.java.isArray) {
             "Array"

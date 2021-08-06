@@ -639,18 +639,23 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """
             val x = 124
             private var f = "abcd"
-            """.trimIndent()
+            """.trimIndent(),
+            jupyterId = 1
         )
         val state = repl.notebook.cellVariables
         assertTrue(state.isNotEmpty())
+
+        // f is not accessible from here
         eval(
             """
             private var z = 1
             z += x
-            """.trimIndent()
+            """.trimIndent(),
+            jupyterId = 1
         )
         assertTrue(state.isNotEmpty())
 
+        // TODO discuss if we really want this
         val setOfCell = setOf("z", "f", "x")
         assertTrue(state.containsValue(setOfCell))
     }
@@ -830,6 +835,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         val serializer = repl.variablesSerializer
         val newData = serializer.doIncrementalSerialization(0, "data", actualContainer)
+        val a = 1
     }
 
     @Test
@@ -913,13 +919,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val serializer = repl.variablesSerializer
 
         val newData = serializer.doIncrementalSerialization(0, listData.fieldDescriptor.entries.first().key, actualContainer)
-        var receivedDescriptor = newData.fieldDescriptor
-        assertEquals(2, receivedDescriptor.size)
-        assertTrue(receivedDescriptor.containsKey("size"))
-
-        val innerList = receivedDescriptor.entries.last().value!!
-        assertTrue(innerList.isContainer)
-        receivedDescriptor = innerList.fieldDescriptor
+        val receivedDescriptor = newData.fieldDescriptor
         assertEquals(4, receivedDescriptor.size)
 
         var values = 1
@@ -967,11 +967,59 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertEquals(3, newDescriptor["data"]!!.fieldDescriptor.size)
         val ansSet = mutableSetOf("a", "b", "c")
         newDescriptor["data"]!!.fieldDescriptor.forEach { (_, state) ->
-            assertTrue(state!!.isContainer)
+            assertFalse(state!!.isContainer)
             assertTrue(ansSet.contains(state.value))
             ansSet.remove(state.value)
         }
         assertTrue(ansSet.isEmpty())
+    }
+
+
+    @Test
+    fun testSetContainer() {
+        var res = eval(
+            """
+            val x = setOf("a", "b", "cc", "c")
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        assertTrue(varsData.containsKey("x"))
+
+        var setData = varsData["x"]!!
+        assertTrue(setData.isContainer)
+        assertEquals(2, setData.fieldDescriptor.size)
+        var setDescriptors = setData.fieldDescriptor
+        assertEquals("4", setDescriptors["size"]!!.value)
+        assertTrue(setDescriptors["data"]!!.isContainer)
+        assertEquals(4, setDescriptors["data"]!!.fieldDescriptor.size)
+        assertEquals("a", setDescriptors["data"]!!.fieldDescriptor["a"]!!.value)
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("b"))
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("cc"))
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("c"))
+
+        res = eval(
+            """
+            val c = mutableSetOf("a", "b", "cc", "c")
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        varsData = res.metadata.evaluatedVariablesState
+        assertEquals(2, varsData.size)
+        assertTrue(varsData.containsKey("c"))
+
+        setData = varsData["c"]!!
+        assertTrue(setData.isContainer)
+        assertEquals(2, setData.fieldDescriptor.size)
+        setDescriptors = setData.fieldDescriptor
+        assertEquals("4", setDescriptors["size"]!!.value)
+        assertTrue(setDescriptors["data"]!!.isContainer)
+        assertEquals(4, setDescriptors["data"]!!.fieldDescriptor.size)
+        assertEquals("a", setDescriptors["data"]!!.fieldDescriptor["a"]!!.value)
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("b"))
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("cc"))
+        assertTrue(setDescriptors["data"]!!.fieldDescriptor.containsKey("c"))
     }
 
     @Test
@@ -996,9 +1044,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
                 val innerList = data.entries.last().value
                 assertTrue(innerList.isContainer)
-                var receivedDescriptor = innerList.fieldDescriptor
-                assertEquals(2, receivedDescriptor.size)
-                receivedDescriptor = receivedDescriptor.entries.last().value!!.fieldDescriptor
+                val receivedDescriptor = innerList.fieldDescriptor
 
                 assertEquals(4, receivedDescriptor.size)
                 var values = 1
@@ -1018,9 +1064,8 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
                 val innerList = data.entries.last().value
                 assertTrue(innerList.isContainer)
-                var receivedDescriptor = innerList.fieldDescriptor
-                assertEquals(2, receivedDescriptor.size)
-                receivedDescriptor = receivedDescriptor.entries.last().value!!.fieldDescriptor
+                val receivedDescriptor = innerList.fieldDescriptor
+
 
                 assertEquals(4, receivedDescriptor.size)
                 var values = 1
@@ -1071,5 +1116,26 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         )
         assertTrue(state.isNotEmpty())
         assertEquals(state, setOfPrevCell)
+
+
+        eval(
+            """
+            private val x = 341
+            protected val z = "abcd"
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(state.isEmpty())
+
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(state.isNotEmpty())
+        assertEquals(setOfPrevCell, state)
     }
 }
