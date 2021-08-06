@@ -1,5 +1,6 @@
 package jupyter.kotlin
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
@@ -10,11 +11,15 @@ abstract class ScriptTemplateWithDisplayHelpers(
     val notebook: Notebook,
     private val hostProvider: KotlinKernelHostProvider
 ) {
-    fun DISPLAY(value: Any) = hostProvider.host!!.display(value)
+    private val host: KotlinKernelHost get() = hostProvider.host!!
 
-    fun EXECUTE(code: String) = hostProvider.host!!.scheduleExecution(CodeExecution(code).toExecutionCallback())
+    fun DISPLAY(value: Any) = host.display(value)
 
-    fun USE(library: LibraryDefinition) = hostProvider.host!!.addLibrary(library)
+    fun UPDATE_DISPLAY(value: Any, id: String?) = host.updateDisplay(value, id)
+
+    fun EXECUTE(code: String) = host.scheduleExecution(CodeExecution(code).toExecutionCallback())
+
+    fun USE(library: LibraryDefinition) = host.addLibrary(library)
 
     fun USE(builder: JupyterIntegration.Builder.() -> Unit) {
         val o = object : JupyterIntegration() {

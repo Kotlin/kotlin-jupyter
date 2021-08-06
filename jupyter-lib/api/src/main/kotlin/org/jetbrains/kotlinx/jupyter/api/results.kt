@@ -127,6 +127,14 @@ class MimeTypedResult(
         result.setDisplayId(id)
         return Json.encodeToJsonElement(result) as JsonObject
     }
+
+    /**
+     * Adds an [id] to this [MimeTypedResult] object
+     */
+    @Suppress("unused")
+    fun withId(id: String?): MimeTypedResult {
+        return MimeTypedResult(mimeData, isolatedHtml, id)
+    }
 }
 
 // Convenience methods for displaying results
