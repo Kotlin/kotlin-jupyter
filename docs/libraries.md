@@ -131,6 +131,21 @@ tasks.processJupyterApiResources {
 }
 ```
 
+### Integration testing for the integration logic
+You may want to automatically check if your library integrates correctly into kernel. To achieve this, inherit your
+test class from `org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase` and use its methods to execute cells.
+Your library integration descriptors should be already on classpath and will be loaded automatically by the test logic,
+you don't need to use `%use` magic or `DependsOn` annotation to switch on your library. But you may use magics and
+annotations for other purposes, as usual.
+
+The artifact containing test templates is included automatically into `testImplementation` configuration if you
+use the Gradle plugin. You may turn this behavior off by setting `kotlin.jupyter.add.testkit` Gradle property
+to `false`. If you want to include this artifact into your build manually, you'll find the instructions
+[here][maven-search-testkit].
+
+For the examples of integration testing see `org.jetbrains.kotlinx.jupyter.testkit.test.JupyterReplTestingTest` in
+this repository or [related tests in DataFrame][dataframe-integration-tests].
+
 ### Integration using other build systems
 
 If you don't use Gradle as a build system, there is an alternative way.
@@ -157,3 +172,5 @@ Classes derived from `LibraryDefinition` should be added to the `definitions` ar
 Classes derived from `LibraryDefinitionProducer` should be added to the `producers` array.
 
 [libs-repo]: https://github.com/Kotlin/kotlin-jupyter-libraries
+[dataframe-integration-tests]: https://github.com/Kotlin/dataframe/tree/master/src/test/kotlin/org/jetbrains/dataframe/jupyter
+[maven-search-testkit]: https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlin-jupyter-test-kit
