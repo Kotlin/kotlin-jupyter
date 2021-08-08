@@ -141,6 +141,7 @@ changelog {
 kotlinPublications {
     defaultGroup.set("org.jetbrains.kotlinx")
     defaultArtifactIdPrefix.set("kotlin-jupyter-")
+    fairDokkaJars.set(false)
 
     sonatypeSettings(
         typedProperty("kds.sonatype.user"),
