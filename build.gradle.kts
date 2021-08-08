@@ -132,6 +132,10 @@ changelog {
     githubUser = rootSettings.githubRepoUser
     githubRepository = rootSettings.githubRepoName
     excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
+    customTagByIssueNumber = mapOf(
+        20 to "0.10.0.183",
+        318 to "0.10.0.183",
+    )
 }
 
 kotlinPublications {

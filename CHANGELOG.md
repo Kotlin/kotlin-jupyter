@@ -1,18 +1,24 @@
 # Change Log
 
-## Unreleased (2021-07-19)
+## [0.10.0.183](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.183) (2021-08-06)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.40...0.10.0.183)
 
 **Closed issues:**
 
+- Refactor build logic [\#306](https://github.com/Kotlin/kotlin-jupyter/issues/306)
+- Update Kravis and Krangl library descriptors [\#309](https://github.com/Kotlin/kotlin-jupyter/issues/309)
+- Create a separate repository for descriptors [\#254](https://github.com/Kotlin/kotlin-jupyter/issues/254)
+- Support multiplatform projects in jupyter.api plugin [\#148](https://github.com/Kotlin/kotlin-jupyter/issues/148)
+- Update changelog [\#253](https://github.com/Kotlin/kotlin-jupyter/issues/253)
 - Update landing page screenshot [\#307](https://github.com/Kotlin/kotlin-jupyter/issues/307)
 - Display list of data classes as table [\#294](https://github.com/Kotlin/kotlin-jupyter/issues/294)
 - MIME does not allow binary data [\#293](https://github.com/Kotlin/kotlin-jupyter/issues/293)
 - Images are not displayed [\#292](https://github.com/Kotlin/kotlin-jupyter/issues/292)
-- Question about the proper way to add custom classes and files [\#280](https://github.com/Kotlin/kotlin-jupyter/issues/280)
 - Add Skija as a supported library [\#272](https://github.com/Kotlin/kotlin-jupyter/issues/272)
 
 **Fixed bugs:**
 
+- Sources are not published for API Gradle plugin [\#310](https://github.com/Kotlin/kotlin-jupyter/issues/310)
 - Fix Gradle plugin for Multiplatform project [\#255](https://github.com/Kotlin/kotlin-jupyter/issues/255)
 - Cannot find kernel [\#268](https://github.com/Kotlin/kotlin-jupyter/issues/268)
 - Completion of functions parameters works incorrectly [\#256](https://github.com/Kotlin/kotlin-jupyter/issues/256)
@@ -21,6 +27,11 @@
 
 **Merged pull requests:**
 
+- Refactor build [\#315](https://github.com/Kotlin/kotlin-jupyter/pull/315) ([@ileasile](https://github.com/ileasile))
+- Add support for IPC transport protocol [\#313](https://github.com/Kotlin/kotlin-jupyter/pull/313) ([@strangepleasures](https://github.com/strangepleasures))
+- Add separate repository for library descriptors [\#303](https://github.com/Kotlin/kotlin-jupyter/pull/303) ([@ileasile](https://github.com/ileasile))
+- Fix completion starting logic, avoid preventDefault [\#308](https://github.com/Kotlin/kotlin-jupyter/pull/308) ([@ileasile](https://github.com/ileasile))
+- Update Changelog and fix Gradle plugin sources publication [\#311](https://github.com/Kotlin/kotlin-jupyter/pull/311) ([@ileasile](https://github.com/ileasile))
 - Variables view feature [\#297](https://github.com/Kotlin/kotlin-jupyter/pull/297) ([@nikolay-egorov](https://github.com/nikolay-egorov))
 - Conditional Gradle plugin tasks initialization [\#298](https://github.com/Kotlin/kotlin-jupyter/pull/298) ([@ileasile](https://github.com/ileasile))
 - Create specialized kernels w/ JDK, JVM args, and environment variables [\#287](https://github.com/Kotlin/kotlin-jupyter/pull/287) ([@rnett](https://github.com/rnett))
@@ -29,6 +40,12 @@
 
 **New features:**
 
+- Allow for multiple cell outputs [\#20](https://github.com/Kotlin/kotlin-jupyter/issues/20)
+- Dynamic update of cell output [\#318](https://github.com/Kotlin/kotlin-jupyter/issues/318)
+- Integration testing Jupyter notebook support [\#270](https://github.com/Kotlin/kotlin-jupyter/issues/270)
+- Add resource builder for Notebook API [\#129](https://github.com/Kotlin/kotlin-jupyter/issues/129)
+- Load static resources via module descriptions [\#74](https://github.com/Kotlin/kotlin-jupyter/issues/74)
+- Autoremove closing bracket when opening is removed [\#245](https://github.com/Kotlin/kotlin-jupyter/issues/245)
 - Allow setting JDK to use [\#284](https://github.com/Kotlin/kotlin-jupyter/issues/284)
 - Pass args on JVM startup [\#72](https://github.com/Kotlin/kotlin-jupyter/issues/72)
 
@@ -381,7 +398,7 @@
 
 
 ## [v0.7.2](https://github.com/Kotlin/kotlin-jupyter/tree/v0.7.2) (2019-12-04)
-[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/e5987c6b8ef58a26a9a28cd8a7b2ec515fe9f9d4...v0.7.2)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/105aef7d9d52a855328f845d5c79dd37025944ff...v0.7.2)
 
 **Closed issues:**
 
