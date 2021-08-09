@@ -92,7 +92,25 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     private val variablesDeclarationInfo: MutableMap<V, K> = mutableMapOf()
 
     private val unchangedVariables: MutableSet<V> = mutableSetOf()
-//    private val unchangedVariables: MutableSet<V> = mutableSetOf()
+
+    fun removeOldDeclarations(address: K, newDeclarations: Set<V>) {
+        // removeIf?
+        cellVariables[address]?.forEach {
+            val predicate = newDeclarations.contains(it) && variablesDeclarationInfo[it] != address
+            if (predicate) {
+                variablesDeclarationInfo.remove(it)
+                unchangedVariables.remove(it)
+            }
+//            predicate
+        }
+
+        // add old declarations as unchanged
+        variablesDeclarationInfo.forEach { (name, _) ->
+            if (!newDeclarations.contains(name)) {
+                unchangedVariables.add(name)
+            }
+        }
+    }
 
     fun addDeclaration(address: K, variableRef: V) {
         ensureStorageCreation(address)
@@ -122,7 +140,7 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
         // remove known modifying usages in this cell
         cellVariables[newAddress]?.removeIf {
             val predicate = variablesDeclarationInfo[it] != newAddress
-            if (predicate) {
+            if (predicate && variablesDeclarationInfo.containsKey(it)) {
                 unchangedVariables.add(it)
             }
             predicate

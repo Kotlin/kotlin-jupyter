@@ -651,12 +651,12 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var z = 1
             z += x
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 2
         )
         assertTrue(state.isNotEmpty())
 
-        // TODO discuss if we really want this
-        val setOfCell = setOf("z", "f", "x")
+        // TODO discuss if we really want "z", "f", "x"
+        val setOfCell = setOf("z")
         assertTrue(state.containsValue(setOfCell))
     }
 
@@ -801,6 +801,51 @@ class ReplVarsTest : AbstractSingleReplTest() {
         assertEquals(state[0], setOfPrevCell)
         assertEquals(state[1], setOfNextCell)
     }
+
+    @Test
+    fun unchangedVariablesGapedRedefinition() {
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var state = repl.notebook.unchangedVariables()
+        assertEquals(3, state.size)
+
+        eval(
+            """
+            private val x = "abcd"
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        state = repl.notebook.unchangedVariables()
+        assertEquals(1, state.size)
+        assertTrue(state.contains("f"))
+
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47 
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        state = repl.notebook.unchangedVariables()
+        assertEquals(0, state.size)
+
+        eval(
+            """
+            var f = 47 
+            """.trimIndent(),
+            jupyterId = 3
+        )
+        state = repl.notebook.unchangedVariables()
+        assertEquals(2, state.size)
+    }
 }
 
 class ReplVarsSerializationTest : AbstractSingleReplTest() {
@@ -835,7 +880,33 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         val serializer = repl.variablesSerializer
         val newData = serializer.doIncrementalSerialization(0, "data", actualContainer)
-        val a = 1
+    }
+
+    @Test
+    fun testUnchangedVarsRedefinition() {
+        val res = eval(
+            """
+            val x = listOf(1, 2, 3, 4)
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(2, varsData.size)
+        assertTrue(varsData.containsKey("x"))
+        assertTrue(varsData.containsKey("f"))
+        var unchangedVariables = repl.notebook.unchangedVariables()
+        assertTrue(unchangedVariables.isNotEmpty())
+
+        eval(
+            """
+            val x = listOf(1, 2, 3, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        unchangedVariables = repl.notebook.unchangedVariables()
+        assertTrue(unchangedVariables.contains("x"))
+        assertTrue(unchangedVariables.contains("f"))
     }
 
     @Test
@@ -898,7 +969,6 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val serializer = repl.variablesSerializer
 
         val newData = serializer.doIncrementalSerialization(0, "i", descriptor["i"]!!)
-        val a = 1
     }
 
     @Test
@@ -923,7 +993,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertEquals(4, receivedDescriptor.size)
 
         var values = 1
-        receivedDescriptor.forEach { (name, state) ->
+        receivedDescriptor.forEach { (_, state) ->
             val fieldDescriptor = state!!.fieldDescriptor
             assertEquals(0, fieldDescriptor.size)
             assertTrue(state.isContainer)
@@ -935,15 +1005,44 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testMapContainer() {
+    fun incrementalUpdateTestWithPath() {
         val res = eval(
             """
-            val x = mapOf(1 to "a", 2 to "b", 3 to "c", 4 to "c")
+            val x = listOf(listOf(1), listOf(2), listOf(3), listOf(4))
             """.trimIndent(),
             jupyterId = 1
         )
         val varsData = res.metadata.evaluatedVariablesState
-        assertEquals(1, varsData.size)
+        val listData = varsData["x"]!!
+        assertEquals(2, listData.fieldDescriptor.size)
+        val actualContainer = listData.fieldDescriptor.entries.first().value!!
+        val serializer = repl.variablesSerializer
+        val path = listOf("x", "a")
+
+        val newData = serializer.doIncrementalSerialization(0, listData.fieldDescriptor.entries.first().key, actualContainer, path)
+        val receivedDescriptor = newData.fieldDescriptor
+        assertEquals(4, receivedDescriptor.size)
+
+        var values = 1
+        receivedDescriptor.forEach { (_, state) ->
+            val fieldDescriptor = state!!.fieldDescriptor
+            assertEquals(0, fieldDescriptor.size)
+            assertTrue(state.isContainer)
+            assertEquals("${values++}", state.value)
+        }
+    }
+
+    @Test
+    fun testMapContainer() {
+        val res = eval(
+            """
+            val x = mapOf(1 to "a", 2 to "b", 3 to "c", 4 to "c")
+            val m = mapOf(1 to "a")
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(2, varsData.size)
         assertTrue(varsData.containsKey("x"))
 
         val mapData = varsData["x"]!!
@@ -961,8 +1060,8 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         val serializer = repl.variablesSerializer
 
-        val newData = serializer.doIncrementalSerialization(0, "values", valuesDescriptor)
-        val newDescriptor = newData.fieldDescriptor
+        var newData = serializer.doIncrementalSerialization(0, "values", valuesDescriptor)
+        var newDescriptor = newData.fieldDescriptor
         assertEquals("4", newDescriptor["size"]!!.value)
         assertEquals(3, newDescriptor["data"]!!.fieldDescriptor.size)
         val ansSet = mutableSetOf("a", "b", "c")
@@ -972,8 +1071,26 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             ansSet.remove(state.value)
         }
         assertTrue(ansSet.isEmpty())
-    }
 
+        val entriesDescriptor = listDescriptors["entries"]!!
+        assertEquals("4", valuesDescriptor.fieldDescriptor["size"]!!.value)
+        assertTrue(valuesDescriptor.fieldDescriptor["data"]!!.isContainer)
+        newData = serializer.doIncrementalSerialization(0, "entries", entriesDescriptor)
+        newDescriptor = newData.fieldDescriptor
+        assertEquals("4", newDescriptor["size"]!!.value)
+        assertEquals(4, newDescriptor["data"]!!.fieldDescriptor.size)
+        ansSet.add("1=a")
+        ansSet.add("2=b")
+        ansSet.add("3=c")
+        ansSet.add("4=c")
+
+        newDescriptor["data"]!!.fieldDescriptor.forEach { (_, state) ->
+            assertFalse(state!!.isContainer)
+            assertTrue(ansSet.contains(state.value))
+            ansSet.remove(state.value)
+        }
+        assertTrue(ansSet.isEmpty())
+    }
 
     @Test
     fun testSetContainer() {
@@ -1066,7 +1183,6 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
                 assertTrue(innerList.isContainer)
                 val receivedDescriptor = innerList.fieldDescriptor
 
-
                 assertEquals(4, receivedDescriptor.size)
                 var values = 1
                 receivedDescriptor.forEach { (_, state) ->
@@ -1079,6 +1195,32 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         }
     }
 
+    @Test
+    fun testUnchangedVariablesSameCell() {
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.unchangedVariables()
+        val setOfCell = setOf("x", "f", "z")
+        assertTrue(state.isNotEmpty())
+        assertEquals(setOfCell, state)
+
+        eval(
+            """
+            private val x = "44"
+            var f = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        assertTrue(state.isNotEmpty())
+        // it's ok that there's more info, cache's data would filter out
+        assertEquals(setOf("f", "x", "z"), state)
+    }
 
     @Test
     fun testUnchangedVariables() {
@@ -1117,7 +1259,6 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertTrue(state.isNotEmpty())
         assertEquals(state, setOfPrevCell)
 
-
         eval(
             """
             private val x = 341
@@ -1125,7 +1266,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        assertTrue(state.isEmpty())
+        assertTrue(state.contains("f"))
 
         eval(
             """

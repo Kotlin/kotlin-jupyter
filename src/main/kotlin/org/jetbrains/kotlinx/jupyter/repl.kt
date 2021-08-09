@@ -5,6 +5,9 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -139,7 +142,8 @@ interface ReplForJupyter {
 
     suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
 
-    suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
+    suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String> = emptyList(),
+                                   callback: (SerializationReply) -> Unit)
 
     val homeDir: File?
 
@@ -212,7 +216,7 @@ class ReplForJupyterImpl(
 
     override val variablesSerializer = VariablesSerializer()
 
-    private val librariesScanner = LibrariesScanner(notebook)
+    val librariesScanner = LibrariesScanner(notebook)
     private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
     override var outputConfig
@@ -459,8 +463,10 @@ class ReplForJupyterImpl(
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
             val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, notebook.unchangedVariables())
 
+            GlobalScope.launch(Dispatchers.Default) {
+                variablesSerializer.tryValidateCache(jupyterId - 1, notebook.cellVariables)
+            }
 
-            val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(
                 result.result.value,
                 rendered,
@@ -567,8 +573,9 @@ class ReplForJupyterImpl(
         doWithLock(SerializationArgs(descriptorsState, cellId = cellId, callback = callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
     }
 
-    override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
-        doWithLock(SerializationArgs(descriptorsState, topLevelVarName = topLevelVarName, callback = callback), serializationQueue, SerializationReply(), ::doSerializeVariables)
+    override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String>,
+                                            callback: (SerializationReply) -> Unit) {
+        doWithLock(SerializationArgs(descriptorsState, topLevelVarName = topLevelVarName, callback = callback, pathToDescriptor = pathToDescriptor), serializationQueue, SerializationReply(), ::doSerializeVariables)
     }
 
     private fun doSerializeVariables(args: SerializationArgs): SerializationReply {
@@ -579,7 +586,7 @@ class ReplForJupyterImpl(
             finalAns
         }
         args.descriptorsState.forEach { (name, state) ->
-            resultMap[name] = variablesSerializer.doIncrementalSerialization(cellId - 1, name, state)
+            resultMap[name] = variablesSerializer.doIncrementalSerialization(cellId - 1, name, state, args.pathToDescriptor)
         }
         log.debug("Serialization cellID: $cellId")
         log.debug("Serialization answer: ${resultMap.entries.first().value.fieldDescriptor}")
@@ -623,6 +630,7 @@ class ReplForJupyterImpl(
         val descriptorsState: Map<String, SerializedVariablesState>,
         var cellId: Int = -1,
         val topLevelVarName: String = "",
+        val pathToDescriptor: List<String> = emptyList(),
         override val callback: (SerializationReply) -> Unit
     ) : LockQueueArgs<SerializationReply>
 

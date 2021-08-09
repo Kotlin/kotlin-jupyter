@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import java.lang.reflect.Field
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.math.abs
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -32,7 +33,8 @@ enum class PropertiesType {
 @Serializable
 data class SerializedCommMessageContent(
     val topLevelDescriptorName: String,
-    val descriptorsState: Map<String, SerializedVariablesState>
+    val descriptorsState: Map<String, SerializedVariablesState>,
+    val pathToDescriptor: List<String> = emptyList()
 )
 
 fun getVariablesDescriptorsFromJson(json: JsonObject): SerializedCommMessageContent {
@@ -73,14 +75,42 @@ data class RuntimeObjectWrapper(
 
 fun Any?.toObjectWrapper(): RuntimeObjectWrapper = RuntimeObjectWrapper(this)
 
-class VariablesSerializer(private val serializationDepth: Int = 2, private val serializationLimit: Int = 10000) {
+/**
+ * Provides contract for using threshold-based removal heuristic.
+ * Every serialization-related info in [T] would be removed once [isShouldRemove] == true.
+ * Default: T = Int, cellID
+ */
+interface ClearableSerializer<T> {
+    fun isShouldRemove(currentState: T): Boolean
+
+    suspend fun clearStateInfo(currentState: T)
+}
+
+class VariablesSerializer(
+    private val serializationDepth: Int = 2,
+    private val serializationLimit: Int = 10000,
+    private val cellCountRemovalThreshold: Int = 5,
+    // let's make this flag customizable from Jupyter config menu
+    val shouldRemoveOldVariablesFromCache: Boolean = true
+) : ClearableSerializer<Int> {
 
     fun MutableMap<String, SerializedVariablesState?>.addDescriptor(value: Any?, name: String = value.toString()) {
+        val typeName = if (value != null) value::class.simpleName else "null"
         this[name] = createSerializeVariableState(
             name,
-            if (value != null) value::class.simpleName else "null",
+            typeName,
             value
         ).serializedVariablesState
+        if (typeName != null && typeName == "Entry") {
+            val descriptor = this[name]
+            value as Map.Entry<*, *>
+            val valueType = if (value.value != null) value.value!!::class.simpleName else "null"
+            descriptor!!.fieldDescriptor[value.key.toString()] = createSerializeVariableState(
+                value.key.toString(),
+                valueType,
+                value.value
+            ).serializedVariablesState
+        }
     }
 
     /**
@@ -94,7 +124,8 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             "Array",
             "Map",
             "Set",
-            "Collection"
+            "Collection",
+            "LinkedValues"
         )
 
         fun isStandardType(type: String): Boolean = containersTypes.contains(type)
@@ -114,16 +145,18 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
                 if (value != null) value::class.declaredMemberProperties else {
                     null
                 }
-            } catch (ex: Exception) {null}
+            } catch (ex: Exception) { null }
             val serializedVersion = SerializedVariablesState(simpleTypeName, getProperString(value), true)
             val descriptors = serializedVersion.fieldDescriptor
 
             // only for set case
-            if (simpleTypeName == "Set" && kProperties == null) {
+            if (simpleTypeName == "Set" && kProperties == null && value != null) {
                 value as Set<*>
                 val size = value.size
                 descriptors["size"] = createSerializeVariableState(
-                    "size", "Int", size
+                    "size",
+                    "Int",
+                    size
                 ).serializedVariablesState
                 descriptors.addDescriptor(value, "data")
             }
@@ -233,7 +266,59 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
      */
     private val serializedVariablesCache: MutableMap<String, SerializedVariablesState> = mutableMapOf()
 
+    private val removedFromSightVariables: MutableSet<String> = mutableSetOf()
+
+    private suspend fun clearOldData(currentCellId: Int, cellVariables: Map<Int, Set<String>>) {
+        fun removeFromCache(cellId: Int) {
+            val oldDeclarations = cellVariables[cellId]
+            oldDeclarations?.let { oldSet ->
+                oldSet.forEach { varName ->
+                    serializedVariablesCache.remove(varName)
+                    removedFromSightVariables.add(varName)
+                }
+            }
+        }
+
+        val setToRemove = mutableSetOf<Int>()
+        computedDescriptorsPerCell.forEach { (cellNumber, _) ->
+            if (abs(currentCellId - cellNumber) >= cellCountRemovalThreshold) {
+                setToRemove.add(cellNumber)
+            }
+        }
+        log.debug("Removing old info about cells: $setToRemove")
+        setToRemove.forEach {
+            clearStateInfo(it)
+            if (shouldRemoveOldVariablesFromCache) {
+                removeFromCache(it)
+            }
+        }
+    }
+
+    override fun isShouldRemove(currentState: Int): Boolean {
+        return computedDescriptorsPerCell.size >= cellCountRemovalThreshold
+    }
+
+    override suspend fun clearStateInfo(currentState: Int) {
+        computedDescriptorsPerCell.remove(currentState)
+        seenObjectsPerCell.remove(currentState)
+    }
+
+    suspend fun tryValidateCache(currentCellId: Int, cellVariables: Map<Int, Set<String>>) {
+        if (!isShouldRemove(currentCellId)) return
+        clearOldData(currentCellId, cellVariables)
+    }
+
     fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
+        fun removeNonExistingEntries() {
+            val toRemoveSet = mutableSetOf<String>()
+            serializedVariablesCache.forEach { (name, _) ->
+                if (!variablesState.containsKey(name)) {
+                    toRemoveSet.add(name)
+                }
+            }
+            toRemoveSet.forEach { serializedVariablesCache.remove(it) }
+        }
+
         if (!isSerializationActive) return emptyMap()
 
         if (seenObjectsPerCell.containsKey(cellId)) {
@@ -243,15 +328,35 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             return emptyMap()
         }
         currentSerializeCount = 0
+        val neededEntries = variablesState.filterKeys {
+            val wasRedeclared = !unchangedVariables.contains(it)
+            if (wasRedeclared) {
+                removedFromSightVariables.remove(it)
+            }
+            (unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
+                !removedFromSightVariables.contains(it)
+        }
+        log.debug("Variables state as is: $variablesState")
+        log.debug("Serializing variables after filter: $neededEntries")
+        log.debug("Unchanged variables: $unchangedVariables")
 
-        val neededEntries = variablesState.filterKeys { unchangedVariables.contains(it) }
-
+        // remove previous data
+        computedDescriptorsPerCell[cellId]?.instancesPerState?.clear()
         val serializedData = neededEntries.mapValues { serializeVariableState(cellId, it.key, it.value) }
+
         serializedVariablesCache.putAll(serializedData)
+        removeNonExistingEntries()
+        log.debug(serializedVariablesCache.entries.toString())
+
         return serializedVariablesCache
     }
 
-    fun doIncrementalSerialization(cellId: Int, propertyName: String, serializedVariablesState: SerializedVariablesState): SerializedVariablesState {
+    fun doIncrementalSerialization(
+        cellId: Int,
+        propertyName: String,
+        serializedVariablesState: SerializedVariablesState,
+        pathToDescriptor: List<String> = emptyList()
+    ): SerializedVariablesState {
         if (!isSerializationActive) return serializedVariablesState
 
         val cellDescriptors = computedDescriptorsPerCell[cellId] ?: return serializedVariablesState
@@ -301,9 +406,14 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         seenObjectsPerCell.putIfAbsent(cellId, mutableMapOf())
 
         if (isOverride) {
+            val instances = computedDescriptorsPerCell[cellId]?.instancesPerState
             computedDescriptorsPerCell[cellId] = ProcessedDescriptorsState()
+            if (instances != null) {
+                computedDescriptorsPerCell[cellId]!!.instancesPerState += instances
+            }
         }
         val currentCellDescriptors = computedDescriptorsPerCell[cellId]
+        // TODO should we stack?
         currentCellDescriptors!!.processedSerializedVarsToJavaProperties[serializedVersion] = processedData.propertiesData
         currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion] = processedData.kPropertiesData
 
@@ -383,8 +493,11 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
         val isArrayType = checkForPossibleArray(callInstance)
         computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
 
-        if (descriptor.size == 2 && descriptor.containsKey("data")) {
-            val listData = descriptor["data"]?.fieldDescriptor ?: return
+        if (descriptor.size == 2 && (descriptor.containsKey("data") || descriptor.containsKey("element"))) {
+            val singleElemMode = descriptor.containsKey("element")
+            val listData = if (!singleElemMode) descriptor["data"]?.fieldDescriptor else {
+                descriptor["element"]?.fieldDescriptor
+            } ?: return
             if (descriptor.containsKey("size") && descriptor["size"]?.value == "null") {
                 descriptor.remove("size")
                 descriptor.remove("data")
@@ -420,19 +533,6 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
                 )
             }
         }
-        /*
-        if (descriptor.size == 2 && descriptor.containsKey("data")) {
-            val listData = descriptor["data"]?.fieldDescriptor ?: return
-            if (callInstance is Collection<*>) {
-                callInstance.forEach {
-                    listData.addDescriptor(it)
-                }
-            } else if (callInstance is Array<*>) {
-                callInstance.forEach {
-                    listData.addDescriptor(it)
-                }
-            }
-        }*/
     }
 
     /**
@@ -488,7 +588,11 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             val returnType = property.type
             returnType.simpleName
         } else {
-            value?.toString()
+            if (value != null) {
+                value::class.simpleName
+            } else {
+                value?.toString()
+            }
         }
     }
 
@@ -520,14 +624,14 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
             !(it.name.startsWith("script$") || it.name.startsWith("serialVersionUID"))
         }
 
-        val isContainer = if (membersProperties != null) (
-            !primitiveWrappersSet.contains(javaClass) && membersProperties.isNotEmpty() || value is Set<*> || value::class.java.isArray || javaClass.isMemberClass
-            ) else false
         val type = if (value != null && value::class.java.isArray) {
             "Array"
         } else {
             simpleTypeName.toString()
         }
+        val isContainer = if (membersProperties != null) (
+            !primitiveWrappersSet.contains(javaClass) && type != "Entry" && membersProperties.isNotEmpty() || value is Set<*> || value::class.java.isArray || (javaClass.isMemberClass && type != "Entry")
+            ) else false
 
         if (value != null && standardContainersUtilizer.isStandardType(type)) {
             return standardContainersUtilizer.serializeContainer(type, value)
@@ -595,11 +699,21 @@ class VariablesSerializer(private val serializationDepth: Int = 2, private val s
 }
 
 fun getProperString(value: Any?): String {
-    fun print(builder: StringBuilder, containerSize: Int, index: Int, value: Any?) {
+    fun print(builder: StringBuilder, containerSize: Int, index: Int, value: Any?, mapMode: Boolean = false) {
         if (index != containerSize - 1) {
-            builder.append(value, ", ")
+            if (mapMode) {
+                value as Map.Entry<*, *>
+                builder.append(value.key, '=', value.value, "\n")
+            } else {
+                builder.append(value, ", ")
+            }
         } else {
-            builder.append(value)
+            if (mapMode) {
+                value as Map.Entry<*, *>
+                builder.append(value.key, '=', value.value)
+            } else {
+                builder.append(value)
+            }
         }
     }
 
@@ -637,9 +751,11 @@ fun getProperString(value: Any?): String {
         val isMap = kClass.isMap()
         if (isMap) {
             value as Map<*, *>
+            val size = value.size
+            var ind = 0
             return buildString {
                 value.forEach {
-                    append(it.key, '=', it.value, "\n")
+                    print(this, size, ind++, it, true)
                 }
             }
         }

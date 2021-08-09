@@ -560,7 +560,8 @@ class ListErrorsReply(
 class SerializationRequest(
     val cellId: Int,
     val descriptorsState: Map<String, SerializedVariablesState>,
-    val topLevelDescriptorName: String = ""
+    val topLevelDescriptorName: String = "",
+    val pathToDescriptor: List<String> = emptyList()
 ) : MessageContent()
 
 @Serializable

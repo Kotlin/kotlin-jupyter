@@ -317,7 +317,11 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
 
             val messageContent = getVariablesDescriptorsFromJson(data)
             GlobalScope.launch(Dispatchers.Default) {
-                repl.serializeVariables(messageContent.topLevelDescriptorName, messageContent.descriptorsState) { result ->
+                repl.serializeVariables(
+                    messageContent.topLevelDescriptorName,
+                    messageContent.descriptorsState,
+                    messageContent.pathToDescriptor
+                ) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_OPEN, content = result))
                 }
             }
@@ -339,7 +343,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         is SerializationRequest -> {
             GlobalScope.launch(Dispatchers.Default) {
                 if (content.topLevelDescriptorName.isNotEmpty()) {
-                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState) { result ->
+                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState, content.pathToDescriptor) { result ->
                         sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
                     }
                 } else {

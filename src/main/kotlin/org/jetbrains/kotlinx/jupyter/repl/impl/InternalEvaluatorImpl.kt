@@ -155,7 +155,6 @@ internal class InternalEvaluatorImpl(
 
     private fun updateVariablesState(cellId: Int) {
         variablesWatcher.removeOldUsages(cellId)
-
         variablesHolder.forEach {
             val state = it.value as VariableStateImpl
 
@@ -189,6 +188,8 @@ internal class InternalEvaluatorImpl(
 
                 put(property.name, state)
             }
+            // remove old
+            variablesWatcher.removeOldDeclarations(cellId, addedDeclarations)
         }
     }
 
@@ -199,7 +200,7 @@ internal class InternalEvaluatorImpl(
     private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
         variablesWatcher.ensureStorageCreation(lastExecutionCellId)
         variablesHolder += getVisibleVariables(resultValue, lastExecutionCellId)
-
+        // remove unreached variables
         updateVariablesState(lastExecutionCellId)
     }
 }
