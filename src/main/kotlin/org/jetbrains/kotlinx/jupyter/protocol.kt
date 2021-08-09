@@ -236,7 +236,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                             "text/x-kotlin",
                             ".kt",
                             "kotlin",
-                            "text/x-kotlin",
+                            "kotlin",
                             ""
                         ),
                         listOf()
