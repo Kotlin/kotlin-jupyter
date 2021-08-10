@@ -146,10 +146,10 @@ internal class InternalEvaluatorImpl(
 
         variablesHolder.forEach {
             val state = it.value as VariableStateImpl
-            val oldValue = state.stringValue
+            val oldValue = state.value
             state.update()
 
-            if (state.stringValue != oldValue) {
+            if (state.value?.equals(oldValue) == false) {
                 variablesWatcher.addUsage(cellId, it.key)
             }
         }

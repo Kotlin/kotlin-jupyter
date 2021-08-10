@@ -742,6 +742,29 @@ class ReplVarsTest : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testRecursiveVarsState() {
+        eval(
+            """
+            val l = mutableListOf<Any>()
+            l.add(listOf(l))
+            
+            val m = mapOf(1 to l)
+            
+            val z = setOf(1, 2, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val state = repl.notebook.variablesState
+        assertTrue(state.contains("l"))
+        assertTrue(state.contains("m"))
+        assertTrue(state.contains("z"))
+
+        assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
+        assertTrue(state["m"]!!.stringValue!!.contains(" recursive structure"))
+        assertEquals("[1, 2, 4]", state["z"]!!.stringValue)
+    }
+
+    @Test
     fun testSeparatePrivateCellsUsage() {
         eval(
             """
