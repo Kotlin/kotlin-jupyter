@@ -27,6 +27,7 @@ buildSettings {
     withTests()
     withCompilerArgs {
         requiresOptIn()
+        allowResultReturnType()
     }
 }
 
