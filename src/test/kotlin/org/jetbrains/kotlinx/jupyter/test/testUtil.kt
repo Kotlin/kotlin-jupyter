@@ -103,12 +103,16 @@ fun CompletionResult.getOrFail(): CompletionResult.Success = when (this) {
     else -> fail("Result should be success")
 }
 
+fun Map<String, VariableState>.mapToStringValues(): Map<String, String?> {
+    return mapValues { it.value.stringValue }
+}
+
 fun Map<String, VariableState>.getStringValue(variableName: String): String? {
     return get(variableName)?.stringValue
 }
 
 fun Map<String, VariableState>.getValue(variableName: String): Any? {
-    return get(variableName)?.value
+    return get(variableName)?.value?.getOrNull()
 }
 
 class InMemoryLibraryResolver(

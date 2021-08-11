@@ -419,7 +419,7 @@ class ReplForJupyterImpl(
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
 
 
-            val variablesStateUpdate = notebook.variablesState.mapValues { it.value.stringValue }
+            val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(
                 result.result.value,
                 rendered,

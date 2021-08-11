@@ -48,6 +48,7 @@ class BuildSettingsExtension(private val project: Project) {
 
         fun skipPrereleaseCheck() = args.add("-Xskip-prerelease-check")
         fun requiresOptIn() = args.add("-Xopt-in=kotlin.RequiresOptIn")
+        fun allowResultReturnType() = args.add("-Xallow-result-return-type")
     }
 
     fun withCompilerArgs(configure: KotlinCompilerArgsBuilder.() -> Unit) {

@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
+import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -450,7 +451,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
     @Test
     fun testVarsStateConsistency() {
         assertTrue(repl.notebook.variablesState.isEmpty())
-        val res = eval(
+        eval(
             """
             val x = 1 
             val y = 0
@@ -463,7 +464,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             "y" to "0",
             "z" to "47"
         )
-        assertEquals(res.metadata.evaluatedVariablesState, varsUpdate)
+        assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
         assertFalse(repl.notebook.variablesState.isEmpty())
         val varsState = repl.notebook.variablesState
         assertEquals("1", varsState.getStringValue("x"))
@@ -489,7 +490,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testVarsCapture() {
-        val res = eval(
+        eval(
             """
             val x = 1 
             val y = "abc"
@@ -498,13 +499,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
         )
         val varsState = repl.notebook.variablesState
         assertTrue(varsState.isNotEmpty())
-        val strState = mutableMapOf<String, String>()
-        varsState.forEach {
-            strState[it.key] = it.value.stringValue ?: return@forEach
-        }
+        val strState = varsState.mapToStringValues()
 
-        val returnedState = res.metadata.evaluatedVariablesState
-        assertEquals(strState, returnedState)
+        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
+        assertEquals(strState, goalState)
         assertEquals(1, varsState.getValue("x"))
         assertEquals("abc", varsState.getStringValue("y"))
         assertEquals("1", varsState.getStringValue("z"))
@@ -552,7 +550,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testPrivateVarsCapture() {
-        val res = eval(
+        eval(
             """
             private val x = 1 
             private val y = "abc"
@@ -561,13 +559,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
         )
         val varsState = repl.notebook.variablesState
         assertTrue(varsState.isNotEmpty())
-        val strState = mutableMapOf<String, String>()
-        varsState.forEach {
-            strState[it.key] = it.value.stringValue ?: return@forEach
-        }
+        val strState = varsState.mapValues { it.value.stringValue }
 
-        val returnedState = res.metadata.evaluatedVariablesState
-        assertEquals(strState, returnedState)
+        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
+        assertEquals(strState, goalState)
         assertEquals(1, varsState.getValue("x"))
         assertEquals("abc", varsState.getStringValue("y"))
         assertEquals("1", varsState.getStringValue("z"))
