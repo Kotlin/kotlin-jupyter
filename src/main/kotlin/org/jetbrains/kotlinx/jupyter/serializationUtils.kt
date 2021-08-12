@@ -375,8 +375,8 @@ class VariablesSerializer(
     ): SerializedVariablesState {
         val value = evaluatedDescriptorsState.instancesPerState[serializedVariablesState]
         val propertiesData = evaluatedDescriptorsState.processedSerializedVarsToJavaProperties[serializedVariablesState]
-        if (propertiesData == null && value != null && (value::class.java.isArray || value::class.java.isMemberClass)) {
-            return serializeVariableState(cellId, propertyName, propertiesData, value, false)
+        if (value != null && (value::class.java.isArray || value::class.java.isMemberClass)) {
+            return serializeVariableState(cellId, propertyName, propertiesData?.firstOrNull(), value, false)
         }
         val property = propertiesData?.firstOrNull {
             it.name == propertyName
@@ -432,7 +432,6 @@ class VariablesSerializer(
             } else {
                 iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
             }
-            iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
         }
 
         return processedData.serializedVariablesState
@@ -559,7 +558,23 @@ class VariablesSerializer(
             tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
         }
 
-        if (!seenObjectsPerCell!!.containsKey(value)) {
+        val simpleType = if (elem is Field) getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
+        else {
+            elem as KProperty1<Any, *>
+            getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
+        }
+        serializedIteration[name] = if (standardContainersUtilizer.isStandardType(simpleType)) {
+            standardContainersUtilizer.serializeContainer(simpleType, value.objectInstance, true)
+        } else {
+            createSerializeVariableState(name, simpleType, value)
+        }
+        descriptor[name] = serializedIteration[name]!!.serializedVariablesState
+
+        if (descriptor[name] != null) {
+            instancesPerState[descriptor[name]!!] = value.objectInstance
+        }
+
+/*        if (!seenObjectsPerCell!!.containsKey(value)) {
             val simpleType = if (elem is Field) getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
             else {
                 elem as KProperty1<Any, *>
@@ -571,12 +586,18 @@ class VariablesSerializer(
                 createSerializeVariableState(name, simpleType, value)
             }
             descriptor[name] = serializedIteration[name]!!.serializedVariablesState
-        }
-        if (descriptor[name] != null) {
-            instancesPerState[descriptor[name]!!] = value.objectInstance
-        }
 
-        if (!seenObjectsPerCell.containsKey(value)) {
+            if (descriptor[name] != null) {
+                instancesPerState[descriptor[name]!!] = value.objectInstance
+            }
+        }*/
+//        else {
+//            val descriptorsState = seenObjectsPerCell[value]
+//            descriptor.putAll(descriptorsState?.fieldDescriptor ?: emptyMap())
+//        }
+
+
+        if (seenObjectsPerCell?.containsKey(value) == false) {
             if (descriptor[name] != null) {
                 seenObjectsPerCell[value] = descriptor[name]!!
             }

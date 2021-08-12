@@ -1195,6 +1195,59 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         }
     }
 
+
+    @Test
+    fun testCyclicSerializationMessage() {
+        val res = eval(
+            """
+            class C {
+                inner class Inner;
+                val i = Inner()
+                val counter = 0
+            }
+            val c = C()
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val varsData = res.metadata.evaluatedVariablesState
+        assertEquals(1, varsData.size)
+        val listData = varsData["c"]!!
+        assertTrue(listData.isContainer)
+        val actualContainer = listData.fieldDescriptor.entries.first().value!!
+        val propertyName = listData.fieldDescriptor.entries.first().key
+
+        runBlocking {
+            repl.serializeVariables(1, mapOf(propertyName to actualContainer)) { result ->
+                val data = result.descriptorsState
+                assertTrue(data.isNotEmpty())
+
+                val innerList = data.entries.last().value
+                assertTrue(innerList.isContainer)
+                val receivedDescriptor = innerList.fieldDescriptor
+                assertEquals(1, receivedDescriptor.size)
+                val originalClass = receivedDescriptor.entries.first().value!!
+                assertEquals(2, originalClass.fieldDescriptor.size)
+                assertTrue(originalClass.fieldDescriptor.containsKey("i"))
+                assertTrue(originalClass.fieldDescriptor.containsKey("counter"))
+
+                val anotherI = originalClass.fieldDescriptor["i"]!!
+                runBlocking {
+                    repl.serializeVariables(1, mapOf(propertyName to anotherI)) { res ->
+                        val data = res.descriptorsState
+                        val innerList = data.entries.last().value
+                        assertTrue(innerList.isContainer)
+                        val receivedDescriptor = innerList.fieldDescriptor
+                        assertEquals(1, receivedDescriptor.size)
+                        val originalClass = receivedDescriptor.entries.first().value!!
+                        assertEquals(2, originalClass.fieldDescriptor.size)
+                        assertTrue(originalClass.fieldDescriptor.containsKey("i"))
+                        assertTrue(originalClass.fieldDescriptor.containsKey("counter"))
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     fun testUnchangedVariablesSameCell() {
         eval(
@@ -1232,7 +1285,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.unchangedVariables()
+        var state = repl.notebook.unchangedVariables()
         val setOfCell = setOf("x", "f", "z")
         assertTrue(state.isNotEmpty())
         assertEquals(setOfCell, state)
@@ -1254,19 +1307,11 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             private val x = 341
             protected val z = "abcd"
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 3
         )
-        assertTrue(state.isNotEmpty())
-        assertEquals(state, setOfPrevCell)
-
-        eval(
-            """
-            private val x = 341
-            protected val z = "abcd"
-            """.trimIndent(),
-            jupyterId = 1
-        )
-        assertTrue(state.contains("f"))
+        state = repl.notebook.unchangedVariables()
+//        assertTrue(state.isNotEmpty())
+//        assertEquals(state, setOfPrevCell)
 
         eval(
             """
@@ -1274,9 +1319,9 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             var f = 47
             internal val z = 47
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 4
         )
-        assertTrue(state.isNotEmpty())
-        assertEquals(setOfPrevCell, state)
+        state = repl.notebook.unchangedVariables()
+        assertTrue(state.isEmpty())
     }
 }
