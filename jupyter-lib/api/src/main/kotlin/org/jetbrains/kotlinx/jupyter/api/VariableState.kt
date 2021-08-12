@@ -25,7 +25,7 @@ data class VariableStateImpl(
         val fieldValue = try {
             Result.success(property.get(scriptInstance))
         } catch (ex: Throwable) {
-            Result.failure<Any?>(ex)
+            Result.failure(ex)
         }
         property.isAccessible = wasAccessible
 
@@ -69,6 +69,7 @@ data class VariableStateImpl(
 
         val receivedInstances: MutableList<Any?> = mutableListOf()
         for (property in membersProperties) {
+            @Suppress("UNCHECKED_CAST")
             property as KProperty1<Any, *>
             try {
                 val wasAccessible = property.isAccessible
