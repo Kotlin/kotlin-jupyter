@@ -517,12 +517,12 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-
+        val toStringValues = varsState.mapToStringValues()
         assertTrue(varsState.isNotEmpty())
-        assertEquals(3, varsState.size)
-        assertEquals("1024", varsState.getStringValue("x"))
-        assertEquals("${123 * 2}", varsState.getStringValue("y"))
-        assertEquals("abc", varsState.getValue("z"))
+        assertEquals(3, toStringValues.size)
+        assertEquals("1024", toStringValues["x"])
+        assertEquals("${123 * 2}", toStringValues["y"])
+        assertEquals("abc", toStringValues["z"])
     }
 
     @Test

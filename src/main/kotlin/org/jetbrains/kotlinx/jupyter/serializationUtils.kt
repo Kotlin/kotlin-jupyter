@@ -10,6 +10,7 @@ import java.lang.reflect.Field
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -59,7 +60,8 @@ data class ProcessedDescriptorsState(
 )
 
 data class RuntimeObjectWrapper(
-    val objectInstance: Any?
+    val objectInstance: Any?,
+    val isRecursive: Boolean = false
 ) {
     override fun equals(other: Any?): Boolean {
         if (other == null) return objectInstance == null
@@ -69,11 +71,24 @@ data class RuntimeObjectWrapper(
     }
 
     override fun hashCode(): Int {
-        return objectInstance?.hashCode() ?: 0
+        return if (isRecursive) Random.hashCode() else objectInstance?.hashCode() ?: 0
     }
 }
 
-fun Any?.toObjectWrapper(): RuntimeObjectWrapper = RuntimeObjectWrapper(this)
+fun Any?.toObjectWrapper(isRecursive: Boolean = false): RuntimeObjectWrapper = RuntimeObjectWrapper(this, isRecursive)
+
+
+fun Any?.getToStringValue(isRecursive: Boolean = false): String {
+    return if (isRecursive) {
+        "${this!!::class.simpleName}: recursive structure"
+    } else {
+        try {
+            this?.toString() ?: "null"
+        } catch (e: StackOverflowError) {
+            "${this!!::class.simpleName}: recursive structure"
+        }
+    }
+}
 
 /**
  * Provides contract for using threshold-based removal heuristic.
@@ -125,7 +140,8 @@ class VariablesSerializer(
             "Map",
             "Set",
             "Collection",
-            "LinkedValues"
+            "LinkedValues",
+            "LinkedEntrySet"
         )
 
         fun isStandardType(type: String): Boolean = containersTypes.contains(type)
@@ -382,25 +398,27 @@ class VariablesSerializer(
             it.name == propertyName
         } ?: return serializedVariablesState
 
-        return serializeVariableState(cellId, propertyName, property, value, false)
+        return serializeVariableState(cellId, propertyName, property, value, isRecursive = false, false)
     }
 
     private fun serializeVariableState(cellId: Int, name: String?, variableState: VariableState?, isOverride: Boolean = true): SerializedVariablesState {
         if (!isSerializationActive || variableState == null || name == null) return SerializedVariablesState()
-        return serializeVariableState(cellId, name, variableState.property, variableState.value, isOverride)
+        // force recursive check
+        variableState.stringValue
+        return serializeVariableState(cellId, name, variableState.property, variableState.value.getOrNull(), variableState.isRecursive,  isOverride)
     }
 
-    private fun serializeVariableState(cellId: Int, name: String, property: Field?, value: Any?, isOverride: Boolean = true): SerializedVariablesState {
+    private fun serializeVariableState(cellId: Int, name: String, property: Field?, value: Any?, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
         val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value.toObjectWrapper(), isOverride)
+        return doActualSerialization(cellId, processedData, value.toObjectWrapper(isRecursive), isRecursive, isOverride)
     }
 
-    private fun serializeVariableState(cellId: Int, name: String, property: KProperty<*>, value: Any?, isOverride: Boolean = true): SerializedVariablesState {
+    private fun serializeVariableState(cellId: Int, name: String, property: KProperty<*>, value: Any?, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
         val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value.toObjectWrapper(), isOverride)
+        return doActualSerialization(cellId, processedData, value.toObjectWrapper(isRecursive), isRecursive, isOverride)
     }
 
-    private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isOverride: Boolean = true): SerializedVariablesState {
+    private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
         val serializedVersion = processedData.serializedVariablesState
 
         seenObjectsPerCell.putIfAbsent(cellId, mutableMapOf())
@@ -428,9 +446,13 @@ class VariablesSerializer(
             }
             val type = processedData.propertiesType
             if (type == PropertiesType.KOTLIN) {
-                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion])
+                val kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion]
+                if (kProperties?.size == 1 && kProperties.first().name == "size" ) {
+                    serializedVersion.fieldDescriptor.addDescriptor(value.objectInstance, "data")
+                }
+                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, isRecursive = isRecursive, kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion])
             } else {
-                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
+                iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, isRecursive = isRecursive, currentCellDescriptors.processedSerializedVarsToJavaProperties[serializedVersion])
             }
         }
 
@@ -441,6 +463,7 @@ class VariablesSerializer(
         cellId: Int,
         callInstance: Any?,
         descriptor: MutableFieldDescriptor,
+        isRecursive: Boolean = false,
         properties: PropertiesData? = null,
         kProperties: KPropertiesData? = null,
         currentDepth: Int = 0
@@ -448,11 +471,11 @@ class VariablesSerializer(
         fun iterateAndStoreValues(callInstance: Any, descriptorsState: MutableMap<String, SerializedVariablesState?>) {
             if (callInstance is Collection<*>) {
                 callInstance.forEach {
-                    descriptorsState.addDescriptor(it)
+                    descriptorsState.addDescriptor(it, name = it.getToStringValue())
                 }
             } else if (callInstance is Array<*>) {
                 callInstance.forEach {
-                    descriptorsState.addDescriptor(it)
+                    descriptorsState.addDescriptor(it, name = it.getToStringValue())
                 }
             }
         }
@@ -472,7 +495,7 @@ class VariablesSerializer(
                 if (currentSerializeCount > serializationLimit) {
                     break
                 }
-                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance)
+                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance, isRecursive)
                 currentSerializeCount++
             }
         } else if (kProperties != null) {
@@ -480,7 +503,7 @@ class VariablesSerializer(
                 if (currentSerializeCount > serializationLimit) {
                     break
                 }
-                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance)
+                iterateThrough(it, seenObjectsPerCell, serializedIteration, descriptor, instancesPerState, callInstance, isRecursive)
                 currentSerializeCount++
             }
         }
@@ -506,6 +529,10 @@ class VariablesSerializer(
             }
         }
 
+//        if (isRecursive) {
+//            return
+//        }
+
         serializedIteration.forEach {
             val serializedVariablesState = it.value.serializedVariablesState
             val name = it.key
@@ -520,14 +547,15 @@ class VariablesSerializer(
                     else -> {
                         null
                     }
-                }.toObjectWrapper()
+                }.toObjectWrapper(isRecursive)
 
                 computedDescriptorsPerCell[cellId]!!.instancesPerState += instancesPerState
                 iterateThroughContainerMembers(
                     cellId,
                     neededCallInstance.objectInstance,
                     serializedVariablesState.fieldDescriptor,
-                    it.value.propertiesData,
+                    isRecursive = isRecursive,
+                    properties = it.value.propertiesData,
                     currentDepth = currentDepth + 1
                 )
             }
@@ -545,17 +573,18 @@ class VariablesSerializer(
         serializedIteration: MutableMap<String, ProcessedSerializedVarsState>,
         descriptor: MutableFieldDescriptor,
         instancesPerState: MutableMap<SerializedVariablesState, Any?>,
-        callInstance: Any
+        callInstance: Any,
+        isRecursive: Boolean = false
     ) {
         contract {
             returns() implies (elem is Field || elem is KProperty1<*, *>)
         }
 
         val name = if (elem is Field) elem.name else (elem as KProperty1<Any, *>).name
-        val value = if (elem is Field) tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
+        val value = if (elem is Field) tryGetValueFromProperty(elem, callInstance).toObjectWrapper(isRecursive)
         else {
             elem as KProperty1<Any, *>
-            tryGetValueFromProperty(elem, callInstance).toObjectWrapper()
+            tryGetValueFromProperty(elem, callInstance).toObjectWrapper(isRecursive)
         }
 
         val simpleType = if (elem is Field) getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
@@ -564,6 +593,7 @@ class VariablesSerializer(
             getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
         }
         serializedIteration[name] = if (standardContainersUtilizer.isStandardType(simpleType)) {
+            // todo might add isRecursive
             standardContainersUtilizer.serializeContainer(simpleType, value.objectInstance, true)
         } else {
             createSerializeVariableState(name, simpleType, value)
@@ -612,7 +642,7 @@ class VariablesSerializer(
             if (value != null) {
                 value::class.simpleName
             } else {
-                value?.toString()
+               value?.getToStringValue()
             }
         }
     }
@@ -627,7 +657,7 @@ class VariablesSerializer(
                 (classifier as KClass<*>).simpleName
             }
         } else {
-            value?.toString()
+            value?.getToStringValue()
         }
     }
 
@@ -742,7 +772,8 @@ fun getProperString(value: Any?): String {
 
     val kClass = value::class
     val isFromJavaArray = kClass.java.isArray
-    try {
+
+    return try {
         if (isFromJavaArray || kClass.isArray()) {
             value as Array<*>
             return buildString {
@@ -780,11 +811,14 @@ fun getProperString(value: Any?): String {
                 }
             }
         }
-    } catch (e: Throwable) {
         value.toString()
+    } catch (e: Throwable) {
+        if (e is StackOverflowError) {
+            "${value::class.simpleName}: recursive structure"
+        } else {
+            value.toString()
+        }
     }
-
-    return value.toString()
 }
 
 fun KClass<*>.isArray(): Boolean = this.isSubclassOf(Array::class)

@@ -1,14 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import java.lang.reflect.Field
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.isAccessible
-import java.lang.reflect.Field
 
 interface VariableState {
     val property: Field
     val scriptInstance: Any?
     val stringValue: String?
     val value: Result<Any?>
+    val isRecursive: Boolean
 }
 
 data class VariableStateImpl(
@@ -24,6 +25,7 @@ data class VariableStateImpl(
             }
         }
     }
+    override var isRecursive: Boolean = false
 
     private val valCache = VariableStateCache<Result<Any?>> (
         {
