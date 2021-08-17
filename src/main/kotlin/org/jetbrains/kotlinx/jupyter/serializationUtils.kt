@@ -63,6 +63,8 @@ data class RuntimeObjectWrapper(
     val objectInstance: Any?,
     val isRecursive: Boolean = false
 ) {
+    val computerID: String = Integer.toHexString(hashCode())
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return objectInstance == null
         if (objectInstance == null) return false
@@ -71,12 +73,11 @@ data class RuntimeObjectWrapper(
     }
 
     override fun hashCode(): Int {
-        return if (isRecursive) Random.hashCode() else objectInstance?.hashCode() ?: 0
+        return if (isRecursive) Random.nextInt() else objectInstance?.hashCode() ?: 0
     }
 }
 
 fun Any?.toObjectWrapper(isRecursive: Boolean = false): RuntimeObjectWrapper = RuntimeObjectWrapper(this, isRecursive)
-
 
 fun Any?.getToStringValue(isRecursive: Boolean = false): String {
     return if (isRecursive) {
@@ -87,6 +88,24 @@ fun Any?.getToStringValue(isRecursive: Boolean = false): String {
         } catch (e: StackOverflowError) {
             "${this!!::class.simpleName}: recursive structure"
         }
+    }
+}
+
+fun Any?.getUniqueID(isRecursive: Boolean = false): String {
+    return if (this != null) {
+        val hashCode = if (isRecursive) {
+            Random.nextLong()
+        } else {
+            // ignore standard numerics
+            if (this !is Number && this::class.simpleName != "int") {
+                this.hashCode()
+            } else {
+                Random.nextLong()
+            }
+        }
+        Integer.toHexString(hashCode.toInt())
+    } else {
+        ""
     }
 }
 
@@ -162,7 +181,13 @@ class VariablesSerializer(
                     null
                 }
             } catch (ex: Exception) { null }
-            val serializedVersion = SerializedVariablesState(simpleTypeName, getProperString(value), true)
+            val stringedValue = getProperString(value)
+            val varID = if (value !is String) {
+                value.getUniqueID(stringedValue.contains(": recursive structure"))
+            } else {
+                ""
+            }
+            val serializedVersion = SerializedVariablesState(simpleTypeName, stringedValue, true, varID)
             val descriptors = serializedVersion.fieldDescriptor
 
             // only for set case
@@ -180,6 +205,9 @@ class VariablesSerializer(
             if (isDescriptorsNeeded) {
                 kProperties?.forEach { prop ->
                     val name = prop.name
+                    if (name == "null") {
+                        return@forEach
+                    }
                     val propValue = value?.let {
                         try {
                             prop as KProperty1<Any, *>
@@ -188,7 +216,13 @@ class VariablesSerializer(
                                 if (prop.name == "size") {
                                     if (isArray(value)) {
                                         value as Array<*>
-                                        value.size
+                                        // there might be size 10, but only one actual recursive value
+                                        val runTimeSize = value.size
+                                        if (runTimeSize > 5 && value[0] is List<*> && value[1] == null && value [2] == null) {
+                                            1
+                                        } else {
+                                            runTimeSize
+                                        }
                                     } else {
                                         value as Collection<*>
                                         value.size
@@ -405,17 +439,19 @@ class VariablesSerializer(
         if (!isSerializationActive || variableState == null || name == null) return SerializedVariablesState()
         // force recursive check
         variableState.stringValue
-        return serializeVariableState(cellId, name, variableState.property, variableState.value.getOrNull(), variableState.isRecursive,  isOverride)
+        return serializeVariableState(cellId, name, variableState.property, variableState.value.getOrNull(), variableState.isRecursive, isOverride)
     }
 
     private fun serializeVariableState(cellId: Int, name: String, property: Field?, value: Any?, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
-        val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value.toObjectWrapper(isRecursive), isRecursive, isOverride)
+        val wrapper = value.toObjectWrapper(isRecursive)
+        val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), wrapper)
+        return doActualSerialization(cellId, processedData, wrapper, isRecursive, isOverride)
     }
 
     private fun serializeVariableState(cellId: Int, name: String, property: KProperty<*>, value: Any?, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
-        val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), value)
-        return doActualSerialization(cellId, processedData, value.toObjectWrapper(isRecursive), isRecursive, isOverride)
+        val wrapper = value.toObjectWrapper(isRecursive)
+        val processedData = createSerializeVariableState(name, getSimpleTypeNameFrom(property, value), wrapper)
+        return doActualSerialization(cellId, processedData, wrapper, isRecursive, isOverride)
     }
 
     private fun doActualSerialization(cellId: Int, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
@@ -447,7 +483,7 @@ class VariablesSerializer(
             val type = processedData.propertiesType
             if (type == PropertiesType.KOTLIN) {
                 val kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion]
-                if (kProperties?.size == 1 && kProperties.first().name == "size" ) {
+                if (kProperties?.size == 1 && kProperties.first().name == "size") {
                     serializedVersion.fieldDescriptor.addDescriptor(value.objectInstance, "data")
                 }
                 iterateThroughContainerMembers(cellId, value.objectInstance, serializedVersion.fieldDescriptor, isRecursive = isRecursive, kProperties = currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion])
@@ -626,7 +662,6 @@ class VariablesSerializer(
 //            descriptor.putAll(descriptorsState?.fieldDescriptor ?: emptyMap())
 //        }
 
-
         if (seenObjectsPerCell?.containsKey(value) == false) {
             if (descriptor[name] != null) {
                 seenObjectsPerCell[value] = descriptor[name]!!
@@ -642,7 +677,7 @@ class VariablesSerializer(
             if (value != null) {
                 value::class.simpleName
             } else {
-               value?.getToStringValue()
+                value?.getToStringValue()
             }
         }
     }
@@ -666,10 +701,10 @@ class VariablesSerializer(
     }
 
     private fun createSerializeVariableState(name: String, simpleTypeName: String?, value: RuntimeObjectWrapper): ProcessedSerializedVarsState {
-        return doCreateSerializedVarsState(simpleTypeName, value.objectInstance)
+        return doCreateSerializedVarsState(simpleTypeName, value.objectInstance, value.computerID)
     }
 
-    private fun doCreateSerializedVarsState(simpleTypeName: String?, value: Any?): ProcessedSerializedVarsState {
+    private fun doCreateSerializedVarsState(simpleTypeName: String?, value: Any?, uniqueID: String? = null): ProcessedSerializedVarsState {
         val javaClass = value?.javaClass
         val membersProperties = javaClass?.declaredFields?.filter {
             !(it.name.startsWith("script$") || it.name.startsWith("serialVersionUID"))
@@ -687,8 +722,15 @@ class VariablesSerializer(
         if (value != null && standardContainersUtilizer.isStandardType(type)) {
             return standardContainersUtilizer.serializeContainer(type, value)
         }
+        val stringedValue = getProperString(value)
+        val finalID = uniqueID
+            ?: if (value !is String) {
+                value.getUniqueID(stringedValue.contains(": recursive structure"))
+            } else {
+                ""
+            }
 
-        val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer)
+        val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer, ID = finalID)
 
         return ProcessedSerializedVarsState(serializedVariablesState, membersProperties?.toTypedArray())
     }

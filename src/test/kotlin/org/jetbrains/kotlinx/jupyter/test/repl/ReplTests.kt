@@ -1195,7 +1195,6 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         }
     }
 
-
     @Test
     fun testCyclicSerializationMessage() {
         val res = eval(

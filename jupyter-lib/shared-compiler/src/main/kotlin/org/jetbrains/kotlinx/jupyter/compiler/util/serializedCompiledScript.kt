@@ -24,7 +24,8 @@ data class SerializedCompiledScriptsData(
 data class SerializedVariablesState(
     val type: String = "",
     val value: String? = null,
-    val isContainer: Boolean = false
+    val isContainer: Boolean = false,
+    val ID: String = ""
 ) {
     // todo: not null
     val fieldDescriptor: MutableMap<String, SerializedVariablesState?> = mutableMapOf()
