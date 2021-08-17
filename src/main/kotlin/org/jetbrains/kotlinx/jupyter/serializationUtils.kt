@@ -358,7 +358,7 @@ class VariablesSerializer(
         clearOldData(currentCellId, cellVariables)
     }
 
-    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
+    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, variablesCells: Map<String, Int>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
         fun removeNonExistingEntries() {
             val toRemoveSet = mutableSetOf<String>()
             serializedVariablesCache.forEach { (name, _) ->
@@ -382,17 +382,22 @@ class VariablesSerializer(
             val wasRedeclared = !unchangedVariables.contains(it)
             if (wasRedeclared) {
                 removedFromSightVariables.remove(it)
-            }
-            (unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
+            } /*
+            (unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.value?.getOrNull().toString()) &&
+                !removedFromSightVariables.contains(it)*/
+            (unchangedVariables.contains(it)) &&
                 !removedFromSightVariables.contains(it)
         }
         log.debug("Variables state as is: $variablesState")
         log.debug("Serializing variables after filter: $neededEntries")
-        log.debug("Unchanged variables: $unchangedVariables")
+        log.debug("Unchanged variables: ${unchangedVariables - neededEntries.keys}")
 
         // remove previous data
         computedDescriptorsPerCell[cellId]?.instancesPerState?.clear()
-        val serializedData = neededEntries.mapValues { serializeVariableState(cellId, it.key, it.value) }
+        val serializedData = neededEntries.mapValues {
+            val actualCell = variablesCells[it.key] ?: cellId
+            serializeVariableState(actualCell, it.key, it.value)
+        }
 
         serializedVariablesCache.putAll(serializedData)
         removeNonExistingEntries()
@@ -730,7 +735,7 @@ class VariablesSerializer(
                 ""
             }
 
-        val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer, ID = finalID)
+        val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer, finalID)
 
         return ProcessedSerializedVarsState(serializedVariablesState, membersProperties?.toTypedArray())
     }

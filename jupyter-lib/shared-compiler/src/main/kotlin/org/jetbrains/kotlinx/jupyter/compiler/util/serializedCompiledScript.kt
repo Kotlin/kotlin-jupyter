@@ -25,10 +25,29 @@ data class SerializedVariablesState(
     val type: String = "",
     val value: String? = null,
     val isContainer: Boolean = false,
-    val ID: String = ""
+    val stateId: String = ""
 ) {
     // todo: not null
     val fieldDescriptor: MutableMap<String, SerializedVariablesState?> = mutableMapOf()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SerializedVariablesState
+
+        if (type != other.type) return false
+        if (value != other.value) return false
+        if (isContainer != other.isContainer) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + (value?.hashCode() ?: 0)
+        result = 31 * result + isContainer.hashCode()
+        return result
+    }
 }
 
 @Serializable

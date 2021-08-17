@@ -747,7 +747,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testRecursiveVarsState() {
-        eval(
+        val res = eval(
             """
             val l = mutableListOf<Any>()
             l.add(listOf(l))
@@ -757,7 +757,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = setOf(1, 2, 4)
             """.trimIndent(),
             jupyterId = 1
-        )
+        ).metadata
         val state = repl.notebook.variablesState
         assertTrue(state.contains("l"))
         assertTrue(state.contains("m"))
@@ -766,6 +766,54 @@ class ReplVarsTest : AbstractSingleReplTest() {
         assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
         assertTrue(state["m"]!!.stringValue!!.contains(" recursive structure"))
         assertEquals("[1, 2, 4]", state["z"]!!.stringValue)
+
+        val serializer = repl.variablesSerializer
+        val descriptor = res.evaluatedVariablesState["l"]!!.fieldDescriptor
+        val innerList = descriptor["elementData"]!!.fieldDescriptor["data"]
+        val newData = serializer.doIncrementalSerialization(0, "data", innerList!!)
+        assertEquals(2, newData.fieldDescriptor.size)
+    }
+
+    @Test
+    fun testUnchangedVars() {
+        eval(
+            """
+            var l = 11111
+            val m = "abc"
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var state = repl.notebook.unchangedVariables()
+        val res = eval(
+            """
+            l += 11111
+            """.trimIndent(),
+            jupyterId = 2
+        ).metadata.evaluatedVariablesState
+        state = repl.notebook.unchangedVariables()
+        assertEquals(1, state.size)
+        assertTrue(state.contains("m"))
+    }
+
+    @Test
+    fun testMutableList() {
+        eval(
+            """
+            val l = mutableListOf(1, 2, 3, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val serializer = repl.variablesSerializer
+        val res = eval(
+            """
+            l.add(5)
+            """.trimIndent(),
+            jupyterId = 2
+        ).metadata.evaluatedVariablesState
+        val innerList = res["l"]!!.fieldDescriptor["elementData"]!!.fieldDescriptor["data"]
+        val newData = serializer.doIncrementalSerialization(0, "data", innerList!!)
+        assertTrue(newData.isContainer)
+        assertTrue(newData.fieldDescriptor.size > 4)
     }
 
     @Test

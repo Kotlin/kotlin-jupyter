@@ -461,7 +461,8 @@ class ReplForJupyterImpl(
             notebook.updateVariablesState(internalEvaluator)
             // printVars()
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
-            val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, notebook.unchangedVariables())
+            val variablesCells: Map<String, Int> = notebook.variablesState.mapValues { internalEvaluator.findVariableCell(it.key) }
+            val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, variablesCells, notebook.unchangedVariables())
 
             GlobalScope.launch(Dispatchers.Default) {
                 variablesSerializer.tryValidateCache(jupyterId - 1, notebook.cellVariables)
