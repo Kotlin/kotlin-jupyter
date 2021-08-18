@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import java.lang.reflect.Field
+import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.isAccessible
 
@@ -10,6 +11,18 @@ interface VariableState {
     val stringValue: String?
     val value: Result<Any?>
     val isRecursive: Boolean
+}
+
+class DependentLazyDelegate<T>(val initializer: () -> T?) {
+    private var cachedPropertyValue: T? = null
+    var isChanged: Boolean = true
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
+        if (isChanged) {
+            cachedPropertyValue = initializer()
+        }
+        return cachedPropertyValue
+    }
 }
 
 data class VariableStateImpl(
@@ -60,7 +73,15 @@ data class VariableStateImpl(
             val res = action(this)
             isAccessible = wasAccessible
             return res
+    private val customDelegate = DependentLazyDelegate {
+        fun getRecursiveObjectName(): String {
+            val kClassName = cachedValue.getOrNull()!!::class.simpleName
+            return "$kClassName: recursive structure"
         }
+        if (cachedValue.getOrNull() == null) {
+            return@DependentLazyDelegate null
+        }
+        handleIfRecursiveStructure()
     }
 }
 

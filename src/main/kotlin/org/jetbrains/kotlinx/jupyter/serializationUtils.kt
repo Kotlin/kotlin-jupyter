@@ -175,6 +175,16 @@ class VariablesSerializer(
                     value::class.java.isArray
                 } == true
             }
+            fun getProperEntrySetRepresentation(value: Any?): String {
+                value as Set<*>
+                val size = value.size
+                if (size == 0) return ""
+                val firstProper = value.firstOrNull {
+                    it as Map.Entry<*, *>
+                    it.key != null && it.value != null
+                } as Map.Entry<*, *> ?: return ""
+                return "<${firstProper.key!!::class.simpleName}, ${firstProper.value!!::class.simpleName}>"
+            }
 
             val kProperties = try {
                 if (value != null) value::class.declaredMemberProperties else {
@@ -183,7 +193,11 @@ class VariablesSerializer(
             } catch (ex: Exception) { null }
             val stringedValue = getProperString(value)
             val varID = if (value !is String) {
-                value.getUniqueID(stringedValue.contains(": recursive structure"))
+                val isRecursive = stringedValue.contains(": recursive structure")
+                if (!isRecursive && simpleTypeName == "LinkedEntrySet") {
+                    getProperEntrySetRepresentation(value)
+                } else
+                value.getUniqueID(isRecursive)
             } else {
                 ""
             }
@@ -382,10 +396,12 @@ class VariablesSerializer(
             val wasRedeclared = !unchangedVariables.contains(it)
             if (wasRedeclared) {
                 removedFromSightVariables.remove(it)
-            } /*
-            (unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.value?.getOrNull().toString()) &&
-                !removedFromSightVariables.contains(it)*/
-            (unchangedVariables.contains(it)) &&
+            }
+            // todo: might consider self-recursive elements always to recompute since it's non comparable via strings
+            if (serializedVariablesCache.isEmpty()) {
+                true
+            } else
+            (!unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
                 !removedFromSightVariables.contains(it)
         }
         log.debug("Variables state as is: $variablesState")
@@ -645,28 +661,6 @@ class VariablesSerializer(
             instancesPerState[descriptor[name]!!] = value.objectInstance
         }
 
-/*        if (!seenObjectsPerCell!!.containsKey(value)) {
-            val simpleType = if (elem is Field) getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
-            else {
-                elem as KProperty1<Any, *>
-                getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
-            }
-            serializedIteration[name] = if (standardContainersUtilizer.isStandardType(simpleType)) {
-                standardContainersUtilizer.serializeContainer(simpleType, value.objectInstance, true)
-            } else {
-                createSerializeVariableState(name, simpleType, value)
-            }
-            descriptor[name] = serializedIteration[name]!!.serializedVariablesState
-
-            if (descriptor[name] != null) {
-                instancesPerState[descriptor[name]!!] = value.objectInstance
-            }
-        }*/
-//        else {
-//            val descriptorsState = seenObjectsPerCell[value]
-//            descriptor.putAll(descriptorsState?.fieldDescriptor ?: emptyMap())
-//        }
-
         if (seenObjectsPerCell?.containsKey(value) == false) {
             if (descriptor[name] != null) {
                 seenObjectsPerCell[value] = descriptor[name]!!
@@ -801,7 +795,7 @@ fun getProperString(value: Any?): String {
         if (index != containerSize - 1) {
             if (mapMode) {
                 value as Map.Entry<*, *>
-                builder.append(value.key, '=', value.value, "\n")
+                builder.append(value.key, '=', value.value, ", ")
             } else {
                 builder.append(value, ", ")
             }
