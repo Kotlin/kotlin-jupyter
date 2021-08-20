@@ -36,6 +36,8 @@ interface InternalEvaluator {
      */
     fun findVariableCell(variableName: String): Int
 
+    fun getVariablesDeclarationInfo(): Map<String, Int>
+
     /**
      * Returns a set of unaffected variables after execution
      */

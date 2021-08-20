@@ -89,7 +89,7 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     /**
      * Tells in which cell a variable was declared
      */
-    private val variablesDeclarationInfo: MutableMap<V, K> = mutableMapOf()
+    val variablesDeclarationInfo: MutableMap<V, K> = mutableMapOf()
 
     private val unchangedVariables: MutableSet<V> = mutableSetOf()
 

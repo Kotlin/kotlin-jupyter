@@ -56,6 +56,8 @@ internal class InternalEvaluatorImpl(
         return variablesWatcher.findDeclarationAddress(variableName) ?: -1
     }
 
+    override fun getVariablesDeclarationInfo(): Map<String, Int> = variablesWatcher.variablesDeclarationInfo
+
     override fun getUnchangedVariables(): Set<String> {
         return variablesWatcher.getUnchangedVariables()
     }

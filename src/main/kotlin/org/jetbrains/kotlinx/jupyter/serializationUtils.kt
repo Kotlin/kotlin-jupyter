@@ -56,8 +56,7 @@ class ProcessedSerializedVarsState(
 data class ProcessedDescriptorsState(
     val processedSerializedVarsToJavaProperties: MutableMap<SerializedVariablesState, PropertiesData?> = mutableMapOf(),
     val processedSerializedVarsToKTProperties: MutableMap<SerializedVariablesState, KPropertiesData?> = mutableMapOf(),
-    val instancesPerState: MutableMap<SerializedVariablesState, Any?> = mutableMapOf(),
-    val parent: ProcessedDescriptorsState? = null
+    val instancesPerState: MutableMap<SerializedVariablesState, Any?> = mutableMapOf()
 )
 
 data class RuntimeObjectWrapper(
@@ -73,6 +72,7 @@ data class RuntimeObjectWrapper(
         return objectInstance === other
     }
 
+    // TODO: it's not changing after recreation
     override fun hashCode(): Int {
         return if (isRecursive) Random.nextInt() else objectInstance?.hashCode() ?: 0
     }
@@ -93,7 +93,7 @@ fun Any?.getToStringValue(isRecursive: Boolean = false): String {
 }
 
 fun Any?.getUniqueID(isRecursive: Boolean = false): String {
-    return if (this != null) {
+    return if (this != null && this !is Map.Entry<*, *>) {
         val hashCode = if (isRecursive) {
             Random.nextLong()
         } else {
@@ -197,8 +197,9 @@ class VariablesSerializer(
                 val isRecursive = stringedValue.contains(": recursive structure")
                 if (!isRecursive && simpleTypeName == "LinkedEntrySet") {
                     getProperEntrySetRepresentation(value)
-                } else
-                value.getUniqueID(isRecursive)
+                } else {
+                    value.getUniqueID(isRecursive)
+                }
             } else {
                 ""
             }
@@ -285,12 +286,12 @@ class VariablesSerializer(
     }
 
     /**
-     * Map of Map of seen objects.
-     * First Key: cellId
+     * Map of Map of seen objects related to a particular variable serialization
+     * First Key: topLevel variable Name
      * Second Key: actual value
      * Value: serialized VariableState
      */
-    private val seenObjectsPerCell: MutableMap<Int, MutableMap<RuntimeObjectWrapper, SerializedVariablesState>> = mutableMapOf()
+    private val seenObjectsPerVariable: MutableMap<String, MutableMap<RuntimeObjectWrapper, SerializedVariablesState>> = mutableMapOf()
 
     private var currentSerializeCount: Int = 0
 
@@ -355,7 +356,7 @@ class VariablesSerializer(
 
     override suspend fun clearStateInfo(currentState: Int) {
         computedDescriptorsPerCell.remove(currentState)
-        seenObjectsPerCell.remove(currentState)
+        // seenObjectsPerVariable.remove(currentState)
     }
 
     suspend fun tryValidateCache(currentCellId: Int, cellVariables: Map<Int, Set<String>>) {
@@ -363,10 +364,11 @@ class VariablesSerializer(
         clearOldData(currentCellId, cellVariables)
     }
 
-    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, variablesCells: Map<String, Int>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
+    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, oldDeclarations: Map<String, Int>, variablesCells: Map<String, Int>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
         fun removeNonExistingEntries() {
             val toRemoveSet = mutableSetOf<String>()
             serializedVariablesCache.forEach { (name, _) ->
+                // seems like this never gonna happen
                 if (!variablesState.containsKey(name)) {
                     toRemoveSet.add(name)
                 }
@@ -376,9 +378,6 @@ class VariablesSerializer(
 
         if (!isSerializationActive) return emptyMap()
 
-        if (seenObjectsPerCell.containsKey(cellId)) {
-            seenObjectsPerCell[cellId]!!.clear()
-        }
         if (variablesState.isEmpty()) {
             return emptyMap()
         }
@@ -388,21 +387,26 @@ class VariablesSerializer(
             if (wasRedeclared) {
                 removedFromSightVariables.remove(it)
             }
-            // todo: might consider self-recursive elements always to recompute since it's non comparable via strings
+            // TODO: might consider self-recursive elements always to recompute since it's non comparable via strings
             if (serializedVariablesCache.isEmpty()) {
                 true
-            } else
-            (!unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
-                !removedFromSightVariables.contains(it)
+            } else {
+                (!unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
+                    !removedFromSightVariables.contains(it)
+            }
         }
         log.debug("Variables state as is: $variablesState")
         log.debug("Serializing variables after filter: $neededEntries")
         log.debug("Unchanged variables: ${unchangedVariables - neededEntries.keys}")
 
         // remove previous data
-        // computedDescriptorsPerCell[cellId]?.instancesPerState?.clear()
         val serializedData = neededEntries.mapValues {
             val actualCell = variablesCells[it.key] ?: cellId
+            if (oldDeclarations.containsKey(it.key)) {
+                val oldCell = oldDeclarations[it.key]!!
+                computedDescriptorsPerCell[oldCell]?.remove(it.key)
+                seenObjectsPerVariable.remove(it.key)
+            }
             serializeVariableState(actualCell, it.key, it.value)
         }
 
@@ -467,10 +471,13 @@ class VariablesSerializer(
         return doActualSerialization(cellId, topLevelName, processedData, wrapper, isRecursive, isOverride)
     }
 
-    private fun doActualSerialization(cellId: Int, topLevelName:String, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
+    private fun doActualSerialization(cellId: Int, topLevelName: String, processedData: ProcessedSerializedVarsState, value: RuntimeObjectWrapper, isRecursive: Boolean, isOverride: Boolean = true): SerializedVariablesState {
+        fun checkIsNotStandardDescriptor(descriptor: MutableMap<String, SerializedVariablesState?>): Boolean {
+            return descriptor.isNotEmpty() && !descriptor.containsKey("size") && !descriptor.containsKey("data")
+        }
         val serializedVersion = processedData.serializedVariablesState
 
-        seenObjectsPerCell.putIfAbsent(cellId, mutableMapOf())
+        seenObjectsPerVariable.putIfAbsent(topLevelName, mutableMapOf())
         computedDescriptorsPerCell.putIfAbsent(cellId, mutableMapOf())
 
         if (isOverride) {
@@ -482,17 +489,21 @@ class VariablesSerializer(
         }
         val currentCellDescriptors = computedDescriptorsPerCell[cellId]?.get(topLevelName)
         // TODO should we stack?
+        // i guess, not
         currentCellDescriptors!!.processedSerializedVarsToJavaProperties[serializedVersion] = processedData.propertiesData
         currentCellDescriptors.processedSerializedVarsToKTProperties[serializedVersion] = processedData.kPropertiesData
 
         if (value.objectInstance != null) {
-            seenObjectsPerCell[cellId]!!.putIfAbsent(value, serializedVersion)
+            seenObjectsPerVariable[topLevelName]!!.putIfAbsent(value, serializedVersion)
         }
         if (serializedVersion.isContainer) {
             // check for seen
-            if (seenObjectsPerCell[cellId]!!.containsKey(value)) {
-                val previouslySerializedState = seenObjectsPerCell[cellId]!![value] ?: return processedData.serializedVariablesState
+            if (seenObjectsPerVariable[topLevelName]!!.containsKey(value)) {
+                val previouslySerializedState = seenObjectsPerVariable[topLevelName]!![value] ?: return processedData.serializedVariablesState
                 serializedVersion.fieldDescriptor += previouslySerializedState.fieldDescriptor
+                if (checkIsNotStandardDescriptor(serializedVersion.fieldDescriptor)) {
+                    return serializedVersion
+                }
             }
             val type = processedData.propertiesType
             if (type == PropertiesType.KOTLIN) {
@@ -535,8 +546,8 @@ class VariablesSerializer(
 
         val serializedIteration = mutableMapOf<String, ProcessedSerializedVarsState>()
 
-        seenObjectsPerCell.putIfAbsent(cellId, mutableMapOf())
-        val seenObjectsPerCell = seenObjectsPerCell[cellId]
+        seenObjectsPerVariable.putIfAbsent(topLevelName, mutableMapOf())
+        val seenObjectsPerCell = seenObjectsPerVariable[topLevelName]
         val currentCellDescriptors = computedDescriptorsPerCell[cellId]!![topLevelName]!!
         // ok, it's a copy on the left for some reason
         val instancesPerState = currentCellDescriptors.instancesPerState
@@ -645,7 +656,7 @@ class VariablesSerializer(
             getSimpleTypeNameFrom(elem, value.objectInstance) ?: "null"
         }
         serializedIteration[name] = if (standardContainersUtilizer.isStandardType(simpleType)) {
-            // todo might add isRecursive
+            // TODO might add isRecursive
             standardContainersUtilizer.serializeContainer(simpleType, value.objectInstance, true)
         } else {
             createSerializeVariableState(name, simpleType, value)

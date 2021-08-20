@@ -642,7 +642,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.cellVariables
+        var state = repl.notebook.cellVariables
         assertTrue(state.isNotEmpty())
 
         // f is not accessible from here
@@ -653,10 +653,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
+        state = repl.notebook.cellVariables
         assertTrue(state.isNotEmpty())
-
-        // TODO discuss if we really want "z", "f", "x"
-        val setOfCell = setOf("z")
+        // ignore primitive references precise check for Java > 8
+        val setOfCell = setOf("z", "x")
         assertTrue(state.containsValue(setOfCell))
     }
 
@@ -811,7 +811,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             jupyterId = 2
         ).metadata.evaluatedVariablesState
         val innerList = res["l"]!!.fieldDescriptor["elementData"]!!.fieldDescriptor["data"]
-        val newData = serializer.doIncrementalSerialization(0, "l","data", innerList!!)
+        val newData = serializer.doIncrementalSerialization(0, "l", "data", innerList!!)
         assertTrue(newData.isContainer)
         assertTrue(newData.fieldDescriptor.size > 4)
     }
@@ -866,17 +866,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
         eval(
             """
             private val x = "abcd"
-            internal val z = 47
-            """.trimIndent(),
-            jupyterId = 2
-        )
-        state = repl.notebook.unchangedVariables()
-        assertEquals(1, state.size)
-        assertTrue(state.contains("f"))
-
-        eval(
-            """
-            private val x = "abcd"
             var f = 47 
             internal val z = 47
             """.trimIndent(),
@@ -892,7 +881,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             jupyterId = 3
         )
         state = repl.notebook.unchangedVariables()
-        assertEquals(2, state.size)
+        assertEquals(1, state.size)
     }
 }
 
@@ -927,7 +916,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertEquals(listOf(1, 2, 3, 4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
 
         val serializer = repl.variablesSerializer
-        val newData = serializer.doIncrementalSerialization(0, "x","data", actualContainer)
+        val newData = serializer.doIncrementalSerialization(0, "x", "data", actualContainer)
     }
 
     @Test
@@ -1385,8 +1374,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
             """
             val x = listOf(1, 2, 3, 4)
             """.trimIndent(),
-        jupyterId = 2
+            jupyterId = 2
         ).metadata.evaluatedVariablesState
-        val a = 1
     }
 }

@@ -68,6 +68,10 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
         return -1
     }
 
+    override fun getVariablesDeclarationInfo(): Map<String, Int> {
+        return variablesWatcher.variablesDeclarationInfo
+    }
+
     override fun getUnchangedVariables(): Set<String> {
         return variablesWatcher.getUnchangedVariables()
     }
