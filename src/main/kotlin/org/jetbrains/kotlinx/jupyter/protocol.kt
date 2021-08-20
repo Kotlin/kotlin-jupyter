@@ -347,9 +347,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                         sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
                     }
                 } else {
-                    repl.serializeVariables(content.cellId, content.descriptorsState) { result ->
-                        sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
-                    }
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = null))
                 }
             }
         }

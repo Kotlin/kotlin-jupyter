@@ -140,7 +140,7 @@ interface ReplForJupyter {
 
     suspend fun listErrors(code: Code, callback: (ListErrorsResult) -> Unit)
 
-    suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
+    suspend fun serializeVariables(cellId: Int, topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
 
     suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String> = emptyList(),
                                    callback: (SerializationReply) -> Unit)
@@ -570,8 +570,8 @@ class ReplForJupyterImpl(
     }
 
     private val serializationQueue = LockQueue<SerializationReply, SerializationArgs>()
-    override suspend fun serializeVariables(cellId: Int, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
-        doWithLock(SerializationArgs(descriptorsState, cellId = cellId, callback = callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
+    override suspend fun serializeVariables(cellId: Int, topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit) {
+        doWithLock(SerializationArgs(descriptorsState, cellId = cellId, topLevelVarName = topLevelVarName, callback = callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
     }
 
     override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String>,
@@ -587,7 +587,7 @@ class ReplForJupyterImpl(
             finalAns
         }
         args.descriptorsState.forEach { (name, state) ->
-            resultMap[name] = variablesSerializer.doIncrementalSerialization(cellId - 1, name, state, args.pathToDescriptor)
+            resultMap[name] = variablesSerializer.doIncrementalSerialization(cellId - 1, args.topLevelVarName ,name, state, args.pathToDescriptor)
         }
         log.debug("Serialization cellID: $cellId")
         log.debug("Serialization answer: ${resultMap.entries.first().value.fieldDescriptor}")

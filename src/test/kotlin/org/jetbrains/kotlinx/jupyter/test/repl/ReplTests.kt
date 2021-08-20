@@ -770,7 +770,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
         val serializer = repl.variablesSerializer
         val descriptor = res.evaluatedVariablesState["l"]!!.fieldDescriptor
         val innerList = descriptor["elementData"]!!.fieldDescriptor["data"]
-        val newData = serializer.doIncrementalSerialization(0, "data", innerList!!)
+        val newData = serializer.doIncrementalSerialization(0, "l", "data", innerList!!)
         assertEquals(2, newData.fieldDescriptor.size)
     }
 
@@ -811,7 +811,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             jupyterId = 2
         ).metadata.evaluatedVariablesState
         val innerList = res["l"]!!.fieldDescriptor["elementData"]!!.fieldDescriptor["data"]
-        val newData = serializer.doIncrementalSerialization(0, "data", innerList!!)
+        val newData = serializer.doIncrementalSerialization(0, "l","data", innerList!!)
         assertTrue(newData.isContainer)
         assertTrue(newData.fieldDescriptor.size > 4)
     }
@@ -927,7 +927,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         assertEquals(listOf(1, 2, 3, 4).toString().substring(1, actualContainer.value!!.length + 1), actualContainer.value)
 
         val serializer = repl.variablesSerializer
-        val newData = serializer.doIncrementalSerialization(0, "data", actualContainer)
+        val newData = serializer.doIncrementalSerialization(0, "x","data", actualContainer)
     }
 
     @Test
@@ -1016,7 +1016,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         val serializer = repl.variablesSerializer
 
-        val newData = serializer.doIncrementalSerialization(0, "i", descriptor["i"]!!)
+        val newData = serializer.doIncrementalSerialization(0, "c", "i", descriptor["i"]!!)
     }
 
     @Test
@@ -1036,7 +1036,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val actualContainer = listData.fieldDescriptor.entries.first().value!!
         val serializer = repl.variablesSerializer
 
-        val newData = serializer.doIncrementalSerialization(0, listData.fieldDescriptor.entries.first().key, actualContainer)
+        val newData = serializer.doIncrementalSerialization(0, "x", listData.fieldDescriptor.entries.first().key, actualContainer)
         val receivedDescriptor = newData.fieldDescriptor
         assertEquals(4, receivedDescriptor.size)
 
@@ -1049,7 +1049,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         }
 
         val depthMostNode = actualContainer.fieldDescriptor.entries.first { it.value!!.isContainer }
-        val serializationAns = serializer.doIncrementalSerialization(0, depthMostNode.key, depthMostNode.value!!)
+        val serializationAns = serializer.doIncrementalSerialization(0, "x", depthMostNode.key, depthMostNode.value!!)
     }
 
     @Test
@@ -1067,7 +1067,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val serializer = repl.variablesSerializer
         val path = listOf("x", "a")
 
-        val newData = serializer.doIncrementalSerialization(0, listData.fieldDescriptor.entries.first().key, actualContainer, path)
+        val newData = serializer.doIncrementalSerialization(0, "x", listData.fieldDescriptor.entries.first().key, actualContainer, path)
         val receivedDescriptor = newData.fieldDescriptor
         assertEquals(4, receivedDescriptor.size)
 
@@ -1108,7 +1108,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
         val serializer = repl.variablesSerializer
 
-        var newData = serializer.doIncrementalSerialization(0, "values", valuesDescriptor)
+        var newData = serializer.doIncrementalSerialization(0, "x", "values", valuesDescriptor)
         var newDescriptor = newData.fieldDescriptor
         assertEquals("4", newDescriptor["size"]!!.value)
         assertEquals(3, newDescriptor["data"]!!.fieldDescriptor.size)
@@ -1123,7 +1123,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val entriesDescriptor = listDescriptors["entries"]!!
         assertEquals("4", valuesDescriptor.fieldDescriptor["size"]!!.value)
         assertTrue(valuesDescriptor.fieldDescriptor["data"]!!.isContainer)
-        newData = serializer.doIncrementalSerialization(0, "entries", entriesDescriptor)
+        newData = serializer.doIncrementalSerialization(0, "x", "entries", entriesDescriptor)
         newDescriptor = newData.fieldDescriptor
         assertEquals("4", newDescriptor["size"]!!.value)
         assertEquals(4, newDescriptor["data"]!!.fieldDescriptor.size)
@@ -1203,7 +1203,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val propertyName = listData.fieldDescriptor.entries.first().key
 
         runBlocking {
-            repl.serializeVariables(1, mapOf(propertyName to actualContainer)) { result ->
+            repl.serializeVariables(1, "x", mapOf(propertyName to actualContainer)) { result ->
                 val data = result.descriptorsState
                 assertTrue(data.isNotEmpty())
 
@@ -1264,7 +1264,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         val propertyName = listData.fieldDescriptor.entries.first().key
 
         runBlocking {
-            repl.serializeVariables(1, mapOf(propertyName to actualContainer)) { result ->
+            repl.serializeVariables(1, "c", mapOf(propertyName to actualContainer)) { result ->
                 val data = result.descriptorsState
                 assertTrue(data.isNotEmpty())
 
@@ -1279,7 +1279,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
 
                 val anotherI = originalClass.fieldDescriptor["i"]!!
                 runBlocking {
-                    repl.serializeVariables(1, mapOf(propertyName to anotherI)) { res ->
+                    repl.serializeVariables(1, "c", mapOf(propertyName to anotherI)) { res ->
                         val data = res.descriptorsState
                         val innerList = data.entries.last().value
                         assertTrue(innerList.isContainer)
@@ -1370,5 +1370,23 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         )
         state = repl.notebook.unchangedVariables()
         assertTrue(state.isEmpty())
+    }
+
+    @Test
+    fun testSerializationClearInfo() {
+        var res = eval(
+            """
+            val x = listOf(1, 2, 3, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        ).metadata.evaluatedVariablesState
+        var state = repl.notebook.unchangedVariables()
+        res = eval(
+            """
+            val x = listOf(1, 2, 3, 4)
+            """.trimIndent(),
+        jupyterId = 2
+        ).metadata.evaluatedVariablesState
+        val a = 1
     }
 }
