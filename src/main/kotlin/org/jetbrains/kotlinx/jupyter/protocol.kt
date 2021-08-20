@@ -8,7 +8,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
@@ -21,6 +20,9 @@ import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
+import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
+import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
+import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
@@ -228,17 +230,9 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     content = KernelInfoReply(
                         protocolVersion,
                         "Kotlin",
-                        repl.runtimeProperties.version.toMaybeUnspecifiedString(),
-                        "Kotlin kernel v. ${repl.runtimeProperties.version.toMaybeUnspecifiedString()}, Kotlin v. ${KotlinCompilerVersion.VERSION}",
-                        LanguageInfo(
-                            "kotlin",
-                            KotlinCompilerVersion.VERSION,
-                            "text/x-kotlin",
-                            ".kt",
-                            "kotlin",
-                            "kotlin",
-                            ""
-                        ),
+                        currentKernelVersion.toMaybeUnspecifiedString(),
+                        "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",
+                        notebookLanguageInfo,
                         listOf()
                     ),
                 )

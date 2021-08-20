@@ -23,6 +23,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
@@ -369,25 +370,6 @@ class KernelInfoRequest : MessageContent()
 class HelpLink(
     val text: String,
     val url: String,
-)
-
-@Serializable
-class LanguageInfo(
-    val name: String,
-    val version: String,
-    val mimetype: String,
-
-    @SerialName("file_extension")
-    val fileExtension: String,
-
-    @SerialName("pygments_lexer")
-    val pygmentsLexer: String,
-
-    @SerialName("codemirror_mode")
-    val codemirrorMode: String,
-
-    @SerialName("nbconvert_exporter")
-    val nbConvertExporter: String,
 )
 
 @Serializable

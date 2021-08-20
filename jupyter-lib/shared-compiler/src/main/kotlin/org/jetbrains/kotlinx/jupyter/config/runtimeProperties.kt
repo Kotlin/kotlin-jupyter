@@ -15,8 +15,16 @@ private val runtimeProperties by lazy {
     readResourceAsIniFile("compiler.properties", KernelStreams::class.java.classLoader)
 }
 
+fun getFromRuntimeProperties(property: String, propertyDescription: String): String {
+    return runtimeProperties[property] ?: error("Compiler artifact should contain $propertyDescription")
+}
+
 val currentKernelVersion by lazy {
     KotlinKernelVersion.from(
-        runtimeProperties["version"] ?: error("Compiler artifact should contain version")
+        getFromRuntimeProperties("version", "kernel version")
     )!!
+}
+
+val currentKotlinVersion by lazy {
+    getFromRuntimeProperties("kotlinVersion", "Kotlin version")
 }

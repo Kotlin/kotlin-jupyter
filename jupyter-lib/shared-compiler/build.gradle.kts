@@ -1,4 +1,6 @@
 import build.CreateResourcesTask
+import build.util.defaultVersionCatalog
+import build.util.devKotlin
 
 plugins {
     id("ru.ileasile.kotlin.publisher")
@@ -45,7 +47,13 @@ buildSettings {
 }
 
 CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
-    addPropertiesFile("compiler.properties", mapOf("version" to rootSettings.pyPackageVersion))
+    addPropertiesFile(
+        "compiler.properties",
+        mapOf(
+            "version" to rootSettings.pyPackageVersion,
+            "kotlinVersion" to defaultVersionCatalog.versions.devKotlin,
+        )
+    )
 }
 
 kotlinPublications {
