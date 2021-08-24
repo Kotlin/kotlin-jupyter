@@ -775,6 +775,33 @@ class ReplVarsTest : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testProperBiRecursionHandling() {
+        eval(
+            """
+            val l = mutableListOf<Any>()
+            l.add(listOf(l))
+            
+            val m = mutableMapOf<Int, Any>(1 to l)
+            
+            val z = setOf(1, 2, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var state = repl.notebook.variablesState
+        assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
+        assertEquals("LinkedHashMap: recursive structure", state["m"]!!.stringValue)
+        eval(
+            """
+            val m = mutableMapOf<Int, Any>(1 to "abc")
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        state = repl.notebook.variablesState
+        assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
+        assertNotEquals("LinkedHashMap: recursive structure", state["m"]!!.stringValue)
+    }
+
+    @Test
     fun testUnchangedVars() {
         eval(
             """

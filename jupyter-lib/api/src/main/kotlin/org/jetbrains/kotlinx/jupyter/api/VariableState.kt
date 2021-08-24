@@ -39,6 +39,7 @@ data class VariableStateImpl(
         }
     }
     override var isRecursive: Boolean = false
+    private var isLargeForString: Boolean = false
 
     private val valCache = VariableStateCache<Result<Any?>> (
         {
@@ -73,17 +74,35 @@ data class VariableStateImpl(
             val res = action(this)
             isAccessible = wasAccessible
             return res
-    private val customDelegate = DependentLazyDelegate {
-        fun getRecursiveObjectName(): String {
-            val kClassName = cachedValue.getOrNull()!!::class.simpleName
-            return "$kClassName: recursive structure"
         }
-        if (cachedValue.getOrNull() == null) {
-            return@DependentLazyDelegate null
-        }
-        handleIfRecursiveStructure()
     }
-}
+            private val customDelegate = DependentLazyDelegate {
+                fun getRecursiveObjectName(): String {
+                    val kClassName = cachedValue.getOrNull()!!::class.simpleName
+                    return "$kClassName: recursive structure"
+                }
+                if (cachedValue.getOrNull() == null) {
+                    return@DependentLazyDelegate null
+                }
+                handleIfRecursiveStructure()
+                try {
+                    cachedValue.getOrNull().toString()
+                    isRecursive = false
+                    isLargeForString = false
+                } catch (e: VirtualMachineError) {
+                    when (e) {
+                        is StackOverflowError -> {
+                            isRecursive = true
+                        }
+                        is OutOfMemoryError -> {
+                            isLargeForString = true
+                        }
+                        else -> {
+                            return@DependentLazyDelegate null
+                        }
+                    }
+                }
+            }
 
 private class VariableStateCache<T>(
     val equalityChecker: (T, T) -> Boolean = { x, y -> x == y },
