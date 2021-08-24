@@ -443,6 +443,18 @@ class ReplTests : AbstractSingleReplTest() {
 
         assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
     }
+
+    @Test
+    fun testLambdaRendering() {
+        val res = eval(
+            """
+            val foo: (Int) -> Int = {it + 1}
+            foo
+            """.trimIndent()
+        ).resultValue!!
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(2, (res as (Int) -> Int)(1))
+    }
 }
 
 class ReplVarsTest : AbstractSingleReplTest() {

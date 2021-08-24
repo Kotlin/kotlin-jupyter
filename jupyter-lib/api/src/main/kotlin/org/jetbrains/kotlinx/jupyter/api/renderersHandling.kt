@@ -135,7 +135,11 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     }
 
     override fun acceptsType(type: KClass<*>): Boolean {
-        return type.isSubclassOf(superType)
+        return try {
+            type.isSubclassOf(superType)
+        } catch (e: UnsupportedOperationException) {
+            false
+        }
     }
 
     override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {
