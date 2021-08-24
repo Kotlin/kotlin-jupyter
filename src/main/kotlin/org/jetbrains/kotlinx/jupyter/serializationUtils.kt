@@ -126,7 +126,7 @@ class VariablesSerializer(
     private val serializationLimit: Int = 10000,
     private val cellCountRemovalThreshold: Int = 5,
     // let's make this flag customizable from Jupyter config menu
-    val shouldRemoveOldVariablesFromCache: Boolean = true
+    val shouldRemoveOldDescriptors: Boolean = false
 ) : ClearableSerializer<Int> {
 
     fun MutableMap<String, SerializedVariablesState?>.addDescriptor(value: Any?, name: String = value.toString()) {
@@ -330,24 +330,8 @@ class VariablesSerializer(
 
     private val isSerializationActive: Boolean = System.getProperty(serializationSystemProperty)?.toBooleanStrictOrNull() ?: true
 
-    /**
-     * Cache for not recomputing unchanged variables
-     */
-    private val serializedVariablesCache: MutableMap<String, SerializedVariablesState> = mutableMapOf()
-
-    private val removedFromSightVariables: MutableSet<String> = mutableSetOf()
-
     private suspend fun clearOldData(currentCellId: Int, cellVariables: Map<Int, Set<String>>) {
-        fun removeFromCache(cellId: Int) {
-            val oldDeclarations = cellVariables[cellId]
-            oldDeclarations?.let { oldSet ->
-                oldSet.forEach { varName ->
-                    serializedVariablesCache.remove(varName)
-                    removedFromSightVariables.add(varName)
-                }
-            }
-        }
-
+        if (!shouldRemoveOldDescriptors) return
         val setToRemove = mutableSetOf<Int>()
         computedDescriptorsPerCell.forEach { (cellNumber, _) ->
             if (abs(currentCellId - cellNumber) >= cellCountRemovalThreshold) {
@@ -357,9 +341,6 @@ class VariablesSerializer(
         log.debug("Removing old info about cells: $setToRemove")
         setToRemove.forEach {
             clearStateInfo(it)
-            if (shouldRemoveOldVariablesFromCache) {
-                removeFromCache(it)
-            }
         }
     }
 
@@ -369,7 +350,6 @@ class VariablesSerializer(
 
     override suspend fun clearStateInfo(currentState: Int) {
         computedDescriptorsPerCell.remove(currentState)
-        // seenObjectsPerVariable.remove(currentState)
     }
 
     suspend fun tryValidateCache(currentCellId: Int, cellVariables: Map<Int, Set<String>>) {
@@ -378,42 +358,17 @@ class VariablesSerializer(
     }
 
     fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, oldDeclarations: Map<String, Int>, variablesCells: Map<String, Int>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
-        fun removeNonExistingEntries() {
-            val toRemoveSet = mutableSetOf<String>()
-            serializedVariablesCache.forEach { (name, _) ->
-                // seems like this never gonna happen
-                if (!variablesState.containsKey(name)) {
-                    toRemoveSet.add(name)
-                }
-            }
-            toRemoveSet.forEach { serializedVariablesCache.remove(it) }
-        }
-
         if (!isSerializationActive) return emptyMap()
 
         if (variablesState.isEmpty()) {
             return emptyMap()
         }
         currentSerializeCount = 0
-        val neededEntries = variablesState.filterKeys {
-            val wasRedeclared = !unchangedVariables.contains(it)
-            if (wasRedeclared) {
-                removedFromSightVariables.remove(it)
-            }
-            // TODO: might consider self-recursive elements always to recompute since it's non comparable via strings
-            if (serializedVariablesCache.isEmpty()) {
-                true
-            } else {
-                (!unchangedVariables.contains(it) || serializedVariablesCache[it]?.value != variablesState[it]?.stringValue) &&
-                    !removedFromSightVariables.contains(it)
-            }
-        }
         log.debug("Variables state as is: $variablesState")
-        log.debug("Serializing variables after filter: $neededEntries")
-        log.debug("Unchanged variables: ${unchangedVariables - neededEntries.keys}")
+        log.debug("Unchanged variables: ${unchangedVariables - variablesState.keys}")
 
         // remove previous data
-        val serializedData = neededEntries.mapValues {
+        val serializedData = variablesState.mapValues {
             val actualCell = variablesCells[it.key] ?: cellId
             if (oldDeclarations.containsKey(it.key)) {
                 val oldCell = oldDeclarations[it.key]!!
@@ -422,12 +377,9 @@ class VariablesSerializer(
             }
             serializeVariableState(actualCell, it.key, it.value)
         }
+        log.debug(serializedData.entries.toString())
 
-        serializedVariablesCache.putAll(serializedData)
-        removeNonExistingEntries()
-        log.debug(serializedVariablesCache.entries.toString())
-
-        return serializedVariablesCache
+        return serializedData
     }
 
     fun doIncrementalSerialization(
