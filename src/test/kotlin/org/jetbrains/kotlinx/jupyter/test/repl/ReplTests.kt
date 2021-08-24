@@ -1032,7 +1032,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         var values = 1
         receivedDescriptor.forEach { (_, state) ->
             val fieldDescriptor = state!!.fieldDescriptor
-            assertEquals(0, fieldDescriptor.size)
+            assertEquals(1, fieldDescriptor.size)
             assertTrue(state.isContainer)
             assertEquals("${values++}", state.value)
         }
@@ -1063,7 +1063,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
         var values = 1
         receivedDescriptor.forEach { (_, state) ->
             val fieldDescriptor = state!!.fieldDescriptor
-            assertEquals(0, fieldDescriptor.size)
+            assertEquals(1, fieldDescriptor.size)
             assertTrue(state.isContainer)
             assertEquals("${values++}", state.value)
         }
@@ -1204,7 +1204,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
                 var values = 1
                 receivedDescriptor.forEach { (_, state) ->
                     val fieldDescriptor = state!!.fieldDescriptor
-                    assertEquals(0, fieldDescriptor.size)
+                    assertEquals(1, fieldDescriptor.size)
                     assertTrue(state.isContainer)
                     assertEquals("${values++}", state.value)
                 }
@@ -1224,7 +1224,7 @@ class ReplVarsSerializationTest : AbstractSingleReplTest() {
                 var values = 1
                 receivedDescriptor.forEach { (_, state) ->
                     val fieldDescriptor = state!!.fieldDescriptor
-                    assertEquals(0, fieldDescriptor.size)
+                    assertEquals(1, fieldDescriptor.size)
                     assertTrue(state.isContainer)
                     assertEquals("${values++}", state.value)
                 }

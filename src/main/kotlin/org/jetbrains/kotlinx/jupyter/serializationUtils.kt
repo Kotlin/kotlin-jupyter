@@ -136,15 +136,28 @@ class VariablesSerializer(
             typeName,
             value
         ).serializedVariablesState
-        if (typeName != null && typeName == "Entry") {
+        if (typeName != null) {
             val descriptor = this[name]
-            value as Map.Entry<*, *>
-            val valueType = if (value.value != null) value.value!!::class.simpleName else "null"
-            descriptor!!.fieldDescriptor[value.key.toString()] = createSerializeVariableState(
-                value.key.toString(),
-                valueType,
-                value.value
-            ).serializedVariablesState
+            if (typeName == "Entry") {
+                value as Map.Entry<*, *>
+                val valueType = if (value.value != null) value.value!!::class.simpleName else "null"
+                val strName = getProperString(value.key)
+                descriptor!!.fieldDescriptor[strName] = createSerializeVariableState(
+                    strName,
+                    valueType,
+                    value.value
+                ).serializedVariablesState
+            } else if (typeName == "SingletonList") {
+                value as List<*>
+                val toStore = value.firstOrNull()
+                val valueType = if (toStore != null) toStore::class.simpleName else "null"
+                val strName = getProperString(toStore)
+                descriptor!!.fieldDescriptor[strName] = createSerializeVariableState(
+                    strName,
+                    valueType,
+                    toStore
+                ).serializedVariablesState
+            }
         }
     }
 
@@ -815,6 +828,16 @@ fun getProperString(value: Any?): String {
         }
     }
 
+    // todo: this might better be on the plugin side
+    fun isPrintOnlySize(size: Int, builder: StringBuilder): Boolean {
+        return if (size >= 15) {
+            builder.append("size: $size")
+            true
+        } else {
+            false
+        }
+    }
+
     value ?: return "null"
 
     val kClass = value::class
@@ -825,6 +848,9 @@ fun getProperString(value: Any?): String {
             value as Array<*>
             return buildString {
                 val size = value.size
+                if (isPrintOnlySize(size, this)) {
+                    return@buildString
+                }
                 value.forEachIndexed { index, it ->
                     print(this, size, index, it)
                 }
@@ -842,6 +868,9 @@ fun getProperString(value: Any?): String {
             value as Collection<*>
             return buildString {
                 val size = value.size
+                if (isPrintOnlySize(size, this)) {
+                    return@buildString
+                }
                 value.forEachIndexed { index, it ->
                     print(this, size, index, it)
                 }
@@ -853,6 +882,9 @@ fun getProperString(value: Any?): String {
             val size = value.size
             var ind = 0
             return buildString {
+                if (isPrintOnlySize(size, this)) {
+                    return@buildString
+                }
                 value.forEach {
                     print(this, size, ind++, it, true)
                 }
