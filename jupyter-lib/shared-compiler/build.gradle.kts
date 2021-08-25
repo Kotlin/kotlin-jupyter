@@ -32,7 +32,7 @@ dependencies {
     compileOnly(libs.serialization.json)
 
     // Serialization compiler plugin (for notebooks, not for kernel code)
-    compileOnly(libs.serialization.dev.unshadedPlugin)
+    compileOnly(libs.serialization.dev.unshaded)
 
     // Logging
     compileOnly(libs.logging.slf4j.api)

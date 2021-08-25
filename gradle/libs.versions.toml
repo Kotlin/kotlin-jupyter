@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.6.0-dev-1733"
+kotlin = "1.6.0-dev-3567"
 stableKotlin = "1.5.21"
 gradleKotlin = "1.4.31"
 shadowJar = "7.0.0"
@@ -8,20 +8,20 @@ kotlinxSerialization = "1.2.2"
 kotlinxCoroutines = "1.5.1"
 ktlintGradle = "10.0.0"
 ktlint = "0.40.0"
-publishPlugin = "0.0.54-dev"
+publishPlugin = "0.0.57-dev"
 versionsPlugin = "0.39.0"
 
 slf4j = "1.7.32"
-logback = "1.2.4"
-http4k = "4.10.1.0"
-jupyterApi = "0.10.0-146"
-jetbrainsAnnotations = "21.0.1"
+logback = "1.2.5"
+http4k = "4.11.0.1"
+jupyterApi = "0.10.0-215"
+jetbrainsAnnotations = "22.0.0"
 
 junit = "5.7.2"
-kotlinTest = "4.6.1"
+kotlinTest = "4.6.2"
 clikt = "2.8.0"
 zeromq = "0.5.2"
-gson = "2.8.7"
+gson = "2.8.8"
 
 jlatexmath = "1.0.7"
 xmlgraphicsFop = "2.6"
@@ -59,11 +59,11 @@ kotlin-gradle-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib",
 kotlin-gradle-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "gradleKotlin" }
 kotlin-gradle-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "gradleKotlin" }
 kotlin-gradle-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "gradleKotlin" }
-kotlin-gradle-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "gradleKotlin" }
+kotlin-gradle-gradle = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "gradleKotlin" }
 
 # Serialization compiler plugin (for Dev Kotlin)
-serialization-dev-embeddedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
-serialization-dev-unshadedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-unshaded", version.ref = "kotlin" }
+serialization-dev-embedded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
+serialization-dev-unshaded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-unshaded", version.ref = "kotlin" }
 
 # Serialization runtime
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
@@ -127,7 +127,7 @@ plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref =
 plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
 
 # id("com.github.ben-manes.versions")
-plugin-versionsPlugin = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "versionsPlugin" }
+plugin-versionsUpdater = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "versionsPlugin" }
 
 # Published artifacts of this project as binary dependencies
 jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
@@ -144,5 +144,5 @@ allGradlePlugins = [
     "plugin-ktlint",
     "plugin-publisher",
     "plugin-changelog",
-    "plugin-versionsPlugin",
+    "plugin-versionsUpdater",
 ]

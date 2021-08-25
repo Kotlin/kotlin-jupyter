@@ -49,6 +49,6 @@ val NamedVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotli
 val NamedVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
 val NamedVersionCatalogsExtension.Versions.ktlint get() = get("ktlint")
 
-val NamedVersionCatalogsExtension.Dependencies.junitApi get() = get("test-junit-api")
-val NamedVersionCatalogsExtension.Dependencies.junitEngine get() = get("test-junit-engine")
-val NamedVersionCatalogsExtension.Dependencies.kotlinTest get() = get("kotlin-stable-test")
+val NamedVersionCatalogsExtension.Dependencies.junitApi get() = get("test.junit.api")
+val NamedVersionCatalogsExtension.Dependencies.junitEngine get() = get("test.junit.engine")
+val NamedVersionCatalogsExtension.Dependencies.kotlinTest get() = get("kotlin.stable.test")

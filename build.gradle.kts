@@ -42,7 +42,7 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingCommon)
 
     // Embedded version of serialization plugin for notebook code
-    implementation(libs.serialization.dev.embeddedPlugin)
+    implementation(libs.serialization.dev.embedded)
 
     // Logging
     implementation(libs.logging.slf4j.api)

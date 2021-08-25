@@ -247,15 +247,7 @@ fun getSimpleCompiler(
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler {
     class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) :
-        KJvmReplCompilerBase<ReplCodeAnalyzerBase>(
-            hostConfiguration = hostConfiguration,
-            initAnalyzer = { sharedScriptCompilationContext, scopeProcessor ->
-                ReplCodeAnalyzerBase(
-                    sharedScriptCompilationContext.environment,
-                    implicitsResolutionFilter = scopeProcessor
-                )
-            }
-        )
+        KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)
 
     return JupyterCompilerImpl(
         SimpleReplCompiler(

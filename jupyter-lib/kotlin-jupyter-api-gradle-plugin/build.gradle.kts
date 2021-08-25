@@ -20,7 +20,7 @@ dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts and it will be possible to use
     // kotlinx.serialization in plugin code
-    implementation(libs.kotlin.gradle.gradlePlugin)
+    implementation(libs.kotlin.gradle.gradle)
     implementation(libs.gson)
 
     testImplementation(projects.api)
