@@ -561,13 +561,15 @@ class SerializationRequest(
     val cellId: Int,
     val descriptorsState: Map<String, SerializedVariablesState>,
     val topLevelDescriptorName: String = "",
-    val pathToDescriptor: List<String> = emptyList()
+    val pathToDescriptor: List<String> = emptyList(),
+    val commId: String = ""
 ) : MessageContent()
 
 @Serializable
 class SerializationReply(
-    val cellId: Int = 1,
-    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap()
+    val cell_id: Int = 1,
+    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap(),
+    val comm_id: String = ""
 ) : MessageContent()
 
 @Serializable(MessageDataSerializer::class)

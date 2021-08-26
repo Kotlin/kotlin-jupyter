@@ -52,8 +52,9 @@ data class SerializedVariablesState(
 
 @Serializable
 class SerializationReply(
-    val cellId: Int = 1,
-    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap()
+    val cell_id: Int = 1,
+    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap(),
+    val comm_id: String = ""
 )
 
 @Serializable

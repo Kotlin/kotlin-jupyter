@@ -308,21 +308,23 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
         is CommOpen -> {
-            if (!content.commId.equals(MessageType.SERIALIZATION_REQUEST.name, ignoreCase = true)) {
+            if (!content.targetName.equals("kotlin_serialization", ignoreCase = true)) {
                 send(makeReplyMessage(msg, MessageType.NONE))
                 return
             }
             log.debug("Message type in CommOpen: $msg, ${msg.type}")
             val data = content.data ?: return sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY))
-
+            if (data.isEmpty()) return sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY))
+            log.debug("Message data: $data")
             val messageContent = getVariablesDescriptorsFromJson(data)
             GlobalScope.launch(Dispatchers.Default) {
                 repl.serializeVariables(
                     messageContent.topLevelDescriptorName,
                     messageContent.descriptorsState,
+                    content.commId,
                     messageContent.pathToDescriptor
                 ) { result ->
-                    sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_OPEN, content = result))
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_MSG, content = result))
                 }
             }
         }
@@ -343,7 +345,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         is SerializationRequest -> {
             GlobalScope.launch(Dispatchers.Default) {
                 if (content.topLevelDescriptorName.isNotEmpty()) {
-                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState, content.pathToDescriptor) { result ->
+                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState, commID = content.commId, content.pathToDescriptor) { result ->
                         sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
                     }
                 } else {

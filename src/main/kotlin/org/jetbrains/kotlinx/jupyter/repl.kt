@@ -142,7 +142,7 @@ interface ReplForJupyter {
 
     suspend fun serializeVariables(cellId: Int, topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, callback: (SerializationReply) -> Unit)
 
-    suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String> = emptyList(),
+    suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, commID: String = "", pathToDescriptor: List<String> = emptyList(),
                                    callback: (SerializationReply) -> Unit)
 
     val homeDir: File?
@@ -576,9 +576,8 @@ class ReplForJupyterImpl(
         doWithLock(SerializationArgs(descriptorsState, cellId = cellId, topLevelVarName = topLevelVarName, callback = callback), serializationQueue, SerializationReply(cellId, descriptorsState), ::doSerializeVariables)
     }
 
-    override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, pathToDescriptor: List<String>,
-                                            callback: (SerializationReply) -> Unit) {
-        doWithLock(SerializationArgs(descriptorsState, topLevelVarName = topLevelVarName, callback = callback, pathToDescriptor = pathToDescriptor), serializationQueue, SerializationReply(), ::doSerializeVariables)
+    override suspend fun serializeVariables(topLevelVarName: String, descriptorsState: Map<String, SerializedVariablesState>, commID: String, pathToDescriptor: List<String>, callback: (SerializationReply) -> Unit) {
+        doWithLock(SerializationArgs(descriptorsState, topLevelVarName = topLevelVarName, callback = callback, comm_id = commID ,pathToDescriptor = pathToDescriptor), serializationQueue, SerializationReply(), ::doSerializeVariables)
     }
 
     private fun doSerializeVariables(args: SerializationArgs): SerializationReply {
@@ -593,7 +592,7 @@ class ReplForJupyterImpl(
         }
         log.debug("Serialization cellID: $cellId")
         log.debug("Serialization answer: ${resultMap.entries.first().value.fieldDescriptor}")
-        return SerializationReply(cellId, resultMap)
+        return SerializationReply(cellId, resultMap, args.comm_id)
     }
 
 
@@ -634,6 +633,7 @@ class ReplForJupyterImpl(
         var cellId: Int = -1,
         val topLevelVarName: String = "",
         val pathToDescriptor: List<String> = emptyList(),
+        val comm_id: String = "",
         override val callback: (SerializationReply) -> Unit
     ) : LockQueueArgs<SerializationReply>
 
