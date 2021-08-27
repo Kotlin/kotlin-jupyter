@@ -83,7 +83,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
         /****** Distribution ******/
         registerDistributionTasks()
-        installTasksConfigurator.registerInstallTasks(false, settings.distribKernelDir, settings.runKernelDir)
+        installTasksConfigurator.registerInstallTasks(false, settings.distribKernelDir, settings.distribBuildDir)
         registerPythonPackageTasks()
         registerAggregateUploadTasks()
 

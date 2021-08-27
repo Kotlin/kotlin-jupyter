@@ -73,7 +73,6 @@ class RootSettingsExtension(
     val resourcesDir: File = project.file("resources")
     val distribBuildDir: File = project.buildDir.resolve("distrib-build")
     val distribKernelDir: File = distribBuildDir.resolve("kernel")
-    val runKernelDir: File = distribBuildDir.resolve("run_kotlin_kernel")
     val logosDir: File = resourcesDir.resolve("logos")
     val nbExtensionDir: File = resourcesDir.resolve("notebook-extension")
     val distributionDir: File = project.file("distrib")
@@ -83,10 +82,11 @@ class RootSettingsExtension(
     val jarsPath: String = "jars"
     val configDir: String = "config"
     val jarArgsFile: String = "$configDir/jar_args.json"
-    val runKernelPy: String = "run_kernel.py"
+    val runKotlinKernelModule = "run_kotlin_kernel"
     val kotlinKernelModule: String = "kotlin_kernel"
     val kernelFile: String = "kernel.json"
     val setupPy: String = "setup.py"
+    val localRunPy: String = "local_run.py"
 
     val installKernelTaskPrefix: String = "installKernel"
     val cleanInstallDirTaskPrefix: String = "cleanInstallDir"

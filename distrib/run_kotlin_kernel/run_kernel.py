@@ -3,7 +3,7 @@ import os
 import shlex
 import subprocess
 import sys
-from typing import List
+from typing import List, AnyStr
 
 from kotlin_kernel import env_names
 
@@ -16,8 +16,14 @@ def run_kernel(*args) -> None:
         try:
             sys.exit(130)
         except SystemExit:
-            # noinspection PyProtectedMember
+            # noinspection PyProtectedMember,PyUnresolvedReferences
             os._exit(130)
+
+
+def module_install_path() -> str:
+    abspath: AnyStr = os.path.abspath(__file__)
+    current_dir: AnyStr = os.path.dirname(abspath)
+    return str(current_dir)
 
 
 def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables_dir: str = None) -> None:

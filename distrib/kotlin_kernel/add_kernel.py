@@ -11,7 +11,7 @@ from kotlin_kernel.install_user import get_user_jupyter_path
 from kotlin_kernel.install_user import install_base_kernel
 
 
-def add_kernel():
+def add_kernel(sys_args):
     parser = argparse.ArgumentParser(
         prog="add-kernel",
         description="Add a kernel with specified JDK, JVM args, and environment",
@@ -31,11 +31,11 @@ def add_kernel():
     parser.add_argument("--force", action="store_true", default=False,
                         help="Overwrite an existing kernel with the same name.")
 
-    if len(sys.argv) == 2:
+    if len(sys_args) == 2:
         parser.print_usage()
         exit(0)
 
-    args = parser.parse_args(sys.argv[2:])
+    args = parser.parse_args(sys_args[2:])
 
     jdk = args.jdk
     if jdk is not None:

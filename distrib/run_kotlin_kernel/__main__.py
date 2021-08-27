@@ -1,5 +1,11 @@
-from sys import argv
+import sys
+
 from run_kotlin_kernel.run_kernel import run_kernel
 
+
+def main(args):
+    run_kernel(*(args[1:]))
+
+
 if __name__ == "__main__":
-    run_kernel(*(argv[1:]))
+    main(sys.argv)
