@@ -18,11 +18,10 @@ class InstallTasksConfigurator(
         project.tasks.register<Copy>(COPY_RUN_KERNEL_PY_TASK) {
             group = LOCAL_INSTALL_GROUP
             dependsOn(makeTaskName(settings.cleanInstallDirTaskPrefix, true))
-            from(settings.runKernelDir.resolve(settings.runKernelPy))
-            from(settings.distributionDir.resolve(settings.kotlinKernelModule)) {
-                into(settings.kotlinKernelModule)
-            }
+            moduleFromDistributionDir(settings.runKotlinKernelModule)
+            moduleFromDistributionDir(settings.kotlinKernelModule)
             into(settings.localInstallDir)
+            from(settings.distributionDir.resolve(settings.localRunPy))
         }
 
         project.tasks.register<Copy>(COPY_NB_EXTENSION_TASK) {
@@ -49,21 +48,21 @@ class InstallTasksConfigurator(
             dependsOn(cleanDirTask, updateLibrariesTask)
             group = groupName
             from(settings.librariesDir)
-            into(mainInstallPath.resolve(settings.librariesDir))
+            into(mainInstallPath.librariesDir)
         }
 
         project.tasks.register<Copy>(makeTaskName(settings.installLibsTaskPrefix, local)) {
             dependsOn(cleanDirTask)
             group = groupName
             from(project.configurations["deploy"])
-            into(mainInstallPath.resolve(settings.jarsPath))
+            into(mainInstallPath.localJarsDir)
         }
 
         project.tasks.register<Copy>(makeTaskName(settings.installKernelTaskPrefix, local)) {
             dependsOn(cleanDirTask, shadowJar)
             group = groupName
             from(shadowJar.get().outputs)
-            into(mainInstallPath.resolve(settings.jarsPath))
+            into(mainInstallPath.localJarsDir)
         }
 
         listOf(true, false).forEach { debug ->
@@ -72,8 +71,16 @@ class InstallTasksConfigurator(
         }
     }
 
-    private fun registerTaskForSpecs(debug: Boolean, local: Boolean, group: String, cleanDir: TaskProvider<*>, shadowJar: TaskProvider<*>, specPath: File, mainInstallPath: File): String {
-        val taskName = makeTaskName(if (debug) "createDebugSpecs" else "createSpecs", local)
+    private fun registerTaskForSpecs(
+        debug: Boolean,
+        local: Boolean,
+        group: String,
+        cleanDir: TaskProvider<*>,
+        shadowJar: TaskProvider<*>,
+        specPath: File,
+        mainInstallPath: File
+    ): String {
+        val taskName = makeTaskName("create${debugStr(debug)}Specs", local)
         project.tasks.register(taskName) {
             this.group = group
             dependsOn(cleanDir, shadowJar)
@@ -82,8 +89,8 @@ class InstallTasksConfigurator(
 
                 val libsCp = project.files(project.configurations["deploy"]).files.map { it.name }
 
-                makeDirs(mainInstallPath.resolve(settings.jarsPath))
-                makeDirs(mainInstallPath.resolve(settings.configDir))
+                makeDirs(mainInstallPath.localJarsDir)
+                makeDirs(mainInstallPath.configDir)
                 makeDirs(specPath)
 
                 writeJson(
@@ -93,7 +100,7 @@ class InstallTasksConfigurator(
                         "classPath" to libsCp,
                         "debuggerConfig" to if (debug) settings.debuggerConfig else ""
                     ),
-                    mainInstallPath.resolve(settings.jarArgsFile)
+                    mainInstallPath.jarArgsFile
                 )
                 makeKernelSpec(specPath, local)
             }
@@ -103,7 +110,7 @@ class InstallTasksConfigurator(
 
     private fun registerMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
         val taskNamePrefix = if (local) "install" else "prepare"
-        val taskNameMiddle = if (debug) "Debug" else ""
+        val taskNameMiddle = debugStr(debug)
         val taskNameSuffix = if (local) "" else "Package"
         val taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
 
@@ -121,24 +128,21 @@ class InstallTasksConfigurator(
     }
 
     private fun makeKernelSpec(installPath: File, localInstall: Boolean) {
-        val argv = if (localInstall) {
-            listOf(
-                "python",
-                installPath.resolve(settings.runKernelPy).toString(),
-                "{connection_file}",
-                installPath.resolve(settings.jarArgsFile).toString(),
-                installPath.toString()
-            )
-        } else {
-            listOf("python", "-m", "run_kotlin_kernel", "{connection_file}")
-        }
+        val firstArg = if (localInstall) installPath.resolve(settings.localRunPy).toString() else "-m"
+        fun execPythonArgs(vararg args: String) = listOf("python", firstArg, *args)
+
+        val argv = execPythonArgs(settings.runKotlinKernelModule, "{connection_file}")
+        val jarsPathDetectorArgv = execPythonArgs(settings.kotlinKernelModule, "detect-jars-location")
 
         writeJson(
             mapOf(
                 "display_name" to "Kotlin",
                 "language" to "kotlin",
                 "interrupt_mode" to "message",
-                "argv" to argv
+                "argv" to argv,
+                "metadata" to mapOf(
+                    "jar_path_detect_command" to jarsPathDetectorArgv,
+                ),
             ),
             installPath.resolve(settings.kernelFile)
         )
@@ -146,6 +150,19 @@ class InstallTasksConfigurator(
         project.copy {
             from(settings.nbExtensionDir, settings.logosDir)
             into(installPath)
+        }
+    }
+
+    private val File.localJarsDir get() = resolve(settings.runKotlinKernelModule).resolve(settings.jarsPath)
+    private val File.librariesDir get() = resolve(settings.runKotlinKernelModule).resolve(settings.librariesDir)
+    private val File.configDir get() = resolve(settings.runKotlinKernelModule).resolve(settings.configDir)
+    private val File.jarArgsFile get() = resolve(settings.runKotlinKernelModule).resolve(settings.jarArgsFile)
+
+    private fun debugStr(isDebug: Boolean) = if (isDebug) "Debug" else ""
+
+    private fun Copy.moduleFromDistributionDir(moduleName: String) {
+        from(settings.distributionDir.resolve(moduleName)) {
+            into(moduleName)
         }
     }
 }
