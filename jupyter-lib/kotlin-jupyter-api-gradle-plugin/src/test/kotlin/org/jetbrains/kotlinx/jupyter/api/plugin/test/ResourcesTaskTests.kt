@@ -37,7 +37,6 @@ class ResourcesTaskTests {
     private fun runResourcesTask(args: Array<String>? = null, type: String = ""): BuildResult {
         val arguments = args?.toMutableList() ?: mutableListOf(
             "-Pkotlin.jupyter.add.api=false",
-            "-Pkotlin.jupyter.add.scanner=false",
             "--stacktrace",
             "--info"
         )

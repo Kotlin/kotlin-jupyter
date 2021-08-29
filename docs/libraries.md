@@ -68,20 +68,38 @@ plugins {
 }
 ```
 
-This plugin adds dependencies to api and annotations ("scanner") artifacts to your project. You may turn off
-the auto-including of these artifacts by specifying following Gradle properties:
- - `kotlin.jupyter.add.api` to `false`.
- - `kotlin.jupyter.add.scanner` to `false`.
+This plugin adds following dependencies to your project:
 
-Add these dependencies manually using `kotlinJupyter` extension:
+| Artifact                         | Gradle option to exclude/include | Enabled by default | Dependency scope     | Method for adding dependency manually    |
+| :------------------------------- | :------------------------------- | :----------------- | :------------------- | :--------------------------------------- |
+| `kotlin-jupyter-api`             | `kotlin.jupyter.add.api`         | yes                | `compileOnly`        | `addApiDependency(version: String?)`     |
+| `kotlin-jupyter-api-annotations` | `kotlin.jupyter.add.scanner`     | no                 | `implementation`     | `addScannerDependency(version: String?)` |
+| `kotlin-jupyter-test-kit`        | `kotlin.jupyter.add.testkit`     | yes                | `testImplementation` | `addTestKitDependency(version: String?)` |
+
+You may turn on / turn off the dependency with its default version (version of the plugin)
+by setting corresponding Gradle option to `true` or `false`.
+If the corresponding option is set to `false` (by default or in your setup), you still
+can add it manually using the method from the table inside `kotlinJupyter` extension like that:
+
 ```groovy
 kotlinJupyter {
-    addApiDependency("<version>")
-    addScannerDependency("<version>")
+    addApiDependency() // Use default version
+    addApiDependency("0.10.0.1") // Use custom artifact version
 }
 ```
 
-Finally, implement `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` or
+### Adding library integration using annotation processor
+
+If you don't have problems with kapt (i.e. you use JDK version under 16), you can use annotations to
+mark integration classes. 
+
+First, enable `kotlin-jupyter-api-annotations` dependency by adding following line to your `gradle.properties`:
+
+```
+kotlin.jupyter.add.scanner = true
+```
+
+Then, implement `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` or
 `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition` and mark implementation with
 `JupyterLibrary` annotation:
 
@@ -109,8 +127,9 @@ For a further information see docs for:
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer`
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`
 
-### Avoiding using annotation processor
+### Adding library integration avoiding use of annotation processor
 You may want not to use annotation processing for implementations detection.
+The reason may be, for example, the problems with kapt.
 Then you may refer your implementations right in your buildscript. Note that
 no checking for existence will be performed in this case.
 

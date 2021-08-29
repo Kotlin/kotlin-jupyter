@@ -11,7 +11,7 @@ class KotlinJupyterPluginExtension(
     private val project: Project
 ) {
     private val enableApiDependency = project.propertyByFlag("kotlin.jupyter.add.api", true)
-    private val enableScannerDependency = project.propertyByFlag("kotlin.jupyter.add.scanner", true)
+    private val enableScannerDependency = project.propertyByFlag("kotlin.jupyter.add.scanner", false)
     private val enableTestKitDependency = project.propertyByFlag("kotlin.jupyter.add.testkit", true)
 
     internal fun addDependenciesIfNeeded() {
@@ -20,10 +20,12 @@ class KotlinJupyterPluginExtension(
         if (enableTestKitDependency.get()) addTestKitDependency()
     }
 
+    @JvmOverloads
     fun addApiDependency(version: String? = null) = with(project) {
         configureDependency("compileOnly", kernelDependency("api", version))
     }
 
+    @JvmOverloads
     fun addScannerDependency(version: String? = null) = with(project) {
         configurations.whenAdded({ it.name == "kapt" }) { kaptConf ->
             val annotationsDependency = kernelDependency("api-annotations", version)
@@ -34,6 +36,7 @@ class KotlinJupyterPluginExtension(
         }
     }
 
+    @JvmOverloads
     fun addTestKitDependency(version: String? = null) = with(project) {
         configureDependency("testImplementation", kernelDependency("test-kit", version))
     }
