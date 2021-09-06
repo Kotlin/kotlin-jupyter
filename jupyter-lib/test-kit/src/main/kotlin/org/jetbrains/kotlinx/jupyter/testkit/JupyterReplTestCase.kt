@@ -16,7 +16,7 @@ abstract class JupyterReplTestCase {
     }
 
     fun execEx(code: Code): EvalResultEx {
-        return repl.evalEx(code, null, -1, storeHistory)
+        return repl.evalEx(code, null, -1, true)
     }
 
     fun exec(code: Code): Any? {
