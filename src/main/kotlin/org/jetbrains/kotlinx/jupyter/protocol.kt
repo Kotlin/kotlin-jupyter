@@ -1,9 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
 import ch.qos.logback.classic.Level
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
@@ -300,14 +297,14 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
         is CompleteRequest -> {
-            GlobalScope.launch(Dispatchers.Default) {
+            connection.launchJob {
                 repl.complete(content.code, content.cursorPos) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.COMPLETE_REPLY, content = result.message))
                 }
             }
         }
         is ListErrorsRequest -> {
-            GlobalScope.launch(Dispatchers.Default) {
+            connection.launchJob {
                 repl.listErrors(content.code) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.LIST_ERRORS_REPLY, content = result.message))
                 }

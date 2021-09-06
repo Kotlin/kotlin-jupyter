@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -147,6 +150,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     var contextMessage: Message? = null
 
     private val currentExecutions = HashSet<Thread>()
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     data class ConnectionExecutionResult<T>(
         val result: T?,
@@ -187,6 +191,10 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             execution?.stop()
             currentExecutions.remove(execution)
         }
+    }
+
+    fun launchJob(runnable: suspend CoroutineScope.() -> Unit) {
+        coroutineScope.launch(block = runnable)
     }
 
     override fun close() {
