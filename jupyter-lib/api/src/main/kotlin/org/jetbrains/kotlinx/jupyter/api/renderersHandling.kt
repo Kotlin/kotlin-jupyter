@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
+import kotlin.reflect.jvm.internal.KotlinReflectionInternalError
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
@@ -138,6 +139,8 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
         return try {
             type.isSubclassOf(superType)
         } catch (e: UnsupportedOperationException) {
+            false
+        } catch (e: KotlinReflectionInternalError) {
             false
         }
     }
