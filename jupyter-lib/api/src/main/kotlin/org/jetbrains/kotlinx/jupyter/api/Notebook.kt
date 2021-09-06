@@ -23,6 +23,11 @@ interface Notebook {
     val cellVariables: Map<Int, Set<String>>
 
     /**
+     * Returns the object that allows to access execution results
+     */
+    val resultsAccessor: ResultsAccessor
+
+    /**
      * Mapping allowing to get cell by execution number
      */
     @Throws(IndexOutOfBoundsException::class)

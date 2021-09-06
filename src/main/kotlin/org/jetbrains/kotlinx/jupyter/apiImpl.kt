@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 
@@ -109,6 +110,8 @@ class NotebookImpl(
 
     override val cellVariables: Map<Int, Set<String>>
         get() = currentCellVariables
+
+    override val resultsAccessor = ResultsAccessor { getResult(it) }
 
     override fun getCell(id: Int): CodeCellImpl {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(

@@ -24,6 +24,7 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 class ReplTests : AbstractSingleReplTest() {
@@ -454,6 +455,12 @@ class ReplTests : AbstractSingleReplTest() {
         ).resultValue!!
         @Suppress("UNCHECKED_CAST")
         assertEquals(2, (res as (Int) -> Int)(1))
+    }
+
+    @Test
+    fun testOutVarRendering() {
+        val res = eval("Out").resultValue
+        assertNotNull(res)
     }
 }
 

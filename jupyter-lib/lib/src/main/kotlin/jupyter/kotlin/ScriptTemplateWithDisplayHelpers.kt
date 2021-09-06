@@ -30,9 +30,7 @@ abstract class ScriptTemplateWithDisplayHelpers(
         USE(o.getDefinitions(notebook).single())
     }
 
-    val Out: ResultsAccessor get() = ResultsAccessor { id ->
-        notebook.getResult(id)
-    }
+    val Out: ResultsAccessor get() = notebook.resultsAccessor
 
     val JavaRuntimeUtils get() = notebook.jreInfo
 }

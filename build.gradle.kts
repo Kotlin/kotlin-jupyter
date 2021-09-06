@@ -75,6 +75,7 @@ buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
     withCompilerArgs {
         skipPrereleaseCheck()
+        samConversionsClass()
     }
     withTests()
 }
