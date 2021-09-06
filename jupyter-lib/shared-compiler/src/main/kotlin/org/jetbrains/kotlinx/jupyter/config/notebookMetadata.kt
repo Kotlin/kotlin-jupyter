@@ -29,7 +29,7 @@ val notebookLanguageInfo: LanguageInfo by lazy {
         "text/x-kotlin",
         ".kt",
         "kotlin",
-        "kotlin",
+        "text/x-kotlin",
         ""
     )
 }
