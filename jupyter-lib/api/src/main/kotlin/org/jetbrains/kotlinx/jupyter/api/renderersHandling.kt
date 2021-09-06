@@ -137,7 +137,7 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     override fun acceptsType(type: KClass<*>): Boolean {
         return try {
             type.isSubclassOf(superType)
-        } catch (e: UnsupportedOperationException) {
+``        } catch (e: Throwable) {
             false
         }
     }
