@@ -108,7 +108,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
 
         log.info("Begin listening for events")
 
-        val executionCount = AtomicLong(1)
+        val executionCount = AtomicLong(0)
 
         val repl = ReplForJupyterImpl(config, runtimeProperties, scriptReceivers)
 

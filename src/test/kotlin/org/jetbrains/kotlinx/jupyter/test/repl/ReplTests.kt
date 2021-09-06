@@ -386,6 +386,12 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testNoHistory() {
+        eval("1+1", null)
+        assertFails { eval("Out[1]") }
+    }
+
+    @Test
     fun testOutputMagic() {
         eval("%output --max-cell-size=100500 --no-stdout")
         assertEquals(
