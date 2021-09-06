@@ -85,12 +85,13 @@ class ExecuteTests : KernelServerTestsBase() {
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
+        storeHistory: Boolean = true
     ): Any? {
         try {
             val shell = this.shell!!
             val ioPub = this.ioPub!!
             val stdin = this.stdin!!
-            shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin))
+            shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory))
             inputs.forEach {
                 stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
             }
@@ -312,9 +313,11 @@ class ExecuteTests : KernelServerTestsBase() {
         }
         val res1 = doExecute("42", executeReplyChecker = { checkCounter(it, 1) })
         val res2 = doExecute("43", executeReplyChecker = { checkCounter(it, 2) })
+        val res3 = doExecute("44", storeHistory = false, executeReplyChecker = { checkCounter(it, 2) })
 
         assertEquals(jsonObject("text/plain" to "42"), res1)
         assertEquals(jsonObject("text/plain" to "43"), res2)
+        assertEquals(jsonObject("text/plain" to "44"), res3)
     }
 
     @Test

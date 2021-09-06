@@ -48,7 +48,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
                 "Bill", 135,
                 "Mark", 160
             ).typed<Unit>()
-            """.trimIndent()
+            """.trimIndent(),
+            jupyterId = 1
         )
 
         val value = res.resultValue
