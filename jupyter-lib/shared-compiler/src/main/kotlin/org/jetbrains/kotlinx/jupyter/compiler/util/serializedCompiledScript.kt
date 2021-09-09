@@ -21,8 +21,47 @@ data class SerializedCompiledScriptsData(
 }
 
 @Serializable
+data class SerializableTypeInfo(val type: Type = Type.Custom, val isPrimitive: Boolean = false, val fullType: String = "") {
+    companion object {
+        val ignoreSet = setOf("int", "double", "boolean", "char", "float", "byte", "string", "entry")
+
+        val propertyNamesForNullFilter = setOf("data", "size")
+
+        fun makeFromSerializedVariablesState(type: String?, isContainer: Boolean?): SerializableTypeInfo {
+            val fullType = type.orEmpty()
+            val enumType = fullType.toTypeEnum()
+            val isPrimitive = !(
+                if (fullType != "Entry") (isContainer ?: false)
+                else true
+                )
+
+            return SerializableTypeInfo(enumType, isPrimitive, fullType)
+        }
+    }
+}
+
+@Serializable
+enum class Type {
+    Map,
+    Entry,
+    Array,
+    List,
+    Custom
+}
+
+fun String.toTypeEnum(): Type {
+    return when (this) {
+        "Map" -> Type.Map
+        "Entry" -> Type.Entry
+        "Array" -> Type.Array
+        "List" -> Type.List
+        else -> Type.Custom
+    }
+}
+
+@Serializable
 data class SerializedVariablesState(
-    val type: String = "",
+    val type: SerializableTypeInfo = SerializableTypeInfo(),
     val value: String? = null,
     val isContainer: Boolean = false,
     val stateId: String = ""

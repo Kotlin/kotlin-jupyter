@@ -433,9 +433,10 @@ class ReplForJupyterImpl(
             val newImports: List<String>
             val oldDeclarations: MutableMap<String, Int> = mutableMapOf()
             oldDeclarations.putAll(internalEvaluator.getVariablesDeclarationInfo())
+            val jupyterId = evalData.jupyterId
             val result = try {
-                log.debug("Current cell id: ${evalData.jupyterId}")
-                executor.execute(evalData.code, evalData.displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
+                log.debug("Current cell id: $jupyterId")
+                executor.execute(evalData.code, evalData.displayHandler, currentCellId = jupyterId - 1) { internalId, codeToExecute ->
                     if (evalData.storeHistory) {
                         cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
                     }
@@ -464,7 +465,7 @@ class ReplForJupyterImpl(
             // printVars()
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
             val variablesCells: Map<String, Int> = notebook.variablesState.mapValues { internalEvaluator.findVariableCell(it.key) }
-            val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, oldDeclarations, variablesCells, notebook.unchangedVariables())
+            val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, oldDeclarations, variablesCells, notebook.unchangedVariables)
 
             GlobalScope.launch(Dispatchers.Default) {
                 variablesSerializer.tryValidateCache(jupyterId - 1, notebook.cellVariables)

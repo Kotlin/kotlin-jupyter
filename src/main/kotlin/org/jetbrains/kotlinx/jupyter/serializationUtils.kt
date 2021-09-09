@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializableTypeInfo
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import java.lang.reflect.Field
 import kotlin.contracts.ExperimentalContracts
@@ -32,14 +33,14 @@ enum class PropertiesType {
 }
 
 @Serializable
-data class SerializedCommMessageContent(
+data class VariablesStateCommMessageContent(
     val topLevelDescriptorName: String,
     val descriptorsState: Map<String, SerializedVariablesState>,
     val pathToDescriptor: List<String> = emptyList()
 )
 
-fun getVariablesDescriptorsFromJson(json: JsonObject): SerializedCommMessageContent {
-    return Json.decodeFromJsonElement<SerializedCommMessageContent>(json)
+fun getVariablesDescriptorsFromJson(json: JsonObject): VariablesStateCommMessageContent {
+    return Json.decodeFromJsonElement<VariablesStateCommMessageContent>(json)
 }
 
 class ProcessedSerializedVarsState(
@@ -216,7 +217,12 @@ class VariablesSerializer(
             } else {
                 ""
             }
-            val serializedVersion = SerializedVariablesState(simpleTypeName, stringedValue, true, varID)
+            val serializedVersion = SerializedVariablesState(
+                SerializableTypeInfo.makeFromSerializedVariablesState(simpleTypeName, true),
+                stringedValue,
+                true,
+                varID
+            )
             val descriptors = serializedVersion.fieldDescriptor
 
             // only for set case
@@ -700,7 +706,12 @@ class VariablesSerializer(
                 ""
             }
 
-        val serializedVariablesState = SerializedVariablesState(type, getProperString(value), isContainer, finalID)
+        val serializedVariablesState = SerializedVariablesState(
+            SerializableTypeInfo.makeFromSerializedVariablesState(simpleTypeName, isContainer),
+            getProperString(value),
+            isContainer,
+            finalID
+        )
 
         return ProcessedSerializedVarsState(serializedVariablesState, membersProperties?.toTypedArray())
     }

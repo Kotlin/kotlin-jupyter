@@ -133,8 +133,9 @@ class NotebookImpl(
 
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
-    private val unchangedVariables: MutableSet<String> = mutableSetOf()
+    private val _unchangedVariables: MutableSet<String> = mutableSetOf()
 
+    val unchangedVariables: Set<String> get() = _unchangedVariables
     val displays = DisplayContainerImpl()
 
     override fun getAllDisplays(): List<DisplayResultWithCell> {
@@ -153,15 +154,13 @@ class NotebookImpl(
     fun updateVariablesState(evaluator: InternalEvaluator) {
         variablesState += evaluator.variablesHolder
         currentCellVariables = evaluator.cellVariables
-        unchangedVariables.clear()
-        unchangedVariables.addAll(evaluator.getUnchangedVariables())
+        _unchangedVariables.clear()
+        _unchangedVariables.addAll(evaluator.getUnchangedVariables())
     }
 
     fun updateVariablesState(varsStateUpdate: Map<String, VariableState>) {
         variablesState += varsStateUpdate
     }
-
-    fun unchangedVariables(): Set<String> = unchangedVariables
 
     fun variablesReportAsHTML(): String {
         return generateHTMLVarsReport(variablesState)
