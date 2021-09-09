@@ -95,7 +95,9 @@ class CodeCellImpl(
 class EvalData(
     val executionCounter: Int,
     val rawCode: String,
-)
+) {
+    constructor(evalRequestData: EvalRequestData) : this(evalRequestData.jupyterId, evalRequestData.code)
+}
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,

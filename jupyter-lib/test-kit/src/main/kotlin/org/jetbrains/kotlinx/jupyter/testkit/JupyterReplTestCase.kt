@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.testkit
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.DependsOn
+import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -16,7 +17,7 @@ abstract class JupyterReplTestCase {
     }
 
     fun execEx(code: Code): EvalResultEx {
-        return repl.evalEx(code, null, -1, true)
+        return repl.evalEx(EvalRequestData(code))
     }
 
     fun exec(code: Code): Any? {

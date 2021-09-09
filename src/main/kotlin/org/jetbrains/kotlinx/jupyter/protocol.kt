@@ -265,7 +265,7 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
 
         is ExecuteRequest -> {
             connection.contextMessage = msg
-            val count = executionCount.updateAndGet {
+            val count = executionCount.getAndUpdate {
                 if (content.storeHistory) it + 1 else it
             }
             val startedTime = ISO8601DateNow
@@ -286,7 +286,15 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 runCommand(code, repl)
             } else {
                 connection.evalWithIO(repl, msg) {
-                    repl.eval(code, displayHandler, count.toInt(), content.storeHistory)
+                    repl.eval(
+                        EvalRequestData(
+                            code,
+                            displayHandler,
+                            count.toInt(),
+                            content.storeHistory,
+                            content.silent,
+                        )
+                    )
                 }
             }
 

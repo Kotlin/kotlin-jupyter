@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.OutputConfig
+import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
@@ -23,6 +24,7 @@ import java.io.File
 import kotlin.script.experimental.api.SourceCode
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.fail
@@ -387,8 +389,8 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testNoHistory() {
-        eval("1+1", null)
-        assertFails { eval("Out[1]") }
+        eval("1+1", storeHistory = false)
+        assertFailsWith<ReplEvalRuntimeException>("There is no cell with number '1'") { eval("Out[1]") }
     }
 
     @Test
@@ -484,7 +486,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        val varsUpdate = mutableMapOf<String, String>(
+        val varsUpdate = mutableMapOf(
             "x" to "1",
             "y" to "0",
             "z" to "47"
