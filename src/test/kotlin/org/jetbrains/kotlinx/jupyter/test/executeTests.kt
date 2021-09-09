@@ -311,13 +311,23 @@ class ExecuteTests : KernelServerTestsBase() {
             val data = message.data.content as ExecuteReply
             assertEquals(expectedCounter, data.executionCount)
         }
-        val res1 = doExecute("42", executeReplyChecker = { checkCounter(it, 1) })
-        val res2 = doExecute("43", executeReplyChecker = { checkCounter(it, 2) })
-        val res3 = doExecute("44", storeHistory = false, executeReplyChecker = { checkCounter(it, 2) })
+        val res1 = doExecute("41", executeReplyChecker = { checkCounter(it, 1) })
+        val res2 = doExecute("42", executeReplyChecker = { checkCounter(it, 2) })
+        val res3 = doExecute(
+            " \"\${Out[1]} \${Out[2]}\" ",
+            storeHistory = false,
+            executeReplyChecker = { checkCounter(it, 3) }
+        )
+        val res4 = doExecute(
+            "try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }",
+            storeHistory = false,
+            executeReplyChecker = { checkCounter(it, 3) }
+        )
 
-        assertEquals(jsonObject("text/plain" to "42"), res1)
-        assertEquals(jsonObject("text/plain" to "43"), res2)
-        assertEquals(jsonObject("text/plain" to "44"), res3)
+        assertEquals(jsonObject("text/plain" to "41"), res1)
+        assertEquals(jsonObject("text/plain" to "42"), res2)
+        assertEquals(jsonObject("text/plain" to "41 42"), res3)
+        assertEquals(jsonObject("text/plain" to "null"), res4)
     }
 
     @Test

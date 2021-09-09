@@ -15,7 +15,7 @@ class ApiTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
 
     private fun jEval(jupyterId: Int, code: String): EvalResult {
-        return repl.eval(code, jupyterId = jupyterId)
+        return eval(code, jupyterId = jupyterId)
     }
 
     @Test
@@ -46,7 +46,7 @@ class ApiTest : AbstractSingleReplTest() {
 
     @Test
     fun testVarsReportFormat() {
-        val res = eval(
+        eval(
             """
             val x = 1
             val y = "abc"

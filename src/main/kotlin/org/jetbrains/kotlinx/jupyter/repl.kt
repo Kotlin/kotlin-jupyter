@@ -79,6 +79,14 @@ import kotlin.script.experimental.jvm.jvm
 
 data class CheckResult(val isComplete: Boolean = true)
 
+class EvalRequestData(
+    val code: Code,
+    val displayHandler: DisplayHandler? = null,
+    val jupyterId: Int = -1,
+    val storeHistory: Boolean = true,
+    val isSilent: Boolean = false,
+)
+
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
 enum class ExecutedCodeLogging {
@@ -107,7 +115,8 @@ interface ReplOptions {
 
 interface ReplForJupyter {
 
-    fun eval(code: Code, displayHandler: DisplayHandler? = null, jupyterId: Int = -1, storeHistory: Boolean = true): EvalResult
+    fun eval(code: Code): EvalResult = eval(EvalRequestData(code))
+    fun eval(evalData: EvalRequestData): EvalResult
 
     fun <T> eval(execution: ExecutionCallback<T>): T
 
@@ -379,7 +388,7 @@ class ReplForJupyterImpl(
         })
     }
 
-    fun evalEx(code: Code, displayHandler: DisplayHandler?, jupyterId: Int, storeHistory: Boolean): EvalResultEx {
+    fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
                 beforeCellExecution.forEach { executor.execute(it) }
@@ -390,10 +399,10 @@ class ReplForJupyterImpl(
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
             val result = try {
-                log.debug("Current cell id: $jupyterId")
-                executor.execute(code, displayHandler, currentCellId = jupyterId - 1) { internalId, codeToExecute ->
-                    if (storeHistory) {
-                        cell = notebook.addCell(internalId, codeToExecute, EvalData(jupyterId, code))
+                log.debug("Current cell id: ${evalData.jupyterId}")
+                executor.execute(evalData.code, evalData.displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
+                    if (evalData.storeHistory) {
+                        cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
                     }
                 }
             } finally {
@@ -432,8 +441,8 @@ class ReplForJupyterImpl(
         }
     }
 
-    override fun eval(code: Code, displayHandler: DisplayHandler?, jupyterId: Int, storeHistory: Boolean): EvalResult {
-        return evalEx(code, displayHandler, jupyterId, storeHistory).run { EvalResult(renderedValue, metadata) }
+    override fun eval(evalData: EvalRequestData): EvalResult {
+        return evalEx(evalData).run { EvalResult(renderedValue, metadata) }
     }
 
     override fun <T> eval(execution: ExecutionCallback<T>): T {
