@@ -38,6 +38,7 @@ java {
 }
 
 buildSettings {
+    withLanguageLevel("1.4")
     withTests()
 }
 

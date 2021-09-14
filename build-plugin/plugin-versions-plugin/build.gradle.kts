@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.plugin.ktlint)
     implementation(libs.plugin.publisher)
     implementation(libs.plugin.serialization)
+    implementation(libs.kotlin.gradle.gradle)
 }
 
 sourceSets {
