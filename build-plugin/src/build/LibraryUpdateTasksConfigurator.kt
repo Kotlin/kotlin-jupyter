@@ -99,25 +99,25 @@ class LibraryUpdateTasksConfigurator(
                 val user = settings.prGithubUser
                 val password = settings.prGithubToken
                 val repoUserAndName = settings.librariesRepoUserAndName
-                fun githubRequest(
+                fun <R> githubRequest(
                     method: Method,
                     request: String,
                     json: JsonElement,
                     onFailure: (Response) -> Unit,
-                ): ResponseWrapper {
-                    val response = httpRequest(
+                    mapper: (ResponseWrapper) -> R
+                ): R = httpRequest(
                         Request(method, "https://api.github.com/$request")
                             .withJson(json)
                             .withBasicAuth(user, password)
-                    )
-                    println(response.text)
-                    if (!response.status.successful) {
-                        onFailure(response)
+                    ) {
+                        println(it.text)
+                        if (!it.status.successful) {
+                            onFailure(it)
+                        }
+                        mapper(it)
                     }
-                    return response
-                }
 
-                val prResponse = githubRequest(
+                val prNumber = githubRequest(
                     Method.POST, "repos/$repoUserAndName/pulls",
                     Json.encodeToJsonElement(
                         NewPrData(
@@ -125,20 +125,16 @@ class LibraryUpdateTasksConfigurator(
                             head = updateLibBranchName!!,
                             base = "master"
                         )
-                    )
-                ) { response ->
-                    throw BuildException("Creating PR failed with code ${response.status.code}", null)
-                }
-
-                val prNumber = (prResponse.jsonObject["number"] as JsonPrimitive).int
+                    ),
+                    { throw BuildException("Creating PR failed with code ${it.status.code}", null) },
+                    { (it.jsonObject["number"] as JsonPrimitive).int })
                 githubRequest(
                     Method.POST, "repos/$repoUserAndName/issues/$prNumber/labels",
                     Json.encodeToJsonElement(
                         SetLabelsData(listOf("no-changelog", "library-descriptors"))
-                    )
-                ) { response ->
-                    throw BuildException("Cannot setup labels for created PR: ${response.text}", null)
-                }
+                    ),
+                    { throw BuildException("Cannot setup labels for created PR: ${it.text}", null) },
+                    {})
             }
         }
     }

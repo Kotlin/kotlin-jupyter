@@ -25,7 +25,7 @@ class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
                     ResourcePathType.URL -> """
                         <link rel="stylesheet" href="$path">
                     """.trimIndent()
-                    ResourcePathType.URL_EMBEDDED -> wrapInTag(getHttp(path).text)
+                    ResourcePathType.URL_EMBEDDED -> getHttp(path) { wrapInTag(it.text) }
                     ResourcePathType.LOCAL_PATH -> wrapInTag(File(path).readText())
                     ResourcePathType.CLASSPATH_PATH -> wrapInTag(classLoader.getResource(path)?.readText().orEmpty())
                 }

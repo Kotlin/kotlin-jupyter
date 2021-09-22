@@ -25,7 +25,6 @@ class StandardResolutionInfoProvider(override var fallback: LibraryResolutionInf
     }
 
     private fun tryGetAsURL(url: String): LibraryResolutionInfo? {
-        val response = getHttp(url)
-        return if (response.status.successful) AbstractLibraryResolutionInfo.ByURL(URL(url)) else null
+        return getHttp(url) { if (it.status.successful) AbstractLibraryResolutionInfo.ByURL(URL(url)) else null }
     }
 }

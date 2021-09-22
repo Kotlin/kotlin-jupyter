@@ -22,18 +22,18 @@ class ResponseWrapper(
     val url: String,
 ) : Response by response
 
-fun createHttpClient(): HttpHandler {
+private fun createHttpClient(): HttpHandler {
     return ClientFilters.FollowRedirects().then(ApacheClient())
 }
 
-fun httpRequest(request: Request): ResponseWrapper {
+fun <R> httpRequest(request: Request, mapper: (ResponseWrapper) -> R): R {
     val client = createHttpClient()
     val response = client(request)
 
-    return ResponseWrapper(response, request.uri.toString())
+    return ResponseWrapper(response, request.uri.toString()).use(mapper)
 }
 
-fun getHttp(url: String) = httpRequest(Request(Method.GET, url))
+fun <R> getHttp(url: String, mapper: (ResponseWrapper) -> R): R = httpRequest(Request(Method.GET, url), mapper)
 
 fun Request.withBasicAuth(username: String, password: String): Request {
     val b64 = Base64.getEncoder().encode("$username:$password".toByteArray()).toString(Charsets.UTF_8)

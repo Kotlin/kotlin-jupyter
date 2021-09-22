@@ -27,7 +27,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                         URLScriptModifierFunctionGenerator(path)
                     }
                     ResourcePathType.URL_EMBEDDED -> {
-                        val scriptText = getHttp(path).text
+                        val scriptText = getHttp(path) { it.text }
                         CodeScriptModifierFunctionGenerator(scriptText)
                     }
                     ResourcePathType.LOCAL_PATH -> {

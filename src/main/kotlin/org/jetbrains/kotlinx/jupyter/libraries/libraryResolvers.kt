@@ -90,8 +90,7 @@ object FallbackLibraryResolver : ChainedLibraryResolver() {
             file.readText()
         },
         resolver<AbstractLibraryResolutionInfo.ByURL> {
-            val response = getHttp(url.toString())
-            response.text
+            getHttp(url.toString()) { it.text }
         },
         resolver<ByNothingLibraryResolutionInfo> { "{}" },
         resolver<AbstractLibraryResolutionInfo.Default> { null }

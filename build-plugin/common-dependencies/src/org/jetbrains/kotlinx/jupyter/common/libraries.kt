@@ -63,7 +63,7 @@ class LibraryDescriptorsManager private constructor(
                 url += "&since=$sinceTimestamp"
             }
             logger.info("Checking for new commits to library descriptors at $url")
-            val arr = getHttp(url).jsonArrayOrNull
+            val arr = getHttp(url) { it.jsonArrayOrNull }
             if (arr == null) {
                 logger.error("Request for the latest commit in libraries failed")
                 return@catchAll null
@@ -91,8 +91,7 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun checkRefExistence(ref: String): Boolean {
-        val response = getHttp("$apiPrefix/contents/$remotePath?ref=$ref")
-        return response.status.successful
+        return getHttp("$apiPrefix/contents/$remotePath?ref=$ref") { it.status.successful }
     }
 
     fun checkIfRefUpToDate(remoteRef: String?): Boolean {
@@ -110,7 +109,7 @@ class LibraryDescriptorsManager private constructor(
 
         val url = "$apiPrefix/contents/$remotePath?ref=$ref"
         logger.info("Requesting library descriptors at $url")
-        val response = getHttp(url).jsonArray
+        val response = getHttp(url) { it.jsonArray }
 
         for (item in response) {
             item as JsonObject
@@ -120,9 +119,8 @@ class LibraryDescriptorsManager private constructor(
             if (!fileName.endsWith(".$DESCRIPTOR_EXTENSION")) continue
 
             val downloadUrl = item["download_url"]!!.jsonPrimitive.content
-            val descriptorResponse = getHttp(downloadUrl)
 
-            val descriptorText = descriptorResponse.text
+            val descriptorText = getHttp(downloadUrl) { it.text }
             val file = localLibrariesDir.resolve(fileName)
             file.writeText(descriptorText)
         }
@@ -144,10 +142,9 @@ class LibraryDescriptorsManager private constructor(
     }
 
     private fun downloadSingleFile(contentsApiUrl: String): String {
-        val response = getHttp(contentsApiUrl).jsonObject
+        val response = getHttp(contentsApiUrl) { it.jsonObject }
         val downloadUrl = response["download_url"]!!.jsonPrimitive.content
-        val res = getHttp(downloadUrl)
-        return res.text
+        return getHttp(downloadUrl) { it.text }
     }
 
     private fun saveLocalRef(ref: String) {

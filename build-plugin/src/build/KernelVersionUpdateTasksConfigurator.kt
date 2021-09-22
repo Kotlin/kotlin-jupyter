@@ -21,11 +21,10 @@ class KernelVersionUpdateTasksConfigurator(
                 val teamcityUrl = teamcityProject.url
                 val locator = "buildType:(id:${teamcityProject.projectId}),status:SUCCESS,branch:default:any,count:1"
 
-                val response = httpRequest(
+                val builds = httpRequest(
                     Request(Method.GET, "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator")
                         .header("accept", "application/json")
-                )
-                val builds = response.jsonObject["build"] as JsonArray
+                ) { it.jsonObject["build"] as JsonArray }
                 val lastBuild = builds[0] as JsonObject
                 val lastBuildNumber = (lastBuild["number"] as JsonPrimitive).content
                 println("Last Kotlin dev version: $lastBuildNumber")

@@ -86,7 +86,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             val client = ApacheClient()
             val request = Request(Method.GET, url)
             val response = client(request)
-            return response.body.payload.array()
+            return response.use { it.body.payload.array() }
         }
 
         fun loadData(file: File): ByteArray {
