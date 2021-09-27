@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import org.http4k.asString
 import org.http4k.client.ApacheClient
-import org.http4k.core.HttpHandler
+import org.http4k.client.PreCannedApacheHttpClients
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -22,15 +22,14 @@ class ResponseWrapper(
     val url: String,
 ) : Response by response
 
-fun createHttpClient(): HttpHandler {
-    return ClientFilters.FollowRedirects().then(ApacheClient())
-}
-
 fun httpRequest(request: Request): ResponseWrapper {
-    val client = createHttpClient()
-    val response = client(request)
+    PreCannedApacheHttpClients.defaultApacheHttpClient().use { closeableHttpClient ->
+        val apacheClient = ApacheClient(client = closeableHttpClient)
+        val client = ClientFilters.FollowRedirects().then(apacheClient)
+        val response = client(request)
 
-    return ResponseWrapper(response, request.uri.toString())
+        return ResponseWrapper(response, request.uri.toString())
+    }
 }
 
 fun getHttp(url: String) = httpRequest(Request(Method.GET, url))
