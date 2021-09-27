@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.ext
 
 import org.http4k.client.ApacheClient
+import org.http4k.client.PreCannedApacheHttpClients
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.jetbrains.kotlinx.jupyter.api.HTML
@@ -83,10 +84,12 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
         }
 
         fun downloadData(url: String): ByteArray {
-            val client = ApacheClient()
-            val request = Request(Method.GET, url)
-            val response = client(request)
-            return response.body.payload.array()
+            PreCannedApacheHttpClients.defaultApacheHttpClient().use { closeableHttpClient ->
+                val client = ApacheClient(client = closeableHttpClient)
+                val request = Request(Method.GET, url)
+                val response = client(request)
+                return response.body.payload.array()
+            }
         }
 
         fun loadData(file: File): ByteArray {
