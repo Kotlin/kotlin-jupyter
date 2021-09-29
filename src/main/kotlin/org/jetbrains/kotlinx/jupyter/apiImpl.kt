@@ -11,7 +11,9 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
 class DisplayResultWrapper private constructor(
     val display: DisplayResult,
@@ -103,7 +105,7 @@ class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
 ) : Notebook {
     private val cells = hashMapOf<Int, CodeCellImpl>()
-    internal var typeRenderersProcessor: RenderersProcessor? = null
+    internal var sharedReplContext: SharedReplContext? = null
 
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
@@ -198,5 +200,8 @@ class NotebookImpl(
         get() = history(1)
 
     override val renderersProcessor: RenderersProcessor
-        get() = typeRenderersProcessor ?: throw IllegalStateException("Type renderers processor is not initialized yet")
+        get() = sharedReplContext?.renderersProcessor ?: throw IllegalStateException("Type renderers processor is not initialized yet")
+
+    override val libraryRequests: Collection<LibraryResolutionRequest>
+        get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()
 }

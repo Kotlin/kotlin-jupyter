@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
+import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 
 abstract class ChainedLibraryResolver(private val parent: LibraryResolver? = null) : LibraryResolver {
     protected abstract fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition?

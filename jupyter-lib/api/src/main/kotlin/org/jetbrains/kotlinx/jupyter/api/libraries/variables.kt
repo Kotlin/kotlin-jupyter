@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.libraries
+package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
  */
@@ -85,4 +87,9 @@ interface Notebook {
      * and add new renderers
      */
     val renderersProcessor: RenderersProcessor
+
+    /**
+     * All requests for libraries made during this session
+     */
+    val libraryRequests: Collection<LibraryResolutionRequest>
 }

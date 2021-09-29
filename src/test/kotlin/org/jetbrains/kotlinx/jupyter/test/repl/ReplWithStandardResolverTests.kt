@@ -1,6 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotBeBlank
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
@@ -108,6 +113,21 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent()
         ).resultValue
         assertEquals(1, res)
+    }
+
+    @Test
+    fun testLibraryRequestsRecording() {
+        eval("%use default")
+        val res = eval("notebook.libraryRequests").resultValue
+
+        res.shouldBeInstanceOf<List<LibraryResolutionRequest>>()
+        res.shouldHaveSize(3)
+
+        val expectedLibs = listOf("default", "dataframe", "lets-plot-dataframe")
+        for (i in res.indices) {
+            res[i].reference.name shouldBe expectedLibs[i]
+            res[i].definition?.originalDescriptorText.shouldNotBeBlank()
+        }
     }
 
     @Test
