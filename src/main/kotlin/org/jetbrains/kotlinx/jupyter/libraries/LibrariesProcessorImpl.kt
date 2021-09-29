@@ -3,12 +3,17 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 
 class LibrariesProcessorImpl(
     private val libraries: LibraryResolver?,
     private val kernelVersion: KotlinKernelVersion?,
 ) : LibrariesProcessor {
+
+    private val _requests = mutableListOf<LibraryResolutionRequest>()
+    override val requests: Collection<LibraryResolutionRequest>
+        get() = _requests
 
     /**
      * Split a command argument into a set of library calls
@@ -60,6 +65,8 @@ class LibrariesProcessorImpl(
             val (libRef, vars) = parseReferenceWithArgs(it)
             val library = libraries?.resolve(libRef, vars)
                 ?: throw ReplException("Unknown library '$libRef'")
+
+            _requests.add(LibraryResolutionRequest(libRef, vars, library))
 
             checkKernelVersionRequirements(libRef.toString(), library)
 

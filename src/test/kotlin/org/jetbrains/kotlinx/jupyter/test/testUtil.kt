@@ -19,6 +19,9 @@ import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
@@ -26,9 +29,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
-import org.jetbrains.kotlinx.jupyter.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -196,6 +197,9 @@ object NotebookMock : Notebook {
         get() = JavaRuntime
 
     override val renderersProcessor: RenderersProcessor
+        get() = error("Not supposed to be called")
+
+    override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = error("Not supposed to be called")
 }
 

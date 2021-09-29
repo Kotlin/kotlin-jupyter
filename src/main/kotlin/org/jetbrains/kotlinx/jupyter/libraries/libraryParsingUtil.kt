@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
+import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import java.io.File
 import java.net.URL
 

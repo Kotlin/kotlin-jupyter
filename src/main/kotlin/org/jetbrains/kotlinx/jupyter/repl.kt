@@ -36,6 +36,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
@@ -230,10 +231,12 @@ class ReplForJupyterImpl(
         runtimeProperties.jvmTargetForSnippets
     )
 
+    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version)
+
     private val magics = MagicsProcessor(
         FullMagicsHandler(
             this,
-            LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version),
+            librariesProcessor,
             libraryInfoSwitcher,
         )
     )
@@ -318,11 +321,8 @@ class ReplForJupyterImpl(
         executedCodeLogging != ExecutedCodeLogging.Off
     )
 
-    private val renderersProcessor: ResultsRenderersProcessor = run {
-        val processor = RenderersProcessorImpl(contextUpdater)
-        processor.registerDefaultRenderers()
-        notebook.typeRenderersProcessor = processor
-        processor
+    private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
+        registerDefaultRenderers()
     }
 
     private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
@@ -340,13 +340,16 @@ class ReplForJupyterImpl(
         renderersProcessor,
         codePreprocessor,
         resourcesProcessor,
+        librariesProcessor,
         librariesScanner,
         notebook,
         beforeCellExecution,
         shutdownCodes,
         internalEvaluator,
         this
-    )
+    ).also {
+        notebook.sharedReplContext = it
+    }
 
     private var evalContextEnabled = false
     private fun <T> withEvalContext(action: () -> T): T {

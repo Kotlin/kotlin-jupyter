@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.libraries
+package org.jetbrains.kotlinx.jupyter.api.libraries
 
 interface LibraryCacheable {
     val shouldBeCachedLocally: Boolean get() = true
