@@ -20,6 +20,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -138,6 +140,8 @@ interface ReplForJupyter {
     val runtimeProperties: ReplRuntimeProperties
 
     val resolutionInfoProvider: ResolutionInfoProvider
+
+    val throwableRenderersProcessor: ThrowableRenderersProcessor
 
     var outputConfig: OutputConfig
 
@@ -325,6 +329,8 @@ class ReplForJupyterImpl(
         registerDefaultRenderers()
     }
 
+    override val throwableRenderersProcessor: ThrowableRenderersProcessor = ThrowableRenderersProcessorImpl()
+
     private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
@@ -338,6 +344,7 @@ class ReplForJupyterImpl(
         fileAnnotationsProcessor,
         fieldsProcessor,
         renderersProcessor,
+        throwableRenderersProcessor,
         codePreprocessor,
         resourcesProcessor,
         librariesProcessor,

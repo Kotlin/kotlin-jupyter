@@ -1,16 +1,21 @@
 
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.receivers.TempAnnotation
 import kotlinx.serialization.SerializationException
+import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declare
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
+import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
@@ -426,6 +431,30 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             repl.eval("7")
         }
         assertEquals(LibraryProblemPart.BEFORE_CELL_CALLBACKS, e.part)
+    }
+
+    @Test
+    fun testExceptionRendering() {
+        val repl = testOneLibUsage(
+            library {
+                renderThrowable<IllegalArgumentException> { textResult(it.message.orEmpty()) }
+            }
+        )
+        val processor = repl.throwableRenderersProcessor
+
+        val e1 = assertThrows<ReplEvalRuntimeException> {
+            repl.eval("throw IllegalArgumentException(\"42\")")
+        }
+        val display1 = processor.renderThrowable(e1.cause!!)
+        display1.shouldBeInstanceOf<DisplayResult>()
+        val json = display1.toJson().toString()
+        json shouldBe """{"data":{"text/plain":"42"},"metadata":{}}"""
+
+        val e2 = assertThrows<ReplEvalRuntimeException> {
+            repl.eval("throw IndexOutOfBoundsException()")
+        }
+        val display2 = processor.renderThrowable(e2.cause!!)
+        display2 shouldBe null
     }
 
     @Test

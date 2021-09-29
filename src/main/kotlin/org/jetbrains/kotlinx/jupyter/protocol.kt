@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.rawToResponse
 import org.jetbrains.kotlinx.jupyter.repl.toResponse
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -490,7 +491,12 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
             }
         } catch (ex: ReplException) {
             flushStreams()
-            ErrorResponseWithMessage(
+
+            (ex as? ReplEvalRuntimeException)?.cause?.let { originalThrowable ->
+                repl.throwableRenderersProcessor.renderThrowable(originalThrowable)
+            }?.let { renderedThrowable ->
+                rawToResponse(renderedThrowable, repl.notebook)
+            } ?: ErrorResponseWithMessage(
                 ex.render(),
                 ex.javaClass.canonicalName,
                 ex.message ?: "",

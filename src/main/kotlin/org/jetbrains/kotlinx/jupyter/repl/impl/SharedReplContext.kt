@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
@@ -18,6 +19,7 @@ internal data class SharedReplContext(
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,
     val renderersProcessor: ResultsRenderersProcessor,
+    val throwableRenderersProcessor: ThrowableRenderersProcessor,
     val codePreprocessor: CompoundCodePreprocessor,
     val resourcesProcessor: LibraryResourcesProcessor,
     val librariesProcessor: LibrariesProcessor,

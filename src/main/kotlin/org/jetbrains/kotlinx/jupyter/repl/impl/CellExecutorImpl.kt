@@ -125,6 +125,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.init.forEach(::runChild)
             }
             library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
+            library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
             library.converters.forEach(sharedContext.fieldsProcessor::register)
             library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
             library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
