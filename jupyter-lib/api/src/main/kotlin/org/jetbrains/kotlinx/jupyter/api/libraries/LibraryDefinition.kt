@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 
 /**
  * Library definition represents "library" concept in Kotlin kernel.
@@ -102,4 +103,10 @@ interface LibraryDefinition {
      */
     val originalDescriptorText: String?
         get() = null
+
+    /**
+     * Renderers of thrown exceptions
+     */
+    val throwableRenderers: List<ThrowableRenderer>
+        get() = emptyList()
 }

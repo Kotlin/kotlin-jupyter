@@ -19,6 +19,8 @@ import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.SubtypeThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
 import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
 import kotlin.reflect.KMutableProperty
@@ -34,6 +36,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
     class Builder(val notebook: Notebook) {
 
         private val renderers = mutableListOf<RendererHandler>()
+
+        private val throwableRenderers = mutableListOf<ThrowableRenderer>()
 
         private val init = mutableListOf<ExecutionCallback<*>>()
 
@@ -68,6 +72,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             renderers.add(handler)
         }
 
+        fun addThrowableRenderer(renderer: ThrowableRenderer) {
+            throwableRenderers.add(renderer)
+        }
+
         fun addTypeConverter(handler: FieldHandler) {
             converters.add(handler)
         }
@@ -95,6 +103,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 FieldValue(renderer(currentCell, host, property.value as T), property.name)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
+        }
+
+        inline fun <reified E : Throwable> renderThrowable(noinline renderer: (E) -> Any) {
+            addThrowableRenderer(SubtypeThrowableRenderer(E::class, renderer))
         }
 
         fun resource(resource: LibraryResource) {
@@ -182,6 +194,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             libraryDefinition {
                 it.init = init
                 it.renderers = renderers
+                it.throwableRenderers = throwableRenderers
                 it.converters = converters
                 it.imports = imports
                 it.dependencies = dependencies

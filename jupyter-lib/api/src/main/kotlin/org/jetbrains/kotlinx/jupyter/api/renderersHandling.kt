@@ -4,9 +4,8 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
+import org.jetbrains.kotlinx.jupyter.util.isSubclassOfCatching
 import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.jvm.internal.KotlinReflectionInternalError
 
 /**
  * Execution interface for type handlers
@@ -136,13 +135,7 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     }
 
     override fun acceptsType(type: KClass<*>): Boolean {
-        return try {
-            type.isSubclassOf(superType)
-        } catch (e: UnsupportedOperationException) {
-            false
-        } catch (e: KotlinReflectionInternalError) {
-            false
-        }
+        return type.isSubclassOfCatching(superType)
     }
 
     override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {

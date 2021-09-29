@@ -25,6 +25,10 @@ data class EvalResultEx(
     val metadata: EvaluatedSnippetMetadata,
 )
 
+fun rawToResponse(value: Any?, notebook: Notebook, metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY): Response {
+    return OkResponseWithMessage(value.toDisplayResult(notebook), metadata)
+}
+
 fun EvalResult.toResponse(notebook: Notebook): Response {
-    return OkResponseWithMessage(resultValue.toDisplayResult(notebook), metadata)
+    return rawToResponse(resultValue, notebook, metadata)
 }
