@@ -126,7 +126,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val expectedLibs = listOf("default", "dataframe", "lets-plot-dataframe")
         for (i in res.indices) {
             res[i].reference.name shouldBe expectedLibs[i]
-            res[i].definition?.originalDescriptorText.shouldNotBeBlank()
+            res[i].definition.originalDescriptorText.shouldNotBeBlank()
         }
     }
 
