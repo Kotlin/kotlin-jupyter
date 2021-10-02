@@ -30,6 +30,9 @@ dependencies {
 
 buildSettings {
     withTests()
+    withCompilerArgs {
+        requiresOptIn()
+    }
 }
 
 kotlinPublications {

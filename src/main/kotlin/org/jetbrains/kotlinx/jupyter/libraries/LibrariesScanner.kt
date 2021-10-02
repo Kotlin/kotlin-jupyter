@@ -84,7 +84,14 @@ class LibrariesScanner(val notebook: Notebook) {
 
     private fun <T> instantiate(classLoader: ClassLoader, data: LibrariesInstantiable<T>, notebook: Notebook): T {
         val clazz = classLoader.loadClass(data.fqn)
-        val constructor = clazz.constructors.single()
+        val constructors = clazz.constructors
+
+        if (constructors.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            return clazz.kotlin.objectInstance as T
+        }
+
+        val constructor = constructors.single()
 
         @Suppress("UNCHECKED_CAST")
         return when (constructor.parameterCount) {
