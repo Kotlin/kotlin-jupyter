@@ -1,9 +1,24 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowAny
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.maps.shouldBeEmpty
+import io.kotest.matchers.maps.shouldContainKey
+import io.kotest.matchers.maps.shouldContainValue
+import io.kotest.matchers.maps.shouldHaveSize
+import io.kotest.matchers.maps.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
@@ -17,17 +32,9 @@ import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
 import org.jetbrains.kotlinx.jupyter.withPath
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.script.experimental.api.SourceCode
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.fail
 
 class ReplTests : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
@@ -36,7 +43,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testRepl() {
         eval("val x = 3")
         val res = eval("x*2")
-        assertEquals(6, res.resultValue)
+        res.resultValue shouldBe 6
     }
 
     @Test
@@ -46,7 +53,7 @@ class ReplTests : AbstractSingleReplTest() {
         // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        assertThrows<ReplCompilerException> {
+        shouldThrow<ReplCompilerException> {
             eval(
                 """
                 fun stack(vararg tup: Int): Int = tup.sum()
@@ -61,7 +68,7 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testError() {
-        try {
+        val ex = shouldThrow<ReplCompilerException> {
             eval(
                 """
                 val foobar = 78
@@ -70,21 +77,17 @@ class ReplTests : AbstractSingleReplTest() {
                 val ooo = foobar
                 """.trimIndent()
             )
-        } catch (ex: ReplCompilerException) {
-            val diag = ex.firstError
-            val location = diag?.location ?: fail("Location should not be null")
-            val message = ex.message
-
-            val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
-            val expectedMessage = "Line_0.${repl.fileExtension} (3:11 - 14) Unresolved reference: ppp"
-
-            assertEquals(expectedLocation, location)
-            assertEquals(expectedMessage, message)
-
-            return
         }
 
-        fail("Test should fail with ReplCompilerException")
+        val diag = ex.firstError
+        val location = diag?.location
+        val message = ex.message
+
+        val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
+        val expectedMessage = "Line_0.${repl.fileExtension} (3:11 - 14) Unresolved reference: ppp"
+
+        location shouldBe expectedLocation
+        message shouldBe expectedMessage
     }
 
     @Test
@@ -95,7 +98,7 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testImportResolutionAfterFailure() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
-        assertEquals(1, errorsRes.errors.toList().size)
+        errorsRes.errors.toList().size shouldBe 1
 
         val res = eval(
             """
@@ -105,7 +108,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        assertEquals(1, res.resultValue)
+        res.resultValue shouldBe 1
     }
 
     @Test
@@ -117,10 +120,9 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        when (val res = repl.completeBlocking("import com.github.", 18)) {
-            is CompletionResult.Success -> res.sortedMatches().contains("doyaaaaaken")
-            else -> fail("Completion should be successful")
-        }
+        val res = repl.completeBlocking("import com.github.", 18)
+        res.shouldBeInstanceOf<CompletionResult.Success>()
+        res.sortedMatches().contains("doyaaaaaken")
     }
 
     @Test
@@ -133,12 +135,12 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        assertEquals(42, res.resultValue)
+        res.resultValue shouldBe 42
     }
 
     @Test
     fun testScriptIsolation() {
-        assertFails {
+        shouldThrowAny {
             eval("org.jetbrains.kotlinx.jupyter.ReplLineMagics.use")
         }
     }
@@ -154,10 +156,11 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         val newClasspath = res.metadata.newClasspath
-        assertTrue(newClasspath.size >= 2)
+        newClasspath.size shouldBeGreaterThanOrEqual 2
 
         val htmlLibPath = "org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.2/kotlinx-html-jvm".replace('/', File.separatorChar)
-        assertTrue(newClasspath.any { htmlLibPath in it })
+
+        newClasspath.any { htmlLibPath in it }.shouldBeTrue()
     }
 
     @Test
@@ -167,7 +170,7 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             repl.complete("val t = foo", 11) {
-                assertEquals(arrayListOf("foobar", "foobaz"), it.getOrFail().sortedMatches())
+                it.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
             }
         }
     }
@@ -176,7 +179,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testNoCompletionAfterNumbers() {
         runBlocking {
             repl.complete("val t = 42", 10) {
-                assertEquals(emptyList(), it.getOrFail().sortedMatches())
+                it.getOrFail().sortedMatches() shouldBe emptyList()
             }
         }
     }
@@ -200,10 +203,7 @@ class ReplTests : AbstractSingleReplTest() {
         )
         runBlocking {
             repl.complete("df.filter { c_ }", 14) { result ->
-                assertEquals(
-                    arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz"),
-                    result.getOrFail().sortedMatches()
-                )
+                result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
             }
         }
     }
@@ -214,7 +214,7 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             repl.complete("val t = f(x", 11) {
-                assertEquals(arrayListOf("xyz = "), it.getOrFail().sortedMatches())
+                it.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
             }
         }
     }
@@ -230,11 +230,9 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             repl.complete("val t = id_d", 12) { result ->
-                assertTrue(
-                    result.getOrFail().sortedRaw().any {
-                        it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
-                    }
-                )
+                result.getOrFail().sortedRaw().any {
+                    it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+                }.shouldBeTrue()
             }
         }
     }
@@ -260,17 +258,14 @@ class ReplTests : AbstractSingleReplTest() {
             ) { result ->
                 val actualErrors = result.errors.toList()
                 val path = actualErrors.first().sourcePath
-                assertEquals(
-                    withPath(
-                        path,
-                        listOf(
-                            generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                            generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                            generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                            generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-                        )
-                    ),
-                    actualErrors
+                actualErrors shouldBe withPath(
+                    path,
+                    listOf(
+                        generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                        generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                        generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+                    )
                 )
             }
         }
@@ -284,7 +279,7 @@ class ReplTests : AbstractSingleReplTest() {
                 @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
                 """.trimIndent()
             )
-            assertEquals(Unit, res.resultValue)
+            res.resultValue shouldBe Unit
 
             repl.listErrors(
                 """
@@ -293,7 +288,7 @@ class ReplTests : AbstractSingleReplTest() {
                 val mark = TimeSource.Monotonic.markNow()
                 """.trimIndent()
             ) { result ->
-                assertEquals(emptyList(), result.errors.toList())
+                result.errors.toList() shouldBe emptyList()
             }
         }
     }
@@ -312,14 +307,11 @@ class ReplTests : AbstractSingleReplTest() {
             ) { result ->
                 val actualErrors = result.errors.toList()
                 val path = actualErrors.first().sourcePath
-                assertEquals(
-                    withPath(
-                        path,
-                        listOf(
-                            generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
-                        )
-                    ),
-                    actualErrors
+                actualErrors shouldBe withPath(
+                    path,
+                    listOf(
+                        generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
+                    )
                 )
             }
         }
@@ -338,11 +330,8 @@ class ReplTests : AbstractSingleReplTest() {
                 foo
                 """.trimIndent()
             repl.complete(code, code.indexOf("foo") + 3) { result ->
-                if (result is CompletionResult.Success) {
-                    assertEquals(arrayListOf("foobar"), result.sortedMatches())
-                } else {
-                    fail("Result should be success")
-                }
+                result.shouldBeInstanceOf<CompletionResult.Success>()
+                result.sortedMatches() shouldBe arrayListOf("foobar")
             }
         }
     }
@@ -354,21 +343,18 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             repl.listErrors(code1) { result ->
-                assertEquals(code1, result.code)
-                assertEquals(0, result.errors.toList().size)
+                result.code shouldBe code1
+                result.errors.toList().size shouldBe 0
             }
             repl.listErrors(code2) { result ->
-                assertEquals(code2, result.code)
+                result.code shouldBe code2
                 val expectedList = listOf(generateDiagnosticFromAbsolute(code2, 0, 4, "Unknown command", "ERROR"))
                 val actualList = result.errors.toList()
-                assertEquals(expectedList, actualList)
+                actualList shouldBe expectedList
             }
             repl.complete(code2, 3) { result ->
-                if (result is CompletionResult.Success) {
-                    assertEquals(listOf("help"), result.sortedMatches())
-                } else {
-                    fail("Result should be success")
-                }
+                result.shouldBeInstanceOf<CompletionResult.Success>()
+                result.sortedMatches() shouldBe listOf("help")
             }
         }
     }
@@ -376,48 +362,44 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testEmptyErrorsListJson() {
         val res = ListErrorsResult("someCode")
-        assertEquals("""{"code":"someCode","errors":[]}""", Json.encodeToString(res.message))
+        Json.encodeToString(serializer(), res.message) shouldBe """{"code":"someCode","errors":[]}"""
     }
 
     @Test
     fun testOut() {
         eval("1+1", null, 1)
         val res = eval("Out[1]")
-        assertEquals(2, res.resultValue)
-        assertFails { eval("Out[3]") }
+        res.resultValue shouldBe 2
+        shouldThrowAny { eval("Out[3]") }
     }
 
     @Test
     fun testNoHistory() {
         eval("1+1", storeHistory = false)
-        assertFailsWith<ReplEvalRuntimeException>("There is no cell with number '1'") { eval("Out[1]") }
+        shouldThrow<ReplEvalRuntimeException> {
+            eval("Out[1]")
+        }
     }
 
     @Test
     fun testOutputMagic() {
         eval("%output --max-cell-size=100500 --no-stdout")
-        assertEquals(
-            OutputConfig(
-                cellOutputMaxSize = 100500,
-                captureOutput = false
-            ),
-            repl.outputConfig
+        repl.outputConfig shouldBe OutputConfig(
+            cellOutputMaxSize = 100500,
+            captureOutput = false
         )
 
         eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
-        assertEquals(
-            OutputConfig(
-                cellOutputMaxSize = 100500,
-                captureOutput = false,
-                captureBufferMaxSize = 42,
-                captureNewlineBufferSize = 33,
-                captureBufferTimeLimitMs = 2000
-            ),
-            repl.outputConfig
+        repl.outputConfig shouldBe OutputConfig(
+            cellOutputMaxSize = 100500,
+            captureOutput = false,
+            captureBufferMaxSize = 42,
+            captureNewlineBufferSize = 33,
+            captureBufferTimeLimitMs = 2000
         )
 
         eval("%output --reset-to-defaults")
-        assertEquals(OutputConfig(), repl.outputConfig)
+        repl.outputConfig shouldBe OutputConfig()
     }
 
     @Test
@@ -425,13 +407,13 @@ class ReplTests : AbstractSingleReplTest() {
         val result = eval("JavaRuntimeUtils.version")
         val resultVersion = result.resultValue
         val expectedVersion = JavaRuntime.version
-        assertEquals(expectedVersion, resultVersion)
+        resultVersion shouldBe expectedVersion
     }
 
     @Test
     fun testKotlinMath() {
         val result = eval("2.0.pow(2.0)").resultValue
-        assertEquals(4.0, result)
+        result shouldBe 4.0
     }
 
     @Test
@@ -450,7 +432,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         ).resultValue
 
-        assertEquals("org.RDKit.RWMol", res!!::class.qualifiedName)
+        res!!::class.qualifiedName shouldBe "org.RDKit.RWMol"
     }
 
     @Test
@@ -462,22 +444,28 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         ).resultValue!!
         @Suppress("UNCHECKED_CAST")
-        assertEquals(2, (res as (Int) -> Int)(1))
+        (res as (Int) -> Int)(1) shouldBe 2
     }
 
     @Test
     fun testOutVarRendering() {
-        val res = eval("Out").resultValue
-        assertNotNull(res)
+        eval("Out").resultValue.shouldNotBeNull()
     }
 }
 
 class ReplVarsTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
 
+    private val varState get() = repl.notebook.variablesState
+    private val cellVars get() = repl.notebook.cellVariables
+
+    private fun cellVarsAt(i: Int) = cellVars[i]!!
+    private val firstCellVars get() = cellVarsAt(0)
+    private val secondCellVars get() = cellVarsAt(1)
+
     @Test
     fun testVarsStateConsistency() {
-        assertTrue(repl.notebook.variablesState.isEmpty())
+        varState.shouldBeEmpty()
         eval(
             """
             val x = 1 
@@ -486,33 +474,27 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent()
         )
 
-        val varsUpdate = mutableMapOf(
+        varState.mapToStringValues() shouldBe mutableMapOf(
             "x" to "1",
             "y" to "0",
             "z" to "47"
         )
-        assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
-        assertFalse(repl.notebook.variablesState.isEmpty())
-        val varsState = repl.notebook.variablesState
-        assertEquals("1", varsState.getStringValue("x"))
-        assertEquals("0", varsState.getStringValue("y"))
-        assertEquals(47, varsState.getValue("z"))
 
-        (varsState["z"]!! as VariableStateImpl).update()
-        repl.notebook.updateVariablesState(varsState)
-        assertEquals(47, varsState.getValue("z"))
+        varState.getStringValue("x") shouldBe "1"
+        varState.getStringValue("y") shouldBe "0"
+        varState.getValue("z") shouldBe 47
+
+        (varState["z"]!! as VariableStateImpl).update()
+        repl.notebook.updateVariablesState(varState)
+        varState.getValue("z") shouldBe 47
     }
 
     @Test
     fun testVarsEmptyState() {
         val res = eval("3+2")
-        val state = repl.notebook.variablesState
-        val strState = mutableMapOf<String, String>()
-        state.forEach {
-            strState[it.key] = it.value.stringValue ?: return@forEach
-        }
-        assertTrue(state.isEmpty())
-        assertEquals(res.metadata.evaluatedVariablesState, strState)
+        val strState = varState.mapToStringValues()
+        varState.shouldBeEmpty()
+        res.metadata.evaluatedVariablesState shouldBe strState
     }
 
     @Test
@@ -524,15 +506,11 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent()
         )
-        val varsState = repl.notebook.variablesState
-        assertTrue(varsState.isNotEmpty())
-        val strState = varsState.mapToStringValues()
 
-        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
-        assertEquals(strState, goalState)
-        assertEquals(1, varsState.getValue("x"))
-        assertEquals("abc", varsState.getStringValue("y"))
-        assertEquals("1", varsState.getStringValue("z"))
+        varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
+        varState.getValue("x") shouldBe 1
+        varState.getStringValue("y") shouldBe "abc"
+        varState.getStringValue("z") shouldBe "1"
     }
 
     @Test
@@ -544,8 +522,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent()
         )
-        val varsState = repl.notebook.variablesState
-        assertTrue(varsState.isNotEmpty())
+        varState.shouldNotBeEmpty()
+
         eval(
             """
             val x = "abc" 
@@ -554,11 +532,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        assertTrue(varsState.isNotEmpty())
-        assertEquals(3, varsState.size)
-        assertEquals("abc", varsState.getStringValue("x"))
-        assertEquals(123, varsState.getValue("y"))
-        assertEquals("abc", varsState.getStringValue("z"))
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "abc"
+        varState.getValue("y") shouldBe 123
+        varState.getStringValue("z") shouldBe "abc"
 
         eval(
             """
@@ -567,12 +544,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-
-        assertTrue(varsState.isNotEmpty())
-        assertEquals(3, varsState.size)
-        assertEquals("1024", varsState.getStringValue("x"))
-        assertEquals("${123 * 2}", varsState.getStringValue("y"))
-        assertEquals("abc", varsState.getValue("z"))
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "1024"
+        varState.getStringValue("y") shouldBe "${123 * 2}"
+        varState.getValue("z") shouldBe "abc"
     }
 
     @Test
@@ -584,15 +559,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent()
         )
-        val varsState = repl.notebook.variablesState
-        assertTrue(varsState.isNotEmpty())
-        val strState = varsState.mapValues { it.value.stringValue }
-
-        val goalState = mapOf("x" to "1", "y" to "abc", "z" to "1")
-        assertEquals(strState, goalState)
-        assertEquals(1, varsState.getValue("x"))
-        assertEquals("abc", varsState.getStringValue("y"))
-        assertEquals("1", varsState.getStringValue("z"))
+        varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
+        varState.getValue("x") shouldBe 1
     }
 
     @Test
@@ -604,8 +572,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val z = x
             """.trimIndent()
         )
-        val varsState = repl.notebook.variablesState
-        assertTrue(varsState.isNotEmpty())
+        varState.shouldNotBeEmpty()
+
         eval(
             """
             private val x = "abc" 
@@ -614,11 +582,11 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        assertTrue(varsState.isNotEmpty())
-        assertEquals(3, varsState.size)
-        assertEquals("abc", varsState.getStringValue("x"))
-        assertEquals(123, varsState.getValue("y"))
-        assertEquals("abc", varsState.getStringValue("z"))
+
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "abc"
+        varState.getValue("y") shouldBe 123
+        varState.getStringValue("z") shouldBe "abc"
 
         eval(
             """
@@ -628,21 +596,17 @@ class ReplVarsTest : AbstractSingleReplTest() {
             jupyterId = 2
         )
 
-        assertTrue(varsState.isNotEmpty())
-        assertEquals(3, varsState.size)
-        assertEquals("1024", varsState.getStringValue("x"))
-        assertEquals(123 + 1024, varsState.getValue("y"))
-        assertEquals("abc", varsState.getStringValue("z"))
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "1024"
+        varState.getValue("y") shouldBe 123 + 1024
+        varState.getStringValue("z") shouldBe "abc"
     }
 
     @Test
     fun testVarsUsageConsistency() {
         eval("3+2")
-        val state = repl.notebook.cellVariables
-        assertTrue(state.values.size == 1)
-        assertTrue(state.values.first().isEmpty())
-        val setOfNextCell = setOf<String>()
-        assertEquals(state.values.first(), setOfNextCell)
+        cellVars shouldHaveSize 1
+        cellVars.values.first().shouldBeEmpty()
     }
 
     @Test
@@ -654,11 +618,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = 47
             """.trimIndent()
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state.isNotEmpty())
-        assertTrue(state.values.first().isNotEmpty())
-        val setOfCell = setOf("z", "f", "x")
-        assertTrue(state.containsValue(setOfCell))
+        cellVars shouldContainValue setOf("z", "f", "x")
     }
 
     @Test
@@ -669,18 +629,15 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = 47
             """.trimIndent()
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state.isNotEmpty())
+        cellVars.shouldNotBeEmpty()
+
         eval(
             """
             val z = 1
             f += f
             """.trimIndent()
         )
-        assertTrue(state.isNotEmpty())
-
-        val setOfCell = setOf("z", "f", "x")
-        assertTrue(state.containsValue(setOfCell))
+        cellVars shouldContainValue setOf("z", "f", "x")
     }
 
     @Test
@@ -691,18 +648,15 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var f = "abcd"
             """.trimIndent()
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state.isNotEmpty())
+        cellVars.shouldNotBeEmpty()
+
         eval(
             """
             private var z = 1
             z += x
             """.trimIndent()
         )
-        assertTrue(state.isNotEmpty())
-
-        val setOfCell = setOf("z", "f", "x")
-        assertTrue(state.containsValue(setOfCell))
+        cellVars shouldContainValue setOf("z", "f", "x")
     }
 
     @Test
@@ -714,8 +668,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state[0]!!.contains("x"))
+        firstCellVars shouldContain "x"
 
         eval(
             """
@@ -724,14 +677,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-        assertTrue(state.isNotEmpty())
-        assertTrue(state[0]!!.isEmpty())
-        assertTrue(state[1]!!.contains("x"))
+        cellVars.shouldNotBeEmpty()
 
-        val setOfPrevCell = setOf<String>()
-        val setOfNextCell = setOf("x", "f")
-        assertEquals(state[0], setOfPrevCell)
-        assertEquals(state[1], setOfNextCell)
+        firstCellVars.shouldBeEmpty()
+        secondCellVars shouldBe setOf("x", "f")
     }
 
     @Test
@@ -743,8 +692,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state[0]!!.contains("x"))
+        firstCellVars shouldContain "x"
 
         eval(
             """
@@ -753,14 +701,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-        assertTrue(state.isNotEmpty())
-        assertTrue(state[0]!!.isEmpty())
-        assertTrue(state[1]!!.contains("x"))
+        cellVars.shouldNotBeEmpty()
 
-        val setOfPrevCell = setOf<String>()
-        val setOfNextCell = setOf("x", "f")
-        assertEquals(state[0], setOfPrevCell)
-        assertEquals(state[1], setOfNextCell)
+        firstCellVars.shouldBeEmpty()
+        secondCellVars shouldBe setOf("x", "f")
     }
 
     @Test
@@ -776,14 +720,14 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.variablesState
-        assertTrue(state.contains("l"))
-        assertTrue(state.contains("m"))
-        assertTrue(state.contains("z"))
 
-        assertEquals("ArrayList: recursive structure", state["l"]!!.stringValue)
-        assertTrue(state["m"]!!.stringValue!!.contains(" recursive structure"))
-        assertEquals("[1, 2, 4]", state["z"]!!.stringValue)
+        varState shouldContainKey "l"
+        varState shouldContainKey "m"
+        varState shouldContainKey "z"
+
+        varState["l"]!!.stringValue shouldBe "ArrayList: recursive structure"
+        varState["m"]!!.stringValue!! shouldContain " recursive structure"
+        varState["z"]!!.stringValue shouldBe "[1, 2, 4]"
     }
 
     @Test
@@ -796,9 +740,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        val state = repl.notebook.cellVariables
-        assertTrue(state[0]!!.contains("x"))
-        assertTrue(state[0]!!.contains("z"))
+        firstCellVars shouldContain "x"
+        firstCellVars shouldContain "z"
 
         eval(
             """
@@ -808,15 +751,20 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-        assertTrue(state.isNotEmpty())
-        assertTrue(state[0]!!.isNotEmpty())
-        assertFalse(state[0]!!.contains("x"))
-        assertFalse(state[0]!!.contains("z"))
-        assertTrue(state[1]!!.contains("x"))
+        cellVars.shouldNotBeEmpty()
 
-        val setOfPrevCell = setOf("f")
-        val setOfNextCell = setOf("x", "f", "z")
-        assertEquals(state[0], setOfPrevCell)
-        assertEquals(state[1], setOfNextCell)
+        firstCellVars shouldBe setOf("f")
+        secondCellVars shouldBe setOf("x", "f", "z")
+    }
+
+    @Test
+    fun testVariableModification() {
+        eval("var x = sqrt(25.0)", jupyterId = 1)
+        varState.getStringValue("x") shouldBe "5.0"
+        varState.getValue("x") shouldBe 5.0
+
+        eval("x = x * x", jupyterId = 2)
+        varState.getStringValue("x") shouldBe "25.0"
+        varState.getValue("x") shouldBe 25.0
     }
 }
