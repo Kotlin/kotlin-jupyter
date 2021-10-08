@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.6.0-dev-3567"
+kotlin = "1.6.20-dev-3702"
 stableKotlin = "1.5.30"
 gradleKotlin = "1.5.30"
 shadowJar = "7.0.0"

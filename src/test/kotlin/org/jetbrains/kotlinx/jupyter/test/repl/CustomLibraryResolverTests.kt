@@ -458,6 +458,31 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
+    fun testUpdateVariable() {
+        val repl = testOneLibUsage(
+            library {
+                onVariable<Any> { _, prop ->
+                    execute("val gen_${prop.name} = 1")
+                }
+            }
+        )
+
+        repl.eval(
+            """
+            val (a, b) = 1 to 's'
+            val c = "42"
+            """.trimIndent()
+        )
+
+        val res = repl.eval(
+            """
+            gen_a + gen_b + gen_c
+            """.trimIndent()
+        ).resultValue!!
+        res shouldBe 3
+    }
+
+    @Test
     @ExperimentalStdlibApi
     fun testLibraryProperties() {
         val mutProp = arrayListOf(1)
