@@ -169,20 +169,14 @@ class ReplTests : AbstractSingleReplTest() {
         eval("val foobar = 42")
         eval("var foobaz = 43")
 
-        runBlocking {
-            repl.complete("val t = foo", 11) {
-                it.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
-            }
-        }
+        val result = repl.completeBlocking("val t = foo", 11)
+        result.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
     }
 
     @Test
     fun testNoCompletionAfterNumbers() {
-        runBlocking {
-            repl.complete("val t = 42", 10) {
-                it.getOrFail().sortedMatches().shouldBeEmpty()
-            }
-        }
+        val result = repl.completeBlocking("val t = 42", 10)
+        result.getOrFail().sortedMatches().shouldBeEmpty()
     }
 
     @Test
@@ -202,22 +196,17 @@ class ReplTests : AbstractSingleReplTest() {
             val c_zzz = "some string"
             """.trimIndent()
         )
-        runBlocking {
-            repl.complete("df.filter { c_ }", 14) { result ->
-                result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
-            }
-        }
+
+        val result = repl.completeBlocking("df.filter { c_ }", 14)
+        result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
     }
 
     @Test
     fun testParametersCompletion() {
         eval("fun f(xyz: Int) = xyz * 2")
 
-        runBlocking {
-            repl.complete("val t = f(x", 11) {
-                it.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
-            }
-        }
+        val result = repl.completeBlocking("val t = f(x", 11)
+        result.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
     }
 
     @Test
@@ -230,11 +219,10 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         runBlocking {
-            repl.complete("val t = id_d", 12) { result ->
-                result.getOrFail().sortedRaw().any {
-                    it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
-                }.shouldBeTrue()
-            }
+            val result = repl.completeBlocking("val t = id_d", 12)
+            result.getOrFail().sortedRaw().any {
+                it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+            }.shouldBeTrue()
         }
     }
 
@@ -249,92 +237,80 @@ class ReplTests : AbstractSingleReplTest() {
             val v = BClass("KKK", AClass(5, "25"))
             """.trimIndent()
         )
-        runBlocking {
-            repl.listErrors(
-                """
-                val a = AClass("42", 3.14)
-                val b: Int = "str"
-                val c = foob
-                """.trimIndent()
-            ) { result ->
-                val actualErrors = result.errors.toList()
-                val path = actualErrors.first().sourcePath
-                actualErrors shouldBe withPath(
-                    path,
-                    listOf(
-                        generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                        generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                        generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-                    )
-                )
-            }
-        }
+
+        val result = repl.listErrorsBlocking(
+            """
+            val a = AClass("42", 3.14)
+            val b: Int = "str"
+            val c = foob
+            """.trimIndent()
+        )
+        val actualErrors = result.errors.toList()
+        val path = actualErrors.first().sourcePath
+        actualErrors shouldBe withPath(
+            path,
+            listOf(
+                generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
+            )
+        )
     }
 
     @Test
     fun testFreeCompilerArg() {
-        runBlocking {
-            val res = eval(
-                """
-                @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
-                """.trimIndent()
-            )
-            res.resultValue shouldBe Unit
+        val res = eval(
+            """
+            @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
+            """.trimIndent()
+        )
+        res.resultValue shouldBe Unit
 
-            repl.listErrors(
-                """
-                import kotlin.time.*
-                @OptIn(ExperimentalTime::class)
-                val mark = TimeSource.Monotonic.markNow()
-                """.trimIndent()
-            ) { result ->
-                result.errors.shouldBeEmpty()
-            }
-        }
+        repl.listErrorsBlocking(
+            """
+            import kotlin.time.*
+            @OptIn(ExperimentalTime::class)
+            val mark = TimeSource.Monotonic.markNow()
+            """.trimIndent()
+        ).errors.shouldBeEmpty()
     }
 
     @Test
     fun testErrorsListWithMagic() {
-        runBlocking {
-            repl.listErrors(
-                """
-                %use krangl
-                
-                val x = foobar
-                3 * 14
-                %trackClasspath
-                """.trimIndent()
-            ) { result ->
-                val actualErrors = result.errors.toList()
-                val path = actualErrors.first().sourcePath
-                actualErrors shouldBe withPath(
-                    path,
-                    listOf(
-                        generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
-                    )
-                )
-            }
-        }
+        val result = repl.listErrorsBlocking(
+            """
+            %use krangl
+            
+            val x = foobar
+            3 * 14
+            %trackClasspath
+            """.trimIndent()
+        )
+        val actualErrors = result.errors.toList()
+        val path = actualErrors.first().sourcePath
+        actualErrors shouldBe withPath(
+            path,
+            listOf(
+                generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
+            )
+        )
     }
 
     @Test
     fun testCompletionWithMagic() {
         eval("val foobar = 42")
+        val code =
+            """
+                
+            %trackClasspath
+        
+            foo
+            """.trimIndent()
 
-        runBlocking {
-            val code =
-                """
-                    
-                %trackClasspath
-            
-                foo
-                """.trimIndent()
-            repl.complete(code, code.indexOf("foo") + 3) { result ->
-                result.shouldBeInstanceOf<CompletionResult.Success>()
-                result.sortedMatches() shouldBe arrayListOf("foobar")
-            }
-        }
+        val result = repl.completeBlocking(code, code.indexOf("foo") + 3)
+        result.shouldBeInstanceOf<CompletionResult.Success>()
+        result.sortedMatches() shouldBe arrayListOf("foobar")
     }
 
     @Test
