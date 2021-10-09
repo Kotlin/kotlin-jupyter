@@ -5,13 +5,14 @@ import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
-import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.maps.shouldBeEmpty
-import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.maps.shouldContainValue
 import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.maps.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.sequences.shouldBeEmpty
+import io.kotest.matchers.sequences.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -98,7 +99,7 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testImportResolutionAfterFailure() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
-        errorsRes.errors.toList().size shouldBe 1
+        errorsRes.errors shouldHaveSize 1
 
         val res = eval(
             """
@@ -156,7 +157,7 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         val newClasspath = res.metadata.newClasspath
-        newClasspath.size shouldBeGreaterThanOrEqual 2
+        newClasspath shouldHaveAtLeastSize 2
 
         val htmlLibPath = "org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.2/kotlinx-html-jvm".replace('/', File.separatorChar)
 
@@ -179,7 +180,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testNoCompletionAfterNumbers() {
         runBlocking {
             repl.complete("val t = 42", 10) {
-                it.getOrFail().sortedMatches() shouldBe emptyList()
+                it.getOrFail().sortedMatches().shouldBeEmpty()
             }
         }
     }
@@ -288,7 +289,7 @@ class ReplTests : AbstractSingleReplTest() {
                 val mark = TimeSource.Monotonic.markNow()
                 """.trimIndent()
             ) { result ->
-                result.errors.toList() shouldBe emptyList()
+                result.errors.shouldBeEmpty()
             }
         }
     }
@@ -344,7 +345,7 @@ class ReplTests : AbstractSingleReplTest() {
         runBlocking {
             repl.listErrors(code1) { result ->
                 result.code shouldBe code1
-                result.errors.toList().size shouldBe 0
+                result.errors.shouldBeEmpty()
             }
             repl.listErrors(code2) { result ->
                 result.code shouldBe code2
@@ -432,7 +433,8 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent()
         ).resultValue
 
-        res!!::class.qualifiedName shouldBe "org.RDKit.RWMol"
+        res.shouldNotBeNull()
+        res::class.qualifiedName shouldBe "org.RDKit.RWMol"
     }
 
     @Test
@@ -442,7 +444,7 @@ class ReplTests : AbstractSingleReplTest() {
             val foo: (Int) -> Int = {it + 1}
             foo
             """.trimIndent()
-        ).resultValue!!
+        ).resultValue
         @Suppress("UNCHECKED_CAST")
         (res as (Int) -> Int)(1) shouldBe 2
     }
@@ -484,7 +486,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
         varState.getStringValue("y") shouldBe "0"
         varState.getValue("z") shouldBe 47
 
-        (varState["z"]!! as VariableStateImpl).update()
+        (varState["z"] as VariableStateImpl).update()
         repl.notebook.updateVariablesState(varState)
         varState.getValue("z") shouldBe 47
     }
@@ -506,7 +508,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent()
         )
-
         varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
         varState.getValue("x") shouldBe 1
         varState.getStringValue("y") shouldBe "abc"
@@ -582,7 +583,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
         varState.getValue("y") shouldBe 123
@@ -595,7 +595,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 2
         )
-
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
         varState.getValue("y") shouldBe 123 + 1024
@@ -720,14 +719,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-
-        varState shouldContainKey "l"
-        varState shouldContainKey "m"
-        varState shouldContainKey "z"
-
-        varState["l"]!!.stringValue shouldBe "ArrayList: recursive structure"
-        varState["m"]!!.stringValue!! shouldContain " recursive structure"
-        varState["z"]!!.stringValue shouldBe "[1, 2, 4]"
+        varState.getStringValue("l") shouldBe "ArrayList: recursive structure"
+        varState.getStringValue("m") shouldContain " recursive structure"
+        varState.getStringValue("z") shouldBe "[1, 2, 4]"
     }
 
     @Test
