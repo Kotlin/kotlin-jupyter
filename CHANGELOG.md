@@ -1,5 +1,66 @@
 # Change Log
 
+## [0.10.1.3](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.1.3) (2021-10-08)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.260...0.10.1.3)
+
+**Merged pull requests:**
+
+- Add exceptions rendering [\#337](https://github.com/Kotlin/kotlin-jupyter/pull/337) ([@ileasile](https://github.com/ileasile))
+
+**New features:**
+
+- Add exception handling/interception [\#332](https://github.com/Kotlin/kotlin-jupyter/issues/332)
+
+## [0.10.0.260](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.260) (2021-09-30)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.249...0.10.0.260)
+
+**Closed issues:**
+
+- Leaking HTTP connections [\#333](https://github.com/Kotlin/kotlin-jupyter/issues/333)
+
+**Merged pull requests:**
+
+- Provide info about resolved libraries in API [\#336](https://github.com/Kotlin/kotlin-jupyter/pull/336) ([@ileasile](https://github.com/ileasile))
+- Fix \#333, Close HTTP clients [\#335](https://github.com/Kotlin/kotlin-jupyter/pull/335) ([@strangepleasures](https://github.com/strangepleasures))
+
+## [0.10.0.249](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.249) (2021-09-27)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.227...0.10.0.249)
+
+**Fixed bugs:**
+
+- Every execution request increments \`execution\_count\`,  even if \`store\_history=False\` [\#326](https://github.com/Kotlin/kotlin-jupyter/issues/326)
+- No syntax highlighting and completion. [\#327](https://github.com/Kotlin/kotlin-jupyter/issues/327)
+
+**Merged pull requests:**
+
+- Fix \#333 Close HTTP connections [\#334](https://github.com/Kotlin/kotlin-jupyter/pull/334) ([@strangepleasures](https://github.com/strangepleasures))
+- Fix \#326 \- proper handling of store\_history [\#329](https://github.com/Kotlin/kotlin-jupyter/pull/329) ([@strangepleasures](https://github.com/strangepleasures))
+
+## [0.10.0.227](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.227) (2021-09-06)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.200...0.10.0.227)
+
+**Closed issues:**
+
+- Evaluation of \`Out\` results in an exception [\#328](https://github.com/Kotlin/kotlin-jupyter/issues/328)
+- Remove Kapt by default [\#325](https://github.com/Kotlin/kotlin-jupyter/issues/325)
+- Setting \`JupyterApiResourcesTask.libraryProducers\` doesn't disable \`kapt\` that causes incompatibility with JDK 16 [\#322](https://github.com/Kotlin/kotlin-jupyter/issues/322)
+
+**Fixed bugs:**
+
+- Returning a lambda as a result causes an exception [\#323](https://github.com/Kotlin/kotlin-jupyter/issues/323)
+- Adding a new library to kotlin notebook using API [\#321](https://github.com/Kotlin/kotlin-jupyter/issues/321)
+- The kernel hangs if a top\-level variable is assigned a recursive data structure [\#319](https://github.com/Kotlin/kotlin-jupyter/issues/319)
+
+**Merged pull requests:**
+
+- Fix \#328 \- suppress reflection errors in rendering code [\#330](https://github.com/Kotlin/kotlin-jupyter/pull/330) ([@strangepleasures](https://github.com/strangepleasures))
+- Add JARs path detection for Kotlin Notebook plugin [\#324](https://github.com/Kotlin/kotlin-jupyter/pull/324) ([@ileasile](https://github.com/ileasile))
+- Fix issue with recursive structures [\#320](https://github.com/Kotlin/kotlin-jupyter/pull/320) ([@nikolay-egorov](https://github.com/nikolay-egorov))
+
+## [0.10.0.200](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.200) (2021-08-12)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.183...0.10.0.200)
+
+
 ## [0.10.0.183](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.0.183) (2021-08-06)
 [View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.40...0.10.0.183)
 
@@ -398,7 +459,7 @@
 
 
 ## [v0.7.2](https://github.com/Kotlin/kotlin-jupyter/tree/v0.7.2) (2019-12-04)
-[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/105aef7d9d52a855328f845d5c79dd37025944ff...v0.7.2)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/ced4fb73b02a2d939d3447b2b2ca0911868d2006...v0.7.2)
 
 **Closed issues:**
 
