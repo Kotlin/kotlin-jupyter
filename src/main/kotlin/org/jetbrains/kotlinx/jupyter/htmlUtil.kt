@@ -17,9 +17,9 @@ fun generateHTMLVarsReport(variablesState: Map<String, VariableState>): String {
     }
 }
 
-fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
+private fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
     //language=HTML
-    val styleSection = """
+    return """
     <style>
     table.$varsTableStyleClass, .$varsTableStyleClass th, .$varsTableStyleClass td {
       border: ${borderPx}px solid black;
@@ -32,10 +32,9 @@ fun generateStyleSection(borderPx: Int = 1, paddingPx: Int = 5): String {
     </style>
     
     """.trimIndent()
-    return styleSection
 }
 
-fun generateVarsTable(variablesState: Map<String, VariableState>): String {
+private fun generateVarsTable(variablesState: Map<String, VariableState>): String {
     return buildString {
         append(
             """
@@ -53,7 +52,7 @@ fun generateVarsTable(variablesState: Map<String, VariableState>): String {
                 """
                 <tr>
                     <td>${it.key}</td>
-                    <td>${it.value.stringValue}</td>
+                    <td><pre>${it.value.stringValue}</pre></td>
                 </tr>
                 """.trimIndent()
             )

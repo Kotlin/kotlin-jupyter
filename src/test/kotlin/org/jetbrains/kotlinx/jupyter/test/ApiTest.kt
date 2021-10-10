@@ -80,13 +80,13 @@ class ApiTest : AbstractSingleReplTest() {
               </tr>
             <tr>
                 <td>x</td>
-                <td>1</td>
+                <td><pre>1</pre></td>
             </tr><tr>
                 <td>y</td>
-                <td>abc</td>
+                <td><pre>abc</pre></td>
             </tr><tr>
                 <td>z</td>
-                <td>47</td>
+                <td><pre>47</pre></td>
             </tr>
             </table>
             
