@@ -118,6 +118,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         }
 
         override fun addLibrary(library: LibraryDefinition) {
+            sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
             rethrowAsLibraryException(LibraryProblemPart.PREBUILT) {
                 library.buildDependenciesInitCode()?.let { runChild(it) }
             }

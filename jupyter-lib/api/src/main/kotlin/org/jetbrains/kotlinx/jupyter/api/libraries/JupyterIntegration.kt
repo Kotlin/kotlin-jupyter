@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
@@ -63,6 +64,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val codePreprocessors = mutableListOf<CodePreprocessor>()
 
+        private val internalVariablesMarkers = mutableListOf<InternalVariablesMarker>()
+
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
         }
@@ -90,6 +93,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         fun addCodePreprocessor(preprocessor: CodePreprocessor) {
             codePreprocessors.add(preprocessor)
+        }
+
+        fun markVariableInternal(marker: InternalVariablesMarker) {
+            internalVariablesMarkers.add(marker)
         }
 
         inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) {
@@ -206,6 +213,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.fileAnnotations = fileAnnotations
                 it.resources = resources
                 it.codePreprocessors = codePreprocessors
+                it.internalVariablesMarkers = internalVariablesMarkers
             }
     }
 

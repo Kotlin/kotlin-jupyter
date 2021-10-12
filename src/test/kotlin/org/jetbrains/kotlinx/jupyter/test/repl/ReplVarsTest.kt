@@ -45,7 +45,6 @@ class ReplVarsTest : AbstractSingleReplTest() {
         varState.getValue("z") shouldBe 47
 
         (varState["z"] as VariableStateImpl).update()
-        repl.notebook.updateVariablesState(varState)
         varState.getValue("z") shouldBe 47
     }
 

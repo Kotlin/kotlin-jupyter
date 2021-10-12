@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -28,6 +29,7 @@ internal class InternalEvaluatorImpl(
     private val evaluator: BasicJvmReplEvaluator,
     private val contextUpdater: ContextUpdater,
     override var logExecution: Boolean,
+    private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
 ) :
     InternalEvaluator {
 
@@ -158,24 +160,26 @@ internal class InternalEvaluatorImpl(
         val cellClassInstance = target.scriptInstance!!
 
         val fields = kClass.declaredMemberProperties
-        val ans = mutableMapOf<String, VariableStateImpl>()
-        fields.forEach { property ->
-            @Suppress("UNCHECKED_CAST")
-            property as KProperty1<Any, *>
-            val state = VariableStateImpl(property, cellClassInstance)
-            variablesWatcher.addDeclaration(cellId, property.name)
+        return mutableMapOf<String, VariableStateImpl>().apply {
+            for (property in fields) {
+                @Suppress("UNCHECKED_CAST")
+                property as KProperty1<Any, *>
+                if (internalVariablesMarkersProcessor.isInternal(property)) continue
 
-            // it was val, now it's var
-            if (property is KMutableProperty1) {
-                variablesHolder.remove(property.name)
-            } else {
-                variablesHolder[property.name] = state
-                return@forEach
+                val state = VariableStateImpl(property, cellClassInstance)
+                variablesWatcher.addDeclaration(cellId, property.name)
+
+                // it was val, now it's var
+                if (property is KMutableProperty1) {
+                    variablesHolder.remove(property.name)
+                } else {
+                    variablesHolder[property.name] = state
+                    continue
+                }
+
+                put(property.name, state)
             }
-
-            ans[property.name] = state
         }
-        return ans
     }
 
     private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {

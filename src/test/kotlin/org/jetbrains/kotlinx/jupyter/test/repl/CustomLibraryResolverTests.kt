@@ -512,4 +512,39 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         assertEquals(42, result)
         assertEquals(listOf(1, 2), mutProp)
     }
+
+    @Test
+    fun testInternalMarkers() {
+        val repl = testOneLibUsage(
+            library {
+                onLoaded {
+                    declare(
+                        "x1" to 22,
+                        "_x2" to 20
+                    )
+                }
+
+                markVariableInternal {
+                    it.name.startsWith("_")
+                }
+            }
+        )
+
+        repl.eval(
+            """
+            var a = 42
+            val _b = 11
+            """.trimIndent()
+        )
+
+        assertEquals(
+            """
+            Visible vars: 
+            ${'\t'}x1 : 22
+            ${'\t'}a : 42
+            
+            """.trimIndent(),
+            repl.notebook.variablesReport()
+        )
+    }
 }

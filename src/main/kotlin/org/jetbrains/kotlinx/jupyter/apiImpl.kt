@@ -12,7 +12,6 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
-import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
 class DisplayResultWrapper private constructor(
@@ -110,10 +109,15 @@ class NotebookImpl(
     override val cellsList: Collection<CodeCellImpl>
         get() = cells.values
 
-    override val variablesState = mutableMapOf<String, VariableState>()
+    override val variablesState: Map<String, VariableState> get() {
+        return sharedReplContext?.evaluator?.variablesHolder
+            ?: throw IllegalStateException("Evaluator is not initialized yet")
+    }
 
-    override val cellVariables: Map<Int, Set<String>>
-        get() = currentCellVariables
+    override val cellVariables: Map<Int, Set<String>> get() {
+        return sharedReplContext?.evaluator?.cellVariables
+            ?: throw IllegalStateException("Evaluator is not initialized yet")
+    }
 
     override val resultsAccessor = ResultsAccessor { getResult(it) }
 
@@ -127,7 +131,6 @@ class NotebookImpl(
         return getCell(id).result
     }
 
-    private var currentCellVariables = mapOf<Int, Set<String>>()
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
 
@@ -146,15 +149,6 @@ class NotebookImpl(
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
-    fun updateVariablesState(evaluator: InternalEvaluator) {
-        variablesState += evaluator.variablesHolder
-        currentCellVariables = evaluator.cellVariables
-    }
-
-    fun updateVariablesState(varsStateUpdate: Map<String, VariableState>) {
-        variablesState += varsStateUpdate
-    }
-
     fun variablesReportAsHTML(): String {
         return generateHTMLVarsReport(variablesState)
     }
@@ -167,7 +161,6 @@ class NotebookImpl(
                 variablesState.forEach { (name, currentState) ->
                     append("\t$name : ${currentState.stringValue}\n")
                 }
-                append('\n')
             }
         }
     }

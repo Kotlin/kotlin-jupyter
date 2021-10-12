@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 
 internal data class SharedReplContext(
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
@@ -28,7 +29,8 @@ internal data class SharedReplContext(
     val beforeCellExecution: MutableList<ExecutionCallback<*>>,
     val shutdownCodes: MutableList<ExecutionCallback<*>>,
     val evaluator: InternalEvaluator,
-    val baseHost: BaseKernelHost
+    val baseHost: BaseKernelHost,
+    val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
 ) {
     val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 }

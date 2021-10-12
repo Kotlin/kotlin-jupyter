@@ -53,11 +53,13 @@ import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.InternalVariablesMarkersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
@@ -224,6 +226,8 @@ class ReplForJupyterImpl(
             internalEvaluator.writeCompiledClasses = value
         }
 
+    private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
+
     private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
 
     private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
@@ -322,7 +326,8 @@ class ReplForJupyterImpl(
         jupyterCompiler,
         evaluator,
         contextUpdater,
-        executedCodeLogging != ExecutedCodeLogging.Off
+        executedCodeLogging != ExecutedCodeLogging.Off,
+        internalVariablesMarkersProcessor,
     )
 
     private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
@@ -353,7 +358,8 @@ class ReplForJupyterImpl(
         beforeCellExecution,
         shutdownCodes,
         internalEvaluator,
-        this
+        this,
+        internalVariablesMarkersProcessor,
     ).also {
         notebook.sharedReplContext = it
     }
@@ -434,11 +440,6 @@ class ReplForJupyterImpl(
             val newClasspath = log.catchAll {
                 updateClasspath()
             } ?: emptyList()
-
-            notebook.updateVariablesState(internalEvaluator)
-            // printVars()
-            // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
-
 
             val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(

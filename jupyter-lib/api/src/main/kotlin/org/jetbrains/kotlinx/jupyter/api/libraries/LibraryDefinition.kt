@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
+import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
@@ -108,5 +109,12 @@ interface LibraryDefinition {
      * Renderers of thrown exceptions
      */
     val throwableRenderers: List<ThrowableRenderer>
+        get() = emptyList()
+
+    /**
+     * Predicates to tell if the declaration is internal.
+     * Internal declarations tend to be not shown to a user in the variables view, but take place in resolution
+     */
+    val internalVariablesMarkers: List<InternalVariablesMarker>
         get() = emptyList()
 }
