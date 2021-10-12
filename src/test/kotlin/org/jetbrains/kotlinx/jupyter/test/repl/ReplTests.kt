@@ -14,7 +14,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.sequences.shouldBeEmpty
 import io.kotest.matchers.sequences.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
@@ -695,8 +694,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             jupyterId = 1
         )
-        varState.getStringValue("l") shouldBe "ArrayList: recursive structure"
-        varState.getStringValue("m") shouldContain " recursive structure"
+        varState.getStringValue("l") shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
+        varState.getStringValue("m") shouldBe "SingletonMap: [exception thrown: java.lang.StackOverflowError]"
         varState.getStringValue("z") shouldBe "[1, 2, 4]"
     }
 

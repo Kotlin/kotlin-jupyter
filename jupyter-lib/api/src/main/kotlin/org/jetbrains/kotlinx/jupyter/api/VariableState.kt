@@ -2,7 +2,6 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 
 interface VariableState {
@@ -18,30 +17,32 @@ data class VariableStateImpl(
 ) : VariableState {
     private val stringCache = VariableStateCache<String?> {
         value.getOrNull()?.let { value ->
-            if (value.isRecursiveStructure()) {
-                "${value::class.simpleName}: recursive structure"
-            } else {
+            try {
                 value.toString()
+            } catch (e: Throwable) {
+                "${value::class.simpleName}: [exception thrown: $e]"
             }
         }
     }
 
-    private val valCache = VariableStateCache<Result<Any?>> {
-        property.asAccessible { prop ->
-            try {
-                Result.success(prop.get(scriptInstance))
-            } catch (ex: Throwable) {
-                Result.failure(ex)
+    private val valCache = VariableStateCache<Result<Any?>> (
+        {
+            oldValue, newValue ->
+            oldValue.getOrNull() !== newValue.getOrNull()
+        },
+        {
+            property.asAccessible { prop ->
+                try {
+                    Result.success(prop.get(scriptInstance))
+                } catch (ex: Throwable) {
+                    Result.failure(ex)
+                }
             }
         }
-    }
+    )
 
     fun update(): Boolean {
-        val oldValue = value
-        valCache.update()
-        val newValue = value
-
-        return (oldValue.getOrNull() !== newValue.getOrNull()).also { isChanged ->
+        return (valCache.forceUpdate()).also { isChanged ->
             if (isChanged) stringCache.update()
         }
     }
@@ -58,61 +59,37 @@ data class VariableStateImpl(
             isAccessible = wasAccessible
             return res
         }
-
-        private fun Any?.isRecursiveStructure(): Boolean {
-            return traverseObject(this, mutableSetOf())
-        }
-
-        private fun traverseObject(value: Any?, seenNodes: MutableSet<Any>): Boolean {
-            if (value == null) return false
-            return try {
-                value::class.declaredMemberProperties
-            } catch (ex: Throwable) {
-                return false
-            }.mapNotNull { property ->
-                @Suppress("UNCHECKED_CAST")
-                property as KProperty1<Any, *>
-
-                try {
-                    val callInstance = property.asAccessible {
-                        it.get(value)
-                    }
-
-                    if (callInstance != null && !seenNodes.add(callInstance)) {
-                        return true
-                    }
-                    callInstance
-                } catch (ex: Throwable) {
-                    // there might be recursive elements inside the container
-                    if (ex is StackOverflowError) {
-                        return true
-                    } else {
-                        null
-                    }
-                }
-            }.any {
-                traverseObject(it, seenNodes)
-            }
-        }
     }
 }
 
-private class VariableStateCache<T>(val calculate: (T?) -> T) {
+private class VariableStateCache<T>(
+    val equalityChecker: (T, T) -> Boolean = { x, y -> x == y },
+    val calculate: (T?) -> T
+) {
     private var cachedVal: T? = null
     private var shouldRenew: Boolean = true
 
-    fun get(): T {
+    fun getOrNull(): T? {
         return if (shouldRenew) {
             calculate(cachedVal).also {
                 cachedVal = it
                 shouldRenew = false
             }
         } else {
-            cachedVal!!
+            cachedVal
         }
     }
 
+    fun get(): T = getOrNull()!!
+
     fun update() {
         shouldRenew = true
+    }
+
+    fun forceUpdate(): Boolean {
+        val oldVal = getOrNull()
+        update()
+        val newVal = get()
+        return oldVal != null && equalityChecker(oldVal, newVal)
     }
 }
