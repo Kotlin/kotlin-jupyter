@@ -61,11 +61,11 @@ class ApiGradlePlugin : Plugin<Project> {
                 registerResourceTask()
                 tasks.whenAdded(
                     { it.name == kspTaskName },
-                    {
+                    { kspTask ->
                         tasks.named(resourcesTaskName) {
-                            dependsOn(it)
-                            it.dependsOn(cleanJupyterTask)
-                            it.outputs.dir(jupyterBuildPath)
+                            dependsOn(kspTask)
+                            kspTask.dependsOn(cleanJupyterTask)
+                            kspTask.outputs.dir(jupyterBuildPath)
                         }
                     }
                 )

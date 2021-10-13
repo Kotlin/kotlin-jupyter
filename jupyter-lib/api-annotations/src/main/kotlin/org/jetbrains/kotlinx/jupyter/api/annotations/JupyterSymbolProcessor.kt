@@ -43,7 +43,7 @@ class JupyterSymbolProcessor(
         if (significantSupertypes.isEmpty()) {
             logger.warn(
                 "Class $classFqn has $annotationSimpleName annotation, " +
-                    "but doesn't implement one of Jupyter integration classes"
+                    "but doesn't implement one of Jupyter integration interfaces"
             )
             return
         }
