@@ -11,8 +11,8 @@ dependencies {
     implementation(libs.kotlin.stable.reflect)
 
     compileOnly(projects.api)
-    implementation(projects.apiAnnotations)
-    kapt(projects.apiAnnotations)
+    implementation(libs.jupyter.apiAnnotations)
+    kapt(libs.jupyter.apiAnnotations)
 
     testImplementation(projects.api)
 

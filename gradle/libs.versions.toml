@@ -2,6 +2,7 @@
 kotlin = "1.6.20-dev-3702"
 stableKotlin = "1.5.30"
 gradleKotlin = "1.5.30"
+ksp = "1.5.30-1.0.0"
 shadowJar = "7.0.0"
 changelogPlugin = "1.7.0"
 kotlinxSerialization = "1.2.2"
@@ -60,6 +61,10 @@ kotlin-gradle-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect
 kotlin-gradle-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "gradleKotlin" }
 kotlin-gradle-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "gradleKotlin" }
 kotlin-gradle-gradle = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "gradleKotlin" }
+
+# Kotlin symbols processing
+ksp = { group="com.google.devtools.ksp", name="symbol-processing-api", version.ref="ksp" }
+plugin-ksp = { group="com.google.devtools.ksp", name="com.google.devtools.ksp.gradle.plugin", version.ref="ksp" }
 
 # Serialization compiler plugin (for Dev Kotlin)
 serialization-dev-embedded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }

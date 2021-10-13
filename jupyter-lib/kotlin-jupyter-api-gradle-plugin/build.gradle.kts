@@ -22,6 +22,7 @@ dependencies {
     // kotlinx.serialization in plugin code
     implementation(libs.kotlin.gradle.gradle)
     implementation(libs.gson)
+    implementation(libs.plugin.ksp)
 
     testImplementation(projects.api)
     testImplementation(projects.apiAnnotations)
