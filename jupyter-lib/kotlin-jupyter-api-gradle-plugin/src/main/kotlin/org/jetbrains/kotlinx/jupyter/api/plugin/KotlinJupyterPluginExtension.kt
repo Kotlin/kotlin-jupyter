@@ -27,10 +27,10 @@ class KotlinJupyterPluginExtension(
 
     @JvmOverloads
     fun addScannerDependency(version: String? = null) = with(project) {
-        configurations.whenAdded({ it.name == "kapt" }) { kaptConf ->
+        configurations.whenAdded({ it.name == "ksp" }) { kspConf ->
             val annotationsDependency = kernelDependency("api-annotations", version)
             dependencies {
-                kaptConf(annotationsDependency)
+                kspConf(annotationsDependency)
             }
             configureDependency("implementation", annotationsDependency)
         }

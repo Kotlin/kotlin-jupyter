@@ -10,6 +10,7 @@ repositories {
 dependencies {
     compileOnly(libs.kotlin.gradle.stdlib)
     compileOnly(libs.kotlin.gradle.reflect)
+    compileOnly(libs.ksp)
 }
 
 buildSettings {

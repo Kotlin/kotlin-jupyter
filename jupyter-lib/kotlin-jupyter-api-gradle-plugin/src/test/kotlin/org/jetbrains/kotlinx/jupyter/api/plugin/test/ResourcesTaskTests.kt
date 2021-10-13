@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin.test
 
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files.createTempDirectory
@@ -53,7 +54,7 @@ class ResourcesTaskTests {
 
     private fun assertLibrariesJsonContents(expected: LibrariesScanResult, type: String = "") {
         val librariesJsonText = projectDir.resolve(buildLibrariesJsonPath(type)).readText()
-        val libraryInfo = Json.decodeFromString<LibrariesScanResult>(librariesJsonText)
+        val libraryInfo = Json.decodeFromString<LibrariesScanResult>(serializer(), librariesJsonText)
 
         assertEquals(expected, libraryInfo)
     }
@@ -96,13 +97,6 @@ class ResourcesTaskTests {
     fun `check annotations`() {
         val version = ClassLoader.getSystemClassLoader().getResource("VERSION")?.readText().orEmpty()
 
-        val propertiesFile = projectDir.resolve("properties.gradle")
-        propertiesFile.writeText(
-            """
-            kapt.verbose=true
-            """.trimIndent()
-        )
-
         val buildFile = projectDir.resolve("build.gradle")
 
         fun jarFile(name: String): String {
@@ -118,7 +112,7 @@ class ResourcesTaskTests {
             dependencies {
                 implementation(files("$apiJar"))
                 implementation(files("$apiAnnotations"))
-                kapt(files("$apiAnnotations"))
+                ksp(files("$apiAnnotations"))
             }
             """.trimIndent()
         )
@@ -155,13 +149,6 @@ class ResourcesTaskTests {
     fun `check annotations in MPP`() {
         val version = ClassLoader.getSystemClassLoader().getResource("VERSION")?.readText().orEmpty()
 
-        val propertiesFile = projectDir.resolve("properties.gradle")
-        propertiesFile.writeText(
-            """
-            kapt.verbose=true
-            """.trimIndent()
-        )
-
         val buildFile = projectDir.resolve("build.gradle.kts")
 
         fun jarFile(name: String): String {
@@ -195,7 +182,7 @@ class ResourcesTaskTests {
                             implementation(files("$apiJar"))
                             implementation(files("$apiAnnotations"))
                         }
-                        dependencies.add("kapt", files("$apiAnnotations"))
+                        dependencies.add("ksp", files("$apiAnnotations"))
                     }
                     val jvmTest by getting
                     val jsMain by getting
@@ -234,6 +221,7 @@ class ResourcesTaskTests {
         )
     }
 
+    @Disabled
     @Test
     fun `check extension`() {
         val version = "0.8.3.202"
@@ -280,7 +268,8 @@ class ResourcesTaskTests {
     }
 
     companion object {
-        private const val KOTLIN_VERSION = "1.5.21"
+        private const val KOTLIN_VERSION = "1.5.30"
+        private const val KSP_VERSION = "$KOTLIN_VERSION-1.0.0"
         private const val RESOURCES_TASK_NAME = "processResources"
         private const val JUPYTER_RESOURCES_TASK_NAME = "processJupyterApiResources"
 
@@ -297,6 +286,7 @@ class ResourcesTaskTests {
             plugins {
                 id 'org.jetbrains.kotlin.$ktPluginId' version '$KOTLIN_VERSION'
                 id 'org.jetbrains.kotlin.jupyter.api'
+                id 'com.google.devtools.ksp' version '$KSP_VERSION'
             }
         """.trimIndent()
 
