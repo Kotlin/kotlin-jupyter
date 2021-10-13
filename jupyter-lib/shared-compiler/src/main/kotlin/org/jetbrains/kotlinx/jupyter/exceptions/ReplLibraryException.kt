@@ -11,11 +11,13 @@ enum class LibraryProblemPart(val message: String) {
     INIT("init codes"),
     RESOURCES("resources definitions"),
     RENDERERS("renderers"),
+    THROWABLE_RENDERERS("throwable renderers"),
     CONVERTERS("converters (fields callbacks)"),
     CLASS_ANNOTATIONS("class annotations callbacks"),
     FILE_ANNOTATIONS("file annotations callbacks"),
     BEFORE_CELL_CALLBACKS("initCell codes (before-cell-execution callbacks)"),
     AFTER_CELL_CALLBACKS("after-cell-execution callbacks"),
+    INTERNAL_VARIABLES_MARKERS("internal variables markers"),
     SHUTDOWN("shutdown callbacks/codes"),
 }
 

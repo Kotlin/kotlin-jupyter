@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
+import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import kotlin.reflect.KProperty
 
@@ -12,6 +14,8 @@ class InternalVariablesMarkersProcessorImpl : InternalVariablesMarkersProcessor 
     }
 
     override fun isInternal(property: KProperty<*>): Boolean {
-        return markers.any { it.isInternal(property) }
+        return rethrowAsLibraryException(LibraryProblemPart.INTERNAL_VARIABLES_MARKERS) {
+            markers.any { it.isInternal(property) }
+        }
     }
 }
