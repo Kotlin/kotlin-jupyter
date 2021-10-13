@@ -88,10 +88,9 @@ kotlinJupyter {
 }
 ```
 
-### Adding library integration using annotation processor
+### Adding library integration using KSP plugin
 
-If you don't have problems with kapt (i.e. you use JDK version under 16), you can use annotations to
-mark integration classes. 
+If you are OK with using KSP, you can use annotations to mark integration classes. 
 
 First, enable `kotlin-jupyter-api-annotations` dependency by adding following line to your `gradle.properties`:
 
@@ -128,8 +127,7 @@ For a further information see docs for:
  - `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`
 
 ### Adding library integration avoiding use of annotation processor
-You may want not to use annotation processing for implementations detection.
-The reason may be, for example, the problems with kapt.
+You may want not to use KSP plugin for implementations detection.
 Then you may refer your implementations right in your buildscript. Note that
 no checking for existence will be performed in this case.
 

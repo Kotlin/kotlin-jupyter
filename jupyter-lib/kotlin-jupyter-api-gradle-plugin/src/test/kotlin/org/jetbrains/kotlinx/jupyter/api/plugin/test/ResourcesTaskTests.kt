@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files.createTempDirectory
@@ -221,10 +220,9 @@ class ResourcesTaskTests {
         )
     }
 
-    @Disabled
     @Test
     fun `check extension`() {
-        val version = "0.8.3.202"
+        val version = "0.10.2-13-1"
 
         val buildFile = projectDir.resolve("build.gradle")
 
