@@ -37,7 +37,7 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
     implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
     implementation(libs.kotlin.dev.scriptingIdeServices)
-    implementation(libs.kotlin.dev.scriptingDependenciesMaven)
+    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
     implementation(libs.kotlin.dev.scriptUtil)
     implementation(libs.kotlin.dev.scriptingCommon)
 
