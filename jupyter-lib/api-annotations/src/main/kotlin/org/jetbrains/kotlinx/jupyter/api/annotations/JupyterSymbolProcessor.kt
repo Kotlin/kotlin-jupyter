@@ -7,6 +7,11 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import java.io.File
+import java.util.Spliterators
+import java.util.concurrent.locks.ReentrantLock
+import java.util.stream.Stream
+import java.util.stream.StreamSupport
+import kotlin.concurrent.withLock
 
 class JupyterSymbolProcessor(
     private val logger: KSPLogger,
@@ -20,12 +25,18 @@ class JupyterSymbolProcessor(
     private val annotationFqn = JupyterLibrary::class.qualifiedName!!
     private val annotationSimpleName = JupyterLibrary::class.simpleName!!
 
+    private val fileLock = ReentrantLock()
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        generatedFilesPath.deleteRecursively()
+        generatedFilesPath.mkdirs()
+
         resolver
             .getAllFiles()
             .flatMap { it.declarations }
             .filterIsInstance<KSClassDeclaration>()
-            .forEach { processClass(it) }
+            .asParallelStream()
+            .forEach(::processClass)
 
         return emptyList()
     }
@@ -48,14 +59,20 @@ class JupyterSymbolProcessor(
             return
         }
 
-        for (fqn in significantSupertypes) {
-            val fileName = fqnMap[fqn]!!
-            val file = generatedFilesPath.resolve(fileName)
-            file.appendText(classFqn + "\n")
+        fileLock.withLock {
+            for (fqn in significantSupertypes) {
+                val fileName = fqnMap[fqn]!!
+                val file = generatedFilesPath.resolve(fileName)
+                file.appendText(classFqn + "\n")
+            }
         }
     }
 
     private fun hasLibraryAnnotation(clazz: KSClassDeclaration): Boolean {
         return clazz.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == annotationFqn }
+    }
+
+    private fun <T> Sequence<T>.asParallelStream(): Stream<T> {
+        return StreamSupport.stream({ Spliterators.spliteratorUnknownSize(iterator(), 0) }, 0, true)
     }
 }

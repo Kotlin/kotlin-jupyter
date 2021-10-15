@@ -24,6 +24,7 @@ class ApiGradlePlugin : Plugin<Project> {
         }
 
         val jupyterBuildPath = buildDir.resolve(FQNS_PATH)
+        jupyterBuildPath.mkdirs()
         extensions.configure<KspExtension>("ksp") {
             arg("kotlin.jupyter.fqn.path", jupyterBuildPath.absolutePath)
         }
@@ -37,15 +38,11 @@ class ApiGradlePlugin : Plugin<Project> {
         pluginExtension.addDependenciesIfNeeded()
 
         tasks {
-            val cleanJupyterTask = register("cleanJupyterPluginFiles") {
-                doLast {
-                    jupyterBuildPath.deleteRecursively()
-                }
-            }
-
             val resourcesTaskName = "processJupyterApiResources"
             fun registerResourceTask(): JupyterApiResourcesTask {
-                findByName(resourcesTaskName) ?: register<JupyterApiResourcesTask>(resourcesTaskName)
+                findByName(resourcesTaskName) ?: register<JupyterApiResourcesTask>(resourcesTaskName) {
+                    kspOutputDir = jupyterBuildPath
+                }
                 return named<JupyterApiResourcesTask>(resourcesTaskName).get()
             }
 
@@ -58,13 +55,13 @@ class ApiGradlePlugin : Plugin<Project> {
             }
 
             fun dependOnKsp(kspTaskName: String) {
-                registerResourceTask()
+                val jupyterTask = registerResourceTask()
                 tasks.whenAdded(
                     { it.name == kspTaskName },
                     { kspTask ->
+                        jupyterTask.dependsOn(kspTask)
                         tasks.named(resourcesTaskName) {
                             dependsOn(kspTask)
-                            kspTask.dependsOn(cleanJupyterTask)
                             kspTask.outputs.dir(jupyterBuildPath)
                         }
                     }
