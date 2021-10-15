@@ -15,7 +15,7 @@ versionsPlugin = "0.39.0"
 slf4j = "1.7.32"
 logback = "1.2.5"
 http4k = "4.11.0.1"
-jupyterApi = "0.10.2-13-1"
+jupyterApi = "0.10.3-20"
 jetbrainsAnnotations = "22.0.0"
 
 junit = "5.7.2"
