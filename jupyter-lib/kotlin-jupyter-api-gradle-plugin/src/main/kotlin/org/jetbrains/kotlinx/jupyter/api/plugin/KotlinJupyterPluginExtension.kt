@@ -32,7 +32,7 @@ class KotlinJupyterPluginExtension(
             dependencies {
                 kspConf(annotationsDependency)
             }
-            configureDependency("implementation", annotationsDependency)
+            configureDependency("compileOnly", annotationsDependency)
         }
     }
 

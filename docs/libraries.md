@@ -73,7 +73,7 @@ This plugin adds following dependencies to your project:
 | Artifact                         | Gradle option to exclude/include | Enabled by default | Dependency scope     | Method for adding dependency manually    |
 | :------------------------------- | :------------------------------- | :----------------- | :------------------- | :--------------------------------------- |
 | `kotlin-jupyter-api`             | `kotlin.jupyter.add.api`         | yes                | `compileOnly`        | `addApiDependency(version: String?)`     |
-| `kotlin-jupyter-api-annotations` | `kotlin.jupyter.add.scanner`     | no                 | `implementation`     | `addScannerDependency(version: String?)` |
+| `kotlin-jupyter-api-annotations` | `kotlin.jupyter.add.scanner`     | no                 | `compileOnly`        | `addScannerDependency(version: String?)` |
 | `kotlin-jupyter-test-kit`        | `kotlin.jupyter.add.testkit`     | yes                | `testImplementation` | `addTestKitDependency(version: String?)` |
 
 You may turn on / turn off the dependency with its default version (version of the plugin)
