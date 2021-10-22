@@ -503,7 +503,7 @@ class ConnectReply(
 @Serializable
 class CommInfoRequest(
     @SerialName("target_name")
-    val targetName: String
+    val targetName: String? = null
 ) : MessageContent()
 
 @Serializable
