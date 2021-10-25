@@ -87,7 +87,10 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     COMM_CLOSE(CommClose::class),
 
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
-    LIST_ERRORS_REPLY(ListErrorsReply::class);
+    LIST_ERRORS_REPLY(ListErrorsReply::class),
+
+    CODE_FORMAT_REQUEST(CodeFormatRequest::class),
+    CODE_FORMAT_REPLY(CodeFormatReply::class);
 
     val type: String
         get() = name.lowercase()
@@ -550,6 +553,17 @@ class ListErrorsReply(
     val code: String,
 
     val errors: List<ScriptDiagnostic>
+) : MessageContent()
+
+@Serializable
+class CodeFormatRequest(
+    val code: String,
+) : MessageContent()
+
+@Serializable
+class CodeFormatReply(
+    val code: String,
+    val formattedCode: String
 ) : MessageContent()
 
 @Serializable(MessageDataSerializer::class)

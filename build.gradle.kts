@@ -54,6 +54,9 @@ dependencies {
     // Clikt library for parsing output magics
     implementation(libs.clikt)
 
+    // Library for executing code formatting requests
+    implementation(libs.ktfmt)
+
     // Http4k for resolving library descriptors
     implementation(libs.bundles.http4k) {
         exclude(group = "org.jetbrains.kotlin")

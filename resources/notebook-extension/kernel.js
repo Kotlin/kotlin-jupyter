@@ -892,6 +892,16 @@ define(function(){
                     }
                     return true;
                 }
+            } else if (event.type === 'keydown' && event.altKey && event.ctrlKey && event.key.toLowerCase() === "l") {
+                this.kernel.formatCode(editor.getValue(), (msg) => {
+                    var content = msg.content;
+                    if(content.code !== editor.getValue()) {
+                        return;
+                    }
+                    editor.setValue(content.formattedCode)
+                    editor.scrollIntoView(null)
+                });
+                return true;
             }
 
             // keyboard event wasn't one of those unique to code cells, let's see
@@ -1018,6 +1028,17 @@ define(function(){
                 code : code
             };
             return this.send_shell_message("list_errors_request", content, callbacks);
+        };
+
+        Kernel.prototype.formatCode = function (code, callback) {
+            var callbacks;
+            if (callback) {
+                callbacks = { shell : { reply : callback } };
+            }
+            var content = {
+                code : code
+            };
+            return this.send_shell_message("code_format_request", content, callbacks);
         };
 
     }

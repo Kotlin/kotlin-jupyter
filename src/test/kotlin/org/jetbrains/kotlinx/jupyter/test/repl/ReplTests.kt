@@ -419,4 +419,10 @@ class ReplTests : AbstractSingleReplTest() {
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
+
+    @Test
+    fun testCodeFormatting() {
+        val result = repl.formatCode("""val  x =  1 +2""")
+        result shouldBe """val x = 1 + 2"""
+    }
 }

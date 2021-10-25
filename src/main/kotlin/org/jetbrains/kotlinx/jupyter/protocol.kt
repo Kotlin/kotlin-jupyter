@@ -321,6 +321,12 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 }
             }
         }
+        is CodeFormatRequest -> {
+            connection.launchJob {
+                val res = repl.formatCode(content.code)
+                sendWrapped(msg, makeReplyMessage(msg, MessageType.CODE_FORMAT_REPLY, content = CodeFormatReply(content.code, res)))
+            }
+        }
         is IsCompleteRequest -> {
             // We are in console mode, so switch off all the loggers
             if (mainLoggerLevel() != Level.OFF) disableLogging()

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
+import com.facebook.ktfmt.KOTLINLANG_FORMAT
+import com.facebook.ktfmt.format
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
@@ -27,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
+import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -128,6 +131,8 @@ interface ReplForJupyter {
     fun evalOnShutdown(): List<EvalResult>
 
     fun checkComplete(code: Code): CheckResult
+
+    fun formatCode(code: Code): Code
 
     suspend fun complete(code: Code, cursor: Int, callback: (CompletionResult) -> Unit)
 
@@ -343,6 +348,36 @@ class ReplForJupyterImpl(
     private val fileAnnotationsProcessor: FileAnnotationsProcessor = FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
 
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
+
+    override fun formatCode(code: Code): Code {
+        val magicIntervals = magics.magicsIntervals(code)
+        val codeIntervals = magics.codeIntervals(code, magicIntervals)
+
+        val magicsList = magicIntervals.toList()
+        val codesList = codeIntervals.toList()
+
+        if (codesList.isEmpty()) {
+            return code
+        }
+
+        if (magicsList.isNotEmpty() && magicsList.last().to > codesList.first().from) {
+            log.info("Unable to format the code with magics inside it")
+            return code
+        }
+
+        fun List<CodeInterval>.extract() = joinToString("") { code.substring(it.from, it.to) }
+        val onlyMagics = magicsList.extract()
+        val onlyCode = codesList.extract()
+
+        val formattedCode = try {
+            format(KOTLINLANG_FORMAT, onlyCode)
+        } catch (e: Exception) {
+            log.info("Unable to format code", e)
+            onlyCode
+        }
+
+        return onlyMagics + formattedCode
+    }
 
     internal val sharedContext = SharedReplContext(
         classAnnotationsProcessor,
