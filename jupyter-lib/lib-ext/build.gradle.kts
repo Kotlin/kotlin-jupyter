@@ -3,7 +3,7 @@ import build.util.excludeKotlinDependencies
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
-    id("ru.ileasile.kotlin.publisher")
+    kotlin("libs.publisher")
 }
 
 dependencies {

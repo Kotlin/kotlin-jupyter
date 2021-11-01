@@ -9,7 +9,7 @@ kotlinxSerialization = "1.2.2"
 kotlinxCoroutines = "1.5.1"
 ktlintGradle = "10.0.0"
 ktlint = "0.40.0"
-publishPlugin = "0.0.57-dev"
+publishPlugin = "0.0.60-dev-29"
 versionsPlugin = "0.39.0"
 
 slf4j = "1.7.32"
@@ -125,8 +125,8 @@ plugin-shadowJar = { module = "gradle.plugin.com.github.jengelman.gradle.plugins
 # id("org.jlleitschuh.gradle.ktlint")
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 
-# id("ru.ileasile.kotlin.publisher")
-plugin-publisher = { module = "ru.ileasile:kotlin-libs-publisher", version.ref = "publishPlugin" }
+# kotlin("libs.publisher")
+plugin-publisher = { module = "org.jetbrains.kotlin:kotlin-libs-publisher", version.ref = "publishPlugin" }
 
 # id("org.hildan.github.changelog")
 plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }

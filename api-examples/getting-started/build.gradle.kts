@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
-    id("ru.ileasile.kotlin.publisher")
+    kotlin("libs.publisher")
 }
 
 kotlinJupyter {

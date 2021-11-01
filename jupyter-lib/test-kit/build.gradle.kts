@@ -1,5 +1,5 @@
 plugins {
-    id("ru.ileasile.kotlin.publisher")
+    kotlin("libs.publisher")
     kotlin("jvm")
 }
 

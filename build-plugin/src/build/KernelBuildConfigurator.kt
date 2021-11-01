@@ -37,8 +37,8 @@ internal class KernelBuildConfigurator(private val project: Project) {
             apply("org.jetbrains.kotlin.jvm")
             apply("com.github.johnrengelman.shadow")
             apply("org.jetbrains.kotlin.plugin.serialization")
-            apply("ru.ileasile.kotlin.publisher")
-            apply("ru.ileasile.kotlin.doc")
+            apply("org.jetbrains.kotlin.libs.publisher")
+            apply("org.jetbrains.kotlin.libs.doc")
             apply("org.hildan.github.changelog")
         }
 

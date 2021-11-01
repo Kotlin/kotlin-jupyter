@@ -3,7 +3,7 @@ import build.util.defaultVersionCatalog
 import build.util.devKotlin
 
 plugins {
-    id("ru.ileasile.kotlin.publisher")
+    kotlin("libs.publisher")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }

@@ -2,9 +2,9 @@ import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
 import build.util.getFlag
 import build.util.typedProperty
-import ru.ileasile.kotlin.apache2
-import ru.ileasile.kotlin.developer
-import ru.ileasile.kotlin.githubRepo
+import org.jetbrains.kotlinx.publisher.apache2
+import org.jetbrains.kotlinx.publisher.developer
+import org.jetbrains.kotlinx.publisher.githubRepo
 
 plugins {
     id("build.plugins.main")

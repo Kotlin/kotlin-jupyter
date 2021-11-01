@@ -6,7 +6,7 @@ plugins {
     id("com.gradle.plugin-publish")
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("ru.ileasile.kotlin.publisher")
+    kotlin("libs.publisher")
 }
 
 project.group = "org.jetbrains.kotlin"
