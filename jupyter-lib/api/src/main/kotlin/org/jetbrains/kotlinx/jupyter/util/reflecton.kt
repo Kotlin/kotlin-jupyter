@@ -11,5 +11,8 @@ fun KClass<*>.isSubclassOfCatching(superType: KClass<*>): Boolean {
         false
     } catch (e: KotlinReflectionInternalError) {
         false
+    } catch (e: InternalError) {
+        // Workaround for #341
+        false
     }
 }

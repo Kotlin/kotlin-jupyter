@@ -416,6 +416,14 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testAnonymousObjectRendering() {
+        eval("42")
+        eval("val sim = object : ArrayList<String>() {}")
+        val res = eval("sim").resultValue
+        res.toString() shouldBe "[]"
+    }
+
+    @Test
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
