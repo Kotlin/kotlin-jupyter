@@ -28,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -457,6 +458,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         display2 shouldBe null
     }
 
+    @Disabled
     @Test
     fun testUpdateVariable() {
         val repl = testOneLibUsage(
