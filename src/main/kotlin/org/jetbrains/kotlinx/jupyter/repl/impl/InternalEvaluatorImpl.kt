@@ -15,10 +15,9 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
-import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
@@ -170,18 +169,28 @@ internal class InternalEvaluatorImpl(
         val kClass = target.scriptClass ?: return emptyMap()
         val cellClassInstance = target.scriptInstance!!
 
-        val fields = kClass.declaredMemberProperties
-        return mutableMapOf<String, VariableStateImpl>().apply {
-            for (property in fields) {
-                @Suppress("UNCHECKED_CAST")
-                property as KProperty1<Any, *>
-                if (internalVariablesMarkersProcessor.isInternal(property)) continue
+        val fields = kClass.java.declaredFields
+        // ignore implementation details of top level like script instance and result value
+        val kProperties = kClass.declaredMemberProperties.associateBy { it.name }
 
+        return mutableMapOf<String, VariableStateImpl>().apply {
+            val addedDeclarations = mutableSetOf<String>()
+            for (property in fields) {
                 val state = VariableStateImpl(property, cellClassInstance)
+
+                val isInternalKProperty = kProperties[property.name]?.let {
+                    @Suppress("UNCHECKED_CAST")
+                    it as KProperty1<Any, *>
+                    internalVariablesMarkersProcessor.isInternal(it)
+                }
+
+                if (isInternalKProperty == true || !kProperties.contains(property.name)) continue
+
                 variablesWatcher.addDeclaration(cellId, property.name)
+                addedDeclarations.add(property.name)
 
                 // it was val, now it's var
-                if (property is KMutableProperty1) {
+                if (isValField(property)) {
                     variablesHolder.remove(property.name)
                 } else {
                     variablesHolder[property.name] = state

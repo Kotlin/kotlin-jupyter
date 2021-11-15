@@ -90,8 +90,9 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
     LIST_ERRORS_REPLY(ListErrorsReply::class),
 
-    SERIALIZATION_REQUEST(SerializationRequest::class),
-    SERIALIZATION_REPLY(SerializationReply::class);
+    // from Serialization_Request
+    VARIABLES_VIEW_REQUEST(SerializationRequest::class),
+    VARIABLES_VIEW_REPLY(SerializationReply::class);
 
     val type: String
         get() = name.lowercase()

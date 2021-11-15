@@ -462,9 +462,8 @@ class ReplForJupyterImpl(
             } ?: emptyList()
 
             notebook.updateVariablesState(internalEvaluator)
-            // printVars()
             // printUsagesInfo(jupyterId, cellVariables[jupyterId - 1])
-            val variablesCells: Map<String, Int> = notebook.variablesState.mapValues { internalEvaluator.findVariableCell(it.key) }
+            val variablesCells: Map<String, Int?> = notebook.variablesState.mapValues { internalEvaluator.findVariableCell(it.key) }
             val serializedData = variablesSerializer.serializeVariables(jupyterId - 1, notebook.variablesState, oldDeclarations, variablesCells, notebook.unchangedVariables)
 
             GlobalScope.launch(Dispatchers.Default) {
@@ -584,8 +583,8 @@ class ReplForJupyterImpl(
     private fun doSerializeVariables(args: SerializationArgs): SerializationReply {
         val resultMap = mutableMapOf<String, SerializedVariablesState>()
         val cellId = if (args.cellId != -1) args.cellId else {
-            val watcherInfo = internalEvaluator.findVariableCell(args.topLevelVarName) + 1
-            val finalAns = if (watcherInfo == - 1) 1 else watcherInfo
+            val watcherInfo = internalEvaluator.findVariableCell(args.topLevelVarName)
+            val finalAns = if (watcherInfo == null) 1 else watcherInfo + 1
             finalAns
         }
         args.descriptorsState.forEach { (name, state) ->

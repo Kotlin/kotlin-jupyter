@@ -363,7 +363,7 @@ class VariablesSerializer(
         clearOldData(currentCellId, cellVariables)
     }
 
-    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, oldDeclarations: Map<String, Int>, variablesCells: Map<String, Int>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
+    fun serializeVariables(cellId: Int, variablesState: Map<String, VariableState>, oldDeclarations: Map<String, Int>, variablesCells: Map<String, Int?>, unchangedVariables: Set<String>): Map<String, SerializedVariablesState> {
         if (!isSerializationActive) return emptyMap()
 
         if (variablesState.isEmpty()) {

@@ -315,8 +315,8 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                 return
             }
             log.debug("Message type in CommOpen: $msg, ${msg.type}")
-            val data = content.data ?: return sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY))
-            if (data.isEmpty()) return sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY))
+            val data = content.data ?: return sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY))
+            if (data.isEmpty()) return sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY))
             log.debug("Message data: $data")
             val messageContent = getVariablesDescriptorsFromJson(data)
             connection.launchJob {
@@ -348,10 +348,10 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.launchJob {
                 if (content.topLevelDescriptorName.isNotEmpty()) {
                     repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState, commID = content.commId, content.pathToDescriptor) { result ->
-                        sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = result))
+                        sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY, content = result))
                     }
                 } else {
-                    sendWrapped(msg, makeReplyMessage(msg, MessageType.SERIALIZATION_REPLY, content = null))
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY, content = null))
                 }
             }
         }

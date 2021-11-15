@@ -94,14 +94,12 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     private val unchangedVariables: MutableSet<V> = mutableSetOf()
 
     fun removeOldDeclarations(address: K, newDeclarations: Set<V>) {
-        // removeIf?
         cellVariables[address]?.forEach {
             val predicate = newDeclarations.contains(it) && variablesDeclarationInfo[it] != address
             if (predicate) {
                 variablesDeclarationInfo.remove(it)
                 unchangedVariables.remove(it)
             }
-//            predicate
         }
 
         // add old declarations as unchanged

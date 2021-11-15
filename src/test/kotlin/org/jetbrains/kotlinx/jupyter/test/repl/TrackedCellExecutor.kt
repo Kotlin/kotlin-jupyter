@@ -49,7 +49,7 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val variablesHolder = mutableMapOf<String, VariableState>()
     override val cellVariables = mutableMapOf<Int, MutableSet<String>>()
 
-    val variablesWatcher: VariablesUsagesPerCellWatcher<Int, String> = VariablesUsagesPerCellWatcher()
+    private val variablesWatcher: VariablesUsagesPerCellWatcher<Int, String> = VariablesUsagesPerCellWatcher()
 
     override val results: List<Any?>
         get() = executedCodes.map { null }
@@ -59,13 +59,13 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
         return InternalEvalResult(FieldValue(null, null), Unit)
     }
 
-    override fun findVariableCell(variableName: String): Int {
+    override fun findVariableCell(variableName: String): Int? {
         for (cellSet in cellVariables) {
             if (cellSet.value.contains(variableName)) {
                 return cellSet.key
             }
         }
-        return -1
+        return null
     }
 
     override fun getVariablesDeclarationInfo(): Map<String, Int> {

@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
 class DisplayResultWrapper private constructor(
@@ -152,14 +153,8 @@ class NotebookImpl(
         get() = JavaRuntime
 
     fun updateVariablesState(evaluator: InternalEvaluator) {
-        variablesState += evaluator.variablesHolder
-        currentCellVariables = evaluator.cellVariables
         _unchangedVariables.clear()
         _unchangedVariables.addAll(evaluator.getUnchangedVariables())
-    }
-
-    fun updateVariablesState(varsStateUpdate: Map<String, VariableState>) {
-        variablesState += varsStateUpdate
     }
 
     fun variablesReportAsHTML(): String {

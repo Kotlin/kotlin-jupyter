@@ -34,7 +34,7 @@ interface InternalEvaluator {
     /**
      * Get a cellId where a particular variable is declared
      */
-    fun findVariableCell(variableName: String): Int
+    fun findVariableCell(variableName: String): Int?
 
     fun getVariablesDeclarationInfo(): Map<String, Int>
 
