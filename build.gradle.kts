@@ -74,6 +74,7 @@ dependencies {
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
     withCompilerArgs {
+        requiresOptIn()
         skipPrereleaseCheck()
         samConversionsClass()
     }

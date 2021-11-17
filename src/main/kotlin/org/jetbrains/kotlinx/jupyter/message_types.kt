@@ -592,13 +592,11 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
 
 object MessageDataSerializer : KSerializer<MessageData> {
     @InternalSerializationApi
-    private val contentSerializers = MessageType.values()
-        .map { it.type to it.contentClass.serializer() }
-        .toMap()
+    private val contentSerializers = MessageType.values().associate { it.type to it.contentClass.serializer() }
 
     override val descriptor: SerialDescriptor = serializer<JsonObject>().descriptor
 
-    @InternalSerializationApi
+    @OptIn(InternalSerializationApi::class)
     override fun deserialize(decoder: Decoder): MessageData {
         require(decoder is JsonDecoder)
         val element = decoder.decodeJsonElement().jsonObject
