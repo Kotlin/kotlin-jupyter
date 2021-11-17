@@ -1,8 +1,8 @@
 [versions]
-kotlin = "1.6.20-dev-3702"
-stableKotlin = "1.5.30"
-gradleKotlin = "1.5.30"
-ksp = "1.5.30-1.0.0"
+kotlin = "1.6.20-dev-5432"
+stableKotlin = "1.6.0"
+gradleKotlin = "1.6.0"
+ksp = "1.6.0-1.0.1"
 shadowJar = "7.0.0"
 changelogPlugin = "1.7.0"
 kotlinxSerialization = "1.2.2"
@@ -150,4 +150,5 @@ allGradlePlugins = [
     "plugin-publisher",
     "plugin-changelog",
     "plugin-versionsUpdater",
+    "plugin-ksp",
 ]
