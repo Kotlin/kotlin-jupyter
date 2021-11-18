@@ -47,7 +47,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             dataFrameOf(name, height)(
                 "Bill", 135,
                 "Mark", 160
-            ).typed<Unit>()
+            )
             """.trimIndent()
         )
 
