@@ -5,9 +5,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
 import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
@@ -57,36 +61,46 @@ class FullMagicsHandler(
     }
 
     override fun handleTrackExecution() {
-        repl.executedCodeLogging = when (arg?.trim()) {
-            "-all" -> ExecutedCodeLogging.All
-            "-off" -> ExecutedCodeLogging.Off
-            "-generated" -> ExecutedCodeLogging.Generated
-            else -> ExecutedCodeLogging.All
-        }
+        object : CliktCommand() {
+            val logLevel by argument().enum<ExecutedCodeLogging>(true) { it.name.lowercase() }.optional()
+            override fun run() {
+                repl.executedCodeLogging = logLevel ?: ExecutedCodeLogging.ALL
+            }
+        }.parse(argumentsList())
     }
 
     override fun handleTrackClasspath() {
-        repl.trackClasspath = true
+        handleSingleOptionalFlag {
+            repl.trackClasspath = it ?: true
+        }
     }
 
     override fun handleDumpClassesForSpark() {
-        repl.writeCompiledClasses = true
+        handleSingleOptionalFlag {
+            repl.writeCompiledClasses = it ?: true
+        }
     }
 
     override fun handleOutput() {
-        repl.outputConfig = updateOutputConfig(repl.outputConfig, (arg ?: "").split(" "))
+        repl.outputConfig = updateOutputConfig(repl.outputConfig, argumentsList())
     }
 
     override fun handleLogLevel() {
-        val level = when (val levelStr = arg?.trim()) {
-            "off" -> Level.OFF
-            "error" -> Level.ERROR
-            "warn" -> Level.WARN
-            "info" -> Level.INFO
-            "debug" -> Level.DEBUG
-            else -> throw ReplException("Unknown log level: '$levelStr'")
-        }
-        setRootLoggingLevel(level)
+        object : CliktCommand() {
+            val level by argument().choice(
+                mapOf(
+                    "off" to Level.OFF,
+                    "error" to Level.ERROR,
+                    "warn" to Level.WARN,
+                    "info" to Level.INFO,
+                    "debug" to Level.DEBUG,
+                ),
+                ignoreCase = false
+            )
+            override fun run() {
+                setRootLoggingLevel(level)
+            }
+        }.parse(argumentsList())
     }
 
     override fun handleLogHandler() {

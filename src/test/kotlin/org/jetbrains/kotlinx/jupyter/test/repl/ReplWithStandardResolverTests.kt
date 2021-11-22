@@ -61,7 +61,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         eval("%useLatestDescriptors")
         Assertions.assertTrue(infoProvider.fallback is AbstractLibraryResolutionInfo.ByGitRef)
 
-        eval("%useLatestDescriptors -off")
+        eval("%useLatestDescriptors off")
         Assertions.assertTrue(infoProvider.fallback === initialDefaultResolutionInfo)
     }
 

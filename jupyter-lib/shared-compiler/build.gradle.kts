@@ -36,6 +36,9 @@ dependencies {
 
     // Logging
     compileOnly(libs.logging.slf4j.api)
+
+    // Clikt library for parsing output magics
+    implementation(libs.clikt)
 }
 
 buildSettings {

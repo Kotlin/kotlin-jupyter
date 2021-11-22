@@ -95,9 +95,9 @@ class EvalRequestData(
 class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
 enum class ExecutedCodeLogging {
-    Off,
-    All,
-    Generated
+    OFF,
+    ALL,
+    GENERATED
 }
 
 interface ReplRuntimeProperties {
@@ -212,12 +212,12 @@ class ReplForJupyterImpl(
 
     override var trackClasspath: Boolean = false
 
-    private var _executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.Off
+    private var _executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.OFF
     override var executedCodeLogging: ExecutedCodeLogging
         get() = _executedCodeLogging
         set(value) {
             _executedCodeLogging = value
-            internalEvaluator.logExecution = value != ExecutedCodeLogging.Off
+            internalEvaluator.logExecution = value != ExecutedCodeLogging.OFF
         }
 
     override var writeCompiledClasses: Boolean
@@ -326,7 +326,7 @@ class ReplForJupyterImpl(
         jupyterCompiler,
         evaluator,
         contextUpdater,
-        executedCodeLogging != ExecutedCodeLogging.Off,
+        executedCodeLogging != ExecutedCodeLogging.OFF,
         internalVariablesMarkersProcessor,
     )
 

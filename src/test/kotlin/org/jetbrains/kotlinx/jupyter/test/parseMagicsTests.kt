@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
@@ -127,7 +128,7 @@ class ParseMagicsTests {
             get() = standardResolverBranch
         override val librariesDir = KERNEL_LIBRARIES.localLibrariesDir
         override var trackClasspath = false
-        override var executedCodeLogging = ExecutedCodeLogging.Off
+        override var executedCodeLogging = ExecutedCodeLogging.OFF
         override var writeCompiledClasses = false
         override var outputConfig = OutputConfig()
     }
@@ -201,6 +202,15 @@ class ParseMagicsTests {
         }
 
         assertTrue(options.trackClasspath)
+
+        test(
+            """
+                %trackClasspath off
+            """.trimIndent(),
+            ""
+        )
+
+        assertFalse(options.trackClasspath)
     }
 
     @Test
@@ -212,7 +222,7 @@ class ParseMagicsTests {
                     val x = 9
                     %wrongMagic
                     fun f() = 42
-                    %trackExecution -generated
+                    %trackExecution generated
             """.trimIndent(),
             """
                     
@@ -226,7 +236,7 @@ class ParseMagicsTests {
             assertEquals(1, libs.size)
         }
 
-        assertEquals(ExecutedCodeLogging.Generated, options.executedCodeLogging)
+        assertEquals(ExecutedCodeLogging.GENERATED, options.executedCodeLogging)
     }
 
     @Test

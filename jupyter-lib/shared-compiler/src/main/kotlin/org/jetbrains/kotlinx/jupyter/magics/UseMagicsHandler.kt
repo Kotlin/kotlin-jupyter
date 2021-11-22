@@ -20,10 +20,9 @@ open class UseMagicsHandler(
     }
 
     override fun handleUseLatestDescriptors() {
-        libraryResolutionInfoSwitcher.switch = when (arg?.trim()) {
-            "-on" -> DefaultInfoSwitch.GIT_REFERENCE
-            "-off" -> DefaultInfoSwitch.DIRECTORY
-            else -> DefaultInfoSwitch.GIT_REFERENCE
+        handleSingleOptionalFlag {
+            libraryResolutionInfoSwitcher.switch = if (it == false) DefaultInfoSwitch.DIRECTORY
+            else DefaultInfoSwitch.GIT_REFERENCE
         }
     }
 }
