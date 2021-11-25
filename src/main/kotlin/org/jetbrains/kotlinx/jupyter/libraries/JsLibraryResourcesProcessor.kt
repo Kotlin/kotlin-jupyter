@@ -77,28 +77,28 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                 }
             }
             (function (){
-                var modifiers = $jsScriptModifiers
+                var modifiers = $jsScriptModifiers;
                 var e = document.getElementById("$elementId");
                 modifiers.forEach(function (gen) {
                     var script = document.createElement("script");
                     gen(script)
-                    script.onload = function() {
+                    script.addEventListener("load", function() {
                         window$callResourceIndex = function(f) {f();};
                         window.kotlinQueues$resourceIndex.forEach(function(f) {f();});
                         window.kotlinQueues$resourceIndex = [];
-                    };
-                    script.onerror = function() {
+                    }, false);
+                    script.addEventListener("error", function() {
                         window$callResourceIndex = function(f) {};
                         window.kotlinQueues$resourceIndex = [];
                         var div = document.createElement("div");
                         div.style.color = 'darkred';
                         div.textContent = 'Error loading resource $resourceName';
                         document.getElementById("$elementId").appendChild(div);
-                    };
+                    }, false);
                     
                     e.appendChild(script);
-                })
-            })()
+                });
+            })();
         """.trimIndent()
 
         // language=html
@@ -137,6 +137,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
             return """
                 (function(script) {
                     script.src = "$url"
+                    script.type = "text/javascript";
                 })
             """.trimIndent()
         }

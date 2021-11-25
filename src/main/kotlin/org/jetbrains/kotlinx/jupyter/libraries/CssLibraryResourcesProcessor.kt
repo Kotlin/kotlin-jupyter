@@ -15,9 +15,9 @@ class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
             val path = resourceLocation.path
 
             fun wrapInTag(text: String) = """
-                <script>
+                <style>
                 $text
-                </script>
+                </style>
             """.trimIndent()
 
             return try {
