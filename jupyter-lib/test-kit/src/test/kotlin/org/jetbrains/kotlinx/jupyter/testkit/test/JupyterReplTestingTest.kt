@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.testkit.test
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase
 import org.junit.jupiter.api.Test
 
@@ -47,5 +49,12 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
 
         exec("5").shouldBeInstanceOf<MimeTypedResult>()
         execHtml("5") shouldBe "10"
+    }
+
+    @Test
+    fun `dataframe is not resolved`() {
+        shouldThrow<ReplPreprocessingException> {
+            exec("%dataframe")
+        }
     }
 }

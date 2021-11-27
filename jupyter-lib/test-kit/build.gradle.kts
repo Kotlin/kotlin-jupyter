@@ -24,3 +24,15 @@ kotlinPublications {
         description.set("Test suite for testing Kotlin kernel library integration")
     }
 }
+
+build.CreateResourcesTask.register(
+    project,
+    "createTestKitResources",
+    project.tasks.named<Copy>(build.PROCESS_RESOURCES_TASK)
+) {
+    rootSettings.librariesDir
+        .list { _, fileName -> fileName.endsWith(".json") }
+        ?.forEach {
+            addSingleValueFile("jupyterLibraries/$it", rootSettings.librariesDir.resolve(it).readText())
+        }
+}

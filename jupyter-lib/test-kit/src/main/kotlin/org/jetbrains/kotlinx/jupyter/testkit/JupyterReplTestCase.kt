@@ -4,17 +4,15 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
-abstract class JupyterReplTestCase {
-    private val repl = ReplForJupyterImpl(EmptyResolutionInfoProvider, scriptClasspath, isEmbedded = true).apply {
-        eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this) }
-    }
+abstract class JupyterReplTestCase(
+    replProvider: ReplProvider = ReplProvider.withoutLibraryResolution
+) {
+    private val repl = replProvider(scriptClasspath)
 
     fun execEx(code: Code): EvalResultEx {
         return repl.evalEx(EvalRequestData(code))

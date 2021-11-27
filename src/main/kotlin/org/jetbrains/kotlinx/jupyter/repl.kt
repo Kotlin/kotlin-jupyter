@@ -125,6 +125,8 @@ interface ReplForJupyter {
 
     fun <T> eval(execution: ExecutionCallback<T>): T
 
+    fun evalEx(evalData: EvalRequestData): EvalResultEx
+
     fun evalOnShutdown(): List<EvalResult>
 
     fun checkComplete(code: Code): CheckResult
@@ -404,7 +406,7 @@ class ReplForJupyterImpl(
         })
     }
 
-    fun evalEx(evalData: EvalRequestData): EvalResultEx {
+    override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
                 beforeCellExecution.forEach { executor.execute(it) }
