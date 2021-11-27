@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import java.io.File
 
 fun interface ReplProvider {
@@ -19,16 +20,29 @@ fun interface ReplProvider {
         }
 
         fun withDefaultClasspathResolution(
-            shouldResolve: (String?) -> Boolean = { true }
+            shouldResolve: (String?) -> Boolean = { true },
+            shouldResolveToEmpty: (String?) -> Boolean = { false },
         ) = ReplProvider { classpath ->
+            val resolver = run {
+                var res: LibraryResolver = ClasspathLibraryResolver(null, shouldResolve)
+                res = ToEmptyLibraryResolver(res, shouldResolveToEmpty)
+                res
+            }
+
             ReplForJupyterImpl(
                 EmptyResolutionInfoProvider,
                 classpath,
                 isEmbedded = true,
-                resolverConfig = ResolverConfig(defaultRepositories, ClasspathLibraryResolver(null, shouldResolve))
+                resolverConfig = ResolverConfig(defaultRepositories, resolver)
             ).apply {
                 initializeWithCurrentClasspath()
             }
+        }
+
+        fun forLibrariesTesting(libraries: Collection<String>): ReplProvider {
+            return withDefaultClasspathResolution(
+                shouldResolveToEmpty = { it in libraries }
+            )
         }
 
         private fun ReplForJupyterImpl.initializeWithCurrentClasspath() {

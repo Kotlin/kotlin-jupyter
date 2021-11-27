@@ -1,6 +1,7 @@
 plugins {
     kotlin("libs.publisher")
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 repositories {
@@ -10,6 +11,7 @@ repositories {
 dependencies {
     api(projects.kotlinJupyterKernel)
     implementation(libs.kotlin.dev.scriptingJvm)
+    implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
 }
 

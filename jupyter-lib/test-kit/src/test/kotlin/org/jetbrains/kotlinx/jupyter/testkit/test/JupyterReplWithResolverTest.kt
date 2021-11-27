@@ -2,12 +2,18 @@ package org.jetbrains.kotlinx.jupyter.testkit.test
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.string.shouldContain
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase
 import org.jetbrains.kotlinx.jupyter.testkit.ReplProvider
 import org.junit.jupiter.api.Test
 
-class JupyterReplWithResolverTest : JupyterReplTestCase(ReplProvider.withDefaultClasspathResolution { it != "lets-plot" }) {
+class JupyterReplWithResolverTest : JupyterReplTestCase(
+    ReplProvider.withDefaultClasspathResolution(
+        shouldResolve = { it != "lets-plot" },
+        shouldResolveToEmpty = { it == "multik" }
+    )
+) {
 
     @Test
     fun dataframe() {
@@ -30,8 +36,19 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(ReplProvider.withDefault
 
     @Test
     fun `lets-plot is not resolved as it is an exception`() {
-        shouldThrow<ReplPreprocessingException> {
-            exec("%lets-plot")
+        val exception = shouldThrow<ReplPreprocessingException> {
+            exec("%use lets-plot")
         }
+        exception.message shouldContain "Unknown library"
+    }
+
+    @Test
+    fun `krangl resolves to empty`() {
+        exec("%use multik")
+
+        val exception = shouldThrow<ReplCompilerException> {
+            exec("import org.jetbrains.kotlinx.multik.api.*")
+        }
+        exception.message shouldContain "Unresolved reference: multik"
     }
 }

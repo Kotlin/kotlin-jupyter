@@ -25,6 +25,7 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import java.io.IOException
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -180,7 +181,11 @@ internal class KernelBuildConfigurator(private val project: Project) {
             settings.jvmTargetForSnippets?.let {
                 add("jvmTargetForSnippets" to it)
             }
-            BUILD_LIBRARIES.downloadLatestPropertiesFile()
+            try {
+                BUILD_LIBRARIES.downloadLatestPropertiesFile()
+            } catch (e: IOException) {
+                project.logger.warn("Unable to download properties file, continuing in offline mode", e)
+            }
             val librariesProperties = readProperties(BUILD_LIBRARIES.localPropertiesFile)
             add("librariesFormatVersion" to librariesProperties["formatVersion"].orEmpty())
         }

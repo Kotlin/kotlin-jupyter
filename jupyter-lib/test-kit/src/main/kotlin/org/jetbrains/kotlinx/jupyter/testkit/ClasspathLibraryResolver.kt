@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 
-class ClasspathLibraryResolver(parent: LibraryResolver? = null, val shouldResolve: (String?) -> Boolean = { true }) : ChainedLibraryResolver(parent) {
+class ClasspathLibraryResolver(parent: LibraryResolver? = null, val shouldResolve: LibraryNameFilter = { true }) : ChainedLibraryResolver(parent) {
     override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         if (!shouldResolve(reference.name)) return null
         val classloader = this::class.java.classLoader
