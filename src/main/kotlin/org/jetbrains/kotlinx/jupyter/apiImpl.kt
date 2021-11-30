@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
@@ -148,6 +149,10 @@ class NotebookImpl(
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+
+    override val jupyterClientType: JupyterClientType by lazy {
+        JupyterClientDetector.detect()
+    }
 
     fun variablesReportAsHTML(): String {
         return generateHTMLVarsReport(variablesState)

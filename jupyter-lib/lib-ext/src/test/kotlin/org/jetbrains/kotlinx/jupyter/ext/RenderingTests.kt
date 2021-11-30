@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.ext
 
+import io.kotest.matchers.collections.shouldBeSameSizeAs
+import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
 import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
 import org.jetbrains.kotlinx.jupyter.ext.graph.visualization.toHTML
@@ -17,7 +19,6 @@ import kotlin.test.assertTrue
 
 class RenderingTests {
     @Test
-    @Disabled("Rendering is different for different versions of Java")
     fun testRendering() {
         val pngFile = objectsDir.resolve("logo.png")
         val pngFileRelative = "../${objectsDir.name}/logo.png"
@@ -31,7 +32,10 @@ class RenderingTests {
         val svgFile = objectsDir.resolve("svg_ex.svg")
         val svg1 = Image(svgFile, true)
 
-        assertHtmlEquals("test1.html") {
+        assertHtmlEquals(
+            "test1.html",
+            asserter = AlmostEqualsMultilineComparator(1)::compare
+        ) {
             appendLine(image1.toHTML())
             appendLine(image2.toHTML())
             appendLine(image3.toHTML())
@@ -69,7 +73,8 @@ class RenderingTests {
 
     private fun assertHtmlEquals(
         @Suppress("SameParameterValue") fileName: String,
-        contentWriteAction: Writer.() -> Unit
+        asserter: (String, String) -> Unit = { expected, actual -> actual shouldBe expected },
+        contentWriteAction: Writer.() -> Unit,
     ) {
         val file = renderedDir.resolve(fileName)
         val writer = if (doRegenerate) FileOutputStream(file).writer() else StringWriter()
@@ -82,7 +87,21 @@ class RenderingTests {
 
         if (!doRegenerate) {
             val actualVal = writer.toString()
-            assertEquals(file.readText(), actualVal)
+            asserter(file.readText(), actualVal)
+        }
+    }
+
+    private class AlmostEqualsMultilineComparator(val mayDiverge: Int) {
+        fun compare(expected: String, actual: String) {
+            val expectedLines = expected.lines()
+            val actualLines = actual.lines()
+
+            actualLines shouldBeSameSizeAs expectedLines
+
+            val diverged = expectedLines.zip(actualLines).count { it.first != it.second }
+            if (diverged > mayDiverge) {
+                assertEquals(expected, actual, "Texts diverge more than in $mayDiverge lines (in $diverged, actually)")
+            }
         }
     }
 

@@ -83,6 +83,11 @@ interface Notebook {
     val jreInfo: JREInfoProvider
 
     /**
+     * Jupyter client that started the current kernel session
+     */
+    val jupyterClientType: JupyterClientType
+
+    /**
      * Renderers processor gives an ability to render values and
      * and add new renderers
      */

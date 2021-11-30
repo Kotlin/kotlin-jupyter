@@ -34,6 +34,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
         @Suppress("SuspiciousCollectionReassignment")
         freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+
+        jvmTarget = libs.versions.jvmTarget.get()
     }
 }
 
