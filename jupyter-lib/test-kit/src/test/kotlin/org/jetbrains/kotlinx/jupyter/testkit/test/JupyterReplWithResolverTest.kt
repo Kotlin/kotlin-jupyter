@@ -43,7 +43,7 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
     }
 
     @Test
-    fun `krangl resolves to empty`() {
+    fun `multik resolves to empty`() {
         exec("%use multik")
 
         val exception = shouldThrow<ReplCompilerException> {

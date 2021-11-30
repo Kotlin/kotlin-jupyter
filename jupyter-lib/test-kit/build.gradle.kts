@@ -10,6 +10,7 @@ repositories {
 
 dependencies {
     api(projects.kotlinJupyterKernel)
+    api(libs.jupyterNotebooksParser)
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
