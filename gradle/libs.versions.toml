@@ -1,4 +1,6 @@
 [versions]
+jvmTarget = "1.8"
+
 kotlin = "1.6.20-dev-6372"
 stableKotlin = "1.6.0"
 gradleKotlin = "1.6.0"

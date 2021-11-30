@@ -24,7 +24,7 @@ object JavaRuntime : JREInfoProvider {
     }
 
     override val versionAsInt by lazy {
-        val regex = Regex("^(1\\.)?(\\d+)$")
+        val regex = Regex("^(1\\.)?(\\d+)(\\..*)?$")
         val match = regex.matchEntire(version)
         val plainVersion = match?.groupValues?.get(2)
         plainVersion?.toIntOrNull() ?: defaultVersion

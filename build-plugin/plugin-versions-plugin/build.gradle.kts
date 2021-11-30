@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
@@ -13,6 +15,12 @@ dependencies {
     implementation(libs.plugin.publisher)
     implementation(libs.plugin.serialization)
     implementation(libs.kotlin.gradle.gradle)
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = libs.versions.jvmTarget.get()
+    }
 }
 
 sourceSets {

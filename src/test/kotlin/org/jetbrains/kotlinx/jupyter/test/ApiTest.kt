@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.collections.shouldBeOneOf
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
@@ -42,6 +44,11 @@ class ApiTest : AbstractSingleReplTest() {
         )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
+    }
+
+    @Test
+    fun `check jupyter client detection`() {
+        repl.notebook.jupyterClientType shouldBeOneOf listOf(JupyterClientType.KERNEL_TESTS, JupyterClientType.UNKNOWN)
     }
 
     @Test

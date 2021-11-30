@@ -1,12 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.compiler
 
 import jupyter.kotlin.CompilerArgs
+import jupyter.kotlin.JavaRuntime
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.asSuccess
 
 class DefaultCompilerArgsConfigurator(
-    jvmTargetVersion: String = "1.8"
+    jvmTargetVersion: String = JavaRuntime.version
 ) : CompilerArgsConfigurator {
     private val argsList = mutableListOf(
         "-jvm-target",

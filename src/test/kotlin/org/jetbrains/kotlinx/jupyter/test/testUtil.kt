@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
@@ -201,6 +202,9 @@ object NotebookMock : Notebook {
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = error("Not supposed to be called")
+
+    override val jupyterClientType: JupyterClientType
+        get() = JupyterClientType.UNKNOWN
 }
 
 fun library(builder: JupyterIntegration.Builder.() -> Unit): LibraryDefinition {

@@ -6,7 +6,9 @@ import build.util.CondaTaskSpec
 import build.util.DistributionPackageSettings
 import build.util.PyPiTaskSpec
 import build.util.UploadTaskSpecs
+import build.util.defaultVersionCatalog
 import build.util.isProtectedBranch
+import build.util.jvmTarget
 import build.util.prop
 import build.util.stringPropOrEmpty
 import build.util.typedProperty
@@ -19,7 +21,7 @@ class RootSettingsExtension(
 ) {
     val kotlinLanguageLevel by project.prop<String>()
     val stableKotlinLanguageLevel by project.prop<String>()
-    val jvmTarget by project.prop<String>()
+    val jvmTarget = project.defaultVersionCatalog.versions.jvmTarget
 
     val githubRepoUser by project.prop<String>()
     val githubRepoName by project.prop<String>()

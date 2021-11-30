@@ -4,6 +4,7 @@ import build.util.defaultVersionCatalog
 import build.util.junitApi
 import build.util.junitEngine
 import build.util.kotlinTest
+import build.util.kotlintestAssertions
 import build.util.testImplementation
 import build.util.testRuntimeOnly
 import org.gradle.api.Project
@@ -20,6 +21,7 @@ class BuildSettingsExtension(private val project: Project) {
         project.dependencies {
             testImplementation(deps.kotlinTest)
             testImplementation(deps.junitApi)
+            testImplementation(deps.kotlintestAssertions)
             testRuntimeOnly(deps.junitEngine)
         }
 
