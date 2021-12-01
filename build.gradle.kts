@@ -97,7 +97,7 @@ tasks {
 
     test {
         val doParallelTesting = getFlag("test.parallel", true)
-        maxHeapSize = "2048m"
+        maxHeapSize = "3072m"
 
         /**
          *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test

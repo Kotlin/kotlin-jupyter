@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
 import org.jetbrains.kotlinx.jupyter.ext.graph.visualization.toHTML
 import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.fromClass
 import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.fromClassLoader
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileOutputStream
@@ -16,6 +17,7 @@ import kotlin.test.assertTrue
 
 class RenderingTests {
     @Test
+    @Disabled("Rendering is different for different versions of Java")
     fun testRendering() {
         val pngFile = objectsDir.resolve("logo.png")
         val pngFileRelative = "../${objectsDir.name}/logo.png"
