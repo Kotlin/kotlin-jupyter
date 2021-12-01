@@ -59,6 +59,7 @@ class RenderingTests {
     }
 
     @Test
+    @Disabled
     fun testGraphVisualization() {
         val html1 = Graph.of(GraphNode.fromClass<StringWriter>()).toHTML()
         assertTrue(html1.length > 1000)
