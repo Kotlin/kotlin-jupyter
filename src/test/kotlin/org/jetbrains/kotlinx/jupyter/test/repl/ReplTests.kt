@@ -424,6 +424,19 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testAnonymousObjectCustomRendering() {
+        eval("USE { render<ArrayList<*>> { it.size } }")
+        eval(
+            """
+            val sim = object : ArrayList<String>() {}
+            sim.add("42")
+            """.trimIndent()
+        )
+        val res = eval("sim").resultValue
+        res shouldBe 1
+    }
+
+    @Test
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
