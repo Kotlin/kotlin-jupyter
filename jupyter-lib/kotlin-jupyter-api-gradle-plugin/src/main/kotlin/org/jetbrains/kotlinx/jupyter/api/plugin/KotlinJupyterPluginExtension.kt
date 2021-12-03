@@ -14,6 +14,8 @@ class KotlinJupyterPluginExtension(
     private val enableScannerDependency = project.propertyByFlag("kotlin.jupyter.add.scanner", false)
     private val enableTestKitDependency = project.propertyByFlag("kotlin.jupyter.add.testkit", true)
 
+    val scannerDependencyEnabled get() = enableScannerDependency.get()
+
     internal fun addDependenciesIfNeeded() {
         if (enableApiDependency.get()) addApiDependency()
         if (enableScannerDependency.get()) addScannerDependency()

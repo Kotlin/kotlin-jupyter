@@ -161,6 +161,7 @@ class ResourcesTaskTests {
             plugins {
                 kotlin("multiplatform") version "$KOTLIN_VERSION"
                 id("org.jetbrains.kotlin.jupyter.api")
+                id("com.google.devtools.ksp") version "$KSP_VERSION"
             }
             
             kotlin {

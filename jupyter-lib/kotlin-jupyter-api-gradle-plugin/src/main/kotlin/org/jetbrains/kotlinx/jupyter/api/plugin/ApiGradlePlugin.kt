@@ -5,7 +5,6 @@ import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
-import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.named
@@ -19,30 +18,31 @@ import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class ApiGradlePlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
-        pluginManager.run {
-            apply(KspGradleSubplugin::class.java)
-        }
+        val pluginExtension = KotlinJupyterPluginExtension(target)
+        extensions.add("kotlinJupyter", pluginExtension)
 
         val jupyterBuildPath = buildDir.resolve(FQNS_PATH)
         jupyterBuildPath.mkdirs()
-        extensions.configure<KspExtension>("ksp") {
-            arg("kotlin.jupyter.fqn.path", jupyterBuildPath.absolutePath)
+        if (pluginExtension.scannerDependencyEnabled) {
+            pluginManager.run {
+                apply(KspGradleSubplugin::class.java)
+            }
         }
+        configurations.whenAdded({ it.name == "ksp" }) {
+            extensions.configure<KspExtension>("ksp") {
+                arg("kotlin.jupyter.fqn.path", jupyterBuildPath.absolutePath)
+            }
+        }
+        pluginExtension.addDependenciesIfNeeded()
 
         repositories {
             addMavenCentralIfDoesNotExist()
         }
 
-        val pluginExtension = KotlinJupyterPluginExtension(target)
-        extensions.add("kotlinJupyter", pluginExtension)
-        pluginExtension.addDependenciesIfNeeded()
-
         tasks {
             val resourcesTaskName = "processJupyterApiResources"
             fun registerResourceTask(): JupyterApiResourcesTask {
-                findByName(resourcesTaskName) ?: register<JupyterApiResourcesTask>(resourcesTaskName) {
-                    kspOutputDir = jupyterBuildPath
-                }
+                findByName(resourcesTaskName) ?: register<JupyterApiResourcesTask>(resourcesTaskName)
                 return named<JupyterApiResourcesTask>(resourcesTaskName).get()
             }
 
@@ -55,6 +55,7 @@ class ApiGradlePlugin : Plugin<Project> {
             }
 
             fun dependOnKsp(kspTaskName: String) {
+                if (!pluginExtension.scannerDependencyEnabled) return
                 val jupyterTask = registerResourceTask()
                 tasks.whenAdded(
                     { it.name == kspTaskName },

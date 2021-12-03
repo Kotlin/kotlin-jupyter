@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.api.plugin.tasks
 import com.google.gson.Gson
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
@@ -25,9 +24,6 @@ open class JupyterApiResourcesTask : DefaultTask() {
      */
     @Input
     var libraryDefinitions: List<String> = emptyList()
-
-    @InputDirectory
-    var kspOutputDir: File? = null
 
     @OutputDirectory
     val outputDir: File = project.buildDir.resolve("jupyterProcessedResources")
