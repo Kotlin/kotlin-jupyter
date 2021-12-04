@@ -294,16 +294,16 @@ define(function(){
 
         function highlightErrors (errors, cell) {
             errors = errors || [];
-            errors.forEach(error => {
+            for (let error of errors) {
                 var start = error.start;
                 var end = error.end;
                 if (!start || !end)
-                    return;
+                    continue;
                 var r = adjustRange(start, end);
                 error.range = r;
                 var cl = diag_class[error.severity];
                 cell.code_mirror.markText(r.start, r.end, {className: cl});
-            });
+            }
 
             cell.errorsList = errors;
         }
@@ -719,6 +719,7 @@ define(function(){
                 return EMPTY_ERRORS_RESULT;
 
             var filter = (er) => {
+                if (!er.range) return false
                 var er_start_ind = this.code_mirror.indexFromPos(er.range.start);
                 var er_end_ind = this.code_mirror.indexFromPos(er.range.end);
                 return er_start_ind <= ind && ind <= er_end_ind;
