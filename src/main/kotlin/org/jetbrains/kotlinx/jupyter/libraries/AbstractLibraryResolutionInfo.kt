@@ -2,9 +2,9 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
+import org.jetbrains.kotlinx.jupyter.createCachedFun
 import java.io.File
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
 
 abstract class AbstractLibraryResolutionInfo(
     private val typeKey: String
@@ -71,10 +71,8 @@ abstract class AbstractLibraryResolutionInfo(
     }
 
     companion object {
-        private val gitRefsCache = ConcurrentHashMap<String, ByGitRef>()
-
-        fun getInfoByRef(ref: String): ByGitRef {
-            return gitRefsCache.getOrPut(ref) { ByGitRef(ref) }
+        val getInfoByRef = createCachedFun { ref: String ->
+            ByGitRef(ref)
         }
 
         fun replaceForbiddenChars(string: String): String {

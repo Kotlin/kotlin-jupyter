@@ -4,8 +4,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.types.choice
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 
 abstract class AbstractMagicsHandler : MagicsHandler {
     protected var arg: String? = null
@@ -22,8 +22,6 @@ abstract class AbstractMagicsHandler : MagicsHandler {
         }.parse(argumentsList())
     }
 
-    protected val newLibraries: MutableList<LibraryDefinitionProducer> = mutableListOf()
-
     private val callbackMap: Map<ReplLineMagic, () -> Unit> = mapOf(
         ReplLineMagic.USE to ::handleUse,
         ReplLineMagic.TRACK_CLASSPATH to ::handleTrackClasspath,
@@ -35,7 +33,26 @@ abstract class AbstractMagicsHandler : MagicsHandler {
         ReplLineMagic.LOG_HANDLER to ::handleLogHandler,
     )
 
-    override fun handle(magic: ReplLineMagic, arg: String?, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
+    override fun handle(magicText: String, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
+        try {
+            val parts = magicText.split(' ', limit = 2)
+            val keyword = parts[0]
+            val arg = if (parts.count() > 1) parts[1] else null
+
+            val magic = if (parseOnly) null else ReplLineMagic.valueOfOrNull(keyword)?.value
+            if (magic == null && !parseOnly && !tryIgnoreErrors) {
+                throw ReplPreprocessingException("Unknown line magic keyword: '$keyword'")
+            }
+
+            if (magic != null) {
+                handle(magic, arg, tryIgnoreErrors, parseOnly)
+            }
+        } catch (e: Exception) {
+            throw ReplPreprocessingException("Failed to process '%$magicText' command. " + e.message, e)
+        }
+    }
+
+    fun handle(magic: ReplLineMagic, arg: String?, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
         val callback = callbackMap[magic] ?: throw UnhandledMagicException(magic, this)
 
         this.arg = arg
@@ -43,12 +60,6 @@ abstract class AbstractMagicsHandler : MagicsHandler {
         this.parseOnly = parseOnly
 
         callback()
-    }
-
-    override fun getLibraries(): List<LibraryDefinitionProducer> {
-        val librariesCopy = newLibraries.toList()
-        newLibraries.clear()
-        return librariesCopy
     }
 
     open fun handleUse() {}

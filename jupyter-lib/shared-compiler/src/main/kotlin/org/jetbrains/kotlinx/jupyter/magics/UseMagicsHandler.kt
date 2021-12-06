@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 open class UseMagicsHandler(
     private val librariesProcessor: LibrariesProcessor,
     private val libraryResolutionInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
-) : AbstractMagicsHandler() {
+) : LibrariesAwareAbstractMagicsHandler() {
     override fun handleUse() {
         try {
             arg?.let { notNullArg ->

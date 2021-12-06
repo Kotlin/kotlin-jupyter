@@ -44,6 +44,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.magics.CompletionMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
@@ -250,6 +251,7 @@ class ReplForJupyterImpl(
             libraryInfoSwitcher,
         )
     )
+    private val completionMagics = CompletionMagicsProcessor(homeDir)
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
 
@@ -516,12 +518,16 @@ class ReplForJupyterImpl(
     private fun doComplete(args: CompletionArgs): CompletionResult {
         if (looksLikeReplCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
 
-        val preprocessed = magics.processMagics(args.code, true).code
+        val preprocessed = completionMagics.process(args.code, args.cursor)
+        if (preprocessed.cursorInsideMagic) {
+            return KotlinCompleter.getResult(args.code, args.cursor, preprocessed.completions)
+        }
+
         return completer.complete(
             jupyterCompiler.completer,
             compilerConfiguration,
             args.code,
-            preprocessed,
+            preprocessed.code,
             jupyterCompiler.nextCounter(),
             args.cursor
         )

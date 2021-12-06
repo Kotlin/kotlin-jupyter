@@ -7,9 +7,6 @@ import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.common.assertLooksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
-import org.jetbrains.kotlinx.jupyter.config.catchAll
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
-import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
@@ -66,23 +63,11 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
                 s
             }
-            val libraryFiles = repl.homeDir?.let { homeDir ->
-                KERNEL_LIBRARIES.homeLibrariesDir(homeDir).listFiles(KERNEL_LIBRARIES::isLibraryDescriptor)
-            } ?: emptyArray()
-            val libraries = libraryFiles.toList().mapNotNull { file ->
-                val libraryName = file.nameWithoutExtension
-                log.info("Parsing descriptor for library '$libraryName'")
-                val descriptor = log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
-                    parseLibraryDescriptor(file.readText())
-                }
-
-                if (descriptor != null) {
-                    val link = if (descriptor.link != null) " (${descriptor.link})" else ""
-                    val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
-                    "$libraryName$link$description"
-                } else {
-                    null
-                }
+            val libraryDescriptors = repl.homeDir?.let { libraryDescriptors(it) }.orEmpty()
+            val libraries = libraryDescriptors.map { (libraryName, descriptor) ->
+                val link = if (descriptor.link != null) " (${descriptor.link})" else ""
+                val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
+                "$libraryName$link$description"
             }.joinToStringIndented()
             OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
         }

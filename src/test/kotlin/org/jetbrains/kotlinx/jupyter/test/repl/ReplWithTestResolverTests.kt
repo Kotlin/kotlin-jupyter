@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
+import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
@@ -145,5 +148,16 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             assertTrue(newImports.size >= 5)
             assertTrue("jetbrains.letsPlot.*" in newImports)
         }
+    }
+
+    @Test
+    fun testLibraryCompletion() {
+        completeOrFail("%u", 2).sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
+        completeOrFail("%use kot", 8).sortedMatches() shouldBe listOf("kotlin-dl", "kotlin-statistics")
+        with(completeOrFail("%use dataframe(0.8.0-)", 21).sortedMatches()) {
+            shouldHaveAtLeastSize(10)
+            shouldContain("0.8.0-rc-1")
+        }
+        completeOrFail("%use lets-plot, data", 20).sortedMatches() shouldBe listOf("dataframe")
     }
 }

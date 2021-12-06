@@ -3,6 +3,11 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.config.catchAll
+import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
@@ -47,22 +52,25 @@ fun String.findNthSubstring(s: String, n: Int, start: Int = 0): Int {
     return i - s.length
 }
 
-fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
-    val pos = toSourceCodePosition(code)
+fun SourceCode.Position.withNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
     val sep = code.text.determineSep()
     val absLineStart =
-        if (pos.line == 1) 0
-        else newCode.text.findNthSubstring(sep, pos.line - 1) + sep.length
+        if (line == 1) 0
+        else newCode.text.findNthSubstring(sep, line - 1) + sep.length
 
     var nextNewLinePos = newCode.text.indexOf(sep, absLineStart)
     if (nextNewLinePos == -1) nextNewLinePos = newCode.text.length
 
-    val abs = absLineStart + pos.col - 1
+    val abs = absLineStart + col - 1
     if (abs > nextNewLinePos) {
         return null
     }
 
-    return SourceCode.Position(pos.line, abs - absLineStart + 1, abs)
+    return SourceCode.Position(line, col, abs)
+}
+
+fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
+    return toSourceCodePosition(code).withNewAbsolute(code, newCode)
 }
 
 fun ResultsRenderersProcessor.registerDefaultRenderers() {
@@ -107,4 +115,32 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     }
 
     fun ensureStorageCreation(address: K) = cellVariables.putIfAbsent(address, mutableSetOf())
+}
+
+fun <A, V> createCachedFun(calculate: (A) -> V): (A) -> V {
+    return createCachedFun({ it }, calculate)
+}
+
+fun <A, K, V> createCachedFun(calculateKey: (A) -> K, calculate: (A) -> V): (A) -> V {
+    val cache = ConcurrentHashMap<K, V>()
+    return { argument ->
+        val key = calculateKey(argument)
+        cache.getOrPut(key) {
+            calculate(argument)
+        }
+    }
+}
+
+val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir ->
+    val libraryFiles = KERNEL_LIBRARIES
+        .homeLibrariesDir(homeDir)
+        .listFiles(KERNEL_LIBRARIES::isLibraryDescriptor)
+        .orEmpty()
+    libraryFiles.toList().mapNotNull { file ->
+        val libraryName = file.nameWithoutExtension
+        log.info("Parsing descriptor for library '$libraryName'")
+        log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
+            libraryName to parseLibraryDescriptor(file.readText())
+        }
+    }.toMap()
 }
