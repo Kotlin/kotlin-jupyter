@@ -16,7 +16,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
-import kotlin.reflect.KMutableProperty1
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
@@ -48,6 +49,16 @@ internal class InternalEvaluatorImpl(
         val scripts = registeredCompiledScripts.toList()
         registeredCompiledScripts.clear()
         return SerializedCompiledScriptsData(scripts)
+    }
+
+    override fun findVariableCell(variableName: String): Int {
+        return variablesWatcher.findDeclarationAddress(variableName) ?: -1
+    }
+
+    override fun getVariablesDeclarationInfo(): Map<String, Int> = variablesWatcher.variablesDeclarationInfo
+
+    override fun getUnchangedVariables(): Set<String> {
+        return variablesWatcher.getUnchangedVariables()
     }
 
     override var writeCompiledClasses: Boolean
@@ -145,7 +156,6 @@ internal class InternalEvaluatorImpl(
 
     private fun updateVariablesState(cellId: Int) {
         variablesWatcher.removeOldUsages(cellId)
-
         variablesHolder.forEach {
             val state = it.value as VariableStateImpl
 
@@ -159,18 +169,28 @@ internal class InternalEvaluatorImpl(
         val kClass = target.scriptClass ?: return emptyMap()
         val cellClassInstance = target.scriptInstance!!
 
-        val fields = kClass.declaredMemberProperties
-        return mutableMapOf<String, VariableStateImpl>().apply {
-            for (property in fields) {
-                @Suppress("UNCHECKED_CAST")
-                property as KProperty1<Any, *>
-                if (internalVariablesMarkersProcessor.isInternal(property)) continue
+        val fields = kClass.java.declaredFields
+        // ignore implementation details of top level like script instance and result value
+        val kProperties = kClass.declaredMemberProperties.associateBy { it.name }
 
+        return mutableMapOf<String, VariableStateImpl>().apply {
+            val addedDeclarations = mutableSetOf<String>()
+            for (property in fields) {
                 val state = VariableStateImpl(property, cellClassInstance)
+
+                val isInternalKProperty = kProperties[property.name]?.let {
+                    @Suppress("UNCHECKED_CAST")
+                    it as KProperty1<Any, *>
+                    internalVariablesMarkersProcessor.isInternal(it)
+                }
+
+                if (isInternalKProperty == true || !kProperties.contains(property.name)) continue
+
                 variablesWatcher.addDeclaration(cellId, property.name)
+                addedDeclarations.add(property.name)
 
                 // it was val, now it's var
-                if (property is KMutableProperty1) {
+                if (isValField(property)) {
                     variablesHolder.remove(property.name)
                 } else {
                     variablesHolder[property.name] = state
@@ -179,13 +199,19 @@ internal class InternalEvaluatorImpl(
 
                 put(property.name, state)
             }
+            // remove old
+            variablesWatcher.removeOldDeclarations(cellId, addedDeclarations)
         }
+    }
+
+    private fun isValField(property: Field): Boolean {
+        return property.modifiers and Modifier.FINAL != 0
     }
 
     private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
         variablesWatcher.ensureStorageCreation(lastExecutionCellId)
         variablesHolder += getVisibleVariables(resultValue, lastExecutionCellId)
-
+        // remove unreached variables
         updateVariablesState(lastExecutionCellId)
     }
 }

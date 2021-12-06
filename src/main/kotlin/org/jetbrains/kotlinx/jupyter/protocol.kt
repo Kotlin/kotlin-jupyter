@@ -2,8 +2,11 @@ package org.jetbrains.kotlinx.jupyter
 
 import ch.qos.logback.classic.Level
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
@@ -82,7 +85,6 @@ class OkResponseWithMessage(
                 )
             )
         }
-
         socket.send(
             makeReplyMessage(
                 requestMsg,
@@ -92,7 +94,7 @@ class OkResponseWithMessage(
                     "engine" to Json.encodeToJsonElement(requestMsg.data.header?.session),
                     "status" to Json.encodeToJsonElement("ok"),
                     "started" to Json.encodeToJsonElement(startedTime),
-                    "eval_metadata" to Json.encodeToJsonElement(metadata),
+                    "eval_metadata" to Json.encodeToJsonElement(metadata.convertToNullIfEmpty()),
                 ),
                 content = ExecuteReply(
                     MessageStatus.OK,
@@ -307,6 +309,27 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
         is CommInfoRequest -> {
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(mapOf())))
         }
+        is CommOpen -> {
+            if (!content.targetName.equals("kotlin_serialization", ignoreCase = true)) {
+                send(makeReplyMessage(msg, MessageType.NONE))
+                return
+            }
+            log.debug("Message type in CommOpen: $msg, ${msg.type}")
+            val data = content.data ?: return sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY))
+            if (data.isEmpty()) return sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY))
+            log.debug("Message data: $data")
+            val messageContent = getVariablesDescriptorsFromJson(data)
+            connection.launchJob {
+                repl.serializeVariables(
+                    messageContent.topLevelDescriptorName,
+                    messageContent.descriptorsState,
+                    content.commId,
+                    messageContent.pathToDescriptor
+                ) { result ->
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_MSG, content = result))
+                }
+            }
+        }
         is CompleteRequest -> {
             connection.launchJob {
                 repl.complete(content.code, content.cursorPos) { result ->
@@ -318,6 +341,17 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             connection.launchJob {
                 repl.listErrors(content.code) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.LIST_ERRORS_REPLY, content = result.message))
+                }
+            }
+        }
+        is SerializationRequest -> {
+            connection.launchJob {
+                if (content.topLevelDescriptorName.isNotEmpty()) {
+                    repl.serializeVariables(content.topLevelDescriptorName, content.descriptorsState, commID = content.commId, content.pathToDescriptor) { result ->
+                        sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY, content = result))
+                    }
+                } else {
+                    sendWrapped(msg, makeReplyMessage(msg, MessageType.VARIABLES_VIEW_REPLY, content = null))
                 }
             }
         }
@@ -512,4 +546,9 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
 
         KernelStreams.setStreams(false, out, err)
     }
+}
+
+fun EvaluatedSnippetMetadata?.convertToNullIfEmpty(): JsonElement? {
+    val jsonNode = Json.encodeToJsonElement(this)
+    return if (jsonNode is JsonNull || jsonNode?.jsonObject.isEmpty()) null else jsonNode
 }

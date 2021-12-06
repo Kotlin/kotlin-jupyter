@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.sequences.shouldBeEmpty
 import io.kotest.matchers.sequences.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
@@ -416,28 +417,8 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testAnonymousObjectRendering() {
-        eval("42")
-        eval("val sim = object : ArrayList<String>() {}")
-        val res = eval("sim").resultValue
-        res.toString() shouldBe "[]"
-    }
-
-    @Test
-    fun testAnonymousObjectCustomRendering() {
-        eval("USE { render<ArrayList<*>> { it.size } }")
-        eval(
-            """
-            val sim = object : ArrayList<String>() {}
-            sim.add("42")
-            """.trimIndent()
-        )
-        val res = eval("sim").resultValue
-        res shouldBe 1
-    }
-
-    @Test
     fun testOutVarRendering() {
-        eval("Out").resultValue.shouldNotBeNull()
+        val res = eval("Out").resultValue
+        res shouldNotBe null
     }
 }

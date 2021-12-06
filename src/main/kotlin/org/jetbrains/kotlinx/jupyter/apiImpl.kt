@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
 class DisplayResultWrapper private constructor(
@@ -133,7 +134,9 @@ class NotebookImpl(
 
     private val history = arrayListOf<CodeCellImpl>()
     private var mainCellCreated = false
+    private val _unchangedVariables: MutableSet<String> = mutableSetOf()
 
+    val unchangedVariables: Set<String> get() = _unchangedVariables
     val displays = DisplayContainerImpl()
 
     override fun getAllDisplays(): List<DisplayResultWithCell> {
@@ -148,6 +151,11 @@ class NotebookImpl(
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
+
+    fun updateVariablesState(evaluator: InternalEvaluator) {
+        _unchangedVariables.clear()
+        _unchangedVariables.addAll(evaluator.getUnchangedVariables())
+    }
 
     fun variablesReportAsHTML(): String {
         return generateHTMLVarsReport(variablesState)

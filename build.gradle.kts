@@ -114,7 +114,8 @@ tasks {
 
             "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
             "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
+            "jupyter.serialization.enabled" to "true"
         )
     }
 

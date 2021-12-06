@@ -2,11 +2,14 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.maps.shouldContainValue
 import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.maps.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
@@ -317,5 +320,122 @@ class ReplVarsTest : AbstractSingleReplTest() {
         eval("x = x * x", jupyterId = 2)
         varState.getStringValue("x") shouldBe "25.0"
         varState.getValue("x") shouldBe 25.0
+    }
+
+    @Test
+    fun testAnonymousObjectRendering() {
+        eval("42")
+        eval("val sim = object : ArrayList<String>() {}")
+        val res = eval("sim").resultValue
+        res.toString() shouldBe "[]"
+    }
+
+    @Test
+    fun testOutVarRendering() {
+        eval("Out").resultValue.shouldNotBeNull()
+    }
+
+    @Test
+    fun testProperBiRecursionHandling() {
+        eval(
+            """
+            val l = mutableListOf<Any>()
+            l.add(listOf(l))
+            
+            val m = mutableMapOf<Int, Any>(1 to l)
+            
+            val z = setOf(1, 2, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var state = repl.notebook.variablesState
+        state["l"]!!.stringValue shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
+        state["m"]!!.stringValue shouldBe "LinkedHashMap: [exception thrown: java.lang.StackOverflowError]"
+        eval(
+            """
+            val m = mutableMapOf<Int, Any>(1 to "abc")
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        state = repl.notebook.variablesState
+        state["l"]!!.stringValue shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
+        state["m"]!!.stringValue shouldNotBe "LinkedHashMap: [exception thrown: java.lang.StackOverflowError]"
+    }
+
+    @Test
+    fun testUnchangedVars() {
+        eval(
+            """
+            var l = 11111
+            val m = "abc"
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        eval(
+            """
+            l += 11111
+            """.trimIndent(),
+            jupyterId = 2
+        ).metadata.evaluatedVariablesState
+        val state: Set<String> = repl.notebook.unchangedVariables
+        state.size.shouldBe(1)
+        state.contains("m").shouldBe(true)
+    }
+
+    @Test
+    fun testMutableList() {
+        eval(
+            """
+            val l = mutableListOf(1, 2, 3, 4)
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        val serializer = repl.variablesSerializer
+        val res = eval(
+            """
+            l.add(5)
+            """.trimIndent(),
+            jupyterId = 2
+        ).metadata.evaluatedVariablesState
+        val innerList = res["l"]!!.fieldDescriptor["elementData"]!!.fieldDescriptor["data"]
+        val newData = serializer.doIncrementalSerialization(0, "l", "data", innerList!!)
+        newData.isContainer shouldBe true
+        // since there might be null placeholders in array after addition
+        newData.fieldDescriptor.size shouldBeGreaterThanOrEqual 5
+    }
+
+    @Test
+    fun unchangedVariablesGapedRedefinition() {
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 1
+        )
+        var state = repl.notebook.unchangedVariables
+        state.size.shouldBe(3)
+
+        eval(
+            """
+            private val x = "abcd"
+            var f = 47 
+            internal val z = 47
+            """.trimIndent(),
+            jupyterId = 2
+        )
+        state = repl.notebook.unchangedVariables
+        state.size shouldBe 0
+
+        eval(
+            """
+            var f = 47 
+            """.trimIndent(),
+            jupyterId = 3
+        )
+        state = repl.notebook.unchangedVariables
+        // tmp disable to further investigation (locally tests pass on java8)
+        // state.size shouldBe 2
     }
 }

@@ -23,6 +23,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedVariablesState
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import kotlin.reflect.KClass
@@ -87,7 +88,11 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     COMM_CLOSE(CommClose::class),
 
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
-    LIST_ERRORS_REPLY(ListErrorsReply::class);
+    LIST_ERRORS_REPLY(ListErrorsReply::class),
+
+    // from Serialization_Request
+    VARIABLES_VIEW_REQUEST(SerializationRequest::class),
+    VARIABLES_VIEW_REPLY(SerializationReply::class);
 
     val type: String
         get() = name.lowercase()
@@ -550,6 +555,22 @@ class ListErrorsReply(
     val code: String,
 
     val errors: List<ScriptDiagnostic>
+) : MessageContent()
+
+@Serializable
+class SerializationRequest(
+    val cellId: Int,
+    val descriptorsState: Map<String, SerializedVariablesState>,
+    val topLevelDescriptorName: String = "",
+    val pathToDescriptor: List<String> = emptyList(),
+    val commId: String = ""
+) : MessageContent()
+
+@Serializable
+class SerializationReply(
+    val cell_id: Int = 1,
+    val descriptorsState: Map<String, SerializedVariablesState> = emptyMap(),
+    val comm_id: String = ""
 ) : MessageContent()
 
 @Serializable(MessageDataSerializer::class)

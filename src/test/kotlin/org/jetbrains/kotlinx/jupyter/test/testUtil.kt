@@ -106,7 +106,7 @@ fun CompletionResult.getOrFail(): CompletionResult.Success = when (this) {
 }
 
 fun Map<String, VariableState>.mapToStringValues(): Map<String, String?> {
-    return mapValues { it.value.stringValue }
+    return mapValues { it.value.value.getOrNull().toString() }
 }
 
 fun Map<String, VariableState>.getStringValue(variableName: String): String? {
