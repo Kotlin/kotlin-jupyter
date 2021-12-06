@@ -53,6 +53,9 @@ abstract class CompletionResult {
         fun sortedMatches(): List<String> = matches.sorted()
 
         @TestOnly
+        fun matches(): List<String> = matches
+
+        @TestOnly
         fun sortedRaw(): List<SourceCodeCompletionVariant> = metadata.sortedBy { it.text }
     }
 

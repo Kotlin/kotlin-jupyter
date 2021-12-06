@@ -2,13 +2,16 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertTimeout
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import java.time.Duration
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -159,5 +162,18 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             shouldContain("0.8.0-rc-1")
         }
         completeOrFail("%use lets-plot, data", 20).sortedMatches() shouldBe listOf("dataframe")
+        with(completeOrFail("%use kotlin-dl(", 15).matches()) {
+            last() shouldBe "0.1.1"
+
+            // Pre-release version should appear after release version
+            indexOf("0.3.0-alpha-1") shouldBeGreaterThan indexOf("0.3.0")
+        }
+
+        // Value should be cached, and all these requests should not take much time
+        assertTimeout(Duration.ofSeconds(10)) {
+            for (i in 1..10000) {
+                completeOrFail("%use kmath(", 11).matches() shouldHaveAtLeastSize 5
+            }
+        }
     }
 }

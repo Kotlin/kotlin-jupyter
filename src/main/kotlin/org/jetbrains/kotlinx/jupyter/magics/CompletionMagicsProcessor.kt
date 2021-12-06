@@ -5,10 +5,12 @@ import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.createCachedFun
+import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.libraries.libraryCommaRanges
 import org.jetbrains.kotlinx.jupyter.libraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import org.w3c.dom.Document
+import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import org.xml.sax.InputSource
@@ -52,18 +54,16 @@ class CompletionMagicsProcessor(
 
     private inner class Handler {
         private val _completions = mutableListOf<SourceCodeCompletionVariant>()
-        val completions: List<SourceCodeCompletionVariant> get() = _completions
+        val completions: List<SourceCodeCompletionVariant> get() = _completions.distinctBy { it.text }
 
         fun handle(magicText: String, cursor: Int) {
             val firstSpaceIndex = magicText.indexOf(' ')
             if (cursor <= firstSpaceIndex || firstSpaceIndex == -1) {
                 val magicPrefix = magicText.substring(0, cursor)
                 val suggestions = ReplLineMagic.codeInsightValues.filter { it.name.startsWith(magicPrefix) }
-                _completions.addAll(
-                    suggestions.map { mg ->
-                        SourceCodeCompletionVariant(mg.name, mg.name, mg.type.name, mg.type.name)
-                    }
-                )
+                suggestions.mapTo(_completions) { mg ->
+                    SourceCodeCompletionVariant(mg.name, mg.name, mg.type.name, mg.type.name)
+                }
             } else {
                 val magicName = magicText.substring(0, firstSpaceIndex)
                 val argument = magicText.substring(firstSpaceIndex)
@@ -99,12 +99,17 @@ class CompletionMagicsProcessor(
                 if (versionArgPrefix.indexOfAny(charArrayOf('(', ',', '@', '=')) != -1) return
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
                 val descriptor = descriptors.filter { (name, _) -> name.startsWith(libName) }.values.singleOrNull() ?: return
+                val paramName = descriptor.variables.singleOrNull()?.name ?: return
                 for (dependencyStr in descriptor.dependencies) {
                     val match = MAVEN_DEP_REGEX.matchEntire(dependencyStr) ?: continue
                     val group = match.groups[1]!!.value
                     val artifact = match.groups[2]!!.value
-                    val versions = getVersions(GA(group, artifact))
-                    val matchingVersions = versions.filter { it.startsWith(versionArgPrefix) }
+                    val versionTemplate = match.groups[3]!!.value
+                    if (versionTemplate != "\$$paramName") continue
+                    val versions = (descriptor.repositories + defaultRepositories.map { it.string }).firstNotNullOfOrNull { repo ->
+                        getVersions(ArtifactLocation(repo, group, artifact))
+                    }.orEmpty()
+                    val matchingVersions = versions.filter { it.startsWith(versionArgPrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {
                         SourceCodeCompletionVariant(it, it, "version", "version")
                     }
@@ -116,21 +121,25 @@ class CompletionMagicsProcessor(
     companion object {
         private val MAVEN_DEP_REGEX = "^([^:]+):([^:]+):([^:]+)$".toRegex()
 
-        data class GA(val group: String, val artifact: String)
+        private data class ArtifactLocation(val repository: String, val group: String, val artifact: String)
 
-        private fun metadataUrl(ga: GA): String {
-            return "https://repo1.maven.org/maven2/${ga.group.replace(".", "/")}/${ga.artifact}/maven-metadata.xml"
+        private fun metadataUrl(artifactLocation: ArtifactLocation): String {
+            val repo = with(artifactLocation.repository) { if (endsWith('/')) this else "$this/" }
+            return "$repo${artifactLocation.group.replace(".", "/")}/${artifactLocation.artifact}/maven-metadata.xml"
         }
 
-        private val getVersions = createCachedFun { ga: GA ->
-            val metadataXml = getHttp(metadataUrl(ga)).takeIf { it.status.successful } ?: return@createCachedFun emptyList()
+        private val getVersions = createCachedFun { artifactLocation: ArtifactLocation ->
+            val metadataXml = getHttp(metadataUrl(artifactLocation)).takeIf { it.status.successful } ?: return@createCachedFun null
             val document = loadXML(metadataXml.text)
             val versionsTag = document
                 .getElementsByTagName("versions")
                 .takeIf { it.length == 1 }
                 ?.item(0) ?: return@createCachedFun emptyList()
 
-            versionsTag.childNodes.toList().map { it.textContent }
+            (versionsTag as? Element)?.getElementsByTagName("version")
+                ?.toList()
+                ?.map { it.textContent }
+                .orEmpty()
         }
 
         private fun loadXML(xml: String): Document {
