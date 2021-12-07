@@ -35,7 +35,6 @@ import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResol
 import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
@@ -90,10 +89,9 @@ class EvalRequestData(
     val displayHandler: DisplayHandler? = null,
     val jupyterId: Int = -1,
     val storeHistory: Boolean = true,
+    @Suppress("UNUSED")
     val isSilent: Boolean = false,
 )
-
-class ReplEvalRuntimeException(message: String, cause: Throwable? = null) : ReplException(message, cause)
 
 enum class ExecutedCodeLogging {
     OFF,

@@ -9,14 +9,16 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.sequences.shouldBeEmpty
 import io.kotest.matchers.sequences.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.OutputConfig
-import org.jetbrains.kotlinx.jupyter.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -58,7 +60,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testError() {
+    fun `compilation error`() {
         val ex = shouldThrow<ReplCompilerException> {
             eval(
                 """
@@ -79,6 +81,27 @@ class ReplTests : AbstractSingleReplTest() {
 
         location shouldBe expectedLocation
         message shouldBe expectedMessage
+    }
+
+    @Test
+    fun `runtime execution error`() {
+        val ex = shouldThrow<ReplEvalRuntimeException> {
+            eval(
+                """
+                try {
+                    (null as String)
+                } catch(e: NullPointerException) {
+                    throw RuntimeException("XYZ", e)
+                }
+                """.trimIndent()
+            )
+        }
+        with(ex.render()) {
+            shouldContain(NullPointerException::class.qualifiedName!!)
+            shouldContain("XYZ")
+            shouldContain("""at Line_\d+.<init>\(Line_\d+\.jupyter-kts:2\)""".toRegex())
+            shouldNotContain(ReplEvalRuntimeException::class.simpleName!!)
+        }
     }
 
     @Test
