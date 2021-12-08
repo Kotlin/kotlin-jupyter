@@ -68,15 +68,14 @@ fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.substring(0, openBracketIndex).trim()
     val argsString = str.substring(openBracketIndex + 1)
+    return name to parseLibraryArguments(argsString, brackets).map { it.variable }.toList()
+}
 
-    val firstArg = parseLibraryArgument(argsString, brackets, 0)
-    val args = generateSequence(firstArg) {
-        parseLibraryArgument(argsString, brackets, it.end)
-    }.map {
-        it.variable
-    }.toList()
-
-    return name to args
+fun parseLibraryArguments(argumentsString: String, brackets: Brackets, start: Int = 0): Sequence<ArgParseResult> {
+    val firstArg = parseLibraryArgument(argumentsString, brackets, start)
+    return generateSequence(firstArg) {
+        parseLibraryArgument(argumentsString, brackets, it.end)
+    }
 }
 
 fun parseLibraryName(str: String): Pair<String, List<Variable>> {

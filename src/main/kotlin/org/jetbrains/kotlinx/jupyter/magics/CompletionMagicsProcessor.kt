@@ -6,7 +6,9 @@ import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.createCachedFun
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
+import org.jetbrains.kotlinx.jupyter.libraries.Brackets
 import org.jetbrains.kotlinx.jupyter.libraries.libraryCommaRanges
+import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryArguments
 import org.jetbrains.kotlinx.jupyter.libraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import org.w3c.dom.Document
@@ -34,7 +36,7 @@ class CompletionMagicsProcessor(
                 insideMagic = true
                 if (code[magicRange.from] != MAGICS_SIGN || cursor == magicRange.from) continue
 
-                val magicText = code.substring(magicRange.from + 1, magicRange.to).trim()
+                val magicText = code.substring(magicRange.from + 1, magicRange.to)
                 log.catchAll(msg = "Handling completion of $magicText failed") {
                     handler.handle(magicText, cursor - magicRange.from - 1)
                 }
@@ -72,7 +74,7 @@ class CompletionMagicsProcessor(
                     ReplLineMagic.USE -> {
                         for ((from, to) in libraryCommaRanges(argument)) {
                             if (cursorToArgument in (from + 1)..to) {
-                                val libArgPart = argument.substring(from + 1, cursorToArgument)
+                                val libArgPart = argument.substring(from + 1, to)
                                 handleLibrary(libArgPart, cursorToArgument - from - 1)
                                 break
                             }
@@ -95,21 +97,46 @@ class CompletionMagicsProcessor(
                     SourceCodeCompletionVariant(it, it, "library", "library")
                 }
             } else {
-                val versionArgPrefix = librarySubstring.substring(firstBracketIndex + 1).trimStart()
-                if (versionArgPrefix.indexOfAny(charArrayOf('(', ',', '@', '=')) != -1) return
+                val callArgs = parseLibraryArguments("$librarySubstring)", Brackets.ROUND, firstBracketIndex + 1).toList()
+                if (callArgs.isEmpty()) return
+
+                val argIndex = callArgs.indexOfFirst { cursor < it.end }
+                if (argIndex == -1) return
+
+                val argCallStart = if (argIndex == 0) firstBracketIndex + 1 else callArgs[argIndex - 1].end
+                val argCall = librarySubstring.substring(argCallStart, cursor)
+                val argName = callArgs[argIndex].variable.name
+                val argValuePrefix = if (argName.isNotEmpty()) {
+                    if ('=' !in argCall) return
+                    argCall.substringAfter('=').trimStart()
+                } else {
+                    argCall
+                }
+
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
-                val descriptor = descriptors.filter { (name, _) -> name.startsWith(libName) }.values.singleOrNull() ?: return
-                val paramName = descriptor.variables.singleOrNull()?.name ?: return
+
+                val descriptor = descriptors[libName] ?: return
+                val paramNames = descriptor.variables.mapTo(mutableSetOf()) { it.name }
+                if (paramNames.isEmpty()) return
+
+                val paramName = argName.ifEmpty {
+                    paramNames.singleOrNull() ?: return
+                }
+
                 for (dependencyStr in descriptor.dependencies) {
                     val match = MAVEN_DEP_REGEX.matchEntire(dependencyStr) ?: continue
                     val group = match.groups[1]!!.value
                     val artifact = match.groups[2]!!.value
+
                     val versionTemplate = match.groups[3]!!.value
-                    if (versionTemplate != "\$$paramName") continue
+                    if (!versionTemplate.startsWith("$")) continue
+                    val dependencyParamName = versionTemplate.substring(1)
+                    if (dependencyParamName != paramName) continue
+
                     val versions = (descriptor.repositories + defaultRepositories.map { it.string }).firstNotNullOfOrNull { repo ->
                         getVersions(ArtifactLocation(repo, group, artifact))
                     }.orEmpty()
-                    val matchingVersions = versions.filter { it.startsWith(versionArgPrefix) }.reversed()
+                    val matchingVersions = versions.filter { it.startsWith(argValuePrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {
                         SourceCodeCompletionVariant(it, it, "version", "version")
                     }
@@ -133,8 +160,7 @@ class CompletionMagicsProcessor(
             val document = loadXML(metadataXml.text)
             val versionsTag = document
                 .getElementsByTagName("versions")
-                .takeIf { it.length == 1 }
-                ?.item(0) ?: return@createCachedFun emptyList()
+                .singleOrNull() ?: return@createCachedFun emptyList()
 
             (versionsTag as? Element)?.getElementsByTagName("version")
                 ?.toList()
@@ -150,11 +176,12 @@ class CompletionMagicsProcessor(
         }
 
         private fun NodeList.toList(): List<Node> {
-            return buildList {
-                for (i in 0 until length) {
-                    add(item(i))
-                }
+            return object : AbstractList<Node>() {
+                override val size: Int get() = length
+                override fun get(index: Int) = item(index)
             }
         }
+
+        private fun NodeList.singleOrNull() = toList().singleOrNull()
     }
 }

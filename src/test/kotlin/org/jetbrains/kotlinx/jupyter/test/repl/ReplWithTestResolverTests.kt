@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -156,7 +158,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     @Test
     fun testLibraryCompletion() {
         completeOrFail("%u", 2).sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
-        completeOrFail("%use kot", 8).sortedMatches() shouldBe listOf("kotlin-dl", "kotlin-statistics")
+        completeOrFail("%use kot", 8).sortedMatches() shouldContainAll listOf("kotlin-dl", "kotlin-statistics")
         with(completeOrFail("%use dataframe(0.8.0-)", 21).sortedMatches()) {
             shouldHaveAtLeastSize(10)
             shouldContain("0.8.0-rc-1")
@@ -175,5 +177,17 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
                 completeOrFail("%use kmath(", 11).matches() shouldHaveAtLeastSize 5
             }
         }
+    }
+
+    @Test
+    fun testLibraryCompletionWithParams() {
+        completeOrFail("%use kotlin-dl()", 15).matches() shouldHaveAtLeastSize 5
+        completeOrFail("%use kotlin-dl(v =)", 15).matches() shouldHaveSize 0
+        completeOrFail("%use kotlin-dl(v =", 18).matches() shouldHaveAtLeastSize 5
+        completeOrFail("%use kotlin-dl(a =", 18).matches() shouldHaveSize 0
+
+        completeOrFail("%use lets-plot(api = ", 21).matches() shouldContain "3.1.0"
+        completeOrFail("%use lets-plot(api = , js", 21).matches() shouldContain "3.1.0"
+        completeOrFail("%use lets-plot(api = 3.1.0, lib = ", 34).matches() shouldContain "2.2.0"
     }
 }
