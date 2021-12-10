@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -24,15 +25,23 @@ fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, mes
         SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol))
     )
 
-fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: String): ScriptDiagnostic {
+fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: ScriptDiagnostic.Severity): ScriptDiagnostic {
     val snippet = SourceCodeImpl(0, code)
     return ScriptDiagnostic(
         ScriptDiagnostic.unspecifiedError,
         message,
-        ScriptDiagnostic.Severity.valueOf(severity),
+        severity,
         null,
         SourceCode.Location(from.toSourceCodePosition(snippet), to.toSourceCodePosition(snippet))
     )
+}
+
+fun CodeInterval.diagnostic(code: String, message: String, severity: ScriptDiagnostic.Severity = ScriptDiagnostic.Severity.ERROR): ScriptDiagnostic {
+    return generateDiagnosticFromAbsolute(code, from, to, message, severity)
+}
+
+fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: String): ScriptDiagnostic {
+    return generateDiagnosticFromAbsolute(code, from, to, message, ScriptDiagnostic.Severity.valueOf(severity))
 }
 
 fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =

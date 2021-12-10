@@ -13,10 +13,7 @@ class MagicsProcessor(
         for (magicRange in magics) {
             processSingleMagic(code, handler, magicRange, parseOnly, tryIgnoreErrors)
         }
-
-        val codes = codeIntervals(code, magics, true)
-        val preprocessedCode = codes.joinToString("") { code.substring(it.from, it.to) }
-        return CodePreprocessor.Result(preprocessedCode, handler.getLibraries())
+        return CodePreprocessor.Result(getCleanCode(code, magics), handler.getLibraries())
     }
 
     override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {

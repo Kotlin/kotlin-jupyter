@@ -463,4 +463,15 @@ class ReplTests : AbstractSingleReplTest() {
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }
+
+    @Test
+    fun testMagicsErrorsReporting() {
+        "%us".let { code ->
+            listErrors(code).errors.toList() shouldBe listOf(generateDiagnosticFromAbsolute(code, 0, 3, "Unknown magic", "ERROR"))
+        }
+
+        "%use kmath".let { code ->
+            listErrors(code).errors.toList().shouldBeEmpty()
+        }
+    }
 }

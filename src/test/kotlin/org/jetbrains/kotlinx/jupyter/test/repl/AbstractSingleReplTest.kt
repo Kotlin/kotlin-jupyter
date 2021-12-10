@@ -13,4 +13,6 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
         repl.eval(EvalRequestData(code, displayHandler, jupyterId, storeHistory))
 
     protected fun completeOrFail(code: Code, cursor: Int) = repl.completeBlocking(code, cursor).getOrFail()
+
+    protected fun listErrors(code: Code) = repl.listErrorsBlocking(code)
 }

@@ -43,9 +43,7 @@ class CompletionMagicsProcessor(
             }
         }
 
-        val codes = codeIntervals(code, magics, true)
-        val preprocessedCode = codes.joinToString("") { code.substring(it.from, it.to) }
-        return Result(preprocessedCode, insideMagic, handler.completions)
+        return Result(getCleanCode(code, magics), insideMagic, handler.completions)
     }
 
     class Result(
@@ -64,7 +62,7 @@ class CompletionMagicsProcessor(
                 val magicPrefix = magicText.substring(0, cursor)
                 val suggestions = ReplLineMagic.codeInsightValues.filter { it.name.startsWith(magicPrefix) }
                 suggestions.mapTo(_completions) { mg ->
-                    SourceCodeCompletionVariant(mg.name, mg.name, mg.type.name, mg.type.name)
+                    variant(mg.name, mg.type.name)
                 }
             } else {
                 val magicName = magicText.substring(0, firstSpaceIndex)
@@ -94,7 +92,7 @@ class CompletionMagicsProcessor(
                 val libNamePrefix = librarySubstring.substring(0, cursor).trimStart()
                 val sufficientNames = descriptors.keys.filter { it.startsWith(libNamePrefix) }
                 sufficientNames.mapTo(_completions) {
-                    SourceCodeCompletionVariant(it, it, "library", "library")
+                    variant(it, "library")
                 }
             } else {
                 val callArgs = parseLibraryArguments("$librarySubstring)", Brackets.ROUND, firstBracketIndex + 1).toList()
@@ -138,7 +136,7 @@ class CompletionMagicsProcessor(
                     }.orEmpty()
                     val matchingVersions = versions.filter { it.startsWith(argValuePrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {
-                        SourceCodeCompletionVariant(it, it, "version", "version")
+                        variant(it, "version")
                     }
                 }
             }
@@ -146,6 +144,8 @@ class CompletionMagicsProcessor(
     }
 
     companion object {
+        private fun variant(text: String, icon: String) = SourceCodeCompletionVariant(text, text, icon, icon)
+
         private val MAVEN_DEP_REGEX = "^([^:]+):([^:]+):([^:]+)$".toRegex()
 
         private data class ArtifactLocation(val repository: String, val group: String, val artifact: String)

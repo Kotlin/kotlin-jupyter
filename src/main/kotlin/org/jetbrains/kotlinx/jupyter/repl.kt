@@ -45,6 +45,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.CompletionMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
+import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
@@ -250,6 +251,7 @@ class ReplForJupyterImpl(
         )
     )
     private val completionMagics = CompletionMagicsProcessor(homeDir)
+    private val errorsMagics = ErrorsMagicsProcessor()
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
 
@@ -538,9 +540,8 @@ class ReplForJupyterImpl(
     private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
         if (looksLikeReplCommand(args.code)) return reportCommandErrors(args.code)
 
-        val preprocessed = magics.processMagics(args.code, true).code
-
-        val errorsList = jupyterCompiler.listErrors(preprocessed)
+        val preprocessingResult = errorsMagics.process(args.code)
+        val errorsList = preprocessingResult.diagnostics + jupyterCompiler.listErrors(preprocessingResult.code)
 
         return ListErrorsResult(args.code, errorsList)
     }
