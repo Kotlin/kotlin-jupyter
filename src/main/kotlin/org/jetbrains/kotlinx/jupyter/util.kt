@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
@@ -84,6 +85,7 @@ fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCod
 
 fun ResultsRenderersProcessor.registerDefaultRenderers() {
     register(bufferedImageRenderer)
+    register(arrayRenderer)
 }
 
 /**

@@ -460,6 +460,13 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testArraysRendering() {
+        eval("intArrayOf(1, 2, 3)").resultValue.toString() shouldBe "[1, 2, 3]"
+        eval("arrayOf(1 to 2, 3 to 4)").resultValue.toString() shouldBe "[(1, 2), (3, 4)]"
+        eval("booleanArrayOf(true, false)").resultValue.toString() shouldBe "[true, false]"
+    }
+
+    @Test
     fun testOutVarRendering() {
         eval("Out").resultValue.shouldNotBeNull()
     }

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.lang.reflect.Array
 import java.util.Base64
 import javax.imageio.ImageIO
 
@@ -16,4 +17,27 @@ val bufferedImageRenderer = createRenderer<BufferedImage> {
         append(encoder.encodeToString(data))
     }
     HTML("""<img src="$src"/>""")
+}
+
+/**
+ * Renders any array (primitive or non-primitive into list)
+ */
+val arrayRenderer = object : RendererHandler {
+    override fun accepts(value: Any?): Boolean {
+        if (value == null) return false
+        val jClass = value::class.java
+        return jClass.isArray
+    }
+
+    private fun toListRuntime(a: Any): List<Any?> {
+        val len = Array.getLength(a)
+        return ArrayList<Any>(len).apply {
+            for (i in 0 until len) {
+                add(Array.get(a, i))
+            }
+        }
+    }
+
+    override val execution = ResultHandlerExecution { _, result -> FieldValue(toListRuntime(result.value!!), result.name) }
+    override fun replaceVariables(mapping: Map<String, String>) = this
 }
