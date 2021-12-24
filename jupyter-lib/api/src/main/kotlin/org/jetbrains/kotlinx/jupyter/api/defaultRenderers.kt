@@ -20,18 +20,16 @@ val bufferedImageRenderer = createRenderer<BufferedImage> {
 }
 
 /**
- * Renders any array (primitive or non-primitive into list)
+ * Renders any array (primitive or non-primitive) into list
  */
 val arrayRenderer = object : RendererHandler {
     override fun accepts(value: Any?): Boolean {
-        if (value == null) return false
-        val jClass = value::class.java
-        return jClass.isArray
+        return value != null && value::class.java.isArray
     }
 
     private fun toListRuntime(a: Any): List<Any?> {
         val len = Array.getLength(a)
-        return ArrayList<Any>(len).apply {
+        return ArrayList<Any?>(len).apply {
             for (i in 0 until len) {
                 add(Array.get(a, i))
             }
