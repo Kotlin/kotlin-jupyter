@@ -219,6 +219,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
+ - [kalasim](https://www.kalasim.org) - Discrete event simulator
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
