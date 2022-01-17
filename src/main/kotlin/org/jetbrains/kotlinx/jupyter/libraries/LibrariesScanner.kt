@@ -29,7 +29,7 @@ class LibrariesScanner(val notebook: Notebook) {
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
         log.debug("Number of detected definitions: ${libraries.size}")
-        libraries.forEach { host.addLibrary(it) }
+        host.addLibraries(libraries)
     }
 
     private fun scanForLibraries(classLoader: ClassLoader): LibrariesScanResult {

@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
+import java.util.TreeSet
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -92,10 +93,12 @@ fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<Lib
     return flatMap { it.getDefinitions(notebook) }
 }
 
-fun LibraryDefinition.buildDependenciesInitCode(mapping: Map<String, String> = emptyMap()): Code? {
+private val emptyVariablesMapping = emptyMap<String, String>()
+
+fun buildDependenciesInitCode(libraries: Collection<LibraryDefinition>): Code? {
     val builder = StringBuilder()
-    repositories.forEach { builder.appendLine("@file:Repository(\"${replaceVariables(it, mapping)}\")") }
-    dependencies.forEach { builder.appendLine("@file:DependsOn(\"${replaceVariables(it, mapping)}\")") }
-    imports.forEach { builder.appendLine("import ${replaceVariables(it, mapping)}") }
+    libraries.flatMapTo(TreeSet()) { it.repositories }.forEach { builder.appendLine("@file:Repository(\"${replaceVariables(it, emptyVariablesMapping)}\")") }
+    libraries.flatMapTo(TreeSet()) { it.dependencies }.forEach { builder.appendLine("@file:DependsOn(\"${replaceVariables(it, emptyVariablesMapping)}\")") }
+    libraries.flatMapTo(TreeSet()) { it.imports }.forEach { builder.appendLine("import ${replaceVariables(it, emptyVariablesMapping)}") }
     return if (builder.isNotBlank()) builder.toString() else null
 }

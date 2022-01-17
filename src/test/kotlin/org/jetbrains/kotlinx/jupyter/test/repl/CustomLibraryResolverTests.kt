@@ -128,17 +128,15 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val expectedCodes = arrayOf(
             """
+                    @file:DependsOn("anotherDep")
                     @file:DependsOn("artifact1:1.0")
                     @file:DependsOn("artifact2:1.0")
+                    import anotherPackage1
                     import package1
                     import package2
                     """,
             "code1",
             "code2",
-            """
-                    @file:DependsOn("anotherDep")
-                    import anotherPackage1
-                    """,
             """
                     @file:Repository("repo-debug")
                     @file:DependsOn("path-release")
@@ -148,10 +146,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "anotherInit"
         ).map { it.trimIndent() }
 
-        assertEquals(expectedCodes.count(), executedCodes.count())
-        expectedCodes.forEachIndexed { index, expected ->
-            assertEquals(expected.trimIndent(), executedCodes[index])
-        }
+        executedCodes shouldBe expectedCodes
     }
 
     @Test

@@ -49,9 +49,8 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 val processedMagics = codePreprocessor.process(code, context)
 
                 log.debug("Adding ${processedMagics.libraries.size} libraries")
-                processedMagics.libraries.getDefinitions(notebook).forEach {
-                    context.addLibrary(it)
-                }
+                val libraries = processedMagics.libraries.getDefinitions(notebook)
+                context.addLibraries(libraries)
 
                 processedMagics.code
             } else code
@@ -117,32 +116,37 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             execute(code)
         }
 
-        override fun addLibrary(library: LibraryDefinition) {
-            sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
+        override fun addLibraries(libraries: Collection<LibraryDefinition>) {
+            if (libraries.isEmpty()) return
+            for (library in libraries) {
+                sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
+            }
             rethrowAsLibraryException(LibraryProblemPart.PREBUILT) {
-                library.buildDependenciesInitCode()?.let { runChild(it) }
+                buildDependenciesInitCode(libraries)?.let { runChild(it) }
             }
-            rethrowAsLibraryException(LibraryProblemPart.INIT) {
-                library.init.forEach(::runChild)
-            }
-            library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
-            library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
-            library.converters.forEach(sharedContext.fieldsProcessor::register)
-            library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
-            library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
-            sharedContext.afterCellExecution.addAll(library.afterCellExecution)
-            sharedContext.codePreprocessor.addAll(library.codePreprocessors)
-
-            val classLoader = sharedContext.evaluator.lastClassLoader
-            rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
-                library.resources.forEach {
-                    val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
-                    displayHandler?.handleDisplay(HTML(htmlText), this)
+            for (library in libraries) {
+                rethrowAsLibraryException(LibraryProblemPart.INIT) {
+                    library.init.forEach(::runChild)
                 }
-            }
+                library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
+                library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
+                library.converters.forEach(sharedContext.fieldsProcessor::register)
+                library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
+                library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
+                sharedContext.afterCellExecution.addAll(library.afterCellExecution)
+                sharedContext.codePreprocessor.addAll(library.codePreprocessors)
 
-            library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
-            library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
+                val classLoader = sharedContext.evaluator.lastClassLoader
+                rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
+                    library.resources.forEach {
+                        val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
+                        displayHandler?.handleDisplay(HTML(htmlText), this)
+                    }
+                }
+
+                library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
+                library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
+            }
         }
 
         override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false).result

@@ -30,10 +30,12 @@ interface KotlinKernelHost {
      */
     fun execute(code: Code): FieldValue
 
+    fun addLibrary(library: LibraryDefinition) = addLibraries(listOf(library))
+
     /**
-     * Adds a new library via its definition. Fully interchangeable with `%use` approach
+     * Adds new libraries via their definition. Fully interchangeable with `%use` approach
      */
-    fun addLibrary(library: LibraryDefinition)
+    fun addLibraries(libraries: Collection<LibraryDefinition>)
 
     /**
      * Declares global variables for notebook
