@@ -481,4 +481,23 @@ class ReplTests : AbstractSingleReplTest() {
             listErrors(code).errors.toList().shouldBeEmpty()
         }
     }
+
+    @Test
+    fun testIssue356() {
+        eval(
+            """
+            sealed class BaseObjClass
+            object Obj : BaseObjClass()
+            val topLevelSequence = sequence {
+               yield(Obj)
+            }
+            open class Base {
+                val iter = topLevelSequence.iterator()
+            }
+            class Child: Base()
+            
+            Child::class.simpleName
+            """.trimIndent()
+        ).resultValue shouldBe "Child"
+    }
 }
