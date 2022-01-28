@@ -275,18 +275,20 @@ class ReplTests : AbstractSingleReplTest() {
     fun testFreeCompilerArg() {
         val res = eval(
             """
-            @file:CompilerArgs("-Xopt-in=kotlin.RequiresOptIn")
+            @file:CompilerArgs("-opt-in=kotlin.RequiresOptIn")
             """.trimIndent()
         )
         res.resultValue shouldBe Unit
 
-        repl.listErrorsBlocking(
+        val actualErrors = repl.listErrorsBlocking(
             """
             import kotlin.time.*
             @OptIn(ExperimentalTime::class)
             val mark = TimeSource.Monotonic.markNow()
             """.trimIndent()
-        ).errors.shouldBeEmpty()
+        ).errors.toList()
+
+        actualErrors.shouldBeEmpty()
     }
 
     @Test
