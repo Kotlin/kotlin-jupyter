@@ -2,8 +2,9 @@ import build.CreateResourcesTask
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
 
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    id("com.gradle.plugin-publish")
+    alias(libs.plugins.plugin.publish)
     `java-gradle-plugin`
     `kotlin-dsl`
     kotlin("libs.publisher")

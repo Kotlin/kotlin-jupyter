@@ -5,7 +5,7 @@ kotlin = "1.7.0-dev-1825"
 stableKotlin = "1.6.20-M1"
 gradleKotlin = "1.6.20-M1"
 ksp = "1.6.20-M1-1.0.2"
-shadowJar = "7.0.0"
+shadowJar = "7.1.2"
 changelogPlugin = "1.7.0"
 kotlinxSerialization = "1.3.2"
 kotlinxCoroutines = "1.6.0"
@@ -14,6 +14,7 @@ jupyterNotebooksParser = "0.1.0-dev-1"
 ktlintGradle = "10.2.0"
 ktlint = "0.40.0"
 publishPlugin = "0.0.60-dev-29"
+pluginPublishPlugin = "0.20.0"
 versionsPlugin = "0.39.0"
 
 slf4j = "1.7.36"
@@ -127,7 +128,7 @@ plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", v
 plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
 
 # id("com.github.johnrengelman.shadow")
-plugin-shadowJar = { module = "gradle.plugin.com.github.jengelman.gradle.plugins:shadow", version.ref = "shadowJar" }
+plugin-shadowJar = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadowJar" }
 
 # id("org.jlleitschuh.gradle.ktlint")
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
@@ -145,6 +146,9 @@ plugin-versionsUpdater = { module = "com.github.ben-manes:gradle-versions-plugin
 jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
 jupyter-apiAnnotations = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api-annotations", version.ref = "jupyterApi" }
 jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-common-dependencies", version.ref = "jupyterApi" }
+
+[plugins]
+plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublishPlugin" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]
