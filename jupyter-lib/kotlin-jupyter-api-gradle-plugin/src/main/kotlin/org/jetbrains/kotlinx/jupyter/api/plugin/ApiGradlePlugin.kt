@@ -55,7 +55,6 @@ class ApiGradlePlugin : Plugin<Project> {
             }
 
             fun dependOnKsp(kspTaskName: String) {
-                if (!pluginExtension.scannerDependencyEnabled) return
                 val jupyterTask = registerResourceTask()
                 tasks.whenAdded(
                     { it.name == kspTaskName },

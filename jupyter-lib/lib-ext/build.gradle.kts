@@ -1,6 +1,7 @@
 import build.util.excludeKotlinDependencies
 
 plugins {
+    id("com.google.devtools.ksp")
     kotlin("jvm")
     kotlin("jupyter.api")
     kotlin("libs.publisher")
