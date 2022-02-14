@@ -1,12 +1,19 @@
-package org.jetbrains.kotlinx.jupyter
+package org.jetbrains.kotlinx.jupyter.messaging
 
 import ch.qos.logback.classic.Level
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlinx.jupyter.DisabledStdinInputStream
+import org.jetbrains.kotlinx.jupyter.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.JupyterConnection
+import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
+import org.jetbrains.kotlinx.jupyter.NotebookImpl
+import org.jetbrains.kotlinx.jupyter.OutputConfig
+import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.Notebook
@@ -23,9 +30,12 @@ import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.protocolVersion
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.rawToResponse
 import org.jetbrains.kotlinx.jupyter.repl.toResponse
+import org.jetbrains.kotlinx.jupyter.runCommand
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.io.PrintStream

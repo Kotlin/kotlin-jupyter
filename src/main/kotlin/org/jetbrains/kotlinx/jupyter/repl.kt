@@ -48,6 +48,7 @@ import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater

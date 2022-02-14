@@ -1,11 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlinx.jupyter.CompleteReply
-import org.jetbrains.kotlinx.jupyter.ErrorReply
-import org.jetbrains.kotlinx.jupyter.MessageContent
-import org.jetbrains.kotlinx.jupyter.Paragraph
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
+import org.jetbrains.kotlinx.jupyter.messaging.CompleteReply
+import org.jetbrains.kotlinx.jupyter.messaging.ErrorReply
+import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
+import org.jetbrains.kotlinx.jupyter.messaging.Paragraph
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 abstract class CompletionResult {

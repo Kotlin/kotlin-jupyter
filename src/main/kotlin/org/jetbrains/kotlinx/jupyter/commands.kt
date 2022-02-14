@@ -7,6 +7,9 @@ import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.common.assertLooksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.messaging.AbortResponseWithMessage
+import org.jetbrains.kotlinx.jupyter.messaging.OkResponseWithMessage
+import org.jetbrains.kotlinx.jupyter.messaging.Response
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult

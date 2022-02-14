@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
-import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 
 /**
  * Executes notebook cell code.

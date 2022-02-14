@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter
+package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.kotlinx.jupyter.protocolVersion
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID

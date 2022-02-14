@@ -2,10 +2,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
-import org.jetbrains.kotlinx.jupyter.Message
-import org.jetbrains.kotlinx.jupyter.MessageData
-import org.jetbrains.kotlinx.jupyter.MessageType
-import org.jetbrains.kotlinx.jupyter.makeHeader
+import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageData
+import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.receiveMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.junit.jupiter.api.Assertions.assertEquals

@@ -1,11 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
-import org.jetbrains.kotlinx.jupyter.OkResponseWithMessage
-import org.jetbrains.kotlinx.jupyter.Response
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.toDisplayResult
+import org.jetbrains.kotlinx.jupyter.messaging.OkResponseWithMessage
+import org.jetbrains.kotlinx.jupyter.messaging.Response
+import org.jetbrains.kotlinx.jupyter.messaging.toDisplayResult
 
 data class InternalEvalResult(
     val result: FieldValue,

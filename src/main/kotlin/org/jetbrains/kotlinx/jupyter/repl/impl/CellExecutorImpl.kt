@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
@@ -17,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult

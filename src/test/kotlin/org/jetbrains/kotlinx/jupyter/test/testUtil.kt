@@ -4,7 +4,6 @@ import io.kotest.assertions.fail
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.CodeCellImpl
-import org.jetbrains.kotlinx.jupyter.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
@@ -33,6 +32,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
