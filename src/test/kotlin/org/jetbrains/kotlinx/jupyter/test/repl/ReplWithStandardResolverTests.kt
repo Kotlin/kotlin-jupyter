@@ -5,15 +5,20 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
+import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -157,5 +162,38 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         assertEquals(25, result.resultValue)
         file.delete()
+    }
+
+    @Test
+    @Disabled
+    fun kotlinSpark() {
+        eval(
+            """
+            %use @file[${testDataDir.invariantSeparatorsPath}/kotlin-spark-api.json](spark = 3.2, version=1.0.4-SNAPSHOT)
+            """.trimIndent()
+        )
+
+        eval(
+            """
+            data class Test(
+                val longFirstName: String,
+                val second: LongArray,
+                val somethingSpecial: Map<Int, String>,
+            )
+
+            val ds = listOf(
+                Test("aaaaaaaaa", longArrayOf(1L, 100000L, 24L), mapOf(1 to "one", 2 to "two")),
+                Test("bbbbbbbbb", longArrayOf(1L, 2353245L, 24L), mapOf(1 to "one", 3 to "three")),
+            ).toDS(spark)
+            """.trimIndent()
+        )
+
+        var res: EvalResult? = null
+        val resultThread = thread(contextClassLoader = repl.currentClassLoader) {
+            res = eval("ds")
+        }
+        resultThread.join()
+        val resultValue = res?.resultValue
+        resultValue.shouldBeInstanceOf<MimeTypedResult>()
     }
 }

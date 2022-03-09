@@ -479,7 +479,7 @@ fun JupyterConnection.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
         return try {
-            val (exec, execException, executionInterrupted) = runExecution(body)
+            val (exec, execException, executionInterrupted) = runExecution(body, repl.currentClassLoader)
             when {
                 executionInterrupted -> {
                     flushStreams()

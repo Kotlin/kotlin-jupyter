@@ -140,6 +140,8 @@ interface ReplForJupyter {
 
     val currentClasspath: Collection<String>
 
+    val currentClassLoader: ClassLoader
+
     val resolverConfig: ResolverConfig?
 
     val runtimeProperties: ReplRuntimeProperties
@@ -338,6 +340,8 @@ class ReplForJupyterImpl(
     private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
         registerDefaultRenderers()
     }
+
+    override val currentClassLoader: ClassLoader get() = internalEvaluator.lastClassLoader
 
     override val throwableRenderersProcessor: ThrowableRenderersProcessor = ThrowableRenderersProcessorImpl()
 

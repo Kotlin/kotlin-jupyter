@@ -172,10 +172,10 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
         val isInterrupted: Boolean,
     )
 
-    fun <T> runExecution(body: () -> T): ConnectionExecutionResult<T> {
+    fun <T> runExecution(body: () -> T, classLoader: ClassLoader): ConnectionExecutionResult<T> {
         var execRes: T? = null
         var execException: Throwable? = null
-        val execThread = thread {
+        val execThread = thread(contextClassLoader = classLoader) {
             try {
                 execRes = body()
             } catch (e: Throwable) {

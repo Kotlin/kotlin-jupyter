@@ -38,6 +38,8 @@ import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.test.assertEquals
 
+val testDataDir = File("src/test/testData")
+
 const val standardResolverBranch = "master"
 
 val testRepositories = defaultRepositories
