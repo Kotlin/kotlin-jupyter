@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeout
 import org.junit.jupiter.api.parallel.Execution
@@ -156,6 +157,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
+    @Disabled
     fun testLibraryCompletion() {
         completeOrFail("%u", 2).sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
         completeOrFail("%use kot", 8).sortedMatches() shouldContainAll listOf("kotlin-dl", "kotlin-statistics")
