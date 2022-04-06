@@ -2,9 +2,9 @@
 jvmTarget = "1.8"
 
 kotlin = "1.7.0-dev-3303"
-stableKotlin = "1.6.20"
-gradleKotlin = "1.6.20"
-ksp = "1.6.20-1.0.4"
+stableKotlin = "1.6.0"
+gradleKotlin = "1.6.0"
+ksp = "1.6.0-1.0.2"
 shadowJar = "7.1.2"
 changelogPlugin = "1.7.0"
 kotlinxSerialization = "1.3.2"
