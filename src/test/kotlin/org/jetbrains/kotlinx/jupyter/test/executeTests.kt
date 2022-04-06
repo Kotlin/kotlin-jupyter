@@ -25,7 +25,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.parallel.Execution
@@ -245,7 +244,6 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
-    @Disabled
     fun testCompiledData() {
         val code =
             """

@@ -25,7 +25,6 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.script.experimental.api.SourceCode
@@ -410,7 +409,6 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    @Disabled
     fun testNativeLibrary() {
         val libName = "GraphMolWrap"
         val testDataPath = "src/test/testData/nativeTest"
@@ -451,7 +449,6 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    @Disabled
     fun testAnonymousObjectCustomRendering() {
         eval("USE { render<ArrayList<*>> { it.size } }")
         eval(
@@ -488,7 +485,6 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    @Disabled
     fun testIssue356() {
         eval(
             """
@@ -508,7 +504,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testIssue360(){
+    fun testIssue360() {
         eval("val a = 1")
         eval("fun b() = a")
         eval("b()").resultValue shouldBe 1
