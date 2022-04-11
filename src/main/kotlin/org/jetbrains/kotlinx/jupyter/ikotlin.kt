@@ -16,8 +16,13 @@ val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
 data class KernelArgs(
     val cfgFile: File,
     val scriptClasspath: List<File>,
-    val homeDir: File?
+    val homeDir: File?,
+    val debugPort: Int?,
 ) {
+    fun parseParams(): KernelJupyterParams {
+        return KernelJupyterParams.fromFile(cfgFile)
+    }
+
     fun argsList(): List<String> {
         return mutableListOf<String>().apply {
             add(cfgFile.absolutePath)
@@ -26,6 +31,7 @@ data class KernelArgs(
                 val classPathString = scriptClasspath.joinToString(File.pathSeparator) { it.absolutePath }
                 add("-cp=$classPathString")
             }
+            debugPort?.let { add("-debugPort=$it") }
         }
     }
 }
@@ -34,6 +40,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     var cfgFile: File? = null
     var classpath: List<File>? = null
     var homeDir: File? = null
+    var debugPort: Int? = null
     args.forEach { arg ->
         when {
             arg.startsWith("-cp=") || arg.startsWith("-classpath=") -> {
@@ -45,6 +52,9 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
             arg.startsWith("-home=") -> {
                 homeDir = File(arg.substringAfter('='))
             }
+            arg.startsWith("-debugPort=") -> {
+                debugPort = arg.substringAfter('=').toInt()
+            }
             else -> {
                 cfgFile?.let { throw IllegalArgumentException("config file already set to $it") }
                 cfgFile = File(arg)
@@ -54,7 +64,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     val cfgFileValue = cfgFile ?: throw IllegalArgumentException("config file is not provided")
     if (!cfgFileValue.exists() || !cfgFileValue.isFile) throw IllegalArgumentException("invalid config file $cfgFileValue")
 
-    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir)
+    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort)
 }
 
 fun printClassPath() {
@@ -73,7 +83,7 @@ fun main(vararg args: String) {
         val kernelArgs = parseCommandLine(*args)
         val libraryPath = KERNEL_LIBRARIES.homeLibrariesDir(kernelArgs.homeDir)
         val libraryInfoProvider = getDefaultDirectoryResolutionInfoProvider(libraryPath)
-        val kernelConfig = KernelConfig.fromArgs(kernelArgs, libraryInfoProvider)
+        val kernelConfig = KernelConfig.create(libraryInfoProvider, kernelArgs)
         kernelServer(kernelConfig)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
@@ -91,11 +101,11 @@ fun main(vararg args: String) {
 @Suppress("unused")
 fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
-    val config = KernelConfig.fromConfig(
-        KernelJupyterParams.fromFile(cfgFile),
+    val args = KernelArgs(cfgFile, cp, null, null)
+
+    val config = KernelConfig.create(
         resolutionInfoProvider ?: EmptyResolutionInfoProvider,
-        cp,
-        null,
+        args,
         true
     )
     kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())
@@ -151,7 +161,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
         try {
             controlThread.join()
             hbThread.join()
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
         }
 
         log.info("Shutdown server")

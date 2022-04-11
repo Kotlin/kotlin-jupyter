@@ -6,6 +6,7 @@ import sys
 from typing import List, AnyStr
 
 from kotlin_kernel import env_names
+from kotlin_kernel import port_generator
 
 
 def run_kernel(*args) -> None:
@@ -40,11 +41,17 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
     with open(jar_args_file, 'r') as fd:
         jar_args_json = json.load(fd)
 
-        debug: str = jar_args_json['debuggerConfig']
+        debug_port = jar_args_json['debuggerPort']
         cp: List[str] = jar_args_json['classPath']
         main_jar: str = jar_args_json['mainJar']
 
-        debug_list = [] if debug is None or debug == '' else [debug]
+        debug_list = []
+        if debug_port is not None and debug_port != '':
+            if debug_port == 'generate':
+                debug_port = port_generator.get_port_not_in_use(port_generator.DEFAULT_DEBUG_PORT)
+            debug_list.append('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address={}'.format(debug_port))
+        else:
+            debug_port = None
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
@@ -66,11 +73,15 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
 
         jvm_args = shlex.split(jvm_arg_str)
 
-        subprocess.call([java] + jvm_args + ['-jar'] + debug_list +
-                        [main_jar_path,
-                         '-classpath=' + class_path_arg,
-                         connection_file,
-                         '-home=' + executables_dir])
+        jar_args = [
+            main_jar_path,
+            '-classpath=' + class_path_arg,
+            connection_file,
+            '-home=' + executables_dir
+        ]
+        if debug_port is not None:
+            jar_args.append('-debugPort=' + str(debug_port))
+        subprocess.call([java] + jvm_args + ['-jar'] + debug_list + jar_args)
 
 
 if __name__ == '__main__':

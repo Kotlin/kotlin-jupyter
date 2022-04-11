@@ -98,7 +98,7 @@ class InstallTasksConfigurator(
                         "mainJar" to kernelFile.name,
                         "mainClass" to settings.mainClassFQN,
                         "classPath" to libsCp,
-                        "debuggerConfig" to if (debug) settings.debuggerConfig else ""
+                        "debuggerPort" to if (debug) settings.debuggerPort else ""
                     ),
                     mainInstallPath.jarArgsFile
                 )
@@ -109,12 +109,7 @@ class InstallTasksConfigurator(
     }
 
     private fun registerMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
-        val taskNamePrefix = if (local) "install" else "prepare"
-        val taskNameMiddle = debugStr(debug)
-        val taskNameSuffix = if (local) "" else "Package"
-        val taskName = "$taskNamePrefix$taskNameMiddle$taskNameSuffix"
-
-        project.tasks.register(taskName) {
+        project.tasks.register(mainInstallTaskName(debug, local)) {
             this.group = group
             dependsOn(
                 makeTaskName(settings.cleanInstallDirTaskPrefix, local),
@@ -157,8 +152,6 @@ class InstallTasksConfigurator(
     private val File.librariesDir get() = resolve(settings.runKotlinKernelModule).resolve(settings.librariesDir)
     private val File.configDir get() = resolve(settings.runKotlinKernelModule).resolve(settings.configDir)
     private val File.jarArgsFile get() = resolve(settings.runKotlinKernelModule).resolve(settings.jarArgsFile)
-
-    private fun debugStr(isDebug: Boolean) = if (isDebug) "Debug" else ""
 
     private fun Copy.moduleFromDistributionDir(moduleName: String) {
         from(settings.distributionDir.resolve(moduleName)) {

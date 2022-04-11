@@ -236,9 +236,10 @@ an error message which can help you to fix the error.
 
 ## Debugging
 
-1. Run `./gradlew installDebug`. Use option `-PdebugPort=` to specify port address for the debugger. Default port is 1044.
-2. Run `jupyter-notebook`
-3. Attach a remote debugger to JVM with specified port 
+1. Run `./gradlew installDebug`. Debugger port is selected automatically.
+   Default port is 1044, consequent ports will be used if it's in use. If you want an exact port, specify `-PdebugPort=<port>` Gradle option.
+2. Run `jupyter notebook`, open the desired notebook.
+3. Attach a remote debugger to JVM with corresponding port (debug port number will be printed in terminal on kernel startup).
 
 ## Adding new libraries
 

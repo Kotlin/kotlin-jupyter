@@ -95,8 +95,7 @@ class RootSettingsExtension(
     val copyLibrariesTaskPrefix: String = "copyLibraries"
     val installLibsTaskPrefix: String = "installLibs"
 
-    private val debugPort = 1044
-    val debuggerConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
+    val debuggerPort = project.stringPropOrEmpty("debugPort")
 
     val runtimePropertiesFile = "runtime.properties"
 

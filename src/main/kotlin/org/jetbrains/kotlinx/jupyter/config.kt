@@ -134,6 +134,7 @@ data class KernelConfig(
     val resolverConfig: ResolverConfig?,
     val resolutionInfoProvider: ResolutionInfoProvider,
     val embedded: Boolean = false,
+    val debugPort: Int? = null,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
         val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
@@ -143,27 +144,28 @@ data class KernelConfig(
         val format = Json { prettyPrint = true }
         cfgFile.writeText(format.encodeToString(params))
 
-        return KernelArgs(cfgFile, scriptClasspath, homeDir)
+        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort)
     }
 
     companion object {
-        fun fromArgs(args: KernelArgs, resolutionInfoProvider: ResolutionInfoProvider): KernelConfig {
-            val (cfgFile, scriptClasspath, homeDir) = args
-            val cfg = KernelJupyterParams.fromFile(cfgFile)
-            return fromConfig(cfg, resolutionInfoProvider, scriptClasspath, homeDir)
-        }
+        fun create(
+            resolutionInfoProvider: ResolutionInfoProvider,
+            args: KernelArgs,
+            embedded: Boolean = false,
+        ): KernelConfig {
+            val cfg = args.parseParams()
 
-        fun fromConfig(cfg: KernelJupyterParams, resolutionInfoProvider: ResolutionInfoProvider, scriptClasspath: List<File>, homeDir: File?, embedded: Boolean = false): KernelConfig {
             return KernelConfig(
                 ports = cfg.ports,
                 transport = cfg.transport ?: "tcp",
                 signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
                 signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
-                scriptClasspath = scriptClasspath,
-                homeDir = homeDir,
-                resolverConfig = homeDir?.let { loadResolverConfig(it.toString(), resolutionInfoProvider) },
+                scriptClasspath = args.scriptClasspath,
+                homeDir = args.homeDir,
+                resolverConfig = args.homeDir?.let { loadResolverConfig(it.toString(), resolutionInfoProvider) },
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,
+                debugPort = args.debugPort,
             )
         }
     }
