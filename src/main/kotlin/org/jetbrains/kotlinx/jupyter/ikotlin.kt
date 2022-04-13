@@ -101,11 +101,10 @@ fun main(vararg args: String) {
 @Suppress("unused")
 fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
-    val args = KernelArgs(cfgFile, cp, null, null)
 
     val config = KernelConfig.create(
         resolutionInfoProvider ?: EmptyResolutionInfoProvider,
-        args,
+        KernelArgs(cfgFile, cp, null, null),
         true
     )
     kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())

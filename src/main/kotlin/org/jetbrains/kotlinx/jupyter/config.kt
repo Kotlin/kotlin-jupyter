@@ -162,7 +162,7 @@ data class KernelConfig(
                 signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
                 scriptClasspath = args.scriptClasspath,
                 homeDir = args.homeDir,
-                resolverConfig = args.homeDir?.let { loadResolverConfig(it.toString(), resolutionInfoProvider) },
+                resolverConfig = loadResolverConfig(args.homeDir?.toString(), resolutionInfoProvider),
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,
                 debugPort = args.debugPort,
@@ -171,4 +171,4 @@ data class KernelConfig(
     }
 }
 
-fun loadResolverConfig(homeDir: String, resolutionInfoProvider: ResolutionInfoProvider) = ResolverConfig(defaultRepositories, getStandardResolver(homeDir, resolutionInfoProvider))
+fun loadResolverConfig(homeDir: String?, resolutionInfoProvider: ResolutionInfoProvider) = ResolverConfig(defaultRepositories, getStandardResolver(homeDir, resolutionInfoProvider))
