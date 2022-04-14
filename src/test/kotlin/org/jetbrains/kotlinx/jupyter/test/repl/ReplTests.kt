@@ -27,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.nio.file.Path
 import kotlin.script.experimental.api.SourceCode
 
 class ReplTests : AbstractSingleReplTest() {
@@ -459,6 +460,20 @@ class ReplTests : AbstractSingleReplTest() {
         )
         val res = eval("sim").resultValue
         res shouldBe 1
+    }
+
+    @Test
+    fun testStdlibJdkExtensionsUsage() {
+        eval("USE_STDLIB_EXTENSIONS()")
+        val res = eval(
+            """
+            import kotlin.io.path.*
+            import java.nio.file.Path
+            
+            Path.of(".").absolute()
+            """.trimIndent()
+        ).resultValue
+        res.shouldBeInstanceOf<Path>()
     }
 
     @Test

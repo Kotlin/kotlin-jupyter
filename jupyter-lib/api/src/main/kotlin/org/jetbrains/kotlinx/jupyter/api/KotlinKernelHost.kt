@@ -38,6 +38,21 @@ interface KotlinKernelHost {
     fun addLibraries(libraries: Collection<LibraryDefinition>)
 
     /**
+     * Loads Kotlin standard artifacts (org.jetbrains.kotlin:kotlin-$name:$version)
+     *
+     * @param artifacts Names of the artifacts substituted to the above line
+     * @param version Version of the artifacts to load. Current Kotlin version will be used by default
+     */
+    fun loadKotlinArtifacts(artifacts: Collection<String>, version: String? = null)
+
+    /**
+     * Loads Kotlin standard library extensions for a current JDK
+     *
+     * @param version Version of the artifact to load. Current Kotlin version will be used by default
+     */
+    fun loadStdlibJdkExtensions(version: String? = null)
+
+    /**
      * Declares global variables for notebook
      */
     fun declare(variables: Iterable<VariableDeclaration>)

@@ -30,6 +30,8 @@ abstract class ScriptTemplateWithDisplayHelpers(
         USE(o.getDefinitions(notebook).single())
     }
 
+    fun USE_STDLIB_EXTENSIONS() = host.loadStdlibJdkExtensions()
+
     val Out: ResultsAccessor get() = notebook.resultsAccessor
 
     val JavaRuntimeUtils get() = notebook.jreInfo

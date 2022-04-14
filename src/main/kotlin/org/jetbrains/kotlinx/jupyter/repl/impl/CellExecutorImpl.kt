@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
+import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
@@ -9,7 +10,9 @@ import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.catchAll
+import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
@@ -147,6 +150,28 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
                 library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
             }
+        }
+
+        override fun loadKotlinArtifacts(artifacts: Collection<String>, version: String?) {
+            val kotlinVersion = version ?: currentKotlinVersion
+            val repositories = buildList {
+                if (kotlinVersion.contains("dev")) add("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+                else if (kotlinVersion.contains("SNAPSHOT")) add("*mavenLocal")
+            }
+            val libraries = listOf(
+                libraryDefinition {
+                    it.repositories = repositories
+                    it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
+                }
+            )
+            buildDependenciesInitCode(libraries)?.let { scheduleExecution(it) }
+        }
+
+        override fun loadStdlibJdkExtensions(version: String?) {
+            val availableExtensionsVersions = listOf(7, 8)
+            val jdkVersion = JavaRuntime.versionAsInt
+            val versionToLoad = availableExtensionsVersions.lastOrNull { it <= jdkVersion } ?: return
+            loadKotlinArtifacts(listOf("stdlib-jdk$versionToLoad"), version)
         }
 
         override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false).result
