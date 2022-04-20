@@ -1,6 +1,7 @@
 import build.CreateResourcesTask
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
+import build.util.excludeKotlinDependencies
 
 plugins {
     kotlin("libs.publisher")
@@ -12,6 +13,8 @@ repositories {
     mavenCentral()
 }
 
+// When adding new dependencies, make sure that
+// kotlin-stdlib and kotlin-reflect dependencies do not get into POM file
 dependencies {
     // Internal dependencies
     api(projects.api) { isTransitive = false }
@@ -38,7 +41,12 @@ dependencies {
     compileOnly(libs.logging.slf4j.api)
 
     // Clikt library for parsing output magics
-    implementation(libs.clikt)
+    implementation(libs.clikt) {
+        excludeKotlinDependencies(
+            "stdlib",
+            "stdlib-common",
+        )
+    }
 }
 
 buildSettings {
