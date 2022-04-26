@@ -24,6 +24,7 @@ abstract class CreateResourcesTask : DefaultTask() {
     @TaskAction
     fun createResources() {
         val dir = outputResourceDir.get()
+        dir.deleteRecursively()
         resources.forEach { (subPath, text) ->
             val file = dir.resolve(subPath)
             file.parentFile.mkdirs()
@@ -48,6 +49,7 @@ abstract class CreateResourcesTask : DefaultTask() {
     }
 
     fun addPropertiesFile(subPath: String, values: Map<String, String>) {
+        inputs.property("__filename__", subPath)
         addResource(subPath, values.entries.joinToString("") { "${it.key}=${it.value}\n" })
         setInputProperties(values)
     }

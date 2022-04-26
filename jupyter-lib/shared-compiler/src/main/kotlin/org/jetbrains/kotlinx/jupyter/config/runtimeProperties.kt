@@ -12,7 +12,7 @@ fun readResourceAsIniFile(fileName: String, classLoader: ClassLoader) =
     classLoader.getResource(fileName)?.readText()?.parseIniConfig().orEmpty()
 
 private val runtimeProperties by lazy {
-    readResourceAsIniFile("compiler.properties", KernelStreams::class.java.classLoader)
+    readResourceAsIniFile("kotlin-jupyter-compiler.properties", KernelStreams::class.java.classLoader)
 }
 
 fun getFromRuntimeProperties(property: String, propertyDescription: String): String {

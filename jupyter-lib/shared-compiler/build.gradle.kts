@@ -59,7 +59,7 @@ buildSettings {
 
 CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
     addPropertiesFile(
-        "compiler.properties",
+        "kotlin-jupyter-compiler.properties",
         mapOf(
             "version" to rootSettings.pyPackageVersion,
             "kotlinVersion" to defaultVersionCatalog.versions.devKotlin,
