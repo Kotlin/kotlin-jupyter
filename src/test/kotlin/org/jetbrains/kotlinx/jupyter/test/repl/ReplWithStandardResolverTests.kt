@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import java.net.URLClassLoader
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 
@@ -46,6 +47,12 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testStandardLibraryResolver() {
+        val baseClassLoader = repl.currentClassLoader.parent
+        fun urlClassLoadersCount() = generateSequence(repl.currentClassLoader) { classLoader ->
+            classLoader.parent?.takeIf { it != baseClassLoader }
+        }.filter { it is URLClassLoader }.count()
+        urlClassLoadersCount() shouldBe 1
+
         val res = eval(
             """
             %use krangl@d91d045946f59(0.16.2)
@@ -54,6 +61,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent()
         )
         assertEquals("John Smith", res.resultValue)
+        urlClassLoadersCount() shouldBe 2
+
+        eval("val x = 2 + 2")
+        urlClassLoadersCount() shouldBe 2
     }
 
     @Test

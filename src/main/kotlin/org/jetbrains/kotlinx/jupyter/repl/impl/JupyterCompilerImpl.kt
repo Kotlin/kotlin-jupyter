@@ -45,6 +45,7 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.lastSnippetClassLoader
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -122,9 +123,11 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     override val lastKClass: KClass<*>
         get() = classes.last()
 
+    private val _baseClassLoader: ClassLoader
+        get() = basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
+
     override val lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader
-            ?: basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
+        get() = classes.lastOrNull()?.java?.classLoader ?: _baseClassLoader
 
     override fun nextCounter() = executionCounter.getAndIncrement()
 
@@ -174,11 +177,9 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                 val compiledScript = result.get()
 
                 val configWithClassloader = basicEvaluationConfiguration.with {
-                    val lastClassOrNull = classes.lastOrNull()
-                    if (lastClassOrNull != null) {
-                        jvm {
-                            baseClassLoader(lastClassOrNull.java.classLoader)
-                        }
+                    jvm {
+                        lastSnippetClassLoader(lastClassLoader)
+                        baseClassLoader(_baseClassLoader.parent)
                     }
                 }
                 val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
