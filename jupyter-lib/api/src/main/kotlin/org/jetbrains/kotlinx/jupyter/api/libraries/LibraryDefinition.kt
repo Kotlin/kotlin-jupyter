@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 
 /**
  * Library definition represents "library" concept in Kotlin kernel.
@@ -116,5 +117,11 @@ interface LibraryDefinition {
      * Internal declarations tend to be not shown to a user in the variables view, but take place in resolution
      */
     val internalVariablesMarkers: List<InternalVariablesMarker>
+        get() = emptyList()
+
+    /**
+     * Integration type name rules for the library integration classes which are about to be loaded transitively
+     */
+    val integrationTypeNameRules: List<AcceptanceRule<String>>
         get() = emptyList()
 }

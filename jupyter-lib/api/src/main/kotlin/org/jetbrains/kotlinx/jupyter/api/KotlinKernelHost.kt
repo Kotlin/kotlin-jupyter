@@ -38,6 +38,12 @@ interface KotlinKernelHost {
     fun addLibraries(libraries: Collection<LibraryDefinition>)
 
     /**
+     * Says whether this [typeName] should be loaded as integration based on loaded libraries.
+     * `null` means that loaded libraries don't care about this [typeName].
+     */
+    fun acceptsIntegrationTypeName(typeName: String): Boolean?
+
+    /**
      * Loads Kotlin standard artifacts (org.jetbrains.kotlin:kotlin-$name:$version)
      *
      * @param artifacts Names of the artifacts substituted to the above line

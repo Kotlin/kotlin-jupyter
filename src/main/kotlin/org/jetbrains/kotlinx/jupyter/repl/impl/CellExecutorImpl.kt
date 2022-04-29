@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
+import org.jetbrains.kotlinx.jupyter.util.accepts
 import java.util.LinkedList
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -42,10 +43,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         processMagics: Boolean,
         invokeAfterCallbacks: Boolean,
         currentCellId: Int,
-        callback: ExecutionStartedCallback?
+        stackFrame: ExecutionStackFrame?,
+        callback: ExecutionStartedCallback?,
     ): InternalEvalResult {
         with(replContext) {
-            val context = ExecutionContext(replContext, displayHandler, this@CellExecutorImpl)
+            val context = ExecutionContext(replContext, displayHandler, this@CellExecutorImpl, stackFrame.push())
 
             log.debug("Executing code:\n$code")
             val preprocessedCode = if (processMagics) {
@@ -103,11 +105,15 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
     }
 
     override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
-        return callback(ExecutionContext(replContext, null, this))
+        return callback(ExecutionContext(replContext, null, this, null.push()))
     }
 
-    private class ExecutionContext(private val sharedContext: SharedReplContext, private val displayHandler: DisplayHandler?, private val executor: CellExecutor) :
-        KotlinKernelHost, ExecutionHost {
+    private class ExecutionContext(
+        private val sharedContext: SharedReplContext,
+        private val displayHandler: DisplayHandler?,
+        private val executor: CellExecutor,
+        private val stackFrame: MutableExecutionStackFrame,
+    ) : KotlinKernelHost, ExecutionHost {
 
         private val executionQueue = LinkedList<ExecutionCallback<*>>()
 
@@ -121,6 +127,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
         override fun addLibraries(libraries: Collection<LibraryDefinition>) {
             if (libraries.isEmpty()) return
+            stackFrame.libraries.addAll(libraries)
             for (library in libraries) {
                 sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
             }
@@ -174,7 +181,15 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             loadKotlinArtifacts(listOf("stdlib-jdk$versionToLoad"), version)
         }
 
-        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false).result
+        override fun acceptsIntegrationTypeName(typeName: String): Boolean? {
+            return stackFrame.traverseStack().mapNotNull { frame ->
+                frame.libraries
+                    .mapNotNull { library -> library.integrationTypeNameRules.accepts(typeName) }
+                    .lastOrNull()
+            }.firstOrNull()
+        }
+
+        override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false, stackFrame = stackFrame).result
 
         override fun display(value: Any) {
             displayHandler?.handleDisplay(value, this)
@@ -196,7 +211,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         }
 
         override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
-            return callback(ExecutionContext(sharedContext, displayHandler, executor))
+            return callback(ExecutionContext(sharedContext, displayHandler, executor, stackFrame.push()))
         }
 
         override fun declare(variables: Iterable<VariableDeclaration>) {

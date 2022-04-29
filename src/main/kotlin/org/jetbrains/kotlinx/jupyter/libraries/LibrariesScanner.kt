@@ -19,20 +19,33 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 
 class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
+    private val discardedFQNs = mutableSetOf<TypeName>()
 
-    private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterProcessed(): List<I> {
-        return filter { processedFQNs.add(it.fqn) }
+    private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterNamesToLoad(host: KotlinKernelHost): List<I> {
+        return filter {
+            val typeName = it.fqn
+            val acceptance = host.acceptsIntegrationTypeName(typeName)
+            log.debug("Acceptance result for $typeName: $acceptance")
+            when (acceptance) {
+                true -> processedFQNs.add(typeName)
+                false -> {
+                    discardedFQNs.add(typeName)
+                    false
+                }
+                null -> typeName !in discardedFQNs && processedFQNs.add(typeName)
+            }
+        }
     }
 
     fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost) {
-        val scanResult = scanForLibraries(classLoader)
+        val scanResult = scanForLibraries(classLoader, host)
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
         log.debug("Number of detected definitions: ${libraries.size}")
         host.addLibraries(libraries)
     }
 
-    private fun scanForLibraries(classLoader: ClassLoader): LibrariesScanResult {
+    private fun scanForLibraries(classLoader: ClassLoader, host: KotlinKernelHost): LibrariesScanResult {
         val results = classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
             val contents = url.readText()
             Json.decodeFromString<LibrariesScanResult>(contents)
@@ -47,8 +60,8 @@ class LibrariesScanner(val notebook: Notebook) {
         }
 
         return LibrariesScanResult(
-            definitions.filterProcessed(),
-            producers.filterProcessed(),
+            definitions.filterNamesToLoad(host),
+            producers.filterNamesToLoad(host),
         )
     }
 

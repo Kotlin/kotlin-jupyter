@@ -22,8 +22,11 @@ import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.SubtypeThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
 import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
+import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
+import org.jetbrains.kotlinx.jupyter.util.NameAcceptanceRule
 import kotlin.reflect.KMutableProperty
 
 /**
@@ -65,6 +68,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         private val codePreprocessors = mutableListOf<CodePreprocessor>()
 
         private val internalVariablesMarkers = mutableListOf<InternalVariablesMarker>()
+
+        private val integrationTypeNameRules = mutableListOf<AcceptanceRule<String>>()
 
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
@@ -197,6 +202,31 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             preprocessCodeWithLibraries { CodePreprocessor.Result(this.callback(it)) }
         }
 
+        /**
+         * All integrations transitively loaded by this integration will be tested against
+         * passed acceptance rule and won't be loaded if the rule returned `false`.
+         * If there were no acceptance rules that returned not-null values, integration
+         * **will be loaded**. If there are several acceptance rules that returned not-null values,
+         * the latest one will be taken into account.
+         */
+        fun addIntegrationTypeNameRule(rule: AcceptanceRule<TypeName>) {
+            integrationTypeNameRules.add(rule)
+        }
+
+        /**
+         * See [addIntegrationTypeNameRule]
+         */
+        fun acceptIntegrationTypeNameIf(predicate: (TypeName) -> Boolean) {
+            addIntegrationTypeNameRule(NameAcceptanceRule(true, predicate))
+        }
+
+        /**
+         * See [addIntegrationTypeNameRule]
+         */
+        fun discardIntegrationTypeNameIf(predicate: (TypeName) -> Boolean) {
+            addIntegrationTypeNameRule(NameAcceptanceRule(false, predicate))
+        }
+
         internal fun getDefinition() =
             libraryDefinition {
                 it.init = init
@@ -214,6 +244,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.resources = resources
                 it.codePreprocessors = codePreprocessors
                 it.internalVariablesMarkers = internalVariablesMarkers
+                it.integrationTypeNameRules = integrationTypeNameRules
             }
     }
 

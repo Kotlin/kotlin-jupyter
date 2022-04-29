@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.repl.impl.ExecutionStackFrame
 
 /**
  * Executes notebook cell code.
@@ -18,7 +19,8 @@ interface CellExecutor : ExecutionHost {
         processMagics: Boolean = true,
         invokeAfterCallbacks: Boolean = true,
         currentCellId: Int = -1,
-        callback: ExecutionStartedCallback? = null
+        stackFrame: ExecutionStackFrame? = null,
+        callback: ExecutionStartedCallback? = null,
     ): InternalEvalResult
 }
 

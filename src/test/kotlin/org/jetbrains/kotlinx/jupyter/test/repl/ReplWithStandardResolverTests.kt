@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
@@ -7,6 +8,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
@@ -173,6 +175,19 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         assertEquals(25, result.resultValue)
         file.delete()
+    }
+
+    @Test
+    fun `multiple integrations in one JAR with the filter enabled`() {
+        fun includeLib(name: String) = eval("%use @file[src/test/testData/twoFqns/$name.json]")
+
+        includeLib("lib1")
+
+        eval("xxx").resultValue shouldBe 1
+        shouldThrow<ReplCompilerException> { eval("yyy").resultValue }
+
+        includeLib("lib2")
+        eval("yyy").resultValue shouldBe 2
     }
 
     @Test

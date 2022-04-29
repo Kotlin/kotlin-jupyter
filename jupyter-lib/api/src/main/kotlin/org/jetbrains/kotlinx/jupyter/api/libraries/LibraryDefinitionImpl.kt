@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 
 /**
  * Trivial implementation of [LibraryDefinition] - simple container.
@@ -32,6 +33,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var internalVariablesMarkers: List<InternalVariablesMarker> = emptyList()
     override var minKernelVersion: KotlinKernelVersion? = null
     override var originalDescriptorText: String? = null
+    override var integrationTypeNameRules: List<AcceptanceRule<String>> = emptyList()
 
     companion object {
         internal fun build(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition {

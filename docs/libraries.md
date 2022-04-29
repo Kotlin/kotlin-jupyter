@@ -24,6 +24,7 @@ Library descriptor is a `<libName>.json` file with the following fields:
 - `renderers`: a mapping from fully qualified names of types to be rendered to the Kotlin expression returning output value.
   Source object is referenced as `$it`
 - `resources`: a list of JS/CSS resources. See [this descriptor](../src/test/testData/lib-with-resources.json) for example
+- `integrationTypeNameRules`: a list of rules for integration classes which are about to be loaded transitively. Each rule has the form `[+|-]:<pattern>` where `+` or `-` denotes if this pattern is accepted or declined. Pattern may consist of any characters. Special combinations are allowed: `?` (any single character or no character), `*` (any character excluding dot), `**` (any character).
 
 *All fields are optional
 
@@ -71,7 +72,7 @@ plugins {
 This plugin adds following dependencies to your project:
 
 | Artifact                         | Gradle option to exclude/include | Enabled by default | Dependency scope     | Method for adding dependency manually    |
-| :------------------------------- | :------------------------------- | :----------------- | :------------------- | :--------------------------------------- |
+|:---------------------------------|:---------------------------------|:-------------------|:---------------------|:-----------------------------------------|
 | `kotlin-jupyter-api`             | `kotlin.jupyter.add.api`         | yes                | `compileOnly`        | `addApiDependency(version: String?)`     |
 | `kotlin-jupyter-api-annotations` | `kotlin.jupyter.add.scanner`     | no                 | `compileOnly`        | `addScannerDependency(version: String?)` |
 | `kotlin-jupyter-test-kit`        | `kotlin.jupyter.add.testkit`     | yes                | `testImplementation` | `addTestKitDependency(version: String?)` |

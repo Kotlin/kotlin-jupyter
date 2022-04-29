@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.util.KotlinKernelVersionSerializer
+import org.jetbrains.kotlinx.jupyter.util.PatternNameAcceptanceRule
 import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 
@@ -42,6 +43,8 @@ class LibraryDescriptor(
 
     @Serializable(KotlinKernelVersionSerializer::class)
     val minKernelVersion: KotlinKernelVersion? = null,
+
+    val integrationTypeNameRules: List<PatternNameAcceptanceRule> = emptyList(),
 ) {
     fun convertToDefinition(arguments: List<Variable>): LibraryDefinition {
         val mapping = substituteArguments(variables, arguments)
@@ -90,6 +93,7 @@ class LibraryDescriptor(
             it.renderers = renderers.replaceVariables(mapping)
             it.resources = resources.replaceVariables(mapping)
             it.minKernelVersion = minKernelVersion
+            it.integrationTypeNameRules = integrationTypeNameRules.replaceVariables(mapping)
             it.originalDescriptorText = Json.encodeToString(this)
         }
     }

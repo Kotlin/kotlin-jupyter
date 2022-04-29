@@ -64,7 +64,7 @@ abstract class ListToMapSerializer<T, K, V>(
     }
 
     override fun serialize(encoder: Encoder, value: List<T>) {
-        val tempMap = value.map(reverseMapper).toMap()
+        val tempMap = value.associate(reverseMapper)
         utilSerializer.serialize(encoder, tempMap)
     }
 }
@@ -113,5 +113,32 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
 
     override fun serialize(encoder: Encoder, value: ResourceFallbacksBundle) {
         encoder.encodeSerializableValue(serializer(), value.locations)
+    }
+}
+
+object PatternNameAcceptanceRuleSerializer : KSerializer<PatternNameAcceptanceRule> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(PatternNameAcceptanceRule::class.qualifiedName!!, PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): PatternNameAcceptanceRule {
+        val rule = decoder.decodeString()
+        fun throwError(): Nothing = throw SerializationException("Wrong format of pattern rule: $rule")
+
+        val parts = rule.split(':').map { it.trim() }
+        val (sign, pattern) = when (parts.size) {
+            1 -> "+" to parts[0]
+            2 -> parts[0] to parts[1]
+            else -> throwError()
+        }
+        val accepts = when (sign) {
+            "+" -> true
+            "-" -> false
+            else -> throwError()
+        }
+
+        return PatternNameAcceptanceRule(accepts, pattern)
+    }
+
+    override fun serialize(encoder: Encoder, value: PatternNameAcceptanceRule) {
+        encoder.encodeString("${ if (value.acceptsFlag) '+' else '-' }:${value.pattern}")
     }
 }

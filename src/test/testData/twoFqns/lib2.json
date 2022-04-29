@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "src/test/testData/twoFqns/kotlin-jupyter-api-test-0.0.17.jar"
+  ],
+  "integrationTypeNameRules": [
+    "-:**",
+    "+:org.jetbrains.test.kotlinx.jupyter.api.Integration2"
+  ]
+}
