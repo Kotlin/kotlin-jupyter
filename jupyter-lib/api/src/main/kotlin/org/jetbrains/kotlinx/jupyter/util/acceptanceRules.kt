@@ -99,5 +99,13 @@ class PatternNameAcceptanceRule(
  * 3) returns `null` if all acceptance results are `null` or the iterable is empty
  */
 fun <T> Iterable<AcceptanceRule<T>>.accepts(obj: T): Boolean? {
-    return mapNotNull { it.accepts(obj) }.lastOrNull()
+    return unionAcceptance(map { it.accepts(obj) })
+}
+
+fun unionAcceptance(results: Iterable<Boolean?>): Boolean? {
+    return results.filterNotNull().lastOrNull()
+}
+
+fun unionAcceptance(vararg result: Boolean?): Boolean? {
+    return unionAcceptance(result.toList())
 }

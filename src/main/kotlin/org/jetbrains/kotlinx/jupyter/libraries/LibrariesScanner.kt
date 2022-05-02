@@ -18,15 +18,22 @@ import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 import org.jetbrains.kotlinx.jupyter.util.accepts
+import org.jetbrains.kotlinx.jupyter.util.unionAcceptance
 
 class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
 
-    private fun <T, I : LibrariesInstantiable<T>> Iterable<I>.filterNamesToLoad(host: KotlinKernelHost): List<I> {
+    private fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNamesToLoad(
+        host: KotlinKernelHost,
+        integrationTypeNameRules: Iterable<AcceptanceRule<TypeName>>,
+    ): List<I> {
         return filter {
             val typeName = it.fqn
-            val acceptance = host.acceptsIntegrationTypeName(typeName)
+            val acceptance = unionAcceptance(
+                host.acceptsIntegrationTypeName(typeName),
+                integrationTypeNameRules.accepts(typeName)
+            )
             log.debug("Acceptance result for $typeName: $acceptance")
             when (acceptance) {
                 true -> processedFQNs.add(typeName)
@@ -57,20 +64,15 @@ class LibrariesScanner(val notebook: Notebook) {
         val producers = mutableListOf<LibrariesProducerDeclaration>()
 
         for (result in results) {
-            for (definition in result.definitions) {
-                if (integrationTypeNameRules.accepts(definition.fqn) != false)
-                    definitions += definition
-            }
-
-            for (producer in result.producers) {
-                if (integrationTypeNameRules.accepts(producer.fqn) != false)
-                    producers += producer
-            }
+            definitions.addAll(result.definitions)
+            producers.addAll(result.producers)
         }
 
+        fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNames() = filterNamesToLoad(host, integrationTypeNameRules)
+
         return LibrariesScanResult(
-            definitions.filterNamesToLoad(host),
-            producers.filterNamesToLoad(host),
+            definitions.filterNames(),
+            producers.filterNames(),
         )
     }
 
