@@ -16,6 +16,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
+import org.jetbrains.kotlinx.jupyter.util.accepts
 
 class LibrariesScanner(val notebook: Notebook) {
     private val processedFQNs = mutableSetOf<TypeName>()
@@ -37,15 +39,15 @@ class LibrariesScanner(val notebook: Notebook) {
         }
     }
 
-    fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost) {
-        val scanResult = scanForLibraries(classLoader, host)
+    fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost, integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()) {
+        val scanResult = scanForLibraries(classLoader, host, integrationTypeNameRules)
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
         val libraries = instantiateLibraries(classLoader, scanResult, notebook)
         log.debug("Number of detected definitions: ${libraries.size}")
         host.addLibraries(libraries)
     }
 
-    private fun scanForLibraries(classLoader: ClassLoader, host: KotlinKernelHost): LibrariesScanResult {
+    private fun scanForLibraries(classLoader: ClassLoader, host: KotlinKernelHost, integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()): LibrariesScanResult {
         val results = classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
             val contents = url.readText()
             Json.decodeFromString<LibrariesScanResult>(contents)
@@ -55,8 +57,15 @@ class LibrariesScanner(val notebook: Notebook) {
         val producers = mutableListOf<LibrariesProducerDeclaration>()
 
         for (result in results) {
-            definitions.addAll(result.definitions)
-            producers.addAll(result.producers)
+            for (definition in result.definitions) {
+                if (integrationTypeNameRules.accepts(definition.fqn) != false)
+                    definitions += definition
+            }
+
+            for (producer in result.producers) {
+                if (integrationTypeNameRules.accepts(producer.fqn) != false)
+                    producers += producer
+            }
         }
 
         return LibrariesScanResult(
