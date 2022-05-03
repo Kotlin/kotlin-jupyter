@@ -4,7 +4,6 @@ import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import java.io.File
@@ -33,7 +32,8 @@ fun interface ReplProvider {
                 EmptyResolutionInfoProvider,
                 classpath,
                 isEmbedded = true,
-                resolverConfig = ResolverConfig(defaultRepositories, resolver)
+                mavenRepositories = defaultRepositories,
+                libraryResolver = resolver
             ).apply {
                 initializeWithCurrentClasspath()
             }

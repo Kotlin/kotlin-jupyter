@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
@@ -12,8 +11,8 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
-import org.jetbrains.kotlinx.jupyter.test.testResolverConfig
 import java.io.File
 
 abstract class AbstractReplTest {
@@ -44,13 +43,13 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeReplWithTestResolver(): ReplForJupyter {
-        return ReplForJupyterImpl(resolutionInfoProvider, classpath, homeDir, testResolverConfig)
+        return ReplForJupyterImpl(resolutionInfoProvider, classpath, homeDir, libraryResolver = testLibraryResolver)
     }
 
     protected fun makeReplWithStandardResolver(): ReplForJupyter {
         val standardResolutionInfoProvider = getDefaultDirectoryResolutionInfoProvider(KERNEL_LIBRARIES.homeLibrariesDir(homeDir))
-        val config = ResolverConfig(testRepositories, getStandardResolver(".", standardResolutionInfoProvider))
-        return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, config, standardResolverRuntimeProperties)
+        val resolver = getStandardResolver(".", standardResolutionInfoProvider)
+        return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, testRepositories, resolver, standardResolverRuntimeProperties)
     }
 
     protected fun makeEmbeddedRepl(): ReplForJupyter {

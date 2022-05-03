@@ -24,7 +24,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -59,11 +58,8 @@ val classpath = scriptCompilationClasspathFromContext(
     classLoader = DependsOn::class.java.classLoader
 )
 
-val testResolverConfig: ResolverConfig
-    get() = ResolverConfig(
-        testRepositories,
-        getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
-    )
+val testLibraryResolver: LibraryResolver
+    get() = getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
 
 fun assertUnit(value: Any?) = assertEquals(Unit, value)
 

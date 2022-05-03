@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.common.getNameForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.zeromq.SocketType
@@ -131,7 +131,8 @@ data class KernelConfig(
     val signatureKey: String,
     val scriptClasspath: List<File> = emptyList(),
     val homeDir: File?,
-    val resolverConfig: ResolverConfig?,
+    val mavenRepositories: List<RepositoryCoordinates> = listOf(),
+    val libraryResolver: LibraryResolver? = null,
     val resolutionInfoProvider: ResolutionInfoProvider,
     val embedded: Boolean = false,
     val debugPort: Int? = null,
@@ -162,7 +163,8 @@ data class KernelConfig(
                 signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
                 scriptClasspath = args.scriptClasspath,
                 homeDir = args.homeDir,
-                resolverConfig = loadResolverConfig(args.homeDir?.toString(), resolutionInfoProvider),
+                mavenRepositories = defaultRepositories,
+                libraryResolver = getStandardResolver(args.homeDir?.toString(), resolutionInfoProvider),
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,
                 debugPort = args.debugPort,
@@ -170,5 +172,3 @@ data class KernelConfig(
         }
     }
 }
-
-fun loadResolverConfig(homeDir: String?, resolutionInfoProvider: ResolutionInfoProvider) = ResolverConfig(defaultRepositories, getStandardResolver(homeDir, resolutionInfoProvider))

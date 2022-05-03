@@ -139,7 +139,7 @@ class ParseMagicsTests {
         val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider)
         val magicsHandler = FullMagicsHandler(
             options,
-            LibrariesProcessorImpl(testResolverConfig.libraries, defaultRuntimeProperties.version),
+            LibrariesProcessorImpl(testLibraryResolver, defaultRuntimeProperties.version),
             switcher,
         )
         val processor = MagicsProcessor(magicsHandler)

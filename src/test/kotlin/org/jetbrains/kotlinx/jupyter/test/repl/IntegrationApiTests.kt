@@ -5,7 +5,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.test.classpath
@@ -19,11 +18,7 @@ import org.junit.jupiter.api.assertThrows
 class IntegrationApiTests {
 
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyterImpl {
-        val config = ResolverConfig(
-            testRepositories,
-            libs.toList().toLibraries()
-        )
-        return ReplForJupyterImpl(EmptyResolutionInfoProvider, classpath, null, config)
+        return ReplForJupyterImpl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libs.toList().toLibraries())
     }
 
     @Test

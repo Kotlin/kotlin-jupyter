@@ -16,7 +16,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
@@ -41,14 +40,12 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>) = makeRepl(libs.toList().toLibraries())
 
-    private fun makeRepl(libs: LibraryResolver) = ReplForJupyterImpl(
+    private fun makeRepl(libraryResolver: LibraryResolver) = ReplForJupyterImpl(
         resolutionInfoProvider,
         classpathWithTestLib,
         homeDir,
-        ResolverConfig(
-            testRepositories,
-            libs
-        )
+        testRepositories,
+        libraryResolver
     )
 
     private fun testOneLibUsage(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {

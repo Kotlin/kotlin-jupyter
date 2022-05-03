@@ -21,7 +21,7 @@ import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesReso
 import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
-open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?) : JupyterScriptDependenciesResolver {
+open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<RepositoryCoordinates>) : JupyterScriptDependenciesResolver {
 
     private val log = getLogger("resolver")
 
@@ -38,7 +38,7 @@ open class JupyterScriptDependenciesResolverImpl(resolverConfig: ResolverConfig?
             FileSystemDependenciesResolver(),
             RemoteResolverWrapper(MavenDependenciesResolver())
         )
-        resolverConfig?.repositories?.forEach { addRepository(Repo(it)) }
+        mavenRepositories.forEach { addRepository(Repo(it)) }
     }
 
     private fun buildOptions(vararg options: Pair<DependenciesResolverOptionsName, String>): Options {

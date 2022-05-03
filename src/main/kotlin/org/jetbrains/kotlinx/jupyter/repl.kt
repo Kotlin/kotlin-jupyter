@@ -32,7 +32,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolverConfig
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
@@ -40,6 +39,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
@@ -79,6 +79,7 @@ import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
+import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
@@ -142,7 +143,9 @@ interface ReplForJupyter {
 
     val currentClassLoader: ClassLoader
 
-    val resolverConfig: ResolverConfig?
+    val mavenRepositories: List<RepositoryCoordinates>
+
+    val libraryResolver: LibraryResolver?
 
     val runtimeProperties: ReplRuntimeProperties
 
@@ -168,7 +171,8 @@ class ReplForJupyterImpl(
     override val resolutionInfoProvider: ResolutionInfoProvider,
     private val scriptClasspath: List<File> = emptyList(),
     override val homeDir: File? = null,
-    override val resolverConfig: ResolverConfig? = null,
+    override val mavenRepositories: List<RepositoryCoordinates> = listOf(),
+    override val libraryResolver: LibraryResolver? = null,
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     private val scriptReceivers: List<Any> = emptyList(),
     override val isEmbedded: Boolean = false,
@@ -183,7 +187,8 @@ class ReplForJupyterImpl(
             config.resolutionInfoProvider,
             config.scriptClasspath,
             config.homeDir,
-            config.resolverConfig,
+            config.mavenRepositories,
+            config.libraryResolver,
             runtimeProperties,
             scriptReceivers,
             config.embedded
@@ -233,7 +238,7 @@ class ReplForJupyterImpl(
 
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
-    private val resolver = JupyterScriptDependenciesResolverImpl(resolverConfig)
+    private val resolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
 
     private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
     private val shutdownCodes = mutableListOf<ExecutionCallback<*>>()
@@ -244,7 +249,7 @@ class ReplForJupyterImpl(
         runtimeProperties.jvmTargetForSnippets
     )
 
-    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(resolverConfig?.libraries, runtimeProperties.version)
+    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(libraryResolver, runtimeProperties.version)
 
     private val magics = MagicsProcessor(
         FullMagicsHandler(

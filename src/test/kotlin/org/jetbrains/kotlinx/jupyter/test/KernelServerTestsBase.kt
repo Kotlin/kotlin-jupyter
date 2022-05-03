@@ -38,7 +38,6 @@ open class KernelServerTestsBase {
         signatureScheme = "hmac1-sha256",
         signatureKey = "",
         scriptClasspath = classpath,
-        resolverConfig = null,
         homeDir = File(""),
         resolutionInfoProvider = EmptyResolutionInfoProvider,
     )
