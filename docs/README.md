@@ -242,7 +242,8 @@ Other options are resolving library descriptor from a local file or from remote 
  - [roboquant](https://roboquant.org) - Algorithmic trading platform for Kotlin
  - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
- - [spark](https://github.com/apache/spark) - Unified analytics engine for large-scale data processing
+ - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
+ - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
 
 ### Rich output
   
