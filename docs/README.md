@@ -227,6 +227,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [kotlin-dl](https://github.com/JetBrains/KotlinDL) - KotlinDL library which provides Keras-like API for deep learning
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
+ - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
