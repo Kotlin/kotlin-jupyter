@@ -30,8 +30,7 @@ abstract class AbstractLibraryResolutionInfo(
             get() = sha
 
         val sha: String by lazy {
-            val (resolvedSha, _) = KERNEL_LIBRARIES.getLatestCommitToLibraries(ref, null) ?: return@lazy ref
-            resolvedSha
+            KERNEL_LIBRARIES.getLatestCommitToLibraries(ref, null)?.sha ?: return@lazy ref
         }
 
         override val args = listOf(Variable("ref", ref))

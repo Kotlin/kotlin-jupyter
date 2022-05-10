@@ -35,9 +35,7 @@ class LibraryDescriptorsManager private constructor(
     val userCacheDir = userSettingsDir.resolve("cache")
     val localLibrariesDir = File(localPath)
     val defaultBranch = "master"
-    val latestCommitOnDefaultBranch by lazy {
-        getLatestCommitToLibraries(defaultBranch)?.first
-    }
+    val latestCommitOnDefaultBranch get() = getLatestCommitToLibraries(defaultBranch)?.sha
 
     fun homeLibrariesDir(homeDir: File? = null) = (homeDir ?: File("")).resolve(homePath)
 
@@ -56,7 +54,7 @@ class LibraryDescriptorsManager private constructor(
         return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
     }
 
-    fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String? = null): Pair<String, String>? {
+    fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String? = null): CommitInfo? {
         return catchAll {
             var url = "$apiPrefix/commits?path=$remotePath&sha=$ref"
             if (sinceTimestamp != null) {
@@ -79,7 +77,7 @@ class LibraryDescriptorsManager private constructor(
                 val commit = arr[0] as JsonObject
                 val sha = (commit["sha"] as JsonPrimitive).content
                 val timestamp = (((commit["commit"] as JsonObject)["committer"] as JsonObject)["date"] as JsonPrimitive).content
-                sha to timestamp
+                CommitInfo(sha, timestamp)
             }
         }
     }
@@ -165,6 +163,11 @@ class LibraryDescriptorsManager private constructor(
         exceptionsHandler.handle(logger, message, e)
         null
     }
+
+    class CommitInfo(
+        val sha: String,
+        val timestamp: String,
+    )
 
     companion object {
         private const val GITHUB_API_HOST = "api.github.com"
