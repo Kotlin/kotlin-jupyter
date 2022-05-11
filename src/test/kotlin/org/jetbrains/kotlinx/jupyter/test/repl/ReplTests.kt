@@ -25,6 +25,7 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Path
@@ -450,6 +451,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    @Disabled
     fun testAnonymousObjectCustomRendering() {
         eval("USE { render<ArrayList<*>> { it.size } }")
         eval(
@@ -500,6 +502,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    @Disabled
     fun testIssue356() {
         eval(
             """

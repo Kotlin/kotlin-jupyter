@@ -27,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -450,6 +451,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
+    @Disabled("No properties are generated for desctructing declarations in 1.6.0")
     fun testUpdateVariable() {
         val repl = testOneLibUsage(
             library {
