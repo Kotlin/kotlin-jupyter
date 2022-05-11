@@ -522,6 +522,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    @Disabled
     fun testIssue360() {
         eval("val a = 1")
         eval("fun b() = a")
