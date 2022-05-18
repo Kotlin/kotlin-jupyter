@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
+import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
@@ -123,5 +124,12 @@ interface LibraryDefinition {
      * Integration type name rules for the library integration classes which are about to be loaded transitively
      */
     val integrationTypeNameRules: List<AcceptanceRule<String>>
+        get() = emptyList()
+
+    /**
+     * Callbacks that are run if [java.lang.ThreadDeath] was thrown during cell execution.
+     * In normal conditions, it happens if the user interrupted cell execution via UI
+     */
+    val interruptionCallbacks: List<InterruptionCallback>
         get() = emptyList()
 }

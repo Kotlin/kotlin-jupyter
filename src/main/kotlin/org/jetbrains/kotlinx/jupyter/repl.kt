@@ -35,6 +35,7 @@ import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResol
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
+import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
@@ -62,6 +63,7 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalVariablesMarkersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.InterruptionCallbacksProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
@@ -356,6 +358,8 @@ class ReplForJupyterImpl(
 
     private val fileAnnotationsProcessor: FileAnnotationsProcessor = FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
 
+    private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(this)
+
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext = SharedReplContext(
@@ -374,6 +378,7 @@ class ReplForJupyterImpl(
         internalEvaluator,
         this,
         internalVariablesMarkersProcessor,
+        interruptionCallbacksProcessor,
     ).also {
         notebook.sharedReplContext = it
     }

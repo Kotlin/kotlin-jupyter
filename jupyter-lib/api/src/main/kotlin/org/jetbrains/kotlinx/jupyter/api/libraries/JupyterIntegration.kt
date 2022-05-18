@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
+import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
@@ -70,6 +71,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         private val internalVariablesMarkers = mutableListOf<InternalVariablesMarker>()
 
         private val integrationTypeNameRules = mutableListOf<AcceptanceRule<String>>()
+
+        private val interruptionCallbacks = mutableListOf<InterruptionCallback>()
 
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
@@ -227,6 +230,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             addIntegrationTypeNameRule(NameAcceptanceRule(false, predicate))
         }
 
+        fun onInterrupt(action: InterruptionCallback) {
+            interruptionCallbacks.add(action)
+        }
+
         internal fun getDefinition() =
             libraryDefinition {
                 it.init = init
@@ -245,6 +252,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.codePreprocessors = codePreprocessors
                 it.internalVariablesMarkers = internalVariablesMarkers
                 it.integrationTypeNameRules = integrationTypeNameRules
+                it.interruptionCallbacks = interruptionCallbacks
             }
     }
 

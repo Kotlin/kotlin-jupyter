@@ -1,11 +1,14 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -175,5 +178,23 @@ class IntegrationApiTests {
 
         val result = repl.eval("\"abab\"")
         assertEquals("axax", result.resultValue)
+    }
+
+    @Test
+    fun `interruption callbacks`() {
+        var x = 0
+        val repl = makeRepl(
+            "lib1" to library {
+                onInterrupt { ++x }
+            }
+        )
+
+        repl.eval("%use lib1")
+        x shouldBe 0
+
+        shouldThrow<ReplEvalRuntimeException> {
+            repl.eval("throw java.lang.ThreadDeath()")
+        }
+        x shouldBe 1
     }
 }

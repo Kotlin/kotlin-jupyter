@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
@@ -65,8 +66,17 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
 
             val result = baseHost.withHost(context) {
-                evaluator.eval(preprocessedCode, currentCellId) { internalId ->
-                    if (callback != null) callback(internalId, preprocessedCode)
+                try {
+                    evaluator.eval(preprocessedCode, currentCellId) { internalId ->
+                        if (callback != null) callback(internalId, preprocessedCode)
+                    }
+                } catch (e: ReplException) {
+                    if (e.cause is ThreadDeath) {
+                        rethrowAsLibraryException(LibraryProblemPart.INTERRUPTION_CALLBACKS) {
+                            interruptionCallbacksProcessor.runCallbacks()
+                        }
+                    }
+                    throw e
                 }
             }
             val snippetClass = evaluator.lastKClass
@@ -143,6 +153,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.converters.forEach(sharedContext.fieldsProcessor::register)
                 library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
                 library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
+                library.interruptionCallbacks.forEach(sharedContext.interruptionCallbacksProcessor::register)
                 sharedContext.afterCellExecution.addAll(library.afterCellExecution)
                 sharedContext.codePreprocessor.addAll(library.codePreprocessors)
 

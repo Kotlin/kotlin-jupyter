@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
+import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
@@ -34,6 +35,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var minKernelVersion: KotlinKernelVersion? = null
     override var originalDescriptorText: String? = null
     override var integrationTypeNameRules: List<AcceptanceRule<String>> = emptyList()
+    override var interruptionCallbacks: List<InterruptionCallback> = emptyList()
 
     companion object {
         internal fun build(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition {

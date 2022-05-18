@@ -19,6 +19,7 @@ enum class LibraryProblemPart(val message: String) {
     AFTER_CELL_CALLBACKS("after-cell-execution callbacks"),
     INTERNAL_VARIABLES_MARKERS("internal variables markers"),
     SHUTDOWN("shutdown callbacks/codes"),
+    INTERRUPTION_CALLBACKS("interruption callbacks"),
 }
 
 fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {
