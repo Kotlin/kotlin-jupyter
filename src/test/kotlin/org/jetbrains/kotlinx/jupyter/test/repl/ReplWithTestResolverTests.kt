@@ -45,6 +45,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testDataframe() {
+        eval("SessionOptions.resolveSources = true")
+
         val res = eval(
             """
             %use dataframe
@@ -64,6 +66,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
         val html = value["text/html"]!!
         assertTrue(html.contains("Bill"))
+
+        res.metadata.newSources.shouldHaveAtLeastSize(3)
     }
 
     @Test
@@ -172,7 +176,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         }
 
         // Value should be cached, and all these requests should not take much time
-        assertTimeout(Duration.ofSeconds(10)) {
+        assertTimeout(Duration.ofSeconds(20)) {
             for (i in 1..10000) {
                 completeOrFail("%use kmath(", 11).matches() shouldHaveAtLeastSize 5
             }

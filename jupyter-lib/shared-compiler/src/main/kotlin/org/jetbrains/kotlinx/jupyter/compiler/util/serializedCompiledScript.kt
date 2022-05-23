@@ -23,6 +23,7 @@ data class SerializedCompiledScriptsData(
 @Serializable
 class EvaluatedSnippetMetadata(
     val newClasspath: Classpath = emptyList(),
+    val newSources: Classpath = emptyList(),
     val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,
     val newImports: List<String> = emptyList(),
     val evaluatedVariablesState: Map<String, String?> = mutableMapOf()

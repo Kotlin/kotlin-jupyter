@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
-import jupyter.kotlin.KotlinKernelHostProvider
+import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -10,6 +10,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
+import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
@@ -274,11 +276,14 @@ class ExecuteTests : KernelServerTestsBase() {
                 val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
                 val constructor = loadedClass.constructors.single()
 
-                val hostProvider = object : KotlinKernelHostProvider {
+                val userHandlesProvider = object : UserHandlesProvider {
                     override val host: Nothing? = null
+                    override val notebook: Notebook = NotebookMock
+                    override val sessionOptions: SessionOptions
+                        get() = throw NotImplementedError()
                 }
 
-                val instance = constructor.call(emptyArray<Any>(), NotebookMock, hostProvider)
+                val instance = constructor.call(emptyArray<Any>(), userHandlesProvider)
 
                 val result = xyzProperty.get(instance)
                 assertEquals(42, result)

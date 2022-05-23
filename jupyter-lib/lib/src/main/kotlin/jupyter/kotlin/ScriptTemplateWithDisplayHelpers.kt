@@ -1,17 +1,18 @@
 package jupyter.kotlin
 
+import jupyter.kotlin.providers.UserHandlesProvider
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 abstract class ScriptTemplateWithDisplayHelpers(
-    val notebook: Notebook,
-    private val hostProvider: KotlinKernelHostProvider
+    val userHandlesProvider: UserHandlesProvider
 ) {
-    private val host: KotlinKernelHost get() = hostProvider.host!!
+    private val host: KotlinKernelHost get() = userHandlesProvider.host!!
+
+    val notebook get() = userHandlesProvider.notebook
 
     fun DISPLAY(value: Any) = host.display(value)
 
@@ -35,4 +36,6 @@ abstract class ScriptTemplateWithDisplayHelpers(
     val Out: ResultsAccessor get() = notebook.resultsAccessor
 
     val JavaRuntimeUtils get() = notebook.jreInfo
+
+    val SessionOptions get() = userHandlesProvider.sessionOptions
 }

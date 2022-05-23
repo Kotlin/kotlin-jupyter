@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import jupyter.kotlin.KotlinKernelHostProvider
+import jupyter.kotlin.providers.KotlinKernelHostProvider
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 

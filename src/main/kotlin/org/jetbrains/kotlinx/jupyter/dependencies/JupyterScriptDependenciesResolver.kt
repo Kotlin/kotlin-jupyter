@@ -5,5 +5,9 @@ import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.ResultWithDiagnostics
 
 interface JupyterScriptDependenciesResolver {
+    var resolveSources: Boolean
+
     fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>>
+    fun popAddedClasspath(): List<File>
+    fun popAddedSources(): List<File>
 }

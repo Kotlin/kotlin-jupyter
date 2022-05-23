@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
-import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
+import jupyter.kotlin.providers.UserHandlesProvider
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
@@ -31,6 +32,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
+import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolver
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
@@ -178,7 +180,7 @@ class ReplForJupyterImpl(
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     private val scriptReceivers: List<Any> = emptyList(),
     override val isEmbedded: Boolean = false,
-) : ReplForJupyter, ReplOptions, BaseKernelHost, KotlinKernelHostProvider {
+) : ReplForJupyter, ReplOptions, BaseKernelHost, UserHandlesProvider {
 
     constructor(
         config: KernelConfig,
@@ -215,6 +217,12 @@ class ReplForJupyterImpl(
     val librariesScanner = LibrariesScanner(notebook)
     private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
+    override val sessionOptions: SessionOptions = object : SessionOptions {
+        override var resolveSources: Boolean
+            get() = resolver.resolveSources
+            set(value) { resolver.resolveSources = value }
+    }
+
     override var outputConfig
         get() = outputConfigImpl
         set(value) {
@@ -240,7 +248,7 @@ class ReplForJupyterImpl(
 
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
-    private val resolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
+    private val resolver: JupyterScriptDependenciesResolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
 
     private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
     private val shutdownCodes = mutableListOf<ExecutionCallback<*>>()
@@ -290,6 +298,7 @@ class ReplForJupyterImpl(
             .orEmpty()
 
     override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
+    private val currentSources = mutableSetOf<String>()
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) :
         ClassLoader(parent) {
@@ -321,7 +330,7 @@ class ReplForJupyterImpl(
                 baseClassLoader(scriptClassloader)
             }
         }
-        constructorArgs(notebook, this@ReplForJupyterImpl)
+        constructorArgs(this@ReplForJupyterImpl)
     }
 
     private val jupyterCompiler by lazy {
@@ -460,13 +469,17 @@ class ReplForJupyterImpl(
                 updateClasspath()
             } ?: emptyList()
 
+            val newSources = log.catchAll {
+                updateSources()
+            } ?: emptyList()
+
             val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(
                 result.result.value,
                 rendered,
                 result.scriptInstance,
                 result.result.name,
-                EvaluatedSnippetMetadata(newClasspath, compiledData, newImports, variablesStateUpdate),
+                EvaluatedSnippetMetadata(newClasspath, newSources, compiledData, newImports, variablesStateUpdate),
             )
         }
     }
@@ -518,6 +531,13 @@ class ReplForJupyterImpl(
             println(sb.toString())
         }
 
+        return newClasspath
+    }
+
+    private fun updateSources(): Classpath {
+        val resolvedClasspath = resolver.popAddedSources().map { it.canonicalPath }
+        val newClasspath = resolvedClasspath.filter { it !in currentSources }
+        currentSources.addAll(newClasspath)
         return newClasspath
     }
 

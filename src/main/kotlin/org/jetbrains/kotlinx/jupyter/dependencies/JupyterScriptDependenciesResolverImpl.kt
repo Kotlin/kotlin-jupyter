@@ -30,8 +30,17 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         DependenciesResolverOptionsName.SCOPE to "compile,runtime"
     )
 
+    private val sourcesResolverOptions = buildOptions(
+        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+        DependenciesResolverOptionsName.CLASSIFIER to "sources",
+        DependenciesResolverOptionsName.EXTENSION to "jar",
+    )
+
     private val repositories = arrayListOf<Repo>()
     private val addedClasspath = arrayListOf<File>()
+
+    override var resolveSources: Boolean = false
+    private val addedSourcesClasspath = arrayListOf<File>()
 
     init {
         resolver = CompoundDependenciesResolver(
@@ -57,9 +66,15 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         return resolver.addRepository(repo.coordinates, repo.options).valueOrNull() == true
     }
 
-    fun popAddedClasspath(): List<File> {
+    override fun popAddedClasspath(): List<File> {
         val result = addedClasspath.toList()
         addedClasspath.clear()
+        return result
+    }
+
+    override fun popAddedSources(): List<File> {
+        val result = addedSourcesClasspath.toList()
+        addedSourcesClasspath.clear()
         return result
     }
 
@@ -95,17 +110,29 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                 is DependsOn -> {
                     log.info("Resolving ${annotation.value}")
                     try {
-                        when (val result = runBlocking { resolver.resolve(annotation.value, resolverOptions) }) {
-                            is ResultWithDiagnostics.Failure -> {
+                        doResolve(
+                            { resolver.resolve(annotation.value, resolverOptions) },
+                            onResolved = { files ->
+                                addedClasspath.addAll(files)
+                                classpath.addAll(files)
+                            },
+                            onFailure = { result ->
                                 val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
                                 log.warn(diagnostics.message, diagnostics.exception)
                                 scriptDiagnostics.add(diagnostics)
                             }
-                            is ResultWithDiagnostics.Success -> {
-                                log.info("Resolved: " + result.value.joinToString())
-                                addedClasspath.addAll(result.value)
-                                classpath.addAll(result.value)
-                            }
+                        )
+
+                        if (resolveSources) {
+                            doResolve(
+                                { resolver.resolve(annotation.value, sourcesResolverOptions) },
+                                onResolved = { files ->
+                                    addedSourcesClasspath.addAll(files)
+                                },
+                                onFailure = { result ->
+                                    log.warn("Failed to resolve sources for ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
+                                }
+                            )
                         }
                     } catch (e: Exception) {
                         val diagnostic = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unhandled exception during resolve", exception = e)
@@ -121,6 +148,22 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
 
         return if (scriptDiagnostics.isEmpty()) classpath.asSuccess()
         else makeFailureResult(scriptDiagnostics)
+    }
+
+    private fun doResolve(
+        resolveAction: suspend () -> ResultWithDiagnostics<List<File>>,
+        onResolved: (List<File>) -> Unit,
+        onFailure: (ResultWithDiagnostics.Failure) -> Unit
+    ) {
+        when (val result = runBlocking { resolveAction() }) {
+            is ResultWithDiagnostics.Failure -> {
+                onFailure(result)
+            }
+            is ResultWithDiagnostics.Success -> {
+                log.info("Resolved: " + result.value.joinToString())
+                onResolved(result.value)
+            }
+        }
     }
 
     private class Repo(

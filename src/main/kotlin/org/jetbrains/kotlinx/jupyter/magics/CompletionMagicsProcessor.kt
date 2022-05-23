@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.catchAll
+import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.createCachedFun
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.libraries.Brackets
@@ -85,7 +86,7 @@ class CompletionMagicsProcessor(
 
         private fun handleLibrary(librarySubstring: String, cursor: Int) {
             if (homeDir == null) return
-            val descriptors = libraryDescriptors(homeDir)
+            val descriptors = libraryDescriptors(homeDir)!!
 
             val firstBracketIndex = librarySubstring.indexOf('(')
             if (cursor <= firstBracketIndex || firstBracketIndex == -1) {
@@ -156,8 +157,12 @@ class CompletionMagicsProcessor(
         }
 
         private val getVersions = createCachedFun { artifactLocation: ArtifactLocation ->
-            val metadataXml = getHttp(metadataUrl(artifactLocation)).takeIf { it.status.successful } ?: return@createCachedFun null
-            val document = loadXML(metadataXml.text)
+            val response = getHttp(metadataUrl(artifactLocation))
+            if (!response.status.successful) {
+                getLogger("magics completion").warn("Magic completion request failed: ${response.status}")
+                return@createCachedFun null
+            }
+            val document = loadXML(response.text)
             val versionsTag = document
                 .getElementsByTagName("versions")
                 .singleOrNull() ?: return@createCachedFun emptyList()

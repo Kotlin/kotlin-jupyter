@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.codegen
 
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
-import jupyter.kotlin.KotlinKernelHostProvider
 import jupyter.kotlin.Repository
+import jupyter.kotlin.providers.KotlinKernelHostProvider
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost

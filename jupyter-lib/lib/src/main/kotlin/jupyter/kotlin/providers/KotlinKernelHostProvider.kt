@@ -1,4 +1,4 @@
-package jupyter.kotlin
+package jupyter.kotlin.providers
 
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 
