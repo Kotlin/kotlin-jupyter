@@ -2,10 +2,13 @@ package org.jetbrains.kotlinx.jupyter.compiler
 
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedScriptSource
+import org.jetbrains.kotlinx.jupyter.compiler.util.buildScriptsData
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.util.Base64
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledModuleInMemory
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
@@ -13,23 +16,32 @@ class CompiledScriptsSerializer {
     private val encoder = Base64.getEncoder()
     private val decoder = Base64.getDecoder()
 
-    fun serialize(script: KJvmCompiledScript): SerializedCompiledScriptsData {
+    fun serialize(script: KJvmCompiledScript, source: SourceCode): SerializedCompiledScriptsData {
         val moduleInMemory = script.getCompiledModule() as KJvmCompiledModuleInMemory
 
-        return SerializedCompiledScriptsData(
-            moduleInMemory.compilerOutputFiles.mapNotNullTo(mutableListOf()) { (name, bytes) ->
+        return buildScriptsData {
+            moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
                 if (name.endsWith(".class")) {
-                    SerializedCompiledScript(
-                        name,
-                        encoder.encodeToString(bytes),
-                        !name.contains("$"),
+                    addCompiledScript(
+                        SerializedCompiledScript(
+                            name,
+                            encoder.encodeToString(bytes),
+                            !name.contains("$"),
+                        )
                     )
-                } else null
+                }
             }
-        )
+
+            addSource(
+                SerializedScriptSource(
+                    source.name!! + ".kts",
+                    source.text
+                )
+            )
+        }
     }
 
-    private fun deserialize(data: SerializedCompiledScriptsData): Sequence<Pair<SerializedCompiledScript, ByteArray>> {
+    private fun deserializeCompiledScripts(data: SerializedCompiledScriptsData): Sequence<Pair<SerializedCompiledScript, ByteArray>> {
         return sequence {
             for (script in data.scripts) {
                 yield(script to decoder.decode(script.data))
@@ -39,13 +51,14 @@ class CompiledScriptsSerializer {
 
     /**
      * Deserializes [data] containing information about compiled scripts, saves
-     * it to the [outputDir] directory, returns the list of names of classes
-     * which are meant to be implicit receivers.
+     * it to the [scriptsDir] directory, returns the list of names of classes
+     * which are meant to be implicit receivers. Saves script sources to [sourcesDir].
      */
-    fun deserializeAndSave(data: SerializedCompiledScriptsData, outputDir: Path): List<String> {
+    fun deserializeAndSave(data: SerializedCompiledScriptsData, scriptsDir: Path, sourcesDir: Path): List<String> {
         val classNames = mutableListOf<String>()
-        deserialize(data).forEach { (script, bytes) ->
-            val file = outputDir.resolve(script.fileName).toFile()
+        deserializeCompiledScripts(data).forEach { (script, bytes) ->
+            val file = scriptsDir.resolve(script.fileName).toFile()
+            file.parentFile.mkdirs()
             if (script.isImplicitReceiver) {
                 classNames.add(file.nameWithoutExtension)
             }
@@ -55,6 +68,11 @@ class CompiledScriptsSerializer {
                     out.flush()
                 }
             }
+        }
+        data.sources.forEach { scriptSource ->
+            val file = sourcesDir.resolve(scriptSource.fileName).toFile()
+            file.parentFile.mkdirs()
+            file.writeText(scriptSource.text)
         }
         return classNames
     }

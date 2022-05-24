@@ -41,6 +41,7 @@ interface TrackedInternalEvaluator : InternalEvaluator {
 internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override var logExecution: Boolean = false
     override var writeCompiledClasses: Boolean = false
+    override var serializeScriptData: Boolean = false
     override val lastKClass: KClass<*> = Unit::class
     override val lastClassLoader: ClassLoader = ClassLoader.getSystemClassLoader()
     override val executedCodes = mutableListOf<Code>()

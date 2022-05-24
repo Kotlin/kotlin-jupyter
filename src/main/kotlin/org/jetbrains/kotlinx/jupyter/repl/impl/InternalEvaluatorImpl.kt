@@ -7,7 +7,6 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
@@ -21,6 +20,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
@@ -37,17 +37,18 @@ internal class InternalEvaluatorImpl(
 
     private val scriptsSerializer = CompiledScriptsSerializer()
 
-    private val registeredCompiledScripts = arrayListOf<SerializedCompiledScript>()
+    private val registeredCompiledScripts = SerializedCompiledScriptsData.Builder()
 
-    private fun serializeAndRegisterScript(compiledScript: KJvmCompiledScript) {
-        val serializedData = scriptsSerializer.serialize(compiledScript)
-        registeredCompiledScripts.addAll(serializedData.scripts)
+    private fun serializeAndRegisterScript(compiledScript: KJvmCompiledScript, source: SourceCode) {
+        if (!serializeScriptData) return
+        val serializedData = scriptsSerializer.serialize(compiledScript, source)
+        registeredCompiledScripts.addData(serializedData)
     }
 
     override fun popAddedCompiledScripts(): SerializedCompiledScriptsData {
-        val scripts = registeredCompiledScripts.toList()
+        val data = registeredCompiledScripts.build()
         registeredCompiledScripts.clear()
-        return SerializedCompiledScriptsData(scripts)
+        return data
     }
 
     override var writeCompiledClasses: Boolean
@@ -60,6 +61,9 @@ internal class InternalEvaluatorImpl(
                 cw
             }
         }
+
+    // TODO: change to false after plugin migration
+    override var serializeScriptData: Boolean = true
 
     override val lastKClass get() = compiler.lastKClass
 
@@ -108,7 +112,7 @@ internal class InternalEvaluatorImpl(
                             resultValue.error
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
-                            serializeAndRegisterScript(compiledScript)
+                            serializeAndRegisterScript(compiledScript, codeLine)
                             updateDataAfterExecution(cellId, resultValue)
 
                             if (resultValue is ResultValue.Unit) {

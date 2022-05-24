@@ -2,6 +2,8 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
+import io.kotest.matchers.paths.shouldBeAFile
+import io.kotest.matchers.shouldBe
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -36,6 +38,7 @@ import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertNotNull
@@ -247,6 +250,13 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testCompiledData() {
+        doExecute(
+            """
+            SessionOptions.serializeScriptData = true
+            """.trimIndent(),
+            hasResult = false
+        )
+
         val code =
             """
             val xyz = 42
@@ -265,12 +275,14 @@ class ExecuteTests : KernelServerTestsBase() {
 
                 val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
                 val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
+                dir.toFile().deleteOnExit()
+                val classesDir = dir.resolve("classes")
+                val sourcesDir = dir.resolve("sources")
 
-                val names = deserializer.deserializeAndSave(compiledData, dir)
+                val names = deserializer.deserializeAndSave(compiledData, classesDir, sourcesDir)
                 val kClassName = names.single()
-                val classLoader = URLClassLoader(arrayOf(dir.toUri().toURL()), ClassLoader.getSystemClassLoader())
+                val classLoader = URLClassLoader(arrayOf(classesDir.toUri().toURL()), ClassLoader.getSystemClassLoader())
                 val loadedClass = classLoader.loadClass(kClassName).kotlin
-                dir.toFile().delete()
 
                 @Suppress("UNCHECKED_CAST")
                 val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
@@ -284,9 +296,11 @@ class ExecuteTests : KernelServerTestsBase() {
                 }
 
                 val instance = constructor.call(emptyArray<Any>(), userHandlesProvider)
+                xyzProperty.get(instance) shouldBe 42
 
-                val result = xyzProperty.get(instance)
-                assertEquals(42, result)
+                val sourceFile = sourcesDir.resolve("Line_1.kts")
+                sourceFile.shouldBeAFile()
+                sourceFile.readText() shouldBe "val xyz = 42"
             }
         )
         assertNull(res)

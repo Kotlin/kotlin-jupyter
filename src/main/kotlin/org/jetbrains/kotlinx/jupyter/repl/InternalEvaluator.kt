@@ -9,6 +9,7 @@ interface InternalEvaluator {
 
     var logExecution: Boolean
     var writeCompiledClasses: Boolean
+    var serializeScriptData: Boolean
 
     val lastKClass: KClass<*>
     val lastClassLoader: ClassLoader
