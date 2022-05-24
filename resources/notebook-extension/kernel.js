@@ -181,7 +181,7 @@ define(function(){
                 throw new Error("Position " + cursor + " does not exist in code snippet <" + buf + ">");
             }
 
-            var filter = c => !/^[A-Z0-9_]$/i.test(c);
+            var filter = c => !/^[A-Z0-9_\p{L}]$/ui.test(c);
 
             var start = indexOf(buf, filter, cursor - 1, 0, -1) + 1;
             var end = cursor
@@ -642,7 +642,7 @@ define(function(){
         };
 
         function _isCompletionKey(key) {
-            return /^[A-Z0-9.:"]$/i.test(key);
+            return /^[A-Z0-9.:"\p{L}]$/ui.test(key);
         }
 
         function _processCompletionOnChange(cm, changes, completer) {
