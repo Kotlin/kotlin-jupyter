@@ -225,7 +225,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
- - [kotlin-dl](https://github.com/JetBrains/KotlinDL) - KotlinDL library which provides Keras-like API for deep learning
+ - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning
  - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
