@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
@@ -18,7 +19,8 @@ interface TrackedCellExecutor : CellExecutor {
 
     companion object {
 
-        fun create(baseRepl: ReplForJupyterImpl, mockEvaluator: Boolean): TrackedCellExecutor {
+        fun create(baseRepl: ReplForJupyter, mockEvaluator: Boolean): TrackedCellExecutor {
+            baseRepl as ReplForJupyterImpl
             val context = baseRepl.sharedContext
             val evaluator = if (mockEvaluator) MockedInternalEvaluator() else TrackedInternalEvaluatorImpl(context.evaluator)
             val hackedContext = context.copy(evaluator = evaluator)
@@ -27,9 +29,9 @@ interface TrackedCellExecutor : CellExecutor {
     }
 }
 
-fun ReplForJupyterImpl.mockExecution() = TrackedCellExecutor.create(this, true)
+fun ReplForJupyter.mockExecution() = TrackedCellExecutor.create(this, true)
 
-fun ReplForJupyterImpl.trackExecution() = TrackedCellExecutor.create(this, false)
+fun ReplForJupyter.trackExecution() = TrackedCellExecutor.create(this, false)
 
 internal class MockedCellExecutorImpl(private val executor: CellExecutor, override val executedCodes: List<Code>, override val results: List<Any?>) : TrackedCellExecutor, CellExecutor by executor
 

@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.controlMessagesHandler
 import org.jetbrains.kotlinx.jupyter.messaging.shellMessagesHandler
+import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplFactory
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
@@ -121,7 +122,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
 
         val executionCount = AtomicLong(1)
 
-        val repl = ReplForJupyterImpl(config, runtimeProperties, scriptReceivers)
+        val repl = DefaultReplFactory(config, runtimeProperties, scriptReceivers, conn).createRepl()
 
         val mainThread = Thread.currentThread()
 

@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 
 class LibrariesProcessorImpl(
-    private val libraries: LibraryResolver?,
+    private val libraryResolver: LibraryResolver?,
     private val kernelVersion: KotlinKernelVersion?,
 ) : LibrariesProcessor {
 
@@ -28,7 +28,7 @@ class LibrariesProcessorImpl(
     override fun processNewLibraries(arg: String): List<LibraryDefinitionProducer> =
         splitLibraryCalls(arg).map {
             val (libRef, vars) = parseReferenceWithArgs(it)
-            val library = libraries?.resolve(libRef, vars)
+            val library = libraryResolver?.resolve(libRef, vars)
                 ?: throw ReplException("Unknown library '$libRef'")
 
             _requests.add(LibraryResolutionRequest(libRef, vars, library))

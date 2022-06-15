@@ -29,6 +29,8 @@ interface Notebook {
      */
     val resultsAccessor: ResultsAccessor
 
+    val displays: DisplayContainer
+
     /**
      * Mapping allowing to get cell by execution number
      */

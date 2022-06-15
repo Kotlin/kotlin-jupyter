@@ -59,7 +59,7 @@ val testLibraryDefinition1 = libraryDefinition {
 }
 
 /**
- * Used for [EmbedReplTest.testJsResources]
+ * Used for [EmbeddedTestWithHackedDisplayHandler.testJsResources]
  */
 @Suppress("unused")
 val testLibraryDefinition2 = libraryDefinition {
@@ -123,13 +123,16 @@ class EmbedReplTest : AbstractSingleReplTest() {
         )
         assertEquals("[12, 13, 14]", result2.resultValue)
     }
+}
+
+class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
+    private val displayHandler = TestDisplayHandler()
+    override val repl = makeEmbeddedRepl(displayHandler = displayHandler)
 
     @Test
     fun testJsResources() {
-        val displayHandler = TestDisplayHandler()
         val res = eval(
-            "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
-            displayHandler
+            "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)"
         )
         assertTrue(res.resultValue is Unit)
         assertEquals(1, displayHandler.list.size)

@@ -4,12 +4,13 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
@@ -20,8 +21,8 @@ import org.junit.jupiter.api.assertThrows
 
 class IntegrationApiTests {
 
-    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyterImpl {
-        return ReplForJupyterImpl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libs.toList().toLibraries())
+    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter {
+        return createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libs.toList().toLibraries())
     }
 
     @Test

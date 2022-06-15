@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 
-internal data class SharedReplContext(
+data class SharedReplContext(
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,

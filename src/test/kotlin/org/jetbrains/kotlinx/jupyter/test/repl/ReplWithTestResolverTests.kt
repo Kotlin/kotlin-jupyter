@@ -20,21 +20,21 @@ import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithTestResolverTests : AbstractSingleReplTest() {
-    override val repl = makeReplWithTestResolver()
+    val displays = mutableListOf<Any>()
+    val displayHandler = TestDisplayHandler(displays)
+    override val repl = makeReplWithTestResolver(displayHandler)
 
     @Test
     fun testLetsPlot() {
         val code1 = "%use lets-plot"
         val code2 =
             """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
-        val displays = mutableListOf<Any>()
-        val displayHandler = TestDisplayHandler(displays)
 
-        val res1 = eval(code1, displayHandler)
+        val res1 = eval(code1)
         assertEquals(1, displays.count())
         displays.clear()
         assertUnit(res1.resultValue)
-        val res2 = eval(code2, displayHandler)
+        val res2 = eval(code2)
         assertEquals(0, displays.count())
         val mime = res2.resultValue as? MimeTypedResult
         assertNotNull(mime)
@@ -89,10 +89,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     @Test
     fun testTwoLibrariesInUse() {
         val code = "%use lets-plot, krangl"
-        val displays = mutableListOf<Any>()
-        val displayHandler = TestDisplayHandler(displays)
-
-        eval(code, displayHandler)
+        eval(code)
         assertEquals(1, displays.count())
     }
 

@@ -26,7 +26,9 @@ import kotlin.test.assertEquals
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverTests : AbstractSingleReplTest() {
-    override val repl = makeReplWithStandardResolver()
+    private val displays = mutableListOf<Any>()
+    private val handler = TestDisplayHandler(displays)
+    override val repl = makeReplWithStandardResolver(handler)
 
     @Test
     fun testResolverRepoOrder() {
@@ -105,10 +107,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         )
         assertEquals(43, res2.resultValue)
 
-        val displays = mutableListOf<Any>()
-        val handler = TestDisplayHandler(displays)
-
-        val res3 = eval("%use lets-plot@$libsCommit", handler)
+        val res3 = eval("%use lets-plot@$libsCommit")
         assertEquals(1, displays.count())
         assertUnit(res3.resultValue)
         displays.clear()

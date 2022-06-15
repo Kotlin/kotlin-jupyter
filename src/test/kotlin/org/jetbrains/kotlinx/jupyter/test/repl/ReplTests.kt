@@ -360,7 +360,7 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testOut() {
-        eval("1+1", null, 1)
+        eval("1+1", 1)
         val res = eval("Out[1]")
         res.resultValue shouldBe 2
         shouldThrowAny { eval("Out[3]") }

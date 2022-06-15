@@ -2,10 +2,10 @@ package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import java.io.File
 
 fun interface ReplProvider {
@@ -13,7 +13,7 @@ fun interface ReplProvider {
 
     companion object {
         val withoutLibraryResolution = ReplProvider { classpath ->
-            ReplForJupyterImpl(EmptyResolutionInfoProvider, classpath, isEmbedded = true).apply {
+            createRepl(EmptyResolutionInfoProvider, classpath, isEmbedded = true).apply {
                 initializeWithCurrentClasspath()
             }
         }
@@ -28,7 +28,7 @@ fun interface ReplProvider {
                 res
             }
 
-            ReplForJupyterImpl(
+            createRepl(
                 EmptyResolutionInfoProvider,
                 classpath,
                 isEmbedded = true,
@@ -45,7 +45,7 @@ fun interface ReplProvider {
             )
         }
 
-        private fun ReplForJupyterImpl.initializeWithCurrentClasspath() {
+        private fun ReplForJupyter.initializeWithCurrentClasspath() {
             eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this) }
         }
 

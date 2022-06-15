@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.assertions.fail
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlinx.jupyter.CodeCellImpl
+import org.jetbrains.kotlinx.jupyter.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
@@ -157,7 +157,7 @@ class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Display
 }
 
 object NotebookMock : Notebook {
-    private val cells = hashMapOf<Int, CodeCellImpl>()
+    private val cells = hashMapOf<Int, MutableCodeCell>()
 
     override val cellsList: Collection<CodeCell>
         get() = emptyList()
@@ -165,7 +165,7 @@ object NotebookMock : Notebook {
     override val cellVariables = mapOf<Int, Set<String>>()
     override val resultsAccessor = ResultsAccessor { getResult(it) }
 
-    override fun getCell(id: Int): CodeCellImpl {
+    override fun getCell(id: Int): MutableCodeCell {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"
         )
@@ -175,7 +175,7 @@ object NotebookMock : Notebook {
         return getCell(id).result
     }
 
-    private val displays: DisplayContainer
+    override val displays: DisplayContainer
         get() = error("Not supposed to be called")
 
     override fun getAllDisplays(): List<DisplayResultWithCell> {

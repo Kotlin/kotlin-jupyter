@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.jupyter.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.JupyterSockets
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
-import org.jetbrains.kotlinx.jupyter.NotebookImpl
+import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
@@ -119,11 +119,20 @@ interface DisplayHandler {
     fun handleUpdate(value: Any, host: ExecutionHost, id: String? = null)
 }
 
+object NoOpDisplayHandler : DisplayHandler {
+    override fun handleDisplay(value: Any, host: ExecutionHost) {
+    }
+
+    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+    }
+}
+
 class SocketDisplayHandler(
-    private val socket: JupyterConnection.Socket,
-    private val notebook: NotebookImpl,
-    private val message: Message,
+    private val connection: JupyterConnection,
+    private val notebook: MutableNotebook,
 ) : DisplayHandler {
+    private val socket = connection.iopub
+
     private fun render(host: ExecutionHost, value: Any): DisplayResult? {
         val renderedValue = notebook.renderersProcessor.renderValue(host, value)
         return renderedValue.toDisplayResult(notebook)
@@ -137,7 +146,7 @@ class SocketDisplayHandler(
 
         socket.send(
             makeReplyMessage(
-                message,
+                connection.contextMessage!!,
                 MessageType.DISPLAY_DATA,
                 content = DisplayDataResponse(
                     json["data"],
@@ -158,7 +167,7 @@ class SocketDisplayHandler(
 
         socket.send(
             makeReplyMessage(
-                message,
+                connection.contextMessage!!,
                 MessageType.UPDATE_DISPLAY_DATA,
                 content = DisplayDataResponse(
                     json["data"],
@@ -282,8 +291,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
             }
             val startedTime = ISO8601DateNow
 
-            val displayHandler = SocketDisplayHandler(connection.iopub, repl.notebook, msg)
-
             connection.iopub.sendStatus(KernelStatus.BUSY, msg)
 
             val code = content.code
@@ -301,7 +308,6 @@ fun JupyterConnection.Socket.shellMessagesHandler(msg: Message, repl: ReplForJup
                     repl.eval(
                         EvalRequestData(
                             code,
-                            displayHandler,
                             count.toInt(),
                             content.storeHistory,
                             content.silent,

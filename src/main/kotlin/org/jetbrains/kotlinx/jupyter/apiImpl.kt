@@ -15,27 +15,59 @@ import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
+interface MutableDisplayContainer : DisplayContainer {
+    fun add(display: DisplayResultWrapper)
+
+    fun add(display: DisplayResult, cell: MutableCodeCell)
+
+    fun update(id: String?, display: DisplayResult)
+}
+
+interface MutableCodeCell : CodeCell {
+    var resultVal: Any?
+    fun appendStreamOutput(output: String)
+
+    fun addDisplay(display: DisplayResult)
+
+    override val displays: MutableDisplayContainer
+}
+
+interface MutableNotebook : Notebook {
+    var sharedReplContext: SharedReplContext?
+
+    override val displays: MutableDisplayContainer
+    fun addCell(
+        internalId: Int,
+        preprocessedCode: String,
+        data: EvalData,
+    ): MutableCodeCell
+
+    fun beginEvalSession()
+
+    override val currentCell: MutableCodeCell?
+}
+
 class DisplayResultWrapper private constructor(
     val display: DisplayResult,
-    override val cell: CodeCellImpl,
+    override val cell: MutableCodeCell,
 ) : DisplayResult by display, DisplayResultWithCell {
     companion object {
-        fun create(display: DisplayResult, cell: CodeCellImpl): DisplayResultWrapper {
+        fun create(display: DisplayResult, cell: MutableCodeCell): DisplayResultWrapper {
             return if (display is DisplayResultWrapper) DisplayResultWrapper(display.display, cell)
             else DisplayResultWrapper(display, cell)
         }
     }
 }
 
-class DisplayContainerImpl : DisplayContainer {
+class DisplayContainerImpl : MutableDisplayContainer {
     private val displays: MutableMap<String?, MutableList<DisplayResultWrapper>> = mutableMapOf()
 
-    fun add(display: DisplayResultWrapper) {
+    override fun add(display: DisplayResultWrapper) {
         val list = displays.getOrPut(display.id) { mutableListOf() }
         list.add(display)
     }
 
-    fun add(display: DisplayResult, cell: CodeCellImpl) {
+    override fun add(display: DisplayResult, cell: MutableCodeCell) {
         add(DisplayResultWrapper.create(display, cell))
     }
 
@@ -47,7 +79,7 @@ class DisplayContainerImpl : DisplayContainer {
         return displays[id].orEmpty()
     }
 
-    fun update(id: String?, display: DisplayResult) {
+    override fun update(id: String?, display: DisplayResult) {
         val initialDisplays = displays[id] ?: return
         val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
         initialDisplays.clear()
@@ -62,15 +94,15 @@ class CodeCellImpl(
     override val code: String,
     override val preprocessedCode: String,
     override val prevCell: CodeCell?,
-) : CodeCell {
-    var resultVal: Any? = null
+) : MutableCodeCell {
+    override var resultVal: Any? = null
     override val result: Any?
         get() = resultVal
 
     private var isStreamOutputUpToDate: Boolean = true
     private var collectedStreamOutput: String = ""
     private val streamBuilder = StringBuilder()
-    fun appendStreamOutput(output: String) {
+    override fun appendStreamOutput(output: String) {
         isStreamOutputUpToDate = false
         streamBuilder.append(output)
     }
@@ -87,7 +119,7 @@ class CodeCellImpl(
 
     override val displays = DisplayContainerImpl()
 
-    fun addDisplay(display: DisplayResult) {
+    override fun addDisplay(display: DisplayResult) {
         val wrapper = DisplayResultWrapper.create(display, this)
         displays.add(wrapper)
         notebook.displays.add(wrapper)
@@ -103,11 +135,11 @@ class EvalData(
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
-) : Notebook {
-    private val cells = hashMapOf<Int, CodeCellImpl>()
-    internal var sharedReplContext: SharedReplContext? = null
+) : MutableNotebook {
+    private val cells = hashMapOf<Int, MutableCodeCell>()
+    override var sharedReplContext: SharedReplContext? = null
 
-    override val cellsList: Collection<CodeCellImpl>
+    override val cellsList: Collection<MutableCodeCell>
         get() = cells.values
 
     override val variablesState: Map<String, VariableState> get() {
@@ -122,7 +154,7 @@ class NotebookImpl(
 
     override val resultsAccessor = ResultsAccessor { getResult(it) }
 
-    override fun getCell(id: Int): CodeCellImpl {
+    override fun getCell(id: Int): MutableCodeCell {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'"
         )
@@ -132,10 +164,10 @@ class NotebookImpl(
         return getCell(id).result
     }
 
-    private val history = arrayListOf<CodeCellImpl>()
+    private val history = arrayListOf<MutableCodeCell>()
     private var mainCellCreated = false
 
-    val displays = DisplayContainerImpl()
+    override val displays = DisplayContainerImpl()
 
     override fun getAllDisplays(): List<DisplayResultWithCell> {
         return displays.getAll()
@@ -154,27 +186,11 @@ class NotebookImpl(
         JupyterClientDetector.detect()
     }
 
-    fun variablesReportAsHTML(): String {
-        return generateHTMLVarsReport(variablesState)
-    }
-
-    fun variablesReport(): String {
-        return if (variablesState.isEmpty()) ""
-        else {
-            buildString {
-                append("Visible vars: \n")
-                variablesState.forEach { (name, currentState) ->
-                    append("\t$name : ${currentState.stringValue}\n")
-                }
-            }
-        }
-    }
-
-    fun addCell(
+    override fun addCell(
         internalId: Int,
         preprocessedCode: String,
         data: EvalData,
-    ): CodeCellImpl {
+    ): MutableCodeCell {
         val cell = CodeCellImpl(this, data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
         cells[data.executionCounter] = cell
         history.add(cell)
@@ -182,19 +198,19 @@ class NotebookImpl(
         return cell
     }
 
-    fun beginEvalSession() {
+    override fun beginEvalSession() {
         mainCellCreated = false
     }
 
-    override fun history(before: Int): CodeCellImpl? {
+    override fun history(before: Int): MutableCodeCell? {
         val offset = if (mainCellCreated) 1 else 0
         return history.getOrNull(history.size - offset - before)
     }
 
-    override val currentCell: CodeCellImpl?
+    override val currentCell: MutableCodeCell?
         get() = history(0)
 
-    override val lastCell: CodeCellImpl?
+    override val lastCell: MutableCodeCell?
         get() = history(1)
 
     override val renderersProcessor: RenderersProcessor
@@ -202,4 +218,20 @@ class NotebookImpl(
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()
+}
+
+fun Notebook.variablesReportAsHTML(): String {
+    return generateHTMLVarsReport(variablesState)
+}
+
+fun Notebook.variablesReport(): String {
+    return if (variablesState.isEmpty()) ""
+    else {
+        buildString {
+            append("Visible vars: \n")
+            variablesState.forEach { (name, currentState) ->
+                append("\t$name : ${currentState.stringValue}\n")
+            }
+        }
+    }
 }

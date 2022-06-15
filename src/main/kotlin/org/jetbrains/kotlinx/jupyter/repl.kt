@@ -52,6 +52,7 @@ import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
@@ -93,7 +94,6 @@ data class CheckResult(val isComplete: Boolean = true)
 
 class EvalRequestData(
     val code: Code,
-    val displayHandler: DisplayHandler? = null,
     val jupyterId: Int = -1,
     val storeHistory: Boolean = true,
     @Suppress("UNUSED")
@@ -151,6 +151,8 @@ interface ReplForJupyter {
 
     val libraryResolver: LibraryResolver?
 
+    val librariesScanner: LibrariesScanner
+
     val runtimeProperties: ReplRuntimeProperties
 
     val resolutionInfoProvider: ResolutionInfoProvider
@@ -159,7 +161,9 @@ interface ReplForJupyter {
 
     var outputConfig: OutputConfig
 
-    val notebook: NotebookImpl
+    val notebook: MutableNotebook
+
+    val displayHandler: DisplayHandler
 
     val fileExtension: String
 
@@ -173,6 +177,7 @@ fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
 
 class ReplForJupyterImpl(
     override val resolutionInfoProvider: ResolutionInfoProvider,
+    override val displayHandler: DisplayHandler = NoOpDisplayHandler,
     private val scriptClasspath: List<File> = emptyList(),
     override val homeDir: File? = null,
     override val mavenRepositories: List<RepositoryCoordinates> = listOf(),
@@ -180,23 +185,9 @@ class ReplForJupyterImpl(
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     private val scriptReceivers: List<Any> = emptyList(),
     override val isEmbedded: Boolean = false,
+    override val notebook: MutableNotebook,
+    override val librariesScanner: LibrariesScanner
 ) : ReplForJupyter, ReplOptions, BaseKernelHost, UserHandlesProvider {
-
-    constructor(
-        config: KernelConfig,
-        runtimeProperties: ReplRuntimeProperties,
-        scriptReceivers: List<Any> = emptyList()
-    ) :
-        this(
-            config.resolutionInfoProvider,
-            config.scriptClasspath,
-            config.homeDir,
-            config.mavenRepositories,
-            config.libraryResolver,
-            runtimeProperties,
-            scriptReceivers,
-            config.embedded
-        )
 
     override val currentBranch: String
         get() = runtimeProperties.currentBranch
@@ -212,9 +203,6 @@ class ReplForJupyterImpl(
 
     private var currentKernelHost: KotlinKernelHost? = null
 
-    override val notebook = NotebookImpl(runtimeProperties)
-
-    val librariesScanner = LibrariesScanner(notebook)
     private val resourcesProcessor = LibraryResourcesProcessorImpl()
 
     override val sessionOptions: SessionOptions = object : SessionOptions {
@@ -442,13 +430,13 @@ class ReplForJupyterImpl(
                 beforeCellExecution.forEach { executor.execute(it) }
             }
 
-            var cell: CodeCellImpl? = null
+            var cell: MutableCodeCell? = null
 
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
             val result = try {
                 log.debug("Current cell id: ${evalData.jupyterId}")
-                executor.execute(evalData.code, evalData.displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
+                executor.execute(evalData.code, displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
                     if (evalData.storeHistory) {
                         cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
                     }

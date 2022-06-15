@@ -21,6 +21,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
@@ -38,7 +39,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
     override fun execute(
         code: Code,
-        displayHandler: DisplayHandler?,
+        displayHandler: DisplayHandler,
         processVariables: Boolean,
         processAnnotations: Boolean,
         processMagics: Boolean,
@@ -115,12 +116,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
     }
 
     override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
-        return callback(ExecutionContext(replContext, null, this, null.push()))
+        return callback(ExecutionContext(replContext, NoOpDisplayHandler, this, null.push()))
     }
 
     private class ExecutionContext(
         private val sharedContext: SharedReplContext,
-        private val displayHandler: DisplayHandler?,
+        private val displayHandler: DisplayHandler,
         private val executor: CellExecutor,
         private val stackFrame: MutableExecutionStackFrame,
     ) : KotlinKernelHost, ExecutionHost {
@@ -161,7 +162,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {
                     library.resources.forEach {
                         val htmlText = sharedContext.resourcesProcessor.wrapLibrary(it, classLoader)
-                        displayHandler?.handleDisplay(HTML(htmlText), this)
+                        displayHandler.handleDisplay(HTML(htmlText), this)
                     }
                 }
 
@@ -203,11 +204,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false, stackFrame = stackFrame).result
 
         override fun display(value: Any) {
-            displayHandler?.handleDisplay(value, this)
+            displayHandler.handleDisplay(value, this)
         }
 
         override fun updateDisplay(value: Any, id: String?) {
-            displayHandler?.handleUpdate(value, this, id)
+            displayHandler.handleUpdate(value, this, id)
         }
 
         override fun scheduleExecution(execution: ExecutionCallback<*>) {

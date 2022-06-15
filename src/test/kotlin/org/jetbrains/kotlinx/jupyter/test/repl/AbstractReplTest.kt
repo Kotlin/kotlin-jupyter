@@ -2,13 +2,15 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
@@ -39,22 +41,22 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeSimpleRepl(): ReplForJupyter {
-        return ReplForJupyterImpl(resolutionInfoProvider, classpath)
+        return createRepl(resolutionInfoProvider, classpath)
     }
 
-    protected fun makeReplWithTestResolver(): ReplForJupyter {
-        return ReplForJupyterImpl(resolutionInfoProvider, classpath, homeDir, libraryResolver = testLibraryResolver)
+    protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
+        return createRepl(resolutionInfoProvider, classpath, homeDir, libraryResolver = testLibraryResolver, displayHandler = displayHandler)
     }
 
-    protected fun makeReplWithStandardResolver(): ReplForJupyter {
+    protected fun makeReplWithStandardResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
         val standardResolutionInfoProvider = getDefaultDirectoryResolutionInfoProvider(KERNEL_LIBRARIES.homeLibrariesDir(homeDir))
         val resolver = getStandardResolver(".", standardResolutionInfoProvider)
-        return ReplForJupyterImpl(standardResolutionInfoProvider, classpath, homeDir, testRepositories, resolver, standardResolverRuntimeProperties)
+        return createRepl(standardResolutionInfoProvider, classpath, homeDir, testRepositories, resolver, standardResolverRuntimeProperties, displayHandler = displayHandler)
     }
 
-    protected fun makeEmbeddedRepl(): ReplForJupyter {
+    protected fun makeEmbeddedRepl(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        return ReplForJupyterImpl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true)
+        return createRepl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true, displayHandler = displayHandler)
     }
 
     companion object {

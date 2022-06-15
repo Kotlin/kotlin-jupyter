@@ -6,7 +6,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.receivers.TempAnnotation
 import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
@@ -23,9 +22,11 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
+import org.jetbrains.kotlinx.jupyter.variablesReport
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -40,7 +41,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>) = makeRepl(libs.toList().toLibraries())
 
-    private fun makeRepl(libraryResolver: LibraryResolver) = ReplForJupyterImpl(
+    private fun makeRepl(libraryResolver: LibraryResolver) = createRepl(
         resolutionInfoProvider,
         classpathWithTestLib,
         homeDir,
