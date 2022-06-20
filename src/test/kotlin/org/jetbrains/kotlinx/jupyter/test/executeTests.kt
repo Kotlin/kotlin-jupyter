@@ -4,17 +4,21 @@ import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
-import org.jetbrains.kotlinx.jupyter.JupyterSockets
+import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.kotlinx.jupyter.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
+import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
+import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResult
@@ -59,9 +63,11 @@ class ExecuteTests : KernelServerTestsBase() {
     override fun beforeEach() {
         try {
             context = ZMQ.context(1)
-            shell = ClientSocket(context!!, JupyterSockets.SHELL)
-            ioPub = ClientSocket(context!!, JupyterSockets.IOPUB)
-            stdin = ClientSocket(context!!, JupyterSockets.STDIN)
+            shell = ClientSocket(context!!, JupyterSocketInfo.SHELL).apply {
+                base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
+            }
+            ioPub = ClientSocket(context!!, JupyterSocketInfo.IOPUB)
+            stdin = ClientSocket(context!!, JupyterSocketInfo.STDIN)
             ioPub?.subscribe(byteArrayOf())
             shell?.connect()
             ioPub?.connect()
@@ -382,5 +388,68 @@ class ExecuteTests : KernelServerTestsBase() {
         assertTrue("3 + 4" !in logText)
 
         file.delete()
+    }
+
+    @Test
+    fun testComms() {
+        val shell = shell!!
+        val iopub = ioPub!!
+
+        val targetName = "my_comm"
+        val commId = "xyz"
+
+        val registerCode = """
+            import kotlinx.serialization.*
+            import kotlinx.serialization.json.*
+            
+            notebook.commManager.registerCommTarget("$targetName") { comm, openData ->
+                comm.send(
+                    JsonObject(
+                        mapOf(
+                            "xo" to JsonPrimitive(comm.id)
+                        )
+                    )
+                )
+                
+                comm.onMessage { d ->
+                    comm.send(
+                        JsonObject(
+                            mapOf(
+                                "y" to JsonPrimitive("received: " + d["x"]!!.jsonPrimitive.content)
+                            )
+                        )
+                    )
+                }
+            }
+        """.trimIndent()
+        doExecute(registerCode, false)
+
+        shell.sendMessage(MessageType.COMM_OPEN, CommOpen(commId, targetName))
+
+        iopub.receiveMessage().apply {
+            val c = content.shouldBeTypeOf<CommMsg>()
+            c.commId shouldBe commId
+            c.data["xo"]!!.jsonPrimitive.content shouldBe commId
+        }
+
+        // Thread.sleep(5000)
+
+        shell.sendMessage(
+            MessageType.COMM_MSG,
+            CommMsg(
+                commId,
+                JsonObject(
+                    mapOf(
+                        "x" to JsonPrimitive("4321")
+                    )
+                )
+            )
+        )
+
+        iopub.receiveMessage().apply {
+            val c = content.shouldBeTypeOf<CommMsg>()
+            c.commId shouldBe commId
+            c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+        }
     }
 }

@@ -13,6 +13,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
@@ -23,8 +24,10 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -91,6 +94,16 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
 
     val type: String
         get() = name.lowercase()
+
+    companion object {
+        fun fromString(type: String): MessageType? {
+            return try {
+                MessageType.valueOf(type.toUpperCaseAsciiOnly())
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+    }
 }
 
 @Serializable
@@ -269,8 +282,8 @@ class InspectRequest(
 @Serializable
 class InspectReply(
     val found: Boolean,
-    val data: JsonObject = emptyJsonObject,
-    val metadata: JsonObject = emptyJsonObject,
+    val data: JsonObject = Json.EMPTY,
+    val metadata: JsonObject = Json.EMPTY,
 ) : OkReply()
 
 @Serializable
@@ -452,21 +465,21 @@ class CommOpen(
     val commId: String,
     @SerialName("target_name")
     val targetName: String,
-    val data: JsonObject? = null
+    val data: JsonObject = Json.EMPTY
 ) : MessageContent()
 
 @Serializable
 class CommMsg(
     @SerialName("comm_id")
     val commId: String,
-    val data: JsonObject? = null
+    val data: JsonObject = Json.EMPTY
 ) : MessageContent()
 
 @Serializable
 class CommClose(
     @SerialName("comm_id")
     val commId: String,
-    val data: JsonObject? = null
+    val data: JsonObject = Json.EMPTY
 ) : MessageContent()
 
 @Serializable
@@ -551,14 +564,14 @@ object MessageDataSerializer : KSerializer<MessageData> {
 
         val content = value.content?.let {
             format.encodeToJsonElement(serializer(it::class.createType()), it)
-        } ?: emptyJsonObject
+        } ?: Json.EMPTY
 
         encoder.encodeJsonElement(
             JsonObject(
                 mapOf(
                     "header" to format.encodeToJsonElement(value.header),
-                    "parent_header" to format.encodeToJsonElement(value.parentHeader),
-                    "metadata" to format.encodeToJsonElement(value.metadata),
+                    "parent_header" to (value.parentHeader?.let { format.encodeToJsonElement(it) } ?: Json.EMPTY),
+                    "metadata" to (value.metadata?.let { format.encodeToJsonElement(it) } ?: Json.EMPTY),
                     "content" to content
                 )
             )

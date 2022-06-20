@@ -12,6 +12,8 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
@@ -135,6 +137,8 @@ class EvalData(
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
+    override val connection: JupyterConnection,
+    override val commManager: CommManager,
 ) : MutableNotebook {
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null

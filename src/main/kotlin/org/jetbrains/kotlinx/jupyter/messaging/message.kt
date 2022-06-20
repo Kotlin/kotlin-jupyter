@@ -3,10 +3,17 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.api.libraries.header
 import org.jetbrains.kotlinx.jupyter.protocolVersion
+import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
@@ -14,9 +21,21 @@ import java.util.UUID
 private val ISO8601DateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
 internal val ISO8601DateNow: String get() = ISO8601DateFormatter.format(Date())
 
-val emptyJsonObject = JsonObject(mapOf())
-internal val emptyJsonObjectString = emptyJsonObject.toString()
+internal val emptyJsonObjectString = Json.EMPTY.toString()
 internal val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
+
+data class RawMessageImpl(
+    override val id: List<ByteArray> = listOf(),
+    override val data: JsonElement = JsonNull
+) : RawMessage {
+    override fun toString(): String =
+        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] " +
+            Json.encodeToString(data)
+}
+
+fun RawMessage.toMessage(): Message {
+    return Message(id, Json.decodeFromJsonElement(data))
+}
 
 data class Message(
     val id: List<ByteArray> = listOf(),
@@ -31,6 +50,10 @@ data class Message(
     override fun toString(): String =
         "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] " +
             Json.encodeToString(data)
+}
+
+fun Message.toRawMessage(): RawMessage {
+    return RawMessageImpl(id, Json.encodeToJsonElement(data))
 }
 
 @JvmName("jsonObjectForString")
@@ -68,12 +91,34 @@ fun makeReplyMessage(
     )
 
 fun makeHeader(msgType: MessageType? = null, incomingMsg: Message? = null, sessionId: String? = null): MessageHeader {
-    val header = incomingMsg?.data?.header
+    val parentHeader = incomingMsg?.data?.header
+    return makeHeader(
+        msgType ?: MessageType.NONE,
+        parentHeader?.session ?: sessionId,
+        parentHeader?.username ?: "kernel",
+    )
+}
+
+fun makeJsonHeader(msgType: String, incomingMsg: RawMessage? = null, sessionId: String? = null): JsonObject {
+    val parentHeader = incomingMsg?.header
+    fun JsonObject.getStringVal(key: String): String? {
+        return get(key)?.jsonPrimitive?.content
+    }
+
+    val header = makeHeader(
+        MessageType.fromString(msgType) ?: MessageType.NONE,
+        parentHeader?.getStringVal("session") ?: sessionId,
+        parentHeader?.getStringVal("username") ?: "kernel",
+    )
+    return Json.encodeToJsonElement(header).jsonObject
+}
+
+fun makeHeader(type: MessageType, sessionId: String?, username: String?): MessageHeader {
     return MessageHeader(
         UUID.randomUUID().toString(),
-        msgType ?: MessageType.NONE,
-        header?.session ?: sessionId,
-        header?.username ?: "kernel",
+        type,
+        sessionId,
+        username,
         protocolVersion,
         ISO8601DateNow
     )

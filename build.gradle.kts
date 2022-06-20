@@ -12,11 +12,6 @@ plugins {
 
 val deploy: Configuration by configurations.creating
 
-deploy.apply {
-    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-json-jvm")
-    exclude("org.jetbrains.kotlinx", "kotlinx-serialization-core-jvm")
-}
-
 ktlint {
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")

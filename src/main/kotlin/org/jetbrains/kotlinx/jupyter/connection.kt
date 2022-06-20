@@ -9,24 +9,30 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
+import org.jetbrains.kotlinx.jupyter.api.libraries.header
+import org.jetbrains.kotlinx.jupyter.api.libraries.type
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterOutType
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSocket
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
-import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.messaging.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
-import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
-import org.jetbrains.kotlinx.jupyter.messaging.emptyJsonObject
 import org.jetbrains.kotlinx.jupyter.messaging.emptyJsonObjectStringBytes
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
-import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
+import org.jetbrains.kotlinx.jupyter.messaging.makeJsonHeader
 import org.jetbrains.kotlinx.jupyter.messaging.makeReplyMessage
+import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
+import org.jetbrains.kotlinx.jupyter.messaging.toMessage
+import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
+import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
@@ -37,9 +43,23 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.concurrent.thread
 import kotlin.math.min
 
-class JupyterConnection(val config: KernelConfig) : Closeable {
+typealias SocketMessageCallback = JupyterConnectionImpl.Socket.(Message) -> Unit
+typealias SocketRawMessageCallback = JupyterConnectionImpl.Socket.(RawMessage) -> Unit
 
-    inner class Socket(private val socket: JupyterSockets, type: SocketType = socket.zmqKernelType) : ZMQ.Socket(context, type) {
+class JupyterConnectionImpl(
+    val config: KernelConfig
+) : JupyterConnectionInternal, Closeable {
+
+    private var _messageId: List<ByteArray> = listOf(byteArrayOf(1))
+    override val messageId: List<ByteArray> get() = _messageId
+
+    private var _sessionId = ""
+    override val sessionId: String get() = _sessionId
+
+    private var _username = ""
+    override val username: String get() = _username
+
+    inner class Socket(private val socket: JupyterSocketInfo, type: SocketType = socket.zmqKernelType) : ZMQ.Socket(context, type), JupyterServerSocket {
         val name: String get() = socket.name
         init {
             val port = config.ports[socket.ordinal]
@@ -55,32 +75,60 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             log.debug("[$name] listen: ${config.transport}://*:$port")
         }
 
+        private val callbacks = mutableSetOf<SocketRawMessageCallback>()
+
+        fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback {
+            callbacks.add(callback)
+            return callback
+        }
+
+        fun onMessage(callback: SocketMessageCallback): SocketRawMessageCallback {
+            return onRawMessage { rawMessage ->
+                callback(rawMessage.toMessage())
+            }
+        }
+
+        fun removeCallback(callback: SocketRawMessageCallback) {
+            callbacks.remove(callback)
+        }
+
         inline fun onData(body: Socket.(ByteArray) -> Unit) = recv()?.let { body(it) }
 
-        inline fun onMessage(body: Socket.(Message) -> Unit) = recv()?.let { bytes -> receiveMessage(bytes)?.let { body(it) } }
+        fun runCallbacksOnMessage() = recv()?.let { bytes ->
+            receiveRawMessage(bytes)?.let { message ->
+                callbacks.forEach { callback ->
+                    try {
+                        callback(message)
+                    } catch (e: Throwable) {
+                        log.error("Exception thrown while processing a message", e)
+                    }
+                }
+            }
+        }
 
         fun sendStatus(status: KernelStatus, msg: Message) {
-            connection.iopub.send(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
+            connection.iopub.sendMessage(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
         }
 
         fun sendWrapped(incomingMessage: Message, msg: Message) {
             sendStatus(KernelStatus.BUSY, incomingMessage)
-            send(msg)
+            sendMessage(msg)
             sendStatus(KernelStatus.IDLE, incomingMessage)
         }
 
-        fun sendOut(msg: Message, stream: JupyterOutType, text: String) {
-            send(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
-        }
-
-        fun send(msg: Message) {
+        override fun sendRawMessage(msg: RawMessage) {
             log.debug("[$name] snd>: $msg")
-            sendMessage(msg, hmac)
+            sendRawMessage(msg, hmac)
         }
 
         fun receiveMessage(start: ByteArray): Message? {
+            val rawMessage = receiveRawMessage(start)
+            return rawMessage?.toMessage()
+        }
+
+        private fun receiveRawMessage(start: ByteArray): RawMessage? {
             return try {
-                val msg = receiveMessage(start, hmac)
+                val msg = receiveRawMessage(start, hmac)
                 log.debug("[$name] >rcv: $msg")
                 msg
             } catch (e: SignatureException) {
@@ -89,7 +137,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
             }
         }
 
-        val connection: JupyterConnection = this@JupyterConnection
+        override val connection: JupyterConnectionImpl = this@JupyterConnectionImpl
     }
 
     inner class StdinInputStream : java.io.InputStream() {
@@ -97,7 +145,7 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
         private var currentBufPos = 0
 
         private fun getInput(): String {
-            stdin.send(
+            stdin.sendMessage(
                 makeReplyMessage(
                     contextMessage!!,
                     MessageType.INPUT_REQUEST,
@@ -153,11 +201,67 @@ class JupyterConnection(val config: KernelConfig) : Closeable {
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
-    val heartbeat = Socket(JupyterSockets.HB)
-    val shell = Socket(JupyterSockets.SHELL)
-    val control = Socket(JupyterSockets.CONTROL)
-    val stdin = Socket(JupyterSockets.STDIN)
-    val iopub = Socket(JupyterSockets.IOPUB)
+    override val heartbeat = Socket(JupyterSocketInfo.HB)
+    override val shell = Socket(JupyterSocketInfo.SHELL)
+    override val control = Socket(JupyterSocketInfo.CONTROL)
+    override val stdin = Socket(JupyterSocketInfo.STDIN)
+    override val iopub = Socket(JupyterSocketInfo.IOPUB)
+
+    private fun fromSocketName(socket: JupyterSocket): Socket {
+        return when (socket) {
+            JupyterSocket.HB -> heartbeat
+            JupyterSocket.SHELL -> shell
+            JupyterSocket.CONTROL -> control
+            JupyterSocket.STDIN -> stdin
+            JupyterSocket.IOPUB -> iopub
+        }
+    }
+
+    private val callbacks = mutableMapOf<RawMessageCallback, SocketRawMessageCallback>()
+
+    override fun addMessageCallback(callback: RawMessageCallback): RawMessageCallback {
+        val socket = fromSocketName(callback.socket)
+        val socketCallback: SocketRawMessageCallback = { message ->
+            if (message.type == callback.messageType) {
+                callback.action(message)
+            }
+        }
+        callbacks[callback] = socket.onRawMessage(socketCallback)
+        return callback
+    }
+
+    override fun removeMessageCallback(callback: RawMessageCallback) {
+        val socketCallback = callbacks[callback] ?: return
+        val socket = fromSocketName(callback.socket)
+        socket.removeCallback(socketCallback)
+    }
+
+    fun updateSessionInfo(message: Message) {
+        val header = message.data.header ?: return
+        header.session?.let { _sessionId = it }
+        header.username?.let { _username = it }
+        _messageId = message.id
+    }
+
+    override fun send(socketName: JupyterSocket, message: RawMessage) {
+        val socket = fromSocketName(socketName)
+        socket.sendRawMessage(message)
+    }
+
+    override fun sendReply(socketName: JupyterSocket, parentMessage: RawMessage, type: String, content: JsonObject, metadata: JsonObject?) {
+        val message = RawMessageImpl(
+            parentMessage.id,
+            JsonObject(
+                mapOf(
+                    "header" to makeJsonHeader(type, parentMessage),
+                    "parent_header" to (parentMessage.header ?: Json.EMPTY),
+                    "metadata" to (metadata ?: Json.EMPTY),
+                    "content" to content
+                )
+            )
+        )
+        send(socketName, message)
+    }
 
     val stdinIn = StdinInputStream()
 
@@ -242,21 +346,27 @@ class HMAC(algorithm: String, key: String?) {
 
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
-fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
+fun ZMQ.Socket.sendRawMessage(msg: RawMessage, hmac: HMAC) {
     synchronized(this) {
         msg.id.forEach { sendMore(it) }
         sendMore(MESSAGE_DELIMITER)
 
-        val dataJson = Json.encodeToJsonElement(msg.data).jsonObject
+        val dataJson = msg.data.jsonObject
         val signableMsg = listOf("header", "parent_header", "metadata", "content")
             .map { fieldName -> dataJson[fieldName]?.let { Json.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes }
         sendMore(hmac(signableMsg) ?: "")
-        signableMsg.take(signableMsg.size - 1).forEach { sendMore(it) }
+        for (i in 0 until (signableMsg.size - 1)) {
+            sendMore(signableMsg[i])
+        }
         send(signableMsg.last())
     }
 }
 
-fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
+fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
+    sendRawMessage(msg.toRawMessage(), hmac)
+}
+
+fun ZMQ.Socket.receiveRawMessage(start: ByteArray, hmac: HMAC): RawMessage {
     val ids = listOf(start) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
     val sig = recvStr().lowercase()
     val header = recv()
@@ -274,7 +384,7 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
         return if (json is JsonObject && json.isEmpty()) JsonNull else json
     }
 
-    fun JsonElement.orEmptyObject() = if (this is JsonNull) emptyJsonObject else this
+    fun JsonElement.orEmptyObject() = if (this is JsonNull) Json.EMPTY else this
 
     val dataJson = jsonObject(
         "header" to header.parseJson(),
@@ -283,11 +393,9 @@ fun ZMQ.Socket.receiveMessage(start: ByteArray, hmac: HMAC): Message {
         "content" to content.parseJson().orEmptyObject()
     )
 
-    val data = Json.decodeFromJsonElement<MessageData>(dataJson)
-
-    return Message(
+    return RawMessageImpl(
         ids,
-        data
+        dataJson
     )
 }
 

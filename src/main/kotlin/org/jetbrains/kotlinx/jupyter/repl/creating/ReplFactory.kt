@@ -4,10 +4,12 @@ import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
@@ -60,6 +62,12 @@ abstract class ReplFactory {
 
     protected val librariesScanner: LibrariesScanner by lazy { provideLibrariesScanner() }
     protected abstract fun provideLibrariesScanner(): LibrariesScanner
+
+    protected val connection: JupyterConnectionInternal by lazy { provideConnection() }
+    protected abstract fun provideConnection(): JupyterConnectionInternal
+
+    protected val commManager: CommManager by lazy { provideCommManager() }
+    protected abstract fun provideCommManager(): CommManager
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
