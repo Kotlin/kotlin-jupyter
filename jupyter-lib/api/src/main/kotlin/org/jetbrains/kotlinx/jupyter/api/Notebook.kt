@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 
 /**
@@ -99,4 +101,8 @@ interface Notebook {
      * All requests for libraries made during this session
      */
     val libraryRequests: Collection<LibraryResolutionRequest>
+
+    val connection: JupyterConnection
+
+    val commManager: CommManager
 }

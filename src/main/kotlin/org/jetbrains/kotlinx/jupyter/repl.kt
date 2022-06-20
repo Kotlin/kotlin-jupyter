@@ -313,7 +313,8 @@ class ReplForJupyterImpl(
                     listOf(
                         "jupyter.kotlin.",
                         "org.jetbrains.kotlinx.jupyter.api",
-                        "kotlin."
+                        "kotlin.",
+                        "kotlinx.serialization.",
                     ).any { fqn.startsWith(it) } ||
                         (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
                 }

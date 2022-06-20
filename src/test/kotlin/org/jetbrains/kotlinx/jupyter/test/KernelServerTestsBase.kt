@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.HMAC
-import org.jetbrains.kotlinx.jupyter.JupyterSockets
+import org.jetbrains.kotlinx.jupyter.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.KernelConfig
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
@@ -12,7 +12,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
-import org.jetbrains.kotlinx.jupyter.receiveMessage
+import org.jetbrains.kotlinx.jupyter.messaging.toMessage
+import org.jetbrains.kotlinx.jupyter.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -33,7 +34,7 @@ import kotlin.concurrent.thread
 open class KernelServerTestsBase {
 
     private val config = KernelConfig(
-        ports = JupyterSockets.values().map { randomPort() },
+        ports = JupyterSocketInfo.values().map { randomPort() },
         transport = "tcp",
         signatureScheme = "hmac1-sha256",
         signatureKey = "",
@@ -112,7 +113,7 @@ open class KernelServerTestsBase {
         }
     }
 
-    inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSockets) : ZMQ.Socket(context, socket.zmqClientType) {
+    inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSocketInfo) : ZMQ.Socket(context, socket.zmqClientType) {
         fun connect() = connect("${config.transport}://*:${config.ports[socket.ordinal]}")
     }
 
@@ -120,7 +121,7 @@ open class KernelServerTestsBase {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)), hmac)
     }
 
-    fun ZMQ.Socket.receiveMessage() = receiveMessage(recv(), hmac)
+    fun ZMQ.Socket.receiveMessage() = receiveRawMessage(recv(), hmac).toMessage()
 
     companion object {
         private val rng = Random()

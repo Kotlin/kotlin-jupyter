@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.assertions.fail
-import jupyter.kotlin.DependsOn
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
@@ -16,7 +15,9 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
@@ -31,8 +32,10 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
+import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
 import java.io.File
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.test.assertEquals
@@ -55,7 +58,9 @@ val classpath = scriptCompilationClasspathFromContext(
     "kotlin-stdlib",
     "kotlin-reflect",
     "kotlin-script-runtime",
-    classLoader = DependsOn::class.java.classLoader
+    "kotlinx-serialization-json-jvm",
+    "kotlinx-serialization-core-jvm",
+    classLoader = TestDisplayHandler::class.java.classLoader
 )
 
 val testLibraryResolver: LibraryResolver
@@ -203,6 +208,12 @@ object NotebookMock : Notebook {
 
     override val jupyterClientType: JupyterClientType
         get() = JupyterClientType.UNKNOWN
+
+    override val connection: JupyterConnection
+        get() = MockJupyterConnection
+
+    override val commManager: CommManager
+        get() = CommManagerImpl(MockJupyterConnection)
 }
 
 fun library(builder: JupyterIntegration.Builder.() -> Unit): LibraryDefinition {

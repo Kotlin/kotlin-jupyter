@@ -143,8 +143,12 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     }
 }
 
-inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererTypeHandler {
-    return SubtypeRendererTypeHandler(T::class) { _, result ->
+inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererTypeHandler {
+    return SubtypeRendererTypeHandler(kClass) { _, result ->
         FieldValue(renderAction(result.value as T), result.name)
     }
+}
+
+inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererTypeHandler {
+    return createRenderer(T::class, renderAction)
 }

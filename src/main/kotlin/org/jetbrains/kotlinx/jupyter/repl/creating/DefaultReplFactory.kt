@@ -1,11 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import org.jetbrains.kotlinx.jupyter.JupyterConnection
+import org.jetbrains.kotlinx.jupyter.JupyterConnectionImpl
 import org.jetbrains.kotlinx.jupyter.KernelConfig
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.SocketDisplayHandler
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
@@ -14,7 +16,8 @@ class DefaultReplFactory(
     private val _kernelConfig: KernelConfig,
     private val _runtimeProperties: ReplRuntimeProperties,
     private val _scriptReceivers: List<Any>,
-    private val _connection: JupyterConnection
+    private val _connection: JupyterConnectionImpl,
+    private val _commManager: CommManager,
 ) : BaseReplFactory() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider {
         return _kernelConfig.resolutionInfoProvider
@@ -50,5 +53,13 @@ class DefaultReplFactory(
 
     override fun provideIsEmbedded(): Boolean {
         return _kernelConfig.embedded
+    }
+
+    override fun provideConnection(): JupyterConnectionInternal {
+        return _connection
+    }
+
+    override fun provideCommManager(): CommManager {
+        return _commManager
     }
 }

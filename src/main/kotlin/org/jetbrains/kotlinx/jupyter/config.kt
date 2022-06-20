@@ -36,7 +36,7 @@ val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
 }
 
-enum class JupyterSockets(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
+enum class JupyterSocketInfo(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
     HB(SocketType.REP, SocketType.REQ),
     SHELL(SocketType.ROUTER, SocketType.REQ),
     CONTROL(SocketType.ROUTER, SocketType.REQ),
@@ -103,7 +103,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
         return KernelJupyterParams(
             map["signature_scheme"]?.content,
             map["key"]?.content,
-            JupyterSockets.values().map { socket ->
+            JupyterSocketInfo.values().map { socket ->
                 val fieldName = "${socket.nameForUser}_port"
                 map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
             },
@@ -117,7 +117,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
             "key" to JsonPrimitive(value.key),
             "transport" to JsonPrimitive(value.transport)
         )
-        JupyterSockets.values().forEach {
+        JupyterSocketInfo.values().forEach {
             map["${it.nameForUser}_port"] = JsonPrimitive(value.ports[it.ordinal])
         }
         utilSerializer.serialize(encoder, map)

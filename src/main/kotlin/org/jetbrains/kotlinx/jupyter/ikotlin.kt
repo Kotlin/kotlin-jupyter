@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.controlMessagesHandler
 import org.jetbrains.kotlinx.jupyter.messaging.shellMessagesHandler
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplFactory
@@ -114,7 +115,7 @@ fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, 
 fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
     log.info("Starting server with config: $config")
 
-    JupyterConnection(config).use { conn ->
+    JupyterConnectionImpl(config).use { conn ->
 
         printClassPath()
 
@@ -122,7 +123,8 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
 
         val executionCount = AtomicLong(1)
 
-        val repl = DefaultReplFactory(config, runtimeProperties, scriptReceivers, conn).createRepl()
+        val commManager = CommManagerImpl(conn)
+        val repl = DefaultReplFactory(config, runtimeProperties, scriptReceivers, conn, commManager).createRepl()
 
         val mainThread = Thread.currentThread()
 
@@ -142,9 +144,18 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
             }
         }
 
+        conn.control.onMessage { message ->
+            controlMessagesHandler(message, repl)
+        }
+
+        conn.shell.onMessage { message ->
+            conn.updateSessionInfo(message)
+            shellMessagesHandler(message, repl, commManager, executionCount)
+        }
+
         val controlThread = thread {
             socketLoop("Control: Interrupted", mainThread) {
-                conn.control.onMessage { controlMessagesHandler(it, repl) }
+                conn.control.runCallbacksOnMessage()
             }
         }
 
@@ -155,7 +166,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
         }
 
         socketLoop("Main: Interrupted", controlThread, hbThread) {
-            conn.shell.onMessage { message -> shellMessagesHandler(message, repl, executionCount) }
+            conn.shell.runCallbacksOnMessage()
         }
 
         try {
