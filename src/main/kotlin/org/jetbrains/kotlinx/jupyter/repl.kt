@@ -346,6 +346,8 @@ class ReplForJupyterImpl(
         internalVariablesMarkersProcessor,
     )
 
+    private val debugUtilityProvider = DebugUtilityProvider(notebook)
+
     private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
         registerDefaultRenderers()
     }
