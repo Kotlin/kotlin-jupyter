@@ -1,8 +1,5 @@
 package org.jetbrains.kotlinx.jupyter
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -15,7 +12,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.header
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
@@ -29,6 +25,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.emptyJsonObjectStringBytes
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.jetbrains.kotlinx.jupyter.messaging.makeJsonHeader
 import org.jetbrains.kotlinx.jupyter.messaging.makeReplyMessage
+import org.jetbrains.kotlinx.jupyter.messaging.makeSimpleMessage
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
@@ -37,10 +34,10 @@ import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.io.IOException
+import java.io.InputStream
 import java.security.SignatureException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import kotlin.concurrent.thread
 import kotlin.math.min
 
 typealias SocketMessageCallback = JupyterConnectionImpl.Socket.(Message) -> Unit
@@ -106,14 +103,8 @@ class JupyterConnectionImpl(
             }
         }
 
-        fun sendStatus(status: KernelStatus, msg: Message) {
-            connection.iopub.sendMessage(makeReplyMessage(msg, MessageType.STATUS, content = StatusReply(status)))
-        }
-
         fun sendWrapped(incomingMessage: Message, msg: Message) {
-            sendStatus(KernelStatus.BUSY, incomingMessage)
-            sendMessage(msg)
-            sendStatus(KernelStatus.IDLE, incomingMessage)
+            doWrappedInBusyIdle(incomingMessage) { sendMessage(msg) }
         }
 
         override fun sendRawMessage(msg: RawMessage) {
@@ -140,7 +131,7 @@ class JupyterConnectionImpl(
         override val connection: JupyterConnectionImpl = this@JupyterConnectionImpl
     }
 
-    inner class StdinInputStream : java.io.InputStream() {
+    inner class StdinInputStream : InputStream() {
         private var currentBuf: ByteArray? = null
         private var currentBufPos = 0
 
@@ -263,57 +254,26 @@ class JupyterConnectionImpl(
         send(socketName, message)
     }
 
-    val stdinIn = StdinInputStream()
+    override fun sendStatus(status: KernelStatus, incomingMessage: Message?) {
+        val message = if (incomingMessage != null) makeReplyMessage(incomingMessage, MessageType.STATUS, content = StatusReply(status))
+        else makeSimpleMessage(MessageType.STATUS, content = StatusReply(status))
+        iopub.sendMessage(message)
+    }
+
+    override fun doWrappedInBusyIdle(incomingMessage: Message?, action: () -> Unit) {
+        sendStatus(KernelStatus.BUSY, incomingMessage)
+        try {
+            action()
+        } finally {
+            sendStatus(KernelStatus.IDLE, incomingMessage)
+        }
+    }
+
+    override val stdinIn = StdinInputStream()
 
     var contextMessage: Message? = null
 
-    private val currentExecutions = HashSet<Thread>()
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
-
-    data class ConnectionExecutionResult<T>(
-        val result: T?,
-        val throwable: Throwable?,
-        val isInterrupted: Boolean,
-    )
-
-    fun <T> runExecution(body: () -> T, classLoader: ClassLoader): ConnectionExecutionResult<T> {
-        var execRes: T? = null
-        var execException: Throwable? = null
-        val execThread = thread(contextClassLoader = classLoader) {
-            try {
-                execRes = body()
-            } catch (e: Throwable) {
-                execException = e
-            }
-        }
-        currentExecutions.add(execThread)
-        execThread.join()
-        currentExecutions.remove(execThread)
-
-        val exception = execException
-        val isInterrupted = exception is ThreadDeath ||
-            (exception is ReplException && exception.cause is ThreadDeath)
-        return ConnectionExecutionResult(execRes, exception, isInterrupted)
-    }
-
-    /**
-     * We cannot use [Thread.interrupt] here because we have no way
-     * to control the code user executes. [Thread.interrupt] will do nothing for
-     * the simple calculation (like `while (true) 1`). Consider replacing with
-     * something more smart in the future.
-     */
-    fun interruptExecution() {
-        @Suppress("deprecation")
-        while (currentExecutions.isNotEmpty()) {
-            val execution = currentExecutions.firstOrNull()
-            execution?.stop()
-            currentExecutions.remove(execution)
-        }
-    }
-
-    fun launchJob(runnable: suspend CoroutineScope.() -> Unit) {
-        coroutineScope.launch(block = runnable)
-    }
+    override val executor: JupyterExecutor = JupyterExecutorImpl()
 
     override fun close() {
         heartbeat.close()
@@ -399,7 +359,7 @@ fun ZMQ.Socket.receiveRawMessage(start: ByteArray, hmac: HMAC): RawMessage {
     )
 }
 
-object DisabledStdinInputStream : java.io.InputStream() {
+object DisabledStdinInputStream : InputStream() {
     override fun read(): Int {
         throw IOException("Input from stdin is unsupported by the client")
     }

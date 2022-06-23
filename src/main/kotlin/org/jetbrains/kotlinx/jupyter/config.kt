@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.common.getNameForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
@@ -36,12 +37,12 @@ val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
 }
 
-enum class JupyterSocketInfo(val zmqKernelType: SocketType, val zmqClientType: SocketType) {
-    HB(SocketType.REP, SocketType.REQ),
-    SHELL(SocketType.ROUTER, SocketType.REQ),
-    CONTROL(SocketType.ROUTER, SocketType.REQ),
-    STDIN(SocketType.ROUTER, SocketType.REQ),
-    IOPUB(SocketType.PUB, SocketType.SUB);
+enum class JupyterSocketInfo(val type: JupyterSocket, val zmqKernelType: SocketType, val zmqClientType: SocketType) {
+    HB(JupyterSocket.HB, SocketType.REP, SocketType.REQ),
+    SHELL(JupyterSocket.SHELL, SocketType.ROUTER, SocketType.REQ),
+    CONTROL(JupyterSocket.CONTROL, SocketType.ROUTER, SocketType.REQ),
+    STDIN(JupyterSocket.STDIN, SocketType.ROUTER, SocketType.REQ),
+    IOPUB(JupyterSocket.IOPUB, SocketType.PUB, SocketType.SUB);
 
     val nameForUser = getNameForUser(name)
 }
