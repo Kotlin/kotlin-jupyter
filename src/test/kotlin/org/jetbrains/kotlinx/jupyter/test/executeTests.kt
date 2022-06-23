@@ -21,7 +21,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
-import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResult
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
@@ -122,7 +122,7 @@ class ExecuteTests : KernelServerTestsBase() {
             var response: Any? = null
             if (hasResult) {
                 msg = ioPub.receiveMessage()
-                val content = msg.content as ExecutionResult
+                val content = msg.content as ExecutionResultMessage
                 assertEquals(MessageType.EXECUTE_RESULT, msg.type)
                 response = content.data
             }
@@ -447,9 +447,19 @@ class ExecuteTests : KernelServerTestsBase() {
         )
 
         iopub.receiveMessage().apply {
+            val c = content.shouldBeTypeOf<StatusReply>()
+            c.status shouldBe KernelStatus.BUSY
+        }
+
+        iopub.receiveMessage().apply {
             val c = content.shouldBeTypeOf<CommMsg>()
             c.commId shouldBe commId
             c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+        }
+
+        iopub.receiveMessage().apply {
+            val c = content.shouldBeTypeOf<StatusReply>()
+            c.status shouldBe KernelStatus.IDLE
         }
     }
 }

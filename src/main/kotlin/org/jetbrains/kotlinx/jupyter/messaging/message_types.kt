@@ -39,7 +39,7 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     EXECUTE_REQUEST(ExecuteRequest::class),
     EXECUTE_REPLY(ExecuteReply::class),
     EXECUTE_INPUT(ExecutionInputReply::class),
-    EXECUTE_RESULT(ExecutionResult::class),
+    EXECUTE_RESULT(ExecutionResultMessage::class),
 
     INSPECT_REQUEST(InspectRequest::class),
     INSPECT_REPLY(InspectReply::class),
@@ -377,7 +377,7 @@ class ExecutionInputReply(
 ) : MessageContent()
 
 @Serializable
-class ExecutionResult(
+class ExecutionResultMessage(
     val data: JsonElement,
     val metadata: JsonElement,
 

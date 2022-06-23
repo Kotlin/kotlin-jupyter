@@ -7,6 +7,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlinx.jupyter.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.JupyterConnectionImpl
 import org.jetbrains.kotlinx.jupyter.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
@@ -61,10 +62,10 @@ abstract class Response(
 
     fun send(socket: JupyterConnectionImpl.Socket, requestCount: Long, requestMsg: Message, startedTime: String) {
         if (stdOut != null && stdOut.isNotEmpty()) {
-            socket.connection.iopub.sendOut(requestMsg, JupyterOutType.STDOUT, stdOut)
+            socket.connection.sendOut(requestMsg, JupyterOutType.STDOUT, stdOut)
         }
         if (stdErr != null && stdErr.isNotEmpty()) {
-            socket.connection.iopub.sendOut(requestMsg, JupyterOutType.STDERR, stdErr)
+            socket.connection.sendOut(requestMsg, JupyterOutType.STDERR, stdErr)
         }
         sendBody(socket, requestCount, requestMsg, startedTime)
     }
@@ -86,7 +87,7 @@ class OkResponseWithMessage(
                 makeReplyMessage(
                     requestMsg,
                     MessageType.EXECUTE_RESULT,
-                    content = ExecutionResult(
+                    content = ExecutionResultMessage(
                         executionCount = requestCount,
                         data = resultJson["data"]!!,
                         metadata = resultJson["metadata"]!!
@@ -219,7 +220,7 @@ class ErrorResponseWithMessage(
 fun JupyterConnectionImpl.Socket.controlMessagesHandler(msg: Message, repl: ReplForJupyter?) {
     when (msg.content) {
         is InterruptRequest -> {
-            connection.interruptExecution()
+            connection.executor.interruptExecutions()
             sendMessage(makeReplyMessage(msg, MessageType.INTERRUPT_REPLY, content = msg.content))
         }
         is ShutdownRequest -> {
@@ -292,34 +293,32 @@ fun JupyterConnectionImpl.Socket.shellMessagesHandler(msg: Message, repl: ReplFo
             }
             val startedTime = ISO8601DateNow
 
-            connection.iopub.sendStatus(KernelStatus.BUSY, msg)
-
-            val code = content.code
-            connection.iopub.sendMessage(
-                makeReplyMessage(
-                    msg,
-                    MessageType.EXECUTE_INPUT,
-                    content = ExecutionInputReply(code, count)
-                )
-            )
-            val res: Response = if (looksLikeReplCommand(code)) {
-                runCommand(code, repl)
-            } else {
-                connection.evalWithIO(repl, msg) {
-                    repl.eval(
-                        EvalRequestData(
-                            code,
-                            count.toInt(),
-                            content.storeHistory,
-                            content.silent,
-                        )
+            connection.doWrappedInBusyIdle(msg) {
+                val code = content.code
+                connection.iopub.sendMessage(
+                    makeReplyMessage(
+                        msg,
+                        MessageType.EXECUTE_INPUT,
+                        content = ExecutionInputReply(code, count)
                     )
+                )
+                val res: Response = if (looksLikeReplCommand(code)) {
+                    runCommand(code, repl)
+                } else {
+                    connection.evalWithIO(repl, msg) {
+                        repl.eval(
+                            EvalRequestData(
+                                code,
+                                count.toInt(),
+                                content.storeHistory,
+                                content.silent,
+                            )
+                        )
+                    }
                 }
+
+                res.send(this, count, msg, startedTime)
             }
-
-            res.send(this, count, msg, startedTime)
-
-            connection.iopub.sendStatus(KernelStatus.IDLE, msg)
             connection.contextMessage = null
         }
         is CommInfoRequest -> {
@@ -328,23 +327,29 @@ fun JupyterConnectionImpl.Socket.shellMessagesHandler(msg: Message, repl: ReplFo
             sendWrapped(msg, makeReplyMessage(msg, MessageType.COMM_INFO_REPLY, content = CommInfoReply(replyMap)))
         }
         is CommOpen -> {
-            commManager.processCommOpen(content.targetName, content.commId, content.data)
+            connection.executor.runExecution {
+                commManager.processCommOpen(msg, content)
+            }
         }
         is CommClose -> {
-            commManager.processCommClose(content.commId, content.data)
+            connection.executor.runExecution {
+                commManager.processCommClose(msg, content)
+            }
         }
         is CommMsg -> {
-            commManager.processCommMessage(content.commId, content.data)
+            connection.executor.runExecution {
+                commManager.processCommMessage(msg, content)
+            }
         }
         is CompleteRequest -> {
-            connection.launchJob {
+            connection.executor.launchJob {
                 repl.complete(content.code, content.cursorPos) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.COMPLETE_REPLY, content = result.message))
                 }
             }
         }
         is ListErrorsRequest -> {
-            connection.launchJob {
+            connection.executor.launchJob {
                 repl.listErrors(content.code) { result ->
                     sendWrapped(msg, makeReplyMessage(msg, MessageType.LIST_ERRORS_REPLY, content = result.message))
                 }
@@ -455,7 +460,7 @@ fun Any?.toDisplayResult(notebook: Notebook): DisplayResult? = when (this) {
     else -> textResult(this.toString())
 }
 
-fun JupyterConnectionImpl.evalWithIO(repl: ReplForJupyter, srcMessage: Message, body: () -> EvalResult?): Response {
+fun JupyterConnectionInternal.evalWithIO(repl: ReplForJupyter, incomingMessage: Message, body: () -> EvalResult?): Response {
     val config = repl.outputConfig
     val out = System.out
     val err = System.err
@@ -469,7 +474,7 @@ fun JupyterConnectionImpl.evalWithIO(repl: ReplForJupyter, srcMessage: Message, 
             captureOutput
         ) { text ->
             cell()?.appendStreamOutput(text)
-            this.iopub.sendOut(srcMessage, outType, text)
+            this.sendOut(incomingMessage, outType, text)
         }
     }
 
@@ -493,45 +498,39 @@ fun JupyterConnectionImpl.evalWithIO(repl: ReplForJupyter, srcMessage: Message, 
     System.setErr(printForkedErr)
 
     val `in` = System.`in`
-    val allowStdIn = (srcMessage.content as? ExecuteRequest)?.allowStdin ?: true
+    val allowStdIn = (incomingMessage.content as? ExecuteRequest)?.allowStdin ?: true
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
-        return try {
-            val (exec, execException, executionInterrupted) = runExecution(body, repl.currentClassLoader)
-            when {
-                executionInterrupted -> {
-                    flushStreams()
-                    AbortResponseWithMessage("The execution was interrupted")
-                }
-                execException != null -> {
-                    throw execException
-                }
-                exec == null -> {
+        return when (val res = executor.runExecution(repl.currentClassLoader, body)) {
+            is ExecutionResult.Success -> {
+                if (res.result == null) {
                     AbortResponseWithMessage("NO REPL!")
-                }
-                else -> {
-                    flushStreams()
+                } else {
                     try {
-                        exec.toResponse(repl.notebook)
+                        res.result.toResponse(repl.notebook)
                     } catch (e: Exception) {
                         AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                     }
                 }
             }
-        } catch (ex: ReplException) {
-            flushStreams()
-
-            (ex as? ReplEvalRuntimeException)?.cause?.let { originalThrowable ->
-                repl.throwableRenderersProcessor.renderThrowable(originalThrowable)
-            }?.let { renderedThrowable ->
-                rawToResponse(renderedThrowable, repl.notebook)
-            } ?: ErrorResponseWithMessage(
-                ex.render(),
-                ex.javaClass.canonicalName,
-                ex.message ?: "",
-                ex.stackTrace.map { it.toString() },
-                ex.getAdditionalInfoJson() ?: Json.EMPTY
-            )
+            is ExecutionResult.Failure -> {
+                val ex = res.throwable
+                if (ex !is ReplException) throw ex
+                (ex as? ReplEvalRuntimeException)?.cause?.let { originalThrowable ->
+                    repl.throwableRenderersProcessor.renderThrowable(originalThrowable)
+                }?.let { renderedThrowable ->
+                    rawToResponse(renderedThrowable, repl.notebook)
+                } ?: ErrorResponseWithMessage(
+                    ex.render(),
+                    ex.javaClass.canonicalName,
+                    ex.message ?: "",
+                    ex.stackTrace.map { it.toString() },
+                    ex.getAdditionalInfoJson() ?: Json.EMPTY
+                )
+            }
+            ExecutionResult.Interrupted -> {
+                AbortResponseWithMessage("The execution was interrupted")
+            }
         }
     } finally {
         flushStreams()

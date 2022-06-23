@@ -1,11 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSocket
+import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
+import org.jetbrains.kotlinx.jupyter.messaging.Message
+import java.io.InputStream
 
 object MockJupyterConnection : JupyterConnectionInternal {
     override val heartbeat: JupyterServerSocket
@@ -24,6 +28,18 @@ object MockJupyterConnection : JupyterConnectionInternal {
         get() = throw NotImplementedError()
     override val username: String
         get() = throw NotImplementedError()
+    override val executor: JupyterExecutor
+        get() = throw NotImplementedError()
+    override val stdinIn: InputStream
+        get() = throw NotImplementedError()
+
+    override fun sendStatus(status: KernelStatus, incomingMessage: Message?) {
+        throw NotImplementedError()
+    }
+
+    override fun doWrappedInBusyIdle(incomingMessage: Message?, action: () -> Unit) {
+        throw NotImplementedError()
+    }
 
     override fun addMessageCallback(callback: RawMessageCallback): RawMessageCallback {
         throw NotImplementedError()

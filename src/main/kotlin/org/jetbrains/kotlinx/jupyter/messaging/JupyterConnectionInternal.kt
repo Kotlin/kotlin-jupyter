@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import org.jetbrains.kotlinx.jupyter.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import java.io.InputStream
 
 interface JupyterConnectionInternal : JupyterConnection {
     val heartbeat: JupyterServerSocket
@@ -13,6 +15,12 @@ interface JupyterConnectionInternal : JupyterConnection {
     val messageId: List<ByteArray>
     val sessionId: String
     val username: String
+
+    val executor: JupyterExecutor
+    val stdinIn: InputStream
+
+    fun sendStatus(status: KernelStatus, incomingMessage: Message? = null)
+    fun doWrappedInBusyIdle(incomingMessage: Message? = null, action: () -> Unit)
 }
 
 fun JupyterConnectionInternal.makeDefaultHeader(msgType: MessageType): MessageHeader {
@@ -39,8 +47,8 @@ fun JupyterServerSocket.sendMessage(msg: Message) {
     sendRawMessage(msg.toRawMessage())
 }
 
-fun JupyterServerSocket.sendOut(msg: Message, stream: JupyterOutType, text: String) {
-    sendMessage(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
+fun JupyterConnectionInternal.sendOut(msg: Message, stream: JupyterOutType, text: String) {
+    iopub.sendMessage(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
 }
 
 fun JupyterServerSocket.sendSimpleMessage(msgType: MessageType, content: MessageContent) {
