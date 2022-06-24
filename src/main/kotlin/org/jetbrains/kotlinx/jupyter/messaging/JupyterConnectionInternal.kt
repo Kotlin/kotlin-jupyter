@@ -24,6 +24,8 @@ interface JupyterConnectionInternal : JupyterConnection {
     val executor: JupyterExecutor
     val stdinIn: InputStream
 
+    val debugPort: Int?
+
     fun sendStatus(status: KernelStatus, incomingMessage: RawMessage? = null)
     fun doWrappedInBusyIdle(incomingMessage: RawMessage? = null, action: () -> Unit)
     fun updateSessionInfo(message: RawMessage)

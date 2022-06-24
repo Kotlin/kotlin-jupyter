@@ -1,19 +1,24 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.kernelServer
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createSocket
 import org.jetbrains.kotlinx.jupyter.protocol.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
@@ -38,7 +43,7 @@ import kotlin.concurrent.thread
 abstract class KernelServerTestsBase {
     protected abstract val context: ZMQ.Context
 
-    private val kernelConfig = createKotlinKernelConfig(
+    protected val kernelConfig = createKotlinKernelConfig(
         ports = createKernelPorts { randomPort() },
         signatureKey = "",
         scriptClasspath = classpath,
@@ -120,6 +125,19 @@ abstract class KernelServerTestsBase {
     }
 
     fun JupyterSocket.receiveMessage() = socket.receiveRawMessage(socket.recv(), hmac).toMessage()
+
+    fun JupyterSocket.receiveStatusReply(): StatusReply {
+        (this as? SocketWrapper)?.name shouldBe JupyterSocketInfo.IOPUB.name
+        receiveMessage().apply {
+            return content.shouldBeTypeOf()
+        }
+    }
+
+    inline fun JupyterSocket.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
+        receiveStatusReply().status shouldBe KernelStatus.BUSY
+        action()
+        receiveStatusReply().status shouldBe KernelStatus.IDLE
+    }
 
     companion object {
         private val rng = Random()

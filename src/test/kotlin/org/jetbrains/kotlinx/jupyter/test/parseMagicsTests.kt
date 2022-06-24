@@ -142,6 +142,7 @@ class ParseMagicsTests {
         override var executedCodeLogging = ExecutedCodeLogging.OFF
         override var writeCompiledClasses = false
         override var outputConfig = OutputConfig()
+        override val debugPort: Int? = null
     }
 
     private val options = TestReplOptions()

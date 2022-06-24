@@ -149,6 +149,9 @@ class JupyterConnectionImpl(
 
     override val stdinIn = StdinInputStream()
 
+    override val debugPort: Int?
+        get() = config.debugPort
+
     private var _contextMessage: RawMessage? = null
     override fun setContextMessage(message: RawMessage?) {
         _contextMessage = message
