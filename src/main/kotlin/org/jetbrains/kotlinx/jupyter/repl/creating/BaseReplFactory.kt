@@ -9,7 +9,9 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.messaging.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.DebugPortCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import java.io.File
@@ -28,4 +30,7 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideIsEmbedded() = false
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(notebook)
     override fun provideCommManager(): CommManager = CommManagerImpl(connection)
+    override fun provideCommHandlers(): List<CommHandler> = listOf(
+        DebugPortCommHandler()
+    )
 }

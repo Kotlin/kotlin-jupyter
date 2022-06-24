@@ -124,6 +124,7 @@ interface ReplOptions {
     var executedCodeLogging: ExecutedCodeLogging
     var writeCompiledClasses: Boolean
     var outputConfig: OutputConfig
+    val debugPort: Int?
 }
 
 interface ReplForJupyter {
@@ -188,7 +189,8 @@ class ReplForJupyterImpl(
     private val scriptReceivers: List<Any> = emptyList(),
     override val isEmbedded: Boolean = false,
     override val notebook: MutableNotebook,
-    override val librariesScanner: LibrariesScanner
+    override val librariesScanner: LibrariesScanner,
+    override val debugPort: Int? = null
 ) : ReplForJupyter, ReplOptions, BaseKernelHost, UserHandlesProvider {
 
     override val currentBranch: String
@@ -418,7 +420,7 @@ class ReplForJupyterImpl(
     @Suppress("unused")
     private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>?) {
         log.debug(buildString {
-            if (usedVariables == null || usedVariables.isEmpty()) {
+            if (usedVariables.isNullOrEmpty()) {
                 append("No usages for cell $cellId")
                 return@buildString
             }

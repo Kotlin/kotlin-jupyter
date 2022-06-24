@@ -35,6 +35,8 @@ object MockJupyterConnection : JupyterConnectionInternal {
         get() = throw NotImplementedError()
     override val stdinIn: InputStream
         get() = throw NotImplementedError()
+    override val debugPort: Int?
+        get() = null
 
     override fun sendStatus(status: KernelStatus, incomingMessage: RawMessage?) {
         throw NotImplementedError()

@@ -26,7 +26,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageStatus
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
+import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
@@ -450,20 +453,45 @@ class ExecuteTests : KernelServerTestsBase() {
             )
         )
 
-        iopub.receiveMessage().apply {
-            val c = content.shouldBeTypeOf<StatusReply>()
-            c.status shouldBe KernelStatus.BUSY
-        }
+        iopub.receiveStatusReply().status shouldBe KernelStatus.BUSY
 
         iopub.receiveMessage().apply {
             val c = content.shouldBeTypeOf<CommMsg>()
             c.commId shouldBe commId
             c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
         }
+    }
 
-        iopub.receiveMessage().apply {
-            val c = content.shouldBeTypeOf<StatusReply>()
-            c.status shouldBe KernelStatus.IDLE
+    @Test
+    fun testDebugPortCommHandler() {
+        val shell = shell!!
+        val iopub = ioPub!!
+
+        val targetName = ProvidedCommMessages.OPEN_DEBUG_PORT_TARGET
+        val commId = "some"
+        val actualDebugPort = kernelConfig.debugPort
+
+        shell.sendMessage(
+            MessageType.COMM_OPEN,
+            CommOpen(
+                commId,
+                targetName
+            )
+        )
+
+        shell.sendMessage(
+            MessageType.COMM_MSG,
+            CommMsg(commId)
+        )
+
+        iopub.wrapActionInBusyIdleStatusChange {
+            iopub.receiveMessage().apply {
+                val c = content.shouldBeTypeOf<CommMsg>()
+                val data = Json.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
+                c.commId shouldBe commId
+                data.port shouldBe actualDebugPort
+                data.status shouldBe MessageStatus.OK
+            }
         }
     }
 }

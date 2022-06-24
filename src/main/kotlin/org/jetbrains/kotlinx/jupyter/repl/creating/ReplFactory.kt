@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.messaging.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import java.io.File
@@ -26,8 +27,19 @@ abstract class ReplFactory {
             scriptReceivers,
             isEmbedded,
             notebook,
-            librariesScanner
-        )
+            librariesScanner,
+            connection.debugPort
+        ).also { repl ->
+            commHandlers.forEach { handler ->
+                repl.notebook.commManager.registerCommTarget(handler.targetId) { comm, data ->
+                    // handler.onReceive(comm, data, repl) // maybe send right away?
+
+                    comm.onMessage {
+                        handler.onReceive(comm, it, repl)
+                    }
+                }
+            }
+        }
     }
 
     protected val resolutionInfoProvider by lazy { provideResolutionInfoProvider() }
@@ -69,6 +81,17 @@ abstract class ReplFactory {
     protected val commManager: CommManager by lazy { provideCommManager() }
     protected abstract fun provideCommManager(): CommManager
 
+    protected val commHandlers: List<CommHandler> by lazy { provideCommHandlers() }
+    protected abstract fun provideCommHandlers(): List<CommHandler>
+
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
+
+    init {
+        val uniqueTargets = commHandlers.map { it.targetId }.toSet().size
+        assert(uniqueTargets == commHandlers.size) {
+            val duplicates = commHandlers.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            "Duplicate bundled comm targets found! $duplicates"
+        }
+    }
 }
