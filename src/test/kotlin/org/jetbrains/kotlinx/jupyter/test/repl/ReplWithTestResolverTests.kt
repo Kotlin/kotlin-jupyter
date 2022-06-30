@@ -20,15 +20,15 @@ import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithTestResolverTests : AbstractSingleReplTest() {
-    val displays = mutableListOf<Any>()
-    val displayHandler = TestDisplayHandler(displays)
+    private val displays = mutableListOf<Any>()
+    private val displayHandler = TestDisplayHandler(displays)
     override val repl = makeReplWithTestResolver(displayHandler)
 
     @Test
     fun testLetsPlot() {
         val code1 = "%use lets-plot"
         val code2 =
-            """lets_plot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
+            """letsPlot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
 
         val res1 = eval(code1)
         assertEquals(1, displays.count())
