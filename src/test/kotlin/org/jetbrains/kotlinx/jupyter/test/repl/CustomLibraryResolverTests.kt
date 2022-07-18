@@ -4,6 +4,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.receivers.TempAnnotation
+import jupyter.kotlin.variablesReport
 import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
@@ -26,7 +27,6 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
-import org.jetbrains.kotlinx.jupyter.variablesReport
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -537,7 +537,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             ${'\t'}a : 42
             
             """.trimIndent(),
-            repl.notebook.variablesReport()
+            repl.notebook.variablesReport
         )
     }
 }

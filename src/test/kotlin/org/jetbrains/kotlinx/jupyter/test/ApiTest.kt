@@ -2,13 +2,14 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeOneOf
+import io.kotest.matchers.types.shouldBeTypeOf
+import jupyter.kotlin.varsTableStyleClass
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.session.JupyterSessionInfo
-import org.jetbrains.kotlinx.jupyter.generateHTMLVarsReport
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
-import org.jetbrains.kotlinx.jupyter.varsTableStyleClass
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -73,7 +74,8 @@ class ApiTest : AbstractSingleReplTest() {
             "y" to "abc",
             "z" to "47"
         )
-        val htmlText = generateHTMLVarsReport(repl.notebook.variablesState)
+        val htmlText = eval("notebook.variablesReportAsHTML").resultValue
+        htmlText.shouldBeTypeOf<MimeTypedResult>()
         assertEquals(
             """
             <style>
@@ -105,7 +107,7 @@ class ApiTest : AbstractSingleReplTest() {
             </table>
             
             """.trimIndent(),
-            htmlText
+            htmlText.values.first()
         )
         assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
     }

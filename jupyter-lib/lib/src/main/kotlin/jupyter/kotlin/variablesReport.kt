@@ -1,8 +1,27 @@
-package org.jetbrains.kotlinx.jupyter
+package jupyter.kotlin
 
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.htmlResult
 
 const val varsTableStyleClass = "variables_table"
+
+val Notebook.variablesReportAsHTML: MimeTypedResult get() {
+    return htmlResult(generateHTMLVarsReport(variablesState))
+}
+
+val Notebook.variablesReport: String get() {
+    return if (variablesState.isEmpty()) ""
+    else {
+        buildString {
+            append("Visible vars: \n")
+            variablesState.forEach { (name, currentState) ->
+                append("\t$name : ${currentState.stringValue}\n")
+            }
+        }
+    }
+}
 
 fun generateHTMLVarsReport(variablesState: Map<String, VariableState>): String {
     return buildString {

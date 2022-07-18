@@ -4,7 +4,9 @@ import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.Repository
+import jupyter.kotlin.generateHTMLVarsReport
 import jupyter.kotlin.providers.UserHandlesProvider
+import jupyter.kotlin.variablesReport
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -409,7 +411,7 @@ class ReplForJupyterImpl(
     @TestOnly
     @Suppress("unused")
     private fun printVariables(isHtmlFormat: Boolean = false) = log.debug(
-        if (isHtmlFormat) notebook.variablesReportAsHTML() else notebook.variablesReport()
+        if (isHtmlFormat) generateHTMLVarsReport(notebook.variablesState) else notebook.variablesReport
     )
 
     @TestOnly

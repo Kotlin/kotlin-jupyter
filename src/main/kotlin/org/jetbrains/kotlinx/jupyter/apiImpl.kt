@@ -223,19 +223,3 @@ class NotebookImpl(
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()
 }
-
-fun Notebook.variablesReportAsHTML(): String {
-    return generateHTMLVarsReport(variablesState)
-}
-
-fun Notebook.variablesReport(): String {
-    return if (variablesState.isEmpty()) ""
-    else {
-        buildString {
-            append("Visible vars: \n")
-            variablesState.forEach { (name, currentState) ->
-                append("\t$name : ${currentState.stringValue}\n")
-            }
-        }
-    }
-}

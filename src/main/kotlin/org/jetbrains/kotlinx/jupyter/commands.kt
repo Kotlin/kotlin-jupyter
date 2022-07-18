@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
-import org.jetbrains.kotlinx.jupyter.api.htmlResult
+import jupyter.kotlin.variablesReportAsHTML
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
@@ -57,7 +57,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
             OkResponseWithMessage(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommand.VARS -> {
-            OkResponseWithMessage(htmlResult(repl.notebook.variablesReportAsHTML()))
+            OkResponseWithMessage(repl.notebook.variablesReportAsHTML)
         }
         ReplCommand.HELP -> {
             val commands = ReplCommand.values().asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }
