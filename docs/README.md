@@ -9,7 +9,7 @@
 
 # Kotlin kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.7.20-dev-2773) kernel for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.8.0-dev-707) kernel for [Jupyter](https://jupyter.org).
 
 Beta version. Tested with Jupyter Notebook 6.0.3, Jupyter Lab 1.2.6 and Jupyter Console 6.1.0
 on Windows, Ubuntu Linux and macOS.
