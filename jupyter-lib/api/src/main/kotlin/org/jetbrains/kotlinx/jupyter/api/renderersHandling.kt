@@ -25,7 +25,18 @@ data class FieldValue(val value: Any?, val name: String?)
 @Serializable(TypeHandlerCodeExecutionSerializer::class)
 class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
     override fun execute(host: ExecutionHost, result: FieldValue): FieldValue {
-        val execCode = result.name?.let { code.replace("\$it", it) } ?: code
+        val argTemplate = "\$it"
+        val execCode = if (argTemplate in code) {
+            val resName = result.name ?: run {
+                val newName = "___myRes"
+                host.execute {
+                    declare(newName to result.value)
+                }
+                newName
+            }
+            code.replace(argTemplate, resName)
+        } else code
+
         return host.execute {
             execute(execCode)
         }
@@ -145,7 +156,7 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
 
 inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererTypeHandler {
     return SubtypeRendererTypeHandler(kClass) { _, result ->
-        FieldValue(renderAction(result.value as T), result.name)
+        FieldValue(renderAction(result.value as T), null)
     }
 }
 

@@ -3,12 +3,14 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.receivers.TempAnnotation
 import jupyter.kotlin.variablesReport
 import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declare
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -177,6 +179,34 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         assertNull(results[1].resultValue)
         assertEquals(43, results[2].resultValue)
         assertEquals(100, results[3].resultValue)
+    }
+
+    @Test
+    fun testTransitiveRendering() {
+        val lib = "mylib" to """
+            {
+                "renderers": {
+                    "java.lang.String": "HTML(\"<b>\" + ${"$"}it + \"</b>\")"
+                }
+            }
+        """.trimIndent()
+
+        val libs = listOf(lib).toLibraries()
+        val repl = makeRepl(libs)
+
+        repl.eval(
+            """
+            %use mylib
+            USE {
+                render<Int> { (it * 2).toString() }
+            }
+            """.trimIndent()
+        )
+
+        val result = repl.eval("13").resultValue
+
+        result.shouldBeTypeOf<MimeTypedResult>()
+        result["text/html"] shouldBe "<b>26</b>"
     }
 
     @Test

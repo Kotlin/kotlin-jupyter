@@ -115,7 +115,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             val execution = ResultHandlerExecution { host, property ->
                 val currentCell = notebook.currentCell
                     ?: throw IllegalStateException("Current cell should not be null on renderer invocation")
-                FieldValue(renderer(currentCell, host, property.value as T), property.name)
+                FieldValue(renderer(currentCell, host, property.value as T), null)
             }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
         }
