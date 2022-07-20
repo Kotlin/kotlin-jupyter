@@ -1,20 +1,8 @@
 package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
-import org.jetbrains.kotlinx.jupyter.common.getNameForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -43,8 +31,6 @@ enum class JupyterSocketInfo(val type: JupyterSocket, val zmqKernelType: SocketT
     CONTROL(JupyterSocket.CONTROL, SocketType.ROUTER, SocketType.REQ),
     STDIN(JupyterSocket.STDIN, SocketType.ROUTER, SocketType.REQ),
     IOPUB(JupyterSocket.IOPUB, SocketType.PUB, SocketType.SUB);
-
-    val nameForUser = getNameForUser(name)
 }
 
 data class OutputConfig(
@@ -78,97 +64,23 @@ class RuntimeKernelProperties(val map: Map<String, String>) : ReplRuntimePropert
     }
 }
 
-@Serializable(KernelJupyterParamsSerializer::class)
-data class KernelJupyterParams(
-    val sigScheme: String?,
-    val key: String?,
-    val ports: List<Int>,
-    val transport: String?
-) {
-    companion object {
-        fun fromFile(cfgFile: File): KernelJupyterParams {
-            val jsonString = cfgFile.canonicalFile.readText()
-            return Json.decodeFromString(jsonString)
-        }
-    }
-}
-
-object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
-    private val utilSerializer = serializer<Map<String, JsonPrimitive>>()
-
-    override val descriptor: SerialDescriptor
-        get() = utilSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): KernelJupyterParams {
-        val map = utilSerializer.deserialize(decoder)
-        return KernelJupyterParams(
-            map["signature_scheme"]?.content,
-            map["key"]?.content,
-            JupyterSocketInfo.values().map { socket ->
-                val fieldName = "${socket.nameForUser}_port"
-                map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
-            },
-            map["transport"]?.content ?: "tcp"
-        )
-    }
-
-    override fun serialize(encoder: Encoder, value: KernelJupyterParams) {
-        val map = mutableMapOf(
-            "signature_scheme" to JsonPrimitive(value.sigScheme),
-            "key" to JsonPrimitive(value.key),
-            "transport" to JsonPrimitive(value.transport)
-        )
-        JupyterSocketInfo.values().forEach {
-            map["${it.nameForUser}_port"] = JsonPrimitive(value.ports[it.ordinal])
-        }
-        utilSerializer.serialize(encoder, map)
-    }
-}
-
-data class KernelConfig(
-    val ports: List<Int>,
-    val transport: String,
-    val signatureScheme: String,
-    val signatureKey: String,
-    val scriptClasspath: List<File> = emptyList(),
-    val homeDir: File?,
+data class ReplConfig(
     val mavenRepositories: List<RepositoryCoordinates> = listOf(),
     val libraryResolver: LibraryResolver? = null,
     val resolutionInfoProvider: ResolutionInfoProvider,
     val embedded: Boolean = false,
-    val debugPort: Int? = null,
 ) {
-    fun toArgs(prefix: String = ""): KernelArgs {
-        val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
-
-        val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
-        cfgFile.deleteOnExit()
-        val format = Json { prettyPrint = true }
-        cfgFile.writeText(format.encodeToString(params))
-
-        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort)
-    }
-
     companion object {
         fun create(
             resolutionInfoProvider: ResolutionInfoProvider,
-            args: KernelArgs,
+            homeDir: File? = null,
             embedded: Boolean = false,
-        ): KernelConfig {
-            val cfg = args.parseParams()
-
-            return KernelConfig(
-                ports = cfg.ports,
-                transport = cfg.transport ?: "tcp",
-                signatureScheme = cfg.sigScheme ?: "hmac1-sha256",
-                signatureKey = if (cfg.sigScheme == null || cfg.key == null) "" else cfg.key,
-                scriptClasspath = args.scriptClasspath,
-                homeDir = args.homeDir,
+        ): ReplConfig {
+            return ReplConfig(
                 mavenRepositories = defaultRepositories,
-                libraryResolver = getStandardResolver(args.homeDir?.toString(), resolutionInfoProvider),
+                libraryResolver = getStandardResolver(homeDir?.toString(), resolutionInfoProvider),
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,
-                debugPort = args.debugPort,
             )
         }
     }

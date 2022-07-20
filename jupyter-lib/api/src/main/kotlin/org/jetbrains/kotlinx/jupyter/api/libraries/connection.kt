@@ -24,6 +24,9 @@ enum class JupyterSocket {
     IOPUB;
 }
 
+val JupyterSocket.nameForUser get() = name.toLowerCase()
+val JupyterSocket.portField get() = "${nameForUser}_port"
+
 /**
  * Raw Jupyter message. [data] generally should contain `header`, `parent_header`, `content` and `metadata` fields
  *

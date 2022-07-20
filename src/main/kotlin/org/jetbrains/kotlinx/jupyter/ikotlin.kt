@@ -8,35 +8,15 @@ import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.controlMessagesHandler
 import org.jetbrains.kotlinx.jupyter.messaging.shellMessagesHandler
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplFactory
+import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
-
-data class KernelArgs(
-    val cfgFile: File,
-    val scriptClasspath: List<File>,
-    val homeDir: File?,
-    val debugPort: Int?,
-) {
-    fun parseParams(): KernelJupyterParams {
-        return KernelJupyterParams.fromFile(cfgFile)
-    }
-
-    fun argsList(): List<String> {
-        return mutableListOf<String>().apply {
-            add(cfgFile.absolutePath)
-            homeDir?.let { add("-home=${it.absolutePath}") }
-            if (scriptClasspath.isNotEmpty()) {
-                val classPathString = scriptClasspath.joinToString(File.pathSeparator) { it.absolutePath }
-                add("-cp=$classPathString")
-            }
-            debugPort?.let { add("-debugPort=$it") }
-        }
-    }
-}
 
 private fun parseCommandLine(vararg args: String): KernelArgs {
     var cfgFile: File? = null
@@ -85,8 +65,9 @@ fun main(vararg args: String) {
         val kernelArgs = parseCommandLine(*args)
         val libraryPath = KERNEL_LIBRARIES.homeLibrariesDir(kernelArgs.homeDir)
         val libraryInfoProvider = getDefaultDirectoryResolutionInfoProvider(libraryPath)
-        val kernelConfig = KernelConfig.create(libraryInfoProvider, kernelArgs)
-        kernelServer(kernelConfig)
+        val kernelConfig = kernelArgs.getConfig()
+        val replConfig = ReplConfig.create(libraryInfoProvider, kernelArgs.homeDir)
+        kernelServer(kernelConfig, replConfig)
     } catch (e: Exception) {
         log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
@@ -104,18 +85,19 @@ fun main(vararg args: String) {
 fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
 
-    val config = KernelConfig.create(
+    val kernelConfig = KernelArgs(cfgFile, cp, null, null).getConfig()
+    val replConfig = ReplConfig.create(
         resolutionInfoProvider ?: EmptyResolutionInfoProvider,
-        KernelArgs(cfgFile, cp, null, null),
+        null,
         true
     )
-    kernelServer(config, scriptReceivers = scriptReceivers ?: emptyList())
+    kernelServer(kernelConfig, replConfig, scriptReceivers = scriptReceivers ?: emptyList())
 }
 
-fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
-    log.info("Starting server with config: $config")
+fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
+    log.info("Starting server with config: $kernelConfig")
 
-    JupyterConnectionImpl(config).use { conn ->
+    JupyterConnectionImpl(kernelConfig).use { conn ->
 
         printClassPath()
 
@@ -124,7 +106,7 @@ fun kernelServer(config: KernelConfig, runtimeProperties: ReplRuntimeProperties 
         val executionCount = AtomicLong(1)
 
         val commManager = CommManagerImpl(conn)
-        val repl = DefaultReplFactory(config, runtimeProperties, scriptReceivers, conn, commManager).createRepl()
+        val repl = DefaultReplFactory(kernelConfig, replConfig, runtimeProperties, scriptReceivers, conn, commManager).createRepl()
 
         val mainThread = Thread.currentThread()
 

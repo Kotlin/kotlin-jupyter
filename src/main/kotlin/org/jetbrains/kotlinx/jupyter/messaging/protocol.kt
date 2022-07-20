@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.JupyterConnectionImpl
-import org.jetbrains.kotlinx.jupyter.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
@@ -20,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUn
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
@@ -279,8 +279,9 @@ fun JupyterConnectionImpl.Socket.shellMessagesHandler(msg: Message, repl: ReplFo
                     MessageType.CONNECT_REPLY,
                     content = ConnectReply(
                         jsonObject(
-                            JupyterSocketInfo.values()
-                                .map { Pair("${it.nameForUser}_port", connection.config.ports[it.ordinal]) }
+                            connection.config.ports.map { (socket, port) ->
+                                socket.portField to port
+                            }
                         )
                     )
                 )

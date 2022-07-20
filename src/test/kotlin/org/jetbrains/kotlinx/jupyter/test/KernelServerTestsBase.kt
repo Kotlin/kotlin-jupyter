@@ -2,9 +2,8 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.HMAC
 import org.jetbrains.kotlinx.jupyter.JupyterSocketInfo
-import org.jetbrains.kotlinx.jupyter.KernelConfig
+import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.kernelServer
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.Message
@@ -15,6 +14,9 @@ import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
+import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -25,7 +27,6 @@ import java.io.File
 import java.io.IOException
 import java.net.DatagramSocket
 import java.net.ServerSocket
-import java.util.ArrayList
 import java.util.Random
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -33,19 +34,21 @@ import kotlin.concurrent.thread
 
 open class KernelServerTestsBase {
 
-    private val config = KernelConfig(
-        ports = JupyterSocketInfo.values().map { randomPort() },
-        transport = "tcp",
-        signatureScheme = "hmac1-sha256",
+    private val kernelConfig = createKotlinKernelConfig(
+        ports = createKernelPorts { randomPort() },
         signatureKey = "",
         scriptClasspath = classpath,
         homeDir = File(""),
-        resolutionInfoProvider = EmptyResolutionInfoProvider,
+    )
+
+    private val replConfig = ReplConfig.create(
+        EmptyResolutionInfoProvider,
+        kernelConfig.homeDir
     )
 
     private val sessionId = UUID.randomUUID().toString()
 
-    protected val hmac = HMAC(config.signatureScheme, config.signatureKey)
+    protected val hmac = HMAC(kernelConfig.signatureScheme, kernelConfig.signatureKey)
 
     // Set to false to debug kernel execution
     protected val runInSeparateProcess = true
@@ -65,14 +68,7 @@ open class KernelServerTestsBase {
     fun setupServer(testInfo: TestInfo) {
         if (runInSeparateProcess) {
             val testName = testInfo.displayName
-            val args = config.toArgs(testName).argsList().toTypedArray()
-            val command = ArrayList<String>().apply {
-                add(javaBin)
-                add("-cp")
-                add(classpathArg)
-                add(iKotlinClass.name)
-                addAll(args)
-            }
+            val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg)
 
             testLogger = LoggerFactory.getLogger("testKernel_$testName")
             fileOut = File.createTempFile("tmp-kernel-out-$testName", ".txt")
@@ -83,7 +79,7 @@ open class KernelServerTestsBase {
                 .redirectError(fileErr)
                 .start()
         } else {
-            serverThread = thread { kernelServer(config, defaultRuntimeProperties) }
+            serverThread = thread { kernelServer(kernelConfig, replConfig, defaultRuntimeProperties) }
         }
         beforeEach()
     }
@@ -114,7 +110,7 @@ open class KernelServerTestsBase {
     }
 
     inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSocketInfo) : ZMQ.Socket(context, socket.zmqClientType) {
-        fun connect() = connect("${config.transport}://*:${config.ports[socket.ordinal]}")
+        fun connect() = connect("${kernelConfig.transport}://*:${kernelConfig.ports[socket.type]}")
     }
 
     fun ZMQ.Socket.sendMessage(msgType: MessageType, content: MessageContent) {

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.JupyterConnectionImpl
-import org.jetbrains.kotlinx.jupyter.KernelConfig
+import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -9,18 +9,20 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.SocketDisplayHandler
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 class DefaultReplFactory(
     private val _kernelConfig: KernelConfig,
+    private val _replConfig: ReplConfig,
     private val _runtimeProperties: ReplRuntimeProperties,
     private val _scriptReceivers: List<Any>,
     private val _connection: JupyterConnectionImpl,
     private val _commManager: CommManager,
 ) : BaseReplFactory() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider {
-        return _kernelConfig.resolutionInfoProvider
+        return _replConfig.resolutionInfoProvider
     }
 
     override fun provideDisplayHandler(): DisplayHandler {
@@ -36,11 +38,11 @@ class DefaultReplFactory(
     }
 
     override fun provideMavenRepositories(): List<RepositoryCoordinates> {
-        return _kernelConfig.mavenRepositories
+        return _replConfig.mavenRepositories
     }
 
     override fun provideLibraryResolver(): LibraryResolver? {
-        return _kernelConfig.libraryResolver
+        return _replConfig.libraryResolver
     }
 
     override fun provideRuntimeProperties(): ReplRuntimeProperties {
@@ -52,7 +54,7 @@ class DefaultReplFactory(
     }
 
     override fun provideIsEmbedded(): Boolean {
-        return _kernelConfig.embedded
+        return _replConfig.embedded
     }
 
     override fun provideConnection(): JupyterConnectionInternal {

@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.makeSimpleMessage
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
@@ -59,7 +60,7 @@ class JupyterConnectionImpl(
     inner class Socket(private val socket: JupyterSocketInfo, type: SocketType = socket.zmqKernelType) : ZMQ.Socket(context, type), JupyterServerSocket {
         val name: String get() = socket.name
         init {
-            val port = config.ports[socket.ordinal]
+            val port = config.ports[socket.type]
             bind("${config.transport}://*:$port")
             if (type == SocketType.PUB) {
                 // Workaround to prevent losing few first messages on kernel startup
