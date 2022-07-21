@@ -23,7 +23,7 @@ class Brackets(
 
     init {
         val endCharsStr = ",\\$close"
-        argRegex = Regex("""\s*((?<name>\p{Alnum}+)\s*=\s*)?((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""")
+        argRegex = Regex("""\s*((?<name>(\p{Alnum}|[._-])+)\s*=\s*)?((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""")
     }
 
     companion object {

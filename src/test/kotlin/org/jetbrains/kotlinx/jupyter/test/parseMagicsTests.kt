@@ -77,6 +77,17 @@ class ParseArgumentsTests {
     }
 
     @Test
+    fun test6() {
+        val (ref, args) = parseReferenceWithArgs("""spark(my.api.version = 1.0   , lib-x=foo )""")
+        assertEquals("spark", ref.name)
+        assertEquals(2, args.count())
+        assertEquals("my.api.version", args[0].name)
+        assertEquals("1.0", args[0].value)
+        assertEquals("lib-x", args[1].name)
+        assertEquals("foo", args[1].value)
+    }
+
+    @Test
     fun testInfo1() {
         val requestUrl = "https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/master/libraries/default.json"
         val (ref, args) = parseReferenceWithArgs("lib_name@url[$requestUrl]")
