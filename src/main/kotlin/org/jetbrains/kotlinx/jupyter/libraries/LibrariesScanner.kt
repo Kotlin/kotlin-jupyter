@@ -46,10 +46,15 @@ class LibrariesScanner(val notebook: Notebook) {
         }
     }
 
-    fun addLibrariesFromClassLoader(classLoader: ClassLoader, host: KotlinKernelHost, integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()) {
+    fun addLibrariesFromClassLoader(
+        classLoader: ClassLoader,
+        host: KotlinKernelHost,
+        libraryOptions: Map<String, String> = mapOf(),
+        integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()
+    ) {
         val scanResult = scanForLibraries(classLoader, host, integrationTypeNameRules)
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
-        val libraries = instantiateLibraries(classLoader, scanResult, notebook)
+        val libraries = instantiateLibraries(classLoader, scanResult, notebook, libraryOptions)
         log.debug("Number of detected definitions: ${libraries.size}")
         host.addLibraries(libraries)
     }
@@ -76,7 +81,12 @@ class LibrariesScanner(val notebook: Notebook) {
         )
     }
 
-    private fun instantiateLibraries(classLoader: ClassLoader, scanResult: LibrariesScanResult, notebook: Notebook): List<LibraryDefinition> {
+    private fun instantiateLibraries(
+        classLoader: ClassLoader,
+        scanResult: LibrariesScanResult,
+        notebook: Notebook,
+        libraryOptions: Map<String, String>,
+    ): List<LibraryDefinition> {
         val definitions = mutableListOf<LibraryDefinition>()
 
         fun <T> withErrorsHandling(declaration: LibrariesInstantiable<*>, action: () -> T): T {
@@ -91,13 +101,13 @@ class LibrariesScanner(val notebook: Notebook) {
 
         scanResult.definitions.mapTo(definitions) { declaration ->
             withErrorsHandling(declaration) {
-                instantiate(classLoader, declaration, notebook)
+                instantiate(classLoader, declaration, notebook, libraryOptions)
             }
         }
 
         scanResult.producers.forEach { declaration ->
             withErrorsHandling(declaration) {
-                val producer = instantiate(classLoader, declaration, notebook)
+                val producer = instantiate(classLoader, declaration, notebook, libraryOptions)
                 producer.getDefinitions(notebook).forEach {
                     definitions.add(it)
                 }
@@ -106,7 +116,12 @@ class LibrariesScanner(val notebook: Notebook) {
         return definitions
     }
 
-    private fun <T> instantiate(classLoader: ClassLoader, data: LibrariesInstantiable<T>, notebook: Notebook): T {
+    private fun <T> instantiate(
+        classLoader: ClassLoader,
+        data: LibrariesInstantiable<T>,
+        notebook: Notebook,
+        libraryOptions: Map<String, String>
+    ): T {
         val clazz = classLoader.loadClass(data.fqn)
         val constructors = clazz.constructors
 
@@ -125,7 +140,10 @@ class LibrariesScanner(val notebook: Notebook) {
             1 -> {
                 constructor.newInstance(notebook)
             }
-            else -> throw IllegalStateException("Only zero or one argument is allowed for library class")
+            2 -> {
+                constructor.newInstance(notebook, libraryOptions)
+            }
+            else -> throw IllegalStateException("Only zero, one or two arguments are allowed for library class")
         } as T
     }
 

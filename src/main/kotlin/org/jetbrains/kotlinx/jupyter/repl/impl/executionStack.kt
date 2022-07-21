@@ -17,3 +17,15 @@ class MutableExecutionStackFrame(
 
 fun ExecutionStackFrame?.traverseStack() = generateSequence(this) { it.previous }
 fun ExecutionStackFrame?.push() = MutableExecutionStackFrame(this)
+
+val ExecutionStackFrame?.libraryOptions: Map<String, String> get() {
+    return buildMap {
+        traverseStack().forEach { frame ->
+            frame.libraries.forEach { library ->
+                library.options.entries.forEach { (key, value) ->
+                    put(key, value)
+                }
+            }
+        }
+    }
+}

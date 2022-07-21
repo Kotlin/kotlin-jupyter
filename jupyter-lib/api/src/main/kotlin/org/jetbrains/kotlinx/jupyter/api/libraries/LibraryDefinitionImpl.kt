@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
  * Trivial implementation of [LibraryDefinition] - simple container.
  */
 class LibraryDefinitionImpl private constructor() : LibraryDefinition {
+    override var options: Map<String, String> = emptyMap()
     override var dependencies: List<String> = emptyList()
     override var repositories: List<String> = emptyList()
     override var imports: List<String> = emptyList()

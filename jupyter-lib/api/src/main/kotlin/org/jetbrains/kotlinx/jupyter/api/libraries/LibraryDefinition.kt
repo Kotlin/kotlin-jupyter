@@ -18,6 +18,14 @@ import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
  */
 interface LibraryDefinition {
     /**
+     * Key-value options.
+     * Options are passed to the constructors of transitively loaded libraries
+     * and could be used in their construction
+     */
+    val options: Map<String, String>
+        get() = emptyMap()
+
+    /**
      * List of artifact dependencies in gradle colon-separated format
      */
     val dependencies: List<String>

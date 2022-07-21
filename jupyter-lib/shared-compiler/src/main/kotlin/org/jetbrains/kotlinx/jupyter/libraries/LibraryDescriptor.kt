@@ -84,6 +84,7 @@ class LibraryDescriptor(
 
     private fun processDescriptor(mapping: Map<String, String>): LibraryDefinition {
         return libraryDefinition {
+            it.options = mapping
             it.dependencies = dependencies.replaceVariables(mapping)
             it.repositories = repositories.replaceVariables(mapping)
             it.imports = imports.replaceVariables(mapping)

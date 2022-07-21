@@ -96,7 +96,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             // TODO: scan classloader only when new classpath was added
             log.catchAll {
-                librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context)
+                librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context, stackFrame.libraryOptions)
             }
 
             if (invokeAfterCallbacks) {

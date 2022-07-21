@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
@@ -10,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -20,9 +22,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class IntegrationApiTests {
-
+    private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
+        return createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libraryResolver)
+    }
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter {
-        return createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libs.toList().toLibraries())
+        return makeRepl(libs.toList().toLibraries())
     }
 
     @Test
@@ -130,6 +134,29 @@ class IntegrationApiTests {
         val jsonData = json["data"] as JsonObject
         val htmlString = jsonData["text/html"] as JsonPrimitive
         kotlin.test.assertEquals("""<span style="color:red">red</span>""", htmlString.content)
+    }
+
+    @Test
+    fun `library options`() {
+        val libs = listOf(
+            "lib" to """
+                {
+                    "dependencies": [
+                        "src/test/testData/kotlin-jupyter-api-test-0.0.18.jar"
+                    ]
+                }
+            """.trimIndent()
+        )
+        val repl = makeRepl(libs.toLibraries())
+        repl.eval("%use lib(a = 42, b=foo)")
+
+        val res = repl.eval("integrationOptions")
+
+        val result = res.resultValue
+        result.shouldBeInstanceOf<Map<String, String>>()
+
+        result["a"] shouldBe "42"
+        result["b"] shouldBe "foo"
     }
 
     @Test
