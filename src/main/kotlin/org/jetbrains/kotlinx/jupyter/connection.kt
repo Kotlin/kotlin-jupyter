@@ -4,13 +4,11 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
-import org.jetbrains.kotlinx.jupyter.api.libraries.header
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
@@ -22,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.emptyJsonObjectStringBytes
-import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.jetbrains.kotlinx.jupyter.messaging.makeJsonHeader
 import org.jetbrains.kotlinx.jupyter.messaging.makeReplyMessage
 import org.jetbrains.kotlinx.jupyter.messaging.makeSimpleMessage
@@ -243,14 +240,10 @@ class JupyterConnectionImpl(
     override fun sendReply(socketName: JupyterSocket, parentMessage: RawMessage, type: String, content: JsonObject, metadata: JsonObject?) {
         val message = RawMessageImpl(
             parentMessage.id,
-            JsonObject(
-                mapOf(
-                    "header" to makeJsonHeader(type, parentMessage),
-                    "parent_header" to (parentMessage.header ?: Json.EMPTY),
-                    "metadata" to (metadata ?: Json.EMPTY),
-                    "content" to content
-                )
-            )
+            makeJsonHeader(type, parentMessage),
+            parentMessage.header,
+            metadata,
+            content
         )
         send(socketName, message)
     }
@@ -312,9 +305,8 @@ fun ZMQ.Socket.sendRawMessage(msg: RawMessage, hmac: HMAC) {
         msg.id.forEach { sendMore(it) }
         sendMore(MESSAGE_DELIMITER)
 
-        val dataJson = msg.data.jsonObject
-        val signableMsg = listOf("header", "parent_header", "metadata", "content")
-            .map { fieldName -> dataJson[fieldName]?.let { Json.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes }
+        val properties = listOf(RawMessage::header, RawMessage::parentHeader, RawMessage::metadata, RawMessage::content)
+        val signableMsg = properties.map { prop -> prop.get(msg)?.let { Json.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes }
         sendMore(hmac(signableMsg) ?: "")
         for (i in 0 until (signableMsg.size - 1)) {
             sendMore(signableMsg[i])
@@ -340,23 +332,19 @@ fun ZMQ.Socket.receiveRawMessage(start: ByteArray, hmac: HMAC): RawMessage {
         throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
     }
 
-    fun ByteArray.parseJson(): JsonElement {
+    fun ByteArray.parseJson(): JsonElement? {
         val json = Json.decodeFromString<JsonElement>(this.toString(Charsets.UTF_8))
-        return if (json is JsonObject && json.isEmpty()) JsonNull else json
+        return if (json is JsonObject && json.isEmpty()) null else json
     }
 
-    fun JsonElement.orEmptyObject() = if (this is JsonNull) Json.EMPTY else this
-
-    val dataJson = jsonObject(
-        "header" to header.parseJson(),
-        "parent_header" to parentHeader.parseJson(),
-        "metadata" to metadata.parseJson().orEmptyObject(),
-        "content" to content.parseJson().orEmptyObject()
-    )
+    fun JsonElement?.orEmptyObject() = this ?: Json.EMPTY
 
     return RawMessageImpl(
         ids,
-        dataJson
+        header.parseJson()!!.jsonObject,
+        parentHeader.parseJson()?.jsonObject,
+        metadata.parseJson()?.jsonObject,
+        content.parseJson().orEmptyObject(),
     )
 }
 

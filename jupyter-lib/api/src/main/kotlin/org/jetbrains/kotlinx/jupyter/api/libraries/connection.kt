@@ -28,27 +28,22 @@ val JupyterSocket.nameForUser get() = name.toLowerCase()
 val JupyterSocket.portField get() = "${nameForUser}_port"
 
 /**
- * Raw Jupyter message. [data] generally should contain `header`, `parent_header`, `content` and `metadata` fields
- *
- * @constructor Create empty Raw message
+ * Raw Jupyter message.
  */
 interface RawMessage {
     val id: List<ByteArray>
-    val data: JsonElement
+    val header: JsonObject
+    val parentHeader: JsonObject?
+    val metadata: JsonObject?
+    val content: JsonElement
 }
-
-val RawMessage.header: JsonObject?
-    get() = (data as? JsonObject)?.get("header") as? JsonObject
 
 val RawMessage.type: String?
     get() {
-        val type = header?.get("msg_type")
+        val type = header["msg_type"]
         if (type !is JsonPrimitive || !type.isString) return null
         return type.content
     }
-
-val RawMessage.content: JsonObject?
-    get() = (data as? JsonObject)?.get("content") as? JsonObject
 
 typealias CommOpenCallback = (Comm, JsonObject) -> Unit
 typealias CommMsgCallback = (JsonObject) -> Unit

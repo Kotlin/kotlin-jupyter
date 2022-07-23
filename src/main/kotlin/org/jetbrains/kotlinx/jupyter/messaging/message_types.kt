@@ -567,13 +567,11 @@ object MessageDataSerializer : KSerializer<MessageData> {
         } ?: Json.EMPTY
 
         encoder.encodeJsonElement(
-            JsonObject(
-                mapOf(
-                    "header" to format.encodeToJsonElement(value.header),
-                    "parent_header" to (value.parentHeader?.let { format.encodeToJsonElement(it) } ?: Json.EMPTY),
-                    "metadata" to (value.metadata?.let { format.encodeToJsonElement(it) } ?: Json.EMPTY),
-                    "content" to content
-                )
+            messageDataJson(
+                format.encodeToJsonElement(value.header).jsonObject,
+                value.parentHeader?.let { format.encodeToJsonElement(it) }?.jsonObject,
+                value.metadata?.let { format.encodeToJsonElement(it) }?.jsonObject,
+                content
             )
         )
     }

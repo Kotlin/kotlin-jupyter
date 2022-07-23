@@ -11,7 +11,6 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.api.libraries.header
 import org.jetbrains.kotlinx.jupyter.protocolVersion
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.text.SimpleDateFormat
@@ -26,16 +25,32 @@ internal val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 
 data class RawMessageImpl(
     override val id: List<ByteArray> = listOf(),
-    override val data: JsonElement = JsonNull
+    override val header: JsonObject,
+    override val parentHeader: JsonObject?,
+    override val metadata: JsonObject?,
+    override val content: JsonElement,
 ) : RawMessage {
     override fun toString(): String =
-        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] " +
-            Json.encodeToString(data)
+        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] $data"
 }
 
 fun RawMessage.toMessage(): Message {
     return Message(id, Json.decodeFromJsonElement(data))
 }
+
+fun messageDataJson(
+    header: JsonObject,
+    parentHeader: JsonObject?,
+    metadata: JsonObject?,
+    content: JsonElement,
+) = buildJsonObject {
+    put("header", header)
+    put("parent_header", parentHeader ?: JsonNull)
+    put("metadata", metadata ?: JsonNull)
+    put("content", content)
+}
+
+val RawMessage.data: JsonObject get() = messageDataJson(header, parentHeader, metadata, content)
 
 data class Message(
     val id: List<ByteArray> = listOf(),
@@ -53,7 +68,14 @@ data class Message(
 }
 
 fun Message.toRawMessage(): RawMessage {
-    return RawMessageImpl(id, Json.encodeToJsonElement(data))
+    val dataJson = Json.encodeToJsonElement(data).jsonObject
+    return RawMessageImpl(
+        id,
+        dataJson["header"]!!.jsonObject,
+        dataJson["parent_header"] as? JsonObject,
+        dataJson["metadata"] as? JsonObject,
+        dataJson["content"]!!,
+    )
 }
 
 @JvmName("jsonObjectForString")
