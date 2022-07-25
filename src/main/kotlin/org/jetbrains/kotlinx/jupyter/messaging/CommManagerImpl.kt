@@ -18,8 +18,6 @@ interface CommManagerInternal : CommManager {
 }
 
 class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommManagerInternal {
-    private val iopub get() = connection.iopub
-
     private val commOpenCallbacks = ConcurrentHashMap<String, CommOpenCallback>()
     private val commTargetToIds = ConcurrentHashMap<String, CopyOnWriteArrayList<String>>()
     private val commIdToComm = ConcurrentHashMap<String, CommImpl>()
@@ -29,7 +27,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         val newComm = registerNewComm(target, id)
 
         // send comm_open
-        iopub.sendSimpleMessage(
+        connection.sendSimpleMessageToIoPub(
             MessageType.COMM_OPEN,
             CommOpen(newComm.id, newComm.target, data)
         )
@@ -45,7 +43,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         val callback = commOpenCallbacks[target]
         if (callback == null) {
             // If no callback is registered, we should send `comm_close` immediately in response.
-            iopub.sendSimpleMessage(
+            connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
                 CommClose(id, commFailureJson("Target $target was not registered"))
             )
@@ -56,7 +54,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         try {
             callback(newComm, data)
         } catch (e: Throwable) {
-            iopub.sendSimpleMessage(
+            connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
                 CommClose(id, commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}"))
             )
@@ -127,7 +125,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         }
         override fun send(data: JsonObject) {
             assertOpen()
-            iopub.sendSimpleMessage(
+            connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_MSG,
                 CommMsg(id, data)
             )
@@ -163,7 +161,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
             onCloseCallbacks.forEach { it(data) }
 
             if (notifyClient) {
-                iopub.sendSimpleMessage(
+                connection.sendSimpleMessageToIoPub(
                     MessageType.COMM_CLOSE,
                     CommClose(id, data)
                 )
@@ -173,7 +171,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         fun messageReceived(message: Message, data: JsonObject) {
             if (closed) return
 
-            connection.doWrappedInBusyIdle(message) {
+            connection.doWrappedInBusyIdle(message.toRawMessage()) {
                 for (callback in onMessageCallbacks) {
                     callback(data)
                 }

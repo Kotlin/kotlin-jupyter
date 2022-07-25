@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
  *
  * For now, only adding callbacks for messages on `control` and `shell` sockets makes sense.
  */
-enum class JupyterSocket {
+enum class JupyterSocketType {
     HB,
     SHELL,
     CONTROL,
@@ -24,8 +24,8 @@ enum class JupyterSocket {
     IOPUB;
 }
 
-val JupyterSocket.nameForUser get() = name.toLowerCase()
-val JupyterSocket.portField get() = "${nameForUser}_port"
+val JupyterSocketType.nameForUser get() = name.toLowerCase()
+val JupyterSocketType.portField get() = "${nameForUser}_port"
 
 /**
  * Raw Jupyter message.
@@ -52,10 +52,11 @@ typealias RawMessageAction = (RawMessage) -> Unit
 
 /**
  * Callback for messages of type [messageType] coming to a certain [socket]
+ * If [messageType] is null, callback is called for any message
  */
 interface RawMessageCallback {
-    val socket: JupyterSocket
-    val messageType: String
+    val socket: JupyterSocketType
+    val messageType: String?
     val action: RawMessageAction
 }
 
@@ -73,13 +74,7 @@ interface JupyterConnection {
     /**
      * Send raw [message] to a given [socketName]
      */
-    fun send(socketName: JupyterSocket, message: RawMessage)
-
-    /**
-     * Send reply to a given [parentMessage] of type [type] to socket [socketName].
-     * Simpler-to-use version of [send].
-     */
-    fun sendReply(socketName: JupyterSocket, parentMessage: RawMessage, type: String, content: JsonObject, metadata: JsonObject? = null)
+    fun send(socketName: JupyterSocketType, message: RawMessage)
 }
 
 interface CommManager {
@@ -166,10 +161,10 @@ interface Comm {
 /**
  * Construct raw message callback
  */
-fun rawMessageCallback(socket: JupyterSocket, messageType: String, action: RawMessageAction): RawMessageCallback {
+fun rawMessageCallback(socket: JupyterSocketType, messageType: String?, action: RawMessageAction): RawMessageCallback {
     return object : RawMessageCallback {
-        override val socket: JupyterSocket get() = socket
-        override val messageType: String get() = messageType
+        override val socket: JupyterSocketType get() = socket
+        override val messageType: String? get() = messageType
         override val action: RawMessageAction get() = action
     }
 }

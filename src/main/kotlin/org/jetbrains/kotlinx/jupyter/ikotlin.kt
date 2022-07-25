@@ -1,10 +1,13 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
+import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.controlMessagesHandler
 import org.jetbrains.kotlinx.jupyter.messaging.shellMessagesHandler
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplFactory
@@ -97,7 +100,7 @@ fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, 
 fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties, scriptReceivers: List<Any> = emptyList()) {
     log.info("Starting server with config: $kernelConfig")
 
-    JupyterConnectionImpl(kernelConfig).use { conn ->
+    JupyterConnectionImpl(kernelConfig).use { conn: JupyterConnectionInternal ->
 
         printClassPath()
 
@@ -126,14 +129,18 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
             }
         }
 
-        conn.control.onMessage { message ->
-            controlMessagesHandler(message, repl)
-        }
+        conn.addMessageCallback(
+            rawMessageCallback(JupyterSocketType.CONTROL, null) { rawMessage ->
+                conn.controlMessagesHandler(rawMessage, repl)
+            }
+        )
 
-        conn.shell.onMessage { message ->
-            conn.updateSessionInfo(message)
-            shellMessagesHandler(message, repl, commManager, executionCount)
-        }
+        conn.addMessageCallback(
+            rawMessageCallback(JupyterSocketType.SHELL, null) { rawMessage ->
+                conn.updateSessionInfo(rawMessage)
+                conn.shellMessagesHandler(rawMessage, repl, commManager, executionCount)
+            }
+        )
 
         val controlThread = thread {
             socketLoop("Control: Interrupted", mainThread) {
@@ -143,7 +150,7 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
 
         val hbThread = thread {
             socketLoop("Heartbeat: Interrupted", mainThread) {
-                conn.heartbeat.onData { send(it, 0) }
+                conn.heartbeat.onData { socket.send(it, 0) }
             }
         }
 

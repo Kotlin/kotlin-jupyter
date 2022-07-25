@@ -3,14 +3,19 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import org.jetbrains.kotlinx.jupyter.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.InputStream
 
 interface JupyterConnectionInternal : JupyterConnection {
-    val heartbeat: JupyterServerSocket
-    val shell: JupyterServerSocket
-    val control: JupyterServerSocket
-    val stdin: JupyterServerSocket
-    val iopub: JupyterServerSocket
+    val config: KernelConfig
+    val contextMessage: RawMessage
+
+    val heartbeat: JupyterSocket
+    val shell: JupyterSocket
+    val control: JupyterSocket
+    val stdin: JupyterSocket
+    val iopub: JupyterSocket
 
     val messageId: List<ByteArray>
     val sessionId: String
@@ -19,8 +24,10 @@ interface JupyterConnectionInternal : JupyterConnection {
     val executor: JupyterExecutor
     val stdinIn: InputStream
 
-    fun sendStatus(status: KernelStatus, incomingMessage: Message? = null)
-    fun doWrappedInBusyIdle(incomingMessage: Message? = null, action: () -> Unit)
+    fun sendStatus(status: KernelStatus, incomingMessage: RawMessage? = null)
+    fun doWrappedInBusyIdle(incomingMessage: RawMessage? = null, action: () -> Unit)
+    fun updateSessionInfo(message: RawMessage)
+    fun setContextMessage(message: RawMessage?)
 }
 
 fun JupyterConnectionInternal.makeDefaultHeader(msgType: MessageType): MessageHeader {
@@ -37,20 +44,14 @@ fun JupyterConnectionInternal.makeSimpleMessage(msgType: MessageType, content: M
     )
 }
 
-interface JupyterServerSocket {
-    val connection: JupyterConnectionInternal
-
-    fun sendRawMessage(msg: RawMessage)
-}
-
-fun JupyterServerSocket.sendMessage(msg: Message) {
+fun JupyterSocket.sendMessage(msg: Message) {
     sendRawMessage(msg.toRawMessage())
 }
 
-fun JupyterConnectionInternal.sendOut(msg: Message, stream: JupyterOutType, text: String) {
+fun JupyterConnectionInternal.sendOut(msg: RawMessage, stream: JupyterOutType, text: String) {
     iopub.sendMessage(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
 }
 
-fun JupyterServerSocket.sendSimpleMessage(msgType: MessageType, content: MessageContent) {
-    sendMessage(connection.makeSimpleMessage(msgType, content))
+fun JupyterConnectionInternal.sendSimpleMessageToIoPub(msgType: MessageType, content: MessageContent) {
+    iopub.sendMessage(makeSimpleMessage(msgType, content))
 }

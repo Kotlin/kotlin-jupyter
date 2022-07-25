@@ -2,13 +2,11 @@ package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
-import org.zeromq.SocketType
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
@@ -23,14 +21,6 @@ val defaultRepositories = listOf(
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
-}
-
-enum class JupyterSocketInfo(val type: JupyterSocket, val zmqKernelType: SocketType, val zmqClientType: SocketType) {
-    HB(JupyterSocket.HB, SocketType.REP, SocketType.REQ),
-    SHELL(JupyterSocket.SHELL, SocketType.ROUTER, SocketType.REQ),
-    CONTROL(JupyterSocket.CONTROL, SocketType.ROUTER, SocketType.REQ),
-    STDIN(JupyterSocket.STDIN, SocketType.ROUTER, SocketType.REQ),
-    IOPUB(JupyterSocket.IOPUB, SocketType.PUB, SocketType.SUB);
 }
 
 data class OutputConfig(

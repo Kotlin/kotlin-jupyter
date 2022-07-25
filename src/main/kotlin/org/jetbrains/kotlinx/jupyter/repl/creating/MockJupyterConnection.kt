@@ -1,26 +1,29 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.JupyterExecutor
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSocket
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
-import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.InputStream
 
 object MockJupyterConnection : JupyterConnectionInternal {
-    override val heartbeat: JupyterServerSocket
+    override val config: KernelConfig
         get() = throw NotImplementedError()
-    override val shell: JupyterServerSocket
+    override val contextMessage: RawMessage
         get() = throw NotImplementedError()
-    override val control: JupyterServerSocket
+    override val heartbeat: JupyterSocket
         get() = throw NotImplementedError()
-    override val stdin: JupyterServerSocket
+    override val shell: JupyterSocket
         get() = throw NotImplementedError()
-    override val iopub: JupyterServerSocket
+    override val control: JupyterSocket
+        get() = throw NotImplementedError()
+    override val stdin: JupyterSocket
+        get() = throw NotImplementedError()
+    override val iopub: JupyterSocket
         get() = throw NotImplementedError()
     override val messageId: List<ByteArray>
         get() = throw NotImplementedError()
@@ -33,11 +36,19 @@ object MockJupyterConnection : JupyterConnectionInternal {
     override val stdinIn: InputStream
         get() = throw NotImplementedError()
 
-    override fun sendStatus(status: KernelStatus, incomingMessage: Message?) {
+    override fun sendStatus(status: KernelStatus, incomingMessage: RawMessage?) {
         throw NotImplementedError()
     }
 
-    override fun doWrappedInBusyIdle(incomingMessage: Message?, action: () -> Unit) {
+    override fun doWrappedInBusyIdle(incomingMessage: RawMessage?, action: () -> Unit) {
+        throw NotImplementedError()
+    }
+
+    override fun updateSessionInfo(message: RawMessage) {
+        throw NotImplementedError()
+    }
+
+    override fun setContextMessage(message: RawMessage?) {
         throw NotImplementedError()
     }
 
@@ -49,11 +60,7 @@ object MockJupyterConnection : JupyterConnectionInternal {
         throw NotImplementedError()
     }
 
-    override fun send(socketName: JupyterSocket, message: RawMessage) {
-        throw NotImplementedError()
-    }
-
-    override fun sendReply(socketName: JupyterSocket, parentMessage: RawMessage, type: String, content: JsonObject, metadata: JsonObject?) {
+    override fun send(socketName: JupyterSocketType, message: RawMessage) {
         throw NotImplementedError()
     }
 }

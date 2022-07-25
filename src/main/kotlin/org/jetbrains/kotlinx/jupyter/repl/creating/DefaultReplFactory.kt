@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import org.jetbrains.kotlinx.jupyter.JupyterConnectionImpl
 import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
@@ -18,7 +17,7 @@ class DefaultReplFactory(
     private val _replConfig: ReplConfig,
     private val _runtimeProperties: ReplRuntimeProperties,
     private val _scriptReceivers: List<Any>,
-    private val _connection: JupyterConnectionImpl,
+    private val _connection: JupyterConnectionInternal,
     private val _commManager: CommManager,
 ) : BaseReplFactory() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider {

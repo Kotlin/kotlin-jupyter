@@ -43,9 +43,6 @@ dependencies {
     implementation(libs.logging.slf4j.api)
     implementation(libs.logging.logback.classic)
 
-    // ZeroMQ library for implementing messaging protocol
-    implementation(libs.zeromq)
-
     // Clikt library for parsing output magics
     implementation(libs.clikt)
 

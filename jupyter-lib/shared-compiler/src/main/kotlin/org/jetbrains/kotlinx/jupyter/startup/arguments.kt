@@ -11,20 +11,20 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import java.io.File
 import java.util.ArrayList
 import java.util.EnumMap
 
-typealias KernelPorts = Map<JupyterSocket, Int>
+typealias KernelPorts = Map<JupyterSocketType, Int>
 
 const val kernelTransportProtocol = "tcp"
 const val kernelSignatureScheme = "hmac1-sha256"
 
-fun createKernelPorts(action: (JupyterSocket) -> Int): KernelPorts {
-    return EnumMap<JupyterSocket, Int>(JupyterSocket::class.java).apply {
-        JupyterSocket.values().forEach { socket ->
+fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
+    return EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
+        JupyterSocketType.values().forEach { socket ->
             val port = action(socket)
             put(socket, port)
         }
