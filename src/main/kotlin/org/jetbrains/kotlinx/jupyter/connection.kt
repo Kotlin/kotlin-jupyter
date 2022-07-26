@@ -19,8 +19,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.AbstractJupyterConnection
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.createSocket
+import org.jetbrains.kotlinx.jupyter.protocol.openServerSocket
 import org.jetbrains.kotlinx.jupyter.protocol.sendRawMessage
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.zeromq.ZMQ
@@ -103,12 +102,11 @@ class JupyterConnectionImpl(
     private val hmac = HMAC(config.signatureScheme.replace("-", ""), config.signatureKey)
     private val context = ZMQ.context(1)
 
-    private fun openSocket(socketInfo: JupyterSocketInfo) = createSocket(
+    private fun openSocket(socketInfo: JupyterSocketInfo) = openServerSocket(
         socketInfo,
         context,
         hmac,
         config,
-        JupyterSocketSide.SERVER
     )
 
     override val heartbeat = openSocket(JupyterSocketInfo.HB)

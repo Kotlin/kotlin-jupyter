@@ -11,7 +11,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.createSocket
 import org.jetbrains.kotlinx.jupyter.protocol.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
@@ -32,7 +35,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
-open class KernelServerTestsBase {
+abstract class KernelServerTestsBase {
+    protected abstract val context: ZMQ.Context
 
     private val kernelConfig = createKotlinKernelConfig(
         ports = createKernelPorts { randomPort() },
@@ -109,15 +113,13 @@ open class KernelServerTestsBase {
         }
     }
 
-    inner class ClientSocket(context: ZMQ.Context, private val socket: JupyterSocketInfo) : ZMQ.Socket(context, socket.zmqClientType) {
-        fun connect() = connect("${kernelConfig.transport}://*:${kernelConfig.ports[socket.type]}")
+    fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, hmac, kernelConfig, JupyterSocketSide.CLIENT)
+
+    fun JupyterSocket.sendMessage(msgType: MessageType, content: MessageContent) {
+        socket.sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)), hmac)
     }
 
-    fun ZMQ.Socket.sendMessage(msgType: MessageType, content: MessageContent) {
-        sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)), hmac)
-    }
-
-    fun ZMQ.Socket.receiveMessage() = receiveRawMessage(recv(), hmac).toMessage()
+    fun JupyterSocket.receiveMessage() = socket.receiveRawMessage(socket.recv(), hmac).toMessage()
 
     companion object {
         private val rng = Random()

@@ -30,6 +30,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -55,20 +56,23 @@ fun JsonObject.string(key: String): String {
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
 class ExecuteTests : KernelServerTestsBase() {
-    private var context: ZMQ.Context? = null
-    private var shell: ClientSocket? = null
-    private var ioPub: ClientSocket? = null
-    private var stdin: ClientSocket? = null
+    private var _context: ZMQ.Context? = null
+    override val context: ZMQ.Context
+        get() = _context!!
+
+    private var shell: JupyterSocket? = null
+    private var ioPub: JupyterSocket? = null
+    private var stdin: JupyterSocket? = null
 
     override fun beforeEach() {
         try {
-            context = ZMQ.context(1)
-            shell = ClientSocket(context!!, JupyterSocketInfo.SHELL).apply {
-                base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
+            _context = ZMQ.context(1)
+            shell = createClientSocket(JupyterSocketInfo.SHELL).apply {
+                socket.base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
             }
-            ioPub = ClientSocket(context!!, JupyterSocketInfo.IOPUB)
-            stdin = ClientSocket(context!!, JupyterSocketInfo.STDIN)
-            ioPub?.subscribe(byteArrayOf())
+            ioPub = createClientSocket(JupyterSocketInfo.IOPUB)
+            stdin = createClientSocket(JupyterSocketInfo.STDIN)
+            ioPub?.socket?.subscribe(byteArrayOf())
             shell?.connect()
             ioPub?.connect()
             stdin?.connect()
@@ -85,14 +89,14 @@ class ExecuteTests : KernelServerTestsBase() {
         ioPub = null
         stdin?.close()
         stdin = null
-        context?.term()
-        context = null
+        context.term()
+        _context = null
     }
 
     private fun doExecute(
         code: String,
         hasResult: Boolean = true,
-        ioPubChecker: (ZMQ.Socket) -> Unit = {},
+        ioPubChecker: (JupyterSocket) -> Unit = {},
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
@@ -182,7 +186,7 @@ class ExecuteTests : KernelServerTestsBase() {
             }
             """.trimIndent()
 
-        fun checker(ioPub: ZMQ.Socket) {
+        fun checker(ioPub: JupyterSocket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
@@ -206,7 +210,7 @@ class ExecuteTests : KernelServerTestsBase() {
 
         val expected = arrayOf("12", "34", "5")
 
-        fun checker(ioPub: ZMQ.Socket) {
+        fun checker(ioPub: JupyterSocket) {
             for (el in expected) {
                 val msg = ioPub.receiveMessage()
                 val content = msg.content
@@ -230,7 +234,7 @@ class ExecuteTests : KernelServerTestsBase() {
             }
             """.trimIndent()
 
-        fun checker(ioPub: ZMQ.Socket) {
+        fun checker(ioPub: JupyterSocket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)

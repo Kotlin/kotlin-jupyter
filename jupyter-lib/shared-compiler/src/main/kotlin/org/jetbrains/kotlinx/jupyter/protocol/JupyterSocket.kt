@@ -7,6 +7,9 @@ import java.io.Closeable
 interface JupyterSocket : Closeable {
     val socket: ZMQ.Socket
 
+    fun bind(): Boolean
+    fun connect(): Boolean
+
     fun sendRawMessage(msg: RawMessage)
     fun receiveRawMessage(start: ByteArray): RawMessage?
     fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback

@@ -18,12 +18,14 @@ import org.zeromq.ZMQ
 @Execution(ExecutionMode.SAME_THREAD)
 class KernelServerTest : KernelServerTestsBase() {
 
+    override val context: ZMQ.Context = ZMQ.context(1)
+
+    private fun connectClientSocket(socketInfo: JupyterSocketInfo) = createClientSocket(socketInfo).apply { connect() }
+
     @Test
     fun testHeartbeat() {
-        val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSocketInfo.HB)) {
+        with(connectClientSocket(JupyterSocketInfo.HB).socket) {
             try {
-                connect()
                 send("abc")
                 val msg = recvStr()
                 assertEquals("abc", msg)
@@ -36,10 +38,8 @@ class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testStdin() {
-        val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSocketInfo.STDIN)) {
+        with(connectClientSocket(JupyterSocketInfo.STDIN).socket) {
             try {
-                connect()
                 sendMore("abc")
                 sendMore("def")
                 send("ok")
@@ -52,10 +52,8 @@ class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testShell() {
-        val context = ZMQ.context(1)
-        with(ClientSocket(context, JupyterSocketInfo.CONTROL)) {
+        with(connectClientSocket(JupyterSocketInfo.CONTROL).socket) {
             try {
-                connect()
                 sendMessage(
                     Message(
                         id = messageId,

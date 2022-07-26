@@ -152,7 +152,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         with(res.metadata) {
             assertTrue(newClasspath.size >= 10)
             assertTrue(newImports.size >= 5)
-            assertTrue("jetbrains.letsPlot.*" in newImports)
+            assertTrue("org.jetbrains.letsPlot.*" in newImports)
         }
     }
 

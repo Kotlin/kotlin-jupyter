@@ -13,14 +13,19 @@ class SocketWrapper(
     private val socketInfo: JupyterSocketInfo,
     override val socket: ZMQ.Socket,
     private val hmac: HMAC,
-    kernelConfig: KernelConfig,
+    private val kernelConfig: KernelConfig,
 ) : JupyterSocket {
     private val logger = getLogger(this::class.simpleName!!)
 
     val name: String get() = socketInfo.name
-    init {
+
+    private val address: String get() {
         val port = kernelConfig.ports[socketInfo.type]
-        socket.bind("${kernelConfig.transport}://*:$port")
+        return "${kernelConfig.transport}://*:$port"
+    }
+
+    override fun bind(): Boolean {
+        val res = socket.bind(address)
         if (socket.socketType == SocketType.PUB) {
             // Workaround to prevent losing few first messages on kernel startup
             // For more information on losing messages see this scheme:
@@ -29,7 +34,12 @@ class SocketWrapper(
             // doesn't support this. Value of 500 ms was chosen experimentally.
             Thread.sleep(500)
         }
-        logger.debug("[$name] listen: ${kernelConfig.transport}://*:$port")
+        logger.debug("[$name] listen: $address")
+        return res
+    }
+
+    override fun connect(): Boolean {
+        return socket.connect(address)
     }
 
     private val callbacks = mutableSetOf<SocketRawMessageCallback>()
@@ -91,4 +101,15 @@ fun createSocket(
         hmac,
         kernelConfig
     )
+}
+
+fun openServerSocket(
+    socketInfo: JupyterSocketInfo,
+    context: ZMQ.Context,
+    hmac: HMAC,
+    kernelConfig: KernelConfig,
+): JupyterSocket {
+    return createSocket(socketInfo, context, hmac, kernelConfig, JupyterSocketSide.SERVER).apply {
+        bind()
+    }
 }
