@@ -34,7 +34,7 @@ class NamedVersionCatalogsExtension(
     val dependencies = Dependencies()
     inner class Dependencies {
         fun get(name: String): Provider<MinimalExternalModuleDependency> {
-            return catalog.findDependency(name).get()
+            return catalog.findLibrary(name).get()
         }
     }
 }
