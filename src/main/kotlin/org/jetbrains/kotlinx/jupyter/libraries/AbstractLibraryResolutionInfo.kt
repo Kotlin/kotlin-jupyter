@@ -25,7 +25,7 @@ abstract class AbstractLibraryResolutionInfo(
         override val shouldBeCachedLocally get() = false
     }
 
-    class ByGitRef(private val ref: String) : AbstractLibraryResolutionInfo("ref") {
+    open class ByGitRef(private val ref: String) : AbstractLibraryResolutionInfo("ref") {
         override val valueKey: String
             get() = sha
 
@@ -40,6 +40,8 @@ abstract class AbstractLibraryResolutionInfo(
         override val args = emptyList<Variable>()
         override val shouldBeCachedLocally get() = false
     }
+
+    class ByGitRefWithClasspathFallback(ref: String) : ByGitRef(ref)
 
     class Default(val string: String = "") : AbstractLibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
@@ -77,6 +79,10 @@ abstract class AbstractLibraryResolutionInfo(
     companion object {
         val getInfoByRef = createCachedFun { ref: String ->
             ByGitRef(ref)
+        }
+
+        val getInfoByRefWithFallback = createCachedFun { ref: String ->
+            ByGitRefWithClasspathFallback(ref)
         }
 
         fun replaceForbiddenChars(string: String): String {

@@ -148,6 +148,7 @@ class LibraryDescriptorsManager private constructor(
         val response = getHttp(contentsApiUrl).jsonObject
         val downloadUrl = response["download_url"]!!.jsonPrimitive.content
         val res = getHttp(downloadUrl)
+        res.assertSuccessful()
         return res.text
     }
 

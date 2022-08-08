@@ -6,9 +6,11 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.common.text
+import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import java.io.File
+import java.io.IOException
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
@@ -109,6 +111,19 @@ open class ResourcesLibraryResolver(
 object FallbackLibraryResolver : ChainedLibraryResolver() {
     private val standardResolvers = listOf(
         byDirResolver,
+        resolver<AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback> { name ->
+            if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
+
+            try {
+                KERNEL_LIBRARIES.downloadLibraryDescriptor(sha, name)
+            } catch (e: IOException) {
+                KernelStreams.err.println(
+                    "WARNING: Can't resolve library $name from the given reference. Using classpath version of this library. Error: $e"
+                )
+                KernelStreams.err.flush()
+                resourcesResolver.resolveDescriptorFromResources(name)
+            }
+        },
         resolver<AbstractLibraryResolutionInfo.ByGitRef> { name ->
             if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
             KERNEL_LIBRARIES.downloadLibraryDescriptor(sha, name)

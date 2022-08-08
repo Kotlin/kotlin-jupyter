@@ -21,7 +21,7 @@ fun Project.addAllBuildRepositories() {
     val kotlinVersion = rootProject.defaultVersionCatalog.versions.devKotlin
 
     repositories {
-        mavenLocal()
+        // mavenLocal()
         mavenCentral()
         gradlePluginPortal()
 
