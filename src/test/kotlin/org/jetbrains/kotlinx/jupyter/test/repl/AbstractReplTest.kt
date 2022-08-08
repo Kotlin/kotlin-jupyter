@@ -3,8 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
@@ -49,7 +48,7 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeReplWithStandardResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
-        val standardResolutionInfoProvider = getDefaultDirectoryResolutionInfoProvider(KERNEL_LIBRARIES.homeLibrariesDir(homeDir))
+        val standardResolutionInfoProvider = getDefaultClasspathResolutionInfoProvider()
         val resolver = getStandardResolver(".", standardResolutionInfoProvider)
         return createRepl(standardResolutionInfoProvider, classpath, homeDir, testRepositories, resolver, standardResolverRuntimeProperties, displayHandler = displayHandler)
     }

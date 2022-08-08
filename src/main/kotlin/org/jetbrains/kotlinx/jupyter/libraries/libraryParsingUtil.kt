@@ -87,4 +87,7 @@ private val defaultParsers = listOf(
     LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
         AbstractLibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
     },
+    LibraryResolutionInfoParser.make("classpath", listOf()) {
+        AbstractLibraryResolutionInfo.ByClasspath
+    }
 ).associateBy { it.name }

@@ -76,7 +76,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val infoProvider = repl.resolutionInfoProvider
 
         val initialDefaultResolutionInfo = infoProvider.fallback
-        Assertions.assertTrue(initialDefaultResolutionInfo is AbstractLibraryResolutionInfo.ByDir)
+        Assertions.assertTrue(initialDefaultResolutionInfo is AbstractLibraryResolutionInfo.ByClasspath)
 
         eval("%useLatestDescriptors")
         Assertions.assertTrue(infoProvider.fallback is AbstractLibraryResolutionInfo.ByGitRef)

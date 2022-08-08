@@ -36,6 +36,11 @@ abstract class AbstractLibraryResolutionInfo(
         override val args = listOf(Variable("ref", ref))
     }
 
+    object ByClasspath : AbstractLibraryResolutionInfo("classpath") {
+        override val args = emptyList<Variable>()
+        override val shouldBeCachedLocally get() = false
+    }
+
     class Default(val string: String = "") : AbstractLibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
         override val shouldBeCachedLocally get() = false

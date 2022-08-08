@@ -15,15 +15,14 @@ fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoPro
     // Standard resolver doesn't cache results in memory
     var res: LibraryResolver = FallbackLibraryResolver
     val librariesDir: File? = homeDir?.let { KERNEL_LIBRARIES.homeLibrariesDir(File(it)) }
-    res = ResourcesLibraryResolver(res, Thread.currentThread().contextClassLoader)
     res = LocalLibraryResolver(res, librariesDir)
     res = DefaultInfoLibraryResolver(res, infoProvider, listOf(KERNEL_LIBRARIES.userLibrariesDir))
     return res
 }
 
-fun getDefaultDirectoryResolutionInfoProvider(dir: File): ResolutionInfoProvider {
+fun getDefaultClasspathResolutionInfoProvider(): ResolutionInfoProvider {
     return StandardResolutionInfoProvider(
-        AbstractLibraryResolutionInfo.ByDir(dir)
+        AbstractLibraryResolutionInfo.ByClasspath
     )
 }
 
@@ -42,10 +41,13 @@ fun getDefaultResolutionInfoSwitcher(provider: ResolutionInfoProvider, defaultDi
         AbstractLibraryResolutionInfo.getInfoByRef(defaultRef)
     }
 
+    val classpathInfo = AbstractLibraryResolutionInfo.ByClasspath
+
     return ResolutionInfoSwitcher(provider, DefaultInfoSwitch.DIRECTORY) { switch ->
         when (switch) {
             DefaultInfoSwitch.DIRECTORY -> dirInfo
             DefaultInfoSwitch.GIT_REFERENCE -> refInfo
+            DefaultInfoSwitch.CLASSPATH -> classpathInfo
         }
     }
 }

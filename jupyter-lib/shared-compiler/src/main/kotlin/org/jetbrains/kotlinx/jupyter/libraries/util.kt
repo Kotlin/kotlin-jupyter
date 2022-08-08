@@ -33,7 +33,7 @@ class Brackets(
 }
 
 enum class DefaultInfoSwitch {
-    GIT_REFERENCE, DIRECTORY
+    GIT_REFERENCE, DIRECTORY, CLASSPATH
 }
 
 fun diagFailure(message: String): ResultWithDiagnostics.Failure {

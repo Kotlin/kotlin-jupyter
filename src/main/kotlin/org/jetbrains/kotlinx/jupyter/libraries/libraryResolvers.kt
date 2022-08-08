@@ -87,10 +87,22 @@ open class ResourcesLibraryResolver(
     private val classLoader: ClassLoader,
 ) : ChainedLibraryResolver(parent) {
     override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
-        val name = reference.name ?: return null
-        val url = classLoader.getResource(KERNEL_LIBRARIES.resourceFilePath(name)) ?: return null
-        val descriptorText = url.readText()
-        return parseLibraryDescriptor(descriptorText).convertToDefinition(arguments)
+        val text = resolveDescriptorFromResources(reference.name) ?: return null
+        return parseLibraryDescriptor(text).convertToDefinition(arguments)
+    }
+
+    fun resolveDescriptorFromResources(libraryName: String?): String? {
+        libraryName ?: return null
+        val url = classLoader.getResource(KERNEL_LIBRARIES.resourceFilePath(libraryName)) ?: return null
+        return url.readText()
+    }
+
+    override fun shouldResolve(reference: LibraryReference): Boolean {
+        return when (reference.info) {
+            is AbstractLibraryResolutionInfo.Default -> true
+            is AbstractLibraryResolutionInfo.ByClasspath -> true
+            else -> false
+        }
     }
 }
 
@@ -109,6 +121,9 @@ object FallbackLibraryResolver : ChainedLibraryResolver() {
             response.text
         },
         resolver<ByNothingLibraryResolutionInfo> { "{}" },
+        resolver<AbstractLibraryResolutionInfo.ByClasspath> { name ->
+            resourcesResolver.resolveDescriptorFromResources(name)
+        },
         resolver<AbstractLibraryResolutionInfo.Default> { null }
     )
 
@@ -132,9 +147,11 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(private val kClass: KCl
 private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolverFun: T.(String?) -> String?) = SpecificLibraryResolver(T::class, resolverFun)
 
 private val byDirResolver = resolver<AbstractLibraryResolutionInfo.ByDir> { name ->
-    if (name == null) throw ReplLibraryLoadingException(name, "Directory library resolver needs library name to be specified")
+    if (name == null) throw ReplLibraryLoadingException(null, "Directory library resolver needs library name to be specified")
 
     val jsonFile = librariesDir.resolve(KERNEL_LIBRARIES.descriptorFileName(name))
     if (jsonFile.exists() && jsonFile.isFile) jsonFile.readText()
     else null
 }
+
+private val resourcesResolver = ResourcesLibraryResolver(null, ResourcesLibraryResolver::class.java.classLoader)

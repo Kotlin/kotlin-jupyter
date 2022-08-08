@@ -3,9 +3,8 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultDirectoryResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.controlMessagesHandler
@@ -66,8 +65,7 @@ fun main(vararg args: String) {
     try {
         log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val libraryPath = KERNEL_LIBRARIES.homeLibrariesDir(kernelArgs.homeDir)
-        val libraryInfoProvider = getDefaultDirectoryResolutionInfoProvider(libraryPath)
+        val libraryInfoProvider = getDefaultClasspathResolutionInfoProvider()
         val kernelConfig = kernelArgs.getConfig()
         val replConfig = ReplConfig.create(libraryInfoProvider, kernelArgs.homeDir)
         kernelServer(kernelConfig, replConfig)
@@ -82,7 +80,7 @@ fun main(vararg args: String) {
  *
  * The expected use case for this function is embedding into a Java application that doesn't necessarily support extensions written in Kotlin
  * The signature of this function should thus be simple, and e.g. allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
- * because EmptyResolutionInfoProvider is a Kotlin singleton object and it takes a while to understand how to use it from Java code.
+ * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
 fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
