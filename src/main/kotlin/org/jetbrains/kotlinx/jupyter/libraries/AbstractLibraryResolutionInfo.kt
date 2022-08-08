@@ -41,7 +41,10 @@ abstract class AbstractLibraryResolutionInfo(
         override val shouldBeCachedLocally get() = false
     }
 
-    class ByGitRefWithClasspathFallback(ref: String) : ByGitRef(ref)
+    class ByGitRefWithClasspathFallback(ref: String) : ByGitRef(ref) {
+        override val valueKey: String
+            get() = "fallback_" + super.valueKey
+    }
 
     class Default(val string: String = "") : AbstractLibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
