@@ -82,6 +82,18 @@ class LocalLibraryResolver(
     private fun LibraryReference.getFile(dir: File) = dir.resolve(KERNEL_LIBRARIES.descriptorFileName(key))
 }
 
+open class ResourcesLibraryResolver(
+    parent: LibraryResolver?,
+    private val classLoader: ClassLoader,
+) : ChainedLibraryResolver(parent) {
+    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+        val name = reference.name ?: return null
+        val url = classLoader.getResource(KERNEL_LIBRARIES.resourceFilePath(name)) ?: return null
+        val descriptorText = url.readText()
+        return parseLibraryDescriptor(descriptorText).convertToDefinition(arguments)
+    }
+}
+
 object FallbackLibraryResolver : ChainedLibraryResolver() {
     private val standardResolvers = listOf(
         byDirResolver,

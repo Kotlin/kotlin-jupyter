@@ -110,6 +110,14 @@ tasks {
         )
     }
 
+    CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {
+        rootSettings.librariesDir
+            .list { _, fileName -> fileName.endsWith(".json") }
+            ?.forEach {
+                addSingleValueFile("jupyterLibraries/$it", rootSettings.librariesDir.resolve(it).readText())
+            }
+    }
+
     CreateResourcesTask.register(project, "createTestResources", processTestResources) {
         addSingleValueFile("PUBLISHED_JUPYTER_API_VERSION", libs.versions.jupyterApi.get())
     }

@@ -15,6 +15,7 @@ fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoPro
     // Standard resolver doesn't cache results in memory
     var res: LibraryResolver = FallbackLibraryResolver
     val librariesDir: File? = homeDir?.let { KERNEL_LIBRARIES.homeLibrariesDir(File(it)) }
+    res = ResourcesLibraryResolver(res, Thread.currentThread().contextClassLoader)
     res = LocalLibraryResolver(res, librariesDir)
     res = DefaultInfoLibraryResolver(res, infoProvider, listOf(KERNEL_LIBRARIES.userLibrariesDir))
     return res

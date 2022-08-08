@@ -26,6 +26,7 @@ class LibraryDescriptorsManager private constructor(
     localPath: String,
     private val homePath: String,
     userPath: String,
+    private val resourcesPath: String,
     private val exceptionsHandler: ExceptionsHandler,
     userSettingsDir: File,
     private val logger: Logger,
@@ -49,6 +50,8 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun descriptorFileName(name: String) = "$name.$DESCRIPTOR_EXTENSION"
+
+    fun resourceFilePath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
 
     fun isLibraryDescriptor(file: File): Boolean {
         return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
@@ -186,6 +189,7 @@ class LibraryDescriptorsManager private constructor(
                 "libraries",
                 "libraries",
                 "libraries",
+                "jupyterLibraries",
                 exceptionsHandler,
                 File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
                 logger
