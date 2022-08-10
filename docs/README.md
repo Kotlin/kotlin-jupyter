@@ -210,6 +210,7 @@ Other options are resolving library descriptor from a local file or from remote 
 ```
 
 #### List of supported libraries:
+ - [biokotlin](https://bitbucket.org/bucklerlab/biokotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
  - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing
@@ -218,6 +219,8 @@ Other options are resolving library descriptor from a local file or from remote 
  - default - Default imports: dataframe and Lets-Plot libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
+ - [ggdsl](https://github.com/AndreiKingsley/lib-ggdsl) - Lets-plot and Dataframe ggdsl
+ - [ggdsl-dataframe](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin Dataframe integration for ggdsl
  - [ggdsl-echarts](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Apache ECharts
  - [ggdsl-lets-plot](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Lets-Plot
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
