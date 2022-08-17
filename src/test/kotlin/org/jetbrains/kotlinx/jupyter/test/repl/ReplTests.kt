@@ -141,6 +141,26 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testDependencyConfigurationAnnotationCompletion() {
+        eval(
+            """
+                USE {
+                    repositories {
+                        mavenCentral()
+                    }
+                    dependencies {
+                        implementation("io.github.config4k:config4k:0.4.2")
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val res = repl.completeBlocking("import io.github.", 17)
+        res.shouldBeInstanceOf<CompletionResult.Success>()
+        res.sortedMatches().contains("config4k")
+    }
+
+    @Test
     fun testExternalStaticFunctions() {
         val res = eval(
             """
