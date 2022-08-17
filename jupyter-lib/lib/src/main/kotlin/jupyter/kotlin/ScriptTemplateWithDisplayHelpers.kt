@@ -20,7 +20,7 @@ abstract class ScriptTemplateWithDisplayHelpers(
 
     fun EXECUTE(code: String) = host.scheduleExecution(CodeExecution(code).toExecutionCallback())
 
-    fun USE(library: LibraryDefinition) = host.addLibrary(library)
+    fun USE(library: LibraryDefinition) = host.scheduleExecution { addLibrary(library) }
 
     fun USE(builder: JupyterIntegration.Builder.() -> Unit) {
         val o = object : JupyterIntegration() {
