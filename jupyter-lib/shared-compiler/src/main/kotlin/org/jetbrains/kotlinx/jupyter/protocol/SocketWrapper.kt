@@ -84,6 +84,7 @@ class SocketWrapper(
     }
 
     override fun close() {
+        callbacks.clear()
         socket.close()
     }
 }
