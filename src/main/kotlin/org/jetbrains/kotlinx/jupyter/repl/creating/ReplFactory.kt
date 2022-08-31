@@ -83,15 +83,18 @@ abstract class ReplFactory {
 
     protected val commHandlers: List<CommHandler> by lazy { provideCommHandlers() }
     protected abstract fun provideCommHandlers(): List<CommHandler>
+    private fun checkCommHandlers() {
+        val uniqueTargets = commHandlers.distinctBy { it.targetId }.size
+        assert(uniqueTargets == commHandlers.size) {
+            val duplicates = commHandlers.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+            "Duplicate bundled comm targets found! $duplicates"
+        }
+    }
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
 
     init {
-        val uniqueTargets = commHandlers.map { it.targetId }.toSet().size
-        assert(uniqueTargets == commHandlers.size) {
-            val duplicates = commHandlers.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
-            "Duplicate bundled comm targets found! $duplicates"
-        }
+        checkCommHandlers()
     }
 }
