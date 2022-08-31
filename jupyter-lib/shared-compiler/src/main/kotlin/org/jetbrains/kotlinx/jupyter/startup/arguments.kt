@@ -161,11 +161,15 @@ fun KernelConfig.javaCmdLine(
 
     // Classpath for the whole kernel. Should include kernel artifact
     kernelClasspath: String,
+
+    // Any JVM arguments such as -XmX
+    extraJavaArguments: Collection<String> = emptyList(),
 ): List<String> {
     val args = toArgs(tempDirPrefix).argsList().toTypedArray()
 
     return ArrayList<String>().apply {
         add(javaExecutable)
+        addAll(extraJavaArguments)
         if (debugPort != null) {
             add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debugPort")
         }
