@@ -31,6 +31,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
     )
 
     private val sourcesResolverOptions = buildOptions(
+        DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
         DependenciesResolverOptionsName.SCOPE to "compile,runtime",
         DependenciesResolverOptionsName.CLASSIFIER to "sources",
         DependenciesResolverOptionsName.EXTENSION to "jar",

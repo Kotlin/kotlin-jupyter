@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -220,5 +222,28 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         resultThread.join()
         val resultValue = res?.resultValue
         resultValue.shouldBeInstanceOf<MimeTypedResult>()
+    }
+
+    @Test
+    fun `transitive sources are resolved even they are lacking for some of the dependencies in the graph`() {
+        eval(
+            """
+            SessionOptions.resolveSources = true
+            SessionOptions.serializeScriptData = true
+            """.trimIndent()
+        )
+
+        val result = eval(
+            """USE {
+            dependencies {
+                implementation("org.apache.hadoop:hadoop-client-runtime:3.3.2")
+            }
+        }
+            """.trimIndent()
+        )
+        with(result.metadata.newSources) {
+            filter { "hadoop-client-runtime" in it }.shouldBeEmpty()
+            filter { "hadoop-client-api" in it }.shouldNotBeEmpty()
+        }
     }
 }
