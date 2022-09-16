@@ -64,7 +64,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         if (repoIndex != -1) repositories.removeAt(repoIndex)
         repositories.add(repo)
 
-        return resolver.addRepository(repo.coordinates, repo.options).valueOrNull() == true
+        return resolver.addRepository(repo.coordinates, repo.options, null).valueOrNull() == true
     }
 
     override fun popAddedClasspath(): List<File> {
@@ -112,7 +112,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                     log.info("Resolving ${annotation.value}")
                     try {
                         doResolve(
-                            { resolver.resolve(annotation.value, resolverOptions) },
+                            { resolver.resolve(annotation.value, resolverOptions, null) },
                             onResolved = { files ->
                                 addedClasspath.addAll(files)
                                 classpath.addAll(files)
@@ -126,7 +126,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
 
                         if (resolveSources) {
                             doResolve(
-                                { resolver.resolve(annotation.value, sourcesResolverOptions) },
+                                { resolver.resolve(annotation.value, sourcesResolverOptions, null) },
                                 onResolved = { files ->
                                     addedSourcesClasspath.addAll(files)
                                 },

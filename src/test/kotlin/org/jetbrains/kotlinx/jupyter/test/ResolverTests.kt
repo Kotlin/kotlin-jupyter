@@ -14,9 +14,9 @@ class ResolverTests {
     private val log: Logger by lazy { LoggerFactory.getLogger("resolver") }
 
     private fun ExternalDependenciesResolver.doResolve(artifact: String): List<File> {
-        testRepositories.forEach { addRepository(it) }
+        testRepositories.forEach { addRepository(it, ExternalDependenciesResolver.Options.Empty, sourceCodeLocation = null) }
         assertTrue(acceptsArtifact(artifact))
-        val result = runBlocking { resolve(artifact) }
+        val result = runBlocking { resolve(artifact, ExternalDependenciesResolver.Options.Empty, sourceCodeLocation = null) }
         assertTrue(result is ResultWithDiagnostics.Success)
         return result.value
     }
