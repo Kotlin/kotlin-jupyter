@@ -1,7 +1,7 @@
 [versions]
 jvmTarget = "1.8"
 
-kotlin = "1.8.0-dev-3376"
+kotlin = "1.8.0-dev-3517"
 stableKotlin = "1.7.10"
 gradleKotlin = "1.7.10"
 ksp = "1.7.10-1.0.6"
