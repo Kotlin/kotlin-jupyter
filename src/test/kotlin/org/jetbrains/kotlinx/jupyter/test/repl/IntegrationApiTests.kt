@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
@@ -224,5 +225,29 @@ class IntegrationApiTests {
             repl.eval("throw java.lang.ThreadDeath()")
         }
         x shouldBe 1
+    }
+
+    @Test
+    fun `color scheme change`() {
+        var y = 2
+        val repl = makeRepl(
+            "lib1" to library {
+                onColorSchemeChange { scheme ->
+                    y = when (scheme) {
+                        ColorScheme.LIGHT -> 3
+                        ColorScheme.DARK -> 4
+                    }
+                }
+            }
+        )
+
+        repl.eval("%use lib1")
+        y shouldBe 2
+
+        repl.notebook.changeColorScheme(ColorScheme.DARK)
+        y shouldBe 4
+
+        repl.eval("notebook.changeColorScheme(ColorScheme.LIGHT)")
+        y shouldBe 3
     }
 }

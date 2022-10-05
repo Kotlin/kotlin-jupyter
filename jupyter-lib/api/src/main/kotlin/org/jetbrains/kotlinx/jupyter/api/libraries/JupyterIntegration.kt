@@ -74,6 +74,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val interruptionCallbacks = mutableListOf<InterruptionCallback>()
 
+        private val colorSchemeChangedCallbacks = mutableListOf<ColorSchemeChangedCallback>()
+
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
         }
@@ -234,6 +236,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             interruptionCallbacks.add(action)
         }
 
+        fun onColorSchemeChange(action: ColorSchemeChangedCallback) {
+            colorSchemeChangedCallbacks.add(action)
+        }
+
         internal fun getDefinition() =
             libraryDefinition {
                 it.init = init
@@ -253,6 +259,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.internalVariablesMarkers = internalVariablesMarkers
                 it.integrationTypeNameRules = integrationTypeNameRules
                 it.interruptionCallbacks = interruptionCallbacks
+                it.colorSchemeChangedCallbacks = colorSchemeChangedCallbacks
             }
     }
 

@@ -99,6 +99,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context, stackFrame.libraryOptions)
             }
 
+            log.catchAll {
+                rethrowAsLibraryException(LibraryProblemPart.COLOR_SCHEME_CHANGE_CALLBACKS) {
+                    colorSchemeChangeCallbacksProcessor.runCallbacks()
+                }
+            }
+
             if (invokeAfterCallbacks) {
                 afterCellExecution.forEach {
                     log.catchAll {
@@ -155,6 +161,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
                 library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
                 library.interruptionCallbacks.forEach(sharedContext.interruptionCallbacksProcessor::register)
+                library.colorSchemeChangedCallbacks.forEach(sharedContext.colorSchemeChangeCallbacksProcessor::register)
                 sharedContext.afterCellExecution.addAll(library.afterCellExecution)
                 sharedContext.codePreprocessor.addAll(library.codePreprocessors)
 

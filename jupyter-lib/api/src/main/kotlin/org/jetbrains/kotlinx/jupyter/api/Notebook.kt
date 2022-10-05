@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
@@ -63,6 +64,11 @@ interface Notebook {
      * @return Cell from history
      */
     fun history(before: Int): CodeCell?
+
+    /**
+     * Change color scheme and run callbacks
+     */
+    fun changeColorScheme(newScheme: ColorScheme)
 
     /**
      * Current cell

@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
@@ -192,6 +193,10 @@ object NotebookMock : Notebook {
     }
 
     override fun history(before: Int): CodeCell? {
+        error("Not supposed to be called")
+    }
+
+    override fun changeColorScheme(newScheme: ColorScheme) {
         error("Not supposed to be called")
     }
 

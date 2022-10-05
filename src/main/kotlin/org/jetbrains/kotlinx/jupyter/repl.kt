@@ -39,6 +39,7 @@ import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResol
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
+import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
@@ -66,6 +67,7 @@ import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.ColorSchemeChangeCallbacksProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalVariablesMarkersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InterruptionCallbacksProcessorImpl
@@ -368,6 +370,8 @@ class ReplForJupyterImpl(
 
     private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(this)
 
+    private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor = ColorSchemeChangeCallbacksProcessorImpl()
+
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext = SharedReplContext(
@@ -387,6 +391,7 @@ class ReplForJupyterImpl(
         this,
         internalVariablesMarkersProcessor,
         interruptionCallbacksProcessor,
+        colorSchemeChangeCallbacksProcessor,
     ).also {
         notebook.sharedReplContext = it
     }

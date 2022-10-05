@@ -140,4 +140,11 @@ interface LibraryDefinition {
      */
     val interruptionCallbacks: List<InterruptionCallback>
         get() = emptyList()
+
+    /**
+     * Callbacks that might be called when client changes its color scheme, or on library initialization.
+     * New color scheme value is passed to the callback
+     */
+    val colorSchemeChangedCallbacks: List<ColorSchemeChangedCallback>
+        get() = emptyList()
 }

@@ -37,6 +37,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var originalDescriptorText: String? = null
     override var integrationTypeNameRules: List<AcceptanceRule<String>> = emptyList()
     override var interruptionCallbacks: List<InterruptionCallback> = emptyList()
+    override var colorSchemeChangedCallbacks: List<ColorSchemeChangedCallback> = emptyList()
 
     companion object {
         internal fun build(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition {

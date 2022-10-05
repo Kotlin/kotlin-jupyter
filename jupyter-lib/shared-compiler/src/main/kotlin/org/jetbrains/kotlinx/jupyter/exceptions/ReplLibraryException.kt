@@ -20,6 +20,7 @@ enum class LibraryProblemPart(val message: String) {
     INTERNAL_VARIABLES_MARKERS("internal variables markers"),
     SHUTDOWN("shutdown callbacks/codes"),
     INTERRUPTION_CALLBACKS("interruption callbacks"),
+    COLOR_SCHEME_CHANGE_CALLBACKS("color scheme change callbacks"),
 }
 
 fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {

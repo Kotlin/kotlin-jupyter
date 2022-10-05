@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
@@ -209,6 +210,11 @@ class NotebookImpl(
     override fun history(before: Int): MutableCodeCell? {
         val offset = if (mainCellCreated) 1 else 0
         return history.getOrNull(history.size - offset - before)
+    }
+
+    override fun changeColorScheme(newScheme: ColorScheme) {
+        val context = sharedReplContext ?: return
+        context.colorSchemeChangeCallbacksProcessor.schemeChanged(newScheme)
     }
 
     override val currentCell: MutableCodeCell?

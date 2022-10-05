@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -33,6 +34,7 @@ data class SharedReplContext(
     val baseHost: BaseKernelHost,
     val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     val interruptionCallbacksProcessor: InterruptionCallbacksProcessor,
+    val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor
 ) {
     val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 }
