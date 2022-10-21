@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
+import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
@@ -118,12 +119,12 @@ class OkResponseWithMessage(
 }
 
 interface DisplayHandler {
-    fun handleDisplay(value: Any, host: ExecutionHost)
+    fun handleDisplay(value: Any, host: ExecutionHost, id: String? = null)
     fun handleUpdate(value: Any, host: ExecutionHost, id: String? = null)
 }
 
 object NoOpDisplayHandler : DisplayHandler {
-    override fun handleDisplay(value: Any, host: ExecutionHost) {
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
@@ -141,8 +142,8 @@ class SocketDisplayHandler(
         return renderedValue.toDisplayResult(notebook)
     }
 
-    override fun handleDisplay(value: Any, host: ExecutionHost) {
-        val display = render(host, value) ?: return
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+        val display = render(host, value)?.let { if(id != null) it.withId(id) else it } ?: return
         val json = display.toJson()
 
         notebook.currentCell?.addDisplay(display)
