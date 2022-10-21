@@ -143,7 +143,7 @@ class SocketDisplayHandler(
     }
 
     override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
-        val display = render(host, value)?.let { if(id != null) it.withId(id) else it } ?: return
+        val display = render(host, value)?.let { if (id != null) it.withId(id) else it } ?: return
         val json = display.toJson()
 
         notebook.currentCell?.addDisplay(display)
