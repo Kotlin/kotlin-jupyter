@@ -48,7 +48,7 @@ class JupyterConnectionImpl(
         private fun getInput(): String {
             stdin.sendMessage(
                 makeReplyMessage(
-                    contextMessage,
+                    contextMessage!!,
                     MessageType.INPUT_REQUEST,
                     content = InputRequest("stdin:")
                 )
@@ -156,7 +156,7 @@ class JupyterConnectionImpl(
     override fun setContextMessage(message: RawMessage?) {
         _contextMessage = message
     }
-    override val contextMessage: RawMessage get() = _contextMessage!!
+    override val contextMessage: RawMessage? get() = _contextMessage
 
     override val executor: JupyterExecutor = JupyterExecutorImpl()
 

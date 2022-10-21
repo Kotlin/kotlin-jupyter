@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
+import org.jetbrains.kotlinx.jupyter.MutableDisplayContainer
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
@@ -148,38 +149,34 @@ class SocketDisplayHandler(
 
         notebook.currentCell?.addDisplay(display)
 
-        socket.sendMessage(
-            makeReplyMessage(
-                connection.contextMessage,
-                MessageType.DISPLAY_DATA,
-                content = DisplayDataResponse(
-                    json["data"],
-                    json["metadata"],
-                    json["transient"]
-                )
-            )
+        val content = DisplayDataResponse(
+            json["data"],
+            json["metadata"],
+            json["transient"]
         )
+        val message = makeReplyMessage(connection.contextMessage!!, MessageType.DISPLAY_DATA, content = content)
+        socket.sendMessage(message)
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
         val display = render(host, value) ?: return
         val json = display.toJson().toMutableMap()
 
-        notebook.currentCell?.displays?.update(id, display)
+        val container = notebook.displays
+        container.update(id, display)
+        container.getById(id).distinctBy { it.cell.id }.forEach {
+            (it.cell.displays as MutableDisplayContainer).update(id, display)
+        }
 
         json.setDisplayId(id) ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
 
-        socket.sendMessage(
-            makeReplyMessage(
-                connection.contextMessage,
-                MessageType.UPDATE_DISPLAY_DATA,
-                content = DisplayDataResponse(
-                    json["data"],
-                    json["metadata"],
-                    json["transient"]
-                )
-            )
+        val content = DisplayDataResponse(
+            json["data"],
+            json["metadata"],
+            json["transient"]
         )
+        val message = connection.makeSimpleMessage(MessageType.UPDATE_DISPLAY_DATA, content)
+        socket.sendMessage(message)
     }
 }
 

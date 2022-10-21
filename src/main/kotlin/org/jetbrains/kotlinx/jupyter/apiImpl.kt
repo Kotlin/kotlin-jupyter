@@ -66,8 +66,10 @@ class DisplayContainerImpl : MutableDisplayContainer {
     private val displays: MutableMap<String?, MutableList<DisplayResultWrapper>> = mutableMapOf()
 
     override fun add(display: DisplayResultWrapper) {
-        val list = displays.getOrPut(display.id) { mutableListOf() }
-        list.add(display)
+        synchronized(displays) {
+            val list = displays.getOrPut(display.id) { mutableListOf() }
+            list.add(display)
+        }
     }
 
     override fun add(display: DisplayResult, cell: MutableCodeCell) {
@@ -75,18 +77,24 @@ class DisplayContainerImpl : MutableDisplayContainer {
     }
 
     override fun getAll(): List<DisplayResultWithCell> {
-        return displays.flatMap { it.value }
+        synchronized(displays) {
+            return displays.flatMap { it.value }
+        }
     }
 
     override fun getById(id: String?): List<DisplayResultWithCell> {
-        return displays[id].orEmpty()
+        synchronized(displays) {
+            return displays[id].orEmpty()
+        }
     }
 
     override fun update(id: String?, display: DisplayResult) {
-        val initialDisplays = displays[id] ?: return
-        val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
-        initialDisplays.clear()
-        initialDisplays.addAll(updated)
+        synchronized(displays) {
+            val initialDisplays = displays[id] ?: return
+            val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
+            initialDisplays.clear()
+            initialDisplays.addAll(updated)
+        }
     }
 }
 
