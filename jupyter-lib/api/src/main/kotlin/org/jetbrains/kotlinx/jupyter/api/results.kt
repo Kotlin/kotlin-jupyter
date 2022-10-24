@@ -83,7 +83,8 @@ fun DisplayResult?.toJson(): JsonObject {
     return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 
-fun DisplayResult.withId(id: String) = if(id == this.id) this else object: DisplayResult {
+@Suppress("unused")
+fun DisplayResult.withId(id: String) = if (id == this.id) this else object : DisplayResult {
     override fun toJson(additionalMetadata: JsonObject, overrideId: String?) = this@withId.toJson(additionalMetadata, overrideId ?: id)
     override val id = id
 }
