@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.disableLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
-import org.jetbrains.kotlinx.jupyter.MutableDisplayContainer
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
@@ -64,10 +63,10 @@ abstract class Response(
     abstract val state: ResponseState
 
     fun send(connection: JupyterConnectionInternal, requestCount: Long, requestMsg: RawMessage, startedTime: String) {
-        if (stdOut != null && stdOut.isNotEmpty()) {
+        if (!stdOut.isNullOrEmpty()) {
             connection.sendOut(requestMsg, JupyterOutType.STDOUT, stdOut)
         }
-        if (stdErr != null && stdErr.isNotEmpty()) {
+        if (!stdErr.isNullOrEmpty()) {
             connection.sendOut(requestMsg, JupyterOutType.STDERR, stdErr)
         }
         sendBody(connection, requestCount, requestMsg, startedTime)
@@ -165,7 +164,7 @@ class SocketDisplayHandler(
         val container = notebook.displays
         container.update(id, display)
         container.getById(id).distinctBy { it.cell.id }.forEach {
-            (it.cell.displays as MutableDisplayContainer).update(id, display)
+            it.cell.displays.update(id, display)
         }
 
         json.setDisplayId(id) ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
