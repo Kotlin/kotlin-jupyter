@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.textResult
+import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
@@ -62,10 +63,10 @@ abstract class Response(
     abstract val state: ResponseState
 
     fun send(connection: JupyterConnectionInternal, requestCount: Long, requestMsg: RawMessage, startedTime: String) {
-        if (stdOut != null && stdOut.isNotEmpty()) {
+        if (!stdOut.isNullOrEmpty()) {
             connection.sendOut(requestMsg, JupyterOutType.STDOUT, stdOut)
         }
-        if (stdErr != null && stdErr.isNotEmpty()) {
+        if (!stdErr.isNullOrEmpty()) {
             connection.sendOut(requestMsg, JupyterOutType.STDERR, stdErr)
         }
         sendBody(connection, requestCount, requestMsg, startedTime)
@@ -118,12 +119,12 @@ class OkResponseWithMessage(
 }
 
 interface DisplayHandler {
-    fun handleDisplay(value: Any, host: ExecutionHost)
+    fun handleDisplay(value: Any, host: ExecutionHost, id: String? = null)
     fun handleUpdate(value: Any, host: ExecutionHost, id: String? = null)
 }
 
 object NoOpDisplayHandler : DisplayHandler {
-    override fun handleDisplay(value: Any, host: ExecutionHost) {
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
@@ -141,44 +142,40 @@ class SocketDisplayHandler(
         return renderedValue.toDisplayResult(notebook)
     }
 
-    override fun handleDisplay(value: Any, host: ExecutionHost) {
-        val display = render(host, value) ?: return
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+        val display = render(host, value)?.let { if (id != null) it.withId(id) else it } ?: return
         val json = display.toJson()
 
         notebook.currentCell?.addDisplay(display)
 
-        socket.sendMessage(
-            makeReplyMessage(
-                connection.contextMessage,
-                MessageType.DISPLAY_DATA,
-                content = DisplayDataResponse(
-                    json["data"],
-                    json["metadata"],
-                    json["transient"]
-                )
-            )
+        val content = DisplayDataResponse(
+            json["data"],
+            json["metadata"],
+            json["transient"]
         )
+        val message = makeReplyMessage(connection.contextMessage!!, MessageType.DISPLAY_DATA, content = content)
+        socket.sendMessage(message)
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
         val display = render(host, value) ?: return
         val json = display.toJson().toMutableMap()
 
-        notebook.currentCell?.displays?.update(id, display)
+        val container = notebook.displays
+        container.update(id, display)
+        container.getById(id).distinctBy { it.cell.id }.forEach {
+            it.cell.displays.update(id, display)
+        }
 
         json.setDisplayId(id) ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
 
-        socket.sendMessage(
-            makeReplyMessage(
-                connection.contextMessage,
-                MessageType.UPDATE_DISPLAY_DATA,
-                content = DisplayDataResponse(
-                    json["data"],
-                    json["metadata"],
-                    json["transient"]
-                )
-            )
+        val content = DisplayDataResponse(
+            json["data"],
+            json["metadata"],
+            json["transient"]
         )
+        val message = connection.makeSimpleMessage(MessageType.UPDATE_DISPLAY_DATA, content)
+        socket.sendMessage(message)
     }
 }
 

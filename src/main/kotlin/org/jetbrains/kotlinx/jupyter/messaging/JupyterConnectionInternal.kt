@@ -9,7 +9,7 @@ import java.io.InputStream
 
 interface JupyterConnectionInternal : JupyterConnection {
     val config: KernelConfig
-    val contextMessage: RawMessage
+    val contextMessage: RawMessage?
 
     val heartbeat: JupyterSocket
     val shell: JupyterSocket

@@ -153,7 +153,7 @@ class InMemoryLibraryResolver(
 }
 
 class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
-    override fun handleDisplay(value: Any, host: ExecutionHost) {
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
         list.add(value)
     }
 

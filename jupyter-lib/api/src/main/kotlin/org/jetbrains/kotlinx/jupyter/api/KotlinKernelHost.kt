@@ -11,7 +11,7 @@ interface KotlinKernelHost {
      * Try to display the given value. It is only displayed if it's an instance of [Renderable]
      * or may be converted to it
      */
-    fun display(value: Any)
+    fun display(value: Any, id: String? = null)
 
     /**
      * Updates display data with given [id] with the new [value]

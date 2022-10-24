@@ -47,7 +47,7 @@ interface DisplayResult : Renderable {
      * @param additionalMetadata Additional reply metadata
      * @return Display JSON
      */
-    fun toJson(additionalMetadata: JsonObject = JsonObject(mapOf())): JsonObject
+    fun toJson(additionalMetadata: JsonObject = JsonObject(mapOf()), overrideId: String? = null): JsonObject
 
     /**
      * Renders display result, generally should return `this`
@@ -83,6 +83,12 @@ fun DisplayResult?.toJson(): JsonObject {
     return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 
+@Suppress("unused")
+fun DisplayResult.withId(id: String) = if (id == this.id) this else object : DisplayResult {
+    override fun toJson(additionalMetadata: JsonObject, overrideId: String?) = this@withId.toJson(additionalMetadata, overrideId ?: id)
+    override val id = id
+}
+
 /**
  * Sets display ID to JSON.
  * If ID was not set, sets it to [id] and returns it back
@@ -112,7 +118,7 @@ class MimeTypedResult(
     var isolatedHtml: Boolean = false,
     override val id: String? = null
 ) : Map<String, String> by mimeData, DisplayResult {
-    override fun toJson(additionalMetadata: JsonObject): JsonObject {
+    override fun toJson(additionalMetadata: JsonObject, overrideId: String?): JsonObject {
         val metadata = HashMap<String, JsonElement>().apply {
             if (isolatedHtml) put("text/html", Json.encodeToJsonElement(mapOf("isolated" to true)))
             additionalMetadata.forEach { key, value ->
@@ -124,16 +130,8 @@ class MimeTypedResult(
             "data" to Json.encodeToJsonElement(mimeData),
             "metadata" to Json.encodeToJsonElement(metadata)
         )
-        result.setDisplayId(id)
+        result.setDisplayId(overrideId ?: id)
         return Json.encodeToJsonElement(result) as JsonObject
-    }
-
-    /**
-     * Adds an [id] to this [MimeTypedResult] object
-     */
-    @Suppress("unused")
-    fun withId(id: String?): MimeTypedResult {
-        return MimeTypedResult(mimeData, isolatedHtml, id)
     }
 }
 

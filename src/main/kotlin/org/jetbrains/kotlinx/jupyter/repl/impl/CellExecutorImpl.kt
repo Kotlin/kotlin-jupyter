@@ -210,8 +210,8 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
         override fun execute(code: Code) = executor.execute(code, displayHandler, processVariables = false, invokeAfterCallbacks = false, stackFrame = stackFrame).result
 
-        override fun display(value: Any) {
-            displayHandler.handleDisplay(value, this)
+        override fun display(value: Any, id: String?) {
+            displayHandler.handleDisplay(value, this, id)
         }
 
         override fun updateDisplay(value: Any, id: String?) {
