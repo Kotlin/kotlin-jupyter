@@ -5,9 +5,11 @@ import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
@@ -228,9 +230,15 @@ class NotebookImpl(
         return history.getOrNull(history.size - offset - before)
     }
 
+    private var currentColorScheme: ColorScheme = ColorScheme.LIGHT
     override fun changeColorScheme(newScheme: ColorScheme) {
+        currentColorScheme = newScheme
         val context = sharedReplContext ?: return
         context.colorSchemeChangeCallbacksProcessor.schemeChanged(newScheme)
+    }
+
+    override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult {
+        return data.toIFrame(currentColorScheme)
     }
 
     override val currentCell: MutableCodeCell?

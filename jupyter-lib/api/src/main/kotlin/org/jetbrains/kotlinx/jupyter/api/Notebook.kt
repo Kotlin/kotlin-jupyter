@@ -71,6 +71,11 @@ interface Notebook {
     fun changeColorScheme(newScheme: ColorScheme)
 
     /**
+     * Renders HTML as iframe that fixes scrolling and color scheme issues in Kotlin Notebook plugin
+     */
+    fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult
+
+    /**
      * Current cell
      */
     val currentCell: CodeCell?
