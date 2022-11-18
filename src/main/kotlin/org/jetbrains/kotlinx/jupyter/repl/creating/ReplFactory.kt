@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -90,6 +91,9 @@ abstract class ReplFactory {
             "Duplicate bundled comm targets found! $duplicates"
         }
     }
+
+    protected val explicitClientType: JupyterClientType? by lazy { provideExplicitClientType() }
+    protected abstract fun provideExplicitClientType(): JupyterClientType?
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)

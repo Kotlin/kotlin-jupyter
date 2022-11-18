@@ -36,6 +36,7 @@ data class KernelArgs(
     val scriptClasspath: List<File>,
     val homeDir: File?,
     val debugPort: Int?,
+    val clientType: String?,
 ) {
     fun parseParams(): KernelJupyterParams {
         return KernelJupyterParams.fromFile(cfgFile)
@@ -50,6 +51,7 @@ data class KernelArgs(
                 add("-cp=$classPathString")
             }
             debugPort?.let { add("-debugPort=$it") }
+            clientType?.let { add("-client=$it") }
         }
     }
 }
@@ -110,6 +112,7 @@ data class KernelConfig(
     val scriptClasspath: List<File> = emptyList(),
     val homeDir: File?,
     val debugPort: Int? = null,
+    val clientType: String? = null,
 ) {
     fun toArgs(prefix: String = ""): KernelArgs {
         val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
@@ -119,7 +122,7 @@ data class KernelConfig(
         val format = Json { prettyPrint = true }
         cfgFile.writeText(format.encodeToString(params))
 
-        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort)
+        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort, clientType)
     }
 }
 
@@ -191,5 +194,6 @@ fun KernelArgs.getConfig(): KernelConfig {
         scriptClasspath = scriptClasspath,
         homeDir = homeDir,
         debugPort = debugPort,
+        clientType = clientType,
     )
 }

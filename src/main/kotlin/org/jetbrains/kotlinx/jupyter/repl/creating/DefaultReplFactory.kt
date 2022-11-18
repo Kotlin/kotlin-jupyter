@@ -1,10 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.SocketDisplayHandler
@@ -62,5 +65,16 @@ class DefaultReplFactory(
 
     override fun provideCommManager(): CommManager {
         return _commManager
+    }
+
+    override fun provideExplicitClientType(): JupyterClientType? {
+        return _kernelConfig.clientType?.let { typeName ->
+            try {
+                JupyterClientType.valueOf(typeName.toUpperCaseAsciiOnly())
+            } catch (e: IllegalArgumentException) {
+                log.warn("Unknown client type: $typeName")
+                null
+            }
+        }
     }
 }

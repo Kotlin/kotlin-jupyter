@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.NotebookImpl
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
@@ -20,7 +21,7 @@ import kotlin.script.experimental.dependencies.RepositoryCoordinates
 abstract class BaseReplFactory : ReplFactory() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
-    override fun provideNotebook(): MutableNotebook = NotebookImpl(runtimeProperties, connection, commManager)
+    override fun provideNotebook(): MutableNotebook = NotebookImpl(runtimeProperties, connection, commManager, explicitClientType)
     override fun provideScriptClasspath() = emptyList<File>()
     override fun provideHomeDir(): File? = null
     override fun provideMavenRepositories() = emptyList<RepositoryCoordinates>()
@@ -33,4 +34,6 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideCommHandlers(): List<CommHandler> = listOf(
         DebugPortCommHandler()
     )
+
+    override fun provideExplicitClientType(): JupyterClientType? = null
 }
