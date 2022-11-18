@@ -21,7 +21,7 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
     // apply configuration to JVM-only project
     plugins.withId("org.jetbrains.kotlin.jvm") {
         val configuration = project.configurations.findByName(scope)
-            ?: error("$scope configuration is not resolved for a Kotlin-JVM project")
+            ?: error("$scope configuration is not resolved for a Kotlin-JVM project. ${allConfigurationsNamesMessage()}")
         dependencies {
             configuration.invoke(dependency)
         }
@@ -31,10 +31,15 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
         extensions.findByType<KotlinMultiplatformExtension>()?.apply {
             targets.whenAdded(
                 { it is KotlinJvmTarget },
-                {
-                    val jvmTargetName = it.name
-                    val configuration = project.configurations.findByName(jvmTargetName + scope.capitalize(Locale.ROOT))
-                        ?: error("$scope configuration is not resolved for a multiplatform project")
+                { target ->
+                    val jvmTargetName = target.name
+                    val capitalizedScope = scope.capitalize(Locale.ROOT)
+                    val possibleConfigurationNames = listOf(
+                        jvmTargetName + "Compilation" + capitalizedScope, // 1.8 onwards
+                        jvmTargetName + capitalizedScope, // 1.7 and before
+                    )
+                    val configuration = possibleConfigurationNames.mapNotNull { project.configurations.findByName(it) }.firstOrNull()
+                        ?: error("None of $possibleConfigurationNames configurations could be resolved for a multiplatform project. ${allConfigurationsNamesMessage()}")
                     dependencies {
                         configuration.invoke(dependency)
                     }
@@ -42,6 +47,10 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
             )
         }
     }
+}
+
+private fun Project.allConfigurationsNamesMessage(): String {
+    return "All available configurations: ${configurations.names.joinToString(", ")}."
 }
 
 internal fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
