@@ -151,11 +151,11 @@ fun htmlResult(text: String, isolated: Boolean = false) = mimeResult("text/html"
 
 data class HtmlData(val style: String, val body: String, val script: String) {
     override fun toString(): String {
-        return toString(ColorScheme.LIGHT)
+        return toString(null)
     }
 
     @Language("html")
-    fun toString(colorScheme: ColorScheme): String = """
+    fun toString(colorScheme: ColorScheme?): String = """
         <html${if (colorScheme == ColorScheme.DARK) " theme='dark'" else ""}>
         <head>
             <style type="text/css">
@@ -171,8 +171,8 @@ data class HtmlData(val style: String, val body: String, val script: String) {
         </html>
     """.trimIndent()
 
-    fun toSimpleHtml(colorScheme: ColorScheme, isolated: Boolean = false): MimeTypedResult = HTML(toString(colorScheme), isolated)
-    fun toIFrame(colorScheme: ColorScheme): MimeTypedResult {
+    fun toSimpleHtml(colorScheme: ColorScheme?, isolated: Boolean = false): MimeTypedResult = HTML(toString(colorScheme), isolated)
+    fun toIFrame(colorScheme: ColorScheme?): MimeTypedResult {
         @Suppress("CssUnresolvedCustomProperty")
         @Language("css")
         val styleData = HtmlData(
@@ -233,5 +233,18 @@ data class HtmlData(val style: String, val body: String, val script: String) {
 
     companion object {
         private val iframeCounter = AtomicLong()
+    }
+}
+
+/**
+ * Renders HTML as iframe in Kotlin Notebook or simply in other clients
+ *
+ * @param data
+ */
+fun Notebook.renderHtmlAsIFrameIfNeeded(data: HtmlData): MimeTypedResult {
+    return if (jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK) {
+        data.toIFrame(currentColorScheme)
+    } else {
+        data.toSimpleHtml(currentColorScheme)
     }
 }

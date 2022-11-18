@@ -198,6 +198,9 @@ object NotebookMock : Notebook {
         error("Not supposed to be called")
     }
 
+    override val currentColorScheme: ColorScheme?
+        get() = null
+
     override fun changeColorScheme(newScheme: ColorScheme) {
         error("Not supposed to be called")
     }

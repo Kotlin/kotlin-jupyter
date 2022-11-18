@@ -158,6 +158,7 @@ class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
     override val connection: JupyterConnection,
     override val commManager: CommManager,
+    private val explicitClientType: JupyterClientType?,
 ) : MutableNotebook {
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null
@@ -206,7 +207,7 @@ class NotebookImpl(
         get() = JavaRuntime
 
     override val jupyterClientType: JupyterClientType by lazy {
-        JupyterClientDetector.detect()
+        explicitClientType ?: JupyterClientDetector.detect()
     }
 
     override fun addCell(
@@ -230,15 +231,16 @@ class NotebookImpl(
         return history.getOrNull(history.size - offset - before)
     }
 
-    private var currentColorScheme: ColorScheme = ColorScheme.LIGHT
+    private var _currentColorScheme: ColorScheme = ColorScheme.LIGHT
+    override val currentColorScheme: ColorScheme get() = _currentColorScheme
     override fun changeColorScheme(newScheme: ColorScheme) {
-        currentColorScheme = newScheme
+        _currentColorScheme = newScheme
         val context = sharedReplContext ?: return
         context.colorSchemeChangeCallbacksProcessor.schemeChanged(newScheme)
     }
 
     override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult {
-        return data.toIFrame(currentColorScheme)
+        return data.toIFrame(_currentColorScheme)
     }
 
     override val currentCell: MutableCodeCell?

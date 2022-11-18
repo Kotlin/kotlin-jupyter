@@ -65,6 +65,8 @@ interface Notebook {
      */
     fun history(before: Int): CodeCell?
 
+    val currentColorScheme: ColorScheme?
+
     /**
      * Change color scheme and run callbacks
      */
