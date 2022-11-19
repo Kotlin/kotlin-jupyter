@@ -3,10 +3,9 @@ package org.jetbrains.kotlinx.jupyter.ext.integration
 import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.milliseconds
 
 @JupyterLibrary
-@OptIn(ExperimentalTime::class)
 object ElapsedTimeIntegration : JupyterIntegration() {
     private var lastTime: Long = -1L
 
@@ -23,8 +22,8 @@ object ElapsedTimeIntegration : JupyterIntegration() {
         afterCellExecution { _, _ ->
             if (enabled && lastTime != -1L) {
                 val elapsed = currentTime() - lastTime
-                val duration = Duration.milliseconds(elapsed)
-                display(format(duration))
+                val duration = elapsed.milliseconds
+                display(format(duration), null)
             }
         }
     }

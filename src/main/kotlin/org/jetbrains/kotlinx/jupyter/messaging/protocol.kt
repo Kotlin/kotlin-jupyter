@@ -83,7 +83,7 @@ class OkResponseWithMessage(
 
     override fun sendBody(connection: JupyterConnectionInternal, requestCount: Long, requestMsg: RawMessage, startedTime: String) {
         if (result != null) {
-            val resultJson = result.toJson()
+            val resultJson = result.toJson(Json.EMPTY, null)
 
             connection.iopub.sendMessage(
                 makeReplyMessage(
@@ -144,7 +144,7 @@ class SocketDisplayHandler(
 
     override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
         val display = render(host, value)?.let { if (id != null) it.withId(id) else it } ?: return
-        val json = display.toJson()
+        val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
 
@@ -159,7 +159,7 @@ class SocketDisplayHandler(
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
         val display = render(host, value) ?: return
-        val json = display.toJson().toMutableMap()
+        val json = display.toJson(Json.EMPTY, null).toMutableMap()
 
         val container = notebook.displays
         container.update(id, display)

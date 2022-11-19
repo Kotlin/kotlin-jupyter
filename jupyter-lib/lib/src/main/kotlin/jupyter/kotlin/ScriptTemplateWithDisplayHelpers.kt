@@ -14,6 +14,8 @@ abstract class ScriptTemplateWithDisplayHelpers(
 
     val notebook get() = userHandlesProvider.notebook
 
+    fun DISPLAY(value: Any) = DISPLAY(value, null)
+
     fun DISPLAY(value: Any, id: String? = null) = host.display(value, id)
 
     fun UPDATE_DISPLAY(value: Any, id: String?) = host.updateDisplay(value, id)

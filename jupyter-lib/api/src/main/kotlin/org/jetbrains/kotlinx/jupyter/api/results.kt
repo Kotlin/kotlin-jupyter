@@ -8,6 +8,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
+import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -50,7 +51,10 @@ interface DisplayResult : Renderable {
      * @param additionalMetadata Additional reply metadata
      * @return Display JSON
      */
-    fun toJson(additionalMetadata: JsonObject = JsonObject(mapOf()), overrideId: String? = null): JsonObject
+    fun toJson(additionalMetadata: JsonObject = Json.EMPTY, overrideId: String? = null): JsonObject
+
+    @Deprecated("Use full version instead", ReplaceWith("toJson(additionalMetadata, null)"))
+    fun toJson(additionalMetadata: JsonObject = Json.EMPTY): JsonObject = toJson(additionalMetadata, null)
 
     /**
      * Renders display result, generally should return `this`
@@ -82,7 +86,7 @@ typealias MutableJsonObject = MutableMap<String, JsonElement>
  */
 @Suppress("unused")
 fun DisplayResult?.toJson(): JsonObject {
-    if (this != null) return this.toJson()
+    if (this != null) return this.toJson(Json.EMPTY, null)
     return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 

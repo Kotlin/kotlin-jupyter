@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
@@ -18,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
+import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -131,7 +133,7 @@ class IntegrationApiTests {
         )
 
         val result = res.resultValue as Renderable
-        val json = result.render(repl.notebook).toJson()
+        val json = result.render(repl.notebook).toJson(Json.EMPTY, null)
         val jsonData = json["data"] as JsonObject
         val htmlString = jsonData["text/html"] as JsonPrimitive
         kotlin.test.assertEquals("""<span style="color:red">red</span>""", htmlString.content)
