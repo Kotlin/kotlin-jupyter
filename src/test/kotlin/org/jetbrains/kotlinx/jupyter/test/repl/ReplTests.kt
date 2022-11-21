@@ -100,7 +100,7 @@ class ReplTests : AbstractSingleReplTest() {
         with(ex.render()) {
             shouldContain(NullPointerException::class.qualifiedName!!)
             shouldContain("XYZ")
-            shouldContain("""at Line_\d+.<init>\(Line_\d+\.jupyter-kts:2\)""".toRegex())
+            shouldContain("""at Line_\d+_jupyter.<init>\(Line_\d+\.jupyter.kts:2\)""".toRegex())
             shouldNotContain(ReplEvalRuntimeException::class.simpleName!!)
         }
     }
