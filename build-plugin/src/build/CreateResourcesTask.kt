@@ -58,6 +58,15 @@ abstract class CreateResourcesTask : DefaultTask() {
         addPropertiesFile(subPath, values.associate { it })
     }
 
+    fun addLibrariesFromDir(dir: File, jarPath: String = "jupyterLibraries") {
+        val libsList = dir.list { _, fileName -> fileName.endsWith(".json") }?.toList().orEmpty()
+        libsList.forEach {
+            addSingleValueFile("$jarPath/$it", dir.resolve(it).readText())
+        }
+
+        addSingleValueFile("$jarPath/libraries.list", libsList.joinToString("\n"))
+    }
+
     private fun setupDependencies(resourceTask: Copy) {
         resourceTask.apply {
             dependsOn(this@CreateResourcesTask)

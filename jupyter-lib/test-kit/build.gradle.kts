@@ -33,9 +33,5 @@ build.CreateResourcesTask.register(
     "createTestKitResources",
     project.tasks.named<Copy>(build.PROCESS_RESOURCES_TASK)
 ) {
-    rootSettings.librariesDir
-        .list { _, fileName -> fileName.endsWith(".json") }
-        ?.forEach {
-            addSingleValueFile("jupyterLibraries/$it", rootSettings.librariesDir.resolve(it).readText())
-        }
+    addLibrariesFromDir(rootSettings.librariesDir)
 }

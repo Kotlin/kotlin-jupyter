@@ -26,7 +26,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.defaultRepositories
+import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
@@ -47,7 +47,7 @@ val testDataDir = File("src/test/testData")
 
 const val standardResolverBranch = "master"
 
-val testRepositories = defaultRepositories
+val testRepositories = defaultRepositoriesCoordinates
 
 val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaultRuntimeProperties {
     override val currentBranch: String

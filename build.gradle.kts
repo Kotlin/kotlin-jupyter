@@ -46,11 +46,6 @@ dependencies {
     // Clikt library for parsing output magics
     implementation(libs.clikt)
 
-    // Http4k for resolving library descriptors
-    implementation(libs.bundles.http4k) {
-        exclude(group = "org.jetbrains.kotlin")
-    }
-
     // Serialization implementation for kernel code
     implementation(libs.serialization.json)
 
@@ -111,11 +106,7 @@ tasks {
     }
 
     CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {
-        rootSettings.librariesDir
-            .list { _, fileName -> fileName.endsWith(".json") }
-            ?.forEach {
-                addSingleValueFile("jupyterLibraries/$it", rootSettings.librariesDir.resolve(it).readText())
-            }
+        addLibrariesFromDir(rootSettings.librariesDir)
     }
 
     CreateResourcesTask.register(project, "createTestResources", processTestResources) {

@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.createCachedFun
+import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.File
 import java.net.URL
 

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -14,10 +15,7 @@ const val protocolVersion = "5.3"
 
 internal val log by lazy { getLogger() }
 
-val defaultRepositories = listOf(
-    RepositoryCoordinates("https://repo.maven.apache.org/maven2/"),
-    RepositoryCoordinates("https://jitpack.io/"),
-)
+val defaultRepositoriesCoordinates = defaultRepositories.map(::RepositoryCoordinates)
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
@@ -67,7 +65,7 @@ data class ReplConfig(
             embedded: Boolean = false,
         ): ReplConfig {
             return ReplConfig(
-                mavenRepositories = defaultRepositories,
+                mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver = getStandardResolver(homeDir?.toString(), resolutionInfoProvider),
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,

@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.defaultRepositories
+import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
@@ -32,13 +32,14 @@ fun interface ReplProvider {
                 EmptyResolutionInfoProvider,
                 classpath,
                 isEmbedded = true,
-                mavenRepositories = defaultRepositories,
+                mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver = resolver
             ).apply {
                 initializeWithCurrentClasspath()
             }
         }
 
+        @Suppress("unused")
         fun forLibrariesTesting(libraries: Collection<String>): ReplProvider {
             return withDefaultClasspathResolution(
                 shouldResolveToEmpty = { it in libraries }
@@ -49,6 +50,7 @@ fun interface ReplProvider {
             eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this) }
         }
 
+        @Suppress("unused")
         private val currentClassLoader = DependsOn::class.java.classLoader
     }
 }

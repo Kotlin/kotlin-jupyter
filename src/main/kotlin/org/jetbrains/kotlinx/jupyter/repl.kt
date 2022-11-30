@@ -45,6 +45,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
@@ -158,6 +159,8 @@ interface ReplForJupyter {
 
     val librariesScanner: LibrariesScanner
 
+    val libraryDescriptorsProvider: LibraryDescriptorsProvider
+
     val runtimeProperties: ReplRuntimeProperties
 
     val resolutionInfoProvider: ResolutionInfoProvider
@@ -266,7 +269,8 @@ class ReplForJupyterImpl(
             libraryInfoSwitcher,
         )
     )
-    private val completionMagics = CompletionMagicsProcessor(homeDir)
+    override val libraryDescriptorsProvider = HomeDirLibraryDescriptorsProvider(homeDir)
+    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider)
     private val errorsMagics = ErrorsMagicsProcessor()
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
@@ -352,6 +356,7 @@ class ReplForJupyterImpl(
         internalVariablesMarkersProcessor,
     )
 
+    @Suppress("unused")
     private val debugUtilityProvider = DebugUtilityProvider(notebook)
 
     private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {

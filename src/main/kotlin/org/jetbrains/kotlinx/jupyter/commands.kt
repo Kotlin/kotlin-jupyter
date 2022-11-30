@@ -66,7 +66,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
                 s
             }
-            val libraryDescriptors = repl.homeDir?.let { libraryDescriptors(it) }.orEmpty()
+            val libraryDescriptors = repl.libraryDescriptorsProvider.getDescriptors()
             val libraries = libraryDescriptors.map { (libraryName, descriptor) ->
                 val link = if (descriptor.link != null) " (${descriptor.link})" else ""
                 val description = if (descriptor.description != null) " - ${descriptor.description}" else ""

@@ -7,10 +7,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.libraries.ResourceLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.File
-import java.util.Optional
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
@@ -129,24 +130,7 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     fun ensureStorageCreation(address: K) = cellVariables.putIfAbsent(address, mutableSetOf())
 }
 
-fun <A, V> createCachedFun(calculate: (A) -> V): (A) -> V {
-    return createCachedFun({ it }, calculate)
-}
-
-fun <A, K, V> createCachedFun(calculateKey: (A) -> K, calculate: (A) -> V): (A) -> V {
-    val cache = ConcurrentHashMap<K, Optional<V>>()
-    return { argument ->
-        val key = calculateKey(argument)
-        cache.getOrPut(key) {
-            when (val value = calculate(argument)) {
-                null -> Optional.empty<V>()
-                else -> Optional.of(value)
-            } as Optional<V>
-        }.orElse(null)
-    }
-}
-
-val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir ->
+val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
     val libraryFiles = KERNEL_LIBRARIES
         .homeLibrariesDir(homeDir)
         .listFiles(KERNEL_LIBRARIES::isLibraryDescriptor)
@@ -158,4 +142,11 @@ val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.abs
             libraryName to parseLibraryDescriptor(file.readText())
         }
     }.toMap()
+}
+
+class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLibraryDescriptorsProvider() {
+    override fun getDescriptors(): Map<String, LibraryDescriptor> {
+        return if (homeDir == null) super.getDescriptors()
+        else libraryDescriptors(homeDir)
+    }
 }

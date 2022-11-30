@@ -48,6 +48,11 @@ dependencies {
         )
     }
 
+    // Http4k for resolving library descriptors
+    api(libs.bundles.http4k) {
+        exclude(group = "org.jetbrains.kotlin")
+    }
+
     // ZeroMQ library for Jupyter messaging protocol implementation
     api(libs.zeromq)
 }
@@ -68,6 +73,8 @@ CreateResourcesTask.register(project, "buildProperties", tasks.processResources)
             "kotlinVersion" to defaultVersionCatalog.versions.devKotlin,
         )
     )
+
+    addLibrariesFromDir(rootSettings.librariesDir)
 }
 
 kotlinPublications {
