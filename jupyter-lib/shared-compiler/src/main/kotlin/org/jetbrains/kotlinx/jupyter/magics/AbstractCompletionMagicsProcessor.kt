@@ -20,7 +20,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 abstract class AbstractCompletionMagicsProcessor<V : Any>(
     private val libraryDescriptorsProvider: LibraryDescriptorsProvider,
-) : AbstractMagicsProcessor() {
+    parseOutCellMarker: Boolean = false,
+) : AbstractMagicsProcessor(parseOutCellMarker) {
 
     protected abstract fun variant(text: String, icon: String): V
     protected abstract fun key(variant: V): String

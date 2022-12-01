@@ -7,7 +7,9 @@ import org.jetbrains.kotlinx.jupyter.diagnostic
 import org.jetbrains.kotlinx.jupyter.log
 import kotlin.script.experimental.api.ScriptDiagnostic
 
-class ErrorsMagicsProcessor : AbstractMagicsProcessor() {
+class ErrorsMagicsProcessor(
+    parseOutCellMarker: Boolean = false,
+) : AbstractMagicsProcessor(parseOutCellMarker) {
 
     fun process(code: String): Result {
         val magics = magicsIntervals(code)

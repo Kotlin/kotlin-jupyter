@@ -7,7 +7,8 @@ import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 class CompletionMagicsProcessor(
     libraryDescriptorsProvider: LibraryDescriptorsProvider,
-) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider) {
+    parseOutCellMarker: Boolean = false
+) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider, parseOutCellMarker) {
 
     override fun variant(text: String, icon: String) = SourceCodeCompletionVariant(text, text, icon, icon)
     override fun key(variant: SourceCodeCompletionVariant) = variant.text

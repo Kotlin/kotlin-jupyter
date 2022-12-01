@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
@@ -208,6 +209,8 @@ class ReplForJupyterImpl(
         currentBranch
     )
 
+    private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
+
     private var outputConfigImpl = OutputConfig()
 
     private var currentKernelHost: KotlinKernelHost? = null
@@ -267,11 +270,12 @@ class ReplForJupyterImpl(
             this,
             librariesProcessor,
             libraryInfoSwitcher,
-        )
+        ),
+        parseOutCellMagic
     )
     override val libraryDescriptorsProvider = HomeDirLibraryDescriptorsProvider(homeDir)
-    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider)
-    private val errorsMagics = ErrorsMagicsProcessor()
+    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic)
+    private val errorsMagics = ErrorsMagicsProcessor(parseOutCellMagic)
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
 
