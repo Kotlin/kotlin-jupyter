@@ -46,6 +46,11 @@ dependencies {
     // Clikt library for parsing output magics
     implementation(libs.clikt)
 
+    // Http4k for resolving library descriptors
+    implementation(libs.bundles.http4k) {
+        exclude(group = "org.jetbrains.kotlin")
+    }
+
     // Serialization implementation for kernel code
     implementation(libs.serialization.json)
 

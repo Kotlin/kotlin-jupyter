@@ -1,10 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
-import org.jetbrains.kotlinx.jupyter.common.getHttp
-import org.jetbrains.kotlinx.jupyter.common.text
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.libraries.Brackets
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryArguments
@@ -25,6 +22,20 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
 
     protected abstract fun variant(text: String, icon: String): V
     protected abstract fun key(variant: V): String
+    protected abstract fun getHttpResponseText(url: String): String?
+
+    private val getVersions = createCachedFun { artifactLocation: ArtifactLocation ->
+        val responseText = getHttpResponseText(metadataUrl(artifactLocation)) ?: return@createCachedFun null
+        val document = loadXML(responseText)
+        val versionsTag = document
+            .getElementsByTagName("versions")
+            .singleOrNull() ?: return@createCachedFun emptyList()
+
+        (versionsTag as? Element)?.getElementsByTagName("version")
+            ?.toList()
+            ?.map { it.textContent }
+            .orEmpty()
+    }
 
     protected inner class Handler {
         private val _completions = mutableListOf<V>()
@@ -124,24 +135,6 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
         private fun metadataUrl(artifactLocation: ArtifactLocation): String {
             val repo = with(artifactLocation.repository) { if (endsWith('/')) this else "$this/" }
             return "$repo${artifactLocation.group.replace(".", "/")}/${artifactLocation.artifact}/maven-metadata.xml"
-        }
-
-        private val getVersions = createCachedFun { artifactLocation: ArtifactLocation ->
-            val response = getHttp(metadataUrl(artifactLocation))
-            val status = response.status
-            if (!status.successful) {
-                getLogger("magics completion").warn("Magic completion request failed: $status")
-                return@createCachedFun null
-            }
-            val document = loadXML(response.text)
-            val versionsTag = document
-                .getElementsByTagName("versions")
-                .singleOrNull() ?: return@createCachedFun emptyList()
-
-            (versionsTag as? Element)?.getElementsByTagName("version")
-                ?.toList()
-                ?.map { it.textContent }
-                .orEmpty()
         }
 
         private fun loadXML(xml: String): Document {
