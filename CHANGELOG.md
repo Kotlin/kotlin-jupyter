@@ -1,5 +1,166 @@
 # Change Log
 
+## Unreleased (2022-12-10)
+
+**Merged pull requests:**
+
+- Support display id in `display\(value\)` API. [\#385](https://github.com/Kotlin/kotlin-jupyter/pull/385) ([@nikitinas](https://github.com/nikitinas))
+
+## [0.11.0.170](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.170) (2022-10-05)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.144...0.11.0.170)
+
+**Fixed bugs:**
+
+- Add Gradle\-like API for adding dependencies [\#382](https://github.com/Kotlin/kotlin-jupyter/pull/382) ([@ileasile](https://github.com/ileasile))
+- kernel doesn't start [\#379](https://github.com/Kotlin/kotlin-jupyter/issues/379)
+- Exception when reaching limit in github api [\#378](https://github.com/Kotlin/kotlin-jupyter/issues/378)
+
+**Merged pull requests:**
+
+- Add comm\-message handlers and support for debugPort config retrieval [\#375](https://github.com/Kotlin/kotlin-jupyter/pull/375) ([@nikolay-egorov](https://github.com/nikolay-egorov))
+
+**New features:**
+
+- Add a function to configure dependencies and repositories in gradle\-like manner [\#367](https://github.com/Kotlin/kotlin-jupyter/issues/367)
+
+## [0.11.0.144](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.144) (2022-08-05)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.140...0.11.0.144)
+
+
+## [0.11.0.140](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.140) (2022-07-26)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.95...0.11.0.140)
+
+**Closed issues:**
+
+- Add stability badge to README [\#370](https://github.com/Kotlin/kotlin-jupyter/issues/370)
+
+**Fixed bugs:**
+
+- Completion doesn't work for identifiers containing Unicode letters [\#373](https://github.com/Kotlin/kotlin-jupyter/issues/373)
+
+**Merged pull requests:**
+
+- Add presentableVarsState for debug output with caching [\#374](https://github.com/Kotlin/kotlin-jupyter/pull/374) ([@nikolay-egorov](https://github.com/nikolay-egorov))
+- Add socket messages callbacks and comms API [\#376](https://github.com/Kotlin/kotlin-jupyter/pull/376) ([@ileasile](https://github.com/ileasile))
+
+**New features:**
+
+- Using a non\-default Maven local repository path [\#365](https://github.com/Kotlin/kotlin-jupyter/issues/365)
+
+## [0.11.0.95](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.95) (2022-05-19)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.74...0.11.0.95)
+
+**Closed issues:**
+
+- Library Loading with %use only works when `homeDir` is not null, but invalid `homeDir` works fine [\#359](https://github.com/Kotlin/kotlin-jupyter/issues/359)
+
+**Merged pull requests:**
+
+- integrationTypeNameRules support for LibrariesScanner [\#364](https://github.com/Kotlin/kotlin-jupyter/pull/364) ([@Jolanrensen](https://github.com/Jolanrensen))
+
+**New features:**
+
+- Add onInterrupt to the API [\#369](https://github.com/Kotlin/kotlin-jupyter/issues/369)
+- Add graphs visualization with GraphViz [\#219](https://github.com/Kotlin/kotlin-jupyter/issues/219)
+- Add possibility to filter Integration classes FQNs in JSON descriptors [\#363](https://github.com/Kotlin/kotlin-jupyter/issues/363)
+- Automatically load stdlib extensions with approprieate JDK [\#358](https://github.com/Kotlin/kotlin-jupyter/issues/358)
+
+## [0.11.0.74](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.74) (2022-04-13)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.61...0.11.0.74)
+
+**Closed issues:**
+
+- Backend Internal error: Exception during IR lowering [\#360](https://github.com/Kotlin/kotlin-jupyter/issues/360)
+
+## [0.11.0.61](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.61) (2022-02-14)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.45...0.11.0.61)
+
+**Closed issues:**
+
+- Unresolved reference: tensorflow when importing tensorflow\-lite  [\#350](https://github.com/Kotlin/kotlin-jupyter/issues/350)
+
+**Fixed bugs:**
+
+- Backend Internal error: Exception during file facade code generation [\#356](https://github.com/Kotlin/kotlin-jupyter/issues/356)
+- Order of %use statements should not matter for class loading [\#354](https://github.com/Kotlin/kotlin-jupyter/issues/354)
+
+**Merged pull requests:**
+
+- Add detection of the current Jupyter Client to the API. Switch build to Java 11. [\#346](https://github.com/Kotlin/kotlin-jupyter/pull/346) ([@ileasile](https://github.com/ileasile))
+
+**New features:**
+
+- Add API to integration library to detect jupyter context [\#352](https://github.com/Kotlin/kotlin-jupyter/issues/352)
+
+## [0.11.0.45](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.45) (2021-12-24)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.37...0.11.0.45)
+
+
+## [0.11.0.37](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.37) (2021-12-08)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.33...0.11.0.37)
+
+
+## [0.11.0.33](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.33) (2021-12-06)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.31...0.11.0.33)
+
+
+## [0.11.0.31](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.31) (2021-12-04)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.16...0.11.0.31)
+
+**Closed issues:**
+
+- An internal error when evaluating code with syntax errors [\#347](https://github.com/Kotlin/kotlin-jupyter/issues/347)
+
+**Fixed bugs:**
+
+- Can not use object expresssions [\#341](https://github.com/Kotlin/kotlin-jupyter/issues/341)
+
+## [0.11.0.16](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.16) (2021-11-27)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.11.0.15...0.11.0.16)
+
+
+## [0.11.0.15](https://github.com/Kotlin/kotlin-jupyter/tree/0.11.0.15) (2021-11-27)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.3.31...0.11.0.15)
+
+**Closed issues:**
+
+- KSP does not work with Kotlin 1.6.0\-RC [\#342](https://github.com/Kotlin/kotlin-jupyter/issues/342)
+
+## [0.10.3.31](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.3.31) (2021-11-02)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.3.20...0.10.3.31)
+
+
+## [0.10.3.20](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.3.20) (2021-10-15)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.3.19...0.10.3.20)
+
+
+## [0.10.3.19](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.3.19) (2021-10-14)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.3.18...0.10.3.19)
+
+
+## [0.10.3.18](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.3.18) (2021-10-13)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.3.16...0.10.3.18)
+
+
+## [0.10.3.16](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.3.16) (2021-10-13)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.1.11...0.10.3.16)
+
+**Closed issues:**
+
+- Replace KAPT with KSP in Gradle plugin [\#338](https://github.com/Kotlin/kotlin-jupyter/issues/338)
+
+**Merged pull requests:**
+
+- Replace KAPT with KSP [\#339](https://github.com/Kotlin/kotlin-jupyter/pull/339) ([@ileasile](https://github.com/ileasile))
+
+## [0.10.1.11](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.1.11) (2021-10-12)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.1.7...0.10.1.11)
+
+
+## [0.10.1.7](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.1.7) (2021-10-10)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.1.3...0.10.1.7)
+
+
 ## [0.10.1.3](https://github.com/Kotlin/kotlin-jupyter/tree/0.10.1.3) (2021-10-08)
 [View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0.10.0.260...0.10.1.3)
 
@@ -28,7 +189,7 @@
 
 **Fixed bugs:**
 
-- Every execution request increments \`execution\_count\`,  even if \`store\_history=False\` [\#326](https://github.com/Kotlin/kotlin-jupyter/issues/326)
+- Every execution request increments `execution\_count`,  even if `store\_history=False` [\#326](https://github.com/Kotlin/kotlin-jupyter/issues/326)
 - No syntax highlighting and completion. [\#327](https://github.com/Kotlin/kotlin-jupyter/issues/327)
 
 **Merged pull requests:**
@@ -41,9 +202,9 @@
 
 **Closed issues:**
 
-- Evaluation of \`Out\` results in an exception [\#328](https://github.com/Kotlin/kotlin-jupyter/issues/328)
+- Evaluation of `Out` results in an exception [\#328](https://github.com/Kotlin/kotlin-jupyter/issues/328)
 - Remove Kapt by default [\#325](https://github.com/Kotlin/kotlin-jupyter/issues/325)
-- Setting \`JupyterApiResourcesTask.libraryProducers\` doesn't disable \`kapt\` that causes incompatibility with JDK 16 [\#322](https://github.com/Kotlin/kotlin-jupyter/issues/322)
+- Setting `JupyterApiResourcesTask.libraryProducers` doesn't disable `kapt` that causes incompatibility with JDK 16 [\#322](https://github.com/Kotlin/kotlin-jupyter/issues/322)
 
 **Fixed bugs:**
 
@@ -459,7 +620,7 @@
 
 
 ## [v0.7.2](https://github.com/Kotlin/kotlin-jupyter/tree/v0.7.2) (2019-12-04)
-[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/ced4fb73b02a2d939d3447b2b2ca0911868d2006...v0.7.2)
+[View commits](https://github.com/Kotlin/kotlin-jupyter/compare/0a1a4c6f4bc545fac48724178b536320aa80c375...v0.7.2)
 
 **Closed issues:**
 
