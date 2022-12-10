@@ -15,7 +15,7 @@ ktlintGradle = "11.0.0"
 ktlint = "0.45.2"
 publishPlugin = "0.0.61-dev-33"
 pluginPublishPlugin = "1.1.0"
-versionsPlugin = "0.39.0"
+versionsPlugin = "0.44.0"
 
 slf4j = "2.0.5"
 logback = "1.4.5"
