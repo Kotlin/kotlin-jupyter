@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.api.graphs.labels
 import kotlin.reflect.KProperty
 
 abstract class HtmlAttributes<out Attr>(
-    protected val properties: MutableMap<String, Any> = mutableMapOf()
+    protected val properties: MutableMap<String, Any> = mutableMapOf(),
 ) {
     val html: String get() {
         return properties.entries.joinToString(separator = "") { (key, value) -> """ $key="$value"""" }

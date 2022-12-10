@@ -34,7 +34,7 @@ class RenderingTests {
 
         assertHtmlEquals(
             "test1.html",
-            asserter = AlmostEqualsMultilineComparator(1)::compare
+            asserter = AlmostEqualsMultilineComparator(1)::compare,
         ) {
             appendLine(image1.toHTML())
             appendLine(image2.toHTML())

@@ -9,5 +9,5 @@ data class Variable(val name: String, val value: String, val required: Boolean =
 object VariablesSerializer : ListToMapSerializer<Variable, String, String>(
     serializer(),
     ::Variable,
-    { it.name to it.value }
+    { it.name to it.value },
 )

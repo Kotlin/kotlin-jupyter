@@ -41,7 +41,7 @@ abstract class RecordTableLabel : Label {
     abstract val properties: Collection<Iterable<String>>
 
     class TableAttributes private constructor(
-        properties: MutableMap<String, Any> = mutableMapOf()
+        properties: MutableMap<String, Any> = mutableMapOf(),
     ) : HtmlAttributes<TableAttributes>(properties) {
         var align by attr<String>()
         var bgcolor by attr<String>()

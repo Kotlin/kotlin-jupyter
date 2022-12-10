@@ -107,6 +107,9 @@ internal class KernelBuildConfigurator(private val project: Project) {
             extensions.configure<KtlintExtension> {
                 version.set(ktlintVersion)
                 enableExperimentalRules.set(true)
+                disabledRules.addAll(
+                    "experimental:type-parameter-list-spacing",
+                )
             }
         }
     }

@@ -40,7 +40,7 @@ class GettingStartedIntegration : JupyterIntegration() {
             FieldHandlerByClass(Person::class) { host, person, kProperty ->
                 person as Person
                 if (person.name != kProperty.name) host.execute("val `${person.name}` = ${kProperty.name}")
-            }
+            },
         )
 
         /**

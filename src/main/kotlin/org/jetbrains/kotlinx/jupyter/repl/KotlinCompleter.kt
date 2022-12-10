@@ -16,7 +16,7 @@ class KotlinCompleter {
         code: String,
         preprocessedCode: String,
         id: Int,
-        cursor: Int
+        cursor: Int,
     ): CompletionResult {
         return try {
             val codeLine = SourceCodeImpl(id, code)
@@ -37,7 +37,7 @@ class KotlinCompleter {
         fun getResult(
             code: String,
             cursor: Int,
-            completions: List<SourceCodeCompletionVariant>
+            completions: List<SourceCodeCompletionVariant>,
         ): CompletionResult.Success {
             val bounds = getTokenBounds(code, cursor)
             return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)

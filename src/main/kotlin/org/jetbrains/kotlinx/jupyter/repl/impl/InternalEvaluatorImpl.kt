@@ -109,7 +109,7 @@ internal class InternalEvaluatorImpl(
                     return when (val resultValue = pureResult.result) {
                         is ResultValue.Error -> throw ReplEvalRuntimeException(
                             resultValue.error.message.orEmpty(),
-                            resultValue.error
+                            resultValue.error,
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript, codeLine)
@@ -118,20 +118,20 @@ internal class InternalEvaluatorImpl(
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(
                                     FieldValue(Unit, null),
-                                    resultValue.scriptInstance!!
+                                    resultValue.scriptInstance!!,
                                 )
                             } else {
                                 resultValue as ResultValue.Value
                                 InternalEvalResult(
                                     FieldValue(resultValue.value, resultValue.name),
-                                    resultValue.scriptInstance!!
+                                    resultValue.scriptInstance!!,
                                 )
                             }
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
                                 "This snippet was not evaluated",
-                                resultWithDiagnostics.reports.firstOrNull()?.exception
+                                resultWithDiagnostics.reports.firstOrNull()?.exception,
                             )
                         }
                         else -> throw IllegalStateException("Unknown eval result type $this")

@@ -15,11 +15,11 @@ import kotlin.concurrent.withLock
 
 class JupyterSymbolProcessor(
     private val logger: KSPLogger,
-    private val generatedFilesPath: File
+    private val generatedFilesPath: File,
 ) : SymbolProcessor {
     private val fqnMap = mapOf(
         "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer" to "producers",
-        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition" to "definitions"
+        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition" to "definitions",
     )
 
     private val annotationFqn = JupyterLibrary::class.qualifiedName!!
@@ -54,7 +54,7 @@ class JupyterSymbolProcessor(
         if (significantSupertypes.isEmpty()) {
             logger.warn(
                 "Class $classFqn has $annotationSimpleName annotation, " +
-                    "but doesn't implement one of Jupyter integration interfaces"
+                    "but doesn't implement one of Jupyter integration interfaces",
             )
             return
         }

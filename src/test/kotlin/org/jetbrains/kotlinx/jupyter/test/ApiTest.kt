@@ -31,7 +31,7 @@ class ApiTest : AbstractSingleReplTest() {
             3,
             """
             println(x*3)
-            """.trimIndent()
+            """.trimIndent(),
         )
         val res1 = jEval(4, "notebook.getCell(2)?.result")
         assertEquals(6, res1.resultValue)
@@ -43,7 +43,7 @@ class ApiTest : AbstractSingleReplTest() {
     fun compilerVersion() {
         val jCompiler = getSimpleCompiler(
             ScriptCompilationConfiguration(),
-            ScriptEvaluationConfiguration()
+            ScriptEvaluationConfiguration(),
         )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
@@ -66,13 +66,13 @@ class ApiTest : AbstractSingleReplTest() {
             val x = 1
             val y = "abc"
             val z = 47
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val varsUpdate = mutableMapOf(
             "x" to "1",
             "y" to "abc",
-            "z" to "47"
+            "z" to "47",
         )
         val htmlText = eval("notebook.variablesReportAsHTML").resultValue
         htmlText.shouldBeTypeOf<MimeTypedResult>()
@@ -107,7 +107,7 @@ class ApiTest : AbstractSingleReplTest() {
             </table>
             
             """.trimIndent(),
-            htmlText.values.first()
+            htmlText.values.first(),
         )
         assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
     }

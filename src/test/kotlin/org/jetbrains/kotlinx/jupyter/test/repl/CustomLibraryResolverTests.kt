@@ -48,7 +48,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         classpathWithTestLib,
         homeDir,
         testRepositories,
-        libraryResolver
+        libraryResolver,
     )
 
     private fun testOneLibUsage(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
@@ -143,7 +143,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     import otherPackage
                     """,
             "otherInit",
-            "anotherInit"
+            "anotherInit",
         ).map { it.trimIndent() }
 
         executedCodes shouldBe expectedCodes
@@ -200,7 +200,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             USE {
                 render<Int> { (it * 2).toString() }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = repl.eval("13").resultValue
@@ -242,7 +242,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     EXECUTE("4")
                     @TestAnnotation
                     class Temp
-                    """.trimIndent()
+                    """.trimIndent(),
                 )
             }
             import("java.*")
@@ -253,7 +253,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     """
                     EXECUTE("2")
                     1
-                    """.trimIndent()
+                    """.trimIndent(),
                 )
             }
             import<TestAnnotation>()
@@ -261,7 +261,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 execute(
                     """
                     EXECUTE("3")
-                    """.trimIndent()
+                    """.trimIndent(),
                 )
             }
         }
@@ -290,7 +290,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             """EXECUTE("3")""",
             "3",
             "4",
-            "5"
+            "5",
         )
 
         assertEquals(expectedCodes, repl.executedCodes)
@@ -315,18 +315,18 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         repl.execute(
             """
             %use lib
-            """.trimIndent()
+            """.trimIndent(),
         )
         repl.execute(
             """
             @file:TempAnnotation
             val a = 1
-            """.trimIndent()
+            """.trimIndent(),
         )
         val res = repl.execute(
             """
             b
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         assertEquals(1, res.result.value)
@@ -336,7 +336,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "import jupyter.kotlin.receivers.TempAnnotation",
             "@file:TempAnnotation\nval a = 1",
             "val b = a",
-            "b"
+            "b",
         )
         assertEquals(expected, repl.executedCodes)
     }
@@ -348,7 +348,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 """
                 {
                     "imports": []
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         assertTrue(ex1.cause is SerializationException)
@@ -359,7 +359,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 {
                     "imports2": []
                 }
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         assertTrue(ex2.cause is SerializationException)
@@ -389,7 +389,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             testOneLibUsage(
                 library {
                     import("ru.incorrect")
-                }
+                },
             )
         }
         assertEquals(LibraryProblemPart.PREBUILT, e.part)
@@ -401,7 +401,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             testOneLibUsage(
                 library {
                     dependencies("org.foo:bar:42")
-                }
+                },
             )
         }
         assertEquals(LibraryProblemPart.PREBUILT, e.part)
@@ -415,7 +415,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     onLoaded {
                         null!!
                     }
-                }
+                },
             )
         }
         assertEquals(LibraryProblemPart.INIT, e.part)
@@ -426,7 +426,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val repl = testOneLibUsage(
             library {
                 render<String> { throw IllegalStateException() }
-            }
+            },
         )
 
         repl.eval("42")
@@ -434,7 +434,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             repl.eval(
                 """
                 "42"
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         assertNull(res.resultValue)
@@ -447,7 +447,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 beforeCellExecution {
                     throw NullPointerException()
                 }
-            }
+            },
         )
 
         val e = assertThrows<ReplLibraryException> {
@@ -461,7 +461,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val repl = testOneLibUsage(
             library {
                 renderThrowable<IllegalArgumentException> { textResult(it.message.orEmpty()) }
-            }
+            },
         )
         val processor = repl.throwableRenderersProcessor
 
@@ -487,20 +487,20 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 onVariable<Any> { _, prop ->
                     execute("val gen_${prop.name} = 1")
                 }
-            }
+            },
         )
 
         repl.eval(
             """
             val (a, b) = 1 to 's'
             val c = "42"
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val res = repl.eval(
             """
             gen_a + gen_b + gen_c
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue!!
         res shouldBe 3
     }
@@ -515,21 +515,21 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 onLoaded {
                     declare(
                         "x1" to 22,
-                        "x2" to 20
+                        "x2" to 20,
                     )
 
                     declare(
-                        VariableDeclaration("x3", mutProp, typeOf<ArrayList<Int>>())
+                        VariableDeclaration("x3", mutProp, typeOf<ArrayList<Int>>()),
                     )
                 }
-            }
+            },
         )
 
         val result = repl.eval(
             """
             x3.add(2)
             x1 + x2
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue
 
         assertEquals(42, result)
@@ -543,21 +543,21 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 onLoaded {
                     declare(
                         "x1" to 22,
-                        "_x2" to 20
+                        "_x2" to 20,
                     )
                 }
 
                 markVariableInternal {
                     it.name.startsWith("_")
                 }
-            }
+            },
         )
 
         repl.eval(
             """
             var a = 42
             val _b = 11
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         assertEquals(
@@ -567,7 +567,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             ${'\t'}a : 42
             
             """.trimIndent(),
-            repl.notebook.variablesReport
+            repl.notebook.variablesReport,
         )
     }
 }

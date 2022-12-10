@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 
 class InterruptionCallbacksProcessorImpl(
-    private val hostProvider: KotlinKernelHostProvider
+    private val hostProvider: KotlinKernelHostProvider,
 ) : InterruptionCallbacksProcessor {
     private val callbacks = mutableListOf<InterruptionCallback>()
 

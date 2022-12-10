@@ -155,7 +155,7 @@ object MessageTypeSerializer : KSerializer<MessageType> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
             MessageType::class.qualifiedName!!,
-            PrimitiveKind.STRING
+            PrimitiveKind.STRING,
         )
 
     override fun deserialize(decoder: Decoder): MessageType {
@@ -180,7 +180,7 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
             DetailLevel::class.qualifiedName!!,
-            PrimitiveKind.INT
+            PrimitiveKind.INT,
         )
 
     override fun deserialize(decoder: Decoder): DetailLevel {
@@ -242,7 +242,7 @@ data class ExecuteRequest(
 
 @Serializable
 class Payload(
-    val source: String
+    val source: String,
 )
 
 @Serializable
@@ -374,7 +374,7 @@ class ExecutionInputReply(
     val code: String,
 
     @SerialName("execution_count")
-    val executionCount: Long
+    val executionCount: Long,
 ) : MessageContent()
 
 @Serializable
@@ -383,7 +383,7 @@ class ExecutionResultMessage(
     val metadata: JsonElement,
 
     @SerialName("execution_count")
-    val executionCount: Long
+    val executionCount: Long,
 ) : MessageContent()
 
 @Serializable
@@ -394,7 +394,7 @@ class StatusReply(
 
 @Serializable
 class ClearOutputReply(
-    val wait: Boolean
+    val wait: Boolean,
 ) : MessageContent()
 
 @Serializable
@@ -408,7 +408,7 @@ class InputRequest(
 
 @Serializable
 class InputReply(
-    val value: String
+    val value: String,
 ) : MessageContent()
 
 @Serializable
@@ -427,12 +427,12 @@ class HistoryRequest(
 
     // If hist_access_type is 'search'
     val pattern: String? = null,
-    val unique: Boolean? = null
+    val unique: Boolean? = null,
 ) : MessageContent()
 
 @Serializable
 class HistoryReply(
-    val history: List<String>
+    val history: List<String>,
 ) : MessageContent()
 
 @Serializable
@@ -440,24 +440,24 @@ class ConnectRequest : MessageContent()
 
 @Serializable(ConnectReplySerializer::class)
 class ConnectReply(
-    val ports: JsonObject
+    val ports: JsonObject,
 ) : MessageContent()
 
 @Serializable
 class CommInfoRequest(
     @SerialName("target_name")
-    val targetName: String? = null
+    val targetName: String? = null,
 ) : MessageContent()
 
 @Serializable
 class Comm(
     @SerialName("target_name")
-    val targetName: String
+    val targetName: String,
 )
 
 @Serializable
 class CommInfoReply(
-    val comms: Map<String, Comm>
+    val comms: Map<String, Comm>,
 ) : MessageContent()
 
 @Serializable
@@ -466,21 +466,21 @@ class CommOpen(
     val commId: String,
     @SerialName("target_name")
     val targetName: String,
-    val data: JsonObject = Json.EMPTY
+    val data: JsonObject = Json.EMPTY,
 ) : MessageContent()
 
 @Serializable
 class CommMsg(
     @SerialName("comm_id")
     val commId: String,
-    val data: JsonObject = Json.EMPTY
+    val data: JsonObject = Json.EMPTY,
 ) : MessageContent()
 
 @Serializable
 class CommClose(
     @SerialName("comm_id")
     val commId: String,
-    val data: JsonObject = Json.EMPTY
+    val data: JsonObject = Json.EMPTY,
 ) : MessageContent()
 
 @Serializable
@@ -492,7 +492,7 @@ class ListErrorsRequest(
 class ListErrorsReply(
     val code: String,
 
-    val errors: List<ScriptDiagnostic>
+    val errors: List<ScriptDiagnostic>,
 ) : MessageContent()
 
 @Serializable(MessageDataSerializer::class)
@@ -528,7 +528,7 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
                         put("end", jsonObject("line" to end.line, "col" to end.col))
                     }
                 }
-            }
+            },
         )
     }
 }
@@ -572,8 +572,8 @@ object MessageDataSerializer : KSerializer<MessageData> {
                 format.encodeToJsonElement(value.header).jsonObject,
                 value.parentHeader?.let { format.encodeToJsonElement(it) }?.jsonObject,
                 value.metadata?.let { format.encodeToJsonElement(it) }?.jsonObject,
-                content
-            )
+                content,
+            ),
         )
     }
 

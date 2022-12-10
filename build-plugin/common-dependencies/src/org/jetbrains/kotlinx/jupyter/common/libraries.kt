@@ -193,7 +193,7 @@ class LibraryDescriptorsManager private constructor(
                 "jupyterLibraries",
                 exceptionsHandler,
                 File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
-                logger
+                logger,
             )
         }
     }

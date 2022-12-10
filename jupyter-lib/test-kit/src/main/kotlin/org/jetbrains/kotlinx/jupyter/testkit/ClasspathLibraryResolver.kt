@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResourcesLibraryResolver
 
 class ClasspathLibraryResolver(
     parent: LibraryResolver? = null,
-    val shouldResolve: LibraryNameFilter = { true }
+    val shouldResolve: LibraryNameFilter = { true },
 ) : ResourcesLibraryResolver(parent, ClasspathLibraryResolver::class.java.classLoader) {
     override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
         if (!shouldResolve(reference.name)) return null

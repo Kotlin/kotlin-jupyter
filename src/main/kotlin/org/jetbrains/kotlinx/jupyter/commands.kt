@@ -27,13 +27,13 @@ fun reportCommandErrors(code: String): ListErrorsResult {
     val sourceCode = SourceCodeImpl(0, code)
     val location = SourceCode.Location(
         0.toSourceCodePosition(sourceCode),
-        (commandString.length + 1).toSourceCodePosition(sourceCode)
+        (commandString.length + 1).toSourceCodePosition(sourceCode),
     )
     return ListErrorsResult(
         code,
         sequenceOf(
-            ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unknown command", location = location)
-        )
+            ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unknown command", location = location),
+        ),
     )
 }
 

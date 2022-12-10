@@ -25,7 +25,7 @@ fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, mes
         message,
         ScriptDiagnostic.Severity.valueOf(severity),
         null,
-        SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol))
+        SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol)),
     )
 
 fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: ScriptDiagnostic.Severity): ScriptDiagnostic {
@@ -35,7 +35,7 @@ fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: St
         message,
         severity,
         null,
-        SourceCode.Location(from.toSourceCodePosition(snippet), to.toSourceCodePosition(snippet))
+        SourceCode.Location(from.toSourceCodePosition(snippet), to.toSourceCodePosition(snippet)),
     )
 }
 

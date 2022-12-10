@@ -17,7 +17,7 @@ dependencies {
     api(libs.serialization.json) {
         excludeKotlinDependencies(
             "stdlib",
-            "stdlib-common"
+            "stdlib-common",
         )
     }
 }

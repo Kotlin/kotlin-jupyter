@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
  * are run first
  */
 class CompoundCodePreprocessor(
-    private val preprocessors: MutableList<CodePreprocessor>
+    private val preprocessors: MutableList<CodePreprocessor>,
 ) : CodePreprocessor {
     constructor(vararg preprocessors: CodePreprocessor) : this(preprocessors.toMutableList())
 

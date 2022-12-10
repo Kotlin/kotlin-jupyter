@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 
 val KERNEL_LIBRARIES = LibraryDescriptorsManager.getInstance(
-    getLogger()
+    getLogger(),
 ) { logger, message, exception ->
     logger.errorForUser(message = message, throwable = exception)
 }
@@ -22,7 +22,7 @@ fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoPro
 
 fun getDefaultClasspathResolutionInfoProvider(): ResolutionInfoProvider {
     return StandardResolutionInfoProvider(
-        AbstractLibraryResolutionInfo.ByClasspath
+        AbstractLibraryResolutionInfo.ByClasspath,
     )
 }
 

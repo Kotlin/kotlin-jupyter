@@ -106,7 +106,7 @@ tasks {
 
             "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
             "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent"
+            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
         )
     }
 
@@ -144,13 +144,13 @@ kotlinPublications {
     sonatypeSettings(
         typedProperty("kds.sonatype.user"),
         typedProperty("kds.sonatype.password"),
-        "kotlin-jupyter project, v. ${project.version}"
+        "kotlin-jupyter project, v. ${project.version}",
     )
 
     signingCredentials(
         typedProperty("kds.sign.key.id"),
         typedProperty("kds.sign.key.private"),
-        typedProperty("kds.sign.key.passphrase")
+        typedProperty("kds.sign.key.passphrase"),
     )
 
     pom {

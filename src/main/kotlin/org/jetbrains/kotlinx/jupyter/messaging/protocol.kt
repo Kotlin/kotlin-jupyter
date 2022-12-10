@@ -58,7 +58,7 @@ enum class JupyterOutType {
 
 abstract class Response(
     private val stdOut: String?,
-    private val stdErr: String?
+    private val stdErr: String?,
 ) {
     abstract val state: ResponseState
 
@@ -92,9 +92,9 @@ class OkResponseWithMessage(
                     content = ExecutionResultMessage(
                         executionCount = requestCount,
                         data = resultJson["data"]!!,
-                        metadata = resultJson["metadata"]!!
-                    )
-                )
+                        metadata = resultJson["metadata"]!!,
+                    ),
+                ),
             )
         }
 
@@ -112,8 +112,8 @@ class OkResponseWithMessage(
                 content = ExecuteReply(
                     MessageStatus.OK,
                     requestCount,
-                )
-            )
+                ),
+            ),
         )
     }
 }
@@ -151,7 +151,7 @@ class SocketDisplayHandler(
         val content = DisplayDataResponse(
             json["data"],
             json["metadata"],
-            json["transient"]
+            json["transient"],
         )
         val message = makeReplyMessage(connection.contextMessage!!, MessageType.DISPLAY_DATA, content = content)
         socket.sendMessage(message)
@@ -172,7 +172,7 @@ class SocketDisplayHandler(
         val content = DisplayDataResponse(
             json["data"],
             json["metadata"],
-            json["transient"]
+            json["transient"],
         )
         val message = connection.makeSimpleMessage(MessageType.UPDATE_DISPLAY_DATA, content)
         socket.sendMessage(message)
@@ -188,7 +188,7 @@ class AbortResponseWithMessage(
         val errorReply = makeReplyMessage(
             requestMsg,
             MessageType.EXECUTE_REPLY,
-            content = ExecuteReply(MessageStatus.ABORT, requestCount)
+            content = ExecuteReply(MessageStatus.ABORT, requestCount),
         )
         System.err.println("Sending abort: $errorReply")
         connection.shell.sendMessage(errorReply)
@@ -208,7 +208,7 @@ class ErrorResponseWithMessage(
         val errorReply = makeReplyMessage(
             requestMsg,
             MessageType.EXECUTE_REPLY,
-            content = ExecuteErrorReply(requestCount, errorName, errorValue, traceback, additionalInfo)
+            content = ExecuteErrorReply(requestCount, errorName, errorValue, traceback, additionalInfo),
         )
         System.err.println("Sending error: $errorReply")
         connection.shell.sendMessage(errorReply)
@@ -263,9 +263,9 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                         currentKernelVersion.toMaybeUnspecifiedString(),
                         "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",
                         notebookLanguageInfo,
-                        listOf()
+                        listOf(),
                     ),
-                )
+                ),
             )
 
         is HistoryRequest ->
@@ -273,8 +273,8 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                 makeReplyMessage(
                     rawIncomingMessage,
                     MessageType.HISTORY_REPLY,
-                    content = HistoryReply(listOf()) // not implemented
-                )
+                    content = HistoryReply(listOf()), // not implemented
+                ),
             )
 
         // TODO: This request is deprecated since messaging protocol v.5.1,
@@ -288,10 +288,10 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                         jsonObject(
                             config.ports.map { (socket, port) ->
                                 socket.portField to port
-                            }
-                        )
-                    )
-                )
+                            },
+                        ),
+                    ),
+                ),
             )
 
         is ExecuteRequest -> {
@@ -307,8 +307,8 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                     makeReplyMessage(
                         rawIncomingMessage,
                         MessageType.EXECUTE_INPUT,
-                        content = ExecutionInputReply(code, count)
-                    )
+                        content = ExecutionInputReply(code, count),
+                    ),
                 )
                 val res: Response = if (looksLikeReplCommand(code)) {
                     runCommand(code, repl)
@@ -321,7 +321,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                                 count.toInt(),
                                 content.storeHistory,
                                 content.silent,
-                            )
+                            ),
                         )
                     }
                 }
@@ -402,7 +402,7 @@ class CapturingOutputStream(
         period = conf.captureBufferTimeLimitMs,
         action = {
             flush()
-        }
+        },
     )
 
     val contents: ByteArray
@@ -473,7 +473,7 @@ fun JupyterConnectionInternal.evalWithIO(
     repl: ReplForJupyter,
     incomingMessage: RawMessage,
     allowStdIn: Boolean,
-    body: () -> EvalResult?
+    body: () -> EvalResult?,
 ): Response {
     val config = repl.outputConfig
     val out = System.out
@@ -485,7 +485,7 @@ fun JupyterConnectionInternal.evalWithIO(
         return CapturingOutputStream(
             stream,
             config,
-            captureOutput
+            captureOutput,
         ) { text ->
             cell()?.appendStreamOutput(text)
             this.sendOut(incomingMessage, outType, text)
@@ -538,7 +538,7 @@ fun JupyterConnectionInternal.evalWithIO(
                     ex.javaClass.canonicalName,
                     ex.message ?: "",
                     ex.stackTrace.map { it.toString() },
-                    ex.getAdditionalInfoJson() ?: Json.EMPTY
+                    ex.getAdditionalInfoJson() ?: Json.EMPTY,
                 )
             }
             ExecutionResult.Interrupted -> {

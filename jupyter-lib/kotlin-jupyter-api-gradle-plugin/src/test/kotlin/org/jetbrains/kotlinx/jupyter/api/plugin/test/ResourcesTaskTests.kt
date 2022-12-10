@@ -18,7 +18,7 @@ class ResourcesTaskTests {
     private val projectDir = createTempDirectory("jupyter-gradle-test-project").toFile()
 
     private fun setupTest(
-        taskSetup: String = ""
+        taskSetup: String = "",
     ) {
         val buildFile = projectDir.resolve("build.gradle")
         val taskSetupIndented = taskSetup.prependIndent("    ".repeat(2))
@@ -38,7 +38,7 @@ class ResourcesTaskTests {
         val arguments = args?.toMutableList() ?: mutableListOf(
             "-Pkotlin.jupyter.add.api=false",
             "--stacktrace",
-            "--info"
+            "--info",
         )
         val taskName = RESOURCES_TASK_NAME.withPrefix(type)
         arguments.add(0, taskName)
@@ -64,15 +64,15 @@ class ResourcesTaskTests {
             """
             libraryProducers = ["test.Producer1", "test.Producer2"]
             libraryDefinitions = ["test.Definition1"]
-            """.trimIndent()
+            """.trimIndent(),
         )
         runResourcesTask()
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
                 producers = listOf("test.Producer1", "test.Producer2").map(::LibrariesProducerDeclaration),
-                definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration)
-            )
+                definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration),
+            ),
         )
     }
 
@@ -81,14 +81,14 @@ class ResourcesTaskTests {
         setupTest(
             """
             libraryDefinitions = ["test.Definition1"]
-            """.trimIndent()
+            """.trimIndent(),
         )
         runResourcesTask()
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
-                definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration)
-            )
+                definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration),
+            ),
         )
     }
 
@@ -113,7 +113,7 @@ class ResourcesTaskTests {
                 implementation(files("$apiAnnotations"))
                 ksp(files("$apiAnnotations"))
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val srcDir = projectDir.resolve("src/main/kotlin")
@@ -133,14 +133,14 @@ class ResourcesTaskTests {
             class Integration : JupyterIntegration({            
                 import("org.my.lib.*")
             })
-            """.trimIndent()
+            """.trimIndent(),
         )
         runResourcesTask()
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
-                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration)
-            )
+                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration),
+            ),
         )
     }
 
@@ -189,7 +189,7 @@ class ResourcesTaskTests {
                     val jsTest by getting
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val srcDir = projectDir.resolve("src/jvmMain/kotlin")
@@ -209,15 +209,15 @@ class ResourcesTaskTests {
             class Integration : JupyterIntegration({            
                 import("org.my.lib.*")
             })
-            """.trimIndent()
+            """.trimIndent(),
         )
         runResourcesTask(type = "jvm")
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
-                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration)
+                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration),
             ),
-            "jvm"
+            "jvm",
         )
     }
 
@@ -235,7 +235,7 @@ class ResourcesTaskTests {
                 addApiDependency("$version")
                 addScannerDependency("$version")
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val srcDir = projectDir.resolve("src/main/kotlin")
@@ -255,14 +255,14 @@ class ResourcesTaskTests {
             class Integration : JupyterIntegration({            
                 import("org.my.lib.*")
             })
-            """.trimIndent()
+            """.trimIndent(),
         )
         runResourcesTask()
 
         assertLibrariesJsonContents(
             LibrariesScanResult(
-                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration)
-            )
+                producers = listOf("pack.Integration").map(::LibrariesProducerDeclaration),
+            ),
         )
     }
 

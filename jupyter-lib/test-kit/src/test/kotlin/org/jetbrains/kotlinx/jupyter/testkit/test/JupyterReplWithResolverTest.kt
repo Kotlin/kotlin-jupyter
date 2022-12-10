@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test
 class JupyterReplWithResolverTest : JupyterReplTestCase(
     ReplProvider.withDefaultClasspathResolution(
         shouldResolve = { it != "lets-plot" },
-        shouldResolveToEmpty = { it == "multik" }
-    )
+        shouldResolveToEmpty = { it == "multik" },
+    ),
 ) {
 
     @Test
@@ -28,7 +28,7 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
                 "Bill", 135,
                 "Mark", 160
             )            
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         dfHtml shouldContain "Bill"

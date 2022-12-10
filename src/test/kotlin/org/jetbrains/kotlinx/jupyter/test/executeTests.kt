@@ -103,7 +103,7 @@ class ExecuteTests : KernelServerTestsBase() {
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
-        storeHistory: Boolean = true
+        storeHistory: Boolean = true,
     ): Any? {
         try {
             val shell = this.shell!!
@@ -153,7 +153,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val msg = it.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
                 assertStartsWith("Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
-            }
+            },
         )
     }
 
@@ -267,7 +267,7 @@ class ExecuteTests : KernelServerTestsBase() {
             """
             SessionOptions.serializeScriptData = true
             """.trimIndent(),
-            hasResult = false
+            hasResult = false,
         )
 
         val code =
@@ -281,7 +281,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val metadata = message.data.metadata
                 assertTrue(metadata is JsonObject)
                 val snippetMetadata = Json.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
-                    metadata["eval_metadata"] ?: JsonNull
+                    metadata["eval_metadata"] ?: JsonNull,
                 )
                 val compiledData = snippetMetadata?.compiledData
                 assertNotNull(compiledData)
@@ -314,7 +314,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 val sourceFile = sourcesDir.resolve("Line_1.kts")
                 sourceFile.shouldBeAFile()
                 sourceFile.readText() shouldBe "val xyz = 42"
-            }
+            },
         )
         assertNull(res)
     }
@@ -333,7 +333,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 assertEquals(MessageType.STREAM, msg.type)
                 val msgText = (msg.content as StreamResponse).text
                 assertTrue("The problem is found in one of the loaded libraries" in msgText)
-            }
+            },
         )
     }
 
@@ -348,12 +348,12 @@ class ExecuteTests : KernelServerTestsBase() {
         val res3 = doExecute(
             " \"\${Out[1]} \${Out[2]}\" ",
             storeHistory = false,
-            executeReplyChecker = { checkCounter(it, 3) }
+            executeReplyChecker = { checkCounter(it, 3) },
         )
         val res4 = doExecute(
             "try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }",
             storeHistory = false,
-            executeReplyChecker = { checkCounter(it, 3) }
+            executeReplyChecker = { checkCounter(it, 3) },
         )
 
         assertEquals(jsonObject("text/plain" to "41"), res1)
@@ -447,10 +447,10 @@ class ExecuteTests : KernelServerTestsBase() {
                 commId,
                 JsonObject(
                     mapOf(
-                        "x" to JsonPrimitive("4321")
-                    )
-                )
-            )
+                        "x" to JsonPrimitive("4321"),
+                    ),
+                ),
+            ),
         )
 
         iopub.receiveStatusReply().status shouldBe KernelStatus.BUSY
@@ -475,13 +475,13 @@ class ExecuteTests : KernelServerTestsBase() {
             MessageType.COMM_OPEN,
             CommOpen(
                 commId,
-                targetName
-            )
+                targetName,
+            ),
         )
 
         shell.sendMessage(
             MessageType.COMM_MSG,
-            CommMsg(commId)
+            CommMsg(commId),
         )
 
         iopub.wrapActionInBusyIdleStatusChange {

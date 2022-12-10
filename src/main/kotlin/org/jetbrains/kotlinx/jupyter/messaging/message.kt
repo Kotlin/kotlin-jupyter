@@ -25,7 +25,7 @@ fun RawMessage.toMessage(): Message {
 
 data class Message(
     val id: List<ByteArray> = listOf(),
-    val data: MessageData = MessageData()
+    val data: MessageData = MessageData(),
 ) {
     val type: MessageType
         get() = data.header!!.type
@@ -71,7 +71,7 @@ fun makeReplyMessage(
     header: MessageHeader? = null,
     parentHeader: MessageHeader? = null,
     metadata: JsonElement? = null,
-    content: MessageContent? = null
+    content: MessageContent? = null,
 ) =
     Message(
         id = msg.id,
@@ -79,8 +79,8 @@ fun makeReplyMessage(
             header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
             parentHeader = parentHeader ?: Json.decodeFromJsonElement<MessageHeader>(msg.header),
             metadata = metadata,
-            content = content
-        )
+            content = content,
+        ),
     )
 
 fun makeHeader(msgType: MessageType? = null, incomingMsg: RawMessage? = null, sessionId: String? = null): MessageHeader {
@@ -96,7 +96,7 @@ fun makeJsonHeader(msgType: String, incomingMsg: RawMessage? = null, sessionId: 
     val header = makeHeader(
         MessageType.fromString(msgType) ?: MessageType.NONE,
         incomingMsg,
-        sessionId
+        sessionId,
     )
     return Json.encodeToJsonElement(header).jsonObject
 }
@@ -108,6 +108,6 @@ fun makeHeader(type: MessageType, sessionId: String?, username: String?): Messag
         sessionId,
         username,
         protocolVersion,
-        ISO8601DateNow
+        ISO8601DateNow,
     )
 }

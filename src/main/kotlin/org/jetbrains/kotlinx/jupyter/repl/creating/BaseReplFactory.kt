@@ -32,7 +32,7 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(notebook)
     override fun provideCommManager(): CommManager = CommManagerImpl(connection)
     override fun provideCommHandlers(): List<CommHandler> = listOf(
-        DebugPortCommHandler()
+        DebugPortCommHandler(),
     )
 
     override fun provideExplicitClientType(): JupyterClientType? = null

@@ -28,7 +28,7 @@ interface FlagAcceptanceRule<T> : AcceptanceRule<T> {
  */
 class NameAcceptanceRule(
     override val acceptsFlag: Boolean,
-    private val appliesPredicate: (TypeName) -> Boolean
+    private val appliesPredicate: (TypeName) -> Boolean,
 ) : FlagAcceptanceRule<TypeName> {
     override fun appliesTo(obj: TypeName): Boolean {
         return appliesPredicate(obj)

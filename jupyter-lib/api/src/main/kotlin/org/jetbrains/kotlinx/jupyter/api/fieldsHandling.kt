@@ -47,12 +47,12 @@ data class VariableDeclaration(
     constructor(
         name: VariableName,
         value: Any?,
-        isMutable: Boolean = false
+        isMutable: Boolean = false,
     ) : this(
         name,
         value,
         value?.let { it::class.starProjectedType } ?: Any::class.createType(nullable = true),
-        isMutable
+        isMutable,
     )
 }
 

@@ -25,7 +25,7 @@ open class ScriptDependencyAnnotationHandlerImpl(private val resolver: JupyterSc
 
     protected open fun onResolvedClasspath(
         configuration: ScriptCompilationConfiguration,
-        classpath: List<File>
+        classpath: List<File>,
     ): ScriptCompilationConfiguration {
         return configuration
             .let { if (classpath.isEmpty()) it else it.withUpdatedClasspath(classpath) }

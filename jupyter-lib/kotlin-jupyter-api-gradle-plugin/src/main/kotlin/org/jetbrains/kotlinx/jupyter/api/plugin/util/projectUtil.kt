@@ -43,7 +43,7 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
                     dependencies {
                         configuration.invoke(dependency)
                     }
-                }
+                },
             )
         }
     }

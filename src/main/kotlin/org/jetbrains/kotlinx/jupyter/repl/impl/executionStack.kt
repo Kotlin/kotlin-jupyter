@@ -10,7 +10,7 @@ interface ExecutionStackFrame {
 
 // Mutable stack frame. Mutation is only available for this specific frame
 class MutableExecutionStackFrame(
-    override val previous: ExecutionStackFrame? = null
+    override val previous: ExecutionStackFrame? = null,
 ) : ExecutionStackFrame {
     override val libraries = mutableListOf<LibraryDefinition>()
 }

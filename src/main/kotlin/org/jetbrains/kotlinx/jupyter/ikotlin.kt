@@ -94,7 +94,7 @@ fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, 
     val replConfig = ReplConfig.create(
         resolutionInfoProvider ?: EmptyResolutionInfoProvider,
         null,
-        true
+        true,
     )
     kernelServer(kernelConfig, replConfig, scriptReceivers = scriptReceivers ?: emptyList())
 }
@@ -118,7 +118,7 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
         fun socketLoop(
             interruptedMessage: String,
             vararg threadsToInterrupt: Thread,
-            loopBody: () -> Unit
+            loopBody: () -> Unit,
         ) {
             while (true) {
                 try {
@@ -134,14 +134,14 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
         conn.addMessageCallback(
             rawMessageCallback(JupyterSocketType.CONTROL, null) { rawMessage ->
                 conn.controlMessagesHandler(rawMessage, repl)
-            }
+            },
         )
 
         conn.addMessageCallback(
             rawMessageCallback(JupyterSocketType.SHELL, null) { rawMessage ->
                 conn.updateSessionInfo(rawMessage)
                 conn.shellMessagesHandler(rawMessage, repl, commManager, executionCount)
-            }
+            },
         )
 
         val controlThread = thread {

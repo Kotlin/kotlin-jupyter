@@ -29,7 +29,7 @@ import java.io.InputStream
 import kotlin.math.min
 
 class JupyterConnectionImpl(
-    override val config: KernelConfig
+    override val config: KernelConfig,
 ) : AbstractJupyterConnection(), JupyterConnectionInternal, Closeable {
 
     private var _messageId: List<ByteArray> = listOf(byteArrayOf(1))
@@ -50,8 +50,8 @@ class JupyterConnectionImpl(
                 makeReplyMessage(
                     contextMessage!!,
                     MessageType.INPUT_REQUEST,
-                    content = InputRequest("stdin:")
-                )
+                    content = InputRequest("stdin:"),
+                ),
             )
             val msg = stdin.receiveMessage(stdin.socket.recv())
             val content = msg?.data?.content as? InputReply

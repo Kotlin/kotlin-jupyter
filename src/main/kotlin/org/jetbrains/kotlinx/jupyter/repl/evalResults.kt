@@ -14,7 +14,7 @@ data class InternalEvalResult(
 
 data class EvalResult(
     val resultValue: Any?,
-    val metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY
+    val metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY,
 )
 
 data class EvalResultEx(

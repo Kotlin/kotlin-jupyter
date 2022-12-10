@@ -49,12 +49,12 @@ val testLibraryDefinition1 = libraryDefinition {
     it.renderers = listOf(
         SubtypeRendererTypeHandler(
             TestSum::class,
-            ResultHandlerCodeExecution("\$it.a + \$it.b")
+            ResultHandlerCodeExecution("\$it.a + \$it.b"),
         ),
         SubtypeRendererTypeHandler(
             TestFunList::class,
-            ResultHandlerCodeExecution("\$it.render()")
-        )
+            ResultHandlerCodeExecution("\$it.render()"),
+        ),
     )
 }
 
@@ -69,19 +69,19 @@ val testLibraryDefinition2 = libraryDefinition {
                 ResourceFallbacksBundle(
                     ResourceLocation(
                         "https://cdn.plot.ly/plotly-latest.min.js",
-                        ResourcePathType.URL
-                    )
+                        ResourcePathType.URL,
+                    ),
                 ),
                 ResourceFallbacksBundle(
                     ResourceLocation(
                         "src/test/testData/js-lib.js",
-                        ResourcePathType.LOCAL_PATH
-                    )
+                        ResourcePathType.LOCAL_PATH,
+                    ),
                 ),
             ),
             ResourceType.JS,
-            "testLib2"
-        )
+            "testLib2",
+        ),
     )
 }
 
@@ -119,7 +119,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
             """
             import org.jetbrains.kotlinx.jupyter.test.TestFunList
             TestFunList(12, TestFunList(13, TestFunList(14, null)))
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("[12, 13, 14]", result2.resultValue)
     }
@@ -132,7 +132,7 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
     @Test
     fun testJsResources() {
         val res = eval(
-            "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)"
+            "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
         )
         assertTrue(res.resultValue is Unit)
         assertEquals(1, displayHandler.list.size)

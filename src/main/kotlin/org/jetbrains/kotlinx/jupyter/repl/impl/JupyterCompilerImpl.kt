@@ -79,15 +79,15 @@ interface JupyterCompilerWithCompletion : JupyterCompiler {
     companion object {
         fun create(
             compilationConfiguration: ScriptCompilationConfiguration,
-            evaluationConfiguration: ScriptEvaluationConfiguration
+            evaluationConfiguration: ScriptEvaluationConfiguration,
         ): JupyterCompilerWithCompletion {
             return JupyterCompilerWithCompletionImpl(
                 KJvmReplCompilerWithIdeServices(
                     compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                        ?: defaultJvmScriptingHostConfiguration
+                        ?: defaultJvmScriptingHostConfiguration,
                 ),
                 compilationConfiguration,
-                evaluationConfiguration
+                evaluationConfiguration,
             )
         }
     }
@@ -162,8 +162,8 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                     ScriptConfigurationRefinementContext(
                         context.script,
                         conf,
-                        context.collectedData
-                    )
+                        context.collectedData,
+                    ),
                 )
             } ?: config
         }
@@ -205,7 +205,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 class JupyterCompilerWithCompletionImpl(
     compiler: KJvmReplCompilerWithIdeServices,
     compilationConfig: ScriptCompilationConfiguration,
-    evaluationConfig: ScriptEvaluationConfiguration
+    evaluationConfig: ScriptEvaluationConfiguration,
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
     JupyterCompilerWithCompletion {
 
@@ -213,7 +213,7 @@ class JupyterCompilerWithCompletionImpl(
         get() = compiler
 
     override fun checkComplete(
-        code: Code
+        code: Code,
     ): CheckResult {
         val result = analyze(code)
         val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
@@ -223,7 +223,7 @@ class JupyterCompilerWithCompletionImpl(
     }
 
     private fun analyze(
-        code: Code
+        code: Code,
     ): ResultWithDiagnostics<ReplAnalyzerResult> {
         val snippet = SourceCodeImpl(nextCounter(), code)
 
@@ -231,7 +231,7 @@ class JupyterCompilerWithCompletionImpl(
             compiler.analyze(
                 snippet,
                 0.toSourceCodePosition(snippet),
-                compilationConfig
+                compilationConfig,
             )
         }
     }
@@ -253,9 +253,9 @@ fun getSimpleCompiler(
     return JupyterCompilerImpl(
         SimpleReplCompiler(
             compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                ?: defaultJvmScriptingHostConfiguration
+                ?: defaultJvmScriptingHostConfiguration,
         ),
         compilationConfiguration,
-        evaluationConfiguration
+        evaluationConfiguration,
     )
 }

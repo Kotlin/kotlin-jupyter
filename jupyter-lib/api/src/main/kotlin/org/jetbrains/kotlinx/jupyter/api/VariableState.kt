@@ -25,9 +25,8 @@ data class VariableStateImpl(
         }
     }
 
-    private val valCache = VariableStateCache<Result<Any?>> (
-        {
-            oldValue, newValue ->
+    private val valCache = VariableStateCache<Result<Any?>>(
+        { oldValue, newValue ->
             oldValue.getOrNull() !== newValue.getOrNull()
         },
         {
@@ -38,7 +37,7 @@ data class VariableStateImpl(
                     Result.failure(ex)
                 }
             }
-        }
+        },
     )
 
     fun update(): Boolean {
@@ -64,7 +63,7 @@ data class VariableStateImpl(
 
 private class VariableStateCache<T>(
     val equalityChecker: (T, T) -> Boolean = { x, y -> x == y },
-    val calculate: (T?) -> T
+    val calculate: (T?) -> T,
 ) {
     private var cachedVal: T? = null
     private var shouldRenew: Boolean = true

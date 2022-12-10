@@ -28,7 +28,7 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
             USE {
                 render<Int> { (it * 2).toString() }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val ex = execEx("5")
@@ -44,7 +44,7 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
             USE {
                 render<Int> { HTML((it * 2).toString()) }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         exec("5").shouldBeInstanceOf<MimeTypedResult>()

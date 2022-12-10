@@ -25,7 +25,7 @@ class FileAnnotationsProcessorImpl(
     val dependencyAnnotationsHandler: ScriptDependencyAnnotationHandler,
     val compilerArgsConfigurator: CompilerArgsConfigurator,
     val compiler: JupyterCompiler,
-    val kernelHostProvider: KotlinKernelHostProvider
+    val kernelHostProvider: KotlinKernelHostProvider,
 ) : FileAnnotationsProcessor {
 
     private val handlers = mutableMapOf<String, FileAnnotationCallback>()
@@ -39,7 +39,7 @@ class FileAnnotationsProcessorImpl(
 
     override fun process(
         context: ScriptConfigurationRefinementContext,
-        host: KotlinKernelHost
+        host: KotlinKernelHost,
     ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val collected = mutableListOf<Annotation>()
 
@@ -50,7 +50,7 @@ class FileAnnotationsProcessorImpl(
                 when (clazz) {
                     DependsOn::class, Repository::class -> dependencyAnnotationsHandler.configure(
                         conf,
-                        collected
+                        collected,
                     )
                     CompilerArgs::class -> compilerArgsConfigurator.configure(conf, collected)
                     else -> {

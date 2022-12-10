@@ -28,7 +28,7 @@ class PatternAcceptanceRulesTests {
     private fun testPatternSerialization(
         expectedRuleStr: String,
         expectedFlag: Boolean,
-        expectedPattern: String
+        expectedPattern: String,
     ) {
         val expectedRule = PatternNameAcceptanceRule(expectedFlag, expectedPattern)
         val expectedJson = JsonPrimitive(expectedRuleStr)
@@ -47,14 +47,14 @@ class PatternAcceptanceRulesTests {
     fun `simple case`() = testPattern(
         "my.Name0",
         listOf("my.Name0"),
-        listOf("my.Name", " my.Name0", "myoName0")
+        listOf("my.Name", " my.Name0", "myoName0"),
     )
 
     @Test
     fun `special characters`() = testPattern(
         "org.jetbrains.kotlin?.**.jupyter.*",
         listOf("org.jetbrains.kotlin.my.package.jupyter.Integration", "org.jetbrains.kotlinx.some_package.jupyter.SomeClass"),
-        listOf("org.jetbrains.kotlin.my.package.jupyter.integration.MyClass")
+        listOf("org.jetbrains.kotlin.my.package.jupyter.integration.MyClass"),
     )
 
     @Test

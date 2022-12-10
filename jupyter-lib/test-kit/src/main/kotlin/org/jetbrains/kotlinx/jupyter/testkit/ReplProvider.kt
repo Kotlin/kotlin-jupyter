@@ -33,7 +33,7 @@ fun interface ReplProvider {
                 classpath,
                 isEmbedded = true,
                 mavenRepositories = defaultRepositoriesCoordinates,
-                libraryResolver = resolver
+                libraryResolver = resolver,
             ).apply {
                 initializeWithCurrentClasspath()
             }
@@ -42,7 +42,7 @@ fun interface ReplProvider {
         @Suppress("unused")
         fun forLibrariesTesting(libraries: Collection<String>): ReplProvider {
             return withDefaultClasspathResolution(
-                shouldResolveToEmpty = { it in libraries }
+                shouldResolveToEmpty = { it in libraries },
             )
         }
 

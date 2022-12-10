@@ -53,7 +53,7 @@ class ReplTests : AbstractSingleReplTest() {
                 fun stack(vararg tup: Int): Int = tup.sum()
                 val X = 1
                 val x = stack(1, X)
-                """.trimIndent()
+                """.trimIndent(),
             )
 
             print("")
@@ -69,7 +69,7 @@ class ReplTests : AbstractSingleReplTest() {
                 val foobaz = "dsdsda"
                 val ddd = ppp
                 val ooo = foobar
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 
@@ -94,7 +94,7 @@ class ReplTests : AbstractSingleReplTest() {
                 } catch(e: NullPointerException) {
                     throw RuntimeException("XYZ", e)
                 }
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
         with(ex.render()) {
@@ -120,7 +120,7 @@ class ReplTests : AbstractSingleReplTest() {
             @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
             import net.pearx.kasechange.*
             1
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         res.resultValue shouldBe 1
@@ -132,7 +132,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             @file:Repository("https://repo1.maven.org/maven2/")
             @file:DependsOn("com.github.doyaaaaaken:kotlin-csv-jvm:0.7.3")
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val res = repl.completeBlocking("import com.github.", 18)
@@ -152,7 +152,7 @@ class ReplTests : AbstractSingleReplTest() {
                         implementation("io.github.config4k:config4k:0.4.2")
                     }
                 }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val res = repl.completeBlocking("import io.github.", 17)
@@ -167,7 +167,7 @@ class ReplTests : AbstractSingleReplTest() {
             @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
             import pack.*
             func()
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         res.resultValue shouldBe 42
@@ -187,7 +187,7 @@ class ReplTests : AbstractSingleReplTest() {
             @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
             @file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
             @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val newClasspath = res.metadata.newClasspath
@@ -228,7 +228,7 @@ class ReplTests : AbstractSingleReplTest() {
             fun AClass.c_meth_z(v: Int) = v * c_prop_y
             val df = AClass(10)
             val c_zzz = "some string"
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = repl.completeBlocking("df.filter { c_ }", 14)
@@ -249,7 +249,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             @Deprecated("use id() function instead")
             fun id_deprecated(x: Int) = x
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         runBlocking {
@@ -269,7 +269,7 @@ class ReplTests : AbstractSingleReplTest() {
             val foobar = 42
             var foobaz = "string"
             val v = BClass("KKK", AClass(5, "25"))
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = repl.listErrorsBlocking(
@@ -277,7 +277,7 @@ class ReplTests : AbstractSingleReplTest() {
             val a = AClass("42", 3.14)
             val b: Int = "str"
             val c = foob
-            """.trimIndent()
+            """.trimIndent(),
         )
         val actualErrors = result.errors.toList()
         val path = actualErrors.first().sourcePath
@@ -287,8 +287,8 @@ class ReplTests : AbstractSingleReplTest() {
                 generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
                 generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
                 generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR")
-            )
+                generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR"),
+            ),
         )
     }
 
@@ -297,7 +297,7 @@ class ReplTests : AbstractSingleReplTest() {
         val res = eval(
             """
             @file:CompilerArgs("-opt-in=kotlin.RequiresOptIn")
-            """.trimIndent()
+            """.trimIndent(),
         )
         res.resultValue shouldBe Unit
 
@@ -306,7 +306,7 @@ class ReplTests : AbstractSingleReplTest() {
             import kotlin.time.*
             @OptIn(ExperimentalTime::class)
             val mark = TimeSource.Monotonic.markNow()
-            """.trimIndent()
+            """.trimIndent(),
         ).errors.toList()
 
         actualErrors.shouldBeEmpty()
@@ -321,15 +321,15 @@ class ReplTests : AbstractSingleReplTest() {
             val x = foobar
             3 * 14
             %trackClasspath
-            """.trimIndent()
+            """.trimIndent(),
         )
         val actualErrors = result.errors.toList()
         val path = actualErrors.first().sourcePath
         actualErrors shouldBe withPath(
             path,
             listOf(
-                generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR")
-            )
+                generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR"),
+            ),
         )
     }
 
@@ -399,7 +399,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("%output --max-cell-size=100500 --no-stdout")
         repl.outputConfig shouldBe OutputConfig(
             cellOutputMaxSize = 100500,
-            captureOutput = false
+            captureOutput = false,
         )
 
         eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
@@ -408,7 +408,7 @@ class ReplTests : AbstractSingleReplTest() {
             captureOutput = false,
             captureBufferMaxSize = 42,
             captureNewlineBufferSize = 33,
-            captureBufferTimeLimitMs = 2000
+            captureBufferTimeLimitMs = 2000,
         )
 
         eval("%output --reset-to-defaults")
@@ -442,7 +442,7 @@ class ReplTests : AbstractSingleReplTest() {
             import org.RDKit.RWMol.MolFromSmiles
             Native.loadLibrary(RWMol::class, "$libName", "$testDataPath")
             MolFromSmiles("c1ccccc1")
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue
 
         res.shouldNotBeNull()
@@ -455,7 +455,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             val foo: (Int) -> Int = {it + 1}
             foo
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue
         @Suppress("UNCHECKED_CAST")
         (res as (Int) -> Int)(1) shouldBe 2
@@ -476,7 +476,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             val sim = object : ArrayList<String>() {}
             sim.add("42")
-            """.trimIndent()
+            """.trimIndent(),
         )
         val res = eval("sim").resultValue
         res shouldBe 1
@@ -491,7 +491,7 @@ class ReplTests : AbstractSingleReplTest() {
             import java.nio.file.Path
             
             Path.of(".").absolute()
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue
         res.shouldBeInstanceOf<Path>()
     }
@@ -534,7 +534,7 @@ class ReplTests : AbstractSingleReplTest() {
             class Child: Base()
             
             Child::class.simpleName
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue shouldBe "Child"
     }
 

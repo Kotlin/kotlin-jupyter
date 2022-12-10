@@ -8,11 +8,11 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 class ReplCompilerException(
     val failedCode: String,
     val errorResult: ResultWithDiagnostics.Failure? = null,
-    message: String? = null
+    message: String? = null,
 ) :
     ReplException(
         message ?: errorResult?.getErrors() ?: "",
-        errorResult?.reports?.map { it.exception }?.firstOrNull()
+        errorResult?.reports?.map { it.exception }?.firstOrNull(),
     ) {
 
     val firstError = errorResult?.reports?.firstOrNull {
@@ -29,8 +29,8 @@ class ReplCompilerException(
                     "lineEnd" to JsonPrimitive(it.end?.line ?: -1),
                     "colEnd" to JsonPrimitive(it.end?.col ?: -1),
                     "message" to JsonPrimitive(errorMessage),
-                    "path" to JsonPrimitive(firstError.sourcePath.orEmpty())
-                )
+                    "path" to JsonPrimitive(firstError.sourcePath.orEmpty()),
+                ),
             )
         }
     }

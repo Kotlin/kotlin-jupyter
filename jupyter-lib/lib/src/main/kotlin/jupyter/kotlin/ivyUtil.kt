@@ -37,7 +37,7 @@ private fun deleteCacheDir(group: String? = null, artifact: String? = null, vers
         "ivy-$version.xml",
         "ivy-$version.xml.original",
         "ivydata-$version.properties",
-        "jars/$artifact-$version.jar"
+        "jars/$artifact-$version.jar",
     )
     filesToDelete.forEach {
         deleteDir.resolve(it).delete()

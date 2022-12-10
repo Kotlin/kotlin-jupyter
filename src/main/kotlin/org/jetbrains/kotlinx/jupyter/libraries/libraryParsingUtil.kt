@@ -45,5 +45,5 @@ private val defaultParsers = listOf(
     },
     LibraryResolutionInfoParser.make("classpath", listOf()) {
         AbstractLibraryResolutionInfo.ByClasspath
-    }
+    },
 ).associateBy { it.name }

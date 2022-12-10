@@ -66,7 +66,7 @@ CreateResourcesTask.register(project, "buildProperties", tasks.processResources)
         mapOf(
             "version" to rootSettings.pyPackageVersion,
             "kotlinVersion" to defaultVersionCatalog.versions.devKotlin,
-        )
+        ),
     )
 
     addLibrariesFromDir(rootSettings.librariesDir)

@@ -65,7 +65,7 @@ val classpath = scriptCompilationClasspathFromContext(
     "kotlin-script-runtime",
     "kotlinx-serialization-json-jvm",
     "kotlinx-serialization-core-jvm",
-    classLoader = TestDisplayHandler::class.java.classLoader
+    classLoader = TestDisplayHandler::class.java.classLoader,
 )
 
 val KClass<*>.classPathEntry: File get() {
@@ -185,7 +185,7 @@ object NotebookMock : Notebook {
 
     override fun getCell(id: Int): MutableCodeCell {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
-            "There is no cell with number '$id'"
+            "There is no cell with number '$id'",
         )
     }
 

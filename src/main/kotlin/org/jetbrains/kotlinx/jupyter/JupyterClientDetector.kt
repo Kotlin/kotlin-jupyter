@@ -54,6 +54,6 @@ object JupyterClientDetector {
         },
         detector(JupyterClientType.KERNEL_TESTS) { command, _ ->
             command.endsWith("idea64.exe")
-        }
+        },
     )
 }

@@ -57,9 +57,9 @@ class KernelServerTest : KernelServerTestsBase() {
                 sendMessage(
                     Message(
                         id = messageId,
-                        MessageData(header = makeHeader(MessageType.INTERRUPT_REQUEST))
+                        MessageData(header = makeHeader(MessageType.INTERRUPT_REQUEST)),
                     ),
-                    hmac
+                    hmac,
                 )
                 val msg = receiveRawMessage(recv(), hmac)
                 assertEquals(MessageType.INTERRUPT_REPLY.type, msg.type)

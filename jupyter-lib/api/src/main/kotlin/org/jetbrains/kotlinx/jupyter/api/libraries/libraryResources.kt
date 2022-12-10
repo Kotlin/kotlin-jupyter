@@ -70,7 +70,7 @@ data class LibraryResource(
         return LibraryResource(
             bundles.map { it.replaceVariables(mapping) },
             type,
-            replaceVariables(name, mapping)
+            replaceVariables(name, mapping),
         )
     }
 }

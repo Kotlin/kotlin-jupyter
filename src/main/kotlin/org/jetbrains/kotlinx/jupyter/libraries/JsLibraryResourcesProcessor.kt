@@ -115,7 +115,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
     }
 
     private class CodeScriptModifierFunctionGenerator(
-        val code: Code
+        val code: Code,
     ) : ScriptModifierFunctionGenerator {
         override fun getScriptText(): String {
             val escapedCode = Json.encodeToString(code)
@@ -130,7 +130,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
     }
 
     private class URLScriptModifierFunctionGenerator(
-        private val url: String
+        private val url: String,
     ) : ScriptModifierFunctionGenerator {
         override fun getScriptText(): String {
             // language=js

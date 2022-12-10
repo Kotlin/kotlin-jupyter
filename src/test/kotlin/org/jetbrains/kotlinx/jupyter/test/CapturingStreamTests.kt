@@ -23,7 +23,7 @@ class CapturingStreamTests {
         maxBufferSize: Int = 1000,
         maxOutputSize: Int = 1000,
         maxBufferNewlineSize: Int = 1,
-        onCaptured: (String) -> Unit = {}
+        onCaptured: (String) -> Unit = {},
     ): CapturingOutputStream {
         val printStream = PrintStream(stdout, false, "UTF-8")
         val config = OutputConfig(captureOutput, maxBufferLifeTimeMs, maxBufferSize, maxOutputSize, maxBufferNewlineSize)

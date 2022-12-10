@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 abstract class JupyterReplTestCase(
-    replProvider: ReplProvider = ReplProvider.withoutLibraryResolution
+    replProvider: ReplProvider = ReplProvider.withoutLibraryResolution,
 ) {
     private val repl = replProvider(scriptClasspath)
 

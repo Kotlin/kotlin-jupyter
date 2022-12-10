@@ -5,7 +5,7 @@ package org.jetbrains.kotlinx.jupyter.api
  * serialization/deserialization
  */
 class KotlinKernelVersion private constructor(
-    private val components: List<Int>
+    private val components: List<Int>,
 ) : Comparable<KotlinKernelVersion> {
     val major: Int get() = components[0]
     val minor: Int get() = components[1]

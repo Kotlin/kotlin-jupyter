@@ -7,7 +7,7 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.asSuccess
 
 class DefaultCompilerArgsConfigurator(
-    jvmTargetVersion: String = JavaRuntime.version
+    jvmTargetVersion: String = JavaRuntime.version,
 ) : CompilerArgsConfigurator {
     private val argsList = mutableListOf(
         "-jvm-target",

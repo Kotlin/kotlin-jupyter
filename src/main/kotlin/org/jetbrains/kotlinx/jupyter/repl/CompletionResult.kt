@@ -16,7 +16,7 @@ abstract class CompletionResult {
         private val bounds: CodeInterval,
         private val metadata: List<SourceCodeCompletionVariant>,
         private val text: String,
-        private val cursor: Int
+        private val cursor: Int,
     ) : CompletionResult() {
         init {
             assert(matches.size == metadata.size)
@@ -34,7 +34,7 @@ abstract class CompletionResult {
                             it.text,
                             it.tail,
                             bounds.from,
-                            bounds.to
+                            bounds.to,
                         )
                     },
                     metadata.map {
@@ -45,8 +45,8 @@ abstract class CompletionResult {
                             it.tail,
                             it.deprecationLevel?.name,
                         )
-                    }
-                )
+                    },
+                ),
             )
 
         @TestOnly
@@ -61,13 +61,13 @@ abstract class CompletionResult {
 
     class Empty(
         text: String,
-        cursor: Int
+        cursor: Int,
     ) : Success(emptyList(), CodeInterval(cursor, cursor), emptyList(), text, cursor)
 
     class Error(
         private val errorName: String,
         private val errorValue: String,
-        private val traceBack: List<String>
+        private val traceBack: List<String>,
     ) : CompletionResult() {
         override val message: MessageContent
             get() = ErrorReply(errorName, errorValue, traceBack)

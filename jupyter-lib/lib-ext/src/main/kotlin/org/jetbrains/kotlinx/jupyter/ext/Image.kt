@@ -29,21 +29,21 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
     constructor(url: String, embed: Boolean = false) : this(
         listOf(
             if (embed) embedSrc(downloadData(url), detectMime(URI(url)))
-            else referSrc(url)
-        )
+            else referSrc(url),
+        ),
     )
 
     constructor(file: File, embed: Boolean = false) : this(
         listOf(
             if (embed) embedSrc(loadData(file), detectMime(file.toURI()))
-            else referSrc(file.absolutePath.toString())
-        )
+            else referSrc(file.absolutePath.toString()),
+        ),
     )
 
     constructor(data: ByteArray, format: String) : this(
         listOf(
-            embedSrc(data, convertFormat(format))
-        )
+            embedSrc(data, convertFormat(format)),
+        ),
     )
 
     constructor(data: BufferedImage, outputFormat: String = "png") :
@@ -59,7 +59,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
 
     companion object {
         private val formatToMime = mapOf(
-            "svg" to "svg+xml"
+            "svg" to "svg+xml",
         )
 
         private fun BufferedImage.toByteArray(format: String): ByteArray {
@@ -79,7 +79,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
                 buildString {
                     append("""data:image/$format;base64,""")
                     append(encoder.encodeToString(data))
-                }
+                },
             )
         }
 

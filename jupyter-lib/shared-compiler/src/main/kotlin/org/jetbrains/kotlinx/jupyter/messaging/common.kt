@@ -20,7 +20,7 @@ abstract class MessageContent
 
 @Serializable
 abstract class MessageReplyContent(
-    val status: MessageStatus
+    val status: MessageStatus,
 ) : MessageContent()
 
 @Serializable

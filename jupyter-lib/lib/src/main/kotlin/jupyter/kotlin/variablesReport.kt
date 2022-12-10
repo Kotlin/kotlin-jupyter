@@ -63,7 +63,7 @@ private fun generateVarsTable(variablesState: Map<String, VariableState>): Strin
                 <th>Value</th>
               </tr>
       
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         variablesState.entries.forEach {
@@ -73,7 +73,7 @@ private fun generateVarsTable(variablesState: Map<String, VariableState>): Strin
                     <td>${it.key}</td>
                     <td><pre>${it.value.stringValue}</pre></td>
                 </tr>
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 

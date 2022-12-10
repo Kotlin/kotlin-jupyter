@@ -29,7 +29,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         // send comm_open
         connection.sendSimpleMessageToIoPub(
             MessageType.COMM_OPEN,
-            CommOpen(newComm.id, newComm.target, data)
+            CommOpen(newComm.id, newComm.target, data),
         )
 
         return newComm
@@ -45,7 +45,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
             // If no callback is registered, we should send `comm_close` immediately in response.
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
-                CommClose(id, commFailureJson("Target $target was not registered"))
+                CommClose(id, commFailureJson("Target $target was not registered")),
             )
             return null
         }
@@ -56,7 +56,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         } catch (e: Throwable) {
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
-                CommClose(id, commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}"))
+                CommClose(id, commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}")),
             )
             removeComm(id)
         }
@@ -111,7 +111,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
 
     inner class CommImpl(
         override val target: String,
-        override val id: String
+        override val id: String,
     ) : Comm {
 
         private val onMessageCallbacks = mutableListOf<CommMsgCallback>()
@@ -127,7 +127,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
             assertOpen()
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_MSG,
-                CommMsg(id, data)
+                CommMsg(id, data),
             )
         }
 
@@ -163,7 +163,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
             if (notifyClient) {
                 connection.sendSimpleMessageToIoPub(
                     MessageType.COMM_CLOSE,
-                    CommClose(id, data)
+                    CommClose(id, data),
                 )
             }
         }
@@ -183,8 +183,8 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
         private fun commFailureJson(errorMessage: String): JsonObject {
             return JsonObject(
                 mapOf(
-                    "error" to JsonPrimitive(errorMessage)
-                )
+                    "error" to JsonPrimitive(errorMessage),
+                ),
             )
         }
     }

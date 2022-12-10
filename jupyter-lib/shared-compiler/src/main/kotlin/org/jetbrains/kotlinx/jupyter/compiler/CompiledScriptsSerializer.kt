@@ -27,7 +27,7 @@ class CompiledScriptsSerializer {
                             name,
                             encoder.encodeToString(bytes),
                             !name.contains("$"),
-                        )
+                        ),
                     )
                 }
             }
@@ -35,8 +35,8 @@ class CompiledScriptsSerializer {
             addSource(
                 SerializedScriptSource(
                     source.name!! + ".kts",
-                    source.text
-                )
+                    source.text,
+                ),
             )
         }
     }

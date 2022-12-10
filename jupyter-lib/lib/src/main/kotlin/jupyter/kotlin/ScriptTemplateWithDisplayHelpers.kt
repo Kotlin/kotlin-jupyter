@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 abstract class ScriptTemplateWithDisplayHelpers(
-    val userHandlesProvider: UserHandlesProvider
+    val userHandlesProvider: UserHandlesProvider,
 ) {
     private val host: KotlinKernelHost get() = userHandlesProvider.host!!
 

@@ -61,7 +61,7 @@ data class KernelJupyterParams(
     val signatureScheme: String?,
     val key: String?,
     val ports: KernelPorts,
-    val transport: String?
+    val transport: String?,
 ) {
     companion object {
         fun fromFile(cfgFile: File): KernelJupyterParams {
@@ -87,7 +87,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
                 val fieldName = socket.portField
                 map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
             },
-            map["transport"]?.content ?: kernelTransportProtocol
+            map["transport"]?.content ?: kernelTransportProtocol,
         )
     }
 
@@ -95,7 +95,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
         val map = mutableMapOf(
             "signature_scheme" to JsonPrimitive(value.signatureScheme),
             "key" to JsonPrimitive(value.key),
-            "transport" to JsonPrimitive(value.transport)
+            "transport" to JsonPrimitive(value.transport),
         )
         value.ports.forEach { (socket, port) ->
             map[socket.portField] = JsonPrimitive(port)
@@ -150,7 +150,7 @@ fun createKotlinKernelConfig(
     signatureKey,
     scriptClasspath,
     homeDir,
-    debugPort
+    debugPort,
 )
 
 const val mainClassName = "org.jetbrains.kotlinx.jupyter.IkotlinKt"

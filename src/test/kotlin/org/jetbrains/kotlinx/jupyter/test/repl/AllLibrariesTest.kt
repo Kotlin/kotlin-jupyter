@@ -34,19 +34,18 @@ class AllLibrariesTest : AbstractSingleReplTest() {
     }
 
     companion object {
-        private val disabled: Set<String> = setOf(
-            // a lot of heavy dependencies
-            // "deeplearning4j",
-            // a lot of heavy dependencies
-            // "deeplearning4j-cuda",
-            // we already have a corresponding test
-            // "dataframe",
-            // may lead to OOM
-            // "spark",
-        )
+        // a lot of heavy dependencies
+        // "deeplearning4j",
+        // a lot of heavy dependencies
+        // "deeplearning4j-cuda",
+        // we already have a corresponding test
+        // "dataframe",
+        // may lead to OOM
+        // "spark",
+        private val disabled: Set<String> = setOf()
 
         private val arguments: Map<String, () -> String> = mapOf(
-            "lib-ext" to { getResourceText("PUBLISHED_JUPYTER_API_VERSION") }
+            "lib-ext" to { getResourceText("PUBLISHED_JUPYTER_API_VERSION") },
         )
 
         private val additionalTests: Map<String, AllLibrariesTest.() -> Unit> = mapOf()

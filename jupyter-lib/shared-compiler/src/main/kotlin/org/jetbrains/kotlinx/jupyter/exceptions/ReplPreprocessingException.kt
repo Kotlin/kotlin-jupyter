@@ -2,5 +2,5 @@ package org.jetbrains.kotlinx.jupyter.exceptions
 
 open class ReplPreprocessingException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : ReplException(message, cause)

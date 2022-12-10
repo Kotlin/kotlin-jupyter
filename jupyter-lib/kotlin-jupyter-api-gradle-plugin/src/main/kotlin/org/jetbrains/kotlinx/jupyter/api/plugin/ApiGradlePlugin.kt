@@ -64,7 +64,7 @@ class ApiGradlePlugin : Plugin<Project> {
                             dependsOn(kspTask)
                             kspTask.outputs.dir(jupyterBuildPath)
                         }
-                    }
+                    },
                 )
             }
 
@@ -81,7 +81,7 @@ class ApiGradlePlugin : Plugin<Project> {
                         { (it is KotlinJvmTarget) },
                         {
                             dependOnProcessingTask(it.name + "ProcessResources")
-                        }
+                        },
                     )
                 }
                 dependOnKsp("kspKotlinJvm")

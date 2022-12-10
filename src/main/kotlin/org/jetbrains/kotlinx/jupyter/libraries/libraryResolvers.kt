@@ -40,7 +40,7 @@ class DefaultInfoLibraryResolver(
 
 class LocalLibraryResolver(
     parent: LibraryResolver?,
-    mainLibrariesDir: File?
+    mainLibrariesDir: File?,
 ) : ChainedLibraryResolver(parent) {
     private val logger = getLogger()
     private val pathsToCheck: List<File>
@@ -118,7 +118,7 @@ object FallbackLibraryResolver : ChainedLibraryResolver() {
                 KERNEL_LIBRARIES.downloadLibraryDescriptor(sha, name)
             } catch (e: IOException) {
                 KernelStreams.err.println(
-                    "WARNING: Can't resolve library $name from the given reference. Using classpath version of this library. Error: $e"
+                    "WARNING: Can't resolve library $name from the given reference. Using classpath version of this library. Error: $e",
                 )
                 KernelStreams.err.flush()
                 resourcesResolver.resolveDescriptorFromResources(name)
@@ -139,7 +139,7 @@ object FallbackLibraryResolver : ChainedLibraryResolver() {
         resolver<AbstractLibraryResolutionInfo.ByClasspath> { name ->
             resourcesResolver.resolveDescriptorFromResources(name)
         },
-        resolver<AbstractLibraryResolutionInfo.Default> { null }
+        resolver<AbstractLibraryResolutionInfo.Default> { null },
     )
 
     override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {

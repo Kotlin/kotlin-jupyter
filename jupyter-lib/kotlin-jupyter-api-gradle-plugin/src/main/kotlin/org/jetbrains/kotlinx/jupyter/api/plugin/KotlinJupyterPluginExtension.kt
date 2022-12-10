@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.plugin.util.propertyByFlag
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class KotlinJupyterPluginExtension(
-    private val project: Project
+    private val project: Project,
 ) {
     private val enableApiDependency = project.propertyByFlag("kotlin.jupyter.add.api", true)
     private val enableScannerDependency = project.propertyByFlag("kotlin.jupyter.add.scanner", false)

@@ -29,7 +29,7 @@ class ErrorsMagicsProcessor(
 
     class Result(
         val code: String,
-        val diagnostics: Sequence<ScriptDiagnostic>
+        val diagnostics: Sequence<ScriptDiagnostic>,
     )
 
     private inner class Handler(val code: String) {
@@ -48,7 +48,7 @@ class ErrorsMagicsProcessor(
 
         fun addError(message: String, codeInterval: CodeInterval) {
             _diagnostics.add(
-                codeInterval.diagnostic(code, message)
+                codeInterval.diagnostic(code, message),
             )
         }
     }

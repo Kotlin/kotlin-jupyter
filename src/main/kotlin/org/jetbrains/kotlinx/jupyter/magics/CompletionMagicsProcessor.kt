@@ -10,7 +10,7 @@ import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 class CompletionMagicsProcessor(
     libraryDescriptorsProvider: LibraryDescriptorsProvider,
-    parseOutCellMarker: Boolean = false
+    parseOutCellMarker: Boolean = false,
 ) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider, parseOutCellMarker) {
 
     override fun variant(text: String, icon: String) = SourceCodeCompletionVariant(text, text, icon, icon)
@@ -49,6 +49,6 @@ class CompletionMagicsProcessor(
     class Result(
         val code: String,
         val cursorInsideMagic: Boolean,
-        val completions: List<SourceCodeCompletionVariant>
+        val completions: List<SourceCodeCompletionVariant>,
     )
 }

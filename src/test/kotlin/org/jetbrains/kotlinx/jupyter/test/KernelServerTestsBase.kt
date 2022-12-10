@@ -52,7 +52,7 @@ abstract class KernelServerTestsBase {
 
     private val replConfig = ReplConfig.create(
         EmptyResolutionInfoProvider,
-        kernelConfig.homeDir
+        kernelConfig.homeDir,
     )
 
     private val sessionId = UUID.randomUUID().toString()

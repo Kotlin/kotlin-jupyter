@@ -47,7 +47,7 @@ fun getFromRuntimeProperties(property: String, propertyDescription: String): Str
 
 val currentKernelVersion by lazy {
     KotlinKernelVersion.from(
-        getFromRuntimeProperties("version", "kernel version")
+        getFromRuntimeProperties("version", "kernel version"),
     )!!
 }
 

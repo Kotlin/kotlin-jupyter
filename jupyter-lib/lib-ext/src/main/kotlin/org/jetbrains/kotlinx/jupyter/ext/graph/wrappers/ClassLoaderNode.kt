@@ -28,13 +28,13 @@ val DefaultClassLoaderNodeRenderer: ClassLoaderNodeRenderer = { node ->
 
 class ClassLoaderNode(
     node: ClassLoader,
-    conf: ClassLoaderRenderingConfiguration
+    conf: ClassLoaderRenderingConfiguration,
 ) : NodeWrapper<ClassLoader>(node) {
     override val inNodes by lazy {
         node.parent?.let { listOf(ClassLoaderNode(it, conf)) } ?: emptyList()
     }
     override val label = TextLabel(
-        conf.renderer(conf, node)
+        conf.renderer(conf, node),
     )
 }
 

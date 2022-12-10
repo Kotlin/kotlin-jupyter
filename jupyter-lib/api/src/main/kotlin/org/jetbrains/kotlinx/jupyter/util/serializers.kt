@@ -29,7 +29,7 @@ val Json.EMPTY get() = emptyJsonObject
 abstract class PrimitiveStringPropertySerializer<T : Any>(
     kClass: KClass<T>,
     private val prop: KProperty1<T, String>,
-    private val ctr: (String) -> T
+    private val ctr: (String) -> T,
 ) : KSerializer<T> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(kClass.qualifiedName!!, PrimitiveKind.STRING)
 
@@ -46,19 +46,19 @@ abstract class PrimitiveStringPropertySerializer<T : Any>(
 object CodeExecutionSerializer : PrimitiveStringPropertySerializer<CodeExecution>(
     CodeExecution::class,
     CodeExecution::code,
-    ::CodeExecution
+    ::CodeExecution,
 )
 
 object TypeHandlerCodeExecutionSerializer : PrimitiveStringPropertySerializer<ResultHandlerCodeExecution>(
     ResultHandlerCodeExecution::class,
     ResultHandlerCodeExecution::code,
-    ::ResultHandlerCodeExecution
+    ::ResultHandlerCodeExecution,
 )
 
 abstract class ListToMapSerializer<T, K, V>(
     private val utilSerializer: KSerializer<Map<K, V>>,
     private val mapper: (K, V) -> T,
-    private val reverseMapper: (T) -> Pair<K, V>
+    private val reverseMapper: (T) -> Pair<K, V>,
 ) : KSerializer<List<T>> {
     override val descriptor: SerialDescriptor
         get() = utilSerializer.descriptor
@@ -77,7 +77,7 @@ abstract class ListToMapSerializer<T, K, V>(
 object RenderersSerializer : ListToMapSerializer<ExactRendererTypeHandler, String, ResultHandlerCodeExecution>(
     serializer(),
     ::ExactRendererTypeHandler,
-    { it.className to it.execution }
+    { it.className to it.execution },
 )
 
 object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
@@ -102,14 +102,14 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
                 ResourceFallbacksBundle(
                     obj.map {
                         Json.decodeFromJsonElement(it)
-                    }
+                    },
                 )
             }
             is JsonObject -> {
                 ResourceFallbacksBundle(
                     listOf(
-                        Json.decodeFromJsonElement(obj)
-                    )
+                        Json.decodeFromJsonElement(obj),
+                    ),
                 )
             }
             else -> throw SerializationException("Wrong representation for resource location")

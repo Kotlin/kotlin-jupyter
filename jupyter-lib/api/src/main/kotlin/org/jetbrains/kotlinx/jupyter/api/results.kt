@@ -123,7 +123,7 @@ fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): 
 class MimeTypedResult(
     private val mimeData: Map<String, String>,
     var isolatedHtml: Boolean = false,
-    override val id: String? = null
+    override val id: String? = null,
 ) : Map<String, String> by mimeData, DisplayResult {
     override fun toJson(additionalMetadata: JsonObject, overrideId: String?): JsonObject {
         val metadata = HashMap<String, JsonElement>().apply {
@@ -135,7 +135,7 @@ class MimeTypedResult(
 
         val result: MutableJsonObject = hashMapOf(
             "data" to Json.encodeToJsonElement(mimeData),
-            "metadata" to Json.encodeToJsonElement(metadata)
+            "metadata" to Json.encodeToJsonElement(metadata),
         )
         result.setDisplayId(overrideId ?: id)
         return Json.encodeToJsonElement(result) as JsonObject
@@ -204,7 +204,7 @@ data class HtmlData(val style: String, val body: String, val script: String) {
                 }
             """.trimIndent(),
             "",
-            ""
+            "",
         )
 
         val wholeData = this + styleData

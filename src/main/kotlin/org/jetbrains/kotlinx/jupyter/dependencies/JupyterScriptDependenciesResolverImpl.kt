@@ -27,7 +27,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
 
     private val resolver: ExternalDependenciesResolver
     private val resolverOptions = buildOptions(
-        DependenciesResolverOptionsName.SCOPE to "compile,runtime"
+        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
     )
 
     private val sourcesResolverOptions = buildOptions(
@@ -46,7 +46,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
     init {
         resolver = CompoundDependenciesResolver(
             FileSystemDependenciesResolver(),
-            RemoteResolverWrapper(MavenDependenciesResolver())
+            RemoteResolverWrapper(MavenDependenciesResolver()),
         )
         mavenRepositories.forEach { addRepository(Repo(it)) }
     }
@@ -55,7 +55,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         return makeExternalDependenciesResolverOptions(
             mutableMapOf<String, String>().apply {
                 for (option in options) this[option.first] = option.second
-            }
+            },
         )
     }
 
@@ -121,7 +121,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                                 val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
                                 log.warn(diagnostics.message, diagnostics.exception)
                                 scriptDiagnostics.add(diagnostics)
-                            }
+                            },
                         )
 
                         if (resolveSources) {
@@ -132,7 +132,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                                 },
                                 onFailure = { result ->
                                     log.warn("Failed to resolve sources for ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
-                                }
+                                },
                             )
                         }
                     } catch (e: Exception) {
@@ -154,7 +154,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
     private fun doResolve(
         resolveAction: suspend () -> ResultWithDiagnostics<List<File>>,
         onResolved: (List<File>) -> Unit,
-        onFailure: (ResultWithDiagnostics.Failure) -> Unit
+        onFailure: (ResultWithDiagnostics.Failure) -> Unit,
     ) {
         when (val result = runBlocking { resolveAction() }) {
             is ResultWithDiagnostics.Failure -> {
@@ -169,7 +169,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
 
     private class Repo(
         val coordinates: RepositoryCoordinates,
-        val options: Options = Options.Empty
+        val options: Options = Options.Empty,
     )
 
     companion object {

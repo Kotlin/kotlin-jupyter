@@ -180,7 +180,7 @@ class NotebookImpl(
 
     override fun getCell(id: Int): MutableCodeCell {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
-            "There is no cell with number '$id'"
+            "There is no cell with number '$id'",
         )
     }
 

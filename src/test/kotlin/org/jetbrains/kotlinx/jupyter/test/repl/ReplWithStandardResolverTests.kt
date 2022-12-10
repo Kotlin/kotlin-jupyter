@@ -45,7 +45,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             @file:DependsOn("org.jetbrains.lets-plot:lets-plot-kotlin-geotools:2.0.1")
             
             import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         Assertions.assertTrue(res.metadata.newClasspath.size >= 2)
@@ -64,7 +64,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             %use krangl@d91d045946f59(0.16.2)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("John Smith", res.resultValue)
         urlClassLoadersCount() shouldBe 2
@@ -97,7 +97,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             %use @file[$libraryPath](name=x, value=42)
             x
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals(42, res1.resultValue)
 
@@ -105,7 +105,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             %use @url[https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/$commit/$libraryPath](name=y, value=43)
             y
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals(43, res2.resultValue)
 
@@ -118,7 +118,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             %use @$libraryPath(name=z, value=44)
             z
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals(44, res4.resultValue)
     }
@@ -129,7 +129,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
             1
-            """.trimIndent()
+            """.trimIndent(),
         ).resultValue
         assertEquals(1, res)
     }
@@ -171,7 +171,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             %use $libName
             y
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         assertEquals(25, result.resultValue)
@@ -197,7 +197,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         eval(
             """
             %use @file[${testDataDir.invariantSeparatorsPath}/kotlin-spark-api.json](spark = 3.2, version=1.0.4-SNAPSHOT)
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         eval(
@@ -212,7 +212,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 Test("aaaaaaaaa", longArrayOf(1L, 100000L, 24L), mapOf(1 to "one", 2 to "two")),
                 Test("bbbbbbbbb", longArrayOf(1L, 2353245L, 24L), mapOf(1 to "one", 3 to "three")),
             ).toDS(spark)
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         var res: EvalResult? = null
@@ -230,7 +230,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """
             SessionOptions.resolveSources = true
             SessionOptions.serializeScriptData = true
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = eval(
@@ -239,7 +239,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 implementation("org.apache.hadoop:hadoop-client-runtime:3.3.2")
             }
         }
-            """.trimIndent()
+            """.trimIndent(),
         )
         with(result.metadata.newSources) {
             filter { "hadoop-client-runtime" in it }.shouldBeEmpty()

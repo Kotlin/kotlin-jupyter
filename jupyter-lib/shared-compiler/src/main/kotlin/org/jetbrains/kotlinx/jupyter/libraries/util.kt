@@ -17,7 +17,7 @@ sealed class Parameter(val name: String, open val default: String?) {
 
 class Brackets(
     val open: Char,
-    @Suppress("MemberVisibilityCanBePrivate") val close: Char
+    @Suppress("MemberVisibilityCanBePrivate") val close: Char,
 ) {
     val argRegex: Regex
 
@@ -42,7 +42,7 @@ fun diagFailure(message: String): ResultWithDiagnostics.Failure {
 
 data class ArgParseResult(
     val variable: Variable,
-    val end: Int
+    val end: Int,
 )
 
 private val unescapeRegex = Regex("""\\(.)""")

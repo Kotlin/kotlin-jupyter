@@ -208,7 +208,7 @@ class ParseMagicsTests {
                     
                     val x = 9
                     
-            """.trimIndent()
+            """.trimIndent(),
         ) { libs ->
             assertEquals(2, libs.size)
         }
@@ -219,7 +219,7 @@ class ParseMagicsTests {
             """
                 %trackClasspath off
             """.trimIndent(),
-            ""
+            "",
         )
 
         assertFalse(options.trackClasspath)
@@ -243,7 +243,7 @@ class ParseMagicsTests {
                     
                     fun f() = 42
                     
-            """.trimIndent()
+            """.trimIndent(),
         ) { libs ->
             assertEquals(1, libs.size)
         }
@@ -292,7 +292,7 @@ class ParseMagicsTests {
             
             %some another magic
             """.trimIndent(),
-            true
+            true,
         )
 
         assertEquals(3, magicsIntervals.size)
@@ -323,7 +323,7 @@ class ParseMagicsTests {
             % some magic
             %some another magic
             """.trimIndent(),
-            parsedMagics
+            parsedMagics,
         )
     }
 
@@ -338,7 +338,7 @@ class ParseMagicsTests {
             
             %some another magic
             """.trimIndent(),
-            false
+            false,
         )
 
         assertEquals(2, magicsIntervals.size)
@@ -349,7 +349,7 @@ class ParseMagicsTests {
     fun `percent sign alone is parsed well`() {
         val (magicsIntervals, codeIntervals) = intervals(
             "%",
-            false
+            false,
         )
 
         assertEquals(1, magicsIntervals.size)

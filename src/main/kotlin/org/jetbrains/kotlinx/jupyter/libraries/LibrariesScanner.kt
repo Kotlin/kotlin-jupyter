@@ -32,7 +32,7 @@ class LibrariesScanner(val notebook: Notebook) {
             val typeName = it.fqn
             val acceptance = unionAcceptance(
                 host.acceptsIntegrationTypeName(typeName),
-                integrationTypeNameRules.accepts(typeName)
+                integrationTypeNameRules.accepts(typeName),
             )
             log.debug("Acceptance result for $typeName: $acceptance")
             when (acceptance) {
@@ -50,7 +50,7 @@ class LibrariesScanner(val notebook: Notebook) {
         classLoader: ClassLoader,
         host: KotlinKernelHost,
         libraryOptions: Map<String, String> = mapOf(),
-        integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()
+        integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
     ) {
         val scanResult = scanForLibraries(classLoader, host, integrationTypeNameRules)
         log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
@@ -120,7 +120,7 @@ class LibrariesScanner(val notebook: Notebook) {
         classLoader: ClassLoader,
         data: LibrariesInstantiable<T>,
         notebook: Notebook,
-        libraryOptions: Map<String, String>
+        libraryOptions: Map<String, String>,
     ): T {
         val clazz = classLoader.loadClass(data.fqn)
         val constructors = clazz.constructors

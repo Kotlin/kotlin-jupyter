@@ -7,7 +7,7 @@ import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
 import kotlin.script.experimental.jvm.JvmGetScriptingClass
 
 class JupyterScriptClassGetter(
-    private val previousScriptClassesProvider: PreviousScriptClassesProvider
+    private val previousScriptClassesProvider: PreviousScriptClassesProvider,
 ) : GetScriptingClassByClassLoader {
     private val getScriptingClass = JvmGetScriptingClass()
 
@@ -17,7 +17,7 @@ class JupyterScriptClassGetter(
     override fun invoke(
         classType: KotlinType,
         contextClass: KClass<*>,
-        hostConfiguration: ScriptingHostConfiguration
+        hostConfiguration: ScriptingHostConfiguration,
     ): KClass<*> {
         return getScriptingClass(classType, lastClassLoader ?: contextClass.java.classLoader, hostConfiguration)
     }
@@ -25,7 +25,7 @@ class JupyterScriptClassGetter(
     override fun invoke(
         classType: KotlinType,
         contextClassLoader: ClassLoader?,
-        hostConfiguration: ScriptingHostConfiguration
+        hostConfiguration: ScriptingHostConfiguration,
     ): KClass<*> {
         return getScriptingClass(classType, lastClassLoader ?: contextClassLoader, hostConfiguration)
     }

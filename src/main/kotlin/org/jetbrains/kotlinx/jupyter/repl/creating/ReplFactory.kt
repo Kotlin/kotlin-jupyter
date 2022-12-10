@@ -29,7 +29,7 @@ abstract class ReplFactory {
             isEmbedded,
             notebook,
             librariesScanner,
-            connection.debugPort
+            connection.debugPort,
         ).also { repl ->
             commHandlers.forEach { handler ->
                 repl.notebook.commManager.registerCommTarget(handler.targetId) { comm, data ->

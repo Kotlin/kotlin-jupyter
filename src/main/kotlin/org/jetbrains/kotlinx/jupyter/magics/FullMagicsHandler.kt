@@ -54,7 +54,7 @@ class FullMagicsHandler(
                     maxTimeInterval,
                     maxBuffer,
                     max,
-                    maxBufferNewline
+                    maxBufferNewline,
                 )
             }
         }
@@ -95,7 +95,7 @@ class FullMagicsHandler(
                     "info" to Level.INFO,
                     "debug" to Level.DEBUG,
                 ),
-                ignoreCase = false
+                ignoreCase = false,
             )
             override fun run() {
                 setRootLoggingLevel(level)
@@ -118,7 +118,7 @@ class FullMagicsHandler(
                             if (it is FileAppender) {
                                 append("(${it.file})")
                             }
-                        }
+                        },
                     )
                 }
             }

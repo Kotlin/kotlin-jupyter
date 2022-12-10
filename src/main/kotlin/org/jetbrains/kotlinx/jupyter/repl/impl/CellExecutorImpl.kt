@@ -188,7 +188,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 libraryDefinition {
                     it.repositories = repositories
                     it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
-                }
+                },
             )
             buildDependenciesInitCode(libraries)?.let { scheduleExecution(it) }
         }
@@ -237,7 +237,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             val tempDeclarations = variables.joinToString(
                 "\n",
                 "object $TEMP_OBJECT_NAME {\n",
-                "\n}\n$TEMP_OBJECT_NAME"
+                "\n}\n$TEMP_OBJECT_NAME",
             ) {
                 it.tempDeclaration
             }

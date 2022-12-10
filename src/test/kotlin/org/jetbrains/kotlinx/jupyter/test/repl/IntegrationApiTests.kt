@@ -82,8 +82,8 @@ class IntegrationApiTests {
                 """var a = l
             a = q
             a.value0
-        """.trimMargin()
-            ).resultValue
+                """.trimMargin(),
+            ).resultValue,
         )
 
         // create a list of size 6
@@ -123,13 +123,13 @@ class IntegrationApiTests {
         repl.eval(
             """
             @file:DependsOn("src/test/testData/kotlin-jupyter-api-test-0.0.16.jar")
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val res = repl.eval(
             """
             ses.visualizeColor("red")
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = res.resultValue as Renderable
@@ -148,7 +148,7 @@ class IntegrationApiTests {
                         "src/test/testData/kotlin-jupyter-api-test-0.0.18.jar"
                     ]
                 }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val repl = makeRepl(libs.toLibraries())
         repl.eval("%use lib(a = 42, b=foo)")
@@ -170,7 +170,7 @@ class IntegrationApiTests {
             USE {
                 render<Number> { "${"$"}{notebook?.currentCell?.internalId}. ${"$"}{it.toLong() * 10}" }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         assertEquals("1. 420", repl.eval("42.1").resultValue)
@@ -189,7 +189,7 @@ class IntegrationApiTests {
                 render<A> { "iA" }
                 renderWithHost<B> { host, value -> "iB: " + notebook!!.renderersProcessor.renderValue(host, value.a) }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = repl.eval("B(A())")
@@ -204,7 +204,7 @@ class IntegrationApiTests {
             USE {
                 preprocessCode { it.replace('b', 'x') }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val result = repl.eval("\"abab\"")
@@ -217,7 +217,7 @@ class IntegrationApiTests {
         val repl = makeRepl(
             "lib1" to library {
                 onInterrupt { ++x }
-            }
+            },
         )
 
         repl.eval("%use lib1")
@@ -240,7 +240,7 @@ class IntegrationApiTests {
                         ColorScheme.DARK -> 4
                     }
                 }
-            }
+            },
         )
 
         repl.eval("%use lib1")

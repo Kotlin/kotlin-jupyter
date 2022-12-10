@@ -22,7 +22,7 @@ fun createRepl(
     scriptReceivers: List<Any> = emptyList(),
     isEmbedded: Boolean = false,
     displayHandler: DisplayHandler = NoOpDisplayHandler,
-    connection: JupyterConnectionInternal = MockJupyterConnection
+    connection: JupyterConnectionInternal = MockJupyterConnection,
 ): ReplForJupyter {
     val factory = object : BaseReplFactory() {
         override fun provideResolutionInfoProvider() = resolutionInfoProvider

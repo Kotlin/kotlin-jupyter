@@ -58,7 +58,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
                 "Bill", 135,
                 "Mark", 160
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val value = res.resultValue
@@ -80,7 +80,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             class C(val x: Int)
             
             Json.encodeToString(C(42))
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         assertEquals("""{"x":42}""", serialized.resultValue)
@@ -107,7 +107,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             %use krangl(0.17)
             val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("John Smith", res.resultValue)
     }
@@ -136,7 +136,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
                 }
                 ""${'"'})
             parseRes?.age
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals(23, res.resultValue)
     }
@@ -146,7 +146,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val res = eval(
             """
             %use lets-plot
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         with(res.metadata) {

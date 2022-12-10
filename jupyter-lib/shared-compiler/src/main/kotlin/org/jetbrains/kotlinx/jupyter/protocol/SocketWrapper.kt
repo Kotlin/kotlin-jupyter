@@ -100,7 +100,7 @@ fun createSocket(
         socketInfo,
         context.socket(socketInfo.zmqType(side)),
         hmac,
-        kernelConfig
+        kernelConfig,
     )
 }
 

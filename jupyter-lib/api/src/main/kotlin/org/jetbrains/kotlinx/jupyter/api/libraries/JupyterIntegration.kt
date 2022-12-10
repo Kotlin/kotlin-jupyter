@@ -196,11 +196,13 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         fun preprocessCodeWithLibraries(callback: KotlinKernelHost.(Code) -> CodePreprocessor.Result) {
-            addCodePreprocessor(object : CodePreprocessor {
-                override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
-                    return host.callback(code)
-                }
-            })
+            addCodePreprocessor(
+                object : CodePreprocessor {
+                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+                        return host.callback(code)
+                    }
+                },
+            )
         }
 
         fun preprocessCode(callback: KotlinKernelHost.(Code) -> Code) {

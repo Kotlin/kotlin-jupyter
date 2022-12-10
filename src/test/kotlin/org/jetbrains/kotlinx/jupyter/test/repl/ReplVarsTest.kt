@@ -31,13 +31,13 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1 
             val y = 0
             val z = 47
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         varState.mapToStringValues() shouldBe mutableMapOf(
             "x" to "1",
             "y" to "0",
-            "z" to "47"
+            "z" to "47",
         )
 
         varState.getStringValue("x") shouldBe "1"
@@ -63,7 +63,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1 
             val y = "abc"
             val z = x
-            """.trimIndent()
+            """.trimIndent(),
         )
         varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
         varState.getValue("x") shouldBe 1
@@ -78,7 +78,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1 
             val y = "abc"
             val z = x
-            """.trimIndent()
+            """.trimIndent(),
         )
         varState.shouldNotBeEmpty()
 
@@ -88,7 +88,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var y = 123
             val z = x
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
@@ -100,7 +100,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1024 
             y += 123
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 2,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
@@ -115,7 +115,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = 1 
             private val y = "abc"
             val z = x
-            """.trimIndent()
+            """.trimIndent(),
         )
         varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
         varState.getValue("x") shouldBe 1
@@ -128,7 +128,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = 1 
             private val y = "abc"
             private val z = x
-            """.trimIndent()
+            """.trimIndent(),
         )
         varState.shouldNotBeEmpty()
 
@@ -138,7 +138,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var y = 123
             private val z = x
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
@@ -150,7 +150,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = 1024 
             y += x
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 2,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
@@ -172,7 +172,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1
             val z = "abcd"
             var f = 47
-            """.trimIndent()
+            """.trimIndent(),
         )
         cellVars shouldContainValue setOf("z", "f", "x")
     }
@@ -183,7 +183,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """
             val x = "abcd"
             var f = 47
-            """.trimIndent()
+            """.trimIndent(),
         )
         cellVars.shouldNotBeEmpty()
 
@@ -191,7 +191,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """
             val z = 1
             f += f
-            """.trimIndent()
+            """.trimIndent(),
         )
         cellVars shouldContainValue setOf("z", "f", "x")
     }
@@ -202,7 +202,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """
             val x = 124
             private var f = "abcd"
-            """.trimIndent()
+            """.trimIndent(),
         )
         cellVars.shouldNotBeEmpty()
 
@@ -210,7 +210,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """
             private var z = 1
             z += x
-            """.trimIndent()
+            """.trimIndent(),
         )
         cellVars shouldContainValue setOf("z", "f", "x")
     }
@@ -222,7 +222,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = "abcd"
             var f = 47
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         firstCellVars shouldContain "x"
 
@@ -231,7 +231,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 341
             var f = "abcd"
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 2,
         )
         cellVars.shouldNotBeEmpty()
 
@@ -246,7 +246,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = "abcd"
             private var f = 47
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         firstCellVars shouldContain "x"
 
@@ -255,7 +255,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 341
             private var f = "abcd"
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 2,
         )
         cellVars.shouldNotBeEmpty()
 
@@ -274,7 +274,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             
             val z = setOf(1, 2, 4)
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         varState.getStringValue("l") shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
         varState.getStringValue("m") shouldBe "SingletonMap: [exception thrown: java.lang.StackOverflowError]"
@@ -289,7 +289,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = 47
             internal val z = 47
             """.trimIndent(),
-            jupyterId = 1
+            jupyterId = 1,
         )
         firstCellVars shouldContain "x"
         firstCellVars shouldContain "z"
@@ -300,7 +300,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             f += x
             protected val z = "abcd"
             """.trimIndent(),
-            jupyterId = 2
+            jupyterId = 2,
         )
         cellVars.shouldNotBeEmpty()
 

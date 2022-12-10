@@ -34,7 +34,7 @@ data class SharedReplContext(
     val baseHost: BaseKernelHost,
     val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     val interruptionCallbacksProcessor: InterruptionCallbacksProcessor,
-    val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor
+    val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor,
 ) {
     val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
 }

@@ -50,7 +50,7 @@ object Native {
             "loadLibrary",
             Class::class.java,
             java.lang.String::class.java,
-            Boolean::class.java
+            Boolean::class.java,
         )
         method.isAccessible = true
         method.invoke(null, javaClass, name, isAbsolute)

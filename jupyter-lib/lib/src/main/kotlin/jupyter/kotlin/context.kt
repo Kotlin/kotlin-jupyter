@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
  */
 class KotlinContext(
     val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-    val functions: HashMap<String, KotlinFunctionInfo> = HashMap()
+    val functions: HashMap<String, KotlinFunctionInfo> = HashMap(),
 )
 
 private fun functionSignature(function: KFunction<*>) =

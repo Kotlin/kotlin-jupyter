@@ -32,7 +32,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
     fun createDescriptions() {
         val resultObject = LibrariesScanResult(
             definitions = libraryDefinitions.map { FQNAware(it) }.toTypedArray(),
-            producers = libraryProducers.map { FQNAware(it) }.toTypedArray()
+            producers = libraryProducers.map { FQNAware(it) }.toTypedArray(),
         ) + getScanResultFromAnnotations()
         val json = Gson().toJson(resultObject)
 
@@ -56,23 +56,23 @@ open class JupyterApiResourcesTask : DefaultTask() {
 
         return LibrariesScanResult(
             fqns("definitions"),
-            fqns("producers")
+            fqns("producers"),
         )
     }
 
     data class FQNAware(
-        val fqn: String
+        val fqn: String,
     )
 
     class LibrariesScanResult(
         val definitions: Array<FQNAware>,
-        val producers: Array<FQNAware>
+        val producers: Array<FQNAware>,
     )
 
     operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult {
         return LibrariesScanResult(
             union(definitions, other.definitions),
-            union(producers, other.producers)
+            union(producers, other.producers),
         )
     }
 

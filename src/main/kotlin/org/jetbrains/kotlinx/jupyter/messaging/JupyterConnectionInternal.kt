@@ -41,8 +41,8 @@ fun JupyterConnectionInternal.makeSimpleMessage(msgType: MessageType, content: M
         id = messageId,
         data = MessageData(
             header = makeDefaultHeader(msgType),
-            content = content
-        )
+            content = content,
+        ),
     )
 }
 

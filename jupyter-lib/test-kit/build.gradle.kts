@@ -31,7 +31,7 @@ kotlinPublications {
 build.CreateResourcesTask.register(
     project,
     "createTestKitResources",
-    project.tasks.named<Copy>(build.PROCESS_RESOURCES_TASK)
+    project.tasks.named<Copy>(build.PROCESS_RESOURCES_TASK),
 ) {
     addLibrariesFromDir(rootSettings.librariesDir)
 }

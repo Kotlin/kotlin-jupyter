@@ -102,7 +102,7 @@ class LibraryDescriptor(
     companion object {
         private val kernelVariables = mapOf(
             "kernelVersion" to currentKernelVersion.toString(),
-            "kernelMavenVersion" to currentKernelVersion.toMavenVersion()
+            "kernelMavenVersion" to currentKernelVersion.toMavenVersion(),
         )
 
         fun substituteKernelVars(value: String): String {

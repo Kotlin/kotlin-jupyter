@@ -7,7 +7,7 @@ import java.io.File
 import java.net.URL
 
 abstract class AbstractLibraryResolutionInfo(
-    private val typeKey: String
+    private val typeKey: String,
 ) : LibraryResolutionInfo {
 
     class ByURL(val url: URL) : AbstractLibraryResolutionInfo("url") {

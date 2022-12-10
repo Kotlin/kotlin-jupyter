@@ -54,7 +54,7 @@ class ResourcesBuilder {
                         checkClassPath(classpathFallBack)
                         add(ResourceLocation(classpathFallBack, ResourcePathType.CLASSPATH_PATH))
                     }
-                }
+                },
             )
             bundles.add(libraryResource)
         }
@@ -66,8 +66,8 @@ class ResourcesBuilder {
             checkLocalPath(localPath)
             bundles.add(
                 ResourceFallbacksBundle(
-                    listOf(ResourceLocation(localPath, ResourcePathType.LOCAL_PATH))
-                )
+                    listOf(ResourceLocation(localPath, ResourcePathType.LOCAL_PATH)),
+                ),
             )
         }
 
@@ -78,8 +78,8 @@ class ResourcesBuilder {
             checkClassPath(classPath)
             bundles.add(
                 ResourceFallbacksBundle(
-                    listOf(ResourceLocation(classPath, ResourcePathType.CLASSPATH_PATH))
-                )
+                    listOf(ResourceLocation(classPath, ResourcePathType.CLASSPATH_PATH)),
+                ),
             )
         }
     }
@@ -93,8 +93,8 @@ class ResourcesBuilder {
             LibraryResource(
                 name = name,
                 type = ResourceType.JS,
-                bundles = bundles
-            )
+                bundles = bundles,
+            ),
         )
     }
 
@@ -107,8 +107,8 @@ class ResourcesBuilder {
             LibraryResource(
                 name = name,
                 type = ResourceType.CSS,
-                bundles = bundles
-            )
+                bundles = bundles,
+            ),
         )
     }
 }
