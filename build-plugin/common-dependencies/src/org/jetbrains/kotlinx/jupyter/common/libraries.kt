@@ -31,6 +31,8 @@ class LibraryDescriptorsManager private constructor(
     userSettingsDir: File,
     private val logger: Logger,
 ) {
+    private val authUser: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_USER")
+    private val authToken: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_TOKEN")
     private val apiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"
     val userLibrariesDir = userSettingsDir.resolve(userPath)
     val userCacheDir = userSettingsDir.resolve("cache")
@@ -64,7 +66,7 @@ class LibraryDescriptorsManager private constructor(
                 url += "&since=$sinceTimestamp"
             }
             logger.info("Checking for new commits to library descriptors at $url")
-            val arr = getHttp(url).jsonArrayOrNull
+            val arr = getGithubHttpWithAuth(url).jsonArrayOrNull
             if (arr == null) {
                 logger.error("Request for the latest commit in libraries failed")
                 return@catchAll null
@@ -92,7 +94,7 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun checkRefExistence(ref: String): Boolean {
-        val response = getHttp("$apiPrefix/contents/$remotePath?ref=$ref")
+        val response = getGithubHttpWithAuth("$apiPrefix/contents/$remotePath?ref=$ref")
         return response.status.successful
     }
 
@@ -111,7 +113,7 @@ class LibraryDescriptorsManager private constructor(
 
         val url = "$apiPrefix/contents/$remotePath?ref=$ref"
         logger.info("Requesting library descriptors at $url")
-        val response = getHttp(url).jsonArray
+        val response = getGithubHttpWithAuth(url).jsonArray
 
         for (item in response) {
             item as JsonObject
@@ -144,8 +146,16 @@ class LibraryDescriptorsManager private constructor(
         localPropertiesFile.createDirsAndWrite(text)
     }
 
+    private fun getGithubHttpWithAuth(url: String): ResponseWrapper {
+        return if (authToken == null || authUser == null) {
+            getHttp(url)
+        } else {
+            getHttpWithAuth(url, authUser, authToken)
+        }
+    }
+
     private fun downloadSingleFile(contentsApiUrl: String): String {
-        val response = getHttp(contentsApiUrl).jsonObject
+        val response = getGithubHttpWithAuth(contentsApiUrl).jsonObject
         val downloadUrl = response["download_url"]!!.jsonPrimitive.content
         val res = getHttp(downloadUrl)
         res.assertSuccessful()

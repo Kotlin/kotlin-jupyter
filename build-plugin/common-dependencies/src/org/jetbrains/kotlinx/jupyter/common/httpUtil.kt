@@ -34,6 +34,11 @@ fun httpRequest(request: Request): ResponseWrapper {
 
 fun getHttp(url: String) = httpRequest(Request(Method.GET, url))
 
+fun getHttpWithAuth(url: String, username: String, token: String): ResponseWrapper {
+    val request = Request(Method.GET, url).withBasicAuth(username, token)
+    return httpRequest(request)
+}
+
 fun Request.withBasicAuth(username: String, password: String): Request {
     val b64 = Base64.getEncoder().encode("$username:$password".toByteArray()).toString(Charsets.UTF_8)
     return this.header("Authorization", "Basic $b64")
