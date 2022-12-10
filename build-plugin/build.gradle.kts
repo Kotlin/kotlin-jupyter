@@ -13,6 +13,10 @@ repositories {
 dependencies {
     implementation(projects.commonDependencies)
     api(libs.bundles.allGradlePlugins)
+
+    constraints {
+        implementation(kotlin("serialization", libs.versions.stableKotlin.get()))
+    }
 }
 
 sourceSets {

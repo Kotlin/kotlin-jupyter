@@ -15,6 +15,10 @@ dependencies {
     implementation(libs.plugin.publisher)
     implementation(libs.plugin.serialization)
     implementation(libs.kotlin.gradle.gradle)
+
+    constraints {
+        implementation(kotlin("sam-with-receiver", libs.versions.stableKotlin.get()))
+    }
 }
 
 tasks.withType<KotlinCompile> {

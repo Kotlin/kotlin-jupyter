@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
@@ -10,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
@@ -17,7 +19,11 @@ import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import java.io.File
 
 abstract class AbstractReplTest {
-    val classpathWithTestLib = classpath + File(AbstractReplTest::class.java.protectionDomain.codeSource.location.toURI().path)
+    val classpathWithTestLib = buildList {
+        addAll(classpath)
+        add(classPathEntry<AbstractReplTest>())
+        add(classPathEntry<ReplForJupyterImpl>())
+    }
 
     fun ReplForJupyter.listErrorsBlocking(code: String): ListErrorsResult {
         return runBlocking {

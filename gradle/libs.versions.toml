@@ -1,13 +1,13 @@
 [versions]
 jvmTarget = "1.8"
 
-kotlin = "1.8.0-dev-3517"
-stableKotlin = "1.7.10"
-gradleKotlin = "1.7.10"
-ksp = "1.7.10-1.0.6"
+kotlin = "1.8.0-RC"
+stableKotlin = "1.8.0-Beta"
+gradleKotlin = "1.8.0-Beta"
+ksp = "1.8.0-Beta-1.0.8"
 shadowJar = "7.1.2"
 changelogPlugin = "1.7.0"
-kotlinxSerialization = "1.3.3"
+kotlinxSerialization = "1.4.1"
 kotlinxCoroutines = "1.6.4"
 jupyterNotebooksParser = "0.1.0-dev-1"
 

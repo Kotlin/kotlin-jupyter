@@ -40,6 +40,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
 import java.io.File
+import kotlin.reflect.KClass
+import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.test.assertEquals
 
@@ -65,6 +67,14 @@ val classpath = scriptCompilationClasspathFromContext(
     "kotlinx-serialization-core-jvm",
     classLoader = TestDisplayHandler::class.java.classLoader
 )
+
+val KClass<*>.classPathEntry: File get() {
+    return File(this.java.protectionDomain.codeSource.location.toURI().path)
+}
+
+inline fun <reified T> classPathEntry(): File {
+    return (typeOf<T>().classifier as KClass<*>).classPathEntry
+}
 
 val testLibraryResolver: LibraryResolver
     get() = getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
