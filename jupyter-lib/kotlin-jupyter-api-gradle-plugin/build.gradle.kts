@@ -46,30 +46,19 @@ buildSettings {
 
 val pluginName = "apiGradlePlugin"
 
+@Suppress("UnstableApiUsage")
 gradlePlugin {
+    // These settings are set for the whole plugin bundle
+    website.set(rootSettings.projectRepoUrl)
+    vcsUrl.set(rootSettings.projectRepoUrl)
+
     plugins {
         create(pluginName) {
             id = "org.jetbrains.kotlin.jupyter.api"
             implementationClass = "org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin"
-        }
-    }
-}
-
-pluginBundle {
-    // These settings are set for the whole plugin bundle
-    website = rootSettings.projectRepoUrl
-    vcsUrl = rootSettings.projectRepoUrl
-
-    (plugins) {
-        pluginName {
-            // id is captured from java-gradle-plugin configuration
             displayName = "Kotlin Jupyter kernel integration plugin"
             description = "Gradle plugin providing a smooth Jupyter notebooks integration for Kotlin libraries"
-            tags = listOf("jupyter", "kernel", "kotlin")
+            tags.addAll("jupyter", "kernel", "kotlin")
         }
-    }
-
-    mavenCoordinates {
-        groupId = project.group.toString()
     }
 }
