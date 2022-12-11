@@ -14,7 +14,7 @@ jupyterNotebooksParser = "0.1.0-dev-1"
 ktlintGradle = "11.0.0"
 ktlint = "0.45.2"
 publishPlugin = "0.0.61-dev-33"
-pluginPublishPlugin = "1.1.0"
+pluginPublishPlugin = "0.21.0"
 versionsPlugin = "0.44.0"
 
 slf4j = "2.0.5"
