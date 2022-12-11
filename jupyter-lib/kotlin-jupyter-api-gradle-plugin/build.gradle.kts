@@ -40,7 +40,8 @@ java {
 }
 
 buildSettings {
-    withLanguageLevel("1.5")
+    // see https://docs.gradle.org/current/userguide/compatibility.html#kotlin
+    withLanguageLevel("1.4")
     withTests()
 }
 
