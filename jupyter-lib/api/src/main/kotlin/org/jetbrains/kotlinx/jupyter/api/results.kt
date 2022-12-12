@@ -1,9 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.intellij.lang.annotations.Language
@@ -122,9 +124,20 @@ fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): 
  */
 class MimeTypedResult(
     private val mimeData: Map<String, String>,
+    isolatedHtml: Boolean = false,
+    id: String? = null,
+) : Map<String, String> by mimeData,
+    MimeTypedResultEx(
+        Json.encodeToJsonElement(mimeData),
+        isolatedHtml,
+        id,
+    )
+
+open class MimeTypedResultEx(
+    private val mimeData: JsonElement,
     var isolatedHtml: Boolean = false,
     override val id: String? = null,
-) : Map<String, String> by mimeData, DisplayResult {
+) : DisplayResult {
     override fun toJson(additionalMetadata: JsonObject, overrideId: String?): JsonObject {
         val metadata = HashMap<String, JsonElement>().apply {
             if (isolatedHtml) put("text/html", Json.encodeToJsonElement(mapOf("isolated" to true)))
@@ -134,7 +147,7 @@ class MimeTypedResult(
         }
 
         val result: MutableJsonObject = hashMapOf(
-            "data" to Json.encodeToJsonElement(mimeData),
+            "data" to mimeData,
             "metadata" to Json.encodeToJsonElement(metadata),
         )
         result.setDisplayId(overrideId ?: id)
@@ -148,6 +161,18 @@ fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(
 
 @Suppress("unused", "FunctionName")
 fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
+
+private val jsonPrettyPrinter = Json { prettyPrint = true }
+fun JSON(json: JsonElement, isolated: Boolean = false) = MimeTypedResultEx(
+    buildJsonObject {
+        put("application/json", json)
+        put("text/plain", JsonPrimitive(jsonPrettyPrinter.encodeToString(json)))
+    },
+    isolated,
+)
+
+@Suppress("unused", "FunctionName")
+fun JSON(jsonText: String, isolated: Boolean = false) = JSON(Json.parseToJsonElement(jsonText), isolated)
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 fun textResult(text: String): MimeTypedResult = mimeResult("text/plain" to text)

@@ -2,10 +2,15 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeOneOf
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.varsTableStyleClass
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.session.JupyterSessionInfo
 import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
@@ -110,5 +115,39 @@ class ApiTest : AbstractSingleReplTest() {
             htmlText.values.first(),
         )
         assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
+    }
+
+    @Test
+    fun `check that JSON output has correct metadata`() {
+        val res = eval(
+            """
+            val jsonStr = ""${'"'}
+            {"a": [1], "b": {"inner1": "helloworld"}}
+            ""${'"'}
+
+            JSON(jsonStr)
+            """.trimIndent(),
+        ).resultValue
+        res.shouldBeInstanceOf<MimeTypedResultEx>()
+        val displayJson = res.toJson(overrideId = null)
+
+        val format = Json { prettyPrint = true }
+        format.encodeToString(displayJson) shouldBe """
+            {
+                "data": {
+                    "application/json": {
+                        "a": [
+                            1
+                        ],
+                        "b": {
+                            "inner1": "helloworld"
+                        }
+                    },
+                    "text/plain": "{\n    \"a\": [\n        1\n    ],\n    \"b\": {\n        \"inner1\": \"helloworld\"\n    }\n}"
+                },
+                "metadata": {
+                }
+            }
+        """.trimIndent()
     }
 }
