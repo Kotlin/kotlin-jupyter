@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
@@ -75,6 +76,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         private val interruptionCallbacks = mutableListOf<InterruptionCallback>()
 
         private val colorSchemeChangedCallbacks = mutableListOf<ColorSchemeChangedCallback>()
+
+        private var _minimalKernelVersion: KotlinKernelVersion? = null
 
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
@@ -242,6 +245,14 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             colorSchemeChangedCallbacks.add(action)
         }
 
+        fun setMinimalKernelVersion(version: KotlinKernelVersion) {
+            _minimalKernelVersion = version
+        }
+
+        fun setMinimalKernelVersion(version: String) {
+            setMinimalKernelVersion(KotlinKernelVersion.from(version) ?: error("Wrong kernel version format: $version"))
+        }
+
         internal fun getDefinition() =
             libraryDefinition {
                 it.init = init
@@ -262,6 +273,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.integrationTypeNameRules = integrationTypeNameRules
                 it.interruptionCallbacks = interruptionCallbacks
                 it.colorSchemeChangedCallbacks = colorSchemeChangedCallbacks
+                it.minKernelVersion = _minimalKernelVersion
             }
     }
 
