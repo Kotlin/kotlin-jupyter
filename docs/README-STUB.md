@@ -65,6 +65,65 @@ see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#
 
 Uninstall: `./gradlew uninstall`
 
+## Updating
+
+Depending on the platform you're using, updating the Kotlin Jupyter kernel can be done in the following ways:
+
+### Datalore
+
+To update the kernel in Datalore, simply add an `environment.yml` to the Notebook files containing:
+```yaml
+datalore-env-format-version: "0.2"
+datalore-package-manager: "pip"
+datalore-base-env: "default"
+dependencies:
+- pip:
+  - kotlin-jupyter-kernel=={VERSION}
+```
+where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+Stop and restart the machine afterwards.
+
+### Conda
+
+If you have `conda` installed, just run the following command to update the stable package version:
+
+`conda update -c jetbrains kotlin-jupyter-kernel`
+
+To update the conda package from the dev channel:
+
+`conda update -c jetbrains-dev kotlin-jupyter-kernel`
+
+If you want to change to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+
+For example, for the stable version:
+
+`conda install -c jetbrains kotlin-jupyter-kernel={VERSION}`
+
+### Pip
+
+To update the kernel using Pip, simply run:
+
+Stable:
+`pip install kotlin-jupyter-kernel --upgrade`
+
+Dev:
+`pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
+
+If you want to change to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+
+For example, for the stable version:
+
+`pip install kotlin-jupyter-kernel=={VERSION} --ignore-installed`
+
+### From sources
+
+Change your directory to the source folder, pull, and install, like 
+```bash
+cd kotlin-jupyter
+git pull
+./gradlew install
+```
+
 ### Troubleshooting
 
 There could be a problem with kernel spec detection because of different
