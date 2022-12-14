@@ -87,37 +87,37 @@ Stop and restart the machine afterwards.
 
 If you have `conda` installed, just run the following command to update the stable package version:
 
-`conda update -c jetbrains kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains/kotlin-jupyter-kernel))
+`conda update -c jetbrains kotlin-jupyter-kernel`
 
 To update the conda package from the dev channel:
 
-`conda update -c jetbrains-dev kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains-dev/kotlin-jupyter-kernel))
+`conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
-If you want to update to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+If you want to change to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
 
 For example, for the stable version:
 
-`conda install -c jetbrains kotlin-jupyter-kernel={VERSION}` ([package home](https://anaconda.org/jetbrains/kotlin-jupyter-kernel))
+`conda install -c jetbrains kotlin-jupyter-kernel={VERSION}`
 
 ### Pip
 
 To update the kernel using Pip, simply run:
 
 Stable:
-`pip update kotlin-jupyter-kernel` ([package home](https://pypi.org/project/kotlin-jupyter-kernel/))
+`pip install kotlin-jupyter-kernel --upgrade`
 
 Dev:
-`pip update -i https://test.pypi.org/simple/ kotlin-jupyter-kernel` ([package home](https://test.pypi.org/project/kotlin-jupyter-kernel/))
+`pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
-If you want to update to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+If you want to change to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
 
 For example, for the stable version:
 
-`pip install kotlin-jupyter-kernel=={VERSION}` ([package home](https://pypi.org/project/kotlin-jupyter-kernel/))
+`pip install kotlin-jupyter-kernel=={VERSION} --ignore-installed`
 
 ### From sources
 
-Change you directory to the download folder, pull, and install, like 
+Change your directory to the source folder, pull, and install, like 
 ```bash
 cd kotlin-jupyter
 git pull
