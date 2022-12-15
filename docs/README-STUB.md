@@ -65,6 +65,18 @@ see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#
 
 Uninstall: `./gradlew uninstall`
 
+### Troubleshooting
+
+There could be a problem with kernel spec detection because of different
+python environments and installation modes. If you are using pip or conda
+to install the package, try running post-install fixup script:
+```bash
+python -m kotlin_kernel fix-kernelspec-location
+```
+
+This script replaces kernel specs to the "user" path where they are always detected.
+Don't forget to re-run this script on the kernel update.
+
 ## Updating
 
 Depending on the platform you're using, updating the Kotlin Jupyter kernel can be done in the following ways:
@@ -115,26 +127,9 @@ For example, for the stable version:
 
 `pip install kotlin-jupyter-kernel=={VERSION} --ignore-installed`
 
-### From sources
+### Kotlin Notebook
 
-Change your directory to the source folder, pull, and install, like 
-```bash
-cd kotlin-jupyter
-git pull
-./gradlew install
-```
-
-### Troubleshooting
-
-There could be a problem with kernel spec detection because of different
-python environments and installation modes. If you are using pip or conda
-to install the package, try running post-install fixup script:
-```bash
-python -m kotlin_kernel fix-kernelspec-location
-```
-
-This script replaces kernel specs to the "user" path where they are always detected.
-Don't forget to re-run this script on the kernel update.
+Kotlin Notebook plugin is provided with built-in kernel. To update the kernel, update plugin in IDEA (`File` -> `Settings...` -> `Plugins` -> `Kotlin Notebook`) and restart the IDE.
 
 ## Usage
 
