@@ -20,7 +20,13 @@ class LibrariesProcessorImpl(
         library.minKernelVersion?.let { minVersion ->
             kernelVersion?.let { currentVersion ->
                 if (currentVersion < minVersion) {
-                    throw ReplException("Library '$name' requires at least $minVersion version of kernel. Current kernel version is $currentVersion. Please update kernel")
+                    throw ReplException(
+                        """
+                            Library '$name' requires at least $minVersion version of kernel.
+                            Current kernel version is $currentVersion.
+                            Please update kernel, see https://github.com/Kotlin/kotlin-jupyter#updating for more info.
+                        """.trimIndent(),
+                    )
                 }
             }
         }
