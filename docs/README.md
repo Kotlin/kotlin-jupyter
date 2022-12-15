@@ -300,7 +300,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
  - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
  - [reflection](https://kotlinlang.org/docs/reflection.html) - Imports for Kotlin Reflection
- - [roboquant](https://roboquant.org) - Algorithmic trading platform for Kotlin
+ - [roboquant](https://roboquant.org) - Algorithmic trading platform written in Kotlin
  - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
