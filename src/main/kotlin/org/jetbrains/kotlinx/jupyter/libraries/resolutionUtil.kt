@@ -27,7 +27,7 @@ fun getDefaultClasspathResolutionInfoProvider(): ResolutionInfoProvider {
     )
 }
 
-fun loadResourceFromClassloader(path: String, classLoader: ClassLoader) : String {
+fun loadResourceFromClassLoader(path: String, classLoader: ClassLoader) : String {
     val resource = classLoader.getResource(path)
     resource != null && return resource.readText()
     throw IOException("resource $path not found on classpath")
