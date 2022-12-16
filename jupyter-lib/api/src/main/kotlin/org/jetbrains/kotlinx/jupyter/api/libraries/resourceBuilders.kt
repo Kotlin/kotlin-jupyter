@@ -5,8 +5,8 @@ import java.util.logging.Logger
 
 /**
  * Build a resource tree using [ResourcesBuilder]. The builder allows to construct `js` and `css` bundles. Each bundle
- * could contain multiple files or urls. Each of those could contain multiple fallback paths (for example if URL not found,
- * local resource is used.
+ * could contain multiple files or urls. Each of those could contain multiple fallback paths (for example if URL not
+ * found, local resource is used.
  */
 fun JupyterIntegration.Builder.resources(block: ResourcesBuilder.() -> Unit) {
     val resources = ResourcesBuilder().apply(block)
@@ -27,15 +27,9 @@ class ResourcesBuilder {
             }
         }
 
-        private fun checkClassPath(classPath: String) {
-            if (javaClass.getResource(classPath) == null) {
-                Logger.getLogger("JupyterIntegration").warning("A resource with classpath '$classPath' not found.")
-            }
-        }
-
         /**
-         * Create an url resource with optional embedding (governed by [embed] flag) with optional local file fallback and
-         * a class-path fallback. If fallbacks are null, they are not used.
+         * Create an url resource with optional embedding (governed by [embed] flag) with optional local file fallback
+         * and a class-path fallback. If fallbacks are null, they are not used.
          */
         @OptIn(ExperimentalStdlibApi::class)
         fun url(url: String, localFallBack: String? = null, classpathFallBack: String? = null, embed: Boolean = false) {
@@ -51,7 +45,6 @@ class ResourcesBuilder {
                         add(ResourceLocation(localFallBack, ResourcePathType.LOCAL_PATH))
                     }
                     classpathFallBack?.let {
-                        checkClassPath(classpathFallBack)
                         add(ResourceLocation(classpathFallBack, ResourcePathType.CLASSPATH_PATH))
                     }
                 },
@@ -75,7 +68,6 @@ class ResourcesBuilder {
          * Use Jar class-path resource
          */
         fun classPath(classPath: String) {
-            checkClassPath(classPath)
             bundles.add(
                 ResourceFallbacksBundle(
                     listOf(ResourceLocation(classPath, ResourcePathType.CLASSPATH_PATH)),
