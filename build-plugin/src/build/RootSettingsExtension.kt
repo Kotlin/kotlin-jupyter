@@ -47,6 +47,8 @@ class RootSettingsExtension(
 
     val versionFileName: String = "VERSION"
 
+    val versionsCompatFileName: String = "versionsCompat.txt"
+
     val artifactsDir: File = run {
         val artifactsPath by project.prop(default = "artifacts")
         val artifactsDir = project.rootDir.resolve(artifactsPath)

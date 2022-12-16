@@ -1,5 +1,9 @@
 package build
 
+import build.util.defaultVersionCatalog
+import build.util.devKotlin
+import build.util.stableKotlin
+import build.util.gradleKotlin
 import build.util.PipInstallReq
 import build.util.makeTaskName
 import org.gradle.api.Project
@@ -63,8 +67,21 @@ class DistributionTasksConfigurator(
             doLast {
                 val versionFilePath = settings.distribBuildDir.resolve(settings.versionFileName)
                 versionFilePath.writeText(settings.pyPackageVersion)
+
+                val versionsCompatFilePath = settings.distribBuildDir.resolve(settings.versionsCompatFileName)
+                val projectVersions = project.defaultVersionCatalog.versions
+                versionsCompatFilePath.writeText(
+                    """
+                        pythonPackageVersion=${settings.pyPackageVersion}
+                        mavenVersion=${settings.mavenVersion}
+                        kotlinLibrariesVersion=${projectVersions.devKotlin}
+                        kotlinCompilerVersion=${projectVersions.stableKotlin}
+                        kotlinGradleLibrariesVersion=${projectVersions.gradleKotlin}
+                        kotlinLanguageLevel=${settings.kotlinLanguageLevel}
+                    """.trimIndent()
+                )
                 project.copy {
-                    from(versionFilePath)
+                    from(versionFilePath, versionsCompatFilePath)
                     into(settings.artifactsDir)
                 }
 
