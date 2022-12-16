@@ -49,7 +49,7 @@ class BuildSettingsExtension(private val project: Project) {
         fun build(): List<String> = args
 
         fun skipPrereleaseCheck() = args.add("-Xskip-prerelease-check")
-        fun requiresOptIn() = args.add("-Xopt-in=kotlin.RequiresOptIn")
+        fun requiresOptIn() = args.add("-opt-in=kotlin.RequiresOptIn")
         fun allowResultReturnType() = args.add("-Xallow-result-return-type")
         fun useOldBackend() = args.add("-Xuse-old-backend")
 

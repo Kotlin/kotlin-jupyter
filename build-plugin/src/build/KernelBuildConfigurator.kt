@@ -71,6 +71,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     private fun configureTasks() {
         registerUpdateLibrariesTask()
         registerReadmeTasks()
+        registerCompatibilityTableTask()
         registerKotlinVersionUpdateTask()
         registerLibrariesUpdateTasks()
 
@@ -206,6 +207,10 @@ internal class KernelBuildConfigurator(private val project: Project) {
         ReadmeGenerator(project, settings).registerTasks {
             dependsOn(UPDATE_LIBRARIES_TASK)
         }
+    }
+
+    private fun registerCompatibilityTableTask() {
+        CompatibilityTableGenerator(project, settings).registerTasks { }
     }
 
     private fun configureJarTasks() {

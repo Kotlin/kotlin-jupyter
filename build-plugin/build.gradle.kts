@@ -31,8 +31,8 @@ sourceSets {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xopt-in=kotlin.RequiresOptIn")
-        jvmTarget = libs.versions.jvmTarget.get()
+        freeCompilerArgs = freeCompilerArgs + listOf("-opt-in=kotlin.RequiresOptIn")
+        jvmTarget = "11"
     }
 }
 

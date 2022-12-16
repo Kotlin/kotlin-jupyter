@@ -1,15 +1,19 @@
 package build
 
 import build.util.BUILD_LIBRARIES
+import build.util.CompatibilityAttribute
 import build.util.CondaCredentials
 import build.util.CondaTaskSpec
 import build.util.DistributionPackageSettings
 import build.util.PyPiTaskSpec
 import build.util.UploadTaskSpecs
 import build.util.defaultVersionCatalog
+import build.util.devKotlin
+import build.util.gradleKotlin
 import build.util.isProtectedBranch
 import build.util.jvmTarget
 import build.util.prop
+import build.util.stableKotlin
 import build.util.stringPropOrEmpty
 import build.util.typedProperty
 import org.gradle.api.Project
@@ -48,6 +52,30 @@ class RootSettingsExtension(
     val versionFileName: String = "VERSION"
 
     val versionsCompatFileName: String = "versionsCompat.txt"
+    val compatibilityTableFileName: String = "docs/compatibility.md"
+    val compatibilityAttributes: List<CompatibilityAttribute> = run{
+        val projectVersions = project.defaultVersionCatalog.versions
+        listOf(
+            CompatibilityAttribute("pythonPackageVersion", "Kernel version") {
+                pyPackageVersion
+            },
+            CompatibilityAttribute("mavenVersion", "Maven artifacts version") {
+                mavenVersion
+            },
+            CompatibilityAttribute("kotlinLibrariesVersion", "Kotlin scripting") {
+                projectVersions.devKotlin
+            },
+            CompatibilityAttribute("kotlinCompilerVersion", "Used Kotlin compiler") {
+                projectVersions.stableKotlin
+            },
+            CompatibilityAttribute("kotlinGradleLibrariesVersion", "Kotlin dependencies for Gradle plugin") {
+                projectVersions.gradleKotlin
+            },
+            CompatibilityAttribute("kotlinLanguageLevel", "Kotlin language level") {
+                kotlinLanguageLevel
+            },
+        )
+    }
 
     val artifactsDir: File = run {
         val artifactsPath by project.prop(default = "artifacts")

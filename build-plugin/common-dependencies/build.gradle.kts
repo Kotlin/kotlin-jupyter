@@ -33,7 +33,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         languageVersion = "1.4"
 
         @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
 
         jvmTarget = libs.versions.jvmTarget.get()
     }
