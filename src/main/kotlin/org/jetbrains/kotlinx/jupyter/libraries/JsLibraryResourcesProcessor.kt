@@ -36,7 +36,8 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                         CodeScriptModifierFunctionGenerator(file.readText())
                     }
                     ResourcePathType.CLASSPATH_PATH -> {
-                        CodeScriptModifierFunctionGenerator(classLoader.getResource(path)?.readText().orEmpty())
+                        val content = loadResourceFromClassloader(path, classLoader)
+                        return CodeScriptModifierFunctionGenerator(content)
                     }
                 }
             } catch (e: IOException) {

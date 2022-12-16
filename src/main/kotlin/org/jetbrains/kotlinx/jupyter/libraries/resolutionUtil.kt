@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
+import java.io.IOException
 
 val KERNEL_LIBRARIES = LibraryDescriptorsManager.getInstance(
     getLogger(),
@@ -24,6 +25,12 @@ fun getDefaultClasspathResolutionInfoProvider(): ResolutionInfoProvider {
     return StandardResolutionInfoProvider(
         AbstractLibraryResolutionInfo.ByClasspath,
     )
+}
+
+fun loadResourceFromClassloader(path: String, classLoader: ClassLoader) : String {
+    val resource = classLoader.getResource(path)
+    resource != null && return resource.readText()
+    throw IOException("resource $path not found on classpath")
 }
 
 fun getDefaultResolutionInfoSwitcher(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): ResolutionInfoSwitcher<DefaultInfoSwitch> {

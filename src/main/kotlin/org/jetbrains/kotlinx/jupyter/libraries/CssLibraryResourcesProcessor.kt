@@ -27,7 +27,7 @@ class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
                     """.trimIndent()
                     ResourcePathType.URL_EMBEDDED -> wrapInTag(getHttp(path).text)
                     ResourcePathType.LOCAL_PATH -> wrapInTag(File(path).readText())
-                    ResourcePathType.CLASSPATH_PATH -> wrapInTag(classLoader.getResource(path)?.readText().orEmpty())
+                    ResourcePathType.CLASSPATH_PATH -> wrapInTag(loadResourceFromClassloader(path, classLoader))
                 }
             } catch (e: IOException) {
                 exceptions.add(e)
