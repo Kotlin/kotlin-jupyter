@@ -48,6 +48,7 @@ val NamedVersionCatalogsExtension.Versions.devKotlin get() = get("kotlin")
 val NamedVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotlin")
 val NamedVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
 val NamedVersionCatalogsExtension.Versions.ktlint get() = get("ktlint")
+val NamedVersionCatalogsExtension.Versions.ksp get() = get("ksp")
 val NamedVersionCatalogsExtension.Versions.jvmTarget get() = get("jvmTarget")
 
 val NamedVersionCatalogsExtension.Dependencies.junitApi get() = get("test.junit.api")

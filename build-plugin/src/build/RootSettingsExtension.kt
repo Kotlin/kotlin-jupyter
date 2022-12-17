@@ -12,6 +12,7 @@ import build.util.devKotlin
 import build.util.gradleKotlin
 import build.util.isProtectedBranch
 import build.util.jvmTarget
+import build.util.ksp
 import build.util.prop
 import build.util.stableKotlin
 import build.util.stringPropOrEmpty
@@ -73,6 +74,9 @@ class RootSettingsExtension(
             },
             CompatibilityAttribute("kotlinLanguageLevel", "Kotlin language level") {
                 kotlinLanguageLevel
+            },
+            CompatibilityAttribute("kspVersion", "KSP") {
+                projectVersions.ksp
             },
         )
     }

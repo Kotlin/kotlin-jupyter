@@ -5,6 +5,7 @@ Most importantly, on top of Kotlin scripting and on top of KSP which requires sp
 In the table below you can see the published versions of Kotlin kernel and versions of the most important libraries
 which were used in this build.
 
-| Kernel version | Maven artifacts version | Kotlin scripting | Used Kotlin compiler | Kotlin dependencies for Gradle plugin | Kotlin language level |
-|:---------------|:------------------------|:-----------------|:---------------------|:--------------------------------------|:----------------------|
-| 0.11.0.204     | 0.11.0-204              | 1.8.0-RC         | 1.8.0-RC             | 1.8.0-RC                              | 1.8                   |
+| Kernel version | Maven artifacts version | Kotlin scripting | Used Kotlin compiler | Kotlin dependencies for Gradle plugin | Kotlin language level | KSP            |
+|:---------------|:------------------------|:-----------------|:---------------------|:--------------------------------------|:----------------------|:---------------|
+| 0.11.0.204     | 0.11.0-204              | 1.8.0-RC         | 1.8.0-RC             | 1.8.0-RC                              | 1.8                   | 1.8.0-RC-1.0.8 |
+| 0.11.0.206     | 0.11.0-206              | 1.8.0-RC         | 1.8.0-RC             | 1.8.0-RC                              | 1.8                   | 1.8.0-RC-1.0.8 |

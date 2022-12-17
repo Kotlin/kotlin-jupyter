@@ -18,6 +18,7 @@ class CompatibilityTableGenerator(
     private val settings: RootSettingsExtension,
 ) {
     private val kernelTeamcity = TeamcityProject(INTERNAL_TEAMCITY_URL, "KDS_KotlinJupyter_Conda")
+    private val unknownInfo = "?"
 
     private val mdHeaderToTcProp = HashMap<String, String>().apply {
         for (attr in settings.compatibilityAttributes) {
@@ -73,7 +74,7 @@ class CompatibilityTableGenerator(
         }
 
         val newVersions = HashMap<String, List<String>>().apply {
-            val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/buildType:(id:${kernelTeamcity.projectId})"
+            val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/status:success,buildType:(id:${kernelTeamcity.projectId})"
             val allBuildsResponse = httpRequest(
                     Request(Method.GET, allBuildsUrl)
                             .header("Accept", "application/json")
@@ -94,7 +95,7 @@ class CompatibilityTableGenerator(
                             .filter { it.contains("=") }
                             .associate { it.substringBefore("=") to it.substringAfter("=") }
                     val verList = columns.map { tcProp ->
-                        verMap[tcProp].orEmpty()
+                        verMap[tcProp] ?: unknownInfo
                     }
                     put(verList[0], verList)
                 }
@@ -106,8 +107,11 @@ class CompatibilityTableGenerator(
         for ((key, row) in newVersions) {
             if (key in existingVersions) {
                 // update existing
-                val exVersion = existingVersions[key]!!
-                existingVersions[key] = exVersion.first to row
+                val (index, oldRow) = existingVersions[key]!!
+                val newRow = row.indices.map { i ->
+                    if (row[i] == unknownInfo) oldRow[i] else row[i]
+                }
+                existingVersions[key] = index to newRow
             } else {
                 // add new
                 existingVersions[key] = newLineNumCnt to row
@@ -116,7 +120,7 @@ class CompatibilityTableGenerator(
         }
 
         val linesToUpdate = existingVersions.values.toMap()
-        val newLinesCount = max(linesToUpdate.keys.maxOrNull() ?: 0, mdLines.size) + 1
+        val newLinesCount = max(linesToUpdate.keys.maxOrNull() ?: 0, mdLines.lastIndex) + 2
 
         val newLines = mutableListOf<String>().apply {
             for (i in 0 until newLinesCount) {
