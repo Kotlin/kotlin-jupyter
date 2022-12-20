@@ -71,6 +71,18 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testGGDslSourcesResolution() {
+        eval("SessionOptions.resolveSources = true")
+        val res = eval(
+            """
+                %use ggdsl(0.2.4-dev-1)
+            """.trimIndent(),
+        )
+
+        res.metadata.newSources.shouldHaveSize(85)
+    }
+
+    @Test
     fun testSerialization() {
         val serialized = eval(
             """

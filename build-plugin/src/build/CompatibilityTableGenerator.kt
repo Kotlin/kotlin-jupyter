@@ -7,11 +7,13 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.http4k.core.Method
 import org.http4k.core.Request
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import java.io.File
 import kotlin.math.max
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.text
+import java.util.TreeMap
 
 class CompatibilityTableGenerator(
     private val project: Project,
@@ -73,7 +75,7 @@ class CompatibilityTableGenerator(
             }
         }
 
-        val newVersions = HashMap<String, List<String>>().apply {
+        val newVersions = TreeMap<KotlinKernelVersion, List<String>>().apply {
             val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/status:success,buildType:(id:${kernelTeamcity.projectId})"
             val allBuildsResponse = httpRequest(
                     Request(Method.GET, allBuildsUrl)
@@ -97,14 +99,16 @@ class CompatibilityTableGenerator(
                     val verList = columns.map { tcProp ->
                         verMap[tcProp] ?: unknownInfo
                     }
-                    put(verList[0], verList)
+                    val pyVersion = verList[0]
+                    put(KotlinKernelVersion.from(pyVersion) ?: error("Can't parse version $pyVersion"), verList)
                 }
             }
         }
 
         var newLineNumCnt = (dataLinesIndices.lastOrNull() ?: headerSeparatorIndex) + 1
 
-        for ((key, row) in newVersions) {
+        for ((versionKey, row) in newVersions) {
+            val key = versionKey.toString()
             if (key in existingVersions) {
                 // update existing
                 val (index, oldRow) = existingVersions[key]!!

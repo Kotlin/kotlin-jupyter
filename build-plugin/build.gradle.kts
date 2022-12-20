@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation(projects.commonDependencies)
+    implementation(libs.jupyter.api)
     api(libs.bundles.allGradlePlugins)
 
     constraints {
