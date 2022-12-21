@@ -1,10 +1,10 @@
 [versions]
 jvmTarget = "1.8"
 
-kotlin = "1.8.0-RC"
-stableKotlin = "1.8.0-RC"
-gradleKotlin = "1.8.0-RC"
-ksp = "1.8.0-RC-1.0.8"
+kotlin = "1.8.0-RC2"
+stableKotlin = "1.8.0-RC2"
+gradleKotlin = "1.8.0-RC2"
+ksp = "1.8.0-RC2-1.0.8"
 shadowJar = "7.1.2"
 changelogPlugin = "1.12.1"
 kotlinxSerialization = "1.4.1"

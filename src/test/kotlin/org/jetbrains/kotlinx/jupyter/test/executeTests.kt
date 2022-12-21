@@ -453,12 +453,12 @@ class ExecuteTests : KernelServerTestsBase() {
             ),
         )
 
-        iopub.receiveStatusReply().status shouldBe KernelStatus.BUSY
-
-        iopub.receiveMessage().apply {
-            val c = content.shouldBeTypeOf<CommMsg>()
-            c.commId shouldBe commId
-            c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+        iopub.wrapActionInBusyIdleStatusChange {
+            iopub.receiveMessage().apply {
+                val c = content.shouldBeTypeOf<CommMsg>()
+                c.commId shouldBe commId
+                c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+            }
         }
     }
 
