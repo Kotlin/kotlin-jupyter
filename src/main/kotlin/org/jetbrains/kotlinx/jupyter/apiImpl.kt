@@ -94,7 +94,7 @@ class DisplayContainerImpl : MutableDisplayContainer {
 
     override fun getById(id: String?): List<MutableDisplayResultWithCell> {
         synchronized(displays) {
-            return displays[id].orEmpty()
+            return displays[id]?.toList().orEmpty()
         }
     }
 
