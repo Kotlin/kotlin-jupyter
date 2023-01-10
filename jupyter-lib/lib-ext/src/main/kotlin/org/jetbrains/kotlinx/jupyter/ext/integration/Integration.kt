@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
 import org.jetbrains.kotlinx.jupyter.ext.graph.structure.MultiGraph
 import org.jetbrains.kotlinx.jupyter.ext.graph.visualization.render
 import org.jetbrains.kotlinx.jupyter.ext.graph.wrappers.KClassNode
+import java.io.File
 
 @JupyterLibrary
 class Integration : JupyterIntegration() {
@@ -15,6 +16,8 @@ class Integration : JupyterIntegration() {
         import("org.jetbrains.kotlinx.jupyter.ext.*")
         importPackage<Graph<*>>()
         importPackage<KClassNode>()
+
+        import<File>()
 
         render<MultiGraph<*>> {
             it.render()
