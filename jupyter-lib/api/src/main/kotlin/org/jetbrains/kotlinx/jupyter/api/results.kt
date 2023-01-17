@@ -11,6 +11,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -237,7 +238,7 @@ data class HtmlData(val style: String, val body: String, val script: String) {
 
         val id = "iframe_out_${iframeCounter.incrementAndGet()}"
         val fName = "resize_$id"
-        val cleanText = text.replace("\"", "&quot;")
+        val cleanText = text.escapeForIframe()
 
         @Language("html")
         val iFramedText = """
