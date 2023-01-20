@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import jupyter.kotlin.JavaRuntime
 import jupyter.kotlin.variablesReportAsHTML
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
@@ -7,6 +8,8 @@ import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.common.assertLooksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
+import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.messaging.AbortResponseWithMessage
 import org.jetbrains.kotlinx.jupyter.messaging.OkResponseWithMessage
 import org.jetbrains.kotlinx.jupyter.messaging.Response
@@ -18,7 +21,7 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
-fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n    ", prefix = "    ", transform = transform)
+private fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n|    ", prefix = "    ", transform = transform)
 
 fun reportCommandErrors(code: String): ListErrorsResult {
     val (command, commandString) = replCommandOrNull(code)
@@ -72,7 +75,24 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
                 "$libraryName$link$description"
             }.joinToStringIndented()
-            OkResponseWithMessage(textResult("Commands:\n$commands\n\nMagics\n$magics\n\nSupported libraries:\n$libraries"))
+            OkResponseWithMessage(
+                textResult(
+                    """ |Kotlin Jupyter kernel.
+                        |Kernel version: $currentKernelVersion
+                        |Kotlin version: $currentKotlinVersion
+                        |JVM version: ${JavaRuntime.version}
+                        |
+                        |Commands:
+                        |$commands
+                        |
+                        |Magics:
+                        |$magics
+                        |
+                        |Supported libraries:
+                        |$libraries
+                    """.trimMargin("|"),
+                ),
+            )
         }
     }
 }

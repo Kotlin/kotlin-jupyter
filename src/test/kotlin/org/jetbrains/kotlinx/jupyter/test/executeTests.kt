@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
@@ -16,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
+import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
@@ -493,5 +495,14 @@ class ExecuteTests : KernelServerTestsBase() {
                 data.status shouldBe MessageStatus.OK
             }
         }
+    }
+
+    @Test
+    fun testCommand() {
+        val res = doExecute(":help")
+        res.shouldBeTypeOf<JsonObject>()
+        val text = res["text/plain"]!!.jsonPrimitive.content
+        text.shouldContain(currentKotlinVersion)
+        print(text)
     }
 }
