@@ -7,12 +7,21 @@ import java.io.File
 
 class HtmlUtilTest {
     private val testFolder = File("src/test/testData/html")
+    private val doRegenerate = false
+
+    private fun testEquality(sourceFile: String, expectedFile: String, transformer: (String) -> String) {
+        val sourceText = testFolder.resolve(sourceFile).readText()
+        val actualResult = transformer(sourceText)
+        if (doRegenerate) {
+            testFolder.resolve(expectedFile).writeText(actualResult)
+        } else {
+            val expectedResult = testFolder.resolve(expectedFile).readText()
+            actualResult shouldBe expectedResult
+        }
+    }
 
     @Test
-    fun `escape iframe source`() {
-        val text = testFolder.resolve("iframeEscape.html").readText()
-        val actualResult = text.escapeForIframe()
-        val expectedResult = testFolder.resolve("iframeEscapeResult.html").readText()
-        actualResult shouldBe expectedResult
+    fun `escape iframe source`() = testEquality("iframeEscape.html", "iframeEscapeResult.html") { text ->
+        text.escapeForIframe()
     }
 }

@@ -8,6 +8,9 @@ fun String.escapeForIframe(): String {
                 '&' -> append("&amp;")
                 '"' -> append("&quot;")
                 '\\' -> append("&bsol;")
+                '/' -> append("&sol;")
+                '<' -> append("&lt;")
+                '>' -> append("&gt;")
                 else -> append(c)
             }
         }
