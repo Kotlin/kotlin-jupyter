@@ -242,10 +242,14 @@ data class HtmlData(val style: String, val body: String, val script: String) {
 
         @Language("html")
         val iFramedText = """
-            <iframe onload="$fName()" style="width:100%;" class="result_container" id="$id" frameBorder="0" srcdoc="$cleanText"></iframe>
+            <iframe onload="o_$fName()" style="width:100%;" class="result_container" id="$id" frameBorder="0" srcdoc="$cleanText"></iframe>
             <script>
-                function $fName() {
-                    let el = document.getElementById("$id");
+                function o_$fName() {
+                    let elem = document.getElementById("$id");
+                    $fName(elem);
+                    setInterval($fName, 5000, elem);
+                }
+                function $fName(el) {
                     let h = el.contentWindow.document.body.scrollHeight;
                     el.height = h === 0 ? 0 : h + 41;
                 }
