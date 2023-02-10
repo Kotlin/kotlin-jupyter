@@ -75,7 +75,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         eval("SessionOptions.resolveSources = true")
         val res = eval(
             """
-                %use ggdsl(0.2.4-dev-1)
+                %use ggdsl(v=0.2.4-dev-1)
             """.trimIndent(),
         )
 
