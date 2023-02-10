@@ -98,7 +98,7 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
 
                 val descriptor = descriptors[libName] ?: return
-                val paramNames = descriptor.variables.mapTo(mutableSetOf()) { it.name }
+                val paramNames = descriptor.variables.properties.mapTo(mutableSetOf()) { it.name }
                 if (paramNames.isEmpty()) return
 
                 val paramName = argName.ifEmpty {

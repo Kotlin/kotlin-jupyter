@@ -15,9 +15,6 @@ import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 @Serializable(with = CodeExecutionSerializer::class)
 class CodeExecution(val code: Code) {
     fun toExecutionCallback(mapping: Map<String, String> = emptyMap()): ExecutionCallback<Any?> {
-        val codeWithSubstitutedVars = replaceVariables(code, mapping)
-        return {
-            execute(codeWithSubstitutedVars).value
-        }
+        return CodeExecutionCallback(replaceVariables(code, mapping))
     }
 }

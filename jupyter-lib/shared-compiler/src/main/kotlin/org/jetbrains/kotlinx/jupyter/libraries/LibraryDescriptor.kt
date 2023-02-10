@@ -7,10 +7,11 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.DescriptorVariables
+import org.jetbrains.kotlinx.jupyter.api.libraries.DescriptorVariablesSerializer
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSerializer
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
@@ -22,9 +23,9 @@ import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 @Serializable
 class LibraryDescriptor(
     val dependencies: List<String> = emptyList(),
-    @Serializable(VariablesSerializer::class)
+    @Serializable(DescriptorVariablesSerializer::class)
     @SerialName("properties")
-    val variables: List<Variable> = emptyList(),
+    val variables: DescriptorVariables = DescriptorVariables(),
 
     val initCell: List<CodeExecution> = emptyList(),
 
@@ -58,25 +59,53 @@ class LibraryDescriptor(
      *
      * @return A name-to-value map of library arguments
      */
-    private fun substituteArguments(parameters: List<Variable>, arguments: List<Variable>): Map<String, String> {
+    private fun substituteArguments(descriptorVariables: DescriptorVariables, arguments: List<Variable>): Map<String, String> {
         val result = mutableMapOf<String, String>()
-        if (arguments.any { it.name.isEmpty() }) {
-            if (parameters.count() != 1) {
-                throw ReplPreprocessingException("Unnamed argument is allowed only if library has a single property")
-            }
-            if (arguments.count() != 1) {
-                throw ReplPreprocessingException("Too many arguments")
-            }
-            result[parameters[0].name] = substituteKernelVars(arguments[0].value)
-            return result
+        fun addResult(name: String, value: String) {
+            result[name] = substituteKernelVars(value)
         }
 
-        arguments.forEach {
-            result[it.name] = substituteKernelVars(it.value)
+        val parameters = descriptorVariables.properties
+
+        if (descriptorVariables.hasOrder) {
+            var namedPart = false
+            for ((i, arg) in arguments.withIndex()) {
+                val isNamed = arg.name.isNotEmpty()
+                if (namedPart) {
+                    if (!isNamed) throw ReplPreprocessingException("Unnamed argument is not allowed after named one")
+                } else {
+                    if (isNamed) namedPart = true
+                }
+
+                assert(namedPart == isNamed) { "Named argument might be only in the named part of call" }
+
+                if (isNamed) {
+                    addResult(arg.name, arg.value)
+                } else {
+                    if (parameters.lastIndex < i) throw ReplPreprocessingException("Number of unnamed arguments cannot be more than the number of parameters")
+                    addResult(parameters[i].name, arg.value)
+                }
+            }
+        } else {
+            if (arguments.any { it.name.isEmpty() }) {
+                if (parameters.count() != 1) {
+                    throw ReplPreprocessingException("Unnamed argument is allowed only if library has a single property")
+                }
+                if (arguments.count() != 1) {
+                    throw ReplPreprocessingException("Too many unnamed arguments")
+                }
+                addResult(parameters[0].name, arguments[0].value)
+                return result
+            }
+
+            arguments.forEach {
+                addResult(it.name, it.value)
+            }
         }
+
         parameters.forEach {
             if (!result.containsKey(it.name)) {
-                result[it.name] = substituteKernelVars(it.value)
+                addResult(it.name, it.value)
             }
         }
         return result
