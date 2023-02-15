@@ -3,7 +3,12 @@ package org.jetbrains.kotlinx.jupyter.dependencies
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -37,10 +42,17 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         DependenciesResolverOptionsName.EXTENSION to "jar",
     )
 
+    private val mppResolverOptions = buildOptions(
+        DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
+        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+        DependenciesResolverOptionsName.EXTENSION to "module",
+    )
+
     private val repositories = arrayListOf<Repo>()
     private val addedClasspath = arrayListOf<File>()
 
     override var resolveSources: Boolean = false
+    override var resolveMpp: Boolean = false
     private val addedSourcesClasspath = arrayListOf<File>()
 
     init {
@@ -111,30 +123,11 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                 is DependsOn -> {
                     log.info("Resolving ${annotation.value}")
                     try {
-                        doResolve(
-                            { resolver.resolve(annotation.value, resolverOptions, null) },
-                            onResolved = { files ->
-                                addedClasspath.addAll(files)
-                                classpath.addAll(files)
-                            },
-                            onFailure = { result ->
-                                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
-                                log.warn(diagnostics.message, diagnostics.exception)
-                                scriptDiagnostics.add(diagnostics)
-                            },
+                        tryResolve(
+                            annotation.value,
+                            scriptDiagnostics,
+                            classpath,
                         )
-
-                        if (resolveSources) {
-                            doResolve(
-                                { resolver.resolve(annotation.value, sourcesResolverOptions, null) },
-                                onResolved = { files ->
-                                    addedSourcesClasspath.addAll(files)
-                                },
-                                onFailure = { result ->
-                                    log.warn("Failed to resolve sources for ${annotation.value}:\n" + result.reports.joinToString("\n") { it.message })
-                                },
-                            )
-                        }
                     } catch (e: Exception) {
                         val diagnostic = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unhandled exception during resolve", exception = e)
                         log.error(diagnostic.message, e)
@@ -151,6 +144,56 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
         else makeFailureResult(scriptDiagnostics)
     }
 
+    private fun tryResolve(
+        annotationArg: String,
+        scriptDiagnosticsResult: MutableList<ScriptDiagnostic>,
+        classpathResult: MutableList<File>,
+    ) {
+        doResolve(
+            { resolver.resolve(annotationArg, resolverOptions, null) },
+            onResolved = { files ->
+                addedClasspath.addAll(files)
+                classpathResult.addAll(files)
+            },
+            onFailure = { result ->
+                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve $annotationArg:\n" + result.reports.joinToString("\n") { it.message })
+                log.warn(diagnostics.message, diagnostics.exception)
+                scriptDiagnosticsResult.add(diagnostics)
+            },
+        )
+
+        if (resolveSources) {
+            doResolve(
+                { resolver.resolve(annotationArg, sourcesResolverOptions, null) },
+                onResolved = { files ->
+                    addedSourcesClasspath.addAll(files)
+                },
+                onFailure = { result ->
+                    log.warn("Failed to resolve sources for $annotationArg:\n" + result.reports.joinToString("\n") { it.message })
+                },
+            )
+        }
+
+        if (resolveMpp) {
+            doResolve(
+                { resolver.resolve(annotationArg, mppResolverOptions, null) },
+                onResolved = { files ->
+                    val resolvedArtifacts = mutableSetOf(annotationArg)
+                    resolveMpp(files) { artifactCoordinates ->
+                        if (resolvedArtifacts.add(artifactCoordinates)) {
+                            tryResolve(
+                                artifactCoordinates,
+                                scriptDiagnosticsResult,
+                                classpathResult,
+                            )
+                        }
+                    }
+                },
+                onFailure = {},
+            )
+        }
+    }
+
     private fun doResolve(
         resolveAction: suspend () -> ResultWithDiagnostics<List<File>>,
         onResolved: (List<File>) -> Unit,
@@ -165,6 +208,34 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                 onResolved(result.value)
             }
         }
+    }
+
+    private fun resolveMpp(moduleFiles: List<File>, jvmArtifactCallback: (String) -> Unit) {
+        val coordinates = mutableListOf<String>()
+
+        for (moduleFile in moduleFiles) {
+            val json = try {
+                Json.parseToJsonElement(moduleFile.readText())
+            } catch (e: Throwable) {
+                continue
+            }
+
+            val variants = (json.resolvePath(listOf("variants")) as? JsonArray) ?: continue
+            for (v in variants) {
+                val attrs = (v.resolvePath(listOf("attributes")) as? JsonObject) ?: continue
+                val gradleUsage = (attrs["org.gradle.usage"] as? JsonPrimitive)?.content ?: continue
+
+                if (gradleUsage != "java-runtime") continue
+                val artifact = (v.resolvePath(listOf("available-at")) as? JsonObject) ?: continue
+                val group = (artifact["group"] as? JsonPrimitive)?.content ?: continue
+                val artifactId = (artifact["module"] as? JsonPrimitive)?.content ?: continue
+                val version = (artifact["version"] as? JsonPrimitive)?.content ?: continue
+
+                val artifactCoordinates = "$group:$artifactId:$version"
+                coordinates.add(artifactCoordinates)
+            }
+        }
+        coordinates.forEach(jvmArtifactCallback)
     }
 
     private class Repo(

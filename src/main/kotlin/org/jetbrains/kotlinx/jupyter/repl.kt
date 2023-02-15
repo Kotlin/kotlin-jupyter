@@ -222,6 +222,10 @@ class ReplForJupyterImpl(
             get() = resolver.resolveSources
             set(value) { resolver.resolveSources = value }
 
+        override var resolveMpp: Boolean
+            get() = resolver.resolveMpp
+            set(value) { resolver.resolveMpp = value }
+
         override var serializeScriptData: Boolean
             get() = internalEvaluator.serializeScriptData
             set(value) { internalEvaluator.serializeScriptData = value }

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter
 
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
@@ -149,4 +151,18 @@ class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLi
         return if (homeDir == null) super.getDescriptors()
         else libraryDescriptors(homeDir)
     }
+}
+
+fun JsonElement.resolvePath(path: List<String>): JsonElement? {
+    var cur: JsonElement? = this
+    for (fragment in path) {
+        val sub = cur
+        if (sub is JsonObject) {
+            cur = sub[fragment]
+        } else {
+            return null
+        }
+    }
+
+    return cur
 }

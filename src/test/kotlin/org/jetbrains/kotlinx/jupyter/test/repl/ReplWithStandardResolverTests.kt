@@ -246,4 +246,34 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             filter { "hadoop-client-api" in it }.shouldNotBeEmpty()
         }
     }
+
+    @Test
+    fun `mpp dependencies are resolved to maven artifacts`() {
+        eval(
+            """
+            SessionOptions.resolveMpp = true
+            """.trimIndent(),
+        )
+
+        val result = eval(
+            """
+            @file:DependsOn("io.ktor:ktor-client-cio:2.0.1")
+            @file:DependsOn("io.ktor:ktor-client-core:2.0.1")
+            """.trimIndent(),
+        )
+        with(result.metadata.newClasspath) {
+            filter { "ktor-client-cio-jvm" in it }.shouldNotBeEmpty()
+        }
+
+        val client = eval(
+            """
+            import io.ktor.client.*
+            import io.ktor.client.engine.cio.*
+            
+            val client = HttpClient(CIO)
+            client
+            """.trimIndent(),
+        )
+        (client.resultValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
+    }
 }
