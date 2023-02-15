@@ -55,6 +55,8 @@ interface MutableNotebook : Notebook {
         data: EvalData,
     ): MutableCodeCell
 
+    fun popCell()
+
     fun beginEvalSession()
 
     override val currentCell: MutableCodeCell?
@@ -220,6 +222,13 @@ class NotebookImpl(
         history.add(cell)
         mainCellCreated = true
         return cell
+    }
+
+    // Throws if no cell was added
+    override fun popCell() {
+        val lastCell = history.last()
+        cells.remove(lastCell.id)
+        history.removeLast()
     }
 
     override fun beginEvalSession() {

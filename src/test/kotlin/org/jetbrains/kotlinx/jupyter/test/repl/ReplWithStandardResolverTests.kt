@@ -30,7 +30,7 @@ import kotlin.test.assertEquals
 class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     private val displays = mutableListOf<Any>()
     private val handler = TestDisplayHandler(displays)
-    override val repl = makeReplWithStandardResolver(handler)
+    override val repl = makeReplWithStandardResolver { handler }
 
     @Test
     fun testResolverRepoOrder() {

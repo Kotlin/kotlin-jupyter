@@ -353,7 +353,7 @@ class ExecuteTests : KernelServerTestsBase() {
             executeReplyChecker = { checkCounter(it, 3) },
         )
         val res4 = doExecute(
-            "try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }",
+            "val x = try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }; x",
             storeHistory = false,
             executeReplyChecker = { checkCounter(it, 3) },
         )

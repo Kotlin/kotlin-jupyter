@@ -3,9 +3,11 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.assertions.fail
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.MutableCodeCell
+import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
@@ -26,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
+import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
@@ -37,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.toDisplayResult
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
 import java.io.File
@@ -164,13 +168,39 @@ class InMemoryLibraryResolver(
     }
 }
 
-class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
+open class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
     override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
         list.add(value)
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
-        // TODO: Implement correct updating
+        TODO("Not yet implemented")
+    }
+}
+
+class TestDisplayHandlerWithRendering(
+    private val notebook: MutableNotebook,
+    list: MutableList<Any> = mutableListOf(),
+) : TestDisplayHandler(list) {
+    private fun render(host: ExecutionHost, value: Any): DisplayResult? {
+        val renderedValue = notebook.renderersProcessor.renderValue(host, value)
+        return renderedValue.toDisplayResult(notebook)
+    }
+
+    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+        super.handleDisplay(value, host, id)
+        val display = render(host, value)?.let { if (id != null) it.withId(id) else it } ?: return
+        notebook.currentCell?.addDisplay(display)
+    }
+
+    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+        super.handleUpdate(value, host, id)
+        val display = render(host, value) ?: return
+        val container = notebook.displays
+        container.update(id, display)
+        container.getById(id).distinctBy { it.cell.id }.forEach {
+            it.cell.displays.update(id, display)
+        }
     }
 }
 

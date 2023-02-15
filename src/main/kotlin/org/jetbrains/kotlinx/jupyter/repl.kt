@@ -458,9 +458,7 @@ class ReplForJupyterImpl(
             val result = try {
                 log.debug("Current cell id: ${evalData.jupyterId}")
                 executor.execute(evalData.code, displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
-                    if (evalData.storeHistory) {
-                        cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
-                    }
+                    cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
                 }
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
@@ -485,6 +483,10 @@ class ReplForJupyterImpl(
             val newSources = log.catchAll {
                 updateSources()
             } ?: emptyList()
+
+            if (!evalData.storeHistory) {
+                log.catchAll { notebook.popCell() }
+            }
 
             val variablesStateUpdate = notebook.variablesState.mapValues { "" }
             EvalResultEx(
