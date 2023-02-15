@@ -268,6 +268,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
  - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing
+ - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
  - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
  - default - Default imports: dataframe and Lets-Plot libraries
