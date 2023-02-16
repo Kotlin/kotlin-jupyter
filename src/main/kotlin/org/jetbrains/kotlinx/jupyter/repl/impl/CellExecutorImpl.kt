@@ -58,7 +58,10 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
                 log.debug("Adding ${processedMagics.libraries.size} libraries")
                 val libraries = processedMagics.libraries.getDefinitions(notebook)
-                context.addLibraries(libraries)
+
+                for (library in libraries) {
+                    context.addLibrary(library)
+                }
 
                 processedMagics.code
             } else code
@@ -143,9 +146,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             execute(code)
         }
 
-        override fun addLibraries(libraries: Collection<LibraryDefinition>) {
-            if (libraries.isEmpty()) return
-            stackFrame.libraries.addAll(libraries)
+        private fun doAddLibraries(libraries: Collection<LibraryDefinition>) {
             for (library in libraries) {
                 sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
             }
@@ -176,6 +177,18 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
                 library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
                 library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
+            }
+        }
+
+        override fun addLibraries(libraries: Collection<LibraryDefinition>) {
+            if (libraries.isEmpty()) return
+            stackFrame.libraries.addAll(libraries)
+            try {
+                doAddLibraries(libraries)
+            } finally {
+                for (lib in libraries) {
+                    stackFrame.libraries.removeLast()
+                }
             }
         }
 

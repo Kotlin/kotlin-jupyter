@@ -128,15 +128,17 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val expectedCodes = arrayOf(
             """
-                    @file:DependsOn("anotherDep")
                     @file:DependsOn("artifact1:1.0")
                     @file:DependsOn("artifact2:1.0")
-                    import anotherPackage1
                     import package1
                     import package2
                     """,
             "code1",
             "code2",
+            """
+                @file:DependsOn("anotherDep")
+                import anotherPackage1
+            """,
             """
                     @file:Repository("repo-debug")
                     @file:DependsOn("path-release")
@@ -470,7 +472,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         }
         val display1 = processor.renderThrowable(e1.cause!!)
         display1.shouldBeInstanceOf<DisplayResult>()
-        val json = display1.toJson().toString()
+        val json = display1.toJson(overrideId = null).toString()
         json shouldBe """{"data":{"text/plain":"42"},"metadata":{}}"""
 
         val e2 = assertThrows<ReplEvalRuntimeException> {

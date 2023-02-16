@@ -276,4 +276,16 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         )
         (client.resultValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
     }
+
+    @Test
+    fun `options should not interfer`() {
+        eval(
+            """
+            %use dataframe
+            %use ggdsl(v=0.3.2-dev-7)
+            
+            dataFrameConfig
+            """.trimIndent(),
+        )
+    }
 }
