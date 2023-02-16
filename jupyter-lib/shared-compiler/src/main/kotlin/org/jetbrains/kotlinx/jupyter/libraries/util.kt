@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 import java.util.TreeSet
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -95,10 +94,31 @@ fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<Lib
 
 private val emptyVariablesMapping = emptyMap<String, String>()
 
+fun String.escapeSpecialChars(): String {
+    return buildString {
+        for (char in this@escapeSpecialChars) {
+            when (char) {
+                '\\' -> append("\\\\")
+                '\"' -> append("\\\"")
+                '\'' -> append("\\'")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> append(char)
+            }
+        }
+    }
+}
+
 fun buildDependenciesInitCode(libraries: Collection<LibraryDefinition>): Code? {
     val builder = StringBuilder()
-    libraries.flatMapTo(TreeSet()) { it.repositories }.forEach { builder.appendLine("@file:Repository(\"${replaceVariables(it, emptyVariablesMapping)}\")") }
-    libraries.flatMapTo(TreeSet()) { it.dependencies }.forEach { builder.appendLine("@file:DependsOn(\"${replaceVariables(it, emptyVariablesMapping)}\")") }
-    libraries.flatMapTo(TreeSet()) { it.imports }.forEach { builder.appendLine("import ${replaceVariables(it, emptyVariablesMapping)}") }
+    libraries.flatMapTo(TreeSet()) { it.repositories }.forEach { repo ->
+        val pathArg = "\"${repo.path.escapeSpecialChars()}\""
+        val usernameArg = repo.username?.let { ", username=\"${it.escapeSpecialChars()}\"" }.orEmpty()
+        val passwordArg = repo.password?.let { ", password=\"${it.escapeSpecialChars()}\"" }.orEmpty()
+        builder.appendLine("@file:Repository($pathArg$usernameArg$passwordArg)")
+    }
+    libraries.flatMapTo(TreeSet()) { it.dependencies }.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
+    libraries.flatMapTo(TreeSet()) { it.imports }.forEach { builder.appendLine("import $it") }
     return if (builder.isNotBlank()) builder.toString() else null
 }

@@ -4,7 +4,18 @@ import java.io.File
 
 interface RepositoryHandlerScope {
     fun maven(url: String)
+    fun maven(action: MavenRepositoryConfigurationScope.() -> Unit)
     fun dir(dir: File)
+}
+
+interface MavenRepositoryConfigurationScope {
+    var url: String
+    fun credentials(action: CredentialsConfigurationScope.() -> Unit)
+}
+
+interface CredentialsConfigurationScope {
+    var username: String?
+    var password: String?
 }
 
 interface DependencyHandlerScope {
@@ -31,6 +42,50 @@ private class RepositoryHandlerScopeImpl(private val builder: JupyterIntegration
 
     override fun maven(url: String) {
         builder.repositories(url)
+    }
+
+    override fun maven(action: MavenRepositoryConfigurationScope.() -> Unit) {
+        val repo = MavenRepositoryConfigurationScopeImpl().apply(action).build()
+        builder.addRepository(repo)
+    }
+}
+
+private class MavenRepositoryBuilder {
+    var url: String? = null
+    var username: String? = null
+    var password: String? = null
+    fun build(): KernelRepository {
+        return KernelRepository(
+            url ?: error("URL isn't set for Maven repository"),
+            username,
+            password,
+        )
+    }
+}
+
+private class MavenRepositoryConfigurationScopeImpl : MavenRepositoryConfigurationScope {
+    val builder = MavenRepositoryBuilder()
+
+    override var url: String
+        get() = builder.url!!
+        set(value) { builder.url = value }
+
+    override fun credentials(action: CredentialsConfigurationScope.() -> Unit) {
+        CredentialsConfigurationScopeImpl().action()
+    }
+
+    fun build(): KernelRepository {
+        return builder.build()
+    }
+
+    inner class CredentialsConfigurationScopeImpl : CredentialsConfigurationScope {
+        override var password: String?
+            get() = builder.password
+            set(value) { builder.password = value }
+
+        override var username: String?
+            get() = builder.username
+            set(value) { builder.username = value }
     }
 }
 

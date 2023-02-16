@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.config
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
+
 val defaultGlobalImports = listOf(
     "kotlin.math.*",
     "jupyter.kotlin.*",
@@ -10,4 +12,4 @@ val defaultGlobalImports = listOf(
 val defaultRepositories = listOf(
     "https://repo.maven.apache.org/maven2/",
     "https://jitpack.io/",
-)
+).map(::KernelRepository)

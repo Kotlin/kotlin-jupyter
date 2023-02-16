@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -186,7 +187,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
             val libraries = listOf(
                 libraryDefinition {
-                    it.repositories = repositories
+                    it.repositories = repositories.map(::KernelRepository)
                     it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
                 },
             )

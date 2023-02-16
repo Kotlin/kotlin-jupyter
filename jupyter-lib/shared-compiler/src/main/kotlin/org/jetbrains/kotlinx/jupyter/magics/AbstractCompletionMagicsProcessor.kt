@@ -116,7 +116,11 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                     if (dependencyParamName != paramName) continue
 
                     val versions = (descriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
-                        getVersions(ArtifactLocation(repo, group, artifact))
+                        if (repo.username == null && repo.password == null) {
+                            getVersions(ArtifactLocation(repo.path, group, artifact))
+                        } else {
+                            null
+                        }
                     }.orEmpty()
                     val matchingVersions = versions.filter { it.startsWith(argValuePrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {

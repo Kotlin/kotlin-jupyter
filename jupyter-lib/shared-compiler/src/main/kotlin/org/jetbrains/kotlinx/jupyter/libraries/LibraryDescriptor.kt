@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.DescriptorVariables
 import org.jetbrains.kotlinx.jupyter.api.libraries.DescriptorVariablesSerializer
+import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
@@ -30,7 +31,7 @@ class LibraryDescriptor(
     val initCell: List<CodeExecution> = emptyList(),
 
     val imports: List<String> = emptyList(),
-    val repositories: List<String> = emptyList(),
+    val repositories: List<KernelRepository> = emptyList(),
     val init: List<CodeExecution> = emptyList(),
     val shutdown: List<CodeExecution> = emptyList(),
     @Serializable(RenderersSerializer::class)

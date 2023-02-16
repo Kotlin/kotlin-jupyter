@@ -29,7 +29,7 @@ class DescriptorVariables(
 
 object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
     override val descriptor: SerialDescriptor
-        get() = serializer<Any>().descriptor
+        get() = serializer<JsonElement>().descriptor
 
     override fun deserialize(decoder: Decoder): DescriptorVariables {
         val hasOrder: Boolean

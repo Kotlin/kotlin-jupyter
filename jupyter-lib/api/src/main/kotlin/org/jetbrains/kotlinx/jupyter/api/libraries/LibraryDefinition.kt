@@ -32,9 +32,9 @@ interface LibraryDefinition {
         get() = emptyList()
 
     /**
-     * List of repository URLs to resolve dependencies in
+     * List of repositories to resolve dependencies in
      */
-    val repositories: List<String>
+    val repositories: List<KernelRepository>
         get() = emptyList()
 
     /**

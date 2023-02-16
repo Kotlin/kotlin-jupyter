@@ -15,7 +15,7 @@ const val protocolVersion = "5.3"
 
 internal val log by lazy { getLogger() }
 
-val defaultRepositoriesCoordinates = defaultRepositories.map(::RepositoryCoordinates)
+val defaultRepositoriesCoordinates = defaultRepositories.map { RepositoryCoordinates(it.path) }
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))

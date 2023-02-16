@@ -65,7 +65,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val dependencies = mutableListOf<String>()
 
-        private val repositories = mutableListOf<String>()
+        private val repositories = mutableListOf<KernelRepository>()
 
         private val codePreprocessors = mutableListOf<CodePreprocessor>()
 
@@ -154,7 +154,21 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         fun repositories(vararg paths: String) {
-            repositories.addAll(paths)
+            for (path in paths) {
+                repository(path)
+            }
+        }
+
+        fun addRepository(repository: KernelRepository) {
+            repositories.add(repository)
+        }
+
+        fun repository(
+            path: String,
+            username: String? = null,
+            password: String? = null,
+        ) {
+            addRepository(KernelRepository(path, username, password))
         }
 
         fun onLoaded(callback: KotlinKernelHost.() -> Unit) {

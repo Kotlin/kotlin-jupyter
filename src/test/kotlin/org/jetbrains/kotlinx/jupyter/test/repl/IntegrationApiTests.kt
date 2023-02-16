@@ -10,10 +10,13 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.mavenLocal
+import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -251,5 +254,33 @@ class IntegrationApiTests {
 
         repl.eval("notebook.changeColorScheme(ColorScheme.LIGHT)")
         y shouldBe 3
+    }
+
+    @Test
+    fun `repositories with auth should generate correct code`() {
+        val lib = library {
+            repositories {
+                maven {
+                    url = "sftp://repo.mycompany.com:22/repo"
+                    credentials {
+                        username = "xx\"y"
+                        password = "678\n9"
+                    }
+                }
+
+                mavenLocal()
+            }
+
+            dependencies("my.group:dep:42")
+        }
+
+        val code = buildDependenciesInitCode(listOf(lib))
+
+        code shouldBe """
+            @file:Repository("*mavenLocal")
+            @file:Repository("sftp://repo.mycompany.com:22/repo", username="xx\"y", password="678\n9")
+            @file:DependsOn("my.group:dep:42")
+            
+        """.trimIndent()
     }
 }
