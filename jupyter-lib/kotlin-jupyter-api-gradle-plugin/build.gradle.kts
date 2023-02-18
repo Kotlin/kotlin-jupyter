@@ -69,8 +69,4 @@ pluginBundle {
             tags = listOf("jupyter", "kernel", "kotlin")
         }
     }
-
-    mavenCoordinates {
-        groupId = project.group.toString()
-    }
 }
