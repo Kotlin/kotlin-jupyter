@@ -158,6 +158,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                     library.init.forEach(::runChild)
                 }
                 library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
+                library.textRenderers.forEach { sharedContext.textRenderersProcessor.register(it.renderer, it.priority) }
                 library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
                 library.converters.forEach(sharedContext.fieldsProcessor::register)
                 library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)

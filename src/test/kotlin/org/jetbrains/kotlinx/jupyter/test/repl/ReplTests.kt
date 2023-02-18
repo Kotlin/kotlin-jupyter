@@ -37,7 +37,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testRepl() {
         eval("val x = 3")
         val res = eval("x*2")
-        res.resultValue shouldBe 6
+        res.renderedValue shouldBe 6
     }
 
     @Test
@@ -123,7 +123,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        res.resultValue shouldBe 1
+        res.renderedValue shouldBe 1
     }
 
     @Test
@@ -170,7 +170,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        res.resultValue shouldBe 42
+        res.renderedValue shouldBe 42
     }
 
     @Test
@@ -299,7 +299,7 @@ class ReplTests : AbstractSingleReplTest() {
             @file:CompilerArgs("-opt-in=kotlin.RequiresOptIn")
             """.trimIndent(),
         )
-        res.resultValue shouldBe Unit
+        res.renderedValue shouldBe Unit
 
         val actualErrors = repl.listErrorsBlocking(
             """
@@ -382,7 +382,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testOut() {
         eval("1+1", 1)
         val res = eval("Out[1]")
-        res.resultValue shouldBe 2
+        res.renderedValue shouldBe 2
         shouldThrowAny { eval("Out[3]") }
     }
 
@@ -418,14 +418,14 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testJavaRuntimeUtils() {
         val result = eval("JavaRuntimeUtils.version")
-        val resultVersion = result.resultValue
+        val resultVersion = result.renderedValue
         val expectedVersion = JavaRuntime.version
         resultVersion shouldBe expectedVersion
     }
 
     @Test
     fun testKotlinMath() {
-        val result = eval("2.0.pow(2.0)").resultValue
+        val result = eval("2.0.pow(2.0)").renderedValue
         result shouldBe 4.0
     }
 
@@ -443,7 +443,7 @@ class ReplTests : AbstractSingleReplTest() {
             Native.loadLibrary(RWMol::class, "$libName", "$testDataPath")
             MolFromSmiles("c1ccccc1")
             """.trimIndent(),
-        ).resultValue
+        ).renderedValue
 
         res.shouldNotBeNull()
         res::class.qualifiedName shouldBe "org.RDKit.RWMol"
@@ -456,7 +456,7 @@ class ReplTests : AbstractSingleReplTest() {
             val foo: (Int) -> Int = {it + 1}
             foo
             """.trimIndent(),
-        ).resultValue
+        ).renderedValue
         @Suppress("UNCHECKED_CAST")
         (res as (Int) -> Int)(1) shouldBe 2
     }
@@ -465,7 +465,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testAnonymousObjectRendering() {
         eval("42")
         eval("val sim = object : ArrayList<String>() {}")
-        val res = eval("sim").resultValue
+        val res = eval("sim").renderedValue
         res.toString() shouldBe "[]"
     }
 
@@ -478,7 +478,7 @@ class ReplTests : AbstractSingleReplTest() {
             sim.add("42")
             """.trimIndent(),
         )
-        val res = eval("sim").resultValue
+        val res = eval("sim").renderedValue
         res shouldBe 1
     }
 
@@ -492,20 +492,20 @@ class ReplTests : AbstractSingleReplTest() {
             
             Path.of(".").absolute()
             """.trimIndent(),
-        ).resultValue
+        ).renderedValue
         res.shouldBeInstanceOf<Path>()
     }
 
     @Test
     fun testArraysRendering() {
-        eval("intArrayOf(1, 2, 3)").resultValue.toString() shouldBe "[1, 2, 3]"
-        eval("arrayOf(1 to 2, 3 to 4)").resultValue.toString() shouldBe "[(1, 2), (3, 4)]"
-        eval("booleanArrayOf(true, false)").resultValue.toString() shouldBe "[true, false]"
+        eval("intArrayOf(1, 2, 3)").renderedValue.toString() shouldBe "[1, 2, 3]"
+        eval("arrayOf(1 to 2, 3 to 4)").renderedValue.toString() shouldBe "[(1, 2), (3, 4)]"
+        eval("booleanArrayOf(true, false)").renderedValue.toString() shouldBe "[true, false]"
     }
 
     @Test
     fun testOutVarRendering() {
-        eval("Out").resultValue.shouldNotBeNull()
+        eval("Out").renderedValue.shouldNotBeNull()
     }
 
     @Test
@@ -535,13 +535,13 @@ class ReplTests : AbstractSingleReplTest() {
             
             Child::class.simpleName
             """.trimIndent(),
-        ).resultValue shouldBe "Child"
+        ).renderedValue shouldBe "Child"
     }
 
     @Test
     fun testIssue360() {
         eval("val a = 1")
         eval("fun b() = a")
-        eval("b()").resultValue shouldBe 1
+        eval("b()").renderedValue shouldBe 1
     }
 }

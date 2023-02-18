@@ -4,16 +4,18 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererPriority
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlinx.jupyter.util.PriorityList
 
 class RenderersProcessorImpl(
     private val contextUpdater: ContextUpdater,
 ) : ResultsRenderersProcessor {
     private var counter = 0
-    private val renderers: MutableList<HandlerWithInfo> = mutableListOf()
+    private val renderers = PriorityList<HandlerWithInfo>()
 
     override tailrec fun renderResult(host: ExecutionHost, field: FieldValue): Any? {
         val value = field.value
@@ -40,21 +42,29 @@ class RenderersProcessorImpl(
     }
 
     override fun register(renderer: RendererHandler): Code? {
-        return register(renderer, true)
+        return register(renderer, RendererPriority.DEFAULT)
+    }
+
+    override fun register(renderer: RendererHandler, priority: Int): Code? {
+        return register(renderer, true, priority)
     }
 
     override fun registerWithoutOptimizing(renderer: RendererHandler) {
-        register(renderer, false)
+        registerWithoutOptimizing(renderer, RendererPriority.DEFAULT)
     }
 
-    private fun register(renderer: RendererHandler, doOptimization: Boolean): Code? {
+    override fun registerWithoutOptimizing(renderer: RendererHandler, priority: Int) {
+        register(renderer, false, priority)
+    }
+
+    private fun register(renderer: RendererHandler, doOptimization: Boolean, priority: Int): Code? {
         if (!doOptimization || renderer !is PrecompiledRendererTypeHandler || !renderer.mayBePrecompiled) {
-            renderers.add(HandlerWithInfo(renderer, null))
+            renderers.add(HandlerWithInfo(renderer, null), priority)
             return null
         }
 
         val id = counter++
-        renderers.add(HandlerWithInfo(renderer, id))
+        renderers.add(HandlerWithInfo(renderer, id), priority)
         val methodName = getMethodName(id)
         return renderer.precompile(methodName, "___value")
     }

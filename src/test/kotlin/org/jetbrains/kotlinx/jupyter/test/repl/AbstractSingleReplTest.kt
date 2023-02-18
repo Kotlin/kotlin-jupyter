@@ -9,7 +9,7 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
     protected abstract val repl: ReplForJupyter
 
     protected fun eval(code: Code, jupyterId: Int = -1, storeHistory: Boolean = true) =
-        repl.eval(EvalRequestData(code, jupyterId, storeHistory))
+        repl.evalEx(EvalRequestData(code, jupyterId, storeHistory))
 
     protected fun completeOrFail(code: Code, cursor: Int) = repl.completeBlocking(code, cursor).getOrFail()
 

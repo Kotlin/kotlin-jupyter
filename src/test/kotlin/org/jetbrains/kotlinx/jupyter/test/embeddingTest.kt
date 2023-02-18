@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
-import org.jetbrains.kotlinx.jupyter.execute
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -91,12 +90,12 @@ class EmbedReplTest : AbstractSingleReplTest() {
     @Test
     fun testSharedStaticVariables() {
         var res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
-        assertEquals(false, res.resultValue)
+        assertEquals(false, res.renderedValue)
 
         SomeSingleton.initialized = true
 
         res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
-        assertEquals(true, res.resultValue)
+        assertEquals(true, res.renderedValue)
     }
 
     @Test
@@ -105,23 +104,23 @@ class EmbedReplTest : AbstractSingleReplTest() {
         eval("val p = Point(1,1)")
 
         val res = eval("p.x")
-        assertEquals(1, res.resultValue)
+        assertEquals(1, res.renderedValue)
     }
 
     @Test
     fun testSubtypeRenderer() {
-        repl.execute {
+        repl.eval {
             addLibrary(testLibraryDefinition1)
         }
         val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
-        assertEquals(13, result1.resultValue)
+        assertEquals(13, result1.renderedValue)
         val result2 = eval(
             """
             import org.jetbrains.kotlinx.jupyter.test.TestFunList
             TestFunList(12, TestFunList(13, TestFunList(14, null)))
             """.trimIndent(),
         )
-        assertEquals("[12, 13, 14]", result2.resultValue)
+        assertEquals("[12, 13, 14]", result2.renderedValue)
     }
 }
 
@@ -134,7 +133,7 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
         val res = eval(
             "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
         )
-        assertTrue(res.resultValue is Unit)
+        assertTrue(res.renderedValue is Unit)
         assertEquals(1, displayHandler.list.size)
         val typedResult = displayHandler.list[0] as MimeTypedResult
         val content = typedResult["text/html"]!!

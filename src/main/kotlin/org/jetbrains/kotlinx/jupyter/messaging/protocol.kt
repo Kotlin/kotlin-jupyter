@@ -16,13 +16,10 @@ import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
-import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
-import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
@@ -35,9 +32,10 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.protocolVersion
-import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.rawToResponse
-import org.jetbrains.kotlinx.jupyter.repl.toResponse
+import org.jetbrains.kotlinx.jupyter.repl.renderValue
+import org.jetbrains.kotlinx.jupyter.repl.toDisplayResult
 import org.jetbrains.kotlinx.jupyter.runCommand
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.io.ByteArrayOutputStream
@@ -137,13 +135,8 @@ class SocketDisplayHandler(
 ) : DisplayHandler {
     private val socket = connection.iopub
 
-    private fun render(host: ExecutionHost, value: Any): DisplayResult? {
-        val renderedValue = notebook.renderersProcessor.renderValue(host, value)
-        return renderedValue.toDisplayResult(notebook)
-    }
-
     override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
-        val display = render(host, value)?.let { if (id != null) it.withId(id) else it } ?: return
+        val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
         val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
@@ -158,7 +151,7 @@ class SocketDisplayHandler(
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
-        val display = render(host, value) ?: return
+        val display = renderValue(notebook, host, value) ?: return
         val json = display.toJson(Json.EMPTY, null).toMutableMap()
 
         val container = notebook.displays
@@ -167,7 +160,8 @@ class SocketDisplayHandler(
             it.cell.displays.update(id, display)
         }
 
-        json.setDisplayId(id) ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
+        json.setDisplayId(id)
+            ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
 
         val content = DisplayDataResponse(
             json["data"],
@@ -315,7 +309,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                 } else {
                     val allowStdIn = (incomingMessage.content as? ExecuteRequest)?.allowStdin ?: true
                     evalWithIO(repl, rawIncomingMessage, allowStdIn) {
-                        repl.eval(
+                        repl.evalEx(
                             EvalRequestData(
                                 code,
                                 count.toInt(),
@@ -461,19 +455,11 @@ class CapturingOutputStream(
     }
 }
 
-fun Any?.toDisplayResult(notebook: Notebook): DisplayResult? = when (this) {
-    null -> textResult("null")
-    is DisplayResult -> this
-    is Renderable -> this.render(notebook)
-    is Unit -> null
-    else -> textResult(this.toString())
-}
-
 fun JupyterConnectionInternal.evalWithIO(
     repl: ReplForJupyter,
     incomingMessage: RawMessage,
     allowStdIn: Boolean,
-    body: () -> EvalResult?,
+    body: () -> EvalResultEx?,
 ): Response {
     val config = repl.outputConfig
     val out = System.out
@@ -520,7 +506,7 @@ fun JupyterConnectionInternal.evalWithIO(
                     AbortResponseWithMessage("NO REPL!")
                 } else {
                     try {
-                        res.result.toResponse(repl.notebook)
+                        rawToResponse(res.result.displayValue, res.result.metadata)
                     } catch (e: Exception) {
                         AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                     }
@@ -532,7 +518,7 @@ fun JupyterConnectionInternal.evalWithIO(
                 (ex as? ReplEvalRuntimeException)?.cause?.let { originalThrowable ->
                     repl.throwableRenderersProcessor.renderThrowable(originalThrowable)
                 }?.let { renderedThrowable ->
-                    rawToResponse(renderedThrowable, repl.notebook)
+                    rawToResponse(renderedThrowable.toDisplayResult(repl.notebook))
                 } ?: ErrorResponseWithMessage(
                     ex.render(),
                     ex.javaClass.canonicalName,

@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
-import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
@@ -66,7 +66,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
             """.trimIndent(),
         )
-        assertEquals("John Smith", res.resultValue)
+        assertEquals("John Smith", res.renderedValue)
         urlClassLoadersCount() shouldBe 2
 
         eval("val x = 2 + 2")
@@ -99,7 +99,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             x
             """.trimIndent(),
         )
-        assertEquals(42, res1.resultValue)
+        assertEquals(42, res1.renderedValue)
 
         val res2 = eval(
             """
@@ -107,11 +107,11 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             y
             """.trimIndent(),
         )
-        assertEquals(43, res2.resultValue)
+        assertEquals(43, res2.renderedValue)
 
         val res3 = eval("%use lets-plot@$libsCommit")
         assertEquals(1, displays.count())
-        assertUnit(res3.resultValue)
+        assertUnit(res3.renderedValue)
         displays.clear()
 
         val res4 = eval(
@@ -120,7 +120,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             z
             """.trimIndent(),
         )
-        assertEquals(44, res4.resultValue)
+        assertEquals(44, res4.renderedValue)
     }
 
     @Test
@@ -130,14 +130,14 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
             1
             """.trimIndent(),
-        ).resultValue
+        ).renderedValue
         assertEquals(1, res)
     }
 
     @Test
     fun testLibraryRequestsRecording() {
         eval("%use default")
-        val res = eval("notebook.libraryRequests").resultValue
+        val res = eval("notebook.libraryRequests").renderedValue
 
         res.shouldBeInstanceOf<List<LibraryResolutionRequest>>()
         res.shouldHaveSize(3)
@@ -174,7 +174,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        assertEquals(25, result.resultValue)
+        assertEquals(25, result.renderedValue)
         file.delete()
     }
 
@@ -184,11 +184,11 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         includeLib("lib1")
 
-        eval("xxx").resultValue shouldBe 1
-        shouldThrow<ReplCompilerException> { eval("yyy").resultValue }
+        eval("xxx").renderedValue shouldBe 1
+        shouldThrow<ReplCompilerException> { eval("yyy").renderedValue }
 
         includeLib("lib2")
-        eval("yyy").resultValue shouldBe 2
+        eval("yyy").renderedValue shouldBe 2
     }
 
     @Test
@@ -215,12 +215,12 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        var res: EvalResult? = null
+        var res: EvalResultEx? = null
         val resultThread = thread(contextClassLoader = repl.currentClassLoader) {
             res = eval("ds")
         }
         resultThread.join()
-        val resultValue = res?.resultValue
+        val resultValue = res?.renderedValue
         resultValue.shouldBeInstanceOf<MimeTypedResult>()
     }
 
@@ -274,7 +274,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             client
             """.trimIndent(),
         )
-        (client.resultValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
+        (client.renderedValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
     }
 
     @Test

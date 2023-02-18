@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.receivers.ConstReceiver
+import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.Test
@@ -13,7 +14,7 @@ class ReplWithReceiverTests : AbstractReplTest() {
         val value = 5
         val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
         val repl = createRepl(resolutionInfoProvider, cp, null, scriptReceivers = listOf(ConstReceiver(value)))
-        val res = repl.eval("value")
-        assertEquals(value, res.resultValue)
+        val res = repl.evalEx(EvalRequestData("value"))
+        assertEquals(value, res.rawValue)
     }
 }

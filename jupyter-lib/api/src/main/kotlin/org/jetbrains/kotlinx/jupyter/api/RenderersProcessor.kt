@@ -18,4 +18,6 @@ interface RenderersProcessor {
      * Don't turn on the optimizations for [PrecompiledRendererTypeHandler]
      */
     fun registerWithoutOptimizing(renderer: RendererHandler)
+
+    fun registerWithoutOptimizing(renderer: RendererHandler, priority: Int)
 }

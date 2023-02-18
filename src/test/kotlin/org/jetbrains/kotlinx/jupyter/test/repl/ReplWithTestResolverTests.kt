@@ -33,14 +33,14 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val res1 = eval(code1)
         assertEquals(1, displays.count())
         displays.clear()
-        assertUnit(res1.resultValue)
+        assertUnit(res1.renderedValue)
         val res2 = eval(code2)
         assertEquals(0, displays.count())
-        val mime = res2.resultValue as? MimeTypedResult
+        val mime = res2.renderedValue as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
         assertEquals("text/html", mime.entries.first().key)
-        assertNotNull(res2.resultValue)
+        assertNotNull(res2.renderedValue)
     }
 
     @Test
@@ -61,7 +61,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        val value = res.resultValue
+        val value = res.renderedValue
         assertTrue(value is MimeTypedResult)
 
         val html = value["text/html"]!!
@@ -95,7 +95,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        assertEquals("""{"x":42}""", serialized.resultValue)
+        assertEquals("""{"x":42}""", serialized.renderedValue)
     }
 
     @Test
@@ -109,7 +109,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     fun testKranglImportInfixFun() {
         eval("""%use krangl, lets-plot""")
         val res = eval(""" "a" to {it["a"]} """)
-        assertNotNull(res.resultValue)
+        assertNotNull(res.renderedValue)
     }
 
     @Test
@@ -121,7 +121,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
             """.trimIndent(),
         )
-        assertEquals("John Smith", res.resultValue)
+        assertEquals("John Smith", res.renderedValue)
     }
 
     @Test
@@ -129,7 +129,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val code1 = "val a: Int? = 3"
         eval(code1)
         val code2 = "a+2"
-        val res = eval(code2).resultValue
+        val res = eval(code2).renderedValue
         assertEquals(5, res)
     }
 
@@ -150,7 +150,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             parseRes?.age
             """.trimIndent(),
         )
-        assertEquals(23, res.resultValue)
+        assertEquals(23, res.renderedValue)
     }
 
     @Test

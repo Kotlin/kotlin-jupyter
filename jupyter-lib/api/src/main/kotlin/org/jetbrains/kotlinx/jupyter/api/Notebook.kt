@@ -110,6 +110,8 @@ interface Notebook {
      */
     val renderersProcessor: RenderersProcessor
 
+    val textRenderersProcessor: TextRenderersProcessor
+
     /**
      * All requests for libraries made during this session
      */

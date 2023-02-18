@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 
@@ -72,6 +73,13 @@ interface LibraryDefinition {
      * as it's generally more convenient
      */
     val renderers: List<RendererHandler>
+        get() = emptyList()
+
+    /**
+     * List of text renderers which are used as fallback rendering option.
+     * Check out README for more information
+     */
+    val textRenderers: List<TextRendererWithPriority>
         get() = emptyList()
 
     /**

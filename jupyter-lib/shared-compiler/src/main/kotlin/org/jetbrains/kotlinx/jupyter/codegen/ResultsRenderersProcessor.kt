@@ -19,4 +19,6 @@ interface ResultsRenderersProcessor : RenderersProcessor {
      * for [PrecompiledRendererTypeHandler]'s.
      */
     fun register(renderer: RendererHandler): Code?
+
+    fun register(renderer: RendererHandler, priority: Int): Code?
 }

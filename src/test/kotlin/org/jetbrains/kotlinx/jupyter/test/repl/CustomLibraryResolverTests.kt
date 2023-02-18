@@ -26,6 +26,8 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.test.evalRaw
+import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
@@ -55,7 +57,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val repl = makeRepl("mylib" to definition)
         val paramList = if (args.isEmpty()) ""
         else args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
-        repl.eval("%use mylib$paramList")
+        repl.evalRaw("%use mylib$paramList")
         return repl
     }
 
@@ -173,7 +175,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val libs = listOf(lib1, lib2).toLibraries()
         val replWithResolver = makeRepl(libs)
-        replWithResolver.eval("%use mylib, mylib2")
+        replWithResolver.evalRaw("%use mylib, mylib2")
         val results = replWithResolver.evalOnShutdown()
 
         assertEquals(4, results.size)
@@ -196,7 +198,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val libs = listOf(lib).toLibraries()
         val repl = makeRepl(libs)
 
-        repl.eval(
+        repl.evalRaw(
             """
             %use mylib
             USE {
@@ -205,7 +207,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             """.trimIndent(),
         )
 
-        val result = repl.eval("13").resultValue
+        val result = repl.evalRendered("13")
 
         result.shouldBeTypeOf<MimeTypedResult>()
         result["text/html"] shouldBe "<b>26</b>"
@@ -224,7 +226,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val libs = listOf(lib1).toLibraries()
         val replWithResolver = makeRepl(libs)
-        val exception = assertThrows<ReplPreprocessingException> { replWithResolver.eval("%use mylib") }
+        val exception = assertThrows<ReplPreprocessingException> { replWithResolver.evalRaw("%use mylib") }
 
         val message = exception.message!!
         Assertions.assertTrue(message.contains(minRequiredVersion))
@@ -431,15 +433,15 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             },
         )
 
-        repl.eval("42")
+        repl.evalRaw("42")
         val res = assertDoesNotThrow {
-            repl.eval(
+            repl.evalRendered(
                 """
                 "42"
                 """.trimIndent(),
             )
         }
-        assertNull(res.resultValue)
+        assertNull(res)
     }
 
     @Test
@@ -453,7 +455,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         )
 
         val e = assertThrows<ReplLibraryException> {
-            repl.eval("7")
+            repl.evalRaw("7")
         }
         assertEquals(LibraryProblemPart.BEFORE_CELL_CALLBACKS, e.part)
     }
@@ -468,7 +470,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val processor = repl.throwableRenderersProcessor
 
         val e1 = assertThrows<ReplEvalRuntimeException> {
-            repl.eval("throw IllegalArgumentException(\"42\")")
+            repl.evalRaw("throw IllegalArgumentException(\"42\")")
         }
         val display1 = processor.renderThrowable(e1.cause!!)
         display1.shouldBeInstanceOf<DisplayResult>()
@@ -476,7 +478,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         json shouldBe """{"data":{"text/plain":"42"},"metadata":{}}"""
 
         val e2 = assertThrows<ReplEvalRuntimeException> {
-            repl.eval("throw IndexOutOfBoundsException()")
+            repl.evalRaw("throw IndexOutOfBoundsException()")
         }
         val display2 = processor.renderThrowable(e2.cause!!)
         display2 shouldBe null
@@ -492,18 +494,18 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             },
         )
 
-        repl.eval(
+        repl.evalRaw(
             """
             val (a, b) = 1 to 's'
             val c = "42"
             """.trimIndent(),
         )
 
-        val res = repl.eval(
+        val res = repl.evalRaw(
             """
             gen_a + gen_b + gen_c
             """.trimIndent(),
-        ).resultValue!!
+        )
         res shouldBe 3
     }
 
@@ -527,12 +529,12 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             },
         )
 
-        val result = repl.eval(
+        val result = repl.evalRaw(
             """
             x3.add(2)
             x1 + x2
             """.trimIndent(),
-        ).resultValue
+        )
 
         assertEquals(42, result)
         assertEquals(listOf(1, 2), mutProp)
@@ -555,7 +557,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             },
         )
 
-        repl.eval(
+        repl.evalRaw(
             """
             var a = 42
             val _b = 11

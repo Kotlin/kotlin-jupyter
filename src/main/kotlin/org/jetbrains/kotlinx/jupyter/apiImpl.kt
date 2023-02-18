@@ -11,13 +11,14 @@ import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 
 interface MutableDisplayResultWithCell : DisplayResultWithCell {
@@ -60,6 +61,10 @@ interface MutableNotebook : Notebook {
     fun beginEvalSession()
 
     override val currentCell: MutableCodeCell?
+
+    override val renderersProcessor: ResultsRenderersProcessor
+
+    override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
 }
 
 class DisplayResultWrapper private constructor(
@@ -258,8 +263,11 @@ class NotebookImpl(
     override val lastCell: MutableCodeCell?
         get() = history(1)
 
-    override val renderersProcessor: RenderersProcessor
+    override val renderersProcessor: ResultsRenderersProcessor
         get() = sharedReplContext?.renderersProcessor ?: throw IllegalStateException("Type renderers processor is not initialized yet")
+
+    override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
+        get() = sharedReplContext?.textRenderersProcessor ?: throw IllegalStateException("Text renderers processor is not initialized yet")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()

@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.api.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
@@ -24,6 +25,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
@@ -61,12 +64,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
-import org.jetbrains.kotlinx.jupyter.repl.EvalResult
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.repl.ShutdownEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.ColorSchemeChangeCallbacksProcessorImpl
@@ -76,6 +79,7 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.InterruptionCallbacksProcessorImp
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.postRender
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
@@ -133,14 +137,11 @@ interface ReplOptions {
 
 interface ReplForJupyter {
 
-    fun eval(code: Code): EvalResult = eval(EvalRequestData(code))
-    fun eval(evalData: EvalRequestData): EvalResult
-
     fun <T> eval(execution: ExecutionCallback<T>): T
 
     fun evalEx(evalData: EvalRequestData): EvalResultEx
 
-    fun evalOnShutdown(): List<EvalResult>
+    fun evalOnShutdown(): List<ShutdownEvalResult>
 
     fun checkComplete(code: Code): CheckResult
 
@@ -178,10 +179,6 @@ interface ReplForJupyter {
 
     val isEmbedded: Boolean
         get() = false
-}
-
-fun <T> ReplForJupyter.execute(callback: ExecutionCallback<T>): T {
-    return eval(callback)
 }
 
 class ReplForJupyterImpl(
@@ -367,6 +364,10 @@ class ReplForJupyterImpl(
     @Suppress("unused")
     private val debugUtilityProvider = DebugUtilityProvider(notebook)
 
+    private val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion = TextRenderersProcessorImpl().apply {
+        //registerDefaultRenderers()
+    }
+
     private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
         registerDefaultRenderers()
     }
@@ -392,6 +393,7 @@ class ReplForJupyterImpl(
         fileAnnotationsProcessor,
         fieldsProcessor,
         renderersProcessor,
+        textRenderersProcessor,
         throwableRenderersProcessor,
         codePreprocessor,
         resourcesProcessor,
@@ -480,6 +482,10 @@ class ReplForJupyterImpl(
                 }
             }
 
+            val displayValue = log.catchAll {
+                notebook.postRender(rendered)
+            }
+
             val newClasspath = log.catchAll {
                 updateClasspath()
             } ?: emptyList()
@@ -496,15 +502,12 @@ class ReplForJupyterImpl(
             EvalResultEx(
                 result.result.value,
                 rendered,
+                displayValue,
                 result.scriptInstance,
                 result.result.name,
                 EvaluatedSnippetMetadata(newClasspath, newSources, compiledData, newImports, variablesStateUpdate),
             )
         }
-    }
-
-    override fun eval(evalData: EvalRequestData): EvalResult {
-        return evalEx(evalData).run { EvalResult(renderedValue, metadata) }
     }
 
     override fun <T> eval(execution: ExecutionCallback<T>): T {
@@ -513,14 +516,14 @@ class ReplForJupyterImpl(
         }
     }
 
-    override fun evalOnShutdown(): List<EvalResult> {
+    override fun evalOnShutdown(): List<ShutdownEvalResult> {
         return shutdownCodes.map {
             val res = log.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
                     executor.execute(it)
                 }
             }
-            EvalResult(res)
+            ShutdownEvalResult(res)
         }
     }
 

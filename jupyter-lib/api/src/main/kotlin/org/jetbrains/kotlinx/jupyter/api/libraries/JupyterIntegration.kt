@@ -23,6 +23,8 @@ import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.SubtypeThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.api.TextRenderer
+import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
@@ -42,6 +44,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
     class Builder(val notebook: Notebook) {
 
         private val renderers = mutableListOf<RendererHandler>()
+
+        private val textRenderers = mutableListOf<TextRendererWithPriority>()
 
         private val throwableRenderers = mutableListOf<ThrowableRenderer>()
 
@@ -86,6 +90,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         // Left for ABI compatibility
         fun addRenderer(handler: RendererTypeHandler) {
             renderers.add(handler)
+        }
+
+        fun addTextRenderer(renderer: TextRenderer) {
+            textRenderers.add(TextRendererWithPriority(renderer))
         }
 
         fun addThrowableRenderer(renderer: ThrowableRenderer) {
@@ -271,6 +279,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             libraryDefinition {
                 it.init = init
                 it.renderers = renderers
+                it.textRenderers = textRenderers
                 it.throwableRenderers = throwableRenderers
                 it.converters = converters
                 it.imports = imports

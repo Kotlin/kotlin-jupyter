@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
@@ -22,6 +23,7 @@ data class SharedReplContext(
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessor,
     val renderersProcessor: ResultsRenderersProcessor,
+    val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion,
     val throwableRenderersProcessor: ThrowableRenderersProcessor,
     val codePreprocessor: CompoundCodePreprocessor,
     val resourcesProcessor: LibraryResourcesProcessor,

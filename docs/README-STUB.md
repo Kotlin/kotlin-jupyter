@@ -276,6 +276,26 @@ HTML outputs can also be rendered with `HTML` helper function:
 fun HTML(text: String): MimeTypedResult
 ```
 
+### Rendering
+
+Rendering is a procedure of transforming of the value to the form that is appropriate for displaying in Jupyter client. Kernel supports several features that allow you to render values.
+
+#### Renderers
+
+Renderers can transform a value into another value. Library can define one or several renderers. Rendering with renderers is controlled via `RenderersProcessor`. You can access it via `notebook`. Renderers are applied until at least one renderer can be applied.
+
+#### DisplayResult and Renderable
+
+If object implements `DisplayResult` or `Renderable`, it will be rendered to output `JsonObject` via its own corresponding method.
+
+#### Text rendering
+
+Text renderers render objects to strings. Library can define one or several text renderers. Rendering with text renderers is controlled via `TextRenderersProcessor`. You can access it via `notebook`. Text renderers are applied until at least one renderer returns non-null string for a passed argument. This kind of renderers can be easily composed with each other. I.e. text renderer for iterables can render its elements with text renderers processor recursively.
+
+#### Common rendering semantics
+
+Evaluated value is firstly transformed with RenderersProcessor. Resulting value is checked. If it's Renderable or DisplayResult, it is transformed into output JSON using `toJson()` method. If it's Unit, the cell won't have result at all. Otherwise, value is passed to `TextRenderersProcessor`. It tries to render the value to string using defined text renderers having in mind their priority. If all the renderers returned null, value is transformed to string using `toString()`. Resulting string is wrapped to `text/plain` MIME JSON.  
+
 ### Autocompletion
 
 Press `TAB` to get the list of suggested items for completion. In Jupyter Notebook, you don't need to press `TAB`,

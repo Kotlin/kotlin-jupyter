@@ -11,6 +11,7 @@ enum class LibraryProblemPart(val message: String) {
     INIT("init codes"),
     RESOURCES("resources definitions"),
     RENDERERS("renderers"),
+    TEXT_RENDERERS("text renderers"),
     THROWABLE_RENDERERS("throwable renderers"),
     CONVERTERS("converters (fields callbacks)"),
     CLASS_ANNOTATIONS("class annotations callbacks"),

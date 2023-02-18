@@ -6,6 +6,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
@@ -19,6 +20,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.evalRaw
+import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
@@ -71,35 +74,35 @@ class IntegrationApiTests {
             %use mylib
             val l = listOf(1,2,3)
             """.trimIndent()
-        repl.eval(code1)
-        assertEquals(3, repl.eval("l.value2").resultValue)
+        repl.evalRaw(code1)
+        assertEquals(3, repl.evalRaw("l.value2"))
 
         // create list 'q' of the same size 3
-        repl.eval("val q = l.asReversed()")
-        assertEquals(1, repl.eval("q.value2").resultValue)
+        repl.evalRaw("val q = l.asReversed()")
+        assertEquals(1, repl.evalRaw("q.value2"))
 
         // check that 'l' and 'q' have the same types
         assertEquals(
             3,
-            repl.eval(
+            repl.evalRaw(
                 """var a = l
             a = q
             a.value0
                 """.trimMargin(),
-            ).resultValue,
+            ),
         )
 
         // create a list of size 6
-        repl.eval("val w = l + a")
-        assertEquals(3, repl.eval("w.value3").resultValue)
+        repl.evalRaw("val w = l + a")
+        assertEquals(3, repl.evalRendered("w.value3"))
 
         // check that 'value3' is not available for list 'l'
         assertThrows<ReplCompilerException> {
-            repl.eval("l.value3")
+            repl.evalRaw("l.value3")
         }
 
-        repl.eval("val e: List<Int>? = w.take(5)")
-        val res = repl.eval("e").resultValue
+        repl.evalRaw("val e: List<Int>? = w.take(5)")
+        val res = repl.evalRendered("e")
 
         assertEquals("TypedIntList5", res!!.javaClass.simpleName)
     }
@@ -123,19 +126,19 @@ class IntegrationApiTests {
     @Test
     fun `renderable objects`() {
         val repl = makeRepl()
-        repl.eval(
+        repl.evalRaw(
             """
             @file:DependsOn("src/test/testData/kotlin-jupyter-api-test-0.0.16.jar")
             """.trimIndent(),
         )
 
-        val res = repl.eval(
+        val res = repl.evalRendered(
             """
             ses.visualizeColor("red")
             """.trimIndent(),
         )
 
-        val result = res.resultValue as Renderable
+        val result = res as Renderable
         val json = result.render(repl.notebook).toJson(Json.EMPTY, null)
         val jsonData = json["data"] as JsonObject
         val htmlString = jsonData["text/html"] as JsonPrimitive
@@ -154,21 +157,19 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
         val repl = makeRepl(libs.toLibraries())
-        repl.eval("%use lib(a = 42, b=foo)")
+        repl.evalRaw("%use lib(a = 42, b=foo)")
 
-        val res = repl.eval("integrationOptions")
+        val res = repl.evalRaw("integrationOptions")
+        res.shouldBeInstanceOf<Map<String, String>>()
 
-        val result = res.resultValue
-        result.shouldBeInstanceOf<Map<String, String>>()
-
-        result["a"] shouldBe "42"
-        result["b"] shouldBe "foo"
+        res["a"] shouldBe "42"
+        res["b"] shouldBe "foo"
     }
 
     @Test
     fun `notebook API inside renderer`() {
         val repl = makeRepl()
-        repl.eval(
+        repl.evalRaw(
             """
             USE {
                 render<Number> { "${"$"}{notebook?.currentCell?.internalId}. ${"$"}{it.toLong() * 10}" }
@@ -176,14 +177,14 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        assertEquals("1. 420", repl.eval("42.1").resultValue)
-        assertEquals("2. 150", repl.eval("15").resultValue)
+        assertEquals("1. 420", repl.evalRendered("42.1"))
+        assertEquals("2. 150", repl.evalRendered("15"))
     }
 
     @Test
     fun `rendering processor should work fine`() {
         val repl = makeRepl()
-        repl.eval(
+        repl.evalRaw(
             """
             class A
             class B(val a: A)
@@ -195,14 +196,14 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        val result = repl.eval("B(A())")
-        assertEquals("iB: iA", result.resultValue)
+        val result = repl.evalRendered("B(A())")
+        assertEquals("iB: iA", result)
     }
 
     @Test
     fun `code preprocessing`() {
         val repl = makeRepl()
-        repl.eval(
+        repl.evalRaw(
             """
             USE {
                 preprocessCode { it.replace('b', 'x') }
@@ -210,8 +211,8 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        val result = repl.eval("\"abab\"")
-        assertEquals("axax", result.resultValue)
+        val result = repl.evalEx(EvalRequestData("\"abab\""))
+        assertEquals("axax", result.rawValue)
     }
 
     @Test
@@ -223,11 +224,11 @@ class IntegrationApiTests {
             },
         )
 
-        repl.eval("%use lib1")
+        repl.evalRaw("%use lib1")
         x shouldBe 0
 
         shouldThrow<ReplEvalRuntimeException> {
-            repl.eval("throw java.lang.ThreadDeath()")
+            repl.evalRaw("throw java.lang.ThreadDeath()")
         }
         x shouldBe 1
     }
@@ -246,13 +247,13 @@ class IntegrationApiTests {
             },
         )
 
-        repl.eval("%use lib1")
+        repl.evalRaw("%use lib1")
         y shouldBe 2
 
         repl.notebook.changeColorScheme(ColorScheme.DARK)
         y shouldBe 4
 
-        repl.eval("notebook.changeColorScheme(ColorScheme.LIGHT)")
+        repl.evalRaw("notebook.changeColorScheme(ColorScheme.LIGHT)")
         y shouldBe 3
     }
 

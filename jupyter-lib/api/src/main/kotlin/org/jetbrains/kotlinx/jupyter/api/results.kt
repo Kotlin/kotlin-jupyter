@@ -154,6 +154,15 @@ open class MimeTypedResultEx(
         result.setDisplayId(overrideId ?: id)
         return Json.encodeToJsonElement(result) as JsonObject
     }
+
+    override fun toString(): String {
+        return jsonPrettyPrinter.encodeToString(toJson(Json.EMPTY, null))
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is MimeTypedResultEx) return false
+        return toJson(Json.EMPTY, null) == other.toJson(Json.EMPTY, null)
+    }
 }
 
 // Convenience methods for displaying results

@@ -12,7 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.session.JupyterSessionInfo
-import org.jetbrains.kotlinx.jupyter.repl.EvalResult
+import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 class ApiTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
 
-    private fun jEval(jupyterId: Int, code: String): EvalResult {
+    private fun jEval(jupyterId: Int, code: String): EvalResultEx {
         return eval(code, jupyterId = jupyterId)
     }
 
@@ -39,9 +39,9 @@ class ApiTest : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         val res1 = jEval(4, "notebook.getCell(2)?.result")
-        assertEquals(6, res1.resultValue)
+        assertEquals(6, res1.rawValue)
         val res2 = jEval(5, "notebook.getResult(2)")
-        assertEquals(6, res2.resultValue)
+        assertEquals(6, res2.rawValue)
     }
 
     @Test
@@ -79,7 +79,7 @@ class ApiTest : AbstractSingleReplTest() {
             "y" to "abc",
             "z" to "47",
         )
-        val htmlText = eval("notebook.variablesReportAsHTML").resultValue
+        val htmlText = eval("notebook.variablesReportAsHTML").renderedValue
         htmlText.shouldBeTypeOf<MimeTypedResult>()
         assertEquals(
             """
@@ -127,7 +127,7 @@ class ApiTest : AbstractSingleReplTest() {
 
             JSON(jsonStr)
             """.trimIndent(),
-        ).resultValue
+        ).renderedValue
         res.shouldBeInstanceOf<MimeTypedResultEx>()
         val displayJson = res.toJson(overrideId = null)
 
