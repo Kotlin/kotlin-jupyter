@@ -2,7 +2,6 @@
 
 rootProject.name = "kotlin-jupyter-kernel"
 
-enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 includeBuild("build-plugin")
