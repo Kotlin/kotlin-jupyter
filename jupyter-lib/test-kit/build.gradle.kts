@@ -18,9 +18,7 @@ dependencies {
 
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
-    withTests {
-        mustRunAfter(':' + build.SHADOW_JAR_TASK)
-    }
+    withTests()
 }
 
 kotlinPublications {

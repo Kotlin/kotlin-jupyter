@@ -27,9 +27,6 @@ sourceSets {
     }
 }
 
-val myJvmTarget = libs.versions.jvmTarget.get()
-val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
-
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         apiVersion = "1.4"
@@ -38,13 +35,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         @Suppress("SuspiciousCollectionReassignment")
         freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
 
-        this.jvmTarget = myJvmTarget
-    }
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(myJvmTargetInt))
+        jvmTarget = libs.versions.jvmTarget.get()
     }
 }
 

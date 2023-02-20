@@ -2,10 +2,7 @@
 
 rootProject.name = "kotlin-jupyter-kernel"
 
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.4.0")
-}
-
+enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 includeBuild("build-plugin")
