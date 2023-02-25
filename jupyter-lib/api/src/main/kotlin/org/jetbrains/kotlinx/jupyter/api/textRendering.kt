@@ -7,6 +7,12 @@ fun interface TextRenderer {
     fun render(processor: TextRenderersProcessor, value: Any?): String?
 }
 
+class TextRendererWithDescription(private val description: String, action: TextRenderer) : TextRenderer by action {
+    override fun toString(): String {
+        return "Text renderer: $description"
+    }
+}
+
 class TextRendererWithPriority(
     val renderer: TextRenderer,
     val priority: Int = RendererPriority.DEFAULT,
@@ -25,16 +31,20 @@ private fun String.indent(indent: String = "    ", exceptFirst: Boolean = false)
 }
 
 object TextRenderers {
-    val NULL = TextRenderer { _, value -> if (value == null) "null" else null }
-    val PRIMITIVES = TextRenderer { _, value ->
+    val NULL = TextRendererWithDescription("renders null") { _, value ->
+        if (value == null) "null" else null
+    }
+
+    val PRIMITIVES = TextRendererWithDescription("renders strings, booleans and numbers") { _, value ->
         when (value) {
             is String -> value
             is Number -> value.toString()
+            is Boolean -> value.toString()
             else -> null
         }
     }
 
-    val ITERABLES = TextRenderer { processor, value ->
+    val ITERABLES = TextRendererWithDescription("renders iterables, elements are rendered transitively") { processor, value ->
         if (value !is Iterable<*>) {
             null
         } else {
@@ -46,7 +56,7 @@ object TextRenderers {
         }
     }
 
-    val MAPS = TextRenderer { processor, value ->
+    val MAPS = TextRendererWithDescription("renders maps, keys and values are rendered transitively") { processor, value ->
         if (value !is Map<*, *>) {
             null
         } else {
@@ -54,7 +64,7 @@ object TextRenderers {
         }
     }
 
-    val CLASS = TextRenderer { _, value ->
+    val CLASS = TextRendererWithDescription("renders KClass<*> objects") { _, value ->
         if (value !is KClass<*>) {
             null
         } else {
@@ -62,7 +72,7 @@ object TextRenderers {
         }
     }
 
-    val OBJECT = TextRenderer { processor, value ->
+    val OBJECT = TextRendererWithDescription("renders any objects") { processor, value ->
         if (value == null) {
             null
         } else {
@@ -78,7 +88,7 @@ object TextRenderers {
         }
     }
 
-    val AVOID = TextRenderer { _, value ->
+    val AVOID = TextRendererWithDescription("skips text rendering for some kinds of objects such as java.lang.Class") { _, value ->
         if (value == null) {
             null
         } else {

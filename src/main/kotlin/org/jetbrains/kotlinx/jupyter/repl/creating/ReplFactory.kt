@@ -32,7 +32,7 @@ abstract class ReplFactory {
             connection.debugPort,
         ).also { repl ->
             commHandlers.forEach { handler ->
-                repl.notebook.commManager.registerCommTarget(handler.targetId) { comm, data ->
+                repl.notebook.commManager.registerCommTarget(handler.targetId) { comm, _ ->
                     // handler.onReceive(comm, data, repl) // maybe send right away?
 
                     comm.onMessage {

@@ -23,5 +23,22 @@ class AuxTests {
             "default 1",
             "lower",
         )
+
+        list.remove("default 1")
+        list.elements().toSet() shouldBe setOf(
+            "highest 2",
+            "highest",
+            "default 2",
+            "lower",
+        )
+
+        list.add("default 3", RendererPriority.DEFAULT)
+        list.elementsWithPriority() shouldBe listOf(
+            "highest" to RendererPriority.HIGHEST,
+            "lower" to RendererPriority.LOWER,
+            "highest 2" to RendererPriority.HIGHEST,
+            "default 2" to RendererPriority.DEFAULT,
+            "default 3" to RendererPriority.DEFAULT,
+        )
     }
 }

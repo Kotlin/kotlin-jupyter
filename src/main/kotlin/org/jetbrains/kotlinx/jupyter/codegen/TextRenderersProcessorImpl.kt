@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
 import org.jetbrains.kotlinx.jupyter.api.TextRenderer
+import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.util.PriorityList
@@ -11,6 +12,14 @@ class TextRenderersProcessorImpl : TextRenderersProcessorWithPreventingRecursion
 
     override fun register(renderer: TextRenderer, priority: Int) {
         renderers.add(renderer, priority)
+    }
+
+    override fun remove(renderer: TextRenderer) {
+        renderers.remove(renderer)
+    }
+
+    override fun registeredRenderers(): List<TextRendererWithPriority> {
+        return renderers.elementsWithPriority().map { TextRendererWithPriority(it.first, it.second) }
     }
 
     override fun render(value: Any?): String {

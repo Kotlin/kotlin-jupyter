@@ -156,6 +156,7 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
 
 inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererTypeHandler {
     return SubtypeRendererTypeHandler(kClass) { _, result ->
+        @Suppress("UNCHECKED_CAST")
         FieldValue(renderAction(result.value as T), null)
     }
 }

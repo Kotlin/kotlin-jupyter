@@ -55,4 +55,7 @@ class TextRenderingTests {
         a.parent = c
         doTest(b, "Node(parent=Node(parent=Node(parent=<recursion prevented>, d=3), d=1), d=2)")
     }
+
+    @Test
+    fun `boolean rendering`() = doTest(true, "true")
 }
