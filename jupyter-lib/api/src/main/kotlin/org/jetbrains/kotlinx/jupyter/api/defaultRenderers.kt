@@ -38,4 +38,8 @@ val arrayRenderer = object : RendererHandler {
 
     override val execution = ResultHandlerExecution { _, result -> FieldValue(toListRuntime(result.value!!), null) }
     override fun replaceVariables(mapping: Map<String, String>) = this
+
+    override fun toString(): String {
+        return "Default renderer of arrays: renders them to lists"
+    }
 }

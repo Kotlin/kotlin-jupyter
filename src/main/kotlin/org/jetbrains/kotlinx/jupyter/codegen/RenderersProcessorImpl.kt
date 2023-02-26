@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererHandlerWithPriority
 import org.jetbrains.kotlinx.jupyter.api.RendererPriority
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
@@ -67,6 +68,21 @@ class RenderersProcessorImpl(
         renderers.add(HandlerWithInfo(renderer, id), priority)
         val methodName = getMethodName(id)
         return renderer.precompile(methodName, "___value")
+    }
+
+    override fun registeredRenderers(): List<RendererHandlerWithPriority> {
+        return renderers.elementsWithPriority().map {
+            RendererHandlerWithPriority(it.first.handler, it.second)
+        }
+    }
+
+    override fun unregister(renderer: RendererHandler) {
+        val rendererInfosToRemove = renderers.elements().filter {
+            it.handler === renderer
+        }
+        for (rendererInfo in rendererInfosToRemove) {
+            renderers.remove(rendererInfo)
+        }
     }
 
     private fun getMethodName(id: Int) = "___renderResult$id"

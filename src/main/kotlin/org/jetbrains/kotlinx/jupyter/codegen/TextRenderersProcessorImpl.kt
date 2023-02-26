@@ -14,7 +14,7 @@ class TextRenderersProcessorImpl : TextRenderersProcessorWithPreventingRecursion
         renderers.add(renderer, priority)
     }
 
-    override fun remove(renderer: TextRenderer) {
+    override fun unregister(renderer: TextRenderer) {
         renderers.remove(renderer)
     }
 

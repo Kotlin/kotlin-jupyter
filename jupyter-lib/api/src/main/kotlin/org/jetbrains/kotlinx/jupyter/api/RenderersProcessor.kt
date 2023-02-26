@@ -20,4 +20,8 @@ interface RenderersProcessor {
     fun registerWithoutOptimizing(renderer: RendererHandler)
 
     fun registerWithoutOptimizing(renderer: RendererHandler, priority: Int)
+
+    fun unregister(renderer: RendererHandler)
+
+    fun registeredRenderers(): List<RendererHandlerWithPriority>
 }

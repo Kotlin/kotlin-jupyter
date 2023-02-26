@@ -18,6 +18,11 @@ fun interface ResultHandlerExecution : VariablesSubstitutionAware<ResultHandlerE
 
 data class FieldValue(val value: Any?, val name: String?)
 
+data class RendererHandlerWithPriority(
+    val renderer: RendererHandler,
+    val priority: Int = RendererPriority.DEFAULT,
+)
+
 /**
  * Execution represented by code snippet.
  * This snippet should return the value.
@@ -101,6 +106,10 @@ interface PrecompiledRendererTypeHandler : RendererTypeHandler {
 open class AlwaysRendererTypeHandler(override val execution: ResultHandlerExecution) : RendererTypeHandler {
     override fun acceptsType(type: KClass<*>): Boolean = true
     override fun replaceVariables(mapping: Map<String, String>) = this
+
+    override fun toString(): String {
+        return "Renderer of any type${execution.asTextSuffix()}"
+    }
 }
 
 /**
@@ -117,6 +126,10 @@ class ExactRendererTypeHandler(val className: TypeName, override val execution: 
 
     override fun replaceVariables(mapping: Map<String, String>): RendererTypeHandler {
         return ExactRendererTypeHandler(className, execution.replaceVariables(mapping))
+    }
+
+    override fun toString(): String {
+        return "Exact renderer of $className${execution.asTextSuffix()}"
     }
 }
 
@@ -152,6 +165,10 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {
         return SubtypeRendererTypeHandler(superType, execution.replaceVariables(mapping))
     }
+
+    override fun toString(): String {
+        return "Renderer of subtypes of $superType${execution.asTextSuffix()}"
+    }
 }
 
 inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererTypeHandler {
@@ -163,4 +180,10 @@ inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction:
 
 inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererTypeHandler {
     return createRenderer(T::class, renderAction)
+}
+
+private fun ResultHandlerExecution.asTextSuffix(): String {
+    return (this as? ResultHandlerCodeExecution)
+        ?.let { " with execution=[$code]" }
+        .orEmpty()
 }

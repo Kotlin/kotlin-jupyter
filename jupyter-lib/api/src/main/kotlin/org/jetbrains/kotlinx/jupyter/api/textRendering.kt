@@ -13,7 +13,7 @@ class TextRendererWithDescription(private val description: String, action: TextR
     }
 }
 
-class TextRendererWithPriority(
+data class TextRendererWithPriority(
     val renderer: TextRenderer,
     val priority: Int = RendererPriority.DEFAULT,
 )
