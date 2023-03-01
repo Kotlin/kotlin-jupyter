@@ -212,11 +212,6 @@ data class HtmlData(val style: String, val body: String, val script: String) {
 
     fun toSimpleHtml(colorScheme: ColorScheme?, isolated: Boolean = false): MimeTypedResult = HTML(toString(colorScheme), isolated)
     fun toIFrame(colorScheme: ColorScheme?): MimeTypedResult {
-        val iFramedText = generateIframePlaneText(colorScheme)
-        return htmlResult(iFramedText, false)
-    }
-    
-    fun generateIframePlaneText(colorScheme: ColorScheme?): String {
         @Suppress("CssUnresolvedCustomProperty")
         @Language("css")
         val styleData = HtmlData(
@@ -269,8 +264,7 @@ data class HtmlData(val style: String, val body: String, val script: String) {
                 }
             </script>
         """.trimIndent()
-
-        return iFramedText
+        return htmlResult(iFramedText, false)
     }
 
     operator fun plus(other: HtmlData): HtmlData =
