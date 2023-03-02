@@ -8,8 +8,6 @@ import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
-import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
-import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
@@ -31,7 +29,6 @@ import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
 import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 import org.jetbrains.kotlinx.jupyter.util.NameAcceptanceRule
-import kotlin.reflect.KMutableProperty
 
 /**
  * Base class for library integration with Jupyter Kernel via DSL
@@ -196,20 +193,19 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         inline fun <reified T : Any> onVariable(noinline callback: VariableDeclarationCallback<T>) {
-            val execution = FieldHandlerExecution(callback)
-            addTypeConverter(FieldHandlerByClass(T::class, execution))
+            addTypeConverter(FieldHandlerFactory.createDeclareHandler(TypeDetection.COMPILE_TIME, callback))
         }
 
         inline fun <reified T : Any> updateVariable(noinline callback: VariableUpdateCallback<T>) {
-            val execution = FieldHandlerExecution<T> { host, value, property ->
-                val tempField = callback(host, value, property)
-                if (tempField != null) {
-                    val valOrVar = if (property is KMutableProperty) "var" else "val"
-                    val redeclaration = "$valOrVar ${property.name} = $tempField"
-                    host.execute(redeclaration)
-                }
-            }
-            addTypeConverter(FieldHandlerByClass(T::class, execution))
+            addTypeConverter(FieldHandlerFactory.createUpdateHandler(TypeDetection.COMPILE_TIME, callback))
+        }
+
+        inline fun <reified T : Any> onVariableByRuntimeType(noinline callback: VariableDeclarationCallback<T>) {
+            addTypeConverter(FieldHandlerFactory.createDeclareHandler(TypeDetection.RUNTIME, callback))
+        }
+
+        inline fun <reified T : Any> updateVariableByRuntimeType(noinline callback: VariableUpdateCallback<T>) {
+            addTypeConverter(FieldHandlerFactory.createUpdateHandler(TypeDetection.RUNTIME, callback))
         }
 
         inline fun <reified T : Annotation> onClassAnnotation(noinline callback: ClassDeclarationsCallback) {

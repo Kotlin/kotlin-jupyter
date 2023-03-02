@@ -50,7 +50,7 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
                     continue
                 }
                 val function = method.kotlinFunction ?: continue
-                context.functions[function.name] = KotlinFunctionInfo(function, line)
+                context.addFunction(function.name, KotlinFunctionInfo(function, line))
             }
         }
     }
@@ -75,7 +75,7 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
             val value = field.get(o)
             val descriptor = field.kotlinProperty
             if (descriptor != null) {
-                context.vars[fieldName] = KotlinVariableInfo(value, descriptor, o)
+                context.addVariable(fieldName, KotlinVariableInfo(value, descriptor, o))
             }
         }
     }

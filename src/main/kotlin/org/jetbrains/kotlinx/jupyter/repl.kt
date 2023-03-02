@@ -14,12 +14,13 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
+import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
-import org.jetbrains.kotlinx.jupyter.api.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
@@ -376,7 +377,9 @@ class ReplForJupyterImpl(
 
     override val throwableRenderersProcessor: ThrowableRenderersProcessor = ThrowableRenderersProcessorImpl()
 
-    private val fieldsProcessor: FieldsProcessor = FieldsProcessorImpl(contextUpdater)
+    private val fieldsProcessor: FieldsProcessorInternal = FieldsProcessorImpl(contextUpdater).apply {
+        register(NullabilityEraser, ProcessingPriority.LOWEST)
+    }
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
@@ -419,6 +422,7 @@ class ReplForJupyterImpl(
                 action()
             } finally {
                 evalContextEnabled = false
+                ctx.cellExecutionFinished()
             }
         }
     }

@@ -1,17 +1,26 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.util.isSubclassOfCatching
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.withNullability
 
 typealias VariableDeclarationCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> Unit
 
 typealias VariableName = String
 
 typealias VariableUpdateCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> VariableName?
+
+/**
+ * This prefix is used for creating temporary properties names,
+ * and variables which names start from this prefix are not processed by [FieldHandler] processor
+ */
+const val TEMP_PROPERTY_PREFIX = "___"
 
 fun interface FieldHandlerExecution<T> {
 
@@ -20,22 +29,91 @@ fun interface FieldHandlerExecution<T> {
 
 interface FieldHandler {
     /**
+     * Tells if this handler accepts the given property
+     * Called for each variable in the cells executed by users,
+     * except those names are starting from [TEMP_PROPERTY_PREFIX]
+     * or those that have been already consumed by another handler
+     *
+     * @param value Property value
+     * @param property Property compile-time information
+     */
+    fun accepts(value: Any?, property: KProperty<*>): Boolean
+
+    /**
+     * Execution to handle conversion.
+     * Should not throw if [accepts] returns true
+     * Called for each property for which [accepts] returned true
+     */
+    val execution: FieldHandlerExecution<*>
+
+    /**
+     * Called one time per cell after all the variables have been processed,
+     * and only if this handler accepted at least one variable
+     *
+     * @param host Host for running executions
+     */
+    fun finalize(host: KotlinKernelHost) {}
+}
+
+data class FieldHandlerWithPriority(
+    val handler: FieldHandler,
+    val priority: Int,
+)
+
+interface CompileTimeFieldHandler : FieldHandler {
+    /**
      * Returns true if this converter accepts [type], false otherwise
      */
     fun acceptsType(type: KType): Boolean
 
-    /**
-     * Execution to handle conversion.
-     * Should not throw if [acceptsType] returns true
-     */
-    val execution: FieldHandlerExecution<*>
+    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+        return acceptsType(property.returnType.withNullability(false))
+    }
 }
 
 class FieldHandlerByClass(
     private val kClass: KClass<out Any>,
     override val execution: FieldHandlerExecution<*>,
-) : FieldHandler {
+) : CompileTimeFieldHandler {
     override fun acceptsType(type: KType) = type.isSubtypeOf(kClass.starProjectedType)
+}
+
+class FieldHandlerByRuntimeClass<T : Any>(
+    private val kClass: KClass<T>,
+    override val execution: FieldHandlerExecution<*>,
+) : FieldHandler {
+    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+        if (value == null) return false
+        val valueClass = value::class
+        return valueClass.isSubclassOfCatching(kClass)
+    }
+}
+
+object NullabilityEraser : FieldHandler {
+    private val initCodes = mutableListOf<Code>()
+    private val conversionCodes = mutableListOf<Code>()
+
+    override val execution: FieldHandlerExecution<Any?> = FieldHandlerExecution { _, _, property ->
+        val propName = property.name
+        val tempVarName = TEMP_PROPERTY_PREFIX + propName
+        val valOrVar = if (property is KMutableProperty) "var" else "val"
+        initCodes.add("val $tempVarName = $propName")
+        conversionCodes.add("$valOrVar $propName = $tempVarName!!")
+    }
+
+    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+        return value != null && property.returnType.isMarkedNullable
+    }
+
+    override fun finalize(host: KotlinKernelHost) {
+        try {
+            host.execute(initCodes.joinToString("\n"))
+            host.execute(conversionCodes.joinToString("\n"))
+        } finally {
+            initCodes.clear()
+            conversionCodes.clear()
+        }
+    }
 }
 
 data class VariableDeclaration(

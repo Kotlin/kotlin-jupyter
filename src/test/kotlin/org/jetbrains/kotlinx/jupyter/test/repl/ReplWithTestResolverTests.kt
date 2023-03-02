@@ -126,11 +126,15 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testNullableErasure() {
-        val code1 = "val a: Int? = 3"
-        eval(code1)
-        val code2 = "a+2"
+        eval(
+            """
+            val a: Int? = 3
+            val b: String? = a.toString()
+            """.trimIndent(),
+        )
+        val code2 = "a + 2 + b.toInt()"
         val res = eval(code2).renderedValue
-        assertEquals(5, res)
+        assertEquals(8, res)
     }
 
     @Test

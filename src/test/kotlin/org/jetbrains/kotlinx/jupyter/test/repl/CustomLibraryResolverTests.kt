@@ -486,13 +486,20 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
     @Test
     fun testUpdateVariable() {
+        var listInvocationCounter = 0
+
         val repl = testOneLibUsage(
             library {
                 onVariable<Any> { _, prop ->
                     execute("val gen_${prop.name} = 1")
                 }
+                onVariable<List<Int>> { _, _ ->
+                    ++listInvocationCounter
+                }
             },
         )
+
+        repl.evalRaw("val ls = listOf(1, 2)")
 
         repl.evalRaw(
             """
@@ -507,6 +514,10 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             """.trimIndent(),
         )
         res shouldBe 3
+
+        // List variables updater should be applied only once
+        // because there is only one declaration of the list variable
+        listInvocationCounter shouldBe 1
     }
 
     @Test

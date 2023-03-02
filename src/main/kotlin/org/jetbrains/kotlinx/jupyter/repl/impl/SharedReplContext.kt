@@ -4,7 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessor
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
@@ -21,7 +21,7 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 data class SharedReplContext(
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
-    val fieldsProcessor: FieldsProcessor,
+    val fieldsProcessor: FieldsProcessorInternal,
     val renderersProcessor: ResultsRenderersProcessor,
     val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion,
     val throwableRenderersProcessor: ThrowableRenderersProcessor,

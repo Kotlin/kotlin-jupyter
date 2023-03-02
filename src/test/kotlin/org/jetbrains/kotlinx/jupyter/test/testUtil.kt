@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
@@ -257,6 +258,9 @@ object NotebookMock : Notebook {
         get() = error("Not supposed to be called")
 
     override val textRenderersProcessor: TextRenderersProcessor
+        get() = error("Not supposed to be called")
+
+    override val fieldsHandlersProcessor: FieldsProcessor
         get() = error("Not supposed to be called")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>

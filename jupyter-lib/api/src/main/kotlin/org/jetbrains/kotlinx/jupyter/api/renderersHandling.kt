@@ -20,7 +20,7 @@ data class FieldValue(val value: Any?, val name: String?)
 
 data class RendererHandlerWithPriority(
     val renderer: RendererHandler,
-    val priority: Int = RendererPriority.DEFAULT,
+    val priority: Int = ProcessingPriority.DEFAULT,
 )
 
 /**

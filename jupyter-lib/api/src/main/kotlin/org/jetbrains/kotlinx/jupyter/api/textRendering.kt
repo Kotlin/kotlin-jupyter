@@ -15,7 +15,7 @@ class TextRendererWithDescription(private val description: String, action: TextR
 
 data class TextRendererWithPriority(
     val renderer: TextRenderer,
-    val priority: Int = RendererPriority.DEFAULT,
+    val priority: Int = ProcessingPriority.DEFAULT,
 )
 
 private fun String.indent(indent: String = "    ", exceptFirst: Boolean = false): String {
@@ -184,11 +184,11 @@ object TextRenderers {
 }
 
 fun TextRenderersProcessor.registerDefaultRenderers() {
-    register(TextRenderers.NULL, RendererPriority.DEFAULT)
-    register(TextRenderers.MAPS, RendererPriority.DEFAULT)
-    register(TextRenderers.ITERABLES, RendererPriority.LOW)
-    register(TextRenderers.PRIMITIVES, RendererPriority.DEFAULT)
-    register(TextRenderers.CLASS, RendererPriority.DEFAULT)
-    register(TextRenderers.OBJECT, RendererPriority.LOWER)
-    register(TextRenderers.AVOID, RendererPriority.HIGH)
+    register(TextRenderers.NULL, ProcessingPriority.DEFAULT)
+    register(TextRenderers.MAPS, ProcessingPriority.DEFAULT)
+    register(TextRenderers.ITERABLES, ProcessingPriority.LOW)
+    register(TextRenderers.PRIMITIVES, ProcessingPriority.DEFAULT)
+    register(TextRenderers.CLASS, ProcessingPriority.DEFAULT)
+    register(TextRenderers.OBJECT, ProcessingPriority.LOWER)
+    register(TextRenderers.AVOID, ProcessingPriority.HIGH)
 }

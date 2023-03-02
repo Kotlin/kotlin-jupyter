@@ -112,6 +112,8 @@ interface Notebook {
 
     val textRenderersProcessor: TextRenderersProcessor
 
+    val fieldsHandlersProcessor: FieldsProcessor
+
     /**
      * All requests for libraries made during this session
      */

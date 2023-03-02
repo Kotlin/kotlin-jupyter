@@ -88,7 +88,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             if (processVariables) {
                 log.catchAll {
-                    fieldsProcessor.process(context).forEach(context::execute)
+                    fieldsProcessor.process(context)
                 }
             }
 

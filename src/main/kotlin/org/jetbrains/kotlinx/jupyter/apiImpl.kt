@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
@@ -65,6 +66,8 @@ interface MutableNotebook : Notebook {
     override val renderersProcessor: ResultsRenderersProcessor
 
     override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
+
+    override val fieldsHandlersProcessor: FieldsProcessorInternal
 }
 
 class DisplayResultWrapper private constructor(
@@ -268,6 +271,9 @@ class NotebookImpl(
 
     override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
         get() = sharedReplContext?.textRenderersProcessor ?: throw IllegalStateException("Text renderers processor is not initialized yet")
+
+    override val fieldsHandlersProcessor: FieldsProcessorInternal
+        get() = sharedReplContext?.fieldsProcessor ?: throw IllegalStateException("Fields handlers processor is not initialized yet")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()

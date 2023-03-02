@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.kotlinx.jupyter.api.RendererPriority
+import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.util.PriorityList
 import org.junit.jupiter.api.Test
 
@@ -10,11 +10,11 @@ class AuxTests {
     fun `test priority list`() {
         val list = PriorityList<String>()
         with(list) {
-            add("highest", RendererPriority.HIGHEST)
-            add("lower", RendererPriority.LOWER)
-            add("highest 2", RendererPriority.HIGHEST)
-            add("default 1", RendererPriority.DEFAULT)
-            add("default 2", RendererPriority.DEFAULT)
+            add("highest", ProcessingPriority.HIGHEST)
+            add("lower", ProcessingPriority.LOWER)
+            add("highest 2", ProcessingPriority.HIGHEST)
+            add("default 1", ProcessingPriority.DEFAULT)
+            add("default 2", ProcessingPriority.DEFAULT)
         }
         list.toList() shouldBe listOf(
             "highest 2",
@@ -32,13 +32,13 @@ class AuxTests {
             "lower",
         )
 
-        list.add("default 3", RendererPriority.DEFAULT)
+        list.add("default 3", ProcessingPriority.DEFAULT)
         list.elementsWithPriority() shouldBe listOf(
-            "highest" to RendererPriority.HIGHEST,
-            "lower" to RendererPriority.LOWER,
-            "highest 2" to RendererPriority.HIGHEST,
-            "default 2" to RendererPriority.DEFAULT,
-            "default 3" to RendererPriority.DEFAULT,
+            "highest" to ProcessingPriority.HIGHEST,
+            "lower" to ProcessingPriority.LOWER,
+            "highest 2" to ProcessingPriority.HIGHEST,
+            "default 2" to ProcessingPriority.DEFAULT,
+            "default 3" to ProcessingPriority.DEFAULT,
         )
     }
 }

@@ -10,9 +10,33 @@ import kotlin.reflect.KProperty
  * It can be accessed inside REPL by name `kc`, e.g. kc.showVars()
  */
 class KotlinContext(
-    val vars: HashMap<String, KotlinVariableInfo> = HashMap(),
-    val functions: HashMap<String, KotlinFunctionInfo> = HashMap(),
-)
+    private val variables: HashMap<String, KotlinVariableInfo> = HashMap(),
+    private val functions: HashMap<String, KotlinFunctionInfo> = HashMap(),
+) {
+    private val currentCellVariablesNames = mutableSetOf<String>()
+    private val currentCellFunctionsNames = mutableSetOf<String>()
+
+    val allFunctions: Map<String, KotlinFunctionInfo> get() = functions
+    val allVariables: Map<String, KotlinVariableInfo> get() = variables
+
+    val currentFunctions: Map<String, KotlinFunctionInfo> get() = currentCellFunctionsNames.associateWith { functions[it]!! }
+    val currentVariables: Map<String, KotlinVariableInfo> get() = currentCellVariablesNames.associateWith { variables[it]!! }
+
+    fun addVariable(name: String, info: KotlinVariableInfo) {
+        variables[name] = info
+        currentCellVariablesNames.add(name)
+    }
+
+    fun addFunction(name: String, info: KotlinFunctionInfo) {
+        functions[name] = info
+        currentCellFunctionsNames.add(name)
+    }
+
+    fun cellExecutionFinished() {
+        currentCellVariablesNames.clear()
+        currentCellFunctionsNames.clear()
+    }
+}
 
 private fun functionSignature(function: KFunction<*>) =
     function.toString().replace("Line_\\d+\\.".toRegex(), "")

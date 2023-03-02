@@ -3,9 +3,9 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererHandlerWithPriority
-import org.jetbrains.kotlinx.jupyter.api.RendererPriority
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
@@ -30,7 +30,7 @@ class RenderersProcessorImpl(
         } else {
             val methodName = getMethodName(id)
             contextUpdater.update()
-            val functionInfo = contextUpdater.context.functions[methodName]!!
+            val functionInfo = contextUpdater.context.allFunctions[methodName]!!
             val resultValue = rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
                 functionInfo.function.call(functionInfo.line, value)
             }
@@ -43,7 +43,7 @@ class RenderersProcessorImpl(
     }
 
     override fun register(renderer: RendererHandler): Code? {
-        return register(renderer, RendererPriority.DEFAULT)
+        return register(renderer, ProcessingPriority.DEFAULT)
     }
 
     override fun register(renderer: RendererHandler, priority: Int): Code? {
@@ -51,7 +51,7 @@ class RenderersProcessorImpl(
     }
 
     override fun registerWithoutOptimizing(renderer: RendererHandler) {
-        registerWithoutOptimizing(renderer, RendererPriority.DEFAULT)
+        registerWithoutOptimizing(renderer, ProcessingPriority.DEFAULT)
     }
 
     override fun registerWithoutOptimizing(renderer: RendererHandler, priority: Int) {

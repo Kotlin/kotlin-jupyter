@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-object RendererPriority {
+object ProcessingPriority {
     const val LOWEST = -300
     const val LOWER = -200
     const val LOW = -100
