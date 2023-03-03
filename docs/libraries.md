@@ -120,7 +120,7 @@ internal class Integration : JupyterIntegration() {
 }
 ```
 
-For more complicated example see [integration of dataframe library](https://github.com/nikitinas/dataframe/blob/master/src/main/kotlin/org/jetbrains/dataframe/jupyter/Integration.kt).
+For more complicated example see [integration of dataframe library](https://github.com/Kotlin/dataframe/blob/master/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt).
 
 For a further information see docs for:
  - `org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration`
