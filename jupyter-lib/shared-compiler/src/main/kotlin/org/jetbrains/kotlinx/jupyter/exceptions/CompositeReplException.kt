@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.exceptions
 import java.io.PrintWriter
 
 class CompositeReplException(
-    private val exceptions: List<Throwable>,
+    private val exceptions: Collection<Throwable>,
     libraryProblemPart: LibraryProblemPart?,
 ) : ReplException("CompositeException${libraryProblemPart?.message?.let { " in $it" }.orEmpty()}: ${exceptions.size} exceptions occurred.") {
     override fun printStackTrace() {
@@ -42,4 +42,12 @@ class CompositeReplException(
  */
 fun Throwable.getCauses(): List<Throwable> {
     return generateSequence(cause) { it.cause }.toList()
+}
+
+fun Collection<Throwable>.throwLibraryException(part: LibraryProblemPart) {
+    when (size) {
+        0 -> return
+        1 -> throw ReplLibraryException(part = part, cause = first())
+        else -> throw CompositeReplException(this, part)
+    }
 }

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
@@ -165,4 +166,10 @@ fun JsonElement.resolvePath(path: List<String>): JsonElement? {
     }
 
     return cur
+}
+
+fun Code.presentableForThreadName(): String {
+    val newName = substringBefore('\n').take(20)
+    return if (newName.length < length) "$newName..."
+    else this
 }

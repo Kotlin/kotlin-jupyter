@@ -7,6 +7,7 @@ import java.io.PrintStream
 import java.util.concurrent.locks.ReentrantLock
 
 fun getLogger(name: String = "ikotlin"): Logger = LoggerFactory.getLogger(name)
+inline fun <reified T> logger(): Logger = LoggerFactory.getLogger(T::class.java)
 
 object KernelStreams {
     private val rLock = ReentrantLock()

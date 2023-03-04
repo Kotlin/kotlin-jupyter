@@ -31,6 +31,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.presentableForThreadName
 import org.jetbrains.kotlinx.jupyter.protocolVersion
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.rawToResponse
@@ -308,7 +309,12 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                     runCommand(code, repl)
                 } else {
                     val allowStdIn = (incomingMessage.content as? ExecuteRequest)?.allowStdin ?: true
-                    evalWithIO(repl, rawIncomingMessage, allowStdIn) {
+                    evalWithIO(
+                        "Execution of code '${code.presentableForThreadName()}'",
+                        repl,
+                        rawIncomingMessage,
+                        allowStdIn,
+                    ) {
                         repl.evalEx(
                             EvalRequestData(
                                 code,
@@ -330,17 +336,17 @@ fun JupyterConnectionInternal.shellMessagesHandler(
             sendWrapped(makeReplyMessage(rawIncomingMessage, MessageType.COMM_INFO_REPLY, content = CommInfoReply(replyMap)))
         }
         is CommOpen -> {
-            executor.runExecution {
+            executor.runExecution("Execution of comm_open request for ${content.commId} of target ${content.targetName}") {
                 commManager.processCommOpen(incomingMessage, content)
             }
         }
         is CommClose -> {
-            executor.runExecution {
+            executor.runExecution("Execution of comm_close request for ${content.commId}") {
                 commManager.processCommClose(incomingMessage, content)
             }
         }
         is CommMsg -> {
-            executor.runExecution {
+            executor.runExecution("Execution of comm_msg request for ${content.commId}") {
                 commManager.processCommMessage(incomingMessage, content)
             }
         }
@@ -456,6 +462,7 @@ class CapturingOutputStream(
 }
 
 fun JupyterConnectionInternal.evalWithIO(
+    executionName: String,
     repl: ReplForJupyter,
     incomingMessage: RawMessage,
     allowStdIn: Boolean,
@@ -500,7 +507,13 @@ fun JupyterConnectionInternal.evalWithIO(
     val `in` = System.`in`
     System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
     try {
-        return when (val res = executor.runExecution(repl.currentClassLoader, body)) {
+        return when (
+            val res = executor.runExecution(
+                executionName,
+                repl.currentClassLoader,
+                body,
+            )
+        ) {
             is ExecutionResult.Success -> {
                 if (res.result == null) {
                     AbortResponseWithMessage("NO REPL!")

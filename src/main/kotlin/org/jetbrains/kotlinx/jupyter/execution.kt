@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -15,7 +16,7 @@ sealed interface ExecutionResult<out T> {
 }
 
 interface JupyterExecutor {
-    fun <T> runExecution(classLoader: ClassLoader? = null, body: () -> T): ExecutionResult<T>
+    fun <T> runExecution(name: String, classLoader: ClassLoader? = null, body: () -> T): ExecutionResult<T>
     fun interruptExecutions()
 
     fun launchJob(runnable: suspend CoroutineScope.() -> Unit)
@@ -25,10 +26,13 @@ class JupyterExecutorImpl : JupyterExecutor {
     private val currentExecutions: MutableSet<Thread> = Collections.newSetFromMap(ConcurrentHashMap())
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    override fun <T> runExecution(classLoader: ClassLoader?, body: () -> T): ExecutionResult<T> {
+    override fun <T> runExecution(name: String, classLoader: ClassLoader?, body: () -> T): ExecutionResult<T> {
         var execRes: T? = null
         var execException: Throwable? = null
-        val execThread = thread(contextClassLoader = classLoader ?: Thread.currentThread().contextClassLoader) {
+        val execThread = thread(
+            name = name,
+            contextClassLoader = classLoader ?: Thread.currentThread().contextClassLoader,
+        ) {
             try {
                 execRes = body()
             } catch (e: Throwable) {
@@ -58,15 +62,23 @@ class JupyterExecutorImpl : JupyterExecutor {
      * something more smart in the future.
      */
     override fun interruptExecutions() {
+        LOG.info("Stopping ${currentExecutions.size} executions...")
         @Suppress("deprecation")
         while (currentExecutions.isNotEmpty()) {
-            val execution = currentExecutions.firstOrNull()
-            execution?.stop()
+            val execution = currentExecutions.firstOrNull() ?: break
+            val executionName = execution.name
+            LOG.info("Stopping $executionName...")
+            execution.stop()
+            LOG.info("$executionName stopped")
             currentExecutions.remove(execution)
         }
     }
 
     override fun launchJob(runnable: suspend CoroutineScope.() -> Unit) {
         coroutineScope.launch(block = runnable)
+    }
+
+    companion object {
+        val LOG = logger<JupyterExecutorImpl>()
     }
 }

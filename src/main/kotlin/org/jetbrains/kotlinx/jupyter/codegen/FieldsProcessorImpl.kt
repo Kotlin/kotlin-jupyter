@@ -5,8 +5,8 @@ import org.jetbrains.kotlinx.jupyter.api.FieldHandlerExecution
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerWithPriority
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.TEMP_PROPERTY_PREFIX
-import org.jetbrains.kotlinx.jupyter.exceptions.CompositeReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
+import org.jetbrains.kotlinx.jupyter.exceptions.throwLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.util.PriorityList
 import kotlin.reflect.jvm.isAccessible
@@ -61,8 +61,6 @@ class FieldsProcessorImpl(
             }
         }
 
-        if (exceptions.isNotEmpty()) {
-            throw CompositeReplException(exceptions, LibraryProblemPart.CONVERTERS)
-        }
+        exceptions.throwLibraryException(LibraryProblemPart.CONVERTERS)
     }
 }

@@ -114,6 +114,11 @@ object NullabilityEraser : FieldHandler {
             conversionCodes.clear()
         }
     }
+
+    override fun toString(): String {
+        return "Nullable fields handler: generates non-nullable" +
+            " overrides for nullable variables with non-null values"
+    }
 }
 
 data class VariableDeclaration(
