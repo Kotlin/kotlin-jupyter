@@ -7,10 +7,13 @@ import org.jetbrains.kotlinx.jupyter.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
+import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
@@ -261,6 +264,15 @@ object NotebookMock : Notebook {
         get() = error("Not supposed to be called")
 
     override val fieldsHandlersProcessor: FieldsProcessor
+        get() = error("Not supposed to be called")
+
+    override val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+        get() = error("Not supposed to be called")
+
+    override val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
+        get() = error("Not supposed to be called")
+
+    override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
         get() = error("Not supposed to be called")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>

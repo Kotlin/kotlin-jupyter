@@ -20,8 +20,8 @@ import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
-import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
+import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
@@ -42,8 +42,6 @@ import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolver
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
-import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -71,7 +69,9 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.ShutdownEvalResult
+import org.jetbrains.kotlinx.jupyter.repl.impl.AfterCellExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.impl.BaseKernelHost
+import org.jetbrains.kotlinx.jupyter.repl.impl.BeforeCellExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.ColorSchemeChangeCallbacksProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
@@ -80,6 +80,7 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.InterruptionCallbacksProcessorImp
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.impl.ShutdownExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.postRender
 import java.io.File
 import java.net.URLClassLoader
@@ -256,9 +257,6 @@ class ReplForJupyterImpl(
 
     private val resolver: JupyterScriptDependenciesResolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
 
-    private val beforeCellExecution = mutableListOf<ExecutionCallback<*>>()
-    private val shutdownCodes = mutableListOf<ExecutionCallback<*>>()
-
     private val ctx = KotlinContext()
 
     private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(
@@ -389,6 +387,10 @@ class ReplForJupyterImpl(
 
     private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor = ColorSchemeChangeCallbacksProcessorImpl()
 
+    private val beforeCellExecutionsProcessor = BeforeCellExecutionsProcessor()
+    private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor()
+    private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor()
+
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext = SharedReplContext(
@@ -403,8 +405,9 @@ class ReplForJupyterImpl(
         librariesProcessor,
         librariesScanner,
         notebook,
-        beforeCellExecution,
-        shutdownCodes,
+        beforeCellExecutionsProcessor,
+        shutdownExecutionsProcessor,
+        afterCellExecutionsProcessor,
         internalEvaluator,
         this,
         internalVariablesMarkersProcessor,
@@ -457,9 +460,7 @@ class ReplForJupyterImpl(
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
-            rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
-                beforeCellExecution.forEach { executor.execute(it) }
-            }
+            beforeCellExecutionsProcessor.process(executor)
 
             var cell: MutableCodeCell? = null
 
@@ -521,14 +522,7 @@ class ReplForJupyterImpl(
     }
 
     override fun evalOnShutdown(): List<ShutdownEvalResult> {
-        return shutdownCodes.map {
-            val res = log.catchAll {
-                rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
-                    executor.execute(it)
-                }
-            }
-            ShutdownEvalResult(res)
-        }
+        return shutdownExecutionsProcessor.process(executor)
     }
 
     /**

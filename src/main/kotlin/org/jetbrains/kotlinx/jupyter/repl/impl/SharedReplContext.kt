@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
+import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
@@ -30,13 +30,12 @@ data class SharedReplContext(
     val librariesProcessor: LibrariesProcessor,
     val librariesScanner: LibrariesScanner,
     val notebook: Notebook,
-    val beforeCellExecution: MutableList<ExecutionCallback<*>>,
-    val shutdownCodes: MutableList<ExecutionCallback<*>>,
+    val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>,
+    val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>,
+    val afterCellExecutionsProcessor: AfterCellExecutionsProcessor,
     val evaluator: InternalEvaluator,
     val baseHost: BaseKernelHost,
     val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     val interruptionCallbacksProcessor: InterruptionCallbacksProcessor,
     val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor,
-) {
-    val afterCellExecution = mutableListOf<AfterCellExecutionCallback>()
-}
+)

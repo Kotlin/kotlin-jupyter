@@ -1,10 +1,13 @@
 package org.jetbrains.kotlinx.jupyter
 
 import jupyter.kotlin.JavaRuntime
+import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
+import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
@@ -267,13 +270,26 @@ class NotebookImpl(
         get() = history(1)
 
     override val renderersProcessor: ResultsRenderersProcessor
-        get() = sharedReplContext?.renderersProcessor ?: throw IllegalStateException("Type renderers processor is not initialized yet")
+        get() = sharedReplContext?.renderersProcessor ?: throwItemNotInitialized("Type renderers processor")
 
     override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
-        get() = sharedReplContext?.textRenderersProcessor ?: throw IllegalStateException("Text renderers processor is not initialized yet")
+        get() = sharedReplContext?.textRenderersProcessor ?: throwItemNotInitialized("Text renderers processor")
 
     override val fieldsHandlersProcessor: FieldsProcessorInternal
-        get() = sharedReplContext?.fieldsProcessor ?: throw IllegalStateException("Fields handlers processor is not initialized yet")
+        get() = sharedReplContext?.fieldsProcessor ?: throwItemNotInitialized("Fields handlers processor")
+
+    override val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+        get() = sharedReplContext?.beforeCellExecutionsProcessor ?: throwItemNotInitialized("Before-cell executions processor")
+
+    override val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
+        get() = sharedReplContext?.afterCellExecutionsProcessor ?: throwItemNotInitialized("After-cell executions processor")
+
+    override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+        get() = sharedReplContext?.shutdownExecutionsProcessor ?: throwItemNotInitialized("Shutdown executions processor")
+
+    private fun throwItemNotInitialized(itemName: String): Nothing {
+        throw IllegalStateException("$itemName is not initialized yet")
+    }
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()

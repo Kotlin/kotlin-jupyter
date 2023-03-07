@@ -110,13 +110,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
 
             if (invokeAfterCallbacks) {
-                afterCellExecution.forEach {
-                    log.catchAll {
-                        rethrowAsLibraryException(LibraryProblemPart.AFTER_CELL_CALLBACKS) {
-                            it(context, result.scriptInstance, result.result)
-                        }
-                    }
-                }
+                afterCellExecutionsProcessor.process(context, result.scriptInstance, result.result)
             }
 
             context.processExecutionQueue()
@@ -165,7 +159,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
                 library.interruptionCallbacks.forEach(sharedContext.interruptionCallbacksProcessor::register)
                 library.colorSchemeChangedCallbacks.forEach(sharedContext.colorSchemeChangeCallbacksProcessor::register)
-                sharedContext.afterCellExecution.addAll(library.afterCellExecution)
+                sharedContext.afterCellExecutionsProcessor.registerAll(library.afterCellExecution)
                 sharedContext.codePreprocessor.addAll(library.codePreprocessors)
 
                 val classLoader = sharedContext.evaluator.lastClassLoader
@@ -176,8 +170,8 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                     }
                 }
 
-                library.initCell.filter { !sharedContext.beforeCellExecution.contains(it) }.let(sharedContext.beforeCellExecution::addAll)
-                library.shutdown.filter { !sharedContext.shutdownCodes.contains(it) }.let(sharedContext.shutdownCodes::addAll)
+                sharedContext.beforeCellExecutionsProcessor.registerAll(library.initCell)
+                sharedContext.shutdownExecutionsProcessor.registerAll(library.shutdown)
             }
         }
 

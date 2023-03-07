@@ -114,6 +114,10 @@ interface Notebook {
 
     val fieldsHandlersProcessor: FieldsProcessor
 
+    val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
+    val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+
     /**
      * All requests for libraries made during this session
      */

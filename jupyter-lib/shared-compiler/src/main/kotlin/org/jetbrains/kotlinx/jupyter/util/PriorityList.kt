@@ -2,9 +2,11 @@ package org.jetbrains.kotlinx.jupyter.util
 
 import java.util.*
 
-class PriorityList<T> : Iterable<T> {
+class PriorityList<T>(
+    private val latterFirst: Boolean = true,
+) : Iterable<T> {
     private val c = TreeSet<Entry<T>>()
-    private var count = -1
+    private var count = 0
 
     /**
      * Complexity: O(1)
@@ -12,7 +14,10 @@ class PriorityList<T> : Iterable<T> {
     val size: Int
         get() = c.size
 
-    fun clear() = c.clear()
+    fun clear() {
+        count = 0
+        c.clear()
+    }
 
     fun isEmpty() = c.isEmpty()
 
@@ -29,7 +34,11 @@ class PriorityList<T> : Iterable<T> {
      * Complexity: O(log n)
      */
     fun add(value: T, priority: Int) {
-        ++count
+        if (latterFirst) {
+            ++count
+        } else {
+            --count
+        }
         c.add(Entry(value, priority, count))
     }
 
@@ -50,6 +59,24 @@ class PriorityList<T> : Iterable<T> {
      */
     fun elements(): Collection<T> {
         return c.map { it.value }
+    }
+
+    /**
+     * If a [value] wasn't previously added to the list, simply adds it with a given [priority].
+     * Otherwise, in case if [priority] is less or equal to the priority of existent element(s), does nothing.
+     * Otherwise, removes all existing elements from the list and adds [value] with a given [priority].
+     * Complexity: O(n + k * log(n)) where k is a number of elements equal to [value]
+     */
+    fun addOrUpdatePriority(value: T, priority: Int) {
+        val maxPriority: Int? = c.filter { it.value == value }.maxByOrNull { it.priority }?.priority
+        if (maxPriority != null) {
+            if (maxPriority >= priority) {
+                return
+            } else {
+                remove(value)
+            }
+        }
+        add(value, priority)
     }
 
     /**

@@ -462,6 +462,27 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
+    fun `multiple before-cell executions should be executed in the order of declaration`() {
+        val builder = StringBuilder()
+
+        val repl = testOneLibUsage(
+            library {
+                beforeCellExecution {
+                    builder.append("1")
+                }
+                beforeCellExecution {
+                    builder.append("2")
+                }
+            },
+        )
+
+        repl.evalRaw("0")
+        repl.evalRaw("0")
+
+        builder.toString() shouldBe "1212"
+    }
+
+    @Test
     fun testExceptionRendering() {
         val repl = testOneLibUsage(
             library {
