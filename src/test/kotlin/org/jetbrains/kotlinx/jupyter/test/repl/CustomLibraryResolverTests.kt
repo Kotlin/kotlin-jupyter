@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declare
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -210,7 +211,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val result = repl.evalRendered("13")
 
         result.shouldBeTypeOf<MimeTypedResult>()
-        result["text/html"] shouldBe "<b>26</b>"
+        result[MimeTypes.HTML] shouldBe "<b>26</b>"
     }
 
     @Test

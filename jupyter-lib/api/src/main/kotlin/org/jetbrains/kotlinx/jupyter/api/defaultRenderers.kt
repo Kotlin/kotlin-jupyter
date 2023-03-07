@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Array
@@ -12,11 +14,13 @@ val bufferedImageRenderer = createRenderer<BufferedImage> {
     ImageIO.write(it, format, stream)
     val data = stream.toByteArray()
     val encoder = Base64.getEncoder()
-    val src = buildString {
-        append("""data:image/$format;base64,""")
-        append(encoder.encodeToString(data))
-    }
-    HTML("""<img src="$src"/>""")
+    val encodedData = encoder.encodeToString(data)
+    MimeTypedResultEx(
+        buildJsonObject {
+            put(MimeTypes.PNG, JsonPrimitive(encodedData))
+            put(MimeTypes.PLAIN_TEXT, JsonPrimitive("${it::class}: ${it.width}x${it.height} px"))
+        },
+    )
 }
 
 /**

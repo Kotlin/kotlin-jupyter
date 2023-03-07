@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
@@ -136,7 +137,7 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
         assertTrue(res.renderedValue is Unit)
         assertEquals(1, displayHandler.list.size)
         val typedResult = displayHandler.list[0] as MimeTypedResult
-        val content = typedResult["text/html"]!!
+        val content = typedResult[MimeTypes.HTML]!!
         assertTrue(content.contains("""id="kotlin_out_0""""))
         assertTrue(content.contains("""function test_fun(x)"""))
     }

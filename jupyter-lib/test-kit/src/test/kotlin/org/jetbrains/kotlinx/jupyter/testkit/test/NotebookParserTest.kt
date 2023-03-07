@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.jupyter.parser.JupyterParser
 import org.jetbrains.jupyter.parser.notebook.CodeCell
 import org.jetbrains.jupyter.parser.notebook.ExecuteResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.config.notebookKernelSpec
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.junit.jupiter.api.Test
@@ -43,7 +44,7 @@ class NotebookParserTest {
             val out = outputs.single()
             out.shouldBeInstanceOf<ExecuteResult>()
             out.executionCount shouldBe 1
-            out.data["text/plain"] shouldBe "4"
+            out.data[MimeTypes.PLAIN_TEXT] shouldBe "4"
         }
 
         with(cells[1]) {
@@ -52,7 +53,7 @@ class NotebookParserTest {
             val out = outputs.single()
             out.shouldBeInstanceOf<ExecuteResult>()
             out.executionCount shouldBe 2
-            out.data["text/html"] shouldContain "<img src="
+            out.data[MimeTypes.HTML] shouldContain "<img src="
         }
 
         with(cells[2]) {

@@ -141,7 +141,7 @@ open class MimeTypedResultEx(
 ) : DisplayResult {
     override fun toJson(additionalMetadata: JsonObject, overrideId: String?): JsonObject {
         val metadata = HashMap<String, JsonElement>().apply {
-            if (isolatedHtml) put("text/html", Json.encodeToJsonElement(mapOf("isolated" to true)))
+            if (isolatedHtml) put(MimeTypes.HTML, Json.encodeToJsonElement(mapOf("isolated" to true)))
             additionalMetadata.forEach { key, value ->
                 put(key, value)
             }
@@ -163,6 +163,13 @@ open class MimeTypedResultEx(
         if (other !is MimeTypedResultEx) return false
         return toJson(Json.EMPTY, null) == other.toJson(Json.EMPTY, null)
     }
+
+    override fun hashCode(): Int {
+        var result = mimeData.hashCode()
+        result = 31 * result + isolatedHtml.hashCode()
+        result = 31 * result + (id?.hashCode() ?: 0)
+        return result
+    }
 }
 
 // Convenience methods for displaying results
@@ -175,8 +182,8 @@ fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
 private val jsonPrettyPrinter = Json { prettyPrint = true }
 fun JSON(json: JsonElement, isolated: Boolean = false) = MimeTypedResultEx(
     buildJsonObject {
-        put("application/json", json)
-        put("text/plain", JsonPrimitive(jsonPrettyPrinter.encodeToString(json)))
+        put(MimeTypes.JSON, json)
+        put(MimeTypes.PLAIN_TEXT, JsonPrimitive(jsonPrettyPrinter.encodeToString(json)))
     },
     isolated,
 )
@@ -185,8 +192,8 @@ fun JSON(json: JsonElement, isolated: Boolean = false) = MimeTypedResultEx(
 fun JSON(jsonText: String, isolated: Boolean = false) = JSON(Json.parseToJsonElement(jsonText), isolated)
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
-fun textResult(text: String): MimeTypedResult = mimeResult("text/plain" to text)
-fun htmlResult(text: String, isolated: Boolean = false) = mimeResult("text/html" to text).also { it.isolatedHtml = isolated }
+fun textResult(text: String): MimeTypedResult = mimeResult(MimeTypes.PLAIN_TEXT to text)
+fun htmlResult(text: String, isolated: Boolean = false) = mimeResult(MimeTypes.HTML to text).also { it.isolatedHtml = isolated }
 
 data class HtmlData(val style: String, val body: String, val script: String) {
     override fun toString(): String {
@@ -296,4 +303,13 @@ fun Notebook.renderHtmlAsIFrameIfNeeded(data: HtmlData): MimeTypedResult {
     } else {
         data.toSimpleHtml(currentColorScheme)
     }
+}
+
+object MimeTypes {
+    const val HTML = "text/html"
+    const val PLAIN_TEXT = "text/plain"
+    const val JSON = "application/json"
+
+    const val PNG = "image/png"
+    const val JPEG = "image/jpeg"
 }

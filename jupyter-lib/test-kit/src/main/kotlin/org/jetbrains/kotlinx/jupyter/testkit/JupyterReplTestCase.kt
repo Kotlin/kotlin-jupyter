@@ -6,6 +6,7 @@ import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
@@ -35,7 +36,7 @@ abstract class JupyterReplTestCase(
 
     fun execHtml(code: Code): String {
         val res = exec<MimeTypedResult>(code)
-        val html = res["text/html"]
+        val html = res[MimeTypes.HTML]
         html.shouldNotBeNull()
         return html
     }

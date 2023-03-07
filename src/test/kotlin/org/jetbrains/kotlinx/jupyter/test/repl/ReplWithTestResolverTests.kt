@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.junit.jupiter.api.Test
@@ -39,7 +40,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val mime = res2.renderedValue as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
-        assertEquals("text/html", mime.entries.first().key)
+        assertEquals(MimeTypes.HTML, mime.entries.first().key)
         assertNotNull(res2.renderedValue)
     }
 
@@ -64,7 +65,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         val value = res.renderedValue
         assertTrue(value is MimeTypedResult)
 
-        val html = value["text/html"]!!
+        val html = value[MimeTypes.HTML]!!
         assertTrue(html.contains("Bill"))
 
         res.metadata.newSources.shouldHaveAtLeastSize(3)

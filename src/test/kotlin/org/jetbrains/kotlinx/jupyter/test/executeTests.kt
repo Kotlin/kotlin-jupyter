@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
@@ -178,7 +179,7 @@ class ExecuteTests : KernelServerTestsBase() {
     @Test
     fun testExecute() {
         val res = doExecute("2+2") as JsonObject
-        assertEquals("4", res.string("text/plain"))
+        assertEquals("4", res.string(MimeTypes.PLAIN_TEXT))
     }
 
     @Test
@@ -260,7 +261,7 @@ class ExecuteTests : KernelServerTestsBase() {
             answer
             """.trimIndent()
         val res = doExecute(code, inputs = listOf("42"))
-        assertEquals(jsonObject("text/plain" to "42"), res)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "42"), res)
     }
 
     @Test
@@ -358,10 +359,10 @@ class ExecuteTests : KernelServerTestsBase() {
             executeReplyChecker = { checkCounter(it, 3) },
         )
 
-        assertEquals(jsonObject("text/plain" to "41"), res1)
-        assertEquals(jsonObject("text/plain" to "42"), res2)
-        assertEquals(jsonObject("text/plain" to "41 42"), res3)
-        assertEquals(jsonObject("text/plain" to "null"), res4)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "41"), res1)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "42"), res2)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "41 42"), res3)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "null"), res4)
     }
 
     @Test
@@ -386,11 +387,11 @@ class ExecuteTests : KernelServerTestsBase() {
         val file = File.createTempFile("kotlin-jupyter-logger-appender-test", ".txt")
         doExecute("%logHandler add f1 --file ${file.absolutePath}", false)
         val result1 = doExecute("2 + 2")
-        assertEquals(jsonObject("text/plain" to "4"), result1)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "4"), result1)
 
         doExecute("%logHandler remove f1", false)
         val result2 = doExecute("3 + 4")
-        assertEquals(jsonObject("text/plain" to "7"), result2)
+        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "7"), result2)
 
         val logText = file.readText()
         assertTrue("2 + 2" in logText)
@@ -501,7 +502,7 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testCommand() {
         val res = doExecute(":help")
         res.shouldBeTypeOf<JsonObject>()
-        val text = res["text/plain"]!!.jsonPrimitive.content
+        val text = res[MimeTypes.PLAIN_TEXT]!!.jsonPrimitive.content
         text.shouldContain(currentKotlinVersion)
         print(text)
     }

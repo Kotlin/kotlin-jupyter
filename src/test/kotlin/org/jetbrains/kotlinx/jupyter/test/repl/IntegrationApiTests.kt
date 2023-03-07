@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -141,7 +142,7 @@ class IntegrationApiTests {
         val result = res as Renderable
         val json = result.render(repl.notebook).toJson(Json.EMPTY, null)
         val jsonData = json["data"] as JsonObject
-        val htmlString = jsonData["text/html"] as JsonPrimitive
+        val htmlString = jsonData[MimeTypes.HTML] as JsonPrimitive
         kotlin.test.assertEquals("""<span style="color:red">red</span>""", htmlString.content)
     }
 
