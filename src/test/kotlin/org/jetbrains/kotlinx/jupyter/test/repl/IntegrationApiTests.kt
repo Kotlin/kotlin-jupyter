@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
@@ -122,6 +124,37 @@ class IntegrationApiTests {
         assertEquals(2, repl.executedCodes.size)
         assertEquals(1, repl.results[0])
         assertEquals(2, repl.results[1])
+    }
+
+    @Test
+    fun `code preprocessors`() {
+        val lib = "mylib" to library {
+            addCodePreprocessor(
+                object : CodePreprocessor {
+                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+                        return CodePreprocessor.Result(code.replace("2+2", "3+3"))
+                    }
+
+                    override fun accepts(code: String): Boolean {
+                        return code == "2+2"
+                    }
+                },
+            )
+
+            addCodePreprocessor(
+                object : CodePreprocessor {
+                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+                        return CodePreprocessor.Result(code.replace("1", "2"))
+                    }
+                },
+            )
+        }
+        val repl = makeRepl(lib).trackExecution()
+
+        repl.execute("%use mylib")
+
+        val result = repl.execute("1+1").result.value
+        result shouldBe 6
     }
 
     @Test

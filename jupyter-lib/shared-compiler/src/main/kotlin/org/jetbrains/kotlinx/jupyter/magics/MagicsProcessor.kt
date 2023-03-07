@@ -2,11 +2,12 @@ package org.jetbrains.kotlinx.jupyter.magics
 
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.exceptions.KernelInternalObject
 
 class MagicsProcessor(
     private val handler: LibrariesAwareMagicsHandler,
     parseOutCellMarker: Boolean = false,
-) : CodePreprocessor, AbstractMagicsProcessor(parseOutCellMarker) {
+) : CodePreprocessor, AbstractMagicsProcessor(parseOutCellMarker), KernelInternalObject {
     fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): CodePreprocessor.Result {
         val magics = magicsIntervals(code)
 

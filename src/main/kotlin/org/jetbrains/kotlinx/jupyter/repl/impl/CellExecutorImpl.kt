@@ -160,7 +160,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 library.interruptionCallbacks.forEach(sharedContext.interruptionCallbacksProcessor::register)
                 library.colorSchemeChangedCallbacks.forEach(sharedContext.colorSchemeChangeCallbacksProcessor::register)
                 sharedContext.afterCellExecutionsProcessor.registerAll(library.afterCellExecution)
-                sharedContext.codePreprocessor.addAll(library.codePreprocessors)
+                sharedContext.codePreprocessor.registerAll(library.codePreprocessors)
 
                 val classLoader = sharedContext.evaluator.lastClassLoader
                 rethrowAsLibraryException(LibraryProblemPart.RESOURCES) {

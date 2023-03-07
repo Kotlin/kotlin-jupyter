@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessorsProcessor
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
@@ -273,6 +274,9 @@ object NotebookMock : Notebook {
         get() = error("Not supposed to be called")
 
     override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+        get() = error("Not supposed to be called")
+
+    override val codePreprocessorsProcessor: CodePreprocessorsProcessor
         get() = error("Not supposed to be called")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>

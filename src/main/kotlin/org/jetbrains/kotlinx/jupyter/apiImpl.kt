@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessorsProcessor
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
@@ -286,6 +287,9 @@ class NotebookImpl(
 
     override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
         get() = sharedReplContext?.shutdownExecutionsProcessor ?: throwItemNotInitialized("Shutdown executions processor")
+
+    override val codePreprocessorsProcessor: CodePreprocessorsProcessor
+        get() = sharedReplContext?.codePreprocessor ?: throwItemNotInitialized("Code preprocessors processor")
 
     private fun throwItemNotInitialized(itemName: String): Nothing {
         throw IllegalStateException("$itemName is not initialized yet")

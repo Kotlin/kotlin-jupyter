@@ -22,6 +22,7 @@ enum class LibraryProblemPart(val message: String) {
     SHUTDOWN("shutdown callbacks/codes"),
     INTERRUPTION_CALLBACKS("interruption callbacks"),
     COLOR_SCHEME_CHANGE_CALLBACKS("color scheme change callbacks"),
+    CODE_PREPROCESSORS("code preprocessors"),
 }
 
 fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {

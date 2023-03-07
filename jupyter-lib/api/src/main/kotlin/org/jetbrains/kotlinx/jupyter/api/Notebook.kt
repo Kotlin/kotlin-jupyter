@@ -118,6 +118,8 @@ interface Notebook {
     val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
     val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
 
+    val codePreprocessorsProcessor: CodePreprocessorsProcessor
+
     /**
      * All requests for libraries made during this session
      */
