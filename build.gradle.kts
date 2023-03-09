@@ -125,6 +125,10 @@ tasks {
         }
     }
 
+    dokkaHtmlMultiModule {
+        mustRunAfter(shadowJar.get())
+    }
+
     publishDocs {
         docsRepoUrl.set(rootSettings.docsRepo)
         branchName.set("master")
