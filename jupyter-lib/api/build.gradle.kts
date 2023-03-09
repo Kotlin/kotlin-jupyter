@@ -31,6 +31,13 @@ buildSettings {
     }
 }
 
+tasks.whenTaskAdded {
+    val task = this
+    if (task.name == "generateMetadataFileForPluginMavenPublication") {
+        task.setMustRunAfter(tasks.matching { it.name == "publishPluginJar" || it.name == "publishPluginJavaDocsJar" })
+    }
+}
+
 kotlinPublications {
     publication {
         publicationName.set("api")
