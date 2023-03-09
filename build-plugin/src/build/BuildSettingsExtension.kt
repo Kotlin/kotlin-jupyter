@@ -15,7 +15,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 class BuildSettingsExtension(private val project: Project) {
-    fun withTests() {
+    fun withTests(configure: Test.() -> Unit = {}) {
         val deps = project.defaultVersionCatalog.dependencies
 
         project.dependencies {
@@ -30,6 +30,7 @@ class BuildSettingsExtension(private val project: Project) {
             testLogging {
                 events("passed", "skipped", "failed")
             }
+            configure()
         }
     }
 
