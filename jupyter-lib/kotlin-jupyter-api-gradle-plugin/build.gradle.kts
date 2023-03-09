@@ -29,13 +29,6 @@ dependencies {
     testImplementation(projects.apiAnnotations)
 }
 
-tasks.whenTaskAdded {
-    val task = this
-    if (task.name == "generateMetadataFileForPluginMavenPublication") {
-        task.setMustRunAfter(tasks.matching { it.name == "publishPluginJar" || it.name == "publishPluginJavaDocsJar" })
-    }
-}
-
 CreateResourcesTask.register(project, "saveVersion", tasks.processResources) {
     addSingleValueFile("VERSION", rootSettings.mavenVersion)
     addSingleValueFile("KOTLIN_VERSION", rootProject.defaultVersionCatalog.versions.devKotlin)

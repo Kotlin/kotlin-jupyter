@@ -30,6 +30,7 @@ buildSettings {
         allowResultReturnType()
     }
 }
+
 kotlinPublications {
     publication {
         publicationName.set("api")

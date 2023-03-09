@@ -21,18 +21,9 @@ dependencies {
     }
 }
 
-val myJvmTarget = libs.versions.jvmTarget.get()
-val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
-
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = myJvmTarget
-    }
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(myJvmTargetInt))
+        jvmTarget = libs.versions.jvmTarget.get()
     }
 }
 

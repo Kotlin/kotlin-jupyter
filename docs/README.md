@@ -274,8 +274,10 @@ Other options are resolving library descriptor from a local file or from remote 
  - default - Default imports: dataframe and Lets-Plot libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
- - [ggdsl](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Lets-Plot
+ - [ggdsl](https://github.com/AndreiKingsley/lib-ggdsl) - Lets-plot and Dataframe ggdsl
+ - [ggdsl-dataframe](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin Dataframe integration for ggdsl
  - [ggdsl-echarts](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Apache ECharts
+ - [ggdsl-lets-plot](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Lets-Plot
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [kalasim](https://www.kalasim.org) - Discrete event simulator

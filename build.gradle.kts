@@ -118,17 +118,6 @@ tasks {
         addSingleValueFile("PUBLISHED_JUPYTER_API_VERSION", libs.versions.jupyterApi.get())
     }
 
-    whenTaskAdded {
-        val task = this
-        if (task is GenerateModuleMetadata && task.name == "generateMetadataFileForKernelPublication") {
-            task.dependsOn(shadowJar.get())
-        }
-    }
-
-    dokkaHtmlMultiModule {
-        mustRunAfter(shadowJar.get())
-    }
-
     publishDocs {
         docsRepoUrl.set(rootSettings.docsRepo)
         branchName.set("master")
