@@ -48,6 +48,10 @@ object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
     }
 
     override fun serialize(encoder: Encoder, value: DescriptorVariables) {
-        encoder.encodeSerializableValue(serializer(), value.properties)
+        if (value.hasOrder) {
+            encoder.encodeSerializableValue(serializer(), value.properties)
+        } else {
+            encoder.encodeSerializableValue(serializer(), value.properties.associate { it.name to it.value })
+        }
     }
 }
