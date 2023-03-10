@@ -1,9 +1,12 @@
 @file:Suppress("UnstableApiUsage")
 
-enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "build"
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version("0.4.0")
+}
 
 dependencyResolutionManagement {
     versionCatalogs {

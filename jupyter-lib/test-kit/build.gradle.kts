@@ -16,9 +16,17 @@ dependencies {
     implementation(libs.test.kotlintest.assertions)
 }
 
+val rootShadowJar = ':' + build.SHADOW_JAR_TASK
+
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
-    withTests()
+    withTests {
+        mustRunAfter(rootShadowJar)
+    }
+}
+
+tasks.dokkaHtmlPartial {
+    mustRunAfter(rootShadowJar)
 }
 
 kotlinPublications {
