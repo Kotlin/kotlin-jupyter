@@ -37,7 +37,7 @@ class ErrorsMagicsProcessor(
         val diagnostics: List<ScriptDiagnostic> get() = _diagnostics
 
         fun handle(magicText: String, magicRange: CodeInterval) {
-            val magicName = magicText.substringBefore(' ')
+            val magicName = magicText.substringBefore(' ').trim()
             val magic = ReplLineMagic.valueOfOrNull(magicName)
 
             if (magic == null) {
