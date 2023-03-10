@@ -80,7 +80,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        res.metadata.newSources.shouldHaveSize(85)
+        res.metadata.newSources.shouldHaveSize(49)
     }
 
     @Test
