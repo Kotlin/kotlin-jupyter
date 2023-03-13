@@ -47,7 +47,7 @@ fun interface ReplProvider {
         }
 
         private fun ReplForJupyter.initializeWithCurrentClasspath() {
-            eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this) }
+            eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this, notebook) }
         }
 
         @Suppress("unused")

@@ -4,6 +4,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
@@ -20,7 +21,7 @@ import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 import org.jetbrains.kotlinx.jupyter.util.accepts
 import org.jetbrains.kotlinx.jupyter.util.unionAcceptance
 
-class LibrariesScanner(val notebook: Notebook) {
+class LibrariesScanner : LibraryLoader {
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
 
@@ -49,6 +50,7 @@ class LibrariesScanner(val notebook: Notebook) {
     fun addLibrariesFromClassLoader(
         classLoader: ClassLoader,
         host: KotlinKernelHost,
+        notebook: Notebook,
         libraryOptions: Map<String, String> = mapOf(),
         integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
     ) {
@@ -57,6 +59,19 @@ class LibrariesScanner(val notebook: Notebook) {
         val libraries = instantiateLibraries(classLoader, scanResult, notebook, libraryOptions)
         log.debug("Number of detected definitions: ${libraries.size}")
         host.addLibraries(libraries)
+    }
+
+    override fun addLibrariesByScanResult(
+        host: KotlinKernelHost,
+        notebook: Notebook,
+        classLoader: ClassLoader,
+        libraryOptions: Map<String, String>,
+        scanResult: LibrariesScanResult,
+    ) {
+        host.scheduleExecution {
+            val libraries = instantiateLibraries(classLoader, scanResult, notebook, libraryOptions)
+            host.addLibraries(libraries)
+        }
     }
 
     private fun scanForLibraries(classLoader: ClassLoader, host: KotlinKernelHost, integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()): LibrariesScanResult {
@@ -123,6 +138,7 @@ class LibrariesScanner(val notebook: Notebook) {
         libraryOptions: Map<String, String>,
     ): T {
         val clazz = classLoader.loadClass(data.fqn)
+            ?: throw ReplException("Library ${data.fqn} wasn't found in classloader $classLoader")
         val constructors = clazz.constructors
 
         if (constructors.isEmpty()) {

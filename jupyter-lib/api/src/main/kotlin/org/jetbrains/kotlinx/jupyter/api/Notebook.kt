@@ -124,6 +124,7 @@ interface Notebook {
      * All requests for libraries made during this session
      */
     val libraryRequests: Collection<LibraryResolutionRequest>
+    val libraryLoader: LibraryLoader
 
     val connection: JupyterConnection
 

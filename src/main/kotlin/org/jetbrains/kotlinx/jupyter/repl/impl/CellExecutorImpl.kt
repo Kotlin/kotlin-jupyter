@@ -100,7 +100,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             // TODO: scan classloader only when new classpath was added
             log.catchAll {
-                librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context, stackFrame.libraryOptions)
+                librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context, notebook, stackFrame.libraryOptions)
             }
 
             log.catchAll {
@@ -262,6 +262,9 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
             execute(declarations)
         }
+
+        override val lastClassLoader: ClassLoader
+            get() = sharedContext.evaluator.lastClassLoader
 
         companion object {
             private const val TEMP_OBJECT_NAME = "___temp_declarations"

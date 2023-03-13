@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -189,6 +190,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         includeLib("lib2")
         eval("yyy").renderedValue shouldBe 2
+
+        shouldNotThrow<Throwable> {
+            eval("""loadLibraryProducers("org.jetbrains.test.kotlinx.jupyter.api.Integration1")""")
+        }
     }
 
     @Test

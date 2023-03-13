@@ -21,7 +21,14 @@ import kotlin.script.experimental.dependencies.RepositoryCoordinates
 abstract class BaseReplFactory : ReplFactory() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
-    override fun provideNotebook(): MutableNotebook = NotebookImpl(runtimeProperties, connection, commManager, explicitClientType)
+    override fun provideNotebook(): MutableNotebook = NotebookImpl(
+        runtimeProperties,
+        connection,
+        commManager,
+        explicitClientType,
+        librariesScanner,
+    )
+
     override fun provideScriptClasspath() = emptyList<File>()
     override fun provideHomeDir(): File? = null
     override fun provideMavenRepositories() = emptyList<RepositoryCoordinates>()
@@ -29,7 +36,7 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideRuntimeProperties(): ReplRuntimeProperties = defaultRuntimeProperties
     override fun provideScriptReceivers() = emptyList<Any>()
     override fun provideIsEmbedded() = false
-    override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(notebook)
+    override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner()
     override fun provideCommManager(): CommManager = CommManagerImpl(connection)
     override fun provideCommHandlers(): List<CommHandler> = listOf(
         DebugPortCommHandler(),

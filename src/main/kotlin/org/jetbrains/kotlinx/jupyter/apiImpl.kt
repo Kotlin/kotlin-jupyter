@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
@@ -173,6 +174,7 @@ class NotebookImpl(
     override val connection: JupyterConnection,
     override val commManager: CommManager,
     private val explicitClientType: JupyterClientType?,
+    override val libraryLoader: LibraryLoader,
 ) : MutableNotebook {
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null

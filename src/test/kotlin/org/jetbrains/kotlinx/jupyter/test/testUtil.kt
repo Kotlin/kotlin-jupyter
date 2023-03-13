@@ -20,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
@@ -280,6 +281,9 @@ object NotebookMock : Notebook {
         get() = error("Not supposed to be called")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
+        get() = error("Not supposed to be called")
+
+    override val libraryLoader: LibraryLoader
         get() = error("Not supposed to be called")
 
     override val jupyterClientType: JupyterClientType

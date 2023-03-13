@@ -71,4 +71,6 @@ interface KotlinKernelHost {
      * Declares global variables for notebook
      */
     fun declare(variables: Iterable<VariableDeclaration>)
+
+    val lastClassLoader: ClassLoader
 }
