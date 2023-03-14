@@ -32,6 +32,7 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic
+import java.util.concurrent.ConcurrentHashMap
 
 @Serializable(MessageTypeSerializer::class)
 enum class MessageType(val contentClass: KClass<out MessageContent>) {
@@ -143,7 +144,7 @@ enum class KernelStatus {
 }
 
 object MessageTypeSerializer : KSerializer<MessageType> {
-    private val cache: MutableMap<String, MessageType> = hashMapOf()
+    private val cache: MutableMap<String, MessageType> = ConcurrentHashMap()
 
     private fun getMessageType(type: String): MessageType {
         return cache.computeIfAbsent(type) { newType ->
@@ -168,7 +169,7 @@ object MessageTypeSerializer : KSerializer<MessageType> {
 }
 
 object DetailsLevelSerializer : KSerializer<DetailLevel> {
-    private val cache: MutableMap<Int, DetailLevel> = hashMapOf()
+    private val cache: MutableMap<Int, DetailLevel> = ConcurrentHashMap()
 
     private fun getDetailsLevel(type: Int): DetailLevel {
         return cache.computeIfAbsent(type) { newLevel ->
