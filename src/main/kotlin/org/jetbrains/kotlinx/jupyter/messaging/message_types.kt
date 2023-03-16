@@ -29,10 +29,10 @@ import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.protocol.messageDataJson
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic
-import java.util.concurrent.ConcurrentHashMap
 
 @Serializable(MessageTypeSerializer::class)
 enum class MessageType(val contentClass: KClass<out MessageContent>) {
