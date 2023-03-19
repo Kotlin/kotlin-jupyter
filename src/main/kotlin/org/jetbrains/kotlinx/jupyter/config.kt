@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.config.readResourceAsIniFile
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
@@ -19,6 +20,16 @@ val defaultRepositoriesCoordinates = defaultRepositories.map { RepositoryCoordin
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(readResourceAsIniFile("runtime.properties"))
+}
+
+fun createRuntimeProperties(
+    kernelConfig: KernelConfig,
+    defaultProperties: ReplRuntimeProperties = defaultRuntimeProperties,
+): ReplRuntimeProperties {
+    return object : ReplRuntimeProperties by defaultProperties {
+        override val jvmTargetForSnippets: String
+            get() = kernelConfig.jvmTargetForSnippets ?: defaultProperties.jvmTargetForSnippets
+    }
 }
 
 data class OutputConfig(
