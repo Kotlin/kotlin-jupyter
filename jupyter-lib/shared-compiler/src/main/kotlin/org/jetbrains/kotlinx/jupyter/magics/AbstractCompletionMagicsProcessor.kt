@@ -88,24 +88,31 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val argCallStart = if (argIndex == 0) firstBracketIndex + 1 else callArgs[argIndex - 1].end
                 val argCall = librarySubstring.substring(argCallStart, cursor)
                 val argName = callArgs[argIndex].variable.name
-                val argValuePrefix = if (argName.isNotEmpty()) {
-                    if ('=' !in argCall) return
-                    argCall.substringAfter('=').trimStart()
-                } else {
-                    argCall
-                }
-
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
-
-                val descriptor = descriptors[libName] ?: return
-                val paramNames = descriptor.variables.properties.mapTo(mutableSetOf()) { it.name }
+                val libraryDescriptor = descriptors[libName] ?: return
+                val parameters = libraryDescriptor.variables
+                val paramNames = parameters.properties.map { it.name }
                 if (paramNames.isEmpty()) return
 
-                val paramName = argName.ifEmpty {
-                    paramNames.singleOrNull() ?: return
+                if ('=' !in argCall) {
+                    paramNames.filter { it.startsWith(argCall) }.mapTo(_completions) {
+                        variant(it, "parameter")
+                    }
+                    if (argName.isNotEmpty()) return
                 }
 
-                for (dependencyStr in descriptor.dependencies) {
+                val argValuePrefix = argCall.substringAfter('=').trimStart()
+
+                val paramsHaveOrder = parameters.hasOrder
+                val paramName = argName.ifEmpty {
+                    if (paramsHaveOrder) {
+                        paramNames.getOrNull(argIndex)
+                    } else {
+                        paramNames.singleOrNull()
+                    } ?: return
+                }
+
+                for (dependencyStr in libraryDescriptor.dependencies) {
                     val match = MAVEN_DEP_REGEX.matchEntire(dependencyStr) ?: continue
                     val group = match.groups[1]!!.value
                     val artifact = match.groups[2]!!.value
@@ -115,7 +122,7 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                     val dependencyParamName = versionTemplate.substring(1)
                     if (dependencyParamName != paramName) continue
 
-                    val versions = (descriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
+                    val versions = (libraryDescriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
                         if (repo.username == null && repo.password == null) {
                             getVersions(ArtifactLocation(repo.path, group, artifact))
                         } else {

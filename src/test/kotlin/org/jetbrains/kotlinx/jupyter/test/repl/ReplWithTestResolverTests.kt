@@ -4,8 +4,10 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
@@ -200,12 +202,27 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     @Test
     fun testLibraryCompletionWithParams() {
         completeOrFail("%use kotlin-dl()", 15).matches() shouldHaveAtLeastSize 5
-        completeOrFail("%use kotlin-dl(v =)", 15).matches() shouldHaveSize 0
-        completeOrFail("%use kotlin-dl(v =", 18).matches() shouldHaveAtLeastSize 5
+        completeOrFail("%use kotlin-dl(v =)", 15).matches() shouldBe listOf("v")
+        completeOrFail("%use kotlin-dl(v =", 18).matches().apply {
+            shouldHaveAtLeastSize(5)
+            shouldNotContain("v")
+        }
         completeOrFail("%use kotlin-dl(a =", 18).matches() shouldHaveSize 0
 
         completeOrFail("%use lets-plot(api = ", 21).matches() shouldContain "3.1.0"
         completeOrFail("%use lets-plot(api = , js", 21).matches() shouldContain "3.1.0"
         completeOrFail("%use lets-plot(api = 3.1.0, lib = ", 34).matches() shouldContain "2.2.0"
+    }
+
+    @Test
+    fun testCompletionForLibraryWithOrderedParameters() {
+        completeOrFail("%use ggdsl(gg)", 13).matches().single() shouldContain "Version"
+        completeOrFail("%use ggdsl()", 11).matches() shouldHaveAtLeastSize 70
+        completeOrFail("%use ggdsl(0.3.2,)", 17).matches() shouldHaveSize 2
+        completeOrFail("%use ggdsl(v=", 13).matches() shouldHaveSize 0
+        completeOrFail("%use ggdsl(ggDSLVersion=", 24).matches().apply {
+            shouldHaveAtLeastSize(70)
+            shouldNotContain("applyColorScheme")
+        }
     }
 }
