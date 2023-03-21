@@ -13,5 +13,10 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
 
     protected fun completeOrFail(code: Code, cursor: Int) = repl.completeBlocking(code, cursor).getOrFail()
 
+    protected fun complete(codeWithCursor: String, cursorSign: String = "|") = completeOrFail(
+        codeWithCursor.replace(cursorSign, ""),
+        codeWithCursor.indexOf(cursorSign),
+    )
+
     protected fun listErrors(code: Code) = repl.listErrorsBlocking(code)
 }

@@ -177,14 +177,14 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testLibraryCompletion() {
-        completeOrFail("%u", 2).sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
-        completeOrFail("%use kot", 8).sortedMatches() shouldContainAll listOf("kotlin-dl", "kotlin-statistics")
-        with(completeOrFail("%use dataframe(0.8.0-)", 21).sortedMatches()) {
+        complete("%u|").sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
+        complete("%use kot|").sortedMatches() shouldContainAll listOf("kotlin-dl", "kotlin-statistics")
+        with(complete("%use dataframe(0.8.0-|)").sortedMatches()) {
             shouldHaveAtLeastSize(10)
             shouldContain("0.8.0-rc-1")
         }
-        completeOrFail("%use lets-plot, data", 20).sortedMatches() shouldBe listOf("dataframe")
-        with(completeOrFail("%use kotlin-dl(", 15).matches()) {
+        complete("%use lets-plot, data|").sortedMatches() shouldBe listOf("dataframe")
+        with(complete("%use kotlin-dl(|").matches()) {
             last() shouldBe "0.1.1"
 
             // Pre-release version should appear after release version
@@ -194,33 +194,33 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         // Value should be cached, and all these requests should not take much time
         assertTimeout(Duration.ofSeconds(20)) {
             for (i in 1..10000) {
-                completeOrFail("%use kmath(", 11).matches() shouldHaveAtLeastSize 5
+                complete("%use kmath(|").matches() shouldHaveAtLeastSize 5
             }
         }
     }
 
     @Test
     fun testLibraryCompletionWithParams() {
-        completeOrFail("%use kotlin-dl()", 15).matches() shouldHaveAtLeastSize 5
-        completeOrFail("%use kotlin-dl(v =)", 15).matches() shouldBe listOf("v")
-        completeOrFail("%use kotlin-dl(v =", 18).matches().apply {
+        complete("%use kotlin-dl(|)").matches() shouldHaveAtLeastSize 5
+        complete("%use kotlin-dl(|v =)").matches() shouldBe listOf("v")
+        complete("%use kotlin-dl(v =|").matches().apply {
             shouldHaveAtLeastSize(5)
             shouldNotContain("v")
         }
-        completeOrFail("%use kotlin-dl(a =", 18).matches() shouldHaveSize 0
+        complete("%use kotlin-dl(a =|").matches() shouldHaveSize 0
 
-        completeOrFail("%use lets-plot(api = ", 21).matches() shouldContain "3.1.0"
-        completeOrFail("%use lets-plot(api = , js", 21).matches() shouldContain "3.1.0"
-        completeOrFail("%use lets-plot(api = 3.1.0, lib = ", 34).matches() shouldContain "2.2.0"
+        complete("%use lets-plot(api = |").matches() shouldContain "3.1.0"
+        complete("%use lets-plot(api = |, js").matches() shouldContain "3.1.0"
+        complete("%use lets-plot(api = 3.1.0, lib = |").matches() shouldContain "2.2.0"
     }
 
     @Test
     fun testCompletionForLibraryWithOrderedParameters() {
-        completeOrFail("%use ggdsl(gg)", 13).matches().single() shouldContain "Version"
-        completeOrFail("%use ggdsl()", 11).matches() shouldHaveAtLeastSize 70
-        completeOrFail("%use ggdsl(0.3.2,)", 17).matches() shouldHaveSize 2
-        completeOrFail("%use ggdsl(v=", 13).matches() shouldHaveSize 0
-        completeOrFail("%use ggdsl(ggDSLVersion=", 24).matches().apply {
+        complete("%use ggdsl(gg|)").matches().single() shouldContain "Version"
+        complete("%use ggdsl(|)").matches() shouldHaveAtLeastSize 70
+        complete("%use ggdsl(0.3.2,|)").matches() shouldHaveSize 2
+        complete("%use ggdsl(v=|").matches() shouldHaveSize 0
+        complete("%use ggdsl(ggDSLVersion=|").matches().apply {
             shouldHaveAtLeastSize(70)
             shouldNotContain("applyColorScheme")
         }
