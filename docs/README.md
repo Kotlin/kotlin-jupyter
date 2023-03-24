@@ -276,6 +276,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [ggdsl](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Lets-Plot
  - [ggdsl-echarts](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Apache ECharts
+ - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - A library to use the Gradle Enterprise API in Kotlin scripts or projects
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [kalasim](https://www.kalasim.org) - Discrete event simulator
