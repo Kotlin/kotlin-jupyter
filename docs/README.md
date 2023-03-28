@@ -296,6 +296,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
+ - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
  - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
  - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
