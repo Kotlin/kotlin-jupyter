@@ -1,0 +1,319 @@
+Targets
+    Occurrences of '<!---FUN' in Project
+Found Occurrences in Project  (242 usages found)
+    access.md  (1 usage found)
+        8 <!---FUN getRowsColumns-->
+    add.md  (7 usages found)
+        16 <!---FUN add-->
+        48 <!---FUN addRecurrent-->
+        78 <!---FUN addMany-->
+        138 <!---FUN addCalculatedApi-->
+        151 <!---FUN addCalculated-->
+        197 <!---FUN addExisting-->
+        210 <!---FUN addDfs-->
+    addDf.md  (1 usage found)
+        7 <!---FUN addDfs-->
+    apiLevels.md  (5 usages found)
+        42 <!---FUN strings-->
+        61 <!---FUN accessors3-->
+        82 <!---FUN kproperties1-->
+        109 <!---FUN extensionProperties1-->
+        117 <!---FUN extensionProperties2-->
+    collectionsInterop.md  (5 usages found)
+        21 <!---FUN getRowsColumns-->
+        37 <!---FUN listInterop1-->
+        49 <!---FUN listInterop2-->
+        59 <!---FUN listInterop3-->
+        80 <!---FUN listInterop4-->
+    columnAccessorsApi.md  (2 usages found)
+        7 <!---FUN accessors1-->
+        21 <!---FUN accessors2-->
+    ColumnSelectors.md  (5 usages found)
+        9 <!---FUN columnSelectorsUsages-->
+        24 <!---FUN columnSelectors-->
+        132 <!---FUN columnsSelectorByIndices-->
+        149 <!---FUN columnSelectorsMisc-->
+        196 <!---FUN columnSelectorsModifySet-->
+    concat.md  (7 usages found)
+        11 <!---FUN concatDfs-->
+        21 <!---FUN concatColumns-->
+        33 <!---FUN concatIterable-->
+        43 <!---FUN concatRows-->
+        54 <!---FUN concatColumnsIterable-->
+        66 <!---FUN concatGroupBy-->
+        76 <!---FUN concatFrameColumn-->
+    concatDf.md  (2 usages found)
+        7 <!---FUN concatDfs-->
+        15 <!---FUN concatIterable-->
+    contributions.md  (1 usage found)
+        24 <!---FUN add-->
+    convert.md  (3 usages found)
+        17 <!---FUN convert-->
+        39 <!---FUN convertTo-->
+        56 <!---FUN convertToEnum-->
+    convertTo.md  (2 usages found)
+        15 <!---FUN customConvertersData-->
+        25 <!---FUN customConverters-->
+    count.md  (3 usages found)
+        7 <!---FUN count-->
+        17 <!---FUN countCondition-->
+        27 <!---FUN countAggregation-->
+    countDistinct.md  (2 usages found)
+        7 <!---FUN countDistinctColumns-->
+        36 <!---FUN countDistinct-->
+    createColumn.md  (7 usages found)
+        10 <!---FUN createValueByColumnOf-->
+        21 <!---FUN createColumnRenamed-->
+        31 <!---FUN createColumnGroup-->
+        45 <!---FUN createFrameColumn-->
+        61 <!---FUN createValueByToColumn-->
+        73 <!---FUN createValueColumnInferred-->
+        89 <!---FUN createValueColumnOfType-->
+    createDataFrame.md  (13 usages found)
+        10 <!---FUN createEmptyDataFrame-->
+        22 <!---FUN createDataFrameOf-->
+        35 <!---FUN createDataFrameOfPairs-->
+        47 <!---FUN createDataFrameFromColumns-->
+        59 <!---FUN createDataFrameFromNamesAndValues-->
+        73 <!---FUN createDataFrameWithFill-->
+        82 <!---FUN createDataFrameWithRandom-->
+        98 <!---FUN createDataFrameFillConstant-->
+        113 <!---FUN createDataFrameFromIterable-->
+        126 <!---FUN createDataFrameFromMap-->
+        139 <!---FUN readDataFrameFromObject-->
+        156 <!---FUN readDataFrameFromDeepObject-->
+        175 <!---FUN readDataFrameFromDeepObjectWithExclude-->
+    cumSum.md  (1 usage found)
+        21 <!---FUN cumSum-->
+    DataColumn.md  (8 usages found)
+        41 <!---FUN columnAccessorsUsage-->
+        69 <!---FUN createColumnAccessor-->
+        79 <!---FUN createColumnAccessorRenamed-->
+        89 <!---FUN createGroupOrFrameColumnAccessor-->
+        100 <!---FUN createDeepColumnAccessor-->
+        111 <!---FUN columnAccessorComputed-->
+        148 <!---FUN columnAccessorMap-->
+        161 <!---FUN columnAccessorToColumn-->
+    DataRow.md  (2 usages found)
+        30 <!---FUN expressions-->
+        50 <!---FUN conditions-->
+    describe.md  (2 usages found)
+        28 <!---FUN describe-->
+        38 <!---FUN describeColumns-->
+    distinct.md  (3 usages found)
+        8 <!---FUN distinct-->
+        18 <!---FUN distinctColumns-->
+        55 <!---FUN distinctBy-->
+    drop.md  (4 usages found)
+        7 <!---FUN dropWhere-->
+        42 <!---FUN dropNulls-->
+        58 <!---FUN dropNaNs-->
+        74 <!---FUN dropNA-->
+    explode.md  (4 usages found)
+        29 <!---FUN explode-->
+        59 <!---FUN explodeSeveral-->
+        73 <!---FUN explodeColumnList-->
+        85 <!---FUN explodeColumnFrames-->
+    extensionPropertiesApi.md  (2 usages found)
+        9 <!---FUN extensionProperties1-->
+        19 <!---FUN extensionProperties2-->
+    fill.md  (3 usages found)
+        11 <!---FUN fillNulls-->
+        25 <!---FUN fillNaNs-->
+        37 <!---FUN fillNA-->
+    filter.md  (2 usages found)
+        7 <!---FUN filter-->
+        42 <!---FUN filterBy-->
+    flatten.md  (2 usages found)
+        13 <!---FUN flatten-->
+        48 <!---FUN flattenAll-->
+    gather.md  (2 usages found)
+        39 <!---FUN gather-->
+        47 <!---FUN gatherWithMapping-->
+    getColumn.md  (4 usages found)
+        7 <!---FUN getColumn-->
+        38 <!---FUN getColumnOrNull-->
+        69 <!---FUN getColumnGroup-->
+        100 <!---FUN getColumns-->
+    getColumns.md  (2 usages found)
+        7 <!---FUN getColumnByName-->
+        41 <!---FUN getColumnByIndex-->
+    getRow.md  (2 usages found)
+        7 <!---FUN getRowByIndex-->
+        17 <!---FUN getRowByCondition-->
+    gradle.md  (2 usages found)
+        33 <!---FUN useProperties-->
+        103 <!---FUN useInferredSchema-->
+    group.md  (1 usage found)
+        18 <!---FUN group-->
+    groupBy.md  (8 usages found)
+        29 <!---FUN groupBy-->
+        91 <!---FUN dataFrameToGroupBy-->
+        105 <!---FUN groupByToFrame-->
+        115 <!---FUN concatGroupBy-->
+        129 <!---FUN groupByAggregations-->
+        202 <!---FUN groupByAggregateWithoutInto-->
+        235 <!---FUN groupByDirectAggregations-->
+        307 <!---FUN groupByWithoutAggregation-->
+    head.md  (1 usage found)
+        7 <!---FUN head-->
+    implode.md  (1 usage found)
+        22 <!---FUN implode-->
+    indexing.md  (1 usage found)
+        5 <!---FUN getCell-->
+    insert.md  (2 usages found)
+        19 <!---FUN insert-->
+        49 <!---FUN insertColumn-->
+    iterate.md  (3 usages found)
+        7 <!---FUN forRows-->
+        66 <!---FUN forColumn-->
+        78 <!---FUN forCells-->
+    join.md  (4 usages found)
+        22 <!---FUN joinWithMatch-->
+        52 <!---FUN join-->
+        82 <!---FUN joinDefault-->
+        101 <!---FUN joinSpecial-->
+    KPropertiesApi.md  (2 usages found)
+        10 <!---FUN kproperties1-->
+        36 <!---FUN kproperties2-->
+    map.md  (3 usages found)
+        16 <!---FUN map-->
+        32 <!---FUN mapToColumn-->
+        74 <!---FUN mapMany-->
+    mean.md  (2 usages found)
+        9 <!---FUN meanModes-->
+        20 <!---FUN meanAggregations-->
+    median.md  (2 usages found)
+        9 <!---FUN medianModes-->
+        20 <!---FUN medianAggregations-->
+    merge.md  (5 usages found)
+        18 <!---FUN merge-->
+        29 <!---FUN mergeSameWith-->
+        41 <!---FUN mergeDifferentWith-->
+        53 <!---FUN mergeDefault-->
+        63 <!---FUN mergeIntoList-->
+    minmax.md  (2 usages found)
+        10 <!---FUN minmaxModes-->
+        22 <!---FUN minmaxAggregations-->
+    move.md  (1 usage found)
+        18 <!---FUN move-->
+    operations.md  (1 usage found)
+        9 <!---FUN multiCallOperations-->
+    parse.md  (4 usages found)
+        8 <!---FUN parseAll-->
+        18 <!---FUN parseSome-->
+        43 <!---FUN parseWithOptions-->
+        53 <!---FUN globalParserOptions-->
+    pivot.md  (11 usages found)
+        26 <!---FUN pivot-->
+        57 <!---FUN pivot2-->
+        94 <!---FUN pivotGroupBy-->
+        133 <!---FUN pivotGroupByOther-->
+        147 <!---FUN pivotAggregate-->
+        199 <!---FUN pivotCommonAggregations-->
+        238 <!---FUN pivotSeparate-->
+        285 <!---FUN pivotDefault-->
+        335 <!---FUN pivotInAggregate-->
+        388 <!---FUN pivotCounts-->
+        410 <!---FUN pivotMatches-->
+    read.md  (6 usages found)
+        31 <!---FUN readCsvCustom-->
+        110 <!---FUN readNumbersWithSpecificLocale-->
+        123 <!---FUN readNumbersWithColType-->
+        183 <!---FUN readJson-->
+        374 <!---FUN fixMixedColumn-->
+        405 <!---FUN readArrowFeather-->
+    remove.md  (1 usage found)
+        13 <!---FUN remove-->
+    reorder.md  (3 usages found)
+        15 <!---FUN reorder-->
+        48 <!---FUN reorderSome-->
+        62 <!---FUN reorderInGroup-->
+    replace.md  (3 usages found)
+        15 <!---FUN replace-->
+        37 <!---FUN convertToFrameColumnAPI-->
+        56 <!---FUN customUnfoldRead-->
+    reverse.md  (1 usage found)
+        7 <!---FUN reverse-->
+    schema.md  (2 usages found)
+        9 <!---FUN schema-->
+        31 <!---FUN schemaGroupBy-->
+    schemas.md  (5 usages found)
+        21 <!---FUN createDfNullable-->
+        134 <!---FUN extendedDf-->
+        157 <!---FUN splitNameWorks-->
+        171 <!---FUN adultsWorks-->
+        221 <!---FUN createDf-->
+    select.md  (2 usages found)
+        9 <!---FUN getColumnsByName-->
+        41 <!---FUN select-->
+    shuffle.md  (1 usage found)
+        7 <!---FUN shuffle-->
+    sliceRows.md  (8 usages found)
+        7 <!---FUN getSeveralRowsByIndices-->
+        17 <!---FUN getSeveralRowsByRanges-->
+        30 <!---FUN take-->
+        42 <!---FUN takeLast-->
+        54 <!---FUN takeWhile-->
+        66 <!---FUN drop-->
+        78 <!---FUN dropLast-->
+        91 <!---FUN dropWhile-->
+    sortBy.md  (3 usages found)
+        11 <!---FUN sortBy-->
+        51 <!---FUN sortByDesc-->
+        83 <!---FUN sortWith-->
+    split.md  (5 usages found)
+        28 <!---FUN splitInplace-->
+        69 <!---FUN split-->
+        105 <!---FUN splitRegex-->
+        117 <!---FUN splitFrameColumn-->
+        146 <!---FUN splitIntoRows-->
+    std.md  (2 usages found)
+        9 <!---FUN stdModes-->
+        20 <!---FUN stdAggregations-->
+    stringApi.md  (1 usage found)
+        7 <!---FUN strings-->
+    sum.md  (2 usages found)
+        9 <!---FUN statisticModes-->
+        20 <!---FUN sumAggregations-->
+    summaryStatistics.md  (8 usages found)
+        20 <!---FUN statisticAggregations-->
+        45 <!---FUN statisticModes-->
+        62 <!---FUN statisticGroupBySingle-->
+        73 <!---FUN statisticGroupBySingleNamed-->
+        84 <!---FUN statisticGroupByMany-->
+        99 <!---FUN statisticPivotSingle-->
+        135 <!---FUN statisticPivotMany-->
+        146 <!---FUN statisticPivotManySeparate-->
+    toList.md  (1 usage found)
+        22 <!---FUN listInterop5-->
+    unfold.md  (4 usages found)
+        15 <!---FUN convertToColumnGroupUseCase-->
+        27 <!---FUN convertToColumnGroupData-->
+        43 <!---FUN convertToColumnGroup-->
+        51 <!---FUN convertToColumnGroupBenefits-->
+    ungroup.md  (1 usage found)
+        15 <!---FUN ungroup-->
+    update.md  (6 usages found)
+        22 <!---FUN update-->
+        35 <!---FUN updateWithConst-->
+        45 <!---FUN updateWith-->
+        55 <!---FUN updatePerColumn-->
+        65 <!---FUN updatePerRowCol-->
+        75 <!---FUN updateAsFrame-->
+    valueCounts.md  (1 usage found)
+        19 <!---FUN valueCounts-->
+    values.md  (1 usage found)
+        16 <!---FUN values-->
+    write.md  (9 usages found)
+        13 <!---FUN writeCsv-->
+        21 <!---FUN writeCsvStr-->
+        36 <!---FUN writeJson-->
+        44 <!---FUN writeJsonStr-->
+        62 <!---FUN writeXls-->
+        74 <!---FUN writeXlsAppendAndPostProcessing-->
+        140 <!---FUN writeArrowFile-->
+        150 <!---FUN writeArrowByteArray-->
+        168 <!---FUN writeArrowPerSchema-->
+    xs.md  (1 usage found)
+        16 <!---FUN xs-->

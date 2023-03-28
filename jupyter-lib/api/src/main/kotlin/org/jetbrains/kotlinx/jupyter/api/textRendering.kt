@@ -2,6 +2,10 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.internal.ReflectProperties.LazyVal
+import kotlin.reflect.jvm.isAccessible
 
 fun interface TextRenderer {
     fun render(processor: TextRenderersProcessor, value: Any?): String?
@@ -48,11 +52,14 @@ object TextRenderers {
         if (value !is Iterable<*>) {
             null
         } else {
-            renderIterable(
-                processor,
-                processor.render(value::class),
-                value,
-            )
+            when (value) {
+                is ClosedRange<*> -> value.toString()
+                else -> renderIterable(
+                    processor,
+                    processor.render(value::class),
+                    value,
+                )
+            }
         }
     }
 
@@ -76,15 +83,26 @@ object TextRenderers {
         if (value == null) {
             null
         } else {
-            val valueMap = buildObjectPropertiesMap(value)
-            renderMap(
-                processor,
-                processor.render(value::class),
-                valueMap,
-                "=",
-                openBracket = "(",
-                closeBracket = ")",
-            )
+            when (value) {
+                is LazyVal<*> -> value.toString()
+                is KClass<*> -> value.simpleName
+                is Class<*> -> value.simpleName
+                else -> {
+                    val valueMap = when (value) {
+                        is MatchResult -> buildObjectMapByKotlinProperties(value, MatchResult::class)
+                        is MatchGroup -> buildObjectMapByKotlinProperties(value, MatchGroup::class)
+                        else -> buildObjectMapByJavaFields(value)
+                    }
+                    renderMap(
+                        processor,
+                        processor.render(value::class),
+                        valueMap,
+                        "=",
+                        openBracket = "(",
+                        closeBracket = ")",
+                    )
+                }
+            }
         }
     }
 
@@ -163,15 +181,42 @@ object TextRenderers {
         }
     }
 
-    private fun buildObjectPropertiesMap(obj: Any): Map<String, Any?> {
+    private fun buildObjectMapByJavaFields(obj: Any): Map<String, Any?> {
         val clazz: Class<*> = obj::class.java
-        val fields: Array<Field> = clazz.declaredFields
+        return buildObjectMapByJavaFields(obj, clazz.declaredFields)
+    }
+
+    private fun buildObjectMapByJavaFields(obj: Any, fields: Array<Field>): Map<String, Any?> {
+        return buildAbstractObjectMap(obj, fields.toList(), { it.name }) { f, o ->
+            f.isAccessible = true
+            f.get(o)
+        }
+    }
+
+    private fun buildObjectMapByKotlinProperties(obj: Any, clazz: KClass<*>): Map<String, Any?> {
+        return buildObjectMapByKotlinProperties(obj, clazz.memberProperties)
+    }
+
+    private fun buildObjectMapByKotlinProperties(obj: Any, properties: Collection<KProperty1<out Any, *>>): Map<String, Any?> {
+        return buildAbstractObjectMap(obj, properties, { it.name }) { p, o ->
+            @Suppress("UNCHECKED_CAST")
+            (p as KProperty1<Any, Any?>)
+            p.isAccessible = true
+            p.get(o)
+        }
+    }
+
+    private fun <P> buildAbstractObjectMap(
+        obj: Any,
+        abstractProps: Iterable<P>,
+        nameGetter: (P) -> String,
+        valueGetter: (P, Any) -> Any?,
+    ): Map<String, Any?> {
         return hashMapOf<String, Any?>().apply {
-            for (field in fields) {
-                val name: String = field.name
-                val value: Any = try {
-                    field.isAccessible = true
-                    field.get(obj)
+            for (prop in abstractProps) {
+                val name: String = nameGetter(prop)
+                val value: Any? = try {
+                    valueGetter(prop, obj)
                 } catch (e: IllegalAccessException) {
                     "[exception thrown]"
                 } catch (e: RuntimeException) {

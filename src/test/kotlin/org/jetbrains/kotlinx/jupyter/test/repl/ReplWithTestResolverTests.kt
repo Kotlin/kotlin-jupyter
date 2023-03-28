@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
@@ -224,5 +225,19 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             shouldHaveAtLeastSize(70)
             shouldNotContain("applyColorScheme")
         }
+    }
+
+    @Test
+    fun testTextRenderersOnRealData() {
+        val result = eval(
+            """
+            notebook.textRenderersProcessor.registerDefaultRenderers()
+            val text = java.io.File("src/test/testData/textRenderers/textData.txt").readText()
+            "<!---FUN (.+)-->".toRegex().findAll(text).toList()
+            """.trimIndent(),
+        )
+
+        val html = (result.displayValue as MimeTypedResult)["text/plain"]!!
+        html shouldStartWith "ArrayList[MatcherMatchResult(groupValues=class kotlin.text.MatcherMatchResult\$groupValues\$1[<!---FUN getRowsColumns-->, getRowsColumns], destructured=Destructured(match=<recursion prevented>), groups=class kotlin.text.MatcherMatchResult\$groups\$1[MatchGroup(range=143..168, value=<!---FUN getRowsColumns-->), MatchGroup(range=152..165, value=getRowsColumns)]"
     }
 }
