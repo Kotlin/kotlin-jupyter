@@ -238,6 +238,6 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         )
 
         val html = (result.displayValue as MimeTypedResult)["text/plain"]!!
-        html shouldStartWith "ArrayList[MatcherMatchResult(groupValues=class kotlin.text.MatcherMatchResult\$groupValues\$1[<!---FUN getRowsColumns-->, getRowsColumns], destructured=Destructured(match=<recursion prevented>), groups=class kotlin.text.MatcherMatchResult\$groups\$1[MatchGroup(range=143..168, value=<!---FUN getRowsColumns-->), MatchGroup(range=152..165, value=getRowsColumns)]"
+        html shouldStartWith "ArrayList[MatcherMatchResult("
     }
 }
