@@ -15,3 +15,6 @@ JAVA_HOME = "JAVA_HOME"
 
 # specific JDK location environment variable
 KERNEL_JAVA_HOME = "KOTLIN_JUPYTER_JAVA_HOME"
+
+# java executable path. If set, has greater priority than KOTLIN_JUPYTER_JAVA_HOME
+KERNEL_JAVA_EXECUTABLE = "KOTLIN_JUPYTER_JAVA_EXECUTABLE"

@@ -55,12 +55,15 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
         class_path_arg = os.pathsep.join([os.path.join(jars_dir, jar_name) for jar_name in cp])
         main_jar_path = os.path.join(jars_dir, main_jar)
 
+        java_exec = os.getenv(env_names.KERNEL_JAVA_EXECUTABLE)
         java_home = os.getenv(env_names.KERNEL_JAVA_HOME) or os.getenv(env_names.JAVA_HOME)
 
-        if java_home is None:
-            java = "java"
-        else:
+        if java_exec is not None:
+            java = java_exec
+        elif java_home is not None:
             java = os.path.join(java_home, "bin", "java")
+        else:
+            java = "java"
 
         jvm_arg_str = os.getenv(env_names.KERNEL_JAVA_OPTS) or os.getenv(env_names.JAVA_OPTS) or ""
         extra_args = os.getenv(env_names.KERNEL_EXTRA_JAVA_OPTS)
