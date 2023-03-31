@@ -6,7 +6,7 @@ object JupyterSessionInfo {
     private val loader = ServiceLoader.load(JupyterSessionProvider::class.java)
 
     fun isRunWithKernel(): Boolean {
-        val provider = loader.findFirst().orElse(null)
+        val provider = loader.firstOrNull()
         return provider != null
     }
 }

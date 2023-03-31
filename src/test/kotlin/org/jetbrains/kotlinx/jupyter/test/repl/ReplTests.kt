@@ -488,9 +488,9 @@ class ReplTests : AbstractSingleReplTest() {
         val res = eval(
             """
             import kotlin.io.path.*
-            import java.nio.file.Path
+            import java.nio.file.Paths
             
-            Path.of(".").absolute()
+            Paths.get(".").absolute()
             """.trimIndent(),
         ).renderedValue
         res.shouldBeInstanceOf<Path>()

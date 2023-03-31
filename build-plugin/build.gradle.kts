@@ -30,10 +30,19 @@ sourceSets {
     }
 }
 
+val myJvmTarget = libs.versions.jvmTarget.get()
+val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
+
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = freeCompilerArgs + listOf("-opt-in=kotlin.RequiresOptIn")
-        jvmTarget = "11"
+        jvmTarget = myJvmTarget
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(myJvmTargetInt))
     }
 }
 
