@@ -274,13 +274,13 @@ Other options are resolving library descriptor from a local file or from remote 
  - default - Default imports: dataframe and Lets-Plot libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
- - [ggdsl](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Lets-Plot
- - [ggdsl-echarts](https://github.com/AndreiKingsley/lib-ggdsl) - Kotlin plotting DSL for Apache ECharts
  - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - A library to use the Gradle Enterprise API in Kotlin scripts or projects
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [kalasim](https://www.kalasim.org) - Discrete event simulator
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
+ - [kandy](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Lets-Plot
+ - [kandy-echarts](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Apache ECharts
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
