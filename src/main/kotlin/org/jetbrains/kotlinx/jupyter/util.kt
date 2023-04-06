@@ -11,8 +11,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResourceLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryReference
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.File
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -151,6 +154,20 @@ class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLi
     override fun getDescriptors(): Map<String, LibraryDescriptor> {
         return if (homeDir == null) super.getDescriptors()
         else libraryDescriptors(homeDir)
+    }
+}
+
+class LibraryDescriptorsByResolutionProvider(
+    private val delegate: LibraryDescriptorsProvider,
+    private val libraryResolver: LibraryResolver,
+) : LibraryDescriptorsProvider by delegate {
+    override fun getDescriptorForVersionsCompletion(fullName: String): LibraryDescriptor? {
+        return super.getDescriptorForVersionsCompletion(fullName)
+            ?: run {
+                val reference = parseLibraryReference(fullName)
+                val descriptorText = libraryResolver.resolve(reference, emptyList())?.originalDescriptorText ?: return@run null
+                parseLibraryDescriptor(descriptorText)
+            }
     }
 }
 

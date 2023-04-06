@@ -3,9 +3,12 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.intellij.lang.annotations.Language
@@ -287,10 +290,23 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         eval(
             """
             %use dataframe
-            %use ggdsl(v=0.3.2-dev-7)
+            %use kandy(0.4.0-dev-16)
             
             dataFrameConfig
             """.trimIndent(),
         )
+    }
+
+    @Test
+    fun testCompletionForLibraryWithOrderedParameters() {
+        val lib = "ggdsl@src/test/testData/"
+        complete("%use $lib(gg|)").matches().single() shouldContain "Version"
+        complete("%use $lib(|)").matches() shouldHaveAtLeastSize 70
+        complete("%use $lib(0.3.2,|)").matches() shouldHaveSize 2
+        complete("%use $lib(v=|").matches() shouldHaveSize 0
+        complete("%use $lib(ggDSLVersion=|").matches().apply {
+            shouldHaveAtLeastSize(70)
+            shouldNotContain("applyColorScheme")
+        }
     }
 }

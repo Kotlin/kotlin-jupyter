@@ -8,7 +8,7 @@ import java.net.URL
 
 fun parseReferenceWithArgs(str: String): Pair<LibraryReference, List<Variable>> {
     val (fullName, vars) = parseLibraryName(str)
-    val reference = parseReference(fullName)
+    val reference = parseLibraryReference(fullName)
     return reference to vars
 }
 
@@ -20,7 +20,7 @@ private fun parseResolutionInfo(string: String): LibraryResolutionInfo {
     return defaultParsers[type]?.getInfo(vars) ?: AbstractLibraryResolutionInfo.Default(type)
 }
 
-private fun parseReference(string: String): LibraryReference {
+fun parseLibraryReference(string: String): LibraryReference {
     val sepIndex = string.indexOf('@')
     if (sepIndex == -1) return LibraryReference(AbstractLibraryResolutionInfo.Default(), string)
 

@@ -4,6 +4,10 @@ import org.jetbrains.kotlinx.jupyter.config.librariesFromResources
 
 interface LibraryDescriptorsProvider {
     fun getDescriptors(): Map<String, LibraryDescriptor>
+
+    fun getDescriptorForVersionsCompletion(fullName: String): LibraryDescriptor? {
+        return getDescriptors()[fullName]
+    }
 }
 
 open class ResourceLibraryDescriptorsProvider : LibraryDescriptorsProvider {

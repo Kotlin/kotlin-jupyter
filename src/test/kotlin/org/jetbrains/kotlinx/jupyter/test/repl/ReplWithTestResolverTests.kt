@@ -7,7 +7,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
@@ -79,7 +78,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         eval("SessionOptions.resolveSources = true")
         val res = eval(
             """
-                %use ggdsl(v=0.2.4-dev-1)
+                %use kandy(0.4.0-dev-16)
             """.trimIndent(),
         )
 
@@ -213,18 +212,6 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         complete("%use lets-plot(api = |").matches() shouldContain "3.1.0"
         complete("%use lets-plot(api = |, js").matches() shouldContain "3.1.0"
         complete("%use lets-plot(api = 3.1.0, lib = |").matches() shouldContain "2.2.0"
-    }
-
-    @Test
-    fun testCompletionForLibraryWithOrderedParameters() {
-        complete("%use ggdsl(gg|)").matches().single() shouldContain "Version"
-        complete("%use ggdsl(|)").matches() shouldHaveAtLeastSize 70
-        complete("%use ggdsl(0.3.2,|)").matches() shouldHaveSize 2
-        complete("%use ggdsl(v=|").matches() shouldHaveSize 0
-        complete("%use ggdsl(ggDSLVersion=|").matches().apply {
-            shouldHaveAtLeastSize(70)
-            shouldNotContain("applyColorScheme")
-        }
     }
 
     @Test

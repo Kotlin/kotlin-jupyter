@@ -89,7 +89,7 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val argCall = librarySubstring.substring(argCallStart, cursor)
                 val argName = callArgs[argIndex].variable.name
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
-                val libraryDescriptor = descriptors[libName] ?: return
+                val libraryDescriptor = libraryDescriptorsProvider.getDescriptorForVersionsCompletion(libName) ?: return
                 val parameters = libraryDescriptor.variables
                 val paramNames = parameters.properties.map { it.name }
                 if (paramNames.isEmpty()) return

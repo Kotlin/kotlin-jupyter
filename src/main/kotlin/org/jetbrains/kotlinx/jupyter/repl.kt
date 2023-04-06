@@ -273,7 +273,14 @@ class ReplForJupyterImpl(
         ),
         parseOutCellMagic
     )
-    override val libraryDescriptorsProvider = HomeDirLibraryDescriptorsProvider(homeDir)
+    override val libraryDescriptorsProvider = run {
+        val provider = HomeDirLibraryDescriptorsProvider(homeDir)
+        if (libraryResolver != null) {
+            LibraryDescriptorsByResolutionProvider(provider, libraryResolver)
+        } else {
+            provider
+        }
+    }
     private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic)
     private val errorsMagics = ErrorsMagicsProcessor(parseOutCellMagic)
 
