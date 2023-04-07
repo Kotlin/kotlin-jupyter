@@ -50,6 +50,12 @@ Dev:
 
 Uninstall: `pip uninstall kotlin-jupyter-kernel`
 
+### Kotlin Notebook plugin
+
+Just download and use the latest version of [Kotlin Notebook plugin](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook) from the Marketplace.
+Kotlin kernel is embedded into it.
+
+
 ### From sources
 
 ```bash
@@ -179,16 +185,42 @@ python -m kotlin_kernel add-kernel --name "JDK 15 Big 2 GPU" --jdk ~/.jdks/openj
 The following REPL commands are supported:
 [[supported_commands]]
  
-### Dependencies resolving annotations
+### Dependencies resolving
 
 It is possible to add dynamic dependencies to the notebook using the following annotations:
  - `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class 
    directories or jars, ivy and maven artifacts represented by the colon separated string
  - `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
  To specify Maven local, use `@file:Repository("*mavenLocal")`.
- 
-Note that dependencies in remote repositories are resolved via Ivy resolver.
-Caches are stored in `~/.ivy2/cache` folder by default. Sometimes, due to network
+
+Alternative way to do the same is using Gradle-like syntax:
+
+```kotlin
+USE {
+    repositories {
+        maven {
+            url = "https://my.secret.repo/maven/"
+            credentials {
+                username = USER
+                password = TOKEN
+            }
+        }
+    }
+
+    dependencies {
+        val ktorVersion = "2.0.3"
+
+        implementation("my.secret:artifact:1.0-beta")
+        implementation("io.ktor:ktor-client-core:$ktorVersion")
+        implementation("io.ktor:ktor-client-apache:$ktorVersion")
+    }
+}
+```
+
+The same syntax can be used in [integrations creating](libraries.md).
+
+Note that dependencies in remote repositories are resolved via Maven resolver.
+Caches are stored in `~/.m2/repository` folder by default. Sometimes, due to network
 issues or running several artifacts resolutions in parallel, caches may get corrupted.
 If you have some troubles with artifacts resolution, please remove caches, restart kernel
 and try again.
