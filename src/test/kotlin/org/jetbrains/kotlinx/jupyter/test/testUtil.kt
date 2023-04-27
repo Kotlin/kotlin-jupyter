@@ -286,6 +286,10 @@ object NotebookMock : Notebook {
     override val libraryLoader: LibraryLoader
         get() = error("Not supposed to be called")
 
+    override fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String>): LibraryDefinition {
+        error("Not supposed to be called")
+    }
+
     override val jupyterClientType: JupyterClientType
         get() = JupyterClientType.UNKNOWN
 

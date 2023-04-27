@@ -61,3 +61,12 @@ fun ScriptTemplateWithDisplayHelpers.loadLibraryDefinitions(
     ),
     options,
 )
+
+fun ScriptTemplateWithDisplayHelpers.loadLibraryDescriptor(
+    descriptorText: String,
+    options: Map<String, String> = emptyMap(),
+) {
+    host.scheduleExecution {
+        addLibrary(notebook.getLibraryFromDescriptor(descriptorText, options))
+    }
+}

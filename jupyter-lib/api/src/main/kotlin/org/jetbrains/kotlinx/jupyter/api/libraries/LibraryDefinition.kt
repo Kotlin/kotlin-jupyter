@@ -27,6 +27,18 @@ interface LibraryDefinition {
         get() = emptyMap()
 
     /**
+     * Optional textual description of this library
+     */
+    val description: String?
+        get() = null
+
+    /**
+     * Optional link to this library's website
+     */
+    val website: String?
+        get() = null
+
+    /**
      * List of artifact dependencies in gradle colon-separated format
      */
     val dependencies: List<String>

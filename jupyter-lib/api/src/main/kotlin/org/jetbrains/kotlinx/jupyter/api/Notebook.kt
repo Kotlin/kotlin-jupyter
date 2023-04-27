@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.api
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 
 /**
@@ -125,6 +126,7 @@ interface Notebook {
      */
     val libraryRequests: Collection<LibraryResolutionRequest>
     val libraryLoader: LibraryLoader
+    fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String> = emptyMap()): LibraryDefinition
 
     val connection: JupyterConnection
 

@@ -80,6 +80,11 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private var _minimalKernelVersion: KotlinKernelVersion? = null
 
+        private val options: MutableMap<String, String> = mutableMapOf()
+
+        private var website: String? = null
+        private var description: String? = null
+
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
         }
@@ -271,8 +276,27 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             setMinimalKernelVersion(KotlinKernelVersion.from(version) ?: error("Wrong kernel version format: $version"))
         }
 
+        fun addOption(name: String, value: String) {
+            options[name] = value
+        }
+
+        fun addOptions(options: Map<String, String>) {
+            this.options.putAll(options)
+        }
+
+        fun setDescription(description: String) {
+            this.description = description
+        }
+
+        fun setWebsite(website: String) {
+            this.website = website
+        }
+
         internal fun getDefinition() =
             libraryDefinition {
+                it.description = description
+                it.website = website
+                it.options = options
                 it.init = init
                 it.renderers = renderers
                 it.textRenderers = textRenderers

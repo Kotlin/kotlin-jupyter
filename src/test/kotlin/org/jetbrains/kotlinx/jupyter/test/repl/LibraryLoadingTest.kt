@@ -62,4 +62,18 @@ class LibraryLoadingTest : AbstractSingleReplTest() {
         val result = repl.evalRaw("multiConstructor1")
         result shouldBe "lib-2"
     }
+
+    @Test
+    fun `descriptor could be loaded by its text`() {
+        val tripleQuote = "\"\"\""
+        repl.evalRaw(
+            """
+            loadLibraryDescriptor($tripleQuote
+                { "init": ["val xyz = 4242"] }
+            $tripleQuote)
+            """.trimIndent(),
+        )
+        val result = repl.evalRaw("xyz")
+        result shouldBe 4242
+    }
 }

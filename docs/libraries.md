@@ -1,8 +1,68 @@
 # Adding new libraries
 
+<!-- Start Document Outline -->
+
+* [Overview](#overview)
+* [Supported integration features](#supported-integration-features)
+* [Creating library descriptor](#creating-library-descriptor)
+* [Integration using Kotlin API](#integration-using-kotlin-api)
+	* [Adding library integration using KSP plugin](#adding-library-integration-using-ksp-plugin)
+	* [Adding library integration avoiding use of annotation processor](#adding-library-integration-avoiding-use-of-annotation-processor)
+	* [Integration testing for the integration logic](#integration-testing-for-the-integration-logic)
+	* [Integration using other build systems](#integration-using-other-build-systems)
+
+<!-- End Document Outline -->
+
+## Overview
+
 Generally, there are two ways of adding new library: 
-1. [Creating JSON library descriptor](#Creating-library-descriptor)
-2. [Integration using Kotlin API](#Integration-using-Kotlin-API)
+1. [Creating JSON library descriptor](#Creating-library-descriptor). It's easy-to-go solution that doesn't even
+require you to make any changes to the library itself. You create a JSON file and get the ability to define most
+frequently used features such as renderers and initial imports. This descriptor is loaded into notebook
+with help of [`%use` line magic](README.md#supported-libraries). Exact syntax depends on where the descriptor is located.
+2. [Integration using Kotlin API](#Integration-using-Kotlin-API). Here, you define an integration class
+in your library code (or you can create a separate project for integration if it's a library you don't maintain).
+You can then use all available integration features in this case. Integration is loaded automatically when
+the JAR containing `META-INF/kotlin-jupyter-libraries/libraries.json` file with the integration class name in it
+is added to the current notebook classpath. It can be done with `@file:DependsOn` annotation or with help of
+descriptor (see above) that defines the corresponding dependency. Additionally, it is possible to write tests
+for this kind of integrations.
+
+Library integrations regardless of the way they are defined may define dependencies
+and some callbacks (code executions). Dependencies may contain Kotlin API based integrations, and code executions
+may contain `%use` statements which means that library integrations may load other libraries, and so on. Don't
+hesitate to rely on this feature.
+
+## Supported integration features
+
+All supported integration features are given in the following table
+
+| Feature                                                    | Descriptor API             | LibraryDefinition API         | JupyterIntegration API                                                                                                         |
+|:-----------------------------------------------------------|:---------------------------|:------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Dependencies                                               | `dependencies`             | `dependencies`                | `dependencies()`                                                                                                               |
+| Repositories                                               | `repositories`             | `repositories`                | `repositories()`<br>`addRepository()`<br>`repository()`                                                                        |
+| Initial imports                                            | `imports`                  | `imports`                     | `import()`<br>`importPackage()`                                                                                                |
+| Callbacks after library loading (called once)              | `init`                     | `init`                        | `onLoaded{}`                                                                                                                   |
+| Callbacks before each cell execution                       | `initCell`                 | `initCell`                    | `beforeCellExecution{}`                                                                                                        |
+| Callbacks after each cell execution                        | -                          | `afterCellExecution`          | `afterCellExecution{}`                                                                                                         |
+| Callbacks on cell execution interruption                   | -                          | `interruptionCallbacks`       | `onInterrupt{}`                                                                                                                |
+| Callbacks right before kernel shutdown                     | `shutdown`                 | `shutdown`                    | `onShutdown{}`                                                                                                                 |
+| Callbacks on color scheme change                           | -                          | `colorSchemeChangedCallbacks` | `onColorSchemeChange{}`                                                                                                        |
+| Results renderers                                          | `renderers`                | `renderers`                   | `addRenderer()`<br>`render<T>{}`<br>`renderWithHost<T>{}`                                                                      |
+| Results text renderers                                     | -                          | `textRenderers`               | `addTextRenderer()`                                                                                                            |
+| Throwables renderers                                       | -                          | `throwableRenderers`          | `addThrowableRenderer()`<br>`renderThrowable<T>{}`                                                                             |
+| Properties handling                                        | -                          | `converters`                  | `addTypeConverter()`<br>`onVariable{}`<br>`updateVariable{}`<br>`onVariableByRuntimeType{}`<br>`updateVariableByRuntimeType{}` |
+| Annotated classes handling                                 | -                          | `classAnnotations`            | `addClassAnnotationHandler()`<br>`onClassAnnotation<T>{}`                                                                      |
+| File annotations handling                                  | -                          | `fileAnnotations`             | `addFileAnnotationHanlder()`<br>`onFileAnnotation<T>{}`                                                                        |
+| Code preprocessing                                         | -                          | `codePreprocessors`           | `addCodePreprocessor()`<br>`preprocessCodeWithLibraries{}`<br>`preprocessCode{}`                                               |
+| Library static resources loading                           | `resources`                | `resources`                   | `resource()`                                                                                                                   |
+| Internal variables markers                                 | -                          | `internalVariablesMarkers`    | `markVariableInternal()`                                                                                                       |
+| Typename rules for transitively loaded integration classes | `integrationTypeNameRules` | `integrationTypeNameRules`    | `addIntegrationTypeNameRule()`<br>`acceptIntegrationTypeNameIf{}`<br>`discardIntegrationTypeNameIf{}`                          |
+| Minimal kernel version supported by the library            | `minKernelVersion`         | `minKernelVersion`            | `setMinimalKernelVersion()`                                                                                                    |
+| Library options                                            | `properties`               | `options`                     | `addOption()`<br>`addOptions()`                                                                                                |
+| Link to the library site, used to generate README          | `link`                     | `website`                     | `setWebsite()`                                                                                                                 |
+| Library description, used to generate README               | `description`              | `description`                 | `setDescription()`                                                                                                             |
+
 
 ## Creating library descriptor
 
@@ -24,7 +84,7 @@ Library descriptor is a `<libName>.json` file with the following fields:
 - `renderers`: a mapping from fully qualified names of types to be rendered to the Kotlin expression returning output value.
   Source object is referenced as `$it`
 - `resources`: a list of JS/CSS resources. See [this descriptor](../src/test/testData/lib-with-resources.json) for example
-- `integrationTypeNameRules`: a list of rules for integration classes which are about to be loaded transitively. Each rule has the form `[+|-]:<pattern>` where `+` or `-` denotes if this pattern is accepted or declined. Pattern may consist of any characters. Special combinations are allowed: `?` (any single character or no character), `*` (any character excluding dot), `**` (any character).
+- `integrationTypeNameRules`: a list of rules for integration classes which are about to be loaded transitively. Each rule has the form `[+|-]:<pattern>` where `+` or `-` denotes if this pattern is accepted or declined. Pattern may consist of any characters. Special combinations are allowed: `?` (any single character or no character), `*` (any character sequence excluding dot), `**` (any character sequence).
 
 *All fields are optional
 
