@@ -338,6 +338,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
  - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
+ - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers
 
 ### Rich output
   
