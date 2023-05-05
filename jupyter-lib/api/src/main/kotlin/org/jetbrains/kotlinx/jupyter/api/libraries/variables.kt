@@ -44,7 +44,11 @@ object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
             }
             else -> throw SerializationException("Library descriptor should be either object or array")
         }
-        return DescriptorVariables(properties, hasOrder)
+
+        // We exclude hints for Renovate CI tool, see https://github.com/Kotlin/kotlin-jupyter-libraries/pull/201
+        val productionProperties = properties.filter { !it.name.endsWith("-renovate-hint") }
+
+        return DescriptorVariables(productionProperties, hasOrder)
     }
 
     override fun serialize(encoder: Encoder, value: DescriptorVariables) {
