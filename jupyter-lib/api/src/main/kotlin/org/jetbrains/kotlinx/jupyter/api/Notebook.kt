@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -115,11 +116,14 @@ interface Notebook {
 
     val fieldsHandlersProcessor: FieldsProcessor
 
-    val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
-    val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
-    val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
+    val afterCellExecutionsProcessor: ExtensionsProcessor<AfterCellExecutionCallback>
+    val shutdownExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
 
-    val codePreprocessorsProcessor: CodePreprocessorsProcessor
+    val codePreprocessorsProcessor: ExtensionsProcessor<CodePreprocessor>
+    val interruptionCallbacksProcessor: ExtensionsProcessor<InterruptionCallback>
+
+    val colorSchemeChangeCallbacksProcessor: ExtensionsProcessor<ColorSchemeChangedCallback>
 
     /**
      * All requests for libraries made during this session

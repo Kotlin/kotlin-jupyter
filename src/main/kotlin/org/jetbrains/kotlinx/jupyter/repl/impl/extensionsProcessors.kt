@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -13,33 +13,35 @@ import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.ShutdownEvalResult
 import org.jetbrains.kotlinx.jupyter.util.PriorityList
 
-abstract class AbstractExecutionsProcessor<T : Any> : ExecutionsProcessor<T> {
-    protected val executions = PriorityList<T>(latterFirst = false)
+abstract class AbstractExtensionsProcessor<T : Any>(
+    latterFirst: Boolean = false,
+) : ExtensionsProcessor<T> {
+    protected val extensions = PriorityList<T>(latterFirst = latterFirst)
 
-    override fun register(execution: T, priority: Int) {
-        executions.addOrUpdatePriority(execution, priority)
+    override fun register(extension: T, priority: Int) {
+        extensions.addOrUpdatePriority(extension, priority)
     }
 
-    override fun unregister(execution: T) {
-        executions.remove(execution)
+    override fun unregister(extension: T) {
+        extensions.remove(extension)
     }
 
     override fun unregisterAll() {
-        executions.clear()
+        extensions.clear()
     }
 
-    override fun registeredExecutions(): Collection<T> {
-        return executions.elements()
+    override fun registeredExtensions(): Collection<T> {
+        return extensions.elements()
     }
 
-    override fun registeredExecutionsWithPriority(): List<Pair<T, Int>> {
-        return executions.elementsWithPriority()
+    override fun registeredExtensionsWithPriority(): List<Pair<T, Int>> {
+        return extensions.elementsWithPriority()
     }
 }
 
-class BeforeCellExecutionsProcessor : AbstractExecutionsProcessor<ExecutionCallback<*>>() {
+class BeforeCellExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
     fun process(executor: CellExecutor) {
-        executions.forEach {
+        extensions.forEach {
             rethrowAsLibraryException(LibraryProblemPart.BEFORE_CELL_CALLBACKS) {
                 executor.execute(it)
             }
@@ -47,9 +49,9 @@ class BeforeCellExecutionsProcessor : AbstractExecutionsProcessor<ExecutionCallb
     }
 }
 
-class AfterCellExecutionsProcessor : AbstractExecutionsProcessor<AfterCellExecutionCallback>() {
+class AfterCellExecutionsProcessor : AbstractExtensionsProcessor<AfterCellExecutionCallback>() {
     fun process(host: KotlinKernelHost, snippetInstance: Any, result: FieldValue) {
-        executions.forEach {
+        extensions.forEach {
             log.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.AFTER_CELL_CALLBACKS) {
                     it(host, snippetInstance, result)
@@ -59,9 +61,9 @@ class AfterCellExecutionsProcessor : AbstractExecutionsProcessor<AfterCellExecut
     }
 }
 
-class ShutdownExecutionsProcessor : AbstractExecutionsProcessor<ExecutionCallback<*>>() {
+class ShutdownExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
     fun process(executor: CellExecutor): List<ShutdownEvalResult> {
-        return executions.map {
+        return extensions.map {
             val res = log.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
                     executor.execute(it)

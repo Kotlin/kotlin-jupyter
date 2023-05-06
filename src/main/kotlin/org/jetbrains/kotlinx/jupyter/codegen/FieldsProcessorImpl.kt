@@ -8,25 +8,15 @@ import org.jetbrains.kotlinx.jupyter.api.TEMP_PROPERTY_PREFIX
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.throwLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
-import org.jetbrains.kotlinx.jupyter.util.PriorityList
+import org.jetbrains.kotlinx.jupyter.repl.impl.AbstractExtensionsProcessor
 import kotlin.reflect.jvm.isAccessible
 
 class FieldsProcessorImpl(
     private val contextUpdater: ContextUpdater,
-) : FieldsProcessorInternal {
-
-    private val handlers = PriorityList<FieldHandler>()
-
-    override fun register(handler: FieldHandler, priority: Int) {
-        handlers.add(handler, priority)
-    }
+) : AbstractExtensionsProcessor<FieldHandler>(latterFirst = true), FieldsProcessorInternal {
 
     override fun registeredHandlers(): List<FieldHandlerWithPriority> {
-        return handlers.elementsWithPriority().map { FieldHandlerWithPriority(it.first, it.second) }
-    }
-
-    override fun unregister(handler: FieldHandler) {
-        handlers.remove(handler)
+        return extensions.elementsWithPriority().map { FieldHandlerWithPriority(it.first, it.second) }
     }
 
     override fun process(host: KotlinKernelHost) {
@@ -40,7 +30,7 @@ class FieldsProcessorImpl(
             val property = info.descriptor
             property.isAccessible = true
             val value = info.value ?: continue
-            val handler = handlers.firstOrNull { it.accepts(value, property) }
+            val handler = extensions.firstOrNull { it.accepts(value, property) }
             if (handler != null) {
                 @Suppress("UNCHECKED_CAST")
                 val execution = handler.execution as FieldHandlerExecution<Any>

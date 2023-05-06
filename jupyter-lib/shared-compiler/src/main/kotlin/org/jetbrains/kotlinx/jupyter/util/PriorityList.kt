@@ -47,7 +47,11 @@ class PriorityList<T>(
      * Complexity: O(n + k * log(n)) where k is a number of elements to remove
      */
     fun remove(value: T) {
-        val entriesForRemoval = c.filter { it.value == value }
+        removeIf { it == value }
+    }
+
+    fun removeIf(predicate: (T) -> Boolean) {
+        val entriesForRemoval = c.filter { predicate(it.value) }
         for (entry in entriesForRemoval) {
             c.remove(entry)
         }

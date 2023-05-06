@@ -85,6 +85,10 @@ class RenderersProcessorImpl(
         }
     }
 
+    override fun unregisterAll() {
+        renderers.clear()
+    }
+
     private fun getMethodName(id: Int) = "___renderResult$id"
 
     private data class HandlerWithInfo(

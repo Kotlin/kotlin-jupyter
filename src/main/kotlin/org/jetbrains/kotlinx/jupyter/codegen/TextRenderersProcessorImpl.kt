@@ -4,22 +4,13 @@ import org.jetbrains.kotlinx.jupyter.api.TextRenderer
 import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
-import org.jetbrains.kotlinx.jupyter.util.PriorityList
+import org.jetbrains.kotlinx.jupyter.repl.impl.AbstractExtensionsProcessor
 
-class TextRenderersProcessorImpl : TextRenderersProcessorWithPreventingRecursion {
-    private val renderers = PriorityList<TextRenderer>()
+class TextRenderersProcessorImpl : AbstractExtensionsProcessor<TextRenderer>(latterFirst = true), TextRenderersProcessorWithPreventingRecursion {
     private val cache = mutableListOf<CacheEntry>()
 
-    override fun register(renderer: TextRenderer, priority: Int) {
-        renderers.add(renderer, priority)
-    }
-
-    override fun unregister(renderer: TextRenderer) {
-        renderers.remove(renderer)
-    }
-
     override fun registeredRenderers(): List<TextRendererWithPriority> {
-        return renderers.elementsWithPriority().map { TextRendererWithPriority(it.first, it.second) }
+        return extensions.elementsWithPriority().map { TextRendererWithPriority(it.first, it.second) }
     }
 
     override fun render(value: Any?): String {
@@ -35,7 +26,7 @@ class TextRenderersProcessorImpl : TextRenderersProcessorWithPreventingRecursion
             return rendered
         }
 
-        for (renderer in renderers) {
+        for (renderer in extensions) {
             val res = rethrowAsLibraryException(LibraryProblemPart.TEXT_RENDERERS) {
                 renderer.render(this, value)
             }

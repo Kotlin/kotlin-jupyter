@@ -190,3 +190,5 @@ fun Code.presentableForThreadName(): String {
     return if (newName.length < length) "$newName..."
     else this
 }
+
+data class MutablePair<T1, T2>(var first: T1, var second: T2)

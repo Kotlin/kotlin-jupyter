@@ -3,13 +3,14 @@ package org.jetbrains.kotlinx.jupyter
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
-import org.jetbrains.kotlinx.jupyter.api.CodePreprocessorsProcessor
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
+import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -19,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -284,17 +286,23 @@ class NotebookImpl(
     override val fieldsHandlersProcessor: FieldsProcessorInternal
         get() = sharedReplContext?.fieldsProcessor ?: throwItemNotInitialized("Fields handlers processor")
 
-    override val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    override val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
         get() = sharedReplContext?.beforeCellExecutionsProcessor ?: throwItemNotInitialized("Before-cell executions processor")
 
-    override val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
+    override val afterCellExecutionsProcessor: ExtensionsProcessor<AfterCellExecutionCallback>
         get() = sharedReplContext?.afterCellExecutionsProcessor ?: throwItemNotInitialized("After-cell executions processor")
 
-    override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    override val shutdownExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
         get() = sharedReplContext?.shutdownExecutionsProcessor ?: throwItemNotInitialized("Shutdown executions processor")
 
-    override val codePreprocessorsProcessor: CodePreprocessorsProcessor
+    override val codePreprocessorsProcessor: ExtensionsProcessor<CodePreprocessor>
         get() = sharedReplContext?.codePreprocessor ?: throwItemNotInitialized("Code preprocessors processor")
+
+    override val interruptionCallbacksProcessor: ExtensionsProcessor<InterruptionCallback>
+        get() = sharedReplContext?.interruptionCallbacksProcessor ?: throwItemNotInitialized("Interruptions callback processor")
+
+    override val colorSchemeChangeCallbacksProcessor: ExtensionsProcessor<ColorSchemeChangedCallback>
+        get() = sharedReplContext?.colorSchemeChangeCallbacksProcessor ?: throwItemNotInitialized("Color scheme change callbacks processor")
 
     private fun throwItemNotInitialized(itemName: String): Nothing {
         throw IllegalStateException("$itemName is not initialized yet")

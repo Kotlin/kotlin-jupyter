@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
@@ -30,8 +30,8 @@ data class SharedReplContext(
     val librariesProcessor: LibrariesProcessor,
     val librariesScanner: LibrariesScanner,
     val notebook: Notebook,
-    val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>,
-    val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>,
+    val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>,
+    val shutdownExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>,
     val afterCellExecutionsProcessor: AfterCellExecutionsProcessor,
     val evaluator: InternalEvaluator,
     val baseHost: BaseKernelHost,

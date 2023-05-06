@@ -23,5 +23,7 @@ interface RenderersProcessor {
 
     fun unregister(renderer: RendererHandler)
 
+    fun unregisterAll()
+
     fun registeredRenderers(): List<RendererHandlerWithPriority>
 }

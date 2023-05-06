@@ -10,13 +10,14 @@ import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
-import org.jetbrains.kotlinx.jupyter.api.CodePreprocessorsProcessor
+import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.ExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.api.HtmlData
+import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -29,6 +30,7 @@ import org.jetbrains.kotlinx.jupyter.api.TextRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
+import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
@@ -268,16 +270,20 @@ object NotebookMock : Notebook {
     override val fieldsHandlersProcessor: FieldsProcessor
         get() = error("Not supposed to be called")
 
-    override val beforeCellExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    override val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
         get() = error("Not supposed to be called")
 
-    override val afterCellExecutionsProcessor: ExecutionsProcessor<AfterCellExecutionCallback>
+    override val afterCellExecutionsProcessor: ExtensionsProcessor<AfterCellExecutionCallback>
         get() = error("Not supposed to be called")
 
-    override val shutdownExecutionsProcessor: ExecutionsProcessor<ExecutionCallback<*>>
+    override val shutdownExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
         get() = error("Not supposed to be called")
 
-    override val codePreprocessorsProcessor: CodePreprocessorsProcessor
+    override val codePreprocessorsProcessor: ExtensionsProcessor<CodePreprocessor>
+        get() = error("Not supposed to be called")
+    override val interruptionCallbacksProcessor: ExtensionsProcessor<InterruptionCallback>
+        get() = error("Not supposed to be called")
+    override val colorSchemeChangeCallbacksProcessor: ExtensionsProcessor<ColorSchemeChangedCallback>
         get() = error("Not supposed to be called")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
