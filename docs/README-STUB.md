@@ -271,6 +271,8 @@ You can also specify the source of library descriptor. By default, it's taken fr
 // Specify git ref along with library arguments
 %use krangl@dev(0.10)
 ```
+Note that using descriptor from specific revision is better than using `%useLatestDescriptors`.
+
 Other options are resolving library descriptor from a local file or from remote URL:
 ```
 // Load library from file

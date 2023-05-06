@@ -239,7 +239,7 @@ The following line magics are supported:
  - `%use` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers. Usage example: `%use klaxon(5.5), lets-plot`
  - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures. Usage example: `%trackClasspath [on|off]`
  - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support. Usage example: `%trackExecution [all|generated|off]`
- - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used. Usage example: `%useLatestDescriptors [on|off]`
+ - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used. Note that default behavior is preferred: latest descriptors versions might be not supported by current version of kernel. So if you care about stability of the notebook, avoid using this line magic. Usage example: `%useLatestDescriptors [on|off]`
  - `%output` - output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`
  - `%logLevel` - set logging level. Usage example: `%logLevel [off|error|warn|info|debug]`
  
@@ -278,6 +278,8 @@ You can also specify the source of library descriptor. By default, it's taken fr
 // Specify git ref along with library arguments
 %use krangl@dev(0.10)
 ```
+Note that using descriptor from specific revision is better than using `%useLatestDescriptors`.
+
 Other options are resolving library descriptor from a local file or from remote URL:
 ```
 // Load library from file
