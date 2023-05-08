@@ -1,5 +1,6 @@
 package build
 
+import build.util.BUILD_LIBRARIES
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -15,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class CreateResourcesTask : DefaultTask() {
     private val resourceFileCounter = AtomicInteger()
     private val resources: MutableMap<String, String> = mutableMapOf()
+    private var librariesDir: File? = null
+    private var jarPath: String? = null
 
     @get:OutputDirectory
     val outputResourceDir: Property<File> = project.objects.property<File>().apply {
@@ -25,6 +28,17 @@ abstract class CreateResourcesTask : DefaultTask() {
     fun createResources() {
         val dir = outputResourceDir.get()
         dir.deleteRecursively()
+
+        librariesDir?.let { libDir ->
+            val libsList = libDir.list { _, fileName ->
+                fileName.endsWith(".json") || fileName == BUILD_LIBRARIES.optionsFileName()
+            }?.toList().orEmpty()
+            libsList.forEach {
+                addResource("$jarPath/$it", libDir.resolve(it).readText())
+            }
+            addResource("$jarPath/libraries.list", libsList.joinToString("\n"))
+        }
+
         resources.forEach { (subPath, text) ->
             val file = dir.resolve(subPath)
             file.parentFile.mkdirs()
@@ -59,12 +73,9 @@ abstract class CreateResourcesTask : DefaultTask() {
     }
 
     fun addLibrariesFromDir(dir: File, jarPath: String = "jupyterLibraries") {
-        val libsList = dir.list { _, fileName -> fileName.endsWith(".json") }?.toList().orEmpty()
-        libsList.forEach {
-            addSingleValueFile("$jarPath/$it", dir.resolve(it).readText())
-        }
-
-        addSingleValueFile("$jarPath/libraries.list", libsList.joinToString("\n"))
+        this.librariesDir = dir
+        this.jarPath = jarPath
+        outputs.upToDateWhen { false }
     }
 
     private fun setupDependencies(resourceTask: Copy) {
