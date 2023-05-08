@@ -15,6 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
@@ -295,6 +296,17 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             dataFrameConfig
             """.trimIndent(),
         )
+    }
+
+    @Test
+    fun `some options could be ignored`() {
+        eval("%use ___test@experimental(0.1)")
+
+        val exception = shouldThrow<ReplPreprocessingException> {
+            eval("%use ___test@experimental(0.1, 0.2)")
+        }
+
+        exception.message shouldContain "unnamed arguments cannot be more than the number"
     }
 
     @Test

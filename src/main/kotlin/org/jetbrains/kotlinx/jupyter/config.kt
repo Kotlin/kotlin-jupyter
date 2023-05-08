@@ -52,8 +52,10 @@ class RuntimeKernelProperties(val map: Map<String, String>) : ReplRuntimePropert
     override val version: KotlinKernelVersion? by lazy {
         map["version"]?.let { KotlinKernelVersion.from(it) }
     }
+
+    @Deprecated("This parameter is meaningless, do not use")
     override val librariesFormatVersion: Int
-        get() = map["librariesFormatVersion"]?.toIntOrNull() ?: throw RuntimeException("Libraries format version is not specified!")
+        get() = throw RuntimeException("Libraries format version is not specified!")
     override val currentBranch: String
         get() = map["currentBranch"] ?: throw RuntimeException("Current branch is not specified!")
     override val currentSha: String

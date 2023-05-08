@@ -8,6 +8,7 @@ ksp = "1.8.20-1.0.10"
 shadowJar = "7.1.2"
 changelogPlugin = "1.12.1"
 kotlinxSerialization = "1.4.1"
+json5k = "0.3.0"
 kotlinxCoroutines = "1.6.4"
 jupyterNotebooksParser = "0.1.0-dev-1"
 
@@ -78,7 +79,8 @@ serialization-dev-unshaded = { group = "org.jetbrains.kotlin", name = "kotlin-se
 
 # Serialization runtime
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-
+# JSON5 support for serialization
+serialization-json5 = { group = "io.github.xn32", name = "json5k", version.ref = "json5k" }
 
 # JetBrains libraries
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations"}

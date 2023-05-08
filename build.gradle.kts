@@ -53,6 +53,7 @@ dependencies {
 
     // Serialization implementation for kernel code
     implementation(libs.serialization.json)
+    implementation(libs.serialization.json5)
 
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(libs.test.junit.params)

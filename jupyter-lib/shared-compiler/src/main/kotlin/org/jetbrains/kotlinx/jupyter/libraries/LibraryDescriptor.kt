@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
+import org.jetbrains.kotlinx.jupyter.api.libraries.filter
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
@@ -22,7 +23,7 @@ import org.jetbrains.kotlinx.jupyter.util.RenderersSerializer
 import org.jetbrains.kotlinx.jupyter.util.replaceVariables
 
 @Serializable
-class LibraryDescriptor(
+data class LibraryDescriptor(
     val dependencies: List<String> = emptyList(),
     @Serializable(DescriptorVariablesSerializer::class)
     @SerialName("properties")
@@ -46,11 +47,20 @@ class LibraryDescriptor(
     @Serializable(KotlinKernelVersionSerializer::class)
     val minKernelVersion: KotlinKernelVersion? = null,
 
+    val formatVersion: LibraryDescriptorFormatVersion? = null,
+
     val integrationTypeNameRules: List<PatternNameAcceptanceRule> = emptyList(),
 ) {
-    fun convertToDefinition(arguments: List<Variable>): LibraryDefinition {
-        val mapping = substituteArguments(variables, arguments)
-        return processDescriptor(mapping)
+    fun convertToDefinition(
+        arguments: List<Variable>,
+        options: LibraryDescriptorGlobalOptions = DefaultLibraryDescriptorGlobalOptions,
+    ): LibraryDefinition {
+        assertDescriptorFormatVersionCompatible(this)
+        val newVariables = variables.filter { !options.isPropertyIgnored(it.name) }
+        val descriptor = if (variables != newVariables) this.copy(variables = newVariables) else this
+
+        val mapping = substituteArguments(descriptor.variables, arguments)
+        return descriptor.processDescriptor(mapping)
     }
 
     /**

@@ -1,6 +1,5 @@
 package build
 
-import build.util.BUILD_LIBRARIES
 import build.util.TaskSpec
 import build.util.UploadTaskSpecs
 import build.util.addAllBuildRepositories
@@ -12,7 +11,6 @@ import build.util.getOrCreateExtension
 import build.util.isNonStableVersion
 import build.util.ktlint
 import build.util.makeTaskName
-import build.util.readProperties
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
@@ -25,7 +23,6 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
-import java.io.IOException
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -185,13 +182,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
             settings.jvmTargetForSnippets?.let {
                 add("jvmTargetForSnippets" to it)
             }
-            try {
-                BUILD_LIBRARIES.downloadLatestPropertiesFile()
-            } catch (e: IOException) {
-                project.logger.warn("Unable to download properties file, continuing in offline mode", e)
-            }
-            val librariesProperties = readProperties(BUILD_LIBRARIES.localPropertiesFile)
-            add("librariesFormatVersion" to librariesProperties["formatVersion"].orEmpty())
         }
 
         CreateResourcesTask.register(

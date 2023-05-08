@@ -3,10 +3,8 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.shouldBe
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.config.parseIniConfig
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.startup.mainClassName
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -32,19 +30,9 @@ class ConfigTest {
     }
 
     @Test
-    fun testLibrariesProperties() {
-        val format = defaultRuntimeProperties.librariesFormatVersion
-        log.debug("Runtime libs format is: $format")
-
-        assertTrue(format in 2..1000)
-        val localProperties = KERNEL_LIBRARIES.localPropertiesFile.readText().parseIniConfig()
-        assertEquals(localProperties["formatVersion"], format.toString())
-    }
-
-    @Test
     fun testVersion() {
         val version = defaultRuntimeProperties.version
-        log.debug("Runtime version is: $version")
+        log.debug("Runtime version is: {}", version)
 
         assertNotNull(version)
     }

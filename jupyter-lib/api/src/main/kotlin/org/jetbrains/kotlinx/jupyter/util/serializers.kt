@@ -26,7 +26,7 @@ import kotlin.reflect.KProperty1
 
 private val emptyJsonObject = JsonObject(mapOf())
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 val Json.EMPTY get() = emptyJsonObject
 
 abstract class PrimitiveStringPropertySerializer<T : Any>(
@@ -83,18 +83,28 @@ object RenderersSerializer : ListToMapSerializer<ExactRendererTypeHandler, Strin
     { it.className to it.execution },
 )
 
-object KotlinKernelVersionSerializer : KSerializer<KotlinKernelVersion> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(KotlinKernelVersion::class.qualifiedName!!, PrimitiveKind.STRING)
+abstract class StringValueSerializer<T : Any>(
+    kClass: KClass<T>,
+    private val serializer: (T) -> String = { it.toString() },
+    private val deserializer: (String) -> T,
+) : KSerializer<T> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(kClass.qualifiedName!!, PrimitiveKind.STRING)
 
-    override fun deserialize(decoder: Decoder): KotlinKernelVersion {
+    override fun deserialize(decoder: Decoder): T {
         val str = decoder.decodeString()
-        return KotlinKernelVersion.from(str) ?: throw SerializationException("Wrong format of kotlin kernel version: $str")
+        return deserializer(str)
     }
 
-    override fun serialize(encoder: Encoder, value: KotlinKernelVersion) {
-        encoder.encodeString(value.toString())
+    override fun serialize(encoder: Encoder, value: T) {
+        encoder.encodeString(serializer(value))
     }
 }
+
+object KotlinKernelVersionSerializer : StringValueSerializer<KotlinKernelVersion>(
+    KotlinKernelVersion::class,
+    { it.toString() },
+    { str -> KotlinKernelVersion.from(str) ?: throw SerializationException("Wrong format of kotlin kernel version: $str") },
+)
 
 object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(ResourceFallbacksBundle::class.qualifiedName!!, PrimitiveKind.STRING)

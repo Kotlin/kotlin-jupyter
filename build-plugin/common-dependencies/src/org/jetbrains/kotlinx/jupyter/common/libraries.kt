@@ -6,7 +6,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 
 fun interface ExceptionsHandler {
     fun handle(logger: Logger, message: String, exception: Throwable)
@@ -42,7 +41,6 @@ class LibraryDescriptorsManager private constructor(
 
     fun homeLibrariesDir(homeDir: File? = null) = (homeDir ?: File("")).resolve(homePath)
 
-    val localPropertiesFile = localLibrariesDir.resolve(PROPERTIES_FILE)
     val commitHashFile by lazy {
         localLibrariesDir.resolve(COMMIT_HASH_FILE).also { file ->
             if (!file.exists()) {
@@ -52,8 +50,10 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun descriptorFileName(name: String) = "$name.$DESCRIPTOR_EXTENSION"
+    fun optionsFileName() = OPTIONS_FILE
 
-    fun resourceFilePath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
+    fun resourceLibraryPath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
+    fun resourceOptionsPath() = "$resourcesPath/${optionsFileName()}"
 
     fun isLibraryDescriptor(file: File): Boolean {
         return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
@@ -84,6 +84,17 @@ class LibraryDescriptorsManager private constructor(
                 val timestamp = (((commit["commit"] as JsonObject)["committer"] as JsonObject)["date"] as JsonPrimitive).content
                 CommitInfo(sha, timestamp)
             }
+        }
+    }
+
+    fun downloadGlobalDescriptorOptions(ref: String): String? {
+        val url = "$apiPrefix/contents/$remotePath/$OPTIONS_FILE?ref=$ref"
+        logger.info("Requesting global descriptor options at $url")
+        return try {
+            downloadSingleFile(url)
+        } catch (e: Throwable) {
+            logger.warn("Unable to load global descriptor options", e)
+            null
         }
     }
 
@@ -120,7 +131,7 @@ class LibraryDescriptorsManager private constructor(
             if (item["type"]?.jsonPrimitive?.content != "file") continue
 
             val fileName = item["name"]!!.jsonPrimitive.content
-            if (!fileName.endsWith(".$DESCRIPTOR_EXTENSION")) continue
+            if (!fileName.endsWith(".$DESCRIPTOR_EXTENSION") && fileName != OPTIONS_FILE) continue
 
             val downloadUrl = item["download_url"]!!.jsonPrimitive.content
             val descriptorResponse = getHttp(downloadUrl)
@@ -131,19 +142,6 @@ class LibraryDescriptorsManager private constructor(
         }
 
         saveLocalRef(ref)
-    }
-
-    fun downloadLatestPropertiesFile() {
-        val ref = latestCommitOnDefaultBranch ?: if (localPropertiesFile.exists()) {
-            logger.warn("Cannot load $PROPERTIES_FILE file, but it exists locally")
-            return
-        } else {
-            throw IOException("Cannot load $PROPERTIES_FILE file")
-        }
-        val url = "$apiPrefix/contents/$remotePath/$PROPERTIES_FILE?ref=$ref"
-        logger.info("Requesting $PROPERTIES_FILE file at $url")
-        val text = downloadSingleFile(url)
-        localPropertiesFile.createDirsAndWrite(text)
     }
 
     private fun getGithubHttpWithAuth(url: String): ResponseWrapper {
@@ -186,8 +184,8 @@ class LibraryDescriptorsManager private constructor(
     companion object {
         private const val GITHUB_API_HOST = "api.github.com"
         private const val DESCRIPTOR_EXTENSION = "json"
-        private const val PROPERTIES_FILE = ".properties"
         private const val COMMIT_HASH_FILE = "commit_sha"
+        private const val OPTIONS_FILE = "global.options"
 
         fun getInstance(
             logger: Logger = LoggerFactory.getLogger(LibraryDescriptorsManager::class.java),

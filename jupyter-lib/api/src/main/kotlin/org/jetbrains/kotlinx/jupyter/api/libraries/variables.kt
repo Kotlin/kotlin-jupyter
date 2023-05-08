@@ -22,10 +22,14 @@ object VariablesMapSerializer : ListToMapSerializer<Variable, String, String>(
     { it.name to it.value },
 )
 
-class DescriptorVariables(
+data class DescriptorVariables(
     val properties: List<Variable> = listOf(),
     val hasOrder: Boolean = false,
 )
+
+fun DescriptorVariables.filter(predicate: (Variable) -> Boolean): DescriptorVariables {
+    return DescriptorVariables(properties.filter(predicate), hasOrder)
+}
 
 object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
     override val descriptor: SerialDescriptor
@@ -45,10 +49,7 @@ object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
             else -> throw SerializationException("Library descriptor should be either object or array")
         }
 
-        // We exclude hints for Renovate CI tool, see https://github.com/Kotlin/kotlin-jupyter-libraries/pull/201
-        val productionProperties = properties.filter { !it.name.endsWith("-renovate-hint") }
-
-        return DescriptorVariables(productionProperties, hasOrder)
+        return DescriptorVariables(properties, hasOrder)
     }
 
     override fun serialize(encoder: Encoder, value: DescriptorVariables) {
