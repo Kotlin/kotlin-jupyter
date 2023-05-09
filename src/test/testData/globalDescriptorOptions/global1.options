@@ -1,6 +1,6 @@
 {
-  ignoredPropertyPatterns: [
+  "ignoredPropertyPatterns": [
     ".*-renovate-hint",
-    "abc-[abc]",
+    "abc-[abc]"
   ]
 }

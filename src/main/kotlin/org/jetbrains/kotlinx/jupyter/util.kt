@@ -9,12 +9,15 @@ import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultLibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResourceLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryReference
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.File
@@ -150,10 +153,26 @@ val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.abs
     }.toMap()
 }
 
+val descriptorOptions = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
+    val globalOptions = KERNEL_LIBRARIES
+        .homeLibrariesDir(homeDir)
+        .resolve(KERNEL_LIBRARIES.optionsFileName())
+    if (globalOptions.exists()) {
+        parseLibraryDescriptorGlobalOptions(globalOptions.readText())
+    } else {
+        DefaultLibraryDescriptorGlobalOptions
+    }
+}
+
 class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLibraryDescriptorsProvider() {
     override fun getDescriptors(): Map<String, LibraryDescriptor> {
         return if (homeDir == null) super.getDescriptors()
         else libraryDescriptors(homeDir)
+    }
+
+    override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions {
+        return if (homeDir == null) super.getDescriptorGlobalOptions()
+        else descriptorOptions(homeDir)
     }
 }
 
