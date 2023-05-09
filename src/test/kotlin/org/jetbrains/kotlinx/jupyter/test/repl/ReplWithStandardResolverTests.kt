@@ -312,6 +312,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     fun testCompletionForLibraryWithOrderedParameters() {
         val lib = "ggdsl@src/test/testData/"
+        complete("%use $lib(v|)").matches() shouldHaveSize 0
         complete("%use $lib(gg|)").matches().single() shouldContain "Version"
         complete("%use $lib(|)").matches() shouldHaveAtLeastSize 70
         complete("%use $lib(0.3.2,|)").matches() shouldHaveSize 2

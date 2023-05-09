@@ -31,7 +31,12 @@ object LibraryDescriptorFormatVersionSerializer : StringValueSerializer<LibraryD
     { str -> LibraryDescriptorFormatVersion.fromString(str) ?: throw SerializationException("Wrong format of library descriptor format version: $str") },
 )
 
-val currentLibraryDescriptorFormatVersion = LibraryDescriptorFormatVersion(3, 1)
+/**
+ * 3.1: Initial version
+ * 3.2: Changed <required> to <ignored> in libraries properties.
+ *      Technically it's a breaking change, but impact is close to zero, so only minor version was increased.
+ */
+val currentLibraryDescriptorFormatVersion = LibraryDescriptorFormatVersion(3, 2)
 
 fun isDescriptorFormatVersionCompatible(formatVersion: LibraryDescriptorFormatVersion?): Boolean {
     if (formatVersion == null) return true

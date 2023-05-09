@@ -15,7 +15,7 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.util.ListToMapSerializer
 
 @Serializable
-data class Variable(val name: String, val value: String, val required: Boolean = false)
+data class Variable(val name: String, val value: String, val ignored: Boolean = false)
 object VariablesMapSerializer : ListToMapSerializer<Variable, String, String>(
     serializer(),
     ::Variable,
@@ -47,7 +47,7 @@ object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
                 Json.decodeFromJsonElement(VariablesMapSerializer, obj)
             }
             else -> throw SerializationException("Library descriptor should be either object or array")
-        }
+        }.filter { !it.ignored }
 
         return DescriptorVariables(properties, hasOrder)
     }

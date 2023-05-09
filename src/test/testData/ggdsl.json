@@ -2,7 +2,8 @@
   "description": "Former name of Kandy library",
   "properties": [
     {"name": "ggDSLVersion", "value": "0.3.2"},
-    {"name": "applyColorScheme", "value": "true"}
+    {"name": "applyColorScheme", "value": "true"},
+    {"name": "version", "value": "no matter", "ignored": true}
   ],
   "link": "https://github.com/AndreiKingsley/lib-ggdsl",
   "dependencies": [
