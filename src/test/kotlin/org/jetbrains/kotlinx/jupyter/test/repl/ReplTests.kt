@@ -26,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.SourceCode
@@ -543,5 +544,17 @@ class ReplTests : AbstractSingleReplTest() {
         eval("val a = 1")
         eval("fun b() = a")
         eval("b()").renderedValue shouldBe 1
+    }
+
+    @Test
+    fun testRegexBug413() {
+        val code = """
+            Regex("(?<x>[0-9]*)").matchEntire("123456789")?.groups?.get("x")?.value
+        """.trimIndent()
+
+        eval(code)
+        assertThrows<ReplEvalRuntimeException> {
+            eval(code)
+        }
     }
 }
