@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.magics
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositories
 import org.jetbrains.kotlinx.jupyter.libraries.Brackets
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultLibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryArguments
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
@@ -91,7 +92,9 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val libName = librarySubstring.substring(0, firstBracketIndex).trim()
                 val libraryDescriptor = libraryDescriptorsProvider.getDescriptorForVersionsCompletion(libName) ?: return
                 val parameters = libraryDescriptor.variables
-                val paramNames = parameters.properties.map { it.name }
+                val paramNames = parameters.properties
+                    .map { it.name }
+                    .filter { !DefaultLibraryDescriptorGlobalOptions.isPropertyIgnored(it) }
                 if (paramNames.isEmpty()) return
 
                 if ('=' !in argCall) {
