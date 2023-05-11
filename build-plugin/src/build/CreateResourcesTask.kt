@@ -31,11 +31,13 @@ abstract class CreateResourcesTask : DefaultTask() {
 
         librariesDir?.let { libDir ->
             val libsList = libDir.list { _, fileName ->
-                fileName.endsWith(".json") || fileName == BUILD_LIBRARIES.optionsFileName()
+                fileName.endsWith(".json")
             }?.toList().orEmpty()
             libsList.forEach {
                 addResource("$jarPath/$it", libDir.resolve(it).readText())
             }
+            val optionsFileName = BUILD_LIBRARIES.optionsFileName()
+            addResource("$jarPath/$optionsFileName", libDir.resolve(optionsFileName).readText())
             addResource("$jarPath/libraries.list", libsList.joinToString("\n"))
         }
 
