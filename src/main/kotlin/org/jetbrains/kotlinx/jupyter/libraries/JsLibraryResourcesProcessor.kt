@@ -104,7 +104,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
 
         // language=html
         return """
-            <div id="$elementId"/>
+            <div id="$elementId"></div>
             <script type="text/javascript">
                 $wrapper
             </script>
