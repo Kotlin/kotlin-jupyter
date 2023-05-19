@@ -35,10 +35,22 @@ class BuildSettingsExtension(private val project: Project) {
     }
 
     fun withLanguageLevel(level: String) {
+        withLanguageVersion(level)
+        withApiVersion(level)
+    }
+
+    fun withLanguageVersion(version: String) {
         project.tasks.withType<KotlinCompile> {
             kotlinOptions {
-                apiVersion = level
-                languageVersion = level
+                languageVersion = version
+            }
+        }
+    }
+
+    fun withApiVersion(version: String) {
+        project.tasks.withType<KotlinCompile> {
+            kotlinOptions {
+                apiVersion = version
             }
         }
     }
@@ -62,7 +74,6 @@ class BuildSettingsExtension(private val project: Project) {
         val argsList = KotlinCompilerArgsBuilder().apply(configure).build()
         project.tasks.withType<KotlinCompile> {
             kotlinOptions {
-                @Suppress("SuspiciousCollectionReassignment")
                 freeCompilerArgs += argsList
             }
         }

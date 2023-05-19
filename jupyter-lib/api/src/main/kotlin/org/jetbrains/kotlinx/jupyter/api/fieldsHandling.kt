@@ -72,10 +72,20 @@ interface CompileTimeFieldHandler : FieldHandler {
 }
 
 class FieldHandlerByClass(
-    private val kClass: KClass<out Any>,
+    private val kType: KType,
     override val execution: FieldHandlerExecution<*>,
 ) : CompileTimeFieldHandler {
-    override fun acceptsType(type: KType) = type.isSubtypeOf(kClass.starProjectedType)
+
+    @Deprecated(
+        "This constructor is misleading, use either primary constructor or `FieldHandlerByRuntimeClass`",
+        ReplaceWith(
+            "FieldHandlerByRuntimeClass(kClass, execution)",
+            "org.jetbrains.kotlinx.jupyter.api.FieldHandlerByRuntimeClass",
+        ),
+        DeprecationLevel.ERROR,
+    )
+    constructor(kClass: KClass<out Any>, execution: FieldHandlerExecution<*>) : this(kClass.starProjectedType, execution)
+    override fun acceptsType(type: KType) = type.isSubtypeOf(kType)
 }
 
 class FieldHandlerByRuntimeClass<T : Any>(

@@ -375,9 +375,19 @@ If object implements `DisplayResult` or `Renderable`, it will be rendered to out
 
 Text renderers render objects to strings. Library can define one or several text renderers. Rendering with text renderers is controlled via `TextRenderersProcessor`. You can access it via `notebook`. Text renderers are applied until at least one renderer returns non-null string for a passed argument. This kind of renderers can be easily composed with each other. I.e. text renderer for iterables can render its elements with text renderers processor recursively.
 
+#### Throwables rendering
+
+Throwable renderers do the same thing as renderers do, but only for results of the cells that were not
+successfully executed, and some exception was generated.
+
 #### Common rendering semantics
 
-Evaluated value is firstly transformed with RenderersProcessor. Resulting value is checked. If it's Renderable or DisplayResult, it is transformed into output JSON using `toJson()` method. If it's Unit, the cell won't have result at all. Otherwise, value is passed to `TextRenderersProcessor`. It tries to render the value to string using defined text renderers having in mind their priority. If all the renderers returned null, value is transformed to string using `toString()`. Resulting string is wrapped to `text/plain` MIME JSON.  
+Successfully evaluated value is firstly transformed with RenderersProcessor. Resulting value is checked. If it's Renderable or DisplayResult, it is transformed into output JSON using `toJson()` method. If it's Unit, the cell won't have result at all. Otherwise, value is passed to `TextRenderersProcessor`. It tries to render the value to string using defined text renderers having in mind their priority. If all the renderers returned null, value is transformed to string using `toString()`. Resulting string is wrapped to `text/plain` MIME JSON.
+
+If the cell execution finished unsuccessfully and exception was generated, then the first applicable throwable renderer
+will be chosen for this exception, and exception will be passed to this renderer's `render()` method. Returned value
+will be displayed. If no applicable throwable renderer was found, exception message and stacktrace will be printed
+to stderr.
 
 ### Autocompletion
 

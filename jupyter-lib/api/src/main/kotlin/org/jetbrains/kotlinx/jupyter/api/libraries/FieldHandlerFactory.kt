@@ -8,17 +8,19 @@ import org.jetbrains.kotlinx.jupyter.api.VariableDeclarationCallback
 import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 object FieldHandlerFactory {
-    fun createHandler(kClass: KClass<*>, execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
+    fun createHandler(kType: KType, execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
         return when (typeDetection) {
-            TypeDetection.COMPILE_TIME -> FieldHandlerByClass(kClass, execution)
-            TypeDetection.RUNTIME -> FieldHandlerByRuntimeClass(kClass, execution)
+            TypeDetection.COMPILE_TIME -> FieldHandlerByClass(kType, execution)
+            TypeDetection.RUNTIME -> FieldHandlerByRuntimeClass(kType.classifier as KClass<*>, execution)
         }
     }
 
     inline fun <reified T : Any> createHandler(execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
-        return createHandler(T::class, execution, typeDetection)
+        return createHandler(typeOf<T>(), execution, typeDetection)
     }
 
     fun <T> createDeclareExecution(callback: VariableDeclarationCallback<T>): FieldHandlerExecution<T> {

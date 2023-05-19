@@ -23,7 +23,8 @@ dependencies {
 }
 
 buildSettings {
-    withLanguageLevel("1.4")
+    withLanguageVersion("1.6")
+    withApiVersion("1.6")
     withTests()
     withCompilerArgs {
         requiresOptIn()

@@ -1,5 +1,6 @@
 package jupyter.kotlin
 
+import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
@@ -15,6 +16,7 @@ fun ScriptTemplateWithDisplayHelpers.DISPLAY(value: Any) = DISPLAY(value, null)
 fun ScriptTemplateWithDisplayHelpers.DISPLAY(value: Any, id: String? = null) = host.display(value, id)
 fun ScriptTemplateWithDisplayHelpers.UPDATE_DISPLAY(value: Any, id: String?) = host.updateDisplay(value, id)
 fun ScriptTemplateWithDisplayHelpers.EXECUTE(code: String) = host.scheduleExecution(CodeExecution(code).toExecutionCallback())
+fun ScriptTemplateWithDisplayHelpers.EXECUTE(executionCallback: ExecutionCallback<*>) = host.scheduleExecution(executionCallback)
 fun ScriptTemplateWithDisplayHelpers.USE(library: LibraryDefinition) = host.scheduleExecution { addLibrary(library) }
 fun ScriptTemplateWithDisplayHelpers.USE(builder: JupyterIntegration.Builder.() -> Unit) {
     val o = object : JupyterIntegration() {
