@@ -120,7 +120,7 @@ Summing up, if you want to use a feature from the table below, you can do one of
 
 ## Supported integration features
 
-All supported integration features are given in the following table
+All supported integration features are given in the following table. You can also learn the API using [this interactive guide](../samples/api-guide.ipynb).
 
 | Feature                                                    | Descriptor API             | LibraryDefinition API         | JupyterIntegration API                                                                                                         |
 |:-----------------------------------------------------------|:---------------------------|:------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
