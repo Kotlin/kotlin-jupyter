@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.VariableUpdateCallback
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 object FieldHandlerFactory {
@@ -17,6 +18,11 @@ object FieldHandlerFactory {
             TypeDetection.COMPILE_TIME -> FieldHandlerByClass(kType, execution)
             TypeDetection.RUNTIME -> FieldHandlerByRuntimeClass(kType.classifier as KClass<*>, execution)
         }
+    }
+
+    @Deprecated("Please use KType API", replaceWith = ReplaceWith("createHandler(kClass.starProjectedType, execution, typeDetection)"))
+    fun createHandler(kClass: KClass<*>, execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
+        return createHandler(kClass.starProjectedType, execution, typeDetection)
     }
 
     inline fun <reified T : Any> createHandler(execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
