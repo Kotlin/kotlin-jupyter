@@ -308,8 +308,10 @@ fun Notebook.renderHtmlAsIFrameIfNeeded(data: HtmlData): MimeTypedResult {
 object MimeTypes {
     const val HTML = "text/html"
     const val PLAIN_TEXT = "text/plain"
+    const val MARKDOWN = "text/markdown"
     const val JSON = "application/json"
 
     const val PNG = "image/png"
     const val JPEG = "image/jpeg"
+    const val SVG = "image/svg+xml"
 }
