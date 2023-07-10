@@ -17,11 +17,11 @@ interface RenderersProcessor {
      * Adds new [renderer] for this notebook.
      * Don't turn on the optimizations for [PrecompiledRendererTypeHandler]
      */
-    fun registerWithoutOptimizing(renderer: RendererHandler)
+    fun registerWithoutOptimizing(renderer: RendererFieldHandler)
 
-    fun registerWithoutOptimizing(renderer: RendererHandler, priority: Int)
+    fun registerWithoutOptimizing(renderer: RendererFieldHandler, priority: Int)
 
-    fun unregister(renderer: RendererHandler)
+    fun unregister(renderer: RendererFieldHandler)
 
     fun unregisterAll()
 

@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.RendererFieldHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererHandler
 import org.jetbrains.kotlinx.jupyter.api.RendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerExecution
@@ -41,7 +42,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
     class Builder(val notebook: Notebook) {
 
-        private val renderers = mutableListOf<RendererHandler>()
+        private val renderers = mutableListOf<RendererFieldHandler>()
 
         private val textRenderers = mutableListOf<TextRendererWithPriority>()
 
@@ -86,6 +87,11 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         private var website: String? = null
         private var description: String? = null
 
+        fun addRenderer(handler: RendererFieldHandler) {
+            renderers.add(handler)
+        }
+
+        // Left for ABI compatibility
         fun addRenderer(handler: RendererHandler) {
             renderers.add(handler)
         }

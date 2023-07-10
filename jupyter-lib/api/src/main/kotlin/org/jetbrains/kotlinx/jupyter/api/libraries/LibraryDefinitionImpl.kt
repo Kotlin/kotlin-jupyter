@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererFieldHandler
 import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
@@ -28,7 +28,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var initCell: List<ExecutionCallback<*>> = emptyList()
     override var afterCellExecution: List<AfterCellExecutionCallback> = emptyList()
     override var shutdown: List<ExecutionCallback<*>> = emptyList()
-    override var renderers: List<RendererHandler> = emptyList()
+    override var renderers: List<RendererFieldHandler> = emptyList()
     override var textRenderers: List<TextRendererWithPriority> = emptyList()
     override var throwableRenderers: List<ThrowableRenderer> = emptyList()
     override var converters: List<FieldHandler> = emptyList()

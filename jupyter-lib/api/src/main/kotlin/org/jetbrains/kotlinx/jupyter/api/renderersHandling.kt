@@ -6,6 +6,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 import org.jetbrains.kotlinx.jupyter.util.TypeHandlerCodeExecutionSerializer
 import org.jetbrains.kotlinx.jupyter.util.isSubclassOfCatching
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.typeOf
 
 /**
  * Execution interface for type handlers
@@ -16,10 +19,18 @@ fun interface ResultHandlerExecution : VariablesSubstitutionAware<ResultHandlerE
     override fun replaceVariables(mapping: Map<String, String>): ResultHandlerExecution = this
 }
 
-data class FieldValue(val value: Any?, val name: String?)
+fun interface KTypeProvider {
+    fun provideType(): KType
+}
+
+data class FieldValue(val value: Any?, val name: String?, private val typeProvider: KTypeProvider?) {
+    constructor(value: Any?, name: String?) : this(value, name, null)
+
+    val type by lazy { typeProvider?.provideType() ?: typeOf<Any?>() }
+}
 
 data class RendererHandlerWithPriority(
-    val renderer: RendererHandler,
+    val renderer: RendererFieldHandler,
     val priority: Int = ProcessingPriority.DEFAULT,
 )
 
@@ -53,19 +64,33 @@ class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
 }
 
 /**
+ * [RendererFieldHandler] renders results for which [acceptsField] returns `true`
+ */
+interface RendererFieldHandler : VariablesSubstitutionAware<RendererFieldHandler> {
+    /**
+     * Returns true if this renderer accepts [result], false otherwise
+     */
+    fun acceptsField(result: FieldValue): Boolean
+
+    /**
+     * Execution to handle result.
+     * Should not throw if [acceptsField] returns true
+     */
+    val execution: ResultHandlerExecution
+}
+
+/**
  * [RendererHandler] renders results for which [accepts] returns `true`
  */
-interface RendererHandler : VariablesSubstitutionAware<RendererHandler> {
+interface RendererHandler : RendererFieldHandler {
     /**
      * Returns true if this renderer accepts [value], false otherwise
      */
     fun accepts(value: Any?): Boolean
 
-    /**
-     * Execution to handle result.
-     * Should not throw if [accepts] returns true
-     */
-    val execution: ResultHandlerExecution
+    override fun acceptsField(result: FieldValue): Boolean {
+        return accepts(result.value)
+    }
 }
 
 /**
@@ -180,6 +205,26 @@ inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction:
 
 inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererTypeHandler {
     return createRenderer(T::class, renderAction)
+}
+
+inline fun <reified T : Any, RealT : Any> createRendererByCompileTimeType(crossinline converter: (FieldValue) -> RealT, crossinline renderAction: (RealT) -> Any?): RendererFieldHandler {
+    return createRendererByCompileTimeType(typeOf<T>(), converter, renderAction)
+}
+
+inline fun <RealT : Any> createRendererByCompileTimeType(kType: KType, crossinline converter: (FieldValue) -> RealT, crossinline renderAction: (RealT) -> Any?): RendererFieldHandler {
+    return object : RendererFieldHandler {
+        override fun acceptsField(result: FieldValue): Boolean {
+            return result.type.isSubtypeOf(kType)
+        }
+
+        override val execution: ResultHandlerExecution = ResultHandlerExecution { _, result ->
+            FieldValue(renderAction(converter(result)), null)
+        }
+
+        override fun replaceVariables(mapping: Map<String, String>): RendererFieldHandler {
+            return this
+        }
+    }
 }
 
 private fun ResultHandlerExecution.asTextSuffix(): String {

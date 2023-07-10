@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererFieldHandler
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 
@@ -18,7 +18,7 @@ interface ResultsRenderersProcessor : RenderersProcessor {
      * Returns code to be executed on execution host
      * for [PrecompiledRendererTypeHandler]'s.
      */
-    fun register(renderer: RendererHandler): Code?
+    fun register(renderer: RendererFieldHandler): Code?
 
-    fun register(renderer: RendererHandler, priority: Int): Code?
+    fun register(renderer: RendererFieldHandler, priority: Int): Code?
 }

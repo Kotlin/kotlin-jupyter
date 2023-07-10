@@ -484,6 +484,50 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testValueClassRendering() {
+        eval(
+            """
+            class Obj(val x: Int)
+
+            @JvmInline
+            value class Wrapper(val o: Obj)
+            """.trimIndent(),
+        )
+
+        eval(
+            """
+            USE {
+                addRenderer(
+                    createRendererByCompileTimeType<Wrapper, Obj>({ it.value as Obj }, { it.x * 2 })
+                )
+            }
+            """.trimIndent(),
+        )
+
+        val res = eval("Wrapper(Obj(2))").renderedValue
+        res shouldBe 2 * 2
+    }
+
+    @Test
+    fun testParametrizedClassRendering() {
+        eval(
+            """
+            USE {
+                addRenderer(
+                    createRendererByCompileTimeType<List<Int>, List<Int>>({ it.value as List<Int> }, { it.map { x -> x * 2 } })
+                )
+            }
+            """.trimIndent(),
+        )
+
+        val res1 = eval("listOf(1, 2)").renderedValue
+        res1 shouldBe listOf(2, 4)
+
+        val res2 = eval("listOf('1', '2')").renderedValue
+        res2 shouldBe listOf('1', '2')
+    }
+
+    @Test
     fun testStdlibJdkExtensionsUsage() {
         eval("USE_STDLIB_EXTENSIONS()")
         val res = eval(

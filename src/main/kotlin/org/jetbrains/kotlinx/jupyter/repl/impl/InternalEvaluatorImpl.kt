@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.KTypeProvider
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
@@ -17,7 +18,9 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.typeOf
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
@@ -115,15 +118,19 @@ internal class InternalEvaluatorImpl(
                             serializeAndRegisterScript(compiledScript, codeLine)
                             updateDataAfterExecution(cellId, resultValue)
 
+                            val resultType = compiledScript.resultField?.second?.typeName
+                            val typeProvider = if (resultType == null) KTypeProvider { typeOf<Any?>() }
+                            else KTypeProvider { eval("kotlin.reflect.typeOf<$resultType>()").result.value as KType }
+
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(
-                                    FieldValue(Unit, null),
+                                    FieldValue(Unit, null, typeProvider),
                                     resultValue.scriptInstance!!,
                                 )
                             } else {
                                 resultValue as ResultValue.Value
                                 InternalEvalResult(
-                                    FieldValue(resultValue.value, resultValue.name),
+                                    FieldValue(resultValue.value, resultValue.name, typeProvider),
                                     resultValue.scriptInstance!!,
                                 )
                             }

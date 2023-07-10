@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.api.RendererHandler
+import org.jetbrains.kotlinx.jupyter.api.RendererFieldHandler
 import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
@@ -84,7 +84,7 @@ interface LibraryDefinition {
      * List of type renderers. Consider using [org.jetbrains.kotlinx.jupyter.api.Renderable]
      * as it's generally more convenient
      */
-    val renderers: List<RendererHandler>
+    val renderers: List<RendererFieldHandler>
         get() = emptyList()
 
     /**
