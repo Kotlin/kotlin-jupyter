@@ -498,7 +498,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             USE {
                 addRenderer(
-                    createRendererByCompileTimeType<Wrapper, Obj>({ it.value as Obj }, { it.x * 2 })
+                    createRendererByCompileTimeType<Wrapper> { (it.value as Obj).x * 2 }
                 )
             }
             """.trimIndent(),
@@ -514,7 +514,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
             USE {
                 addRenderer(
-                    createRendererByCompileTimeType<List<Int>, List<Int>>({ it.value as List<Int> }, { it.map { x -> x * 2 } })
+                    createRendererByCompileTimeType<List<Int>> { (it.value as List<Int>).map { x -> x * 2 } }
                 )
             }
             """.trimIndent(),

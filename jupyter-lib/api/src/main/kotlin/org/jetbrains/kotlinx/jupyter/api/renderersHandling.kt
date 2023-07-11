@@ -188,7 +188,9 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     }
 
     override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {
-        return SubtypeRendererTypeHandler(superType, execution.replaceVariables(mapping))
+        val executionCopy = execution.replaceVariables(mapping)
+        if (executionCopy === execution) return this
+        return SubtypeRendererTypeHandler(superType, executionCopy)
     }
 
     override fun toString(): String {
@@ -196,29 +198,33 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
     }
 }
 
-inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererTypeHandler {
-    return SubtypeRendererTypeHandler(kClass) { _, result ->
+inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererFieldHandler {
+    return createRenderer({ it.isOfRuntimeType(kClass) }, {
         @Suppress("UNCHECKED_CAST")
-        FieldValue(renderAction(result.value as T), null)
-    }
+        renderAction(it.value as T)
+    },)
 }
 
-inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererTypeHandler {
+inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererFieldHandler {
     return createRenderer(T::class, renderAction)
 }
 
-inline fun <reified T : Any, RealT : Any> createRendererByCompileTimeType(crossinline converter: (FieldValue) -> RealT, crossinline renderAction: (RealT) -> Any?): RendererFieldHandler {
-    return createRendererByCompileTimeType(typeOf<T>(), converter, renderAction)
+inline fun <reified T : Any> createRendererByCompileTimeType(crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler {
+    return createRendererByCompileTimeType(typeOf<T>(), renderAction)
 }
 
-inline fun <RealT : Any> createRendererByCompileTimeType(kType: KType, crossinline converter: (FieldValue) -> RealT, crossinline renderAction: (RealT) -> Any?): RendererFieldHandler {
+inline fun createRendererByCompileTimeType(kType: KType, crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler {
+    return createRenderer({ it.isOfCompileTimeType(kType) }, renderAction)
+}
+
+inline fun createRenderer(crossinline renderCondition: (FieldValue) -> Boolean, crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler {
     return object : RendererFieldHandler {
         override fun acceptsField(result: FieldValue): Boolean {
-            return result.type.isSubtypeOf(kType)
+            return renderCondition(result)
         }
 
         override val execution: ResultHandlerExecution = ResultHandlerExecution { _, result ->
-            FieldValue(renderAction(converter(result)), null)
+            FieldValue(renderAction(result), null)
         }
 
         override fun replaceVariables(mapping: Map<String, String>): RendererFieldHandler {
@@ -226,6 +232,9 @@ inline fun <RealT : Any> createRendererByCompileTimeType(kType: KType, crossinli
         }
     }
 }
+
+fun FieldValue.isOfRuntimeType(kClass: KClass<*>) = this.value?.let { v -> v::class.isSubclassOfCatching(kClass) } ?: false
+fun FieldValue.isOfCompileTimeType(kType: KType) = this.type.isSubtypeOf(kType)
 
 private fun ResultHandlerExecution.asTextSuffix(): String {
     return (this as? ResultHandlerCodeExecution)
