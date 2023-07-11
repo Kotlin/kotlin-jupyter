@@ -67,10 +67,13 @@ interface Notebook {
      */
     fun history(before: Int): CodeCell?
 
+    /**
+     * Current color scheme. Works correctly only in Kotlin Notebook plugin
+     */
     val currentColorScheme: ColorScheme?
 
     /**
-     * Change color scheme and run callbacks
+     * Change color scheme and run callbacks. Works correctly only in Kotlin Notebook plugin
      */
     fun changeColorScheme(newScheme: ColorScheme)
 
