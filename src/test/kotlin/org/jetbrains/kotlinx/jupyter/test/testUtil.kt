@@ -39,6 +39,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
+import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
@@ -306,19 +307,14 @@ object NotebookMock : Notebook {
         get() = CommManagerImpl(MockJupyterConnection)
 }
 
-fun library(builder: JupyterIntegration.Builder.() -> Unit): LibraryDefinition {
-    val o = object : JupyterIntegration() {
-        override fun Builder.onLoaded() {
-            builder()
-        }
-    }
-    return o.getDefinitions(NotebookMock).single()
-}
+fun library(builder: JupyterIntegration.Builder.() -> Unit) = createLibrary(NotebookMock, builder)
+
+fun ReplForJupyter.evalEx(code: Code) = evalEx(EvalRequestData(code))
 
 fun ReplForJupyter.evalRaw(code: Code): Any? {
-    return evalEx(EvalRequestData(code)).rawValue
+    return evalEx(code).rawValue
 }
 
 fun ReplForJupyter.evalRendered(code: Code): Any? {
-    return evalEx(EvalRequestData(code)).renderedValue
+    return evalEx(code).renderedValue
 }
