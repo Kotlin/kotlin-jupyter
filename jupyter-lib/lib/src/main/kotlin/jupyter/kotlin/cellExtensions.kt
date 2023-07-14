@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaratio
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 
 private val ScriptTemplateWithDisplayHelpers.host: KotlinKernelHost get() = userHandlesProvider.host!!
 val ScriptTemplateWithDisplayHelpers.notebook get() = userHandlesProvider.notebook
@@ -18,13 +19,13 @@ fun ScriptTemplateWithDisplayHelpers.UPDATE_DISPLAY(value: Any, id: String?) = h
 fun ScriptTemplateWithDisplayHelpers.EXECUTE(code: String) = host.scheduleExecution(CodeExecution(code).toExecutionCallback())
 fun ScriptTemplateWithDisplayHelpers.EXECUTE(executionCallback: ExecutionCallback<*>) = host.scheduleExecution(executionCallback)
 fun ScriptTemplateWithDisplayHelpers.USE(library: LibraryDefinition) = host.scheduleExecution { addLibrary(library) }
+fun ScriptTemplateWithDisplayHelpers.USE(libraryProducer: LibraryDefinitionProducer) = host.scheduleExecution { addLibraries(libraryProducer.getDefinitions(notebook)) }
 fun ScriptTemplateWithDisplayHelpers.USE(builder: JupyterIntegration.Builder.() -> Unit) {
-    val o = object : JupyterIntegration() {
+    USE(object : JupyterIntegration() {
         override fun Builder.onLoaded() {
             builder()
         }
-    }
-    USE(o.getDefinitions(notebook).single())
+    })
 }
 fun ScriptTemplateWithDisplayHelpers.USE_STDLIB_EXTENSIONS() = host.loadStdlibJdkExtensions()
 val ScriptTemplateWithDisplayHelpers.Out: ResultsAccessor get() = notebook.resultsAccessor
