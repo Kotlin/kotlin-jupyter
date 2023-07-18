@@ -20,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.openServerSocket
-import org.jetbrains.kotlinx.jupyter.protocol.sendRawMessage
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.zeromq.ZMQ
 import java.io.Closeable
@@ -53,7 +52,7 @@ class JupyterConnectionImpl(
                     content = InputRequest("stdin:"),
                 ),
             )
-            val msg = stdin.receiveMessage(stdin.socket.recv())
+            val msg = stdin.receiveMessage()
             val content = msg?.data?.content as? InputReply
 
             return content?.value ?: throw UnsupportedOperationException("Unexpected input message $msg")
@@ -133,7 +132,11 @@ class JupyterConnectionImpl(
     }
 
     override fun sendStatus(status: KernelStatus, incomingMessage: RawMessage?) {
-        val message = if (incomingMessage != null) makeReplyMessage(incomingMessage, MessageType.STATUS, content = StatusReply(status))
+        val message = if (incomingMessage != null) makeReplyMessage(
+            incomingMessage,
+            MessageType.STATUS,
+            content = StatusReply(status),
+        )
         else makeSimpleMessage(MessageType.STATUS, content = StatusReply(status))
         iopub.sendMessage(message)
     }
@@ -156,6 +159,7 @@ class JupyterConnectionImpl(
     override fun setContextMessage(message: RawMessage?) {
         _contextMessage = message
     }
+
     override val contextMessage: RawMessage? get() = _contextMessage
 
     override val executor: JupyterExecutor = JupyterExecutorImpl()
@@ -170,13 +174,13 @@ class JupyterConnectionImpl(
     }
 }
 
-fun JupyterSocket.receiveMessage(start: ByteArray): Message? {
-    val rawMessage = receiveRawMessage(start)
+fun JupyterSocket.receiveMessage(): Message? {
+    val rawMessage = receiveRawMessage()
     return rawMessage?.toMessage()
 }
 
-fun ZMQ.Socket.sendMessage(msg: Message, hmac: HMAC) {
-    sendRawMessage(msg.toRawMessage(), hmac)
+fun JupyterSocket.sendMessage(msg: Message) {
+    sendRawMessage(msg.toRawMessage())
 }
 
 object DisabledStdinInputStream : InputStream() {

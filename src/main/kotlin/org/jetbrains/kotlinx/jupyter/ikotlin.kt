@@ -157,7 +157,7 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
 
         val hbThread = thread {
             socketLoop("Heartbeat: Interrupted", mainThread) {
-                conn.heartbeat.onData { socket.send(it, 0) }
+                conn.heartbeat.onData { send(it) }
             }
         }
 

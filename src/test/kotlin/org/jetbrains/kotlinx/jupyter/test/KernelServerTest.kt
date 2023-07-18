@@ -7,7 +7,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
-import org.jetbrains.kotlinx.jupyter.protocol.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -24,10 +23,10 @@ class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testHeartbeat() {
-        with(connectClientSocket(JupyterSocketInfo.HB).socket) {
+        with(connectClientSocket(JupyterSocketInfo.HB)) {
             try {
                 send("abc")
-                val msg = recvStr()
+                val msg = recvString()
                 assertEquals("abc", msg)
             } finally {
                 close()
@@ -38,7 +37,7 @@ class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testStdin() {
-        with(connectClientSocket(JupyterSocketInfo.STDIN).socket) {
+        with(connectClientSocket(JupyterSocketInfo.STDIN)) {
             try {
                 sendMore("abc")
                 sendMore("def")
@@ -52,17 +51,16 @@ class KernelServerTest : KernelServerTestsBase() {
 
     @Test
     fun testShell() {
-        with(connectClientSocket(JupyterSocketInfo.CONTROL).socket) {
+        with(connectClientSocket(JupyterSocketInfo.CONTROL)) {
             try {
                 sendMessage(
                     Message(
                         id = messageId,
                         MessageData(header = makeHeader(MessageType.INTERRUPT_REQUEST)),
                     ),
-                    hmac,
                 )
-                val msg = receiveRawMessage(recv(), hmac)
-                assertEquals(MessageType.INTERRUPT_REPLY.type, msg.type)
+                val msg = receiveRawMessage()
+                assertEquals(MessageType.INTERRUPT_REPLY.type, msg?.type)
             } finally {
                 close()
                 context.term()

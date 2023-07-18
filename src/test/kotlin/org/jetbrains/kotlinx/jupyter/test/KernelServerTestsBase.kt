@@ -20,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createSocket
-import org.jetbrains.kotlinx.jupyter.protocol.receiveRawMessage
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
@@ -57,7 +56,7 @@ abstract class KernelServerTestsBase {
 
     private val sessionId = UUID.randomUUID().toString()
 
-    protected val hmac = HMAC(kernelConfig.signatureScheme, kernelConfig.signatureKey)
+    private val hmac = HMAC(kernelConfig.signatureScheme, kernelConfig.signatureKey)
 
     // Set to false to debug kernel execution
     protected val runInSeparateProcess = true
@@ -121,10 +120,10 @@ abstract class KernelServerTestsBase {
     fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, hmac, kernelConfig, JupyterSocketSide.CLIENT)
 
     fun JupyterSocket.sendMessage(msgType: MessageType, content: MessageContent) {
-        socket.sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)), hmac)
+        sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 
-    fun JupyterSocket.receiveMessage() = socket.receiveRawMessage(socket.recv(), hmac).toMessage()
+    fun JupyterSocket.receiveMessage() = receiveRawMessage()!!.toMessage()
 
     fun JupyterSocket.receiveStatusReply(): StatusReply {
         (this as? SocketWrapper)?.name shouldBe JupyterSocketInfo.IOPUB.name

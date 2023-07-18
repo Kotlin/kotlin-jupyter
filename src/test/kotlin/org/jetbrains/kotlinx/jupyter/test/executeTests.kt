@@ -74,11 +74,11 @@ class ExecuteTests : KernelServerTestsBase() {
         try {
             _context = ZMQ.context(1)
             shell = createClientSocket(JupyterSocketInfo.SHELL).apply {
-                socket.base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
+                makeRelaxed()
             }
             ioPub = createClientSocket(JupyterSocketInfo.IOPUB)
             stdin = createClientSocket(JupyterSocketInfo.STDIN)
-            ioPub?.socket?.subscribe(byteArrayOf())
+            ioPub?.subscribe(byteArrayOf())
             shell?.connect()
             ioPub?.connect()
             stdin?.connect()
