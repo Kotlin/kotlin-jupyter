@@ -1,5 +1,5 @@
 
-package org.jetbrains.kotlinx.jupyter.test
+package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
 import org.jetbrains.kotlinx.jupyter.messaging.Message

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.test
+package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -24,6 +24,7 @@ import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
+import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo

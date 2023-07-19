@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.test
+package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
@@ -38,6 +38,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.test.NotebookMock
+import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
