@@ -1,6 +1,5 @@
-package org.jetbrains.kotlinx.jupyter.test.protocol
+package org.jetbrains.kotlinx.jupyter.startup
 
-import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
 import java.io.IOException
 import java.net.DatagramSocket
 import java.net.ServerSocket

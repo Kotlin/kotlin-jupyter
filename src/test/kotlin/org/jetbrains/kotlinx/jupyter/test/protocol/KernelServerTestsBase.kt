@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createSocket
 import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.createRandomKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
