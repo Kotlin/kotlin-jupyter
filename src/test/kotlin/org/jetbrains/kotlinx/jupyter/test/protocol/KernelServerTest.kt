@@ -2,12 +2,8 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
-import org.jetbrains.kotlinx.jupyter.messaging.Message
-import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
-import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
-import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -53,12 +49,7 @@ class KernelServerTest : KernelServerTestsBase() {
     fun testShell() {
         with(connectClientSocket(JupyterSocketInfo.CONTROL)) {
             try {
-                sendMessage(
-                    Message(
-                        id = messageId,
-                        MessageData(header = makeHeader(MessageType.INTERRUPT_REQUEST)),
-                    ),
-                )
+                sendMessage(MessageType.INTERRUPT_REQUEST, null)
                 val msg = receiveRawMessage()
                 assertEquals(MessageType.INTERRUPT_REPLY.type, msg?.type)
             } finally {

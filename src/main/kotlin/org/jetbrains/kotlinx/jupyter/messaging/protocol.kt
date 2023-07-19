@@ -84,7 +84,7 @@ class OkResponseWithMessage(
         if (result != null) {
             val resultJson = result.toJson(Json.EMPTY, null)
 
-            connection.iopub.sendMessage(
+            connection.socketManager.iopub.sendMessage(
                 makeReplyMessage(
                     requestMsg,
                     MessageType.EXECUTE_RESULT,
@@ -97,7 +97,7 @@ class OkResponseWithMessage(
             )
         }
 
-        connection.shell.sendMessage(
+        connection.socketManager.shell.sendMessage(
             makeReplyMessage(
                 requestMsg,
                 MessageType.EXECUTE_REPLY,
@@ -134,7 +134,7 @@ class SocketDisplayHandler(
     private val connection: JupyterConnectionInternal,
     private val notebook: MutableNotebook,
 ) : DisplayHandler {
-    private val socket = connection.iopub
+    private val socket = connection.socketManager.iopub
 
     override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
         val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
@@ -147,7 +147,7 @@ class SocketDisplayHandler(
             json["metadata"],
             json["transient"],
         )
-        val message = makeReplyMessage(connection.contextMessage!!, MessageType.DISPLAY_DATA, content = content)
+        val message = connection.messageFactory.makeReplyMessage(MessageType.DISPLAY_DATA, content = content)
         socket.sendMessage(message)
     }
 
@@ -169,7 +169,7 @@ class SocketDisplayHandler(
             json["metadata"],
             json["transient"],
         )
-        val message = connection.makeSimpleMessage(MessageType.UPDATE_DISPLAY_DATA, content)
+        val message = connection.messageFactory.makeSimpleMessage(MessageType.UPDATE_DISPLAY_DATA, content)
         socket.sendMessage(message)
     }
 }
@@ -186,7 +186,7 @@ class AbortResponseWithMessage(
             content = ExecuteReply(MessageStatus.ABORT, requestCount),
         )
         System.err.println("Sending abort: $errorReply")
-        connection.shell.sendMessage(errorReply)
+        connection.socketManager.shell.sendMessage(errorReply)
     }
 }
 
@@ -206,7 +206,7 @@ class ErrorResponseWithMessage(
             content = ExecuteErrorReply(requestCount, errorName, errorValue, traceback, additionalInfo),
         )
         System.err.println("Sending error: $errorReply")
-        connection.shell.sendMessage(errorReply)
+        connection.socketManager.shell.sendMessage(errorReply)
     }
 }
 
@@ -216,11 +216,11 @@ fun JupyterConnectionInternal.controlMessagesHandler(rawIncomingMessage: RawMess
     when (msg.content) {
         is InterruptRequest -> {
             executor.interruptExecutions()
-            control.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.INTERRUPT_REPLY, content = msg.content))
+            socketManager.control.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.INTERRUPT_REPLY, content = msg.content))
         }
         is ShutdownRequest -> {
             repl?.evalOnShutdown()
-            control.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.SHUTDOWN_REPLY, content = msg.content))
+            socketManager.control.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.SHUTDOWN_REPLY, content = msg.content))
             // exitProcess would kill the entire process that embedded the kernel
             // Instead the controlThread will be interrupted,
             // which will then interrupt the mainThread and make kernelServer return
@@ -242,7 +242,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
 ) {
     val incomingMessage = rawIncomingMessage.toMessage()
     fun sendWrapped(message: Message) = doWrappedInBusyIdle(rawIncomingMessage) {
-        shell.sendMessage(message)
+        socketManager.shell.sendMessage(message)
     }
 
     when (val content = incomingMessage.content) {
@@ -290,7 +290,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
             )
 
         is ExecuteRequest -> {
-            setContextMessage(rawIncomingMessage)
+            messageFactory.updateContextMessage(rawIncomingMessage)
             val count = executionCount.getAndUpdate {
                 if (content.storeHistory) it + 1 else it
             }
@@ -298,7 +298,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
 
             doWrappedInBusyIdle(rawIncomingMessage) {
                 val code = content.code
-                iopub.sendMessage(
+                socketManager.iopub.sendMessage(
                     makeReplyMessage(
                         rawIncomingMessage,
                         MessageType.EXECUTE_INPUT,
@@ -328,7 +328,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
 
                 res.send(this, count, rawIncomingMessage, startedTime)
             }
-            setContextMessage(null)
+            messageFactory.updateContextMessage(null)
         }
         is CommInfoRequest -> {
             val comms = commManager.getComms(content.targetName)
@@ -380,9 +380,9 @@ fun JupyterConnectionInternal.shellMessagesHandler(
                 }
                 result
             }
-            shell.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
+            socketManager.shell.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)))
         }
-        else -> shell.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.NONE))
+        else -> socketManager.shell.sendMessage(makeReplyMessage(rawIncomingMessage, MessageType.NONE))
     }
 }
 

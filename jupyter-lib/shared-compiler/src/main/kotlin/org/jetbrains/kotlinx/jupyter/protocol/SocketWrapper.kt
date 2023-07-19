@@ -24,20 +24,13 @@ private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
 class SocketWrapper(
-    private val socketInfo: JupyterSocketInfo,
+    val name: String,
     socket: ZMQ.Socket,
+    private val address: String,
     private val hmac: HMAC,
-    private val kernelConfig: KernelConfig,
 ) : SocketWithCancellationBase(socket), JupyterSocket {
     private val logger = getLogger(this::class.simpleName!!)
     private val lock = ReentrantLock()
-
-    val name: String get() = socketInfo.name
-
-    private val address: String by lazy {
-        val port = kernelConfig.ports[socketInfo.type]
-        "${kernelConfig.transport}://*:$port"
-    }
 
     override fun bind(): Boolean {
         val res = bind(address)
@@ -154,25 +147,28 @@ class SocketWrapper(
 fun createSocket(
     socketInfo: JupyterSocketInfo,
     context: ZMQ.Context,
-    hmac: HMAC,
     kernelConfig: KernelConfig,
     side: JupyterSocketSide,
 ): JupyterSocket {
     return SocketWrapper(
-        socketInfo,
+        socketInfo.name,
         context.socket(socketInfo.zmqType(side)),
-        hmac,
-        kernelConfig,
+        kernelConfig.addressForSocket(socketInfo),
+        kernelConfig.hmac,
     )
+}
+
+fun KernelConfig.addressForSocket(socketInfo: JupyterSocketInfo): String {
+    val port = ports[socketInfo.type]
+    return "$transport://*:$port"
 }
 
 fun openServerSocket(
     socketInfo: JupyterSocketInfo,
     context: ZMQ.Context,
-    hmac: HMAC,
     kernelConfig: KernelConfig,
 ): JupyterSocket {
-    return createSocket(socketInfo, context, hmac, kernelConfig, JupyterSocketSide.SERVER).apply {
+    return createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
         bind()
     }
 }

@@ -29,7 +29,7 @@ abstract class ReplFactory {
             isEmbedded,
             notebook,
             librariesScanner,
-            connection.debugPort,
+            debugPort,
         ).also { repl ->
             commHandlers.forEach { handler ->
                 repl.notebook.commManager.registerCommTarget(handler.targetId) { comm, _ ->
@@ -57,6 +57,9 @@ abstract class ReplFactory {
 
     protected val homeDir: File? by lazy { provideHomeDir() }
     protected abstract fun provideHomeDir(): File?
+
+    protected val debugPort: Int? by lazy { provideDebugPort() }
+    protected abstract fun provideDebugPort(): Int?
 
     protected val mavenRepositories: List<RepositoryCoordinates> by lazy { provideMavenRepositories() }
     protected abstract fun provideMavenRepositories(): List<RepositoryCoordinates>

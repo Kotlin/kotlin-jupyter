@@ -13,6 +13,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
+import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import java.io.File
 import java.util.ArrayList
 import java.util.EnumMap
@@ -117,6 +118,10 @@ data class KernelConfig(
     val clientType: String? = null,
     val jvmTargetForSnippets: String? = null,
 ) {
+    val hmac by lazy {
+        HMAC(signatureScheme.replace("-", ""), signatureKey)
+    }
+
     fun toArgs(prefix: String = ""): KernelArgs {
         val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
 

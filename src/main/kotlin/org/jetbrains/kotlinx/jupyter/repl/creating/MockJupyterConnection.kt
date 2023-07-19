@@ -5,54 +5,23 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
-import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManager
+import org.jetbrains.kotlinx.jupyter.messaging.MessageFactory
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.InputStream
 
 object MockJupyterConnection : JupyterConnectionInternal {
     override val config: KernelConfig
         get() = throw NotImplementedError()
-    override val contextMessage: RawMessage
+    override val socketManager: JupyterSocketManager
         get() = throw NotImplementedError()
-    override val heartbeat: JupyterSocket
+    override val messageFactory: MessageFactory
         get() = throw NotImplementedError()
-    override val shell: JupyterSocket
-        get() = throw NotImplementedError()
-    override val control: JupyterSocket
-        get() = throw NotImplementedError()
-    override val stdin: JupyterSocket
-        get() = throw NotImplementedError()
-    override val iopub: JupyterSocket
-        get() = throw NotImplementedError()
-    override val messageId: List<ByteArray>
-        get() = throw NotImplementedError()
-    override val sessionId: String
-        get() = throw NotImplementedError()
-    override val username: String
-        get() = throw NotImplementedError()
+
     override val executor: JupyterExecutor
         get() = throw NotImplementedError()
     override val stdinIn: InputStream
         get() = throw NotImplementedError()
-    override val debugPort: Int?
-        get() = null
-
-    override fun sendStatus(status: KernelStatus, incomingMessage: RawMessage?) {
-        throw NotImplementedError()
-    }
-
-    override fun doWrappedInBusyIdle(incomingMessage: RawMessage?, action: () -> Unit) {
-        throw NotImplementedError()
-    }
-
-    override fun updateSessionInfo(message: RawMessage) {
-        throw NotImplementedError()
-    }
-
-    override fun setContextMessage(message: RawMessage?) {
-        throw NotImplementedError()
-    }
 
     override fun addMessageCallback(callback: RawMessageCallback): RawMessageCallback {
         throw NotImplementedError()

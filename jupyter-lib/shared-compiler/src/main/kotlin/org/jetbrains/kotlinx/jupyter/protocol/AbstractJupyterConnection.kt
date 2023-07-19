@@ -9,10 +9,10 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.type
 abstract class AbstractJupyterConnection : JupyterConnection {
     private val callbacks = mutableMapOf<RawMessageCallback, SocketRawMessageCallback>()
 
-    protected abstract fun fromSocketType(type: JupyterSocketType): JupyterSocket
+    abstract val socketManager: JupyterSocketManagerBase
 
     override fun addMessageCallback(callback: RawMessageCallback): RawMessageCallback {
-        val socket = fromSocketType(callback.socket)
+        val socket = socketManager.fromSocketType(callback.socket)
         val socketCallback: SocketRawMessageCallback = { message ->
             if (callback.messageType?.let { it == message.type } != false) {
                 callback.action(message)
@@ -24,12 +24,12 @@ abstract class AbstractJupyterConnection : JupyterConnection {
 
     override fun removeMessageCallback(callback: RawMessageCallback) {
         val socketCallback = callbacks[callback] ?: return
-        val socket = fromSocketType(callback.socket)
+        val socket = socketManager.fromSocketType(callback.socket)
         socket.removeCallback(socketCallback)
     }
 
     override fun send(socketName: JupyterSocketType, message: RawMessage) {
-        val socket = fromSocketType(socketName)
+        val socket = socketManager.fromSocketType(socketName)
         socket.sendRawMessage(message)
     }
 }

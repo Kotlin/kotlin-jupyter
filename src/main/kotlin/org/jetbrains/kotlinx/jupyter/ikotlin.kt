@@ -114,6 +114,7 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
         log.info("Begin listening for events")
 
         val executionCount = AtomicLong(1)
+        val socketManager = conn.socketManager
 
         val commManager = CommManagerImpl(conn)
         val repl = DefaultReplFactory(kernelConfig, replConfig, runtimeProperties, scriptReceivers, conn, commManager).createRepl()
@@ -144,25 +145,25 @@ fun kernelServer(kernelConfig: KernelConfig, replConfig: ReplConfig, runtimeProp
 
         conn.addMessageCallback(
             rawMessageCallback(JupyterSocketType.SHELL, null) { rawMessage ->
-                conn.updateSessionInfo(rawMessage)
+                conn.messageFactory.updateSessionInfo(rawMessage)
                 conn.shellMessagesHandler(rawMessage, repl, commManager, executionCount)
             },
         )
 
         val controlThread = thread {
             socketLoop("Control: Interrupted", mainThread) {
-                conn.control.runCallbacksOnMessage()
+                socketManager.control.runCallbacksOnMessage()
             }
         }
 
         val hbThread = thread {
             socketLoop("Heartbeat: Interrupted", mainThread) {
-                conn.heartbeat.onData { send(it) }
+                socketManager.heartbeat.onData { send(it) }
             }
         }
 
         socketLoop("Main: Interrupted", controlThread, hbThread) {
-            conn.shell.runCallbacksOnMessage()
+            socketManager.shell.runCallbacksOnMessage()
         }
 
         try {

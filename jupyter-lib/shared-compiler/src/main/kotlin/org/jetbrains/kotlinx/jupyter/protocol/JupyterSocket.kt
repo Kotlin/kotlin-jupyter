@@ -16,7 +16,10 @@ interface SocketWithCancellation : Closeable {
 }
 
 interface JupyterSocket : SocketWithCancellation {
+    // Used on server side
     fun bind(): Boolean
+
+    // Used on client side
     fun connect(): Boolean
 
     fun sendRawMessage(msg: RawMessage)

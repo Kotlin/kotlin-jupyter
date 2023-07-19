@@ -67,6 +67,10 @@ class DefaultReplFactory(
         return _commManager
     }
 
+    override fun provideDebugPort(): Int? {
+        return _kernelConfig.debugPort
+    }
+
     override fun provideExplicitClientType(): JupyterClientType? {
         return _kernelConfig.clientType?.let { typeName ->
             try {

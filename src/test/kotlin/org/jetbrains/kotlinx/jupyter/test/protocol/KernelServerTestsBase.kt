@@ -10,14 +10,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
-import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createSocket
 import org.jetbrains.kotlinx.jupyter.sendMessage
-import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.AfterEach
@@ -25,31 +23,24 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.zeromq.ZMQ
 import java.io.File
-import java.io.IOException
-import java.net.DatagramSocket
-import java.net.ServerSocket
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 abstract class KernelServerTestsBase {
     protected abstract val context: ZMQ.Context
 
     protected val kernelConfig = createKotlinKernelConfig(
-        ports = createKernelPorts { randomPort() },
+        ports = createRandomKernelPorts(),
         signatureKey = "",
         scriptClasspath = classpath,
         homeDir = File(""),
     )
 
     private val sessionId = UUID.randomUUID().toString()
-
-    private val hmac = HMAC(kernelConfig.signatureScheme, kernelConfig.signatureKey)
+    private val messageId = listOf(byteArrayOf(1))
 
     // Set to false to debug kernel execution
     protected val runInSeparateProcess = true
     private val executor = if (runInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
-
-    protected val messageId = listOf(byteArrayOf(1))
 
     open fun beforeEach() {}
     open fun afterEach() {}
@@ -66,9 +57,9 @@ abstract class KernelServerTestsBase {
         executor.tearDown()
     }
 
-    fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, hmac, kernelConfig, JupyterSocketSide.CLIENT)
+    fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
 
-    fun JupyterSocket.sendMessage(msgType: MessageType, content: MessageContent) {
+    fun JupyterSocket.sendMessage(msgType: MessageType, content: MessageContent?) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 
@@ -85,35 +76,5 @@ abstract class KernelServerTestsBase {
         receiveStatusReply().status shouldBe KernelStatus.BUSY
         action()
         receiveStatusReply().status shouldBe KernelStatus.IDLE
-    }
-
-    companion object {
-        private val rng = Random()
-        private val usedPorts: MutableSet<Int> = ConcurrentHashMap.newKeySet()
-        private const val portRangeStart = 32768
-        private const val portRangeEnd = 65536
-        private const val maxTrials = portRangeEnd - portRangeStart
-
-        private fun isPortAvailable(port: Int): Boolean {
-            var tcpSocket: ServerSocket? = null
-            var udpSocket: DatagramSocket? = null
-            try {
-                tcpSocket = ServerSocket(port)
-                tcpSocket.reuseAddress = true
-                udpSocket = DatagramSocket(port)
-                udpSocket.reuseAddress = true
-                return true
-            } catch (_: IOException) {
-            } finally {
-                tcpSocket?.close()
-                udpSocket?.close()
-            }
-            return false
-        }
-
-        fun randomPort() =
-            generateSequence { portRangeStart + rng.nextInt(portRangeEnd - portRangeStart) }.take(maxTrials).find {
-                isPortAvailable(it) && usedPorts.add(it)
-            } ?: throw RuntimeException("No free port found")
     }
 }

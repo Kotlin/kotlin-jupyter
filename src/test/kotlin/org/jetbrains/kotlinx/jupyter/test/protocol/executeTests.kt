@@ -91,12 +91,10 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     override fun afterEach() {
-        shell?.close()
-        shell = null
-        ioPub?.close()
-        ioPub = null
-        stdin?.close()
-        stdin = null
+        listOf(::shell, ::ioPub, ::stdin).forEach { socketProp ->
+            socketProp.get()?.close()
+            socketProp.set(null)
+        }
         context.term()
         _context = null
     }

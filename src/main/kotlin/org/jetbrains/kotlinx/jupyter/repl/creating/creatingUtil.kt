@@ -23,6 +23,7 @@ fun createRepl(
     isEmbedded: Boolean = false,
     displayHandler: DisplayHandler = NoOpDisplayHandler,
     connection: JupyterConnectionInternal = MockJupyterConnection,
+    debugPort: Int? = null,
 ): ReplForJupyter {
     val factory = object : BaseReplFactory() {
         override fun provideResolutionInfoProvider() = resolutionInfoProvider
@@ -35,6 +36,7 @@ fun createRepl(
         override fun provideIsEmbedded() = isEmbedded
         override fun provideDisplayHandler() = displayHandler
         override fun provideConnection() = connection
+        override fun provideDebugPort(): Int? = debugPort
     }
     return factory.createRepl()
 }

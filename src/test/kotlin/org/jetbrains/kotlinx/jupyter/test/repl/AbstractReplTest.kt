@@ -73,6 +73,7 @@ abstract class AbstractReplTest {
             override fun provideIsEmbedded() = false
             override fun provideDisplayHandler() = displayHandlerProvider(notebook)
             override fun provideConnection() = MockJupyterConnection
+            override fun provideDebugPort(): Int? = null
         }
         return factory.createRepl()
     }

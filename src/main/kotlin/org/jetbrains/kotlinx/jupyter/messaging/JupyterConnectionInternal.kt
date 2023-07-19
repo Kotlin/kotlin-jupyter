@@ -4,39 +4,43 @@ import org.jetbrains.kotlinx.jupyter.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketManagerBase
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import java.io.Closeable
 import java.io.InputStream
 
-interface JupyterConnectionInternal : JupyterConnection {
-    val config: KernelConfig
+interface MessageFactory {
+    val messageId: List<ByteArray>
+    val sessionId: String
+    val username: String
     val contextMessage: RawMessage?
 
+    fun updateSessionInfo(message: RawMessage)
+    fun updateContextMessage(contextMessage: RawMessage?)
+}
+
+interface JupyterSocketManager : JupyterSocketManagerBase, Closeable {
     val heartbeat: JupyterSocket
     val shell: JupyterSocket
     val control: JupyterSocket
     val stdin: JupyterSocket
     val iopub: JupyterSocket
+}
 
-    val messageId: List<ByteArray>
-    val sessionId: String
-    val username: String
+interface JupyterConnectionInternal : JupyterConnection {
+    val config: KernelConfig
+    val socketManager: JupyterSocketManager
+    val messageFactory: MessageFactory
 
     val executor: JupyterExecutor
     val stdinIn: InputStream
-
-    val debugPort: Int?
-
-    fun sendStatus(status: KernelStatus, incomingMessage: RawMessage? = null)
-    fun doWrappedInBusyIdle(incomingMessage: RawMessage? = null, action: () -> Unit)
-    fun updateSessionInfo(message: RawMessage)
-    fun setContextMessage(message: RawMessage?)
 }
 
-fun JupyterConnectionInternal.makeDefaultHeader(msgType: MessageType): MessageHeader {
+fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader {
     return makeHeader(msgType, sessionId = sessionId, username = username)
 }
 
-fun JupyterConnectionInternal.makeSimpleMessage(msgType: MessageType, content: MessageContent): Message {
+fun MessageFactory.makeSimpleMessage(msgType: MessageType, content: MessageContent): Message {
     return Message(
         id = messageId,
         data = MessageData(
@@ -46,14 +50,37 @@ fun JupyterConnectionInternal.makeSimpleMessage(msgType: MessageType, content: M
     )
 }
 
+fun MessageFactory.makeReplyMessage(msgType: MessageType, content: MessageContent): Message {
+    return makeReplyMessage(contextMessage!!, msgType, content = content)
+}
+
 fun JupyterSocket.sendMessage(msg: Message) {
     sendRawMessage(msg.toRawMessage())
 }
 
 fun JupyterConnectionInternal.sendOut(msg: RawMessage, stream: JupyterOutType, text: String) {
-    iopub.sendMessage(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
+    socketManager.iopub.sendMessage(makeReplyMessage(msg, header = makeHeader(MessageType.STREAM, msg), content = StreamResponse(stream.optionName(), text)))
 }
 
 fun JupyterConnectionInternal.sendSimpleMessageToIoPub(msgType: MessageType, content: MessageContent) {
-    iopub.sendMessage(makeSimpleMessage(msgType, content))
+    socketManager.iopub.sendMessage(messageFactory.makeSimpleMessage(msgType, content))
+}
+
+fun JupyterConnectionInternal.sendStatus(status: KernelStatus, incomingMessage: RawMessage?) {
+    val message = if (incomingMessage != null) makeReplyMessage(
+        incomingMessage,
+        MessageType.STATUS,
+        content = StatusReply(status),
+    )
+    else messageFactory.makeSimpleMessage(MessageType.STATUS, content = StatusReply(status))
+    socketManager.iopub.sendMessage(message)
+}
+
+fun JupyterConnectionInternal.doWrappedInBusyIdle(incomingMessage: RawMessage?, action: () -> Unit) {
+    sendStatus(KernelStatus.BUSY, incomingMessage)
+    try {
+        action()
+    } finally {
+        sendStatus(KernelStatus.IDLE, incomingMessage)
+    }
 }
