@@ -70,9 +70,7 @@ class SocketWrapper(
 
     override fun sendRawMessage(msg: RawMessage) {
         logger.debug("[{}] snd>: {}", name, msg)
-        lock.withLock {
-            doSendRawMessage(msg)
-        }
+        doSendRawMessage(msg)
     }
 
     private fun doSendRawMessage(msg: RawMessage) {
