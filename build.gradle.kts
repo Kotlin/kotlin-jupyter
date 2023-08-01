@@ -33,11 +33,11 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
     implementation(libs.kotlin.dev.scriptingIdeServices)
     implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
-    implementation(libs.kotlin.dev.scriptUtil)
     implementation(libs.kotlin.dev.scriptingCommon)
+    implementation(libs.kotlin.dev.scriptingJvm)
 
     // Embedded version of serialization plugin for notebook code
-    implementation(libs.serialization.dev.embedded)
+    implementation(libs.serialization.dev.embeddedPlugin)
 
     // Logging
     implementation(libs.logging.slf4j.api)

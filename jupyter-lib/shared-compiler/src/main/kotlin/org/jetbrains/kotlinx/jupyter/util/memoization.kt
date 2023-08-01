@@ -10,7 +10,7 @@ fun <A, V> createCachedFun(calculate: (A) -> V): (A) -> V {
 fun <A, K, V> createCachedFun(calculateKey: (A) -> K, calculate: (A) -> V): (A) -> V {
     val cache = ConcurrentHashMap<Optional<K>, Optional<V>>()
 
-    @Suppress("USELESS_CAST")
+    @Suppress("UNCHECKED_CAST")
     return { argument ->
         val key = Optional.ofNullable(calculateKey(argument)) as Optional<K>
         cache.getOrPut(key) {

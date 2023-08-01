@@ -8,6 +8,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import java.util.Locale
 
 /**
  * Jupyter connection socket types
@@ -24,7 +25,7 @@ enum class JupyterSocketType {
     IOPUB;
 }
 
-val JupyterSocketType.nameForUser get() = name.toLowerCase()
+val JupyterSocketType.nameForUser get() = name.lowercase(Locale.getDefault())
 val JupyterSocketType.portField get() = "${nameForUser}_port"
 
 /**
