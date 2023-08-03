@@ -199,9 +199,9 @@ class SubtypeRendererTypeHandler(private val superType: KClass<*>, override val 
 }
 
 inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction: (T) -> Any?): RendererFieldHandler {
-    return createRenderer({ it.isOfRuntimeType(kClass) }, {
+    return createRenderer({ it.isOfRuntimeType(kClass) }, { field ->
         @Suppress("UNCHECKED_CAST")
-        renderAction(it.value as T)
+        renderAction(field.value as T)
     },)
 }
 
@@ -218,13 +218,17 @@ inline fun createRendererByCompileTimeType(kType: KType, crossinline renderActio
 }
 
 inline fun createRenderer(crossinline renderCondition: (FieldValue) -> Boolean, crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler {
+    return createRenderer(renderCondition) { _, field -> renderAction(field) }
+}
+
+inline fun createRenderer(crossinline renderCondition: (FieldValue) -> Boolean, crossinline renderAction: (KotlinKernelHost, FieldValue) -> Any?): RendererFieldHandler {
     return object : RendererFieldHandler {
         override fun acceptsField(result: FieldValue): Boolean {
             return renderCondition(result)
         }
 
-        override val execution: ResultHandlerExecution = ResultHandlerExecution { _, result ->
-            FieldValue(renderAction(result), null)
+        override val execution: ResultHandlerExecution = ResultHandlerExecution { executionHost, result ->
+            FieldValue(executionHost.execute { renderAction(this, result) }, null)
         }
 
         override fun replaceVariables(mapping: Map<String, String>): RendererFieldHandler {

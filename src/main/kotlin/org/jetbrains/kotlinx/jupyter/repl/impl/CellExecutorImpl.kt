@@ -84,11 +84,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                     throw e
                 }
             }
+            var newResultField: FieldValue? = null
             val snippetClass = evaluator.lastKClass
 
             if (processVariables) {
                 log.catchAll {
-                    fieldsProcessor.process(context)
+                    fieldsProcessor.process(context)?.let { newResultField = it }
                 }
             }
 
@@ -100,7 +101,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             // TODO: scan classloader only when new classpath was added
             log.catchAll {
-                librariesScanner.addLibrariesFromClassLoader(evaluator.lastClassLoader, context, notebook, stackFrame.libraryOptions)
+                librariesScanner.addLibrariesFromClassLoader(
+                    evaluator.lastClassLoader,
+                    context,
+                    notebook,
+                    stackFrame.libraryOptions,
+                )
             }
 
             log.catchAll {
@@ -115,7 +121,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             context.processExecutionQueue()
 
-            return result
+            return newResultField?.let { field -> result.copy(result = field) } ?: result
         }
     }
 
