@@ -73,10 +73,7 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
 
             field.isAccessible = true
             val value = field.get(o)
-            val descriptor = field.kotlinProperty
-            if (descriptor != null) {
-                context.addVariable(fieldName, KotlinVariableInfo(value, descriptor, o))
-            }
+            context.addVariable(fieldName, KotlinVariableInfo(value, field.kotlinProperty, field, o))
         }
     }
 

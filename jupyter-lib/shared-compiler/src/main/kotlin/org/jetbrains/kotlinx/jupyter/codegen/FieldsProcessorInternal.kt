@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
+import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 
@@ -11,5 +12,5 @@ interface FieldsProcessorInternal : FieldsProcessor {
     /**
      * Processes local variables and generates code snippets that perform type conversions
      */
-    fun process(host: KotlinKernelHost)
+    fun process(host: KotlinKernelHost): FieldValue?
 }

@@ -1,5 +1,6 @@
 package jupyter.kotlin
 
+import java.lang.reflect.Field
 import java.util.HashMap
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
@@ -74,15 +75,12 @@ class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable
     }
 }
 
-class KotlinVariableInfo(val value: Any?, val descriptor: KProperty<*>, val line: Any) {
-
-    val name: String
-        get() = descriptor.name
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    val type: String
-        get() = descriptor.returnType.toString()
-
+class KotlinVariableInfo(
+    val value: Any?,
+    val kotlinProperty: KProperty<*>?,
+    val javaField: Field,
+    val line: Any,
+) {
     fun toString(shortenTypes: Boolean): String {
         var type: String = type
         if (shortenTypes) {
@@ -95,3 +93,10 @@ class KotlinVariableInfo(val value: Any?, val descriptor: KProperty<*>, val line
         return toString(false)
     }
 }
+
+val KotlinVariableInfo.name: String
+    get() = kotlinProperty?.name ?: javaField.name
+
+@Suppress("MemberVisibilityCanBePrivate")
+val KotlinVariableInfo.type: String
+    get() = kotlinProperty?.returnType?.toString() ?: javaField.genericType.typeName

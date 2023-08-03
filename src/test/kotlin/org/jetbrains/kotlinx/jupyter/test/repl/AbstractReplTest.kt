@@ -4,7 +4,10 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
@@ -16,9 +19,11 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
+import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import java.io.File
 
 abstract class AbstractReplTest {
@@ -81,6 +86,24 @@ abstract class AbstractReplTest {
     protected fun makeEmbeddedRepl(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
         return createRepl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true, displayHandler = displayHandler)
+    }
+
+    protected fun makeReplWithLibraries(vararg libs: Pair<String, LibraryDefinition>) = makeReplWithLibraries(libs.toList().toLibraries())
+
+    protected fun makeReplWithLibraries(libraryResolver: LibraryResolver) = createRepl(
+        resolutionInfoProvider,
+        classpathWithTestLib,
+        homeDir,
+        testRepositories,
+        libraryResolver,
+    )
+
+    protected fun makeReplEnablingSingleLibrary(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
+        val repl = makeReplWithLibraries("mylib" to definition)
+        val paramList = if (args.isEmpty()) ""
+        else args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
+        repl.evalRaw("%use mylib$paramList")
+        return repl
     }
 
     companion object {
