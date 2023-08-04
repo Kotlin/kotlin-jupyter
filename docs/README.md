@@ -360,6 +360,7 @@ Other options are resolving library descriptor from a local file or from remote 
 ```
 
 #### List of supported libraries:
+ - [2p-kt](https://github.com/gciatto/kt-math) - Kotlin Multi-Platform ecosystem for symbolic AI
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
@@ -385,6 +386,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - ggplot-like interactive visualization for Kotlin
  - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
