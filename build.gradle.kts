@@ -1,11 +1,9 @@
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
+import build.util.composeOfTaskOutputs
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
-import build.util.registeringEmptyJavadocJar
-import build.util.registeringEmptySourcesJar
-import build.util.registeringShadowJarBy
-import build.util.registeringSourcesShadowJarBy
+import build.util.registerShadowJarTasksBy
 import build.util.typedProperty
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.developer
@@ -165,13 +163,9 @@ tasks {
     }
 }
 
-val kernelShadowedJar by tasks.registeringShadowJarBy(kernelShadowed)
-val scriptClasspathShadowedJar by tasks.registeringShadowJarBy(scriptClasspathShadowed)
-val scriptClasspathSourcesShadowedJar by tasks.registeringSourcesShadowJarBy(scriptClasspathShadowed)
-val ideScriptClasspathShadowedJar by tasks.registeringShadowJarBy(ideScriptClasspathShadowed)
-
-val genericEmptySourcesJar by tasks.registeringEmptySourcesJar()
-val genericEmptyJavadocJar by tasks.registeringEmptyJavadocJar()
+val kernelShadowedJar = tasks.registerShadowJarTasksBy(kernelShadowed, withSources = false)
+val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
+val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
 
 changelog {
     githubUser = rootSettings.githubRepoUser
@@ -227,30 +221,18 @@ kotlinPublications {
     publication {
         publicationName.set("kernel-shadowed")
         description.set("Kotlin Jupyter kernel with all dependencies inside one artifact")
-        composeOf {
-            artifact(kernelShadowedJar)
-            artifact(genericEmptySourcesJar)
-            artifact(genericEmptyJavadocJar)
-        }
+        composeOfTaskOutputs(kernelShadowedJar)
     }
 
     publication {
         publicationName.set("script-classpath-shadowed")
         description.set("Kotlin Jupyter kernel script classpath with all dependencies inside one artifact")
-        composeOf {
-            artifact(scriptClasspathShadowedJar)
-            artifact(scriptClasspathSourcesShadowedJar)
-            artifact(genericEmptyJavadocJar)
-        }
+        composeOfTaskOutputs(scriptClasspathShadowedJar)
     }
 
     publication {
         publicationName.set("ide-classpath-shadowed")
         description.set("Kotlin Jupyter kernel script classpath for IDE with all dependencies inside one artifact")
-        composeOf {
-            artifact(ideScriptClasspathShadowedJar)
-            artifact(genericEmptySourcesJar)
-            artifact(genericEmptyJavadocJar)
-        }
+        composeOfTaskOutputs(ideScriptClasspathShadowedJar)
     }
 }
