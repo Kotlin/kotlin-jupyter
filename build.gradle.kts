@@ -1,6 +1,9 @@
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
+import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
+import build.util.registeringShadowJarBy
+import build.util.registeringSourcesShadowJarBy
 import build.util.typedProperty
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.developer
@@ -11,6 +14,10 @@ plugins {
 }
 
 val deploy: Configuration by configurations.creating
+
+val kernelShadowed: Configuration by configurations.creating
+val scriptClasspathShadowed: Configuration by configurations.creating
+val ideScriptClasspathShadowed: Configuration by configurations.creating
 
 ktlint {
     filter {
@@ -62,6 +69,24 @@ dependencies {
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.kotlin.dev.scriptRuntime.get())
+
+    kernelShadowed(projects.kotlinJupyterKernel)
+
+    ideScriptClasspathShadowed(projects.lib) { isTransitive = false }
+    ideScriptClasspathShadowed(projects.api) { isTransitive = false }
+    ideScriptClasspathShadowed(projects.commonDependencies) {
+        excludeStandardKotlinDependencies()
+    }
+    ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
+    ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
+
+    scriptClasspathShadowed(projects.lib)
+    scriptClasspathShadowed(projects.api)
+    scriptClasspathShadowed(projects.commonDependencies) {
+        excludeStandardKotlinDependencies()
+    }
+    scriptClasspathShadowed(libs.kotlin.dev.stdlib)
+    scriptClasspathShadowed(libs.kotlin.dev.scriptRuntime)
 }
 
 buildSettings {
@@ -138,6 +163,11 @@ tasks {
     }
 }
 
+val kernelShadowedJar by tasks.registeringShadowJarBy(kernelShadowed)
+val scriptClasspathShadowedJar by tasks.registeringShadowJarBy(scriptClasspathShadowed)
+val scriptClasspathSourcesShadowedJar by tasks.registeringSourcesShadowJarBy(scriptClasspathShadowed)
+val ideScriptClasspathShadowedJar by tasks.registeringShadowJarBy(ideScriptClasspathShadowed)
+
 changelog {
     githubUser = rootSettings.githubRepoUser
     githubRepository = rootSettings.githubRepoName
@@ -187,5 +217,30 @@ kotlinPublications {
     publication {
         publicationName.set("kernel")
         description.set("Kotlin Jupyter kernel published as artifact")
+    }
+
+    publication {
+        publicationName.set("kernel-shadowed")
+        description.set("Kotlin Jupyter kernel with all dependencies inside one artifact")
+        composeOf {
+            artifact(kernelShadowedJar)
+        }
+    }
+
+    publication {
+        publicationName.set("script-classpath-shadowed")
+        description.set("Kotlin Jupyter kernel script classpath with all dependencies inside one artifact")
+        composeOf {
+            artifact(scriptClasspathShadowedJar)
+            artifact(scriptClasspathSourcesShadowedJar)
+        }
+    }
+
+    publication {
+        publicationName.set("ide-classpath-shadowed")
+        description.set("Kotlin Jupyter kernel script classpath for IDE with all dependencies inside one artifact")
+        composeOf {
+            artifact(ideScriptClasspathShadowedJar)
+        }
     }
 }

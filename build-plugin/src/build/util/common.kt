@@ -64,6 +64,15 @@ fun ModuleDependency.excludeKotlinDependencies(vararg dependencyNames: String) {
     }
 }
 
+fun ModuleDependency.excludeStandardKotlinDependencies() {
+    excludeKotlinDependencies(
+        "stdlib",
+        "stdlib-common",
+        "kotlin-stdlib-jdk7",
+        "kotlin-stdlib-jdk8"
+    )
+}
+
 fun <T> Optional<T>.getOrNull(): T? {
     var result: T? = null
     ifPresent { result = it }

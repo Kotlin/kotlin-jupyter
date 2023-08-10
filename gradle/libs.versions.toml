@@ -14,7 +14,7 @@ jupyterNotebooksParser = "0.1.0-dev-1"
 
 ktlintGradle = "11.0.0"
 ktlint = "0.45.2"
-publishPlugin = "1.8.10-dev-40"
+publishPlugin = "1.8.10-dev-41"
 pluginPublishPlugin = "0.21.0"
 versionsPlugin = "0.44.0"
 
@@ -43,6 +43,7 @@ graphvizJava = "0.18.1"
 kotlin-dev-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-dev-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 kotlin-dev-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-dev-stdlibCommon = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-common", version.ref = "kotlin" }
 
 kotlin-dev-compilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerImplUnshaded = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl", version.ref = "kotlin" }
