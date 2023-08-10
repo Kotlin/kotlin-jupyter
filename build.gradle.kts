@@ -2,6 +2,8 @@ import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
+import build.util.registeringEmptyJavadocJar
+import build.util.registeringEmptySourcesJar
 import build.util.registeringShadowJarBy
 import build.util.registeringSourcesShadowJarBy
 import build.util.typedProperty
@@ -168,6 +170,9 @@ val scriptClasspathShadowedJar by tasks.registeringShadowJarBy(scriptClasspathSh
 val scriptClasspathSourcesShadowedJar by tasks.registeringSourcesShadowJarBy(scriptClasspathShadowed)
 val ideScriptClasspathShadowedJar by tasks.registeringShadowJarBy(ideScriptClasspathShadowed)
 
+val genericEmptySourcesJar by tasks.registeringEmptySourcesJar()
+val genericEmptyJavadocJar by tasks.registeringEmptyJavadocJar()
+
 changelog {
     githubUser = rootSettings.githubRepoUser
     githubRepository = rootSettings.githubRepoName
@@ -224,6 +229,8 @@ kotlinPublications {
         description.set("Kotlin Jupyter kernel with all dependencies inside one artifact")
         composeOf {
             artifact(kernelShadowedJar)
+            artifact(genericEmptySourcesJar)
+            artifact(genericEmptyJavadocJar)
         }
     }
 
@@ -233,6 +240,7 @@ kotlinPublications {
         composeOf {
             artifact(scriptClasspathShadowedJar)
             artifact(scriptClasspathSourcesShadowedJar)
+            artifact(genericEmptyJavadocJar)
         }
     }
 
@@ -241,6 +249,8 @@ kotlinPublications {
         description.set("Kotlin Jupyter kernel script classpath for IDE with all dependencies inside one artifact")
         composeOf {
             artifact(ideScriptClasspathShadowedJar)
+            artifact(genericEmptySourcesJar)
+            artifact(genericEmptyJavadocJar)
         }
     }
 }
