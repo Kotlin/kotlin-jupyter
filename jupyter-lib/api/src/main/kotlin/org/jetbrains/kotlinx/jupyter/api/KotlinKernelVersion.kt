@@ -60,6 +60,20 @@ class KotlinKernelVersion private constructor(
         const val DEV_SEP = '-'
         const val DEV_PREFIX = "dev"
 
+        val STRING_VERSION_COMPARATOR = Comparator<String> { str1, str2 ->
+            val v1 = fromMavenVersion(str1) ?: from(str1)
+            val v2 = fromMavenVersion(str2) ?: from(str2)
+
+            when {
+                v1 != null && v2 != null -> {
+                    v1.compareTo(v2)
+                }
+                v1 != null -> 1
+                v2 != null -> -1
+                else -> str1.compareTo(str2)
+            }
+        }
+
         fun KotlinKernelVersion?.toMaybeUnspecifiedString() = this?.toString() ?: "unspecified"
 
         fun from(string: String): KotlinKernelVersion? {
@@ -79,6 +93,25 @@ class KotlinKernelVersion private constructor(
                     val devInt = devComponent.removePrefix(DEV_PREFIX).toIntOrNull() ?: return null
                     intComponents.add(devInt)
                 }
+            }
+
+            if (!validateComponents(intComponents)) return null
+            return KotlinKernelVersion(intComponents)
+        }
+
+        fun fromMavenVersion(string: String): KotlinKernelVersion? {
+            val components = string.split(SEP)
+            if (components.size != 3) return null
+
+            val intComponents = mutableListOf<Int>()
+            for (i in 0..1) {
+                intComponents.add(components[i].toIntOrNull() ?: return null)
+            }
+
+            val lastComponent = components[2]
+            val lastIntComponents = lastComponent.split(DEV_SEP)
+            for (component in lastIntComponents) {
+                intComponents.add(component.toIntOrNull() ?: return null)
             }
 
             if (!validateComponents(intComponents)) return null

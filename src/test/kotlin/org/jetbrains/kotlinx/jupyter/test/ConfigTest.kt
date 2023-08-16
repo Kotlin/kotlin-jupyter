@@ -95,6 +95,44 @@ class ConfigTest {
     }
 
     @Test
+    fun `fromMavenVersion should work correctly`() {
+        with(KotlinKernelVersion.Companion) {
+            from("0.8.12") shouldBe fromMavenVersion("0.8.12")
+            from("0.8.12.100500") shouldBe fromMavenVersion("0.8.12-100500")
+            from("0.8.12.100500.dev2") shouldBe fromMavenVersion("0.8.12-100500-2")
+        }
+    }
+
+    @Test
+    fun `maven central versions should be sorted correctly`() {
+        val sortedVersions = listOf(
+            "0.8.0-1-2",
+            "0.12.0-1",
+            "yux",
+            "0.11.0-42",
+            "abcdef",
+            "0.11.0-2",
+            "0.10.4.2",
+            "0.8.0-1-1",
+            "0.8.0-42",
+            "0.10.3.1.dev1",
+        ).sortedWith(KotlinKernelVersion.STRING_VERSION_COMPARATOR)
+
+        sortedVersions shouldBe listOf(
+            "abcdef",
+            "yux",
+            "0.8.0-1-1",
+            "0.8.0-1-2",
+            "0.8.0-42",
+            "0.10.3.1.dev1",
+            "0.10.4.2",
+            "0.11.0-2",
+            "0.11.0-42",
+            "0.12.0-1",
+        )
+    }
+
+    @Test
     fun `kernel main class name should be consistent`() {
         mainClassName shouldBe iKotlinClass.name
     }
