@@ -10,12 +10,14 @@ import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
+import org.jetbrains.kotlinx.jupyter.repl.workflow.EvaluatorWorkflowListener
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -81,7 +83,7 @@ internal class InternalEvaluatorImpl(
 
     private var isExecuting = false
 
-    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(code: Code, compilingOptions: JupyterCompilingOptions, evaluatorWorkflowListener: EvaluatorWorkflowListener?): InternalEvalResult {
         try {
             if (isExecuting) {
                 error("Recursive execution is not supported")
@@ -93,13 +95,12 @@ internal class InternalEvaluatorImpl(
             }
             val id = compiler.nextCounter()
 
-            if (onInternalIdGenerated != null) {
-                onInternalIdGenerated(id)
-            }
+            evaluatorWorkflowListener?.internalIdGenerated(id)
 
             val codeLine = SourceCodeImpl(id, code)
 
-            val (compileResult, evalConfig) = compiler.compileSync(codeLine)
+            val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
+            evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()
 
             classWriter?.writeClasses(codeLine, compiledScript)
@@ -116,7 +117,7 @@ internal class InternalEvaluatorImpl(
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript, codeLine)
-                            updateDataAfterExecution(cellId, resultValue)
+                            updateDataAfterExecution(compilingOptions.cellId, resultValue)
 
                             val resultType = compiledScript.resultField?.second?.typeName
                             val typeProvider = if (resultType == null) KTypeProvider { typeOf<Any?>() }

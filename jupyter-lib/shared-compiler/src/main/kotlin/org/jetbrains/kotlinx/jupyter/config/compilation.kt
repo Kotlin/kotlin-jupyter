@@ -6,11 +6,12 @@ import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
-import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.baseClass
@@ -28,13 +29,25 @@ import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
 import kotlin.script.experimental.jvm.JvmGetScriptingClass
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
+import kotlin.script.experimental.util.PropertiesCollection
+
+data class JupyterCompilingOptions(
+    val cellId: Int,
+    val isUserCode: Boolean,
+) {
+    companion object {
+        val DEFAULT = JupyterCompilingOptions(-1, false)
+    }
+}
+
+val ScriptCompilationConfigurationKeys.jupyterOptions by PropertiesCollection.key(isTransient = true, defaultValue = JupyterCompilingOptions.DEFAULT)
 
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
     scriptReceivers: List<Any> = emptyList(),
     compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
-    importsCollector: ScriptImportsCollector = ScriptImportsCollector.NoOp,
+    scriptDataCollectors: List<ScriptDataCollector> = emptyList(),
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
     return ScriptCompilationConfiguration {
@@ -66,7 +79,10 @@ fun getCompilationConfiguration(
 
         refineConfiguration {
             beforeCompiling { (source, config, _) ->
-                importsCollector.collect(source)
+                val scriptInfo = ScriptDataCollector.ScriptInfo(source, config[jupyterOptions]!!.isUserCode)
+                for (collector in scriptDataCollectors) {
+                    collector.collect(scriptInfo)
+                }
                 config.with {
                     compilerOptions(compilerArgsConfigurator.getArgs())
                 }.asSuccess()

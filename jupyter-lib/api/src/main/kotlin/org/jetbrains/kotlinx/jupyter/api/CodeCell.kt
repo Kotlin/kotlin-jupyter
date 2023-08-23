@@ -48,4 +48,9 @@ interface CodeCell {
      * Previously evaluated cell
      */
     val prevCell: CodeCell?
+
+    /**
+     * Ordered list of snippet declarations
+     */
+    val declarations: List<DeclarationInfo>
 }

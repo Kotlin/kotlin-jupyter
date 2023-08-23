@@ -9,11 +9,13 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
+import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.mavenLocal
 import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
@@ -22,7 +24,9 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -32,6 +36,8 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
 
 class IntegrationApiTests {
     private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
@@ -155,6 +161,51 @@ class IntegrationApiTests {
 
         val result = repl.execute("1+1").result.value
         result shouldBe 6
+    }
+
+    @Test
+    fun `result code preprocessor`() {
+        val displays = mutableListOf<Any>()
+        val repl = createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, displayHandler = TestDisplayHandler(displays))
+
+        repl.eval {
+            addLibrary(
+                createLibrary(repl.notebook) {
+                    afterCellExecution { snippetInstance, result ->
+                        @Suppress("UNCHECKED_CAST")
+                        val kClass: KClass<Any> = snippetInstance::class as KClass<Any>
+                        if (result.name != null) return@afterCellExecution
+
+                        val cellDeclarations = notebook.currentCell!!.declarations
+                        val propNamesWithOrder = cellDeclarations
+                            .filter { it.kind == DeclarationKind.PROPERTY }
+                            .withIndex()
+                            .associate {
+                                it.value.name to it.index
+                            }
+
+                        val props = kClass.declaredMemberProperties
+                        val lastProp = props.maxByOrNull { prop ->
+                            propNamesWithOrder[prop.name] ?: -1
+                        } ?: return@afterCellExecution
+
+                        lastProp.get(snippetInstance)?.let { this.display(it, null) }
+                    }
+                },
+            )
+        }
+
+        repl.evalEx(
+            """
+            val xyz=7
+            val abc = 9
+            val po = 97
+            """.trimIndent(),
+        )
+
+        repl.evalEx("var `Russia is a terrorist state` = true")
+
+        displays shouldBe listOf(97, true)
     }
 
     @Test

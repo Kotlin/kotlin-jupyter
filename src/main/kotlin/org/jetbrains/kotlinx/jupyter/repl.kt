@@ -33,6 +33,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
@@ -78,10 +79,12 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.InternalEvaluatorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InternalVariablesMarkersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.InterruptionCallbacksProcessorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptDeclarationsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.ScriptImportsCollectorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
 import org.jetbrains.kotlinx.jupyter.repl.impl.ShutdownExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.postRender
+import org.jetbrains.kotlinx.jupyter.repl.workflow.ExecutorWorkflowListener
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
@@ -288,6 +291,7 @@ class ReplForJupyterImpl(
     private val codePreprocessor = CompoundCodePreprocessor(magics)
 
     private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
+    private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
 
     // Used for various purposes, i.e. completion and listing errors
     private val compilerConfiguration: ScriptCompilationConfiguration =
@@ -295,7 +299,7 @@ class ReplForJupyterImpl(
             scriptClasspath,
             scriptReceivers,
             compilerArgsConfigurator,
-            importsCollector = importsCollector
+            scriptDataCollectors = listOf(importsCollector, declarationsCollector)
         ).with {
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
@@ -470,20 +474,31 @@ class ReplForJupyterImpl(
         return withEvalContext {
             beforeCellExecutionsProcessor.process(executor)
 
-            var cell: MutableCodeCell? = null
+            val cell: MutableCodeCell = notebook.addCell(EvalData(evalData))
 
             val compiledData: SerializedCompiledScriptsData
             val newImports: List<String>
             val result = try {
                 log.debug("Current cell id: ${evalData.jupyterId}")
-                executor.execute(evalData.code, displayHandler, currentCellId = evalData.jupyterId - 1) { internalId, codeToExecute ->
-                    cell = notebook.addCell(internalId, codeToExecute, EvalData(evalData))
+                val executorWorkflowListener = object : ExecutorWorkflowListener {
+                    override fun internalIdGenerated(id: Int) {
+                        cell.internalId = id
+                    }
+
+                    override fun codePreprocessed(preprocessedCode: Code) {
+                        cell.preprocessedCode = preprocessedCode
+                    }
+
+                    override fun compilationFinished() {
+                        cell.declarations = declarationsCollector.getLastSnippetDeclarations()
+                    }
                 }
+                executor.execute(evalData.code, displayHandler, currentCellId = evalData.jupyterId - 1, isUserCode = true, executorWorkflowListener = executorWorkflowListener)
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()
             }
-            cell?.resultVal = result.result.value
+            cell.resultVal = result.result.value
 
             val rendered = result.result.let {
                 log.catchAll {

@@ -5,10 +5,12 @@ import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
+import org.jetbrains.kotlinx.jupyter.repl.workflow.EvaluatorWorkflowListener
 import kotlin.reflect.KClass
 
 interface TrackedCellExecutor : CellExecutor {
@@ -54,7 +56,11 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     override val results: List<Any?>
         get() = executedCodes.map { null }
 
-    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(
+        code: Code,
+        compilingOptions: JupyterCompilingOptions,
+        evaluatorWorkflowListener: EvaluatorWorkflowListener?,
+    ): InternalEvalResult {
         executedCodes.add(code.trimIndent())
         return InternalEvalResult(FieldValue(null, null), Unit)
     }
@@ -66,9 +72,13 @@ internal class TrackedInternalEvaluatorImpl(private val baseEvaluator: InternalE
 
     override val results = mutableListOf<Any?>()
 
-    override fun eval(code: Code, cellId: Int, onInternalIdGenerated: ((Int) -> Unit)?): InternalEvalResult {
+    override fun eval(
+        code: Code,
+        compilingOptions: JupyterCompilingOptions,
+        evaluatorWorkflowListener: EvaluatorWorkflowListener?,
+    ): InternalEvalResult {
         executedCodes.add(code.trimIndent())
-        val res = baseEvaluator.eval(code, onInternalIdGenerated = onInternalIdGenerated)
+        val res = baseEvaluator.eval(code, compilingOptions, evaluatorWorkflowListener)
         results.add(res.result.value)
         return res
     }

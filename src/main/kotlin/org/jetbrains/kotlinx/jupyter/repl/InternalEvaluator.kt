@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.repl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.repl.workflow.EvaluatorWorkflowListener
 import kotlin.reflect.KClass
 
 interface InternalEvaluator {
@@ -22,7 +24,7 @@ interface InternalEvaluator {
      * Executes code snippet
      * @throws IllegalStateException if this method was invoked recursively
      */
-    fun eval(code: Code, cellId: Int = -1, onInternalIdGenerated: ((Int) -> Unit)? = null): InternalEvalResult
+    fun eval(code: Code, compilingOptions: JupyterCompilingOptions = JupyterCompilingOptions.DEFAULT, evaluatorWorkflowListener: EvaluatorWorkflowListener? = null): InternalEvalResult
 
     /**
      * Pop a serialized form of recently added compiled scripts

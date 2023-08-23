@@ -4,6 +4,7 @@ import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
@@ -31,6 +32,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
+import kotlin.properties.Delegates
 
 interface MutableDisplayResultWithCell : DisplayResultWithCell {
     override val cell: MutableCodeCell
@@ -50,6 +52,10 @@ interface MutableDisplayContainer : DisplayContainer {
 
 interface MutableCodeCell : CodeCell {
     var resultVal: Any?
+    override var declarations: List<DeclarationInfo>
+    override var preprocessedCode: String
+    override var internalId: Int
+
     fun appendStreamOutput(output: String)
 
     fun addDisplay(display: DisplayResult)
@@ -62,8 +68,6 @@ interface MutableNotebook : Notebook {
 
     override val displays: MutableDisplayContainer
     fun addCell(
-        internalId: Int,
-        preprocessedCode: String,
         data: EvalData,
     ): MutableCodeCell
 
@@ -131,12 +135,15 @@ class DisplayContainerImpl : MutableDisplayContainer {
 class CodeCellImpl(
     override val notebook: NotebookImpl,
     override val id: Int,
-    override val internalId: Int,
     override val code: String,
-    override val preprocessedCode: String,
     override val prevCell: CodeCell?,
 ) : MutableCodeCell {
     override var resultVal: Any? = null
+    override var internalId by Delegates.notNull<Int>()
+
+    override var declarations: List<DeclarationInfo> = emptyList()
+    override var preprocessedCode by Delegates.notNull<String>()
+
     override val result: Any?
         get() = resultVal
 
@@ -232,11 +239,9 @@ class NotebookImpl(
     }
 
     override fun addCell(
-        internalId: Int,
-        preprocessedCode: String,
         data: EvalData,
     ): MutableCodeCell {
-        val cell = CodeCellImpl(this, data.executionCounter, internalId, data.rawCode, preprocessedCode, lastCell)
+        val cell = CodeCellImpl(this, data.executionCounter, data.rawCode, lastCell)
         cells[data.executionCounter] = cell
         history.add(cell)
         mainCellCreated = true

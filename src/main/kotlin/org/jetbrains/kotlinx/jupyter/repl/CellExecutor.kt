@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.impl.ExecutionStackFrame
+import org.jetbrains.kotlinx.jupyter.repl.workflow.ExecutorWorkflowListener
 
 /**
  * Executes notebook cell code.
@@ -19,10 +20,9 @@ interface CellExecutor : ExecutionHost {
         processAnnotations: Boolean = true,
         processMagics: Boolean = true,
         invokeAfterCallbacks: Boolean = true,
+        isUserCode: Boolean = false,
         currentCellId: Int = -1,
         stackFrame: ExecutionStackFrame? = null,
-        callback: ExecutionStartedCallback? = null,
+        executorWorkflowListener: ExecutorWorkflowListener? = null,
     ): InternalEvalResult
 }
-
-typealias ExecutionStartedCallback = (internalId: Int, code: Code) -> Unit

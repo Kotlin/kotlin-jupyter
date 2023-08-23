@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
@@ -24,8 +25,8 @@ import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
-import org.jetbrains.kotlinx.jupyter.repl.ExecutionStartedCallback
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
+import org.jetbrains.kotlinx.jupyter.repl.workflow.ExecutorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.util.accepts
 import java.util.LinkedList
 import kotlin.reflect.KMutableProperty1
@@ -45,9 +46,10 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         processAnnotations: Boolean,
         processMagics: Boolean,
         invokeAfterCallbacks: Boolean,
+        isUserCode: Boolean,
         currentCellId: Int,
         stackFrame: ExecutionStackFrame?,
-        callback: ExecutionStartedCallback?,
+        executorWorkflowListener: ExecutorWorkflowListener?,
     ): InternalEvalResult {
         with(replContext) {
             val context = ExecutionContext(replContext, displayHandler, this@CellExecutorImpl, stackFrame.push())
@@ -65,6 +67,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
                 processedMagics.code
             } else code
+            executorWorkflowListener?.codePreprocessed(preprocessedCode)
 
             if (preprocessedCode.isBlank()) {
                 return InternalEvalResult(FieldValue(Unit, null), Unit)
@@ -72,9 +75,11 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
 
             val result = baseHost.withHost(context) {
                 try {
-                    evaluator.eval(preprocessedCode, currentCellId) { internalId ->
-                        if (callback != null) callback(internalId, preprocessedCode)
-                    }
+                    evaluator.eval(
+                        preprocessedCode,
+                        JupyterCompilingOptions(currentCellId, isUserCode),
+                        executorWorkflowListener,
+                    )
                 } catch (e: ReplException) {
                     if (e.cause is ThreadDeath) {
                         rethrowAsLibraryException(LibraryProblemPart.INTERRUPTION_CALLBACKS) {

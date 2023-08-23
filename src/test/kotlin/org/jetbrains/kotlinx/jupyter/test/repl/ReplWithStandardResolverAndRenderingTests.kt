@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.shouldBe
+import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -14,10 +16,8 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
 
     @Test
     fun testDataframeDisplay() {
-        repl.notebook.beginEvalSession()
         eval("SessionOptions.resolveSources = true", 1, false)
 
-        repl.notebook.beginEvalSession()
         eval(
             """
             %use dataframe(0.10.0-dev-1373)
@@ -34,7 +34,12 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
             true,
         )
 
-        repl.notebook.beginEvalSession()
+        val declaredProperties = repl.notebook.currentCell!!.declarations
+            .filter { it.kind == DeclarationKind.PROPERTY }
+            .mapNotNull { it.name }
+
+        declaredProperties shouldBe listOf("name", "height")
+
         eval(
             """DISPLAY((Out[2] as DataFrame<*>).filter { it.index() >= 0 && it.index() <= 10 }, "")""",
             3,

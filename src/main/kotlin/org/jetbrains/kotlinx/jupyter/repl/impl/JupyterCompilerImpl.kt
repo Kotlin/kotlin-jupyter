@@ -12,10 +12,13 @@ import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
+import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
+import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.KotlinType
@@ -60,7 +63,7 @@ interface JupyterCompiler {
     fun nextCounter(): Int
     fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit)
     fun updateCompilationConfigOnAnnotation(handler: FileAnnotationHandler, callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>)
-    fun compileSync(snippet: SourceCode): Result
+    fun compileSync(snippet: SourceCode, options: JupyterCompilingOptions): Result
 
     data class Result(
         val snippet: LinkedSnippet<KJvmCompiledScript>,
@@ -169,8 +172,13 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
         }
     }
 
-    override fun compileSync(snippet: SourceCode): JupyterCompiler.Result {
-        when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfig) }) {
+    private val getCompilationConfiguration = createCachedFun { options: JupyterCompilingOptions ->
+        compilationConfig.with { jupyterOptions(options) }
+    }
+
+    override fun compileSync(snippet: SourceCode, options: JupyterCompilingOptions): JupyterCompiler.Result {
+        val compilationConfigWithJupyterOptions = getCompilationConfiguration(options)
+        when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfigWithJupyterOptions) }) {
             is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, resultWithDiagnostics)
             is ResultWithDiagnostics.Success -> {
                 val result = resultWithDiagnostics.value
