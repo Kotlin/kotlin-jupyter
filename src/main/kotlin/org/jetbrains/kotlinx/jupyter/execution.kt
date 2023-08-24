@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import java.lang.UnsupportedOperationException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
@@ -12,7 +13,7 @@ import kotlin.concurrent.thread
 sealed interface ExecutionResult<out T> {
     class Success<out T>(val result: T) : ExecutionResult<T>
     class Failure(val throwable: Throwable) : ExecutionResult<Nothing>
-    object Interrupted : ExecutionResult<Nothing>
+    data object Interrupted : ExecutionResult<Nothing>
 }
 
 interface JupyterExecutor {
@@ -63,13 +64,23 @@ class JupyterExecutorImpl : JupyterExecutor {
      */
     override fun interruptExecutions() {
         LOG.info("Stopping ${currentExecutions.size} executions...")
-        @Suppress("deprecation")
         while (currentExecutions.isNotEmpty()) {
             val execution = currentExecutions.firstOrNull() ?: break
             val executionName = execution.name
             LOG.info("Stopping $executionName...")
-            execution.stop()
-            LOG.info("$executionName stopped")
+
+            // We hope that user implemented isInterrupted checks on their side
+            execution.interrupt()
+            LOG.info("$executionName interrupted")
+
+            try {
+                @Suppress("DEPRECATION")
+                execution.stop()
+                LOG.info("$executionName stopped")
+            } catch (e: UnsupportedOperationException) {
+                LOG.warn("We tried to stop $executionName thread, but it's not supported in the current version of JRE", e)
+            }
+
             currentExecutions.remove(execution)
         }
     }

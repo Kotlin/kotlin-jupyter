@@ -21,10 +21,12 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
+import org.jetbrains.kotlinx.jupyter.messaging.EXECUTION_INTERRUPTED_MESSAGE
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
+import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
@@ -69,6 +71,7 @@ class ExecuteTests : KernelServerTestsBase() {
         get() = _context!!
 
     private var shell: JupyterSocket? = null
+    private var control: JupyterSocket? = null
     private var ioPub: JupyterSocket? = null
     private var stdin: JupyterSocket? = null
 
@@ -80,10 +83,13 @@ class ExecuteTests : KernelServerTestsBase() {
             }
             ioPub = createClientSocket(JupyterSocketInfo.IOPUB)
             stdin = createClientSocket(JupyterSocketInfo.STDIN)
+            control = createClientSocket(JupyterSocketInfo.CONTROL)
+
             ioPub?.subscribe(byteArrayOf())
             shell?.connect()
             ioPub?.connect()
             stdin?.connect()
+            control?.connect()
         } catch (e: Throwable) {
             afterEach()
             throw e
@@ -91,7 +97,7 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     override fun afterEach() {
-        listOf(::shell, ::ioPub, ::stdin).forEach { socketProp ->
+        listOf(::shell, ::ioPub, ::stdin, ::control).forEach { socketProp ->
             socketProp.get()?.close()
             socketProp.set(null)
         }
@@ -103,6 +109,7 @@ class ExecuteTests : KernelServerTestsBase() {
         code: String,
         hasResult: Boolean = true,
         ioPubChecker: (JupyterSocket) -> Unit = {},
+        executeRequestSent: () -> Unit = {},
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
@@ -113,6 +120,7 @@ class ExecuteTests : KernelServerTestsBase() {
             val ioPub = this.ioPub!!
             val stdin = this.stdin!!
             shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory))
+            executeRequestSent()
             inputs.forEach {
                 stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
             }
@@ -176,6 +184,18 @@ class ExecuteTests : KernelServerTestsBase() {
         }
     }
 
+    private fun interruptExecution() {
+        control!!.sendMessage(MessageType.INTERRUPT_REQUEST, InterruptRequest())
+    }
+
+    private fun JupyterSocket.receiveStreamResponse(): String {
+        val msg = receiveMessage()
+        assertEquals(MessageType.STREAM, msg.type)
+        val content = msg.content
+        content.shouldBeTypeOf<StreamResponse>()
+        return content.text
+    }
+
     @Test
     fun testExecute() {
         val res = doExecute("2+2") as JsonObject
@@ -218,11 +238,8 @@ class ExecuteTests : KernelServerTestsBase() {
 
         fun checker(ioPub: JupyterSocket) {
             for (el in expected) {
-                val msg = ioPub.receiveMessage()
-                val content = msg.content
-                assertEquals(MessageType.STREAM, msg.type)
-                assertTrue(content is StreamResponse)
-                assertEquals(el, content.text)
+                val msgText = ioPub.receiveStreamResponse()
+                assertEquals(el, msgText)
             }
         }
 
@@ -232,20 +249,20 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testOutputStrings() {
+        val repetitions = 5
         val code =
             """
-            for (i in 1..5) {
+            for (i in 1..$repetitions) {
                 Thread.sleep(200)
                 println("text" + i)
             }
             """.trimIndent()
 
         fun checker(ioPub: JupyterSocket) {
-            for (i in 1..5) {
-                val msg = ioPub.receiveMessage()
-                assertEquals(MessageType.STREAM, msg.type)
-                assertEquals("text$i" + System.lineSeparator(), (msg.content as StreamResponse).text)
-            }
+            val lineSeparator = System.lineSeparator()
+            val actualText = (1..repetitions).joinToString("") { ioPub.receiveStreamResponse() }
+            val expectedText = (1..repetitions).joinToString("") { i -> "text$i$lineSeparator" }
+            actualText shouldBe expectedText
         }
 
         val res = doExecute(code, false, ::checker)
@@ -332,9 +349,7 @@ class ExecuteTests : KernelServerTestsBase() {
             """.trimIndent(),
             false,
             ioPubChecker = {
-                val msg = it.receiveMessage()
-                assertEquals(MessageType.STREAM, msg.type)
-                val msgText = (msg.content as StreamResponse).text
+                val msgText = it.receiveStreamResponse()
                 assertTrue("The problem is found in one of the loaded libraries" in msgText)
             },
         )
@@ -505,5 +520,21 @@ class ExecuteTests : KernelServerTestsBase() {
         val text = res[MimeTypes.PLAIN_TEXT]!!.jsonPrimitive.content
         text.shouldContain(currentKotlinVersion)
         print(text)
+    }
+
+    @Test
+    fun testInterrupt() {
+        doExecute(
+            "while(true);",
+            hasResult = false,
+            executeRequestSent = {
+                Thread.sleep(15000)
+                interruptExecution()
+            },
+            ioPubChecker = { iopubSocket ->
+                val msgText = iopubSocket.receiveStreamResponse()
+                msgText shouldBe EXECUTION_INTERRUPTED_MESSAGE
+            },
+        ) shouldBe null
     }
 }

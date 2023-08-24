@@ -55,6 +55,8 @@ enum class JupyterOutType {
     fun optionName() = name.lowercase()
 }
 
+const val EXECUTION_INTERRUPTED_MESSAGE = "The execution was interrupted"
+
 abstract class Response(
     private val stdOut: String?,
     private val stdErr: String?,
@@ -541,7 +543,7 @@ fun JupyterConnectionInternal.evalWithIO(
                 )
             }
             ExecutionResult.Interrupted -> {
-                AbortResponseWithMessage("The execution was interrupted")
+                AbortResponseWithMessage(EXECUTION_INTERRUPTED_MESSAGE)
             }
         }
     } finally {
