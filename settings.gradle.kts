@@ -2,6 +2,13 @@
 
 rootProject.name = "kotlin-jupyter-kernel"
 
+pluginManagement {
+    repositories {
+        maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+        gradlePluginPortal()
+    }
+}
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.5.0")
 }

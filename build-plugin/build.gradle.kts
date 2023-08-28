@@ -8,6 +8,7 @@ plugins {
 repositories {
     mavenCentral()
     gradlePluginPortal()
+    maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
 }
 
 dependencies {

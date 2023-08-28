@@ -6,6 +6,7 @@ stableKotlin = "1.9.0"
 gradleKotlin = "1.9.0"
 ksp = "1.9.0-1.0.12"
 shadowJar = "7.1.2"
+shadowJarUtil = "0.1.1"
 changelogPlugin = "1.12.1"
 kotlinxSerialization = "1.4.1"
 json5k = "0.3.0"
@@ -134,6 +135,8 @@ plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gr
 # id("com.github.johnrengelman.shadow")
 plugin-shadowJar = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadowJar" }
 
+plugin-shadowJar-util = { module = "org.jetbrains.gradle:shadow-jar-util", version.ref = "shadowJarUtil" }
+
 # id("org.jlleitschuh.gradle.ktlint")
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 
@@ -166,4 +169,5 @@ allGradlePlugins = [
     "plugin-changelog",
     "plugin-versionsUpdater",
     "plugin-ksp",
+    "plugin-shadowJar-util",
 ]

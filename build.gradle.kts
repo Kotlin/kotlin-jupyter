@@ -3,8 +3,8 @@ import build.PUBLISHING_GROUP
 import build.util.composeOfTaskOutputs
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
-import build.util.registerShadowJarTasksBy
 import build.util.typedProperty
+import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.developer
 import org.jetbrains.kotlinx.publisher.githubRepo
