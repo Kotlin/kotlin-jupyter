@@ -3,6 +3,7 @@ import build.PUBLISHING_GROUP
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.typedProperty
+import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
@@ -163,7 +164,14 @@ tasks {
     }
 }
 
-val kernelShadowedJar = tasks.registerShadowJarTasksBy(kernelShadowed, withSources = false)
+val kernelShadowedJar = tasks.registerShadowJarTasksBy(
+    kernelShadowed,
+    withSources = false,
+    binaryTaskConfigurator = {
+        mergeServiceFiles()
+        transform(ComponentsXmlResourceTransformer())
+    },
+)
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
 val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
 

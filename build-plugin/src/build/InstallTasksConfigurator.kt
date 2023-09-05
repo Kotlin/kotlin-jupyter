@@ -42,7 +42,6 @@ class InstallTasksConfigurator(
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = project.tasks.named(makeTaskName(settings.cleanInstallDirTaskPrefix, local))
         val shadowJar = project.tasks.named(SHADOW_JAR_TASK)
-        val jarTask = project.tasks.named(JAR_TASK)
         val updateLibrariesTask = project.tasks.named(UPDATE_LIBRARIES_TASK)
 
         project.tasks.register<Copy>(makeTaskName(settings.copyLibrariesTaskPrefix, local)) {
@@ -61,7 +60,6 @@ class InstallTasksConfigurator(
 
         project.tasks.register<Copy>(makeTaskName(settings.installKernelTaskPrefix, local)) {
             dependsOn(cleanDirTask, shadowJar)
-            mustRunAfter(jarTask)
             group = groupName
             from(shadowJar.get().outputs)
             into(mainInstallPath.localJarsDir)

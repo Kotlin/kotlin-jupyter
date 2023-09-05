@@ -75,6 +75,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
         /****** Build tasks ******/
         registerPropertiesTask()
         registerCleanTasks()
+        configureJarTasks()
 
         /****** Local install ******/
         val installTasksConfigurator = InstallTasksConfigurator(project, settings)
@@ -85,8 +86,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
         installTasksConfigurator.registerInstallTasks(false, settings.distribKernelDir, settings.distribBuildDir)
         registerPythonPackageTasks()
         registerAggregateUploadTasks()
-
-        configureJarTasks()
     }
 
     private fun setupVersionsPlugin() {
@@ -213,7 +212,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
         project.tasks.named(SHADOW_JAR_TASK, ShadowJar::class.java) {
             archiveBaseName.set(settings.packageName)
-            archiveClassifier.set("")
+            archiveClassifier.set("all")
             mergeServiceFiles()
             transform(ComponentsXmlResourceTransformer())
 
