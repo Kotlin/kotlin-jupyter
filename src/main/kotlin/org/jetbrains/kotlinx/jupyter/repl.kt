@@ -425,6 +425,7 @@ class ReplForJupyterImpl(
         internalVariablesMarkersProcessor,
         interruptionCallbacksProcessor,
         colorSchemeChangeCallbacksProcessor,
+        displayHandler,
     ).also {
         notebook.sharedReplContext = it
     }
@@ -493,7 +494,12 @@ class ReplForJupyterImpl(
                         cell.declarations = declarationsCollector.getLastSnippetDeclarations()
                     }
                 }
-                executor.execute(evalData.code, displayHandler, currentCellId = evalData.jupyterId - 1, isUserCode = true, executorWorkflowListener = executorWorkflowListener)
+                executor.execute(
+                    evalData.code,
+                    isUserCode = true,
+                    currentCellId = evalData.jupyterId - 1,
+                    executorWorkflowListener = executorWorkflowListener
+                )
             } finally {
                 compiledData = internalEvaluator.popAddedCompiledScripts()
                 newImports = importsCollector.popAddedImports()

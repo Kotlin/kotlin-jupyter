@@ -2,8 +2,6 @@ package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.impl.ExecutionStackFrame
 import org.jetbrains.kotlinx.jupyter.repl.workflow.ExecutorWorkflowListener
 
@@ -15,7 +13,6 @@ interface CellExecutor : ExecutionHost {
 
     fun execute(
         code: Code,
-        displayHandler: DisplayHandler = NoOpDisplayHandler,
         processVariables: Boolean = true,
         processAnnotations: Boolean = true,
         processMagics: Boolean = true,

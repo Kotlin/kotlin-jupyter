@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 
@@ -38,4 +39,5 @@ data class SharedReplContext(
     val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     val interruptionCallbacksProcessor: InterruptionCallbacksProcessor,
     val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor,
+    val displayHandler: DisplayHandler,
 )
