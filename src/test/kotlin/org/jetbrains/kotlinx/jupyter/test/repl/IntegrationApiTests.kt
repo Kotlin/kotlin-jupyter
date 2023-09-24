@@ -35,9 +35,11 @@ import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.test.assertNull
 
 class IntegrationApiTests {
     private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
@@ -368,5 +370,28 @@ class IntegrationApiTests {
             @file:DependsOn("my.group:dep:42")
             
         """.trimIndent()
+    }
+
+    @Test
+    fun `exception in renderer should not be fatal`() {
+        val repl = makeRepl()
+
+        repl.eval {
+            addLibrary(
+                createLibrary(repl.notebook) {
+                    render<String> { throw IllegalStateException() }
+                },
+            )
+        }
+
+        repl.evalRaw("42")
+        val res = assertDoesNotThrow {
+            repl.evalRendered(
+                """
+                "42"
+                """.trimIndent(),
+            )
+        }
+        assertNull(res)
     }
 }

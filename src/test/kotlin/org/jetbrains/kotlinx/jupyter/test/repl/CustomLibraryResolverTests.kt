@@ -403,25 +403,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
-    fun testExceptionInRenderer() {
-        val repl = makeReplEnablingSingleLibrary(
-            library {
-                render<String> { throw IllegalStateException() }
-            },
-        )
-
-        repl.evalRaw("42")
-        val res = assertDoesNotThrow {
-            repl.evalRendered(
-                """
-                "42"
-                """.trimIndent(),
-            )
-        }
-        assertNull(res)
-    }
-
-    @Test
     fun testBeforeExecutionException() {
         val repl = makeReplEnablingSingleLibrary(
             library {
