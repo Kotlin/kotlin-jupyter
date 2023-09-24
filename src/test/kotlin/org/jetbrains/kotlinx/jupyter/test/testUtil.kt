@@ -232,7 +232,7 @@ object NotebookMock : Notebook {
     }
 
     override val displays: DisplayContainer
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override fun getAllDisplays(): List<DisplayResultWithCell> {
         return displays.getAll()
@@ -243,18 +243,18 @@ object NotebookMock : Notebook {
     }
 
     override fun history(before: Int): CodeCell? {
-        error("Not supposed to be called")
+        notImplemented()
     }
 
     override val currentColorScheme: ColorScheme?
         get() = null
 
     override fun changeColorScheme(newScheme: ColorScheme) {
-        error("Not supposed to be called")
+        notImplemented()
     }
 
     override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult {
-        error("Not supposed to be called")
+        notImplemented()
     }
 
     override val kernelVersion: KotlinKernelVersion
@@ -263,37 +263,41 @@ object NotebookMock : Notebook {
         get() = JavaRuntime
 
     override val renderersProcessor: RenderersProcessor
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val textRenderersProcessor: TextRenderersProcessor
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val fieldsHandlersProcessor: FieldsProcessor
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val afterCellExecutionsProcessor: ExtensionsProcessor<AfterCellExecutionCallback>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val shutdownExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val codePreprocessorsProcessor: ExtensionsProcessor<CodePreprocessor>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
     override val interruptionCallbacksProcessor: ExtensionsProcessor<InterruptionCallback>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
     override val colorSchemeChangeCallbacksProcessor: ExtensionsProcessor<ColorSchemeChangedCallback>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override val libraryLoader: LibraryLoader
-        get() = error("Not supposed to be called")
+        get() = notImplemented()
 
     override fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String>): LibraryDefinition {
+        notImplemented()
+    }
+
+    private fun notImplemented(): Nothing {
         error("Not supposed to be called")
     }
 
