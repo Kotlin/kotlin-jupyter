@@ -1,3 +1,5 @@
+@file:Suppress("UNUSED_PARAMETER", "unused")
+
 package org.jetbrains.kotlinx.jupyter.test.integrations
 
 import org.jetbrains.kotlinx.jupyter.api.Notebook
