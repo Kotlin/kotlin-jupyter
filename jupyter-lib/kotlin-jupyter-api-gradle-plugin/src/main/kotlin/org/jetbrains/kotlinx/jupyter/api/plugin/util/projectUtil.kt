@@ -9,6 +9,7 @@ import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
+import java.io.File
 import java.util.Locale
 
 internal fun Project.configureDependency(scope: String, dependency: ExternalModuleDependency) {
@@ -65,4 +66,8 @@ internal fun Project.getFlag(propertyName: String, default: Boolean = false): Bo
 
 internal fun Project.propertyByFlag(flagName: String, default: Boolean = false): Property<Boolean> {
     return objects.property<Boolean>().apply { set(provider { getFlag(flagName, default) }) }
+}
+
+fun Project.getBuildDirectory(): File {
+    return layout.buildDirectory.get().asFile
 }

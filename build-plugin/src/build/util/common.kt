@@ -10,7 +10,7 @@ import org.gradle.kotlin.dsl.exclude
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import java.io.File
 import java.nio.file.Path
-import java.util.Optional
+import java.util.*
 
 val BUILD_LIBRARIES = LibraryDescriptorsManager.getInstance()
 
@@ -94,4 +94,12 @@ fun buildProperties(builderAction: MutableList<Pair<String, String>>.() -> Unit)
 
 fun isNonStableVersion(version: String): Boolean {
     return listOf("dev", "M", "alpha", "beta", "-").any { version.contains(it) }
+}
+
+fun Project.getBuildDirectory(): File {
+    return layout.buildDirectory.get().asFile
+}
+
+fun String.titleCaseFirstChar(locale: Locale = Locale.getDefault()): String {
+    return replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
 }

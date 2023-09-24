@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.JupyterApiResourcesTask
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.addMavenCentralIfDoesNotExist
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.getBuildDirectory
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class ApiGradlePlugin : Plugin<Project> {
@@ -21,7 +22,7 @@ class ApiGradlePlugin : Plugin<Project> {
         val pluginExtension = KotlinJupyterPluginExtension(target)
         extensions.add("kotlinJupyter", pluginExtension)
 
-        val jupyterBuildPath = buildDir.resolve(FQNS_PATH)
+        val jupyterBuildPath = getBuildDirectory().resolve(FQNS_PATH)
         jupyterBuildPath.mkdirs()
         if (pluginExtension.scannerDependencyEnabled) {
             pluginManager.run {

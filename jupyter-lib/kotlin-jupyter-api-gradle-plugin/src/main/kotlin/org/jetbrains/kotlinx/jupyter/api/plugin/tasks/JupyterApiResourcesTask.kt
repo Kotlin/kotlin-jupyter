@@ -6,6 +6,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.getBuildDirectory
 import java.io.File
 
 open class JupyterApiResourcesTask : DefaultTask() {
@@ -26,7 +27,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
     var libraryDefinitions: List<String> = emptyList()
 
     @OutputDirectory
-    val outputDir: File = project.buildDir.resolve("jupyterProcessedResources")
+    val outputDir: File = project.getBuildDirectory().resolve("jupyterProcessedResources")
 
     @TaskAction
     fun createDescriptions() {
@@ -43,7 +44,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
     }
 
     private fun getScanResultFromAnnotations(): LibrariesScanResult {
-        val path = project.buildDir.resolve(ApiGradlePlugin.FQNS_PATH)
+        val path = project.getBuildDirectory().resolve(ApiGradlePlugin.FQNS_PATH)
 
         fun fqns(name: String): Array<FQNAware> {
             val file = path.resolve(name)

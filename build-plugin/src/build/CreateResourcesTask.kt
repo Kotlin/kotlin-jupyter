@@ -1,6 +1,7 @@
 package build
 
 import build.util.BUILD_LIBRARIES
+import build.util.getBuildDirectory
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -21,7 +22,7 @@ abstract class CreateResourcesTask : DefaultTask() {
 
     @get:OutputDirectory
     val outputResourceDir: Property<File> = project.objects.property<File>().apply {
-        set(project.provider { project.buildDir.resolve(this@CreateResourcesTask.name + "Resources") })
+        set(project.provider { project.getBuildDirectory().resolve(this@CreateResourcesTask.name + "Resources") })
     }
 
     @TaskAction

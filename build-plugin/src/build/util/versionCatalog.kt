@@ -39,7 +39,7 @@ class NamedVersionCatalogsExtension(
     }
 }
 
-private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSION_PREFIX + name.capitalize()
+private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSION_PREFIX + name.titleCaseFirstChar()
 
 fun Project.versionCatalog(name: String): NamedVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { NamedVersionCatalogsExtension(this, name) }
 val Project.defaultVersionCatalog get(): NamedVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
