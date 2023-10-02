@@ -205,7 +205,7 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        repl.evalEx("var `Russia is a terrorist state` = true")
+        repl.evalEx("var myVar = true")
 
         displays shouldBe listOf(97, true)
     }
