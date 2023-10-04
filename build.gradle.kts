@@ -170,10 +170,18 @@ val kernelShadowedJar = tasks.registerShadowJarTasksBy(
     binaryTaskConfigurator = {
         mergeServiceFiles()
         transform(ComponentsXmlResourceTransformer())
+        manifest {
+            attributes["Implementation-Version"] = project.version
+        }
     },
 )
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
 val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
+
+val kernelZip = tasks.register("kernelZip", Zip::class) {
+    from(deploy)
+    include("*.jar")
+}
 
 changelog {
     githubUser = rootSettings.githubRepoUser
@@ -235,7 +243,7 @@ kotlinPublications {
     publication {
         publicationName.set("script-classpath-shadowed")
         description.set("Kotlin Jupyter kernel script classpath with all dependencies inside one artifact")
-        composeOfTaskOutputs(scriptClasspathShadowedJar)
+        composeOfTaskOutputs(scriptClasspathShadowedJar + kernelZip)
     }
 
     publication {
