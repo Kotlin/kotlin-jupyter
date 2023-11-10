@@ -92,8 +92,6 @@ fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<Lib
     return flatMap { it.getDefinitions(notebook) }
 }
 
-private val emptyVariablesMapping = emptyMap<String, String>()
-
 fun String.escapeSpecialChars(): String {
     return buildString {
         for (char in this@escapeSpecialChars) {

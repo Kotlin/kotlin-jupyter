@@ -19,7 +19,7 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
     fun dataframe() {
         val dfHtml = execHtml(
             """
-            %use dataframe
+            %use dataframe()
             
             val name by column<String>()
             val height by column<Int>()

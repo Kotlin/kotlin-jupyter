@@ -9,7 +9,8 @@ import java.net.URL
 fun parseReferenceWithArgs(str: String): Pair<LibraryReference, List<Variable>> {
     val (fullName, vars) = parseLibraryName(str)
     val reference = parseLibraryReference(fullName)
-    return reference to vars
+    val processedVars = vars.filter { it.name.isNotBlank() || it.value.isNotBlank() }
+    return reference to processedVars
 }
 
 private fun parseResolutionInfo(string: String): LibraryResolutionInfo {
