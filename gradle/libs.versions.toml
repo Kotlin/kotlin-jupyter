@@ -2,7 +2,7 @@
 jvmTarget = "1.8"
 
 kotlin = "1.9.0"
-kotlinMavenResolver = "1.9.30-dev-3705"
+kotlinMavenResolver = "2.0.0-Beta1"
 stableKotlin = "1.9.0"
 gradleKotlin = "1.9.0"
 ksp = "1.9.0-1.0.12"
