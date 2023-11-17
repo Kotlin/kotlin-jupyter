@@ -299,6 +299,18 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun testGGDslSourcesResolution() {
+        eval("SessionOptions.resolveSources = true")
+        val res = eval(
+            """
+                %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
+            """.trimIndent(),
+        )
+
+        res.metadata.newSources.shouldHaveSize(84)
+    }
+
+    @Test
     fun `some options could be ignored`() {
         eval("%use ___test@experimental(0.1)")
 

@@ -74,18 +74,6 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testGGDslSourcesResolution() {
-        eval("SessionOptions.resolveSources = true")
-        val res = eval(
-            """
-                %use kandy(0.4.0-dev-16)
-            """.trimIndent(),
-        )
-
-        res.metadata.newSources.shouldHaveSize(84)
-    }
-
-    @Test
     fun testSerialization() {
         val serialized = eval(
             """
