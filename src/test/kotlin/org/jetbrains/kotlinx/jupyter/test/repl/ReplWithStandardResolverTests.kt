@@ -147,7 +147,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         res.shouldBeInstanceOf<List<LibraryResolutionRequest>>()
         res.shouldHaveSize(3)
 
-        val expectedLibs = listOf("default", "dataframe", "lets-plot-dataframe")
+        val expectedLibs = listOf("default", "dataframe", "kandy")
         for (i in res.indices) {
             res[i].reference.name shouldBe expectedLibs[i]
             res[i].definition.originalDescriptorText.shouldNotBeBlank()
