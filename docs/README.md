@@ -368,7 +368,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
  - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
- - default - Default imports: dataframe and Lets-Plot libraries
+ - default - Default imports: dataframe and Kandy libraries
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - A library to use the Gradle Enterprise API in Kotlin scripts or projects
@@ -388,7 +388,6 @@ Other options are resolving library descriptor from a local file or from remote 
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
- - [lets-plot-dataframe](https://github.com/JetBrains/lets-plot-kotlin) - A bridge between Lets-Plot and dataframe libraries
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
  - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
