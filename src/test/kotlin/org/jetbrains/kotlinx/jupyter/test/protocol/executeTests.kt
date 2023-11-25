@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.providers.UserHandlesProvider
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -41,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -310,7 +310,7 @@ class ExecuteTests : KernelServerTestsBase() {
             executeReplyChecker = { message ->
                 val metadata = message.data.metadata
                 assertTrue(metadata is JsonObject)
-                val snippetMetadata = Json.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
+                val snippetMetadata = MessageFormat.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
                     metadata["eval_metadata"] ?: JsonNull,
                 )
                 val compiledData = snippetMetadata?.compiledData
@@ -515,7 +515,7 @@ class ExecuteTests : KernelServerTestsBase() {
         iopub.wrapActionInBusyIdleStatusChange {
             iopub.receiveMessage().apply {
                 val c = content.shouldBeTypeOf<CommMsg>()
-                val data = Json.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
+                val data = MessageFormat.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
                 c.commId shouldBe commId
                 data.port shouldBe actualDebugPort
                 data.status shouldBe MessageStatus.OK

@@ -1,3 +1,4 @@
+@file:Suppress("UNUSED")
 @file:UseSerializers(ScriptDiagnosticSerializer::class)
 
 package org.jetbrains.kotlinx.jupyter.messaging
@@ -148,7 +149,7 @@ object MessageTypeSerializer : KSerializer<MessageType> {
 
     private fun getMessageType(type: String): MessageType {
         return cache.computeIfAbsent(type) { newType ->
-            MessageType.values().firstOrNull { it.type == newType }
+            MessageType.entries.firstOrNull { it.type == newType }
                 ?: throw SerializationException("Unknown message type: $newType")
         }
     }
@@ -173,7 +174,7 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
 
     private fun getDetailsLevel(type: Int): DetailLevel {
         return cache.computeIfAbsent(type) { newLevel ->
-            DetailLevel.values().firstOrNull { it.level == newLevel }
+            DetailLevel.entries.firstOrNull { it.level == newLevel }
                 ?: throw SerializationException("Unknown details level: $newLevel")
         }
     }
@@ -233,6 +234,9 @@ data class ExecuteRequest(
 
     @SerialName("user_expressions")
     val userExpressions: Map<String, String> = mapOf(),
+
+    @SerialName("user_variables")
+    val userVariables: List<String> = listOf(),
 
     @SerialName("allow_stdin")
     val allowStdin: Boolean = true,
@@ -416,6 +420,7 @@ class InputReply(
 class HistoryRequest(
     val output: Boolean,
     val raw: Boolean,
+    @Suppress("PropertyName")
     val hist_access_type: String,
 
     // If hist_access_type is 'range'
@@ -536,7 +541,7 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
 
 object MessageDataSerializer : KSerializer<MessageData> {
     @InternalSerializationApi
-    private val contentSerializers = MessageType.values().associate { it.type to it.contentClass.serializer() }
+    private val contentSerializers = MessageType.entries.associate { it.type to it.contentClass.serializer() }
 
     override val descriptor: SerialDescriptor = serializer<JsonObject>().descriptor
 
