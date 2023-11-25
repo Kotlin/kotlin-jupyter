@@ -4,6 +4,7 @@ import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.Repository
+import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.generateHTMLVarsReport
 import jupyter.kotlin.providers.UserHandlesProvider
 import jupyter.kotlin.variablesReport
@@ -38,6 +39,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
 import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolver
@@ -299,7 +301,8 @@ class ReplForJupyterImpl(
             scriptClasspath,
             scriptReceivers,
             compilerArgsConfigurator,
-            scriptDataCollectors = listOf(importsCollector, declarationsCollector)
+            scriptDataCollectors = listOf(importsCollector, declarationsCollector),
+            body = { addBaseClass<ScriptTemplateWithDisplayHelpers>() }
         ).with {
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)

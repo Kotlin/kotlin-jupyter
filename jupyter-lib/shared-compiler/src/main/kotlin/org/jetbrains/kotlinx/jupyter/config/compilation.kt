@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
-import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
@@ -56,14 +55,12 @@ fun getCompilationConfiguration(
                 getScriptingClass(scriptingClassGetter)
             }
         }
-        baseClass.put(KotlinType(ScriptTemplateWithDisplayHelpers::class))
         fileExtension.put("jupyter.kts")
 
         val classImports = listOf(
             DependsOn::class,
             Repository::class,
             CompilerArgs::class,
-            ScriptTemplateWithDisplayHelpers::class,
         ).map { it.java.name }
         defaultImports(classImports + defaultGlobalImports)
 
@@ -95,4 +92,10 @@ fun getCompilationConfiguration(
 
         body()
     }
+}
+
+inline fun <reified T> ScriptCompilationConfiguration.Builder.addBaseClass() {
+    val kClass = T::class
+    defaultImports.append(kClass.java.name)
+    baseClass.put(KotlinType(kClass))
 }
