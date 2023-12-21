@@ -132,10 +132,6 @@ class SocketWrapper(
         )
     }
 
-    private fun assertNotCancelled() {
-        if (isCancelled()) throw InterruptedException()
-    }
-
     override fun close() {
         callbacks.clear()
         super.close()

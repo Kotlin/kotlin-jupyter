@@ -26,6 +26,7 @@ class JupyterSymbolProcessor(
     private val annotationSimpleName = JupyterLibrary::class.simpleName!!
 
     private val fileLock = ReentrantLock()
+    private val resolveLock = ReentrantLock()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         generatedFilesPath.deleteRecursively()
@@ -69,7 +70,10 @@ class JupyterSymbolProcessor(
     }
 
     private fun hasLibraryAnnotation(clazz: KSClassDeclaration): Boolean {
-        return clazz.annotations.any { it.annotationType.resolve().declaration.qualifiedName?.asString() == annotationFqn }
+        return clazz.annotations.any {
+            val type = resolveLock.withLock { it.annotationType.resolve() }
+            type.declaration.qualifiedName?.asString() == annotationFqn
+        }
     }
 
     private fun <T> Sequence<T>.asParallelStream(): Stream<T> {

@@ -88,7 +88,7 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun downloadGlobalDescriptorOptions(ref: String): String? {
-        val url = "$apiPrefix/contents/$remotePath/$OPTIONS_FILE?ref=$ref"
+        val url = resolveAgainstRemotePath(OPTIONS_FILE, ref)
         logger.info("Requesting global descriptor options at $url")
         return try {
             downloadSingleFile(url)
@@ -99,14 +99,31 @@ class LibraryDescriptorsManager private constructor(
     }
 
     fun downloadLibraryDescriptor(ref: String, name: String): String {
-        val url = "$apiPrefix/contents/$remotePath/$name.$DESCRIPTOR_EXTENSION?ref=$ref"
+        val url = resolveAgainstRemotePath("$name.$DESCRIPTOR_EXTENSION", ref)
         logger.info("Requesting library descriptor at $url")
         return downloadSingleFile(url)
     }
 
     fun checkRefExistence(ref: String): Boolean {
-        val response = getGithubHttpWithAuth("$apiPrefix/contents/$remotePath?ref=$ref")
+        val response = getGithubHttpWithAuth(resolveAgainstRemotePath("", ref))
         return response.status.successful
+    }
+
+    private fun resolveAgainstRemotePath(filePath: String, ref: String): String {
+        return buildString {
+            append(apiPrefix)
+            append("/contents")
+            if (remotePath.isNotEmpty()) {
+                append("/")
+                append(remotePath)
+            }
+            if (filePath.isNotEmpty()) {
+                append("/")
+                append(filePath)
+            }
+            append("?ref=")
+            append(ref)
+        }
     }
 
     fun checkIfRefUpToDate(remoteRef: String?): Boolean {
@@ -122,7 +139,7 @@ class LibraryDescriptorsManager private constructor(
     fun downloadLibraries(ref: String) {
         localLibrariesDir.mkdirs()
 
-        val url = "$apiPrefix/contents/$remotePath?ref=$ref"
+        val url = resolveAgainstRemotePath("", ref)
         logger.info("Requesting library descriptors at $url")
         val response = getGithubHttpWithAuth(url).jsonArray
 

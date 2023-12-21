@@ -27,6 +27,8 @@ import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
 import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.SourceCode
@@ -431,6 +433,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    @DisabledOnOs(OS.MAC)
     fun testNativeLibrary() {
         val libName = "GraphMolWrap"
         val testDataPath = "src/test/testData/nativeTest"

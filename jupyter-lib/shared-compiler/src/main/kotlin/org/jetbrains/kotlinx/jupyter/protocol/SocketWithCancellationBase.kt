@@ -9,15 +9,27 @@ abstract class SocketWithCancellationBase(
 ) : SocketWithCancellation {
     private val cancellationToken: ZMQ.CancellationToken = socket.createCancellationToken()
 
-    override fun recv() = socket.recv(0, cancellationToken) ?: throw ZMQException(
-        "Unable to receive message",
-        socket.errno(),
-    )
+    override fun recv(): ByteArray {
+        assertNotCancelled()
+        return socket.recv(0, cancellationToken) ?: throw ZMQException(
+            "Unable to receive message",
+            socket.errno(),
+        )
+    }
     override fun recvString() = String(recv(), ZMQ.CHARSET)
 
-    override fun sendMore(data: String) = socket.sendMore(data)
-    override fun sendMore(data: ByteArray) = socket.sendMore(data)
-    override fun send(data: ByteArray) = socket.send(data, 0, cancellationToken)
+    override fun sendMore(data: String): Boolean {
+        assertNotCancelled()
+        return socket.sendMore(data)
+    }
+    override fun sendMore(data: ByteArray): Boolean {
+        assertNotCancelled()
+        return socket.sendMore(data)
+    }
+    override fun send(data: ByteArray): Boolean {
+        assertNotCancelled()
+        return socket.send(data, 0, cancellationToken)
+    }
     override fun send(data: String): Boolean = send(data.toByteArray(ZMQ.CHARSET))
 
     override fun makeRelaxed() {
@@ -43,7 +55,11 @@ abstract class SocketWithCancellationBase(
         return socket.connect(address)
     }
 
-    protected fun isCancelled() = cancellationToken.isCancellationRequested
+    protected fun assertNotCancelled() {
+        if (isCancelled()) throw InterruptedException()
+    }
+
+    private fun isCancelled() = cancellationToken.isCancellationRequested
 
     override fun close() {
         cancellationToken.cancel()

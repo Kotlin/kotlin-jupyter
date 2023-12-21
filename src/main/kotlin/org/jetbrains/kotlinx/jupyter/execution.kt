@@ -17,7 +17,7 @@ sealed interface ExecutionResult<out T> {
 }
 
 interface JupyterExecutor {
-    fun <T> runExecution(name: String, classLoader: ClassLoader? = null, body: () -> T): ExecutionResult<T>
+    fun <T : Any> runExecution(name: String, classLoader: ClassLoader? = null, body: () -> T): ExecutionResult<T>
     fun interruptExecutions()
 
     fun launchJob(runnable: suspend CoroutineScope.() -> Unit)
@@ -27,7 +27,7 @@ class JupyterExecutorImpl : JupyterExecutor {
     private val currentExecutions: MutableSet<Thread> = Collections.newSetFromMap(ConcurrentHashMap())
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    override fun <T> runExecution(name: String, classLoader: ClassLoader?, body: () -> T): ExecutionResult<T> {
+    override fun <T : Any> runExecution(name: String, classLoader: ClassLoader?, body: () -> T): ExecutionResult<T> {
         var execRes: T? = null
         var execException: Throwable? = null
         val execThread = thread(

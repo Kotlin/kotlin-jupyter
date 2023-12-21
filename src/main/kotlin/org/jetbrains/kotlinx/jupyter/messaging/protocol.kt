@@ -340,6 +340,7 @@ fun JupyterConnectionInternal.shellMessagesHandler(
         is CommOpen -> {
             executor.runExecution("Execution of comm_open request for ${content.commId} of target ${content.targetName}") {
                 commManager.processCommOpen(incomingMessage, content)
+                    ?: throw ReplException("Cannot open comm for ${content.commId} of target ${content.targetName}")
             }
         }
         is CommClose -> {
@@ -468,7 +469,7 @@ fun JupyterConnectionInternal.evalWithIO(
     repl: ReplForJupyter,
     incomingMessage: RawMessage,
     allowStdIn: Boolean,
-    body: () -> EvalResultEx?,
+    body: () -> EvalResultEx,
 ): Response {
     val config = repl.outputConfig
     val out = System.out
@@ -517,14 +518,10 @@ fun JupyterConnectionInternal.evalWithIO(
             )
         ) {
             is ExecutionResult.Success -> {
-                if (res.result == null) {
-                    AbortResponseWithMessage("NO REPL!")
-                } else {
-                    try {
-                        rawToResponse(res.result.displayValue, res.result.metadata)
-                    } catch (e: Exception) {
-                        AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
-                    }
+                try {
+                    rawToResponse(res.result.displayValue, res.result.metadata)
+                } catch (e: Exception) {
+                    AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
                 }
             }
             is ExecutionResult.Failure -> {
