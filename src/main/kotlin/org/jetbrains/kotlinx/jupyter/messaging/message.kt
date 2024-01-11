@@ -12,12 +12,12 @@ import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.data
 import org.jetbrains.kotlinx.jupyter.protocolVersion
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-private val ISO8601DateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ")
-internal val ISO8601DateNow: String get() = ISO8601DateFormatter.format(Date())
+private val ISO8601DateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSxxx'['VV']'")
+internal val ISO8601DateNow: String get() = ZonedDateTime.now().format(ISO8601DateFormatter)
 
 fun RawMessage.toMessage(): Message {
     return Message(id, MessageFormat.decodeFromJsonElement(data))
