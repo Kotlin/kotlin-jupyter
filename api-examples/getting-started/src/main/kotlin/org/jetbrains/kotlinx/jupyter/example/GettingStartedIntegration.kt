@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.example
 
-import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByClass
+import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByRuntimeClass
 import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 
@@ -37,7 +37,7 @@ class GettingStartedIntegration : JupyterIntegration() {
          * Creates new variable for each person with name equivalent to the person's name
          */
         addTypeConverter(
-            FieldHandlerByClass(Person::class) { host, person, kProperty ->
+            FieldHandlerByRuntimeClass(Person::class) { host, person, kProperty ->
                 person as Person
                 if (person.name != kProperty.name) host.execute("val `${person.name}` = ${kProperty.name}")
             },
