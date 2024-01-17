@@ -1,6 +1,5 @@
 @file:Suppress("UNUSED")
 @file:UseSerializers(ScriptDiagnosticSerializer::class)
-
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.InternalSerializationApi
@@ -25,11 +24,11 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.protocol.messageDataJson
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
@@ -529,9 +528,21 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
                 if (loc != null) {
                     val start = loc.start
                     val end = loc.end
-                    put("start", jsonObject("line" to start.line, "col" to start.col))
+                    put(
+                        "start",
+                        buildJsonObject {
+                            put("line", JsonPrimitive(start.line))
+                            put("col", JsonPrimitive(start.col))
+                        },
+                    )
                     if (end != null) {
-                        put("end", jsonObject("line" to end.line, "col" to end.col))
+                        put(
+                            "end",
+                            buildJsonObject {
+                                put("line", JsonPrimitive(end.line))
+                                put("col", JsonPrimitive(end.col))
+                            },
+                        )
                     }
                 }
             },

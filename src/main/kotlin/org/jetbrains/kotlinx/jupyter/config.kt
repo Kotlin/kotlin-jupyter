@@ -12,8 +12,6 @@ import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
-const val protocolVersion = "5.3"
-
 internal val log by lazy { getLogger() }
 
 val defaultRepositoriesCoordinates = defaultRepositories.map { RepositoryCoordinates(it.path) }

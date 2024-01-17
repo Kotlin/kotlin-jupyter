@@ -32,7 +32,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.presentableForThreadName
-import org.jetbrains.kotlinx.jupyter.protocolVersion
+import org.jetbrains.kotlinx.jupyter.protocol.protocolVersion
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.rawToResponse
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
