@@ -33,7 +33,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
@@ -53,7 +52,7 @@ import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
-import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
+import org.jetbrains.kotlinx.jupyter.repl.creating.MockCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import java.io.File
 import kotlin.reflect.KClass
@@ -304,11 +303,8 @@ object NotebookMock : Notebook {
     override val jupyterClientType: JupyterClientType
         get() = JupyterClientType.UNKNOWN
 
-    override val connection: JupyterConnection
-        get() = MockJupyterConnection
-
     override val commManager: CommManager
-        get() = CommManagerImpl(MockJupyterConnection)
+        get() = CommManagerImpl(MockCommunicationFacility)
 }
 
 fun library(builder: JupyterIntegration.Builder.() -> Unit) = createLibrary(NotebookMock, builder)

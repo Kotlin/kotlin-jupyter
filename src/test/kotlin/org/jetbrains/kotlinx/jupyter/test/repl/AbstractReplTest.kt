@@ -15,7 +15,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.creating.BaseReplFactory
-import org.jetbrains.kotlinx.jupyter.repl.creating.MockJupyterConnection
+import org.jetbrains.kotlinx.jupyter.repl.creating.MockCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
@@ -77,7 +77,7 @@ abstract class AbstractReplTest {
             override fun provideScriptReceivers() = emptyList<Any>()
             override fun provideIsEmbedded() = false
             override fun provideDisplayHandler() = displayHandlerProvider(notebook)
-            override fun provideConnection() = MockJupyterConnection
+            override fun provideCommunicationFacility() = MockCommunicationFacility
             override fun provideDebugPort(): Int? = null
         }
         return factory.createRepl()

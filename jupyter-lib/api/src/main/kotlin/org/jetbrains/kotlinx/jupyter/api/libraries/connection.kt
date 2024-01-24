@@ -7,8 +7,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import java.util.Locale
+import java.util.*
 
 /**
  * Jupyter connection socket types
@@ -45,6 +46,9 @@ val RawMessage.type: String?
         if (type !is JsonPrimitive || !type.isString) return null
         return type.content
     }
+
+val RawMessage.sessionId: String? get() = header["session"]?.jsonPrimitive?.content
+val RawMessage.username: String? get() = header["username"]?.jsonPrimitive?.content
 
 typealias CommOpenCallback = (Comm, JsonObject) -> Unit
 typealias CommMsgCallback = (JsonObject) -> Unit

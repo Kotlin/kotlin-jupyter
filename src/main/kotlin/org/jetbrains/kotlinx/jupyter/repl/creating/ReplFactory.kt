@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
@@ -79,8 +79,8 @@ abstract class ReplFactory {
     protected val librariesScanner: LibrariesScanner by lazy { provideLibrariesScanner() }
     protected abstract fun provideLibrariesScanner(): LibrariesScanner
 
-    protected val connection: JupyterConnectionInternal by lazy { provideConnection() }
-    protected abstract fun provideConnection(): JupyterConnectionInternal
+    protected val communicationFacility: JupyterCommunicationFacility by lazy { provideCommunicationFacility() }
+    protected abstract fun provideCommunicationFacility(): JupyterCommunicationFacility
 
     protected val commManager: CommManager by lazy { provideCommManager() }
     protected abstract fun provideCommManager(): CommManager

@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CommCloseCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommMsgCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommOpenCallback
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -17,7 +17,7 @@ interface CommManagerInternal : CommManager {
     fun processCommClose(message: Message, content: CommClose)
 }
 
-class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommManagerInternal {
+class CommManagerImpl(private val connection: JupyterCommunicationFacility) : CommManagerInternal {
     private val commOpenCallbacks = ConcurrentHashMap<String, CommOpenCallback>()
     private val commTargetToIds = ConcurrentHashMap<String, CopyOnWriteArrayList<String>>()
     private val commIdToComm = ConcurrentHashMap<String, CommImpl>()
@@ -98,7 +98,7 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
     }
 
     override fun processCommMessage(message: Message, content: CommMsg) {
-        commIdToComm[content.commId]?.messageReceived(message, content.data)
+        commIdToComm[content.commId]?.messageReceived(content.data)
     }
 
     override fun registerCommTarget(target: String, callback: (Comm, JsonObject) -> Unit) {
@@ -168,10 +168,10 @@ class CommManagerImpl(private val connection: JupyterConnectionInternal) : CommM
             }
         }
 
-        fun messageReceived(message: Message, data: JsonObject) {
+        fun messageReceived(data: JsonObject) {
             if (closed) return
 
-            connection.doWrappedInBusyIdle(message.toRawMessage()) {
+            connection.doWrappedInBusyIdle {
                 for (callback in onMessageCallbacks) {
                     callback(data)
                 }

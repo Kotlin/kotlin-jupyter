@@ -2,11 +2,12 @@ package org.jetbrains.kotlinx.jupyter
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
-import java.lang.UnsupportedOperationException
-import java.util.Collections
+import java.io.Closeable
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
@@ -23,7 +24,7 @@ interface JupyterExecutor {
     fun launchJob(runnable: suspend CoroutineScope.() -> Unit)
 }
 
-class JupyterExecutorImpl : JupyterExecutor {
+class JupyterExecutorImpl : JupyterExecutor, Closeable {
     private val currentExecutions: MutableSet<Thread> = Collections.newSetFromMap(ConcurrentHashMap())
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -87,6 +88,11 @@ class JupyterExecutorImpl : JupyterExecutor {
 
     override fun launchJob(runnable: suspend CoroutineScope.() -> Unit) {
         coroutineScope.launch(block = runnable)
+    }
+
+    override fun close() {
+        interruptExecutions()
+        coroutineScope.cancel("Jupyter executor was shut down")
     }
 
     companion object {

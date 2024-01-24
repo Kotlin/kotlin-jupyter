@@ -23,7 +23,6 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
     override fun provideNotebook(): MutableNotebook = NotebookImpl(
         runtimeProperties,
-        connection,
         commManager,
         explicitClientType,
         librariesScanner,
@@ -37,7 +36,7 @@ abstract class BaseReplFactory : ReplFactory() {
     override fun provideScriptReceivers() = emptyList<Any>()
     override fun provideIsEmbedded() = false
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner()
-    override fun provideCommManager(): CommManager = CommManagerImpl(connection)
+    override fun provideCommManager(): CommManager = CommManagerImpl(communicationFacility)
     override fun provideCommHandlers(): List<CommHandler> = listOf(
         DebugPortCommHandler(),
     )

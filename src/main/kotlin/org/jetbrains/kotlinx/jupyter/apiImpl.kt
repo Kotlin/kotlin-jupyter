@@ -23,7 +23,6 @@ import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
@@ -183,7 +182,6 @@ class EvalData(
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
-    override val connection: JupyterConnection,
     override val commManager: CommManager,
     private val explicitClientType: JupyterClientType?,
     override val libraryLoader: LibraryLoader,

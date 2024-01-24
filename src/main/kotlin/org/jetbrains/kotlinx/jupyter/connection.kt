@@ -7,14 +7,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactory
-import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryImpl
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.makeReplyMessage
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
-import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.AbstractJupyterConnection
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.openServerSocket
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.Closeable
@@ -23,7 +21,7 @@ import java.io.InputStream
 import kotlin.math.min
 
 class StdinInputStream(
-    private val stdinSocket: JupyterSocket,
+    private val stdinSocket: JupyterSocketBase,
     private val messageFactory: MessageFactory,
 ) : InputStream() {
     private var currentBuf: ByteArray? = null
@@ -31,7 +29,7 @@ class StdinInputStream(
 
     private fun getInput(): String {
         stdinSocket.sendMessage(
-            messageFactory.makeReplyMessage(MessageType.INPUT_REQUEST, InputRequest("stdin:")),
+            messageFactory.makeReplyMessage(MessageType.INPUT_REQUEST, content = InputRequest("stdin:")),
         )
         val msg = stdinSocket.receiveMessage()
         val content = msg?.data?.content as? InputReply
@@ -80,10 +78,8 @@ class StdinInputStream(
 }
 
 class JupyterConnectionImpl(
-    override val config: KernelConfig,
+    private val config: KernelConfig,
 ) : AbstractJupyterConnection(), JupyterConnectionInternal, Closeable {
-
-    override val messageFactory: MessageFactory = MessageFactoryImpl()
 
     override val socketManager: JupyterSocketManager = JupyterSocketManagerImpl { socketInfo, context ->
         openServerSocket(
@@ -93,22 +89,14 @@ class JupyterConnectionImpl(
         )
     }
 
-    override val stdinIn = StdinInputStream(socketManager.stdin, messageFactory)
-
-    override val executor: JupyterExecutor = JupyterExecutorImpl()
-
     override fun close() {
         socketManager.close()
     }
 }
 
-fun JupyterSocket.receiveMessage(): Message? {
+fun JupyterSocketBase.receiveMessage(): Message? {
     val rawMessage = receiveRawMessage()
     return rawMessage?.toMessage()
-}
-
-fun JupyterSocket.sendMessage(msg: Message) {
-    sendRawMessage(msg.toRawMessage())
 }
 
 object DisabledStdinInputStream : InputStream() {

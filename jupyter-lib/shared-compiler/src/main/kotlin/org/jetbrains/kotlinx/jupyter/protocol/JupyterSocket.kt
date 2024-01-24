@@ -15,15 +15,18 @@ interface SocketWithCancellation : Closeable {
     fun subscribe(topic: ByteArray): Boolean
 }
 
-interface JupyterSocket : SocketWithCancellation {
+interface JupyterSocketBase {
+    fun sendRawMessage(msg: RawMessage)
+    fun receiveRawMessage(): RawMessage?
+}
+
+interface JupyterSocket : SocketWithCancellation, JupyterSocketBase {
     // Used on server side
     fun bind(): Boolean
 
     // Used on client side
     fun connect(): Boolean
 
-    fun sendRawMessage(msg: RawMessage)
-    fun receiveRawMessage(): RawMessage?
     fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback
     fun removeCallback(callback: SocketRawMessageCallback)
     fun onData(body: JupyterSocket.(ByteArray) -> Unit): Unit?

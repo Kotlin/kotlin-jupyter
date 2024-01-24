@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import java.io.File
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
@@ -22,7 +22,7 @@ fun createRepl(
     scriptReceivers: List<Any> = emptyList(),
     isEmbedded: Boolean = false,
     displayHandler: DisplayHandler = NoOpDisplayHandler,
-    connection: JupyterConnectionInternal = MockJupyterConnection,
+    communicationFacility: JupyterCommunicationFacility = MockCommunicationFacility,
     debugPort: Int? = null,
 ): ReplForJupyter {
     val factory = object : BaseReplFactory() {
@@ -35,7 +35,7 @@ fun createRepl(
         override fun provideScriptReceivers() = scriptReceivers
         override fun provideIsEmbedded() = isEmbedded
         override fun provideDisplayHandler() = displayHandler
-        override fun provideConnection() = connection
+        override fun provideCommunicationFacility(): JupyterCommunicationFacility = communicationFacility
         override fun provideDebugPort(): Int? = debugPort
     }
     return factory.createRepl()

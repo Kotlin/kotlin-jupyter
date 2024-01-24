@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import kotlinx.serialization.json.JsonElement
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 
 interface MessageFactory {
@@ -10,6 +11,15 @@ interface MessageFactory {
 
     fun updateSessionInfo(message: RawMessage)
     fun updateContextMessage(contextMessage: RawMessage?)
+
+    fun makeReplyMessageOrNull(
+        msgType: MessageType? = null,
+        sessionId: String? = null,
+        header: MessageHeader? = null,
+        parentHeader: MessageHeader? = null,
+        metadata: JsonElement? = null,
+        content: MessageContent? = null,
+    ): Message?
 }
 
 fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader {
@@ -26,6 +36,20 @@ fun MessageFactory.makeSimpleMessage(msgType: MessageType, content: MessageConte
     )
 }
 
-fun MessageFactory.makeReplyMessage(msgType: MessageType, content: MessageContent): Message {
-    return makeReplyMessage(contextMessage!!, msgType, content = content)
+fun MessageFactory.makeReplyMessage(
+    msgType: MessageType? = null,
+    sessionId: String? = null,
+    header: MessageHeader? = null,
+    parentHeader: MessageHeader? = null,
+    metadata: JsonElement? = null,
+    content: MessageContent? = null,
+): Message {
+    return makeReplyMessageOrNull(
+        msgType,
+        sessionId,
+        header,
+        parentHeader,
+        metadata,
+        content,
+    ) ?: error("Context message is needed for reply")
 }

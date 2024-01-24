@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 
@@ -29,5 +30,26 @@ class MessageFactoryImpl : MessageFactory {
 
     override fun updateContextMessage(contextMessage: RawMessage?) {
         _contextMessage = contextMessage
+    }
+
+    override fun makeReplyMessageOrNull(
+        msgType: MessageType?,
+        sessionId: String?,
+        header: MessageHeader?,
+        parentHeader: MessageHeader?,
+        metadata: JsonElement?,
+        content: MessageContent?,
+    ): Message? {
+        val myContextMessage = contextMessage ?: return null
+
+        return makeReplyMessage(
+            myContextMessage,
+            msgType,
+            sessionId,
+            header,
+            parentHeader,
+            metadata,
+            content,
+        )
     }
 }

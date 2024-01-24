@@ -9,13 +9,14 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
+import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createSocket
-import org.jetbrains.kotlinx.jupyter.sendMessage
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
@@ -60,7 +61,7 @@ abstract class KernelServerTestsBase {
 
     fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
 
-    fun JupyterSocket.sendMessage(msgType: MessageType, content: MessageContent?) {
+    fun JupyterSocketBase.sendMessage(msgType: MessageType, content: MessageContent?) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 

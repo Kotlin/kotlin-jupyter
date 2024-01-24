@@ -43,7 +43,7 @@ fun reportCommandErrors(code: String): ListErrorsResult {
 fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
     assertLooksLikeReplCommand(code)
     val prefix = code.substring(1, cursor)
-    val suitableCommands = ReplCommand.values().filter { it.nameForUser.startsWith(prefix) }
+    val suitableCommands = ReplCommand.entries.filter { it.nameForUser.startsWith(prefix) }
     val completions = suitableCommands.map {
         SourceCodeCompletionVariant(it.nameForUser, it.nameForUser, "command", "command")
     }
@@ -63,8 +63,8 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
             OkResponseWithMessage(repl.notebook.variablesReportAsHTML)
         }
         ReplCommand.HELP -> {
-            val commands = ReplCommand.values().asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }
-            val magics = ReplLineMagic.values().asIterable().filter { it.visibleInHelp }.joinToStringIndented {
+            val commands = ReplCommand.entries.asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }
+            val magics = ReplLineMagic.entries.asIterable().filter { it.visibleInHelp }.joinToStringIndented {
                 var s = "%${it.nameForUser} - ${it.desc}"
                 if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
                 s
