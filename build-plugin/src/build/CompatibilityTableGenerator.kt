@@ -5,14 +5,13 @@ import build.util.TeamcityProject
 import kotlinx.serialization.json.*
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.http4k.core.Method
-import org.http4k.core.Request
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import java.io.File
 import kotlin.math.max
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
-import org.jetbrains.kotlinx.jupyter.common.text
+import org.jetbrains.kotlinx.jupyter.common.Request
+import org.jetbrains.kotlinx.jupyter.common.successful
 import java.util.TreeMap
 
 class CompatibilityTableGenerator(
@@ -78,7 +77,7 @@ class CompatibilityTableGenerator(
         val newVersions = TreeMap<KotlinKernelVersion, List<String>>().apply {
             val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/status:success,buildType:(id:${kernelTeamcity.projectId})"
             val allBuildsResponse = httpRequest(
-                    Request(Method.GET, allBuildsUrl)
+                    Request("GET", allBuildsUrl)
                             .header("Accept", "application/json")
             )
             val allBuildsJson = allBuildsResponse.jsonObject
@@ -89,7 +88,7 @@ class CompatibilityTableGenerator(
             for (buildId in buildIds) {
                 val artifactUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/id:${buildId}/artifacts/content/teamcity-artifacts/${settings.versionsCompatFileName}"
                 val artifactResponse = httpRequest(
-                        Request(Method.GET, artifactUrl)
+                        Request("GET", artifactUrl)
                 )
                 if(artifactResponse.status.successful) {
                     val verMap = artifactResponse.text

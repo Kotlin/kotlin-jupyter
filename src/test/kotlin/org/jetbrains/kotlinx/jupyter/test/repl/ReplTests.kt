@@ -16,13 +16,13 @@ import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import org.jetbrains.kotlinx.jupyter.OutputConfig
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test

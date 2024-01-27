@@ -10,8 +10,7 @@ repositories {
 dependencies {
     implementation(libs.kotlin.gradle.stdlib)
 
-    // HTTP4K for resolving remote library dependencies
-    api(libs.bundles.http4k)
+    api(libs.logging.slf4j.api)
 
     // Serialization implementation for kernel code
     api(libs.serialization.json)
@@ -35,7 +34,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         apiVersion = "1.4"
         languageVersion = "1.4"
 
-        @Suppress("SuspiciousCollectionReassignment")
         freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
 
         this.jvmTarget = myJvmTarget

@@ -17,7 +17,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
-import org.jetbrains.kotlinx.jupyter.repl.workflow.EvaluatorWorkflowListener
+import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType

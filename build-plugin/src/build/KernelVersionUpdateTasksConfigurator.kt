@@ -6,10 +6,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.gradle.api.Project
-import org.http4k.core.Method
-import org.http4k.core.Request
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
+import org.jetbrains.kotlinx.jupyter.common.Request
 
 class KernelVersionUpdateTasksConfigurator(
     private val project: Project,
@@ -22,7 +21,7 @@ class KernelVersionUpdateTasksConfigurator(
                 val locator = "buildType:(id:${teamcityProject.projectId}),status:SUCCESS,branch:default:any,count:1"
 
                 val response = httpRequest(
-                    Request(Method.GET, "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator")
+                    Request("GET", "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator")
                         .header("accept", "application/json")
                 )
                 val builds = response.jsonObject["build"] as JsonArray

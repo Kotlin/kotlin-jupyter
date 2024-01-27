@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
 import org.jetbrains.kotlinx.jupyter.common.getHttp
-import org.jetbrains.kotlinx.jupyter.common.text
+import org.jetbrains.kotlinx.jupyter.common.successful
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider

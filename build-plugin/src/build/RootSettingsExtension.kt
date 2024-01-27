@@ -132,8 +132,6 @@ class RootSettingsExtension(
 
     val debuggerPort = project.stringPropOrEmpty("debugPort")
 
-    val runtimePropertiesFile = "runtime.properties"
-
     private val distribUtilsDir: File = project.file("distrib-util")
     val distribUtilRequirementsFile: File = distribUtilsDir.resolve("requirements-common.txt")
     val distribUtilRequirementsHintsRemoverFile: File = distribUtilsDir.resolve("requirements-hints-remover.txt")

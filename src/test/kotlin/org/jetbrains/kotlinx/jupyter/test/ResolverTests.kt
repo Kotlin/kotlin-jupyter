@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
+import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.test.assertTrue
 
@@ -14,7 +15,7 @@ class ResolverTests {
     private val log: Logger by lazy { LoggerFactory.getLogger("resolver") }
 
     private fun ExternalDependenciesResolver.doResolve(artifact: String): List<File> {
-        testRepositories.forEach { addRepository(it, ExternalDependenciesResolver.Options.Empty, sourceCodeLocation = null) }
+        testRepositories.forEach { addRepository(RepositoryCoordinates(it.coordinates), ExternalDependenciesResolver.Options.Empty, sourceCodeLocation = null) }
         assertTrue(acceptsArtifact(artifact))
         val result = runBlocking { resolve(artifact, ExternalDependenciesResolver.Options.Empty, sourceCodeLocation = null) }
         assertTrue(result is ResultWithDiagnostics.Success)

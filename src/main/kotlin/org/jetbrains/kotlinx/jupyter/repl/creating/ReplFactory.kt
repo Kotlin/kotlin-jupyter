@@ -1,9 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import org.jetbrains.kotlinx.jupyter.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
-import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -12,8 +8,12 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import java.io.File
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 abstract class ReplFactory {
     fun createRepl(): ReplForJupyter {
@@ -61,8 +61,8 @@ abstract class ReplFactory {
     protected val debugPort: Int? by lazy { provideDebugPort() }
     protected abstract fun provideDebugPort(): Int?
 
-    protected val mavenRepositories: List<RepositoryCoordinates> by lazy { provideMavenRepositories() }
-    protected abstract fun provideMavenRepositories(): List<RepositoryCoordinates>
+    protected val mavenRepositories: List<MavenRepositoryCoordinates> by lazy { provideMavenRepositories() }
+    protected abstract fun provideMavenRepositories(): List<MavenRepositoryCoordinates>
 
     protected val libraryResolver: LibraryResolver? by lazy { provideLibraryResolver() }
     protected abstract fun provideLibraryResolver(): LibraryResolver?

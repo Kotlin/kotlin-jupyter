@@ -4,7 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.TextRenderer
 import org.jetbrains.kotlinx.jupyter.api.TextRendererWithPriority
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
-import org.jetbrains.kotlinx.jupyter.repl.impl.AbstractExtensionsProcessor
+import org.jetbrains.kotlinx.jupyter.repl.execution.AbstractExtensionsProcessor
 
 class TextRenderersProcessorImpl : AbstractExtensionsProcessor<TextRenderer>(latterFirst = true), TextRenderersProcessorWithPreventingRecursion {
     private val cache = mutableListOf<CacheEntry>()

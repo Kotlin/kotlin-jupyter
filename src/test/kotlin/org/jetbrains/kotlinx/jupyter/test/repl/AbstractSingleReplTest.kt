@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import org.jetbrains.kotlinx.jupyter.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 
 abstract class AbstractSingleReplTest : AbstractReplTest() {

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.receivers.ConstReceiver
-import org.jetbrains.kotlinx.jupyter.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.Test

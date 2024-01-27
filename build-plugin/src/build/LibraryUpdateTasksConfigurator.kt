@@ -12,13 +12,12 @@ import org.gradle.api.Project
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
-import org.http4k.core.Method
-import org.http4k.core.Request
-import org.http4k.core.Response
+import org.jetbrains.kotlinx.jupyter.common.Request
+import org.jetbrains.kotlinx.jupyter.common.Response
 import org.jetbrains.kotlinx.jupyter.common.ResponseWrapper
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
-import org.jetbrains.kotlinx.jupyter.common.text
+import org.jetbrains.kotlinx.jupyter.common.successful
 import org.jetbrains.kotlinx.jupyter.common.withBasicAuth
 import org.jetbrains.kotlinx.jupyter.common.withJson
 import java.io.OutputStream
@@ -100,7 +99,7 @@ class LibraryUpdateTasksConfigurator(
                 val password = settings.prGithubToken
                 val repoUserAndName = settings.librariesRepoUserAndName
                 fun githubRequest(
-                    method: Method,
+                    method: String,
                     request: String,
                     json: JsonElement,
                     onFailure: (Response) -> Unit,
@@ -118,7 +117,7 @@ class LibraryUpdateTasksConfigurator(
                 }
 
                 val prResponse = githubRequest(
-                    Method.POST, "repos/$repoUserAndName/pulls",
+                    "POST", "repos/$repoUserAndName/pulls",
                     Json.encodeToJsonElement(
                         NewPrData(
                             title = "Update `${settings.libName}` library to `${settings.libParamValue}`",
@@ -132,7 +131,7 @@ class LibraryUpdateTasksConfigurator(
 
                 val prNumber = (prResponse.jsonObject["number"] as JsonPrimitive).int
                 githubRequest(
-                    Method.POST, "repos/$repoUserAndName/issues/$prNumber/labels",
+                    "POST", "repos/$repoUserAndName/issues/$prNumber/labels",
                     Json.encodeToJsonElement(
                         SetLabelsData(listOf("no-changelog", "library-descriptors"))
                     )

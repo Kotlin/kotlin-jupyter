@@ -3,10 +3,10 @@ package org.jetbrains.kotlinx.jupyter.testkit
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.types.shouldBeInstanceOf
 import jupyter.kotlin.DependsOn
-import org.jetbrains.kotlinx.jupyter.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 

@@ -2,11 +2,6 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.assertions.fail
 import jupyter.kotlin.JavaRuntime
-import org.jetbrains.kotlinx.jupyter.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.MutableCodeCell
-import org.jetbrains.kotlinx.jupyter.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
@@ -40,8 +35,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.withId
-import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
-import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
+import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -52,7 +47,12 @@ import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
+import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.creating.MockCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import java.io.File
 import kotlin.reflect.KClass

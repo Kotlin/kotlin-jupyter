@@ -1,10 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.defaultRepositoriesCoordinates
+import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import java.io.File
 

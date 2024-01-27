@@ -1,9 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlinx.jupyter.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
@@ -14,9 +11,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.BaseReplFactory
 import org.jetbrains.kotlinx.jupyter.repl.creating.MockCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.evalRaw

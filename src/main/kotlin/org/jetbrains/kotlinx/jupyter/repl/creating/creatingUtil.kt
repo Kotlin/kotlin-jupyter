@@ -1,22 +1,22 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
+import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import java.io.File
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 fun createRepl(
     resolutionInfoProvider: ResolutionInfoProvider = EmptyResolutionInfoProvider,
     scriptClasspath: List<File> = emptyList(),
     homeDir: File? = null,
-    mavenRepositories: List<RepositoryCoordinates> = listOf(),
+    mavenRepositories: List<MavenRepositoryCoordinates> = listOf(),
     libraryResolver: LibraryResolver? = null,
     runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     scriptReceivers: List<Any> = emptyList(),

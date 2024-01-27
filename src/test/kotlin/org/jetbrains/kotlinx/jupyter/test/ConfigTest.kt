@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.shouldBe
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.startup.mainClassName

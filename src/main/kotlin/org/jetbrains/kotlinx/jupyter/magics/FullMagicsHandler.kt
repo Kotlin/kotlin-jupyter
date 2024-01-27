@@ -14,17 +14,17 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
-import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.addAppender
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.allLogAppenders
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.removeAppender
 import org.jetbrains.kotlinx.jupyter.LoggingManagement.setRootLoggingLevel
-import org.jetbrains.kotlinx.jupyter.OutputConfig
-import org.jetbrains.kotlinx.jupyter.ReplOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
+import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
+import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 
 class FullMagicsHandler(
     private val repl: ReplOptions,

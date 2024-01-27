@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.internal.ReflectProperties.LazyVal
+import kotlin.reflect.jvm.internal.ReflectProperties.Val
 import kotlin.reflect.jvm.isAccessible
 
 fun interface TextRenderer {
@@ -84,7 +84,7 @@ object TextRenderers {
             null
         } else {
             when (value) {
-                is LazyVal<*> -> value.toString()
+                is Val<*> -> value.toString()
                 is KClass<*> -> value.simpleName
                 is Class<*> -> value.simpleName
                 else -> {

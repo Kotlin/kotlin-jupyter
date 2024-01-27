@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
-import org.jetbrains.kotlinx.jupyter.CheckResult
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -18,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
+import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
@@ -75,7 +75,7 @@ interface JupyterCompilerWithCompletion : JupyterCompiler {
 
     val completer: ReplCompleter
 
-    fun checkComplete(code: Code): CheckResult
+    fun checkComplete(code: Code): CheckCompletenessResult
 
     fun listErrors(code: Code): Sequence<ScriptDiagnostic>
 
@@ -204,6 +204,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                         classes.add(kClass)
                         return JupyterCompiler.Result(result, newEvaluationConfiguration)
                     }
+                    else -> throw IllegalStateException("Impossible value: $kClassWithDiagnostics")
                 }
             }
         }
@@ -222,12 +223,12 @@ class JupyterCompilerWithCompletionImpl(
 
     override fun checkComplete(
         code: Code,
-    ): CheckResult {
+    ): CheckCompletenessResult {
         val result = analyze(code)
         val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
         val diagnostics = analysisResult[ReplAnalyzerResult.analysisDiagnostics]!!
         val isComplete = diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
-        return CheckResult(isComplete)
+        return CheckCompletenessResult(isComplete)
     }
 
     private fun analyze(

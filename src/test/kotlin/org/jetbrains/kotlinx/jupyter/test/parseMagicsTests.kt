@@ -1,12 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.ExecutedCodeLogging
-import org.jetbrains.kotlinx.jupyter.OutputConfig
-import org.jetbrains.kotlinx.jupyter.ReplOptions
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
-import org.jetbrains.kotlinx.jupyter.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -17,7 +14,10 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseReferenceWithArgs
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.NoopMagicsHandler
-import org.jetbrains.kotlinx.jupyter.toSourceCodePositionWithNewAbsolute
+import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
+import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
+import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
+import org.jetbrains.kotlinx.jupyter.util.toSourceCodePositionWithNewAbsolute
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

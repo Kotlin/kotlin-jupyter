@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
-import org.jetbrains.kotlinx.jupyter.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -10,8 +9,10 @@ import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.SocketDisplayHandler
+import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
+import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import java.io.File
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 class DefaultReplFactory(
     private val _settings: DefaultReplSettings,
@@ -34,7 +35,7 @@ class DefaultReplFactory(
         return _settings.kernelConfig.homeDir
     }
 
-    override fun provideMavenRepositories(): List<RepositoryCoordinates> {
+    override fun provideMavenRepositories(): List<MavenRepositoryCoordinates> {
         return _settings.replConfig.mavenRepositories
     }
 

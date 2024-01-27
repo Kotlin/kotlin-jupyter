@@ -6,8 +6,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.kotlinx.jupyter.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
@@ -23,6 +21,8 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
+import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath

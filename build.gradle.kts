@@ -1,7 +1,13 @@
+@file:Suppress("UnstableApiUsage")
+
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
+import build.util.ContentModificationContext
+import build.util.ContentTransformer
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
+import build.util.relocatePackages
+import build.util.transformPluginXmlContent
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
@@ -17,6 +23,7 @@ plugins {
 val deploy: Configuration by configurations.creating
 
 val kernelShadowed: Configuration by configurations.creating
+val embeddableKernel: Configuration by configurations.creating
 val scriptClasspathShadowed: Configuration by configurations.creating
 val ideScriptClasspathShadowed: Configuration by configurations.creating
 
@@ -88,6 +95,17 @@ dependencies {
     }
     scriptClasspathShadowed(libs.kotlin.dev.stdlib)
     scriptClasspathShadowed(libs.kotlin.dev.scriptRuntime)
+
+    embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.scriptingDependenciesMavenAll) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.scriptingIdeServices) { isTransitive = false }
+
+    embeddableKernel(libs.kotlin.dev.scriptingCompilerImplEmbeddable) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.scriptingCompilerEmbeddable) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.compilerEmbeddable) { isTransitive = false }
+
+    embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
 }
 
 buildSettings {
@@ -175,6 +193,29 @@ val kernelShadowedJar = tasks.registerShadowJarTasksBy(
         }
     },
 )
+val embeddableKernelJar = tasks.registerShadowJarTasksBy(
+    embeddableKernel,
+    withSources = false,
+    binaryTaskConfigurator = {
+        mergeServiceFiles()
+        transform(ComponentsXmlResourceTransformer())
+
+        transform(
+            ContentTransformer(
+                "META-INF/extensions/compiler.xml",
+                ContentModificationContext::transformPluginXmlContent,
+            ),
+        )
+        manifest {
+            attributes["Implementation-Version"] = project.version
+        }
+
+        relocatePackages {
+            +"kotlin.script.experimental.dependencies"
+            +"org.jetbrains.kotlin."
+        }
+    },
+)
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
 val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
 
@@ -238,6 +279,12 @@ kotlinPublications {
         publicationName.set("kernel-shadowed")
         description.set("Kotlin Jupyter kernel with all dependencies inside one artifact")
         composeOfTaskOutputs(kernelShadowedJar)
+    }
+
+    publication {
+        publicationName.set("embeddable-kernel")
+        description.set("Kotlin Kernel suitable for embedding into IntelliJ IDEA")
+        composeOfTaskOutputs(embeddableKernelJar)
     }
 
     publication {

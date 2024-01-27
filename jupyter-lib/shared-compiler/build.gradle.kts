@@ -1,7 +1,11 @@
 import build.CreateResourcesTask
+import build.util.buildProperties
+import build.util.compileOnly
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
 import build.util.excludeKotlinDependencies
+import build.util.getCurrentBranch
+import build.util.getCurrentCommitSha
 
 plugins {
     kotlin("libs.publisher")
@@ -34,6 +38,9 @@ dependencies {
     // Serialization runtime
     compileOnly(libs.serialization.json)
 
+    // Coroutines
+    compileOnly(libs.coroutines.core)
+
     // Serialization compiler plugin (for notebooks, not for kernel code)
     compileOnly(libs.serialization.dev.unshaded)
 
@@ -63,10 +70,15 @@ buildSettings {
 CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
     addPropertiesFile(
         "kotlin-jupyter-compiler.properties",
-        mapOf(
-            "version" to rootSettings.pyPackageVersion,
-            "kotlinVersion" to defaultVersionCatalog.versions.devKotlin,
-        ),
+        buildProperties {
+            add("version" to rootSettings.pyPackageVersion)
+            add("kotlinVersion" to defaultVersionCatalog.versions.devKotlin)
+            add("currentBranch" to project.getCurrentBranch())
+            add("currentSha" to project.getCurrentCommitSha())
+            rootSettings.jvmTargetForSnippets?.let {
+                add("jvmTargetForSnippets" to it)
+            }
+        },
     )
 
     addLibrariesFromDir(rootSettings.librariesDir)

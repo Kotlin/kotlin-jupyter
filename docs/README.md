@@ -9,7 +9,7 @@
 
 # Kotlin Kernel for IPython/Jupyter
 
-[Kotlin](https://kotlinlang.org/) (1.9.0) [kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) for [Jupyter](https://jupyter.org).
+[Kotlin](https://kotlinlang.org/) (1.9.10) [kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) for [Jupyter](https://jupyter.org).
 
 The kernel is a powerful engine designed to enhance your Kotlin REPL experience. It offers support for executing code cells,
 providing basic code completion, and analyzing errors. With the Kotlin kernel, you gain access to a range of features,

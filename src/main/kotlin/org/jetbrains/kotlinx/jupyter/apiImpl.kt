@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
-import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
@@ -17,7 +16,6 @@ import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
@@ -30,70 +28,15 @@ import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.repl.impl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.EvalData
+import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.notebook.DisplayResultWrapper
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayContainer
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayResultWithCell
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import kotlin.properties.Delegates
-
-interface MutableDisplayResultWithCell : DisplayResultWithCell {
-    override val cell: MutableCodeCell
-}
-
-interface MutableDisplayContainer : DisplayContainer {
-    fun add(display: DisplayResultWrapper)
-
-    fun add(display: DisplayResult, cell: MutableCodeCell)
-
-    fun update(id: String?, display: DisplayResult)
-
-    override fun getAll(): List<MutableDisplayResultWithCell>
-
-    override fun getById(id: String?): List<MutableDisplayResultWithCell>
-}
-
-interface MutableCodeCell : CodeCell {
-    var resultVal: Any?
-    override var declarations: List<DeclarationInfo>
-    override var preprocessedCode: String
-    override var internalId: Int
-
-    fun appendStreamOutput(output: String)
-
-    fun addDisplay(display: DisplayResult)
-
-    override val displays: MutableDisplayContainer
-}
-
-interface MutableNotebook : Notebook {
-    var sharedReplContext: SharedReplContext?
-
-    override val displays: MutableDisplayContainer
-    fun addCell(
-        data: EvalData,
-    ): MutableCodeCell
-
-    fun popCell()
-
-    fun beginEvalSession()
-
-    override val currentCell: MutableCodeCell?
-
-    override val renderersProcessor: ResultsRenderersProcessor
-
-    override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
-
-    override val fieldsHandlersProcessor: FieldsProcessorInternal
-}
-
-class DisplayResultWrapper private constructor(
-    val display: DisplayResult,
-    override val cell: MutableCodeCell,
-) : DisplayResult by display, MutableDisplayResultWithCell {
-    companion object {
-        fun create(display: DisplayResult, cell: MutableCodeCell): DisplayResultWrapper {
-            return if (display is DisplayResultWrapper) DisplayResultWrapper(display.display, cell)
-            else DisplayResultWrapper(display, cell)
-        }
-    }
-}
 
 class DisplayContainerImpl : MutableDisplayContainer {
     private val displays: MutableMap<String?, MutableList<DisplayResultWrapper>> = mutableMapOf()
@@ -171,13 +114,6 @@ class CodeCellImpl(
         displays.add(wrapper)
         notebook.displays.add(wrapper)
     }
-}
-
-class EvalData(
-    val executionCounter: Int,
-    val rawCode: String,
-) {
-    constructor(evalRequestData: EvalRequestData) : this(evalRequestData.jupyterId, evalRequestData.code)
 }
 
 class NotebookImpl(

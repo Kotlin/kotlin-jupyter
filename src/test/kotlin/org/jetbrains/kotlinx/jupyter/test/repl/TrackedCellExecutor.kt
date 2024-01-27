@@ -1,16 +1,16 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import org.jetbrains.kotlinx.jupyter.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
-import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
+import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
+import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
-import org.jetbrains.kotlinx.jupyter.repl.workflow.EvaluatorWorkflowListener
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import kotlin.reflect.KClass
 
 interface TrackedCellExecutor : CellExecutor {

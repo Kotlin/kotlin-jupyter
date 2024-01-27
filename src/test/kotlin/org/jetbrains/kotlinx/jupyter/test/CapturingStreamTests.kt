@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.OutputConfig
-import org.jetbrains.kotlinx.jupyter.messaging.CapturingOutputStream
+import org.jetbrains.kotlinx.jupyter.protocol.CapturingOutputStream
+import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled

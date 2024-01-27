@@ -3,10 +3,7 @@ package build
 import build.util.TaskSpec
 import build.util.UploadTaskSpecs
 import build.util.addAllBuildRepositories
-import build.util.buildProperties
 import build.util.defaultVersionCatalog
-import build.util.getCurrentBranch
-import build.util.getCurrentCommitSha
 import build.util.getOrCreateExtension
 import build.util.isNonStableVersion
 import build.util.ktlint
@@ -15,11 +12,9 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.api.Project
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
@@ -73,7 +68,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
         registerLibrariesUpdateTasks()
 
         /****** Build tasks ******/
-        registerPropertiesTask()
         registerCleanTasks()
         configureJarTasks()
 
@@ -171,25 +165,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
     private fun registerLibrariesUpdateTasks() {
         LibraryUpdateTasksConfigurator(project, settings).registerTasks()
-    }
-
-    private fun registerPropertiesTask() {
-        val properties = buildProperties {
-            add("version" to settings.pyPackageVersion)
-            add("currentBranch" to project.getCurrentBranch())
-            add("currentSha" to project.getCurrentCommitSha())
-            settings.jvmTargetForSnippets?.let {
-                add("jvmTargetForSnippets" to it)
-            }
-        }
-
-        CreateResourcesTask.register(
-            project,
-            BUILD_PROPERTIES_TASK,
-            project.tasks.named<Copy>(PROCESS_RESOURCES_TASK)
-        ) {
-            addPropertiesFile(settings.runtimePropertiesFile, properties)
-        }
     }
 
     private fun registerReadmeTasks() {

@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import java.io.Closeable
 
 interface SocketWithCancellation : Closeable {
@@ -31,4 +33,9 @@ interface JupyterSocket : SocketWithCancellation, JupyterSocketBase {
     fun removeCallback(callback: SocketRawMessageCallback)
     fun onData(body: JupyterSocket.(ByteArray) -> Unit): Unit?
     fun runCallbacksOnMessage(): Unit?
+}
+
+fun JupyterSocketBase.receiveMessage(): Message? {
+    val rawMessage = receiveRawMessage()
+    return rawMessage?.toMessage()
 }

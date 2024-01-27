@@ -37,12 +37,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
 import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
-import org.jetbrains.kotlinx.jupyter.messaging.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
+import org.jetbrains.kotlinx.jupyter.util.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Disabled

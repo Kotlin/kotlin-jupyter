@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
 import kotlin.script.dependencies.ScriptContents
@@ -27,7 +28,7 @@ import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesReso
 import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
-open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<RepositoryCoordinates>) : JupyterScriptDependenciesResolver {
+open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRepositoryCoordinates>) : JupyterScriptDependenciesResolver {
 
     private val log = getLogger("resolver")
 
@@ -73,11 +74,11 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
     }
 
     private fun addRepository(repo: Repo): Boolean {
-        val repoIndex = repositories.indexOfFirst { it.coordinates.string == repo.coordinates.string }
+        val repoIndex = repositories.indexOfFirst { it.repo == repo.repo }
         if (repoIndex != -1) repositories.removeAt(repoIndex)
         repositories.add(repo)
 
-        return resolver.addRepository(repo.coordinates, repo.options, null).valueOrNull() == true
+        return resolver.addRepository(RepositoryCoordinates(repo.repo.coordinates), repo.options, null).valueOrNull() == true
     }
 
     override fun popAddedClasspath(): List<File> {
@@ -114,7 +115,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
                     } else {
                         Options.Empty
                     }
-                    val repo = Repo(RepositoryCoordinates(annotation.value), options)
+                    val repo = Repo(MavenRepositoryCoordinates(annotation.value), options)
 
                     if (!addRepository(repo)) {
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
@@ -259,12 +260,12 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<Reposit
     }
 
     private class Repo(
-        val coordinates: RepositoryCoordinates,
+        val repo: MavenRepositoryCoordinates,
         val options: Options = Options.Empty,
     )
 
     companion object {
-        private val CENTRAL_REPO_COORDINATES = RepositoryCoordinates("https://repo1.maven.org/maven2/")
+        private val CENTRAL_REPO_COORDINATES = MavenRepositoryCoordinates("https://repo1.maven.org/maven2/")
         private val CENTRAL_REPO = Repo(CENTRAL_REPO_COORDINATES)
     }
 }

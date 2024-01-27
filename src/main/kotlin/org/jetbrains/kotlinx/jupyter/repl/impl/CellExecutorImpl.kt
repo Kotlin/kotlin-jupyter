@@ -22,18 +22,16 @@ import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.log
-import org.jetbrains.kotlinx.jupyter.repl.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
-import org.jetbrains.kotlinx.jupyter.repl.workflow.ExecutorWorkflowListener
+import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
+import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
+import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutionStackFrame
+import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.util.accepts
-import java.util.LinkedList
+import java.util.*
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
-
-interface BaseKernelHost {
-    fun <T> withHost(currentHost: KotlinKernelHost, callback: () -> T): T
-}
 
 internal class CellExecutorImpl(private val replContext: SharedReplContext) : CellExecutor {
 

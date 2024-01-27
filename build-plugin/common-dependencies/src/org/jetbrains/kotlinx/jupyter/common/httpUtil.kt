@@ -6,16 +6,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import org.http4k.asString
-import org.http4k.client.ApacheClient
-import org.http4k.client.PreCannedApacheHttpClients
-import org.http4k.core.Method
-import org.http4k.core.Request
-import org.http4k.core.Response
-import org.http4k.core.then
-import org.http4k.filter.ClientFilters
 import java.io.IOException
-import java.util.Base64
+import java.util.*
 
 class ResponseWrapper(
     response: Response,
@@ -23,19 +15,16 @@ class ResponseWrapper(
 ) : Response by response
 
 fun httpRequest(request: Request): ResponseWrapper {
-    PreCannedApacheHttpClients.defaultApacheHttpClient().use { closeableHttpClient ->
-        val apacheClient = ApacheClient(client = closeableHttpClient)
-        val client = ClientFilters.FollowRedirects().then(apacheClient)
-        val response = client(request)
-
-        return ResponseWrapper(response, request.uri.toString())
-    }
+    return ResponseWrapper(
+        SimpleHttpClient.makeRequest(request),
+        request.url,
+    )
 }
 
-fun getHttp(url: String) = httpRequest(Request(Method.GET, url))
+fun getHttp(url: String) = httpRequest(Request("GET", url))
 
 fun getHttpWithAuth(url: String, username: String, token: String): ResponseWrapper {
-    val request = Request(Method.GET, url).withBasicAuth(username, token)
+    val request = Request("GET", url).withBasicAuth(username, token)
     return httpRequest(request)
 }
 
@@ -48,10 +37,6 @@ fun Request.withJson(json: JsonElement): Request {
     return this
         .body(Json.encodeToString(json))
         .header("Content-Type", "application/json")
-}
-
-val Response.text: String get() {
-    return body.payload.asString()
 }
 
 fun ResponseWrapper.assertSuccessful() {

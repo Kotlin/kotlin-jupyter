@@ -1,10 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
-import org.jetbrains.kotlinx.jupyter.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.withId
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 

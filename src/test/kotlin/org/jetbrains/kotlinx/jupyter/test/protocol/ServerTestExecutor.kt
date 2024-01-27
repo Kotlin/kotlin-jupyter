@@ -1,9 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
-import org.jetbrains.kotlinx.jupyter.ReplConfig
 import org.jetbrains.kotlinx.jupyter.kernelServer
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplSettings
+import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
+import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
 import org.junit.jupiter.api.TestInfo
