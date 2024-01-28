@@ -27,6 +27,10 @@ interface ReplForJupyter {
 
     val homeDir: File?
 
+    val debugPort: Int?
+
+    val options: ReplOptions
+
     val currentClasspath: Collection<String>
 
     val currentClassLoader: ClassLoader
@@ -42,8 +46,6 @@ interface ReplForJupyter {
     val resolutionInfoProvider: ResolutionInfoProvider
 
     val throwableRenderersProcessor: ThrowableRenderersProcessor
-
-    var outputConfig: OutputConfig
 
     val notebook: MutableNotebook
 

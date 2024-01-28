@@ -1,21 +1,22 @@
-package org.jetbrains.kotlinx.jupyter.messaging
+package org.jetbrains.kotlinx.jupyter.messaging.comms
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.Comm
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommCloseCallback
-import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommMsgCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommOpenCallback
+import org.jetbrains.kotlinx.jupyter.messaging.CommClose
+import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
+import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.messaging.doWrappedInBusyIdle
+import org.jetbrains.kotlinx.jupyter.messaging.sendSimpleMessageToIoPub
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-
-interface CommManagerInternal : CommManager {
-    fun processCommOpen(message: Message, content: CommOpen): Comm?
-    fun processCommMessage(message: Message, content: CommMsg)
-    fun processCommClose(message: Message, content: CommClose)
-}
 
 class CommManagerImpl(private val connection: JupyterCommunicationFacility) : CommManagerInternal {
     private val commOpenCallbacks = ConcurrentHashMap<String, CommOpenCallback>()

@@ -399,14 +399,16 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testOutputMagic() {
+        val options = repl.options
+
         eval("%output --max-cell-size=100500 --no-stdout")
-        repl.outputConfig shouldBe OutputConfig(
+        options.outputConfig shouldBe OutputConfig(
             cellOutputMaxSize = 100500,
             captureOutput = false,
         )
 
         eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
-        repl.outputConfig shouldBe OutputConfig(
+        options.outputConfig shouldBe OutputConfig(
             cellOutputMaxSize = 100500,
             captureOutput = false,
             captureBufferMaxSize = 42,
@@ -415,7 +417,7 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         eval("%output --reset-to-defaults")
-        repl.outputConfig shouldBe OutputConfig()
+        options.outputConfig shouldBe OutputConfig()
     }
 
     @Test

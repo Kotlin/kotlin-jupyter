@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
+import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import java.util.concurrent.atomic.AtomicLong
 

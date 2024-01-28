@@ -8,11 +8,11 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.messaging.CommHandler
-import org.jetbrains.kotlinx.jupyter.messaging.CommManagerImpl
-import org.jetbrains.kotlinx.jupyter.messaging.DebugPortCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.comms.DebugPortCommHandler
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook

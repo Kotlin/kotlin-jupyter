@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
+import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.CapturingOutputStream
 import org.jetbrains.kotlinx.jupyter.protocol.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.protocol.StdinInputStream
@@ -242,7 +243,7 @@ open class IdeCompatibleMessageRequestProcessor(
         allowStdIn: Boolean,
         body: () -> T,
     ): T {
-        val config = repl.outputConfig
+        val config = repl.options.outputConfig
         val out = System.out
         val err = System.err
         repl.notebook.beginEvalSession()

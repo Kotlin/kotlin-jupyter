@@ -6,7 +6,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
@@ -135,14 +134,10 @@ class ParseArgumentsTests {
 class ParseMagicsTests {
 
     private class TestReplOptions : ReplOptions {
-        override val currentBranch: String
-            get() = standardResolverBranch
-        override val librariesDir = KERNEL_LIBRARIES.localLibrariesDir
         override var trackClasspath = false
         override var executedCodeLogging = ExecutedCodeLogging.OFF
         override var writeCompiledClasses = false
         override var outputConfig = OutputConfig()
-        override val debugPort: Int? = null
     }
 
     private val options = TestReplOptions()

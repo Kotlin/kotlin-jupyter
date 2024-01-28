@@ -65,6 +65,9 @@ import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.requireUniqueTargets
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -78,7 +81,6 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
-import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
@@ -124,21 +126,18 @@ class ReplForJupyterImpl(
     override val notebook: MutableNotebook,
     override val librariesScanner: LibrariesScanner,
     override val debugPort: Int? = null,
-) : ReplForJupyter, ReplOptions, BaseKernelHost, UserHandlesProvider {
+    commHandlers: List<CommHandler> = listOf(),
+) : ReplForJupyter, BaseKernelHost, UserHandlesProvider {
 
-    override val currentBranch: String
-        get() = runtimeProperties.currentBranch
-    override val librariesDir: File = KERNEL_LIBRARIES.homeLibrariesDir(homeDir)
+    override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
 
     private val libraryInfoSwitcher = getDefaultResolutionInfoSwitcher(
         resolutionInfoProvider,
-        librariesDir,
-        currentBranch,
+        KERNEL_LIBRARIES.homeLibrariesDir(homeDir),
+        runtimeProperties.currentBranch,
     )
 
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
-
-    private var outputConfigImpl = OutputConfig()
 
     private var currentKernelHost: KotlinKernelHost? = null
 
@@ -158,29 +157,6 @@ class ReplForJupyterImpl(
             set(value) { internalEvaluator.serializeScriptData = value }
     }
 
-    override var outputConfig
-        get() = outputConfigImpl
-        set(value) {
-            // reuse output config instance, because it is already passed to CapturingOutputStream and stream parameters should be updated immediately
-            outputConfigImpl.update(value)
-        }
-
-    override var trackClasspath: Boolean = false
-
-    private var _executedCodeLogging: ExecutedCodeLogging = ExecutedCodeLogging.OFF
-    override var executedCodeLogging: ExecutedCodeLogging
-        get() = _executedCodeLogging
-        set(value) {
-            _executedCodeLogging = value
-            internalEvaluator.logExecution = value != ExecutedCodeLogging.OFF
-        }
-
-    override var writeCompiledClasses: Boolean
-        get() = internalEvaluator.writeCompiledClasses
-        set(value) {
-            internalEvaluator.writeCompiledClasses = value
-        }
-
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
     private val resolver: JupyterScriptDependenciesResolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
@@ -195,7 +171,7 @@ class ReplForJupyterImpl(
 
     private val magics = MagicsProcessor(
         FullMagicsHandler(
-            this,
+            options,
             librariesProcessor,
             libraryInfoSwitcher,
         ),
@@ -293,7 +269,7 @@ class ReplForJupyterImpl(
         jupyterCompiler,
         evaluator,
         contextUpdater,
-        executedCodeLogging != ExecutedCodeLogging.OFF,
+        options.executedCodeLogging != ExecutedCodeLogging.OFF,
         internalVariablesMarkersProcessor,
     )
 
@@ -353,6 +329,8 @@ class ReplForJupyterImpl(
         displayHandler,
     ).also {
         notebook.sharedReplContext = it
+        commHandlers.requireUniqueTargets()
+        commHandlers.forEach { handler -> installCommHandler(handler) }
     }
 
     private var evalContextEnabled = false
@@ -460,7 +438,7 @@ class ReplForJupyterImpl(
 
     /**
      * Updates current classpath with newly resolved libraries paths
-     * Also, prints information about resolved libraries to stdout if [trackClasspath] is true
+     * Also, prints information about resolved libraries to stdout if [ReplOptions.trackClasspath] is true
      *
      * @return Newly resolved classpath
      */
@@ -470,7 +448,7 @@ class ReplForJupyterImpl(
 
         val (oldClasspath, newClasspath) = resolvedClasspath.partition { it in currentClasspath }
         currentClasspath.addAll(newClasspath)
-        if (trackClasspath) {
+        if (options.trackClasspath) {
             val sb = StringBuilder()
             if (newClasspath.isNotEmpty()) {
                 sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
