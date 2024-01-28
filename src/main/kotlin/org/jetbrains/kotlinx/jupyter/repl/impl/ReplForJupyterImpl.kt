@@ -5,10 +5,7 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
-import jupyter.kotlin.generateHTMLVarsReport
 import jupyter.kotlin.providers.UserHandlesProvider
-import jupyter.kotlin.variablesReport
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
@@ -376,29 +373,6 @@ class ReplForJupyterImpl(
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) fileAnnotationsProcessor.process(context, currentKernelHost!!)
         else context.compilationConfiguration.asSuccess()
-    }
-
-    @TestOnly
-    @Suppress("unused")
-    private fun printVariables(isHtmlFormat: Boolean = false) = log.debug(
-        if (isHtmlFormat) generateHTMLVarsReport(notebook.variablesState) else notebook.variablesReport,
-    )
-
-    @TestOnly
-    @Suppress("unused")
-    private fun printUsagesInfo(cellId: Int, usedVariables: Set<String>?) {
-        log.debug(
-            buildString {
-                if (usedVariables.isNullOrEmpty()) {
-                    append("No usages for cell $cellId")
-                    return@buildString
-                }
-                append("Usages for cell $cellId:\n")
-                usedVariables.forEach {
-                    append(it + "\n")
-                }
-            },
-        )
     }
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
