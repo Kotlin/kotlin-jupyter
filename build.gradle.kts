@@ -106,6 +106,8 @@ dependencies {
     embeddableKernel(libs.kotlin.dev.compilerEmbeddable) { isTransitive = false }
 
     embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
+
+    embeddableKernel(libs.serialization.dev.embeddedPlugin) { isTransitive = false }
 }
 
 buildSettings {
@@ -213,6 +215,7 @@ val embeddableKernelJar = tasks.registerShadowJarTasksBy(
         relocatePackages {
             +"kotlin.script.experimental.dependencies"
             +"org.jetbrains.kotlin."
+            +"org.jetbrains.kotlinx.serialization."
         }
     },
 )

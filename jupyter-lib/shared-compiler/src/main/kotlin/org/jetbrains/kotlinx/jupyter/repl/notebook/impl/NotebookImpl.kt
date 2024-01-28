@@ -1,11 +1,8 @@
-package org.jetbrains.kotlinx.jupyter
+package org.jetbrains.kotlinx.jupyter.repl.notebook.impl
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
-import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
@@ -31,90 +28,9 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
-import org.jetbrains.kotlinx.jupyter.repl.notebook.DisplayResultWrapper
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
-import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayContainer
-import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
-import kotlin.properties.Delegates
-
-class DisplayContainerImpl : MutableDisplayContainer {
-    private val displays: MutableMap<String?, MutableList<DisplayResultWrapper>> = mutableMapOf()
-
-    override fun add(display: DisplayResultWrapper) {
-        synchronized(displays) {
-            val list = displays.getOrPut(display.id) { mutableListOf() }
-            list.add(display)
-        }
-    }
-
-    override fun add(display: DisplayResult, cell: MutableCodeCell) {
-        add(DisplayResultWrapper.create(display, cell))
-    }
-
-    override fun getAll(): List<MutableDisplayResultWithCell> {
-        synchronized(displays) {
-            return displays.flatMap { it.value }
-        }
-    }
-
-    override fun getById(id: String?): List<MutableDisplayResultWithCell> {
-        synchronized(displays) {
-            return displays[id]?.toList().orEmpty()
-        }
-    }
-
-    override fun update(id: String?, display: DisplayResult) {
-        synchronized(displays) {
-            val initialDisplays = displays[id] ?: return
-            val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
-            initialDisplays.clear()
-            initialDisplays.addAll(updated)
-        }
-    }
-}
-
-class CodeCellImpl(
-    override val notebook: NotebookImpl,
-    override val id: Int,
-    override val code: String,
-    override val prevCell: CodeCell?,
-) : MutableCodeCell {
-    override var resultVal: Any? = null
-    override var internalId by Delegates.notNull<Int>()
-
-    override var declarations: List<DeclarationInfo> = emptyList()
-    override var preprocessedCode by Delegates.notNull<String>()
-
-    override val result: Any?
-        get() = resultVal
-
-    private var isStreamOutputUpToDate: Boolean = true
-    private var collectedStreamOutput: String = ""
-    private val streamBuilder = StringBuilder()
-    override fun appendStreamOutput(output: String) {
-        isStreamOutputUpToDate = false
-        streamBuilder.append(output)
-    }
-
-    override val streamOutput: String
-        get() {
-            if (!isStreamOutputUpToDate) {
-                isStreamOutputUpToDate = true
-                collectedStreamOutput = streamBuilder.toString()
-            }
-
-            return collectedStreamOutput
-        }
-
-    override val displays = DisplayContainerImpl()
-
-    override fun addDisplay(display: DisplayResult) {
-        val wrapper = DisplayResultWrapper.create(display, this)
-        displays.add(wrapper)
-        notebook.displays.add(wrapper)
-    }
-}
+import org.jetbrains.kotlinx.jupyter.util.JupyterClientDetector
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,

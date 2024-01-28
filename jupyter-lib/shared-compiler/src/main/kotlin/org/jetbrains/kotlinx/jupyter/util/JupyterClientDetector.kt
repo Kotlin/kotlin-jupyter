@@ -1,19 +1,20 @@
-package org.jetbrains.kotlinx.jupyter
+package org.jetbrains.kotlinx.jupyter.util
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.config.logger
 
 object JupyterClientDetector {
     fun detect(): JupyterClientType {
         return try {
             doDetect()
         } catch (e: LinkageError) {
-            log.error("Unable to detect Jupyter client type because of incompatible JVM version", e)
+            LOG.error("Unable to detect Jupyter client type because of incompatible JVM version", e)
             JupyterClientType.UNKNOWN
         }
     }
 
     private fun doDetect(): JupyterClientType {
-        log.info("Detecting Jupyter client type")
+        LOG.info("Detecting Jupyter client type")
         val currentHandle = ProcessHandle.current()
         val ancestors = generateSequence(currentHandle) { it.parent().orElse(null) }.toList()
 
@@ -22,14 +23,14 @@ object JupyterClientDetector {
             val command = info.command().orElse("")
             val arguments = info.arguments().orElse(emptyArray()).toList()
 
-            log.info("Inspecting process: $command ${arguments.joinToString(" ")}")
+            LOG.info("Inspecting process: $command ${arguments.joinToString(" ")}")
             val correctDetector = detectors.firstOrNull { it.isThisClient(command, arguments) } ?: continue
 
-            log.info("Detected type is ${correctDetector.type}")
+            LOG.info("Detected type is ${correctDetector.type}")
             return correctDetector.type
         }
 
-        log.info("Client type has not been detected")
+        LOG.info("Client type has not been detected")
         return JupyterClientType.UNKNOWN
     }
 
@@ -56,4 +57,6 @@ object JupyterClientDetector {
             command.endsWith("idea64.exe")
         },
     )
+
+    private val LOG = logger<JupyterClientDetector>()
 }

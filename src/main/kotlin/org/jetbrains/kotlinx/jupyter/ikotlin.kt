@@ -21,7 +21,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
-import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplFactory
+import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
+import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import java.io.File
@@ -126,7 +127,7 @@ fun createMessageHandler(
     val executor: JupyterExecutor = JupyterExecutorImpl()
 
     val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
-    val repl = DefaultReplFactory(replSettings, communicationFacility, commManager).createRepl()
+    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager).createRepl()
     return MessageHandlerImpl(repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 

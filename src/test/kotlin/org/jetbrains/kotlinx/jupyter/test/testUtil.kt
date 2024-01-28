@@ -44,13 +44,14 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.log
+import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.repl.creating.MockCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
@@ -304,8 +305,10 @@ object NotebookMock : Notebook {
         get() = JupyterClientType.UNKNOWN
 
     override val commManager: CommManager
-        get() = CommManagerImpl(MockCommunicationFacility)
+        get() = CommManagerImpl(CommunicationFacilityMock)
 }
+
+object ReplComponentsProviderMock : ReplComponentsProviderBase()
 
 fun library(builder: JupyterIntegration.Builder.() -> Unit) = createLibrary(NotebookMock, builder)
 
