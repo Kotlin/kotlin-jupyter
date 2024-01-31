@@ -374,6 +374,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - A library to use the Gradle Enterprise API in Kotlin scripts or projects
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
+ - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`/`%typescript`/`%jsx` line magic support
  - [kalasim](https://www.kalasim.org) - Discrete event simulator
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [kandy](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Lets-Plot
