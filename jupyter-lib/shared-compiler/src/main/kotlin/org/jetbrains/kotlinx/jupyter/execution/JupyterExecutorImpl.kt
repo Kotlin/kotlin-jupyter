@@ -5,7 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlinx.jupyter.config.logger
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import java.io.Closeable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -37,9 +37,7 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
         return if (exception == null) {
             ExecutionResult.Success(execRes!!)
         } else {
-            val isInterrupted = exception is ThreadDeath ||
-                (exception is ReplException && exception.cause is ThreadDeath)
-            if (isInterrupted) ExecutionResult.Interrupted
+            if (exception.isInterruptedException()) ExecutionResult.Interrupted
             else ExecutionResult.Failure(exception)
         }
     }

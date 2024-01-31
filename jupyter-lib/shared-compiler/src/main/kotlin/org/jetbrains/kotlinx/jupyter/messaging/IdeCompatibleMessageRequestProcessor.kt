@@ -2,18 +2,15 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.commands.runCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
-import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
@@ -23,9 +20,8 @@ import org.jetbrains.kotlinx.jupyter.protocol.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.protocol.StdinInputStream
 import org.jetbrains.kotlinx.jupyter.protocol.protocolVersion
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
-import org.jetbrains.kotlinx.jupyter.repl.toDisplayResult
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.io.InputStream
 import java.io.PrintStream
@@ -120,7 +116,7 @@ open class IdeCompatibleMessageRequestProcessor(
                     content = ExecutionInputReply(code, count),
                 ),
             )
-            val response: Response = if (looksLikeReplCommand(code)) {
+            val response: JupyterResponse = if (looksLikeReplCommand(code)) {
                 runCommand(code, repl)
             } else {
                 evalWithIO(content.allowStdin) {
@@ -203,7 +199,7 @@ open class IdeCompatibleMessageRequestProcessor(
     protected open fun runExecution(
         executionName: String,
         execution: () -> EvalResultEx,
-    ): Response {
+    ): JupyterResponse {
         return when (
             val res = executor.runExecution(
                 executionName,
@@ -213,28 +209,29 @@ open class IdeCompatibleMessageRequestProcessor(
         ) {
             is ExecutionResult.Success -> {
                 try {
-                    rawToResponse(res.result.displayValue, res.result.metadata)
-                } catch (e: Exception) {
-                    AbortResponseWithMessage("error:  Unable to convert result to a string: $e")
+                    when (val replResult = res.result) {
+                        is EvalResultEx.Success -> {
+                            OkJupyterResponse(replResult.displayValue, replResult.metadata)
+                        }
+                        is EvalResultEx.Error -> {
+                            replResult.error.toErrorJupyterResponse(replResult.metadata)
+                        }
+                        is EvalResultEx.RenderedError -> {
+                            OkJupyterResponse(replResult.displayError, replResult.metadata)
+                        }
+                        is EvalResultEx.Interrupted -> {
+                            AbortJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE, replResult.metadata)
+                        }
+                    }
+                } catch (e: Throwable) {
+                    AbortJupyterResponse("error:  Unable to convert result to a string: $e")
                 }
             }
             is ExecutionResult.Failure -> {
-                val ex = res.throwable
-                if (ex !is ReplException) throw ex
-                (ex as? ReplEvalRuntimeException)?.cause?.let { originalThrowable ->
-                    repl.throwableRenderersProcessor.renderThrowable(originalThrowable)
-                }?.let { renderedThrowable ->
-                    rawToResponse(renderedThrowable.toDisplayResult(repl.notebook))
-                } ?: ErrorResponseWithMessage(
-                    ex.render(),
-                    ex.javaClass.canonicalName,
-                    ex.message ?: "",
-                    ex.stackTrace.map { it.toString() },
-                    ex.getAdditionalInfoJson() ?: Json.EMPTY,
-                )
+                res.throwable.toErrorJupyterResponse()
             }
             ExecutionResult.Interrupted -> {
-                AbortResponseWithMessage(EXECUTION_INTERRUPTED_MESSAGE)
+                AbortJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE)
             }
         }
     }
@@ -291,10 +288,6 @@ open class IdeCompatibleMessageRequestProcessor(
 
             KernelStreams.setStreams(false, out, err)
         }
-    }
-
-    private fun rawToResponse(value: DisplayResult?, metadata: EvaluatedSnippetMetadata = EvaluatedSnippetMetadata.EMPTY): Response {
-        return OkResponseWithMessage(value, metadata)
     }
 
     private fun Code.presentableForThreadName(): String {

@@ -10,9 +10,9 @@ import org.jetbrains.kotlinx.jupyter.common.replCommandOrNull
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
-import org.jetbrains.kotlinx.jupyter.messaging.AbortResponseWithMessage
-import org.jetbrains.kotlinx.jupyter.messaging.OkResponseWithMessage
-import org.jetbrains.kotlinx.jupyter.messaging.Response
+import org.jetbrains.kotlinx.jupyter.messaging.AbortJupyterResponse
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterResponse
+import org.jetbrains.kotlinx.jupyter.messaging.OkJupyterResponse
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
@@ -51,17 +51,18 @@ fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
     return KotlinCompleter.getResult(code, cursor, completions)
 }
 
-fun runCommand(code: String, repl: ReplForJupyter): Response {
+fun runCommand(code: String, repl: ReplForJupyter): JupyterResponse {
     assertLooksLikeReplCommand(code)
     val args = code.trim().substring(1).split(" ")
-    val cmd = ReplCommand.valueOfOrNull(args[0])?.value ?: return AbortResponseWithMessage("Unknown command: $code\nTo see available commands, enter :help")
+    val cmd = ReplCommand.valueOfOrNull(args[0])?.value
+        ?: return AbortJupyterResponse("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
         ReplCommand.CLASSPATH -> {
             val cp = repl.currentClasspath
-            OkResponseWithMessage(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
+            OkJupyterResponse(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommand.VARS -> {
-            OkResponseWithMessage(repl.notebook.variablesReportAsHTML)
+            OkJupyterResponse(repl.notebook.variablesReportAsHTML)
         }
         ReplCommand.HELP -> {
             val commands = ReplCommand.entries.asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }
@@ -76,7 +77,7 @@ fun runCommand(code: String, repl: ReplForJupyter): Response {
                 val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
                 "$libraryName$link$description"
             }.joinToStringIndented()
-            OkResponseWithMessage(
+            OkJupyterResponse(
                 textResult(
                     """ |Kotlin Jupyter kernel.
                         |Kernel version: $currentKernelVersion

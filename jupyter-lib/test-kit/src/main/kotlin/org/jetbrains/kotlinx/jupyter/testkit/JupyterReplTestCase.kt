@@ -2,12 +2,13 @@ package org.jetbrains.kotlinx.jupyter.testkit
 
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 abstract class JupyterReplTestCase(
@@ -19,23 +20,35 @@ abstract class JupyterReplTestCase(
         return repl.evalEx(EvalRequestData(code))
     }
 
-    fun exec(code: Code): Any? {
-        return execEx(code).renderedValue
+    fun execSuccess(code: Code): EvalResultEx.Success {
+        val result = execEx(code)
+        result.shouldBeTypeOf<EvalResultEx.Success>()
+        return result
+    }
+
+    fun execRendered(code: Code): Any? {
+        return execSuccess(code).renderedValue
+    }
+
+    fun execError(code: Code): Throwable {
+        val result = execEx(code)
+        result.shouldBeTypeOf<EvalResultEx.Error>()
+        return result.error
     }
 
     fun execRaw(code: Code): Any? {
-        return execEx(code).rawValue
+        return execSuccess(code).internalResult.result.value
     }
 
     @JvmName("execTyped")
-    inline fun <reified T : Any> exec(code: Code): T {
-        val res = exec(code)
+    inline fun <reified T : Any> execRendered(code: Code): T {
+        val res = execRendered(code)
         res.shouldBeInstanceOf<T>()
         return res
     }
 
     fun execHtml(code: Code): String {
-        val res = exec<MimeTypedResult>(code)
+        val res = execRendered<MimeTypedResult>(code)
         val html = res[MimeTypes.HTML]
         html.shouldNotBeNull()
         return html

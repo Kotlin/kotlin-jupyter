@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.repl
+package org.jetbrains.kotlinx.jupyter.repl.result
 
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 

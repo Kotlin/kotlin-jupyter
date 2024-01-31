@@ -15,13 +15,15 @@ enum class MessageStatus {
     ABORT;
 }
 
+interface MessageContent
+
 @Serializable
-abstract class MessageContent
+abstract class AbstractMessageContent : MessageContent
 
 @Serializable
 abstract class MessageReplyContent(
     val status: MessageStatus,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 abstract class OkReply : MessageReplyContent(MessageStatus.OK)

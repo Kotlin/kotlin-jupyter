@@ -2,9 +2,9 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
+import org.jetbrains.kotlinx.jupyter.messaging.AbstractMessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
-import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
@@ -61,7 +61,7 @@ abstract class KernelServerTestsBase {
 
     fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
 
-    fun JupyterSocketBase.sendMessage(msgType: MessageType, content: MessageContent?) {
+    fun JupyterSocketBase.sendMessage(msgType: MessageType, content: AbstractMessageContent?) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 

@@ -1,9 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.compiler
 
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScript
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedScriptSource
-import org.jetbrains.kotlinx.jupyter.compiler.util.buildScriptsData
+import org.jetbrains.kotlinx.jupyter.repl.SerializedScriptSource
+import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScript
+import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.nio.file.Path

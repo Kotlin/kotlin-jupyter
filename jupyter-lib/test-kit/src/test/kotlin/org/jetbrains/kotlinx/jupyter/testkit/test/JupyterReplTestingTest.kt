@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.testkit.test
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase
@@ -17,13 +17,13 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
 
     @Test
     fun `normal (rendered) execution`() {
-        val result = exec("42")
+        val result = execRendered("42")
         result shouldBe 42
     }
 
     @Test
     fun `extended execution`() {
-        exec(
+        execRendered(
             """
             USE {
                 render<Int> { (it * 2).toString() }
@@ -31,15 +31,15 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
             """.trimIndent(),
         )
 
-        val ex = execEx("5")
+        val ex = execSuccess("5")
 
-        ex.rawValue shouldBe 5
+        ex.internalResult.result.value shouldBe 5
         ex.renderedValue shouldBe "10"
     }
 
     @Test
     fun `HTML execution`() {
-        exec(
+        execRendered(
             """
             USE {
                 render<Int> { HTML((it * 2).toString()) }
@@ -47,14 +47,12 @@ class JupyterReplTestingTest : JupyterReplTestCase() {
             """.trimIndent(),
         )
 
-        exec("5").shouldBeInstanceOf<MimeTypedResult>()
+        execRendered("5").shouldBeInstanceOf<MimeTypedResult>()
         execHtml("5") shouldBe "10"
     }
 
     @Test
     fun `dataframe is not resolved`() {
-        shouldThrow<ReplPreprocessingException> {
-            exec("%dataframe")
-        }
+        execError("%dataframe").shouldBeTypeOf<ReplPreprocessingException>()
     }
 }

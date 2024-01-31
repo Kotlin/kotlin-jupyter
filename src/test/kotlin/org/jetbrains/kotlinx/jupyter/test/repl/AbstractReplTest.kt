@@ -17,9 +17,10 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
+import org.jetbrains.kotlinx.jupyter.test.assertSuccess
 import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
-import org.jetbrains.kotlinx.jupyter.test.evalRaw
+import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
@@ -102,7 +103,8 @@ abstract class AbstractReplTest {
         val repl = makeReplWithLibraries("mylib" to definition)
         val paramList = if (args.isEmpty()) ""
         else args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
-        repl.evalRaw("%use mylib$paramList")
+        val result = repl.evalEx("%use mylib$paramList")
+        result.assertSuccess()
         return repl
     }
 

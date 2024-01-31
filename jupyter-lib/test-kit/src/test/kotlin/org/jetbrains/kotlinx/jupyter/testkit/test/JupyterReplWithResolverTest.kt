@@ -1,9 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.testkit.test
 
-import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase
 import org.jetbrains.kotlinx.jupyter.testkit.ReplProvider
 import org.junit.jupiter.api.Test
@@ -35,20 +37,34 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
     }
 
     @Test
-    fun `lets-plot is not resolved as it is an exception`() {
-        val exception = shouldThrow<ReplPreprocessingException> {
-            exec("%use lets-plot")
+    fun `failed code with use should still provide metadata`() {
+        val result = execEx(
+            """
+            %use dataframe
+            throw Exception()
+            """.trimIndent(),
+        )
+
+        result.shouldBeTypeOf<EvalResultEx.Error>()
+        with(result.metadata) {
+            newImports.shouldHaveAtLeastSize(10)
+            compiledData.scripts.shouldHaveAtLeastSize(2)
         }
+    }
+
+    @Test
+    fun `lets-plot is not resolved as it is an exception`() {
+        val exception = execError("%use lets-plot")
+        exception.shouldBeTypeOf<ReplPreprocessingException>()
         exception.message shouldContain "Unknown library"
     }
 
     @Test
     fun `multik resolves to empty`() {
-        exec("%use multik")
+        execRendered("%use multik")
 
-        val exception = shouldThrow<ReplCompilerException> {
-            exec("import org.jetbrains.kotlinx.multik.api.*")
-        }
+        val exception = execError("import org.jetbrains.kotlinx.multik.api.*")
+        exception.shouldBeTypeOf<ReplCompilerException>()
         exception.message shouldContain "Unresolved reference: multik"
     }
 }

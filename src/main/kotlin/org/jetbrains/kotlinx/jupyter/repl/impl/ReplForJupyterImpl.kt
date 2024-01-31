@@ -37,9 +37,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
-import org.jetbrains.kotlinx.jupyter.compiler.util.Classpath
-import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
@@ -47,6 +44,8 @@ import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolver
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
@@ -74,7 +73,7 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
-import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
@@ -94,6 +93,13 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.ShutdownExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.postRender
+import org.jetbrains.kotlinx.jupyter.repl.result.Classpath
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadata
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
+import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
@@ -357,72 +363,131 @@ class ReplForJupyterImpl(
         return withEvalContext {
             beforeCellExecutionsProcessor.process(executor)
 
-            val cell: MutableCodeCell = notebook.addCell(EvalData(evalData))
+            val result = evaluateUserCode(evalData.code, evalData.jupyterId)
+            fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
 
-            val compiledData: SerializedCompiledScriptsData
-            val newImports: List<String>
-            val result = try {
-                log.debug("Current cell id: ${evalData.jupyterId}")
-                val executorWorkflowListener = object : ExecutorWorkflowListener {
-                    override fun internalIdGenerated(id: Int) {
-                        cell.internalId = id
+            when (result) {
+                is InternalReplResult.Success -> {
+                    val rendered = result.internalResult.let { internalResult ->
+                        log.catchAll {
+                            renderersProcessor.renderResult(executor, internalResult.result)
+                        }
+                    }?.let {
+                        log.catchAll {
+                            if (it is Renderable) it.render(notebook) else it
+                        }
                     }
 
-                    override fun codePreprocessed(preprocessedCode: Code) {
-                        cell.preprocessedCode = preprocessedCode
+                    val displayValue = log.catchAll {
+                        notebook.postRender(rendered)
                     }
 
-                    override fun compilationFinished() {
-                        cell.declarations = declarationsCollector.getLastSnippetDeclarations()
+                    EvalResultEx.Success(
+                        result.internalResult,
+                        rendered,
+                        displayValue,
+                        getMetadata(),
+                    )
+                }
+                is InternalReplResult.Error -> {
+                    val error = result.error
+
+                    val isInterrupted = error.isInterruptedException()
+                    if (isInterrupted) {
+                        EvalResultEx.Interrupted(getMetadata())
+                    } else {
+                        val originalError = (error as? ReplEvalRuntimeException)?.cause
+                        val renderedError = log.catchAll {
+                            originalError?.let {
+                                throwableRenderersProcessor.renderThrowable(originalError)
+                            }
+                        }
+
+                        if (renderedError != null) {
+                            val displayError = log.catchAll {
+                                notebook.postRender(renderedError)
+                            }
+                            EvalResultEx.RenderedError(
+                                error,
+                                renderedError,
+                                displayError,
+                                getMetadata(),
+                            )
+                        } else {
+                            EvalResultEx.Error(
+                                error,
+                                getMetadata(),
+                            )
+                        }
                     }
                 }
-                executor.execute(
-                    evalData.code,
-                    isUserCode = true,
-                    currentCellId = evalData.jupyterId - 1,
-                    executorWorkflowListener = executorWorkflowListener,
-                )
-            } finally {
-                compiledData = internalEvaluator.popAddedCompiledScripts()
-                newImports = importsCollector.popAddedImports()
             }
-            cell.resultVal = result.result.value
+        }
+    }
 
-            val rendered = result.result.let {
-                log.catchAll {
-                    renderersProcessor.renderResult(executor, it)
+    private fun calculateEvalMetadata(storeHistory: Boolean, internalMetadata: InternalMetadata): EvaluatedSnippetMetadata {
+        val newClasspath = log.catchAll {
+            updateClasspath()
+        } ?: emptyList()
+
+        val newSources = log.catchAll {
+            updateSources()
+        } ?: emptyList()
+
+        if (!storeHistory) {
+            log.catchAll { notebook.popCell() }
+        }
+
+        val variablesStateUpdate = notebook.variablesState.mapValues { "" }
+        return EvaluatedSnippetMetadata(newClasspath, newSources, internalMetadata, variablesStateUpdate)
+    }
+
+    private fun evaluateUserCode(
+        code: Code,
+        jupyterId: Int,
+    ): InternalReplResult {
+        val cell: MutableCodeCell = notebook.addCell(EvalData(jupyterId, code))
+        val compiledData: SerializedCompiledScriptsData
+        val newImports: List<String>
+        var throwable: Throwable? = null
+        val internalResult: InternalEvalResult? = try {
+            log.debug("Current cell id: $jupyterId")
+            val executorWorkflowListener = object : ExecutorWorkflowListener {
+                override fun internalIdGenerated(id: Int) {
+                    cell.internalId = id
                 }
-            }?.let {
-                log.catchAll {
-                    if (it is Renderable) it.render(notebook) else it
+
+                override fun codePreprocessed(preprocessedCode: Code) {
+                    cell.preprocessedCode = preprocessedCode
+                }
+
+                override fun compilationFinished() {
+                    cell.declarations = declarationsCollector.getLastSnippetDeclarations()
                 }
             }
-
-            val displayValue = log.catchAll {
-                notebook.postRender(rendered)
-            }
-
-            val newClasspath = log.catchAll {
-                updateClasspath()
-            } ?: emptyList()
-
-            val newSources = log.catchAll {
-                updateSources()
-            } ?: emptyList()
-
-            if (!evalData.storeHistory) {
-                log.catchAll { notebook.popCell() }
-            }
-
-            val variablesStateUpdate = notebook.variablesState.mapValues { "" }
-            EvalResultEx(
-                result.result.value,
-                rendered,
-                displayValue,
-                result.scriptInstance,
-                result.result.name,
-                EvaluatedSnippetMetadata(newClasspath, newSources, compiledData, newImports, variablesStateUpdate),
+            executor.execute(
+                code,
+                isUserCode = true,
+                currentCellId = jupyterId - 1,
+                executorWorkflowListener = executorWorkflowListener,
             )
+        } catch (t: Throwable) {
+            throwable = t
+            null
+        } finally {
+            compiledData = internalEvaluator.popAddedCompiledScripts()
+            newImports = importsCollector.popAddedImports()
+        }
+
+        if (internalResult != null) {
+            cell.resultVal = internalResult.result.value
+        }
+
+        val metadata = InternalMetadataImpl(compiledData, newImports)
+        return if (throwable != null) {
+            InternalReplResult.Error(throwable, metadata)
+        } else {
+            InternalReplResult.Success(internalResult!!, metadata)
         }
     }
 

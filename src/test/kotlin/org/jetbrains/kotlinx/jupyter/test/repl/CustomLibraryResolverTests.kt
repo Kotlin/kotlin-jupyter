@@ -1,13 +1,12 @@
 
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.receivers.TempAnnotation
 import jupyter.kotlin.variablesReport
 import kotlinx.serialization.SerializationException
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
@@ -22,8 +21,10 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.test.evalError
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.evalRendered
+import org.jetbrains.kotlinx.jupyter.test.evalRenderedError
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.junit.jupiter.api.Assertions
@@ -203,7 +204,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val libs = listOf(lib1).toLibraries()
         val replWithResolver = makeReplWithLibraries(libs)
-        val exception = assertThrows<ReplPreprocessingException> { replWithResolver.evalRaw("%use mylib") }
+        val exception = replWithResolver.evalError<ReplPreprocessingException>("%use mylib")
 
         val message = exception.message!!
         Assertions.assertTrue(message.contains(minRequiredVersion))
@@ -446,21 +447,13 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 renderThrowable<IllegalArgumentException> { textResult(it.message.orEmpty()) }
             },
         )
-        val processor = repl.throwableRenderersProcessor
 
-        val e1 = assertThrows<ReplEvalRuntimeException> {
-            repl.evalRaw("throw IllegalArgumentException(\"42\")")
-        }
-        val display1 = processor.renderThrowable(e1.cause!!)
-        display1.shouldBeInstanceOf<DisplayResult>()
+        val display1 = repl.evalRenderedError<ReplEvalRuntimeException>("throw IllegalArgumentException(\"42\")")
+        display1.shouldNotBeNull()
         val json = display1.toJson(overrideId = null).toString()
         json shouldBe """{"data":{"text/plain":"42"},"metadata":{}}"""
 
-        val e2 = assertThrows<ReplEvalRuntimeException> {
-            repl.evalRaw("throw IndexOutOfBoundsException()")
-        }
-        val display2 = processor.renderThrowable(e2.cause!!)
-        display2 shouldBe null
+        repl.evalError<ReplEvalRuntimeException>("throw IndexOutOfBoundsException()")
     }
 
     @Test

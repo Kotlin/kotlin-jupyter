@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 
 abstract class AbstractSingleReplTest : AbstractReplTest() {
@@ -10,6 +12,12 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
 
     protected fun eval(code: Code, jupyterId: Int = -1, storeHistory: Boolean = true) =
         repl.evalEx(EvalRequestData(code, jupyterId, storeHistory))
+
+    protected inline fun <reified T : Throwable> evalError(code: Code): T {
+        val result = eval(code)
+        result.shouldBeTypeOf<EvalResultEx.Error>()
+        return result.error.shouldBeTypeOf<T>()
+    }
 
     protected fun completeOrFail(code: Code, cursor: Int) = repl.completeBlocking(code, cursor).getOrFail()
 

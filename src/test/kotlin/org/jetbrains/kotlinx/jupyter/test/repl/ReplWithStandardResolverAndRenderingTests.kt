@@ -6,6 +6,8 @@ import org.jetbrains.kotlinx.jupyter.api.createRenderer
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.evalEx
+import org.jetbrains.kotlinx.jupyter.test.rawValue
+import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode

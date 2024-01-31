@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
@@ -17,16 +16,16 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.mavenLocal
 import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
-import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.evalError
 import org.jetbrains.kotlinx.jupyter.test.evalEx
+import org.jetbrains.kotlinx.jupyter.test.evalInterrupted
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -36,7 +35,6 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertNull
@@ -108,9 +106,7 @@ class IntegrationApiTests {
         assertEquals(3, repl.evalRendered("w.value3"))
 
         // check that 'value3' is not available for list 'l'
-        assertThrows<ReplCompilerException> {
-            repl.evalRaw("l.value3")
-        }
+        repl.evalError<ReplCompilerException>("l.value3")
 
         repl.evalRaw("val e: List<Int>? = w.take(5)")
         val res = repl.evalRendered("e")
@@ -298,8 +294,8 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        val result = repl.evalEx(EvalRequestData("\"abab\""))
-        assertEquals("axax", result.rawValue)
+        val result = repl.evalRaw("\"abab\"")
+        assertEquals("axax", result)
     }
 
     @Test
@@ -314,9 +310,7 @@ class IntegrationApiTests {
         repl.evalRaw("%use lib1")
         x shouldBe 0
 
-        shouldThrow<ReplEvalRuntimeException> {
-            repl.evalRaw("throw java.lang.ThreadDeath()")
-        }
+        repl.evalInterrupted("throw java.lang.ThreadDeath()")
         x shouldBe 1
     }
 

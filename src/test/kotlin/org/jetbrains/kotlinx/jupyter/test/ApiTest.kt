@@ -12,8 +12,8 @@ import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.session.JupyterSessionInfo
-import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration

@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import io.kotest.assertions.throwables.shouldNotThrow
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
@@ -11,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
@@ -18,9 +17,10 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
-import org.jetbrains.kotlinx.jupyter.repl.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
+import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
@@ -190,14 +190,13 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         includeLib("lib1")
 
         eval("xxx").renderedValue shouldBe 1
-        shouldThrow<ReplCompilerException> { eval("yyy").renderedValue }
+        evalError<ReplCompilerException>("yyy")
 
         includeLib("lib2")
         eval("yyy").renderedValue shouldBe 2
 
-        shouldNotThrow<Throwable> {
-            eval("""loadLibraryProducers("org.jetbrains.test.kotlinx.jupyter.api.Integration1")""")
-        }
+        eval("""loadLibraryProducers("org.jetbrains.test.kotlinx.jupyter.api.Integration1")""")
+            .shouldBeTypeOf<EvalResultEx.Success>()
     }
 
     @Test
@@ -314,9 +313,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     fun `some options could be ignored`() {
         eval("%use ___test@experimental(0.1)")
 
-        val exception = shouldThrow<ReplPreprocessingException> {
-            eval("%use ___test@experimental(0.1, 0.2)")
-        }
+        val exception = evalError<ReplPreprocessingException>("%use ___test@experimental(0.1, 0.2)")
 
         exception.message shouldContain "unnamed arguments cannot be more than the number"
     }

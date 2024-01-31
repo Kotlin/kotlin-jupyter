@@ -36,7 +36,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 
 @Serializable(MessageTypeSerializer::class)
 enum class MessageType(val contentClass: KClass<out MessageContent>) {
-    NONE(AbortReply::class),
+    NONE(ExecuteAbortReply::class),
 
     EXECUTE_REQUEST(ExecuteRequest::class),
     EXECUTE_REPLY(ExecuteReply::class),
@@ -193,11 +193,39 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
     }
 }
 
-@Serializable
-class AbortReply : MessageReplyContent(MessageStatus.ABORT)
+object ExecuteReplySerializer : KSerializer<ExecuteReply> {
+    private val utilSerializer = serializer<JsonObject>()
+
+    override val descriptor: SerialDescriptor
+        get() = utilSerializer.descriptor
+
+    override fun deserialize(decoder: Decoder): ExecuteReply {
+        require(decoder is JsonDecoder)
+        val json = decoder.decodeJsonElement().jsonObject
+        val format = decoder.json
+
+        val statusJson = json["status"] ?: throw SerializationException("Status field not present")
+
+        val status = format.decodeFromJsonElement<MessageStatus>(statusJson)
+
+        return when (status) {
+            MessageStatus.OK -> format.decodeFromJsonElement<ExecuteSuccessReply>(json)
+            MessageStatus.ERROR -> format.decodeFromJsonElement<ExecuteErrorReply>(json)
+            MessageStatus.ABORT -> format.decodeFromJsonElement<ExecuteAbortReply>(json)
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: ExecuteReply) {
+        when (value) {
+            is ExecuteAbortReply -> encoder.encodeSerializableValue(serializer(), value)
+            is ExecuteErrorReply -> encoder.encodeSerializableValue(serializer(), value)
+            is ExecuteSuccessReply -> encoder.encodeSerializableValue(serializer(), value)
+        }
+    }
+}
 
 @Serializable
-open class ErrorReply(
+open class CompleteErrorReply(
     @SerialName("ename")
     val name: String,
 
@@ -206,6 +234,15 @@ open class ErrorReply(
 
     val traceback: List<String>,
 ) : MessageReplyContent(MessageStatus.ERROR)
+
+@Serializable(ExecuteReplySerializer::class)
+sealed interface ExecuteReply : MessageContent {
+    val status: MessageStatus
+}
+
+@Serializable
+@Suppress("CanSealedSubClassBeObject")
+class ExecuteAbortReply : MessageReplyContent(MessageStatus.ABORT), ExecuteReply
 
 @Serializable
 class ExecuteErrorReply(
@@ -221,7 +258,20 @@ class ExecuteErrorReply(
     val traceback: List<String>,
 
     val additionalInfo: JsonObject,
-) : MessageReplyContent(MessageStatus.ERROR)
+) : MessageReplyContent(MessageStatus.ERROR), ExecuteReply
+
+@Serializable
+class ExecuteSuccessReply(
+    @SerialName("execution_count")
+    val executionCount: Long,
+
+    val payload: List<Payload> = listOf(),
+
+    @SerialName("user_expressions")
+    val userExpressions: Map<String, JsonElement> = mapOf(),
+
+    val additionalInfo: JsonObject? = null,
+) : MessageReplyContent(MessageStatus.OK), ExecuteReply
 
 @Serializable
 data class ExecuteRequest(
@@ -242,36 +292,12 @@ data class ExecuteRequest(
 
     @SerialName("stop_on_error")
     val stopOnError: Boolean = true,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class Payload(
     val source: String,
 )
-
-@Serializable
-class ExecuteReply(
-    val status: MessageStatus,
-
-    @SerialName("execution_count")
-    val executionCount: Long,
-
-    val payload: List<Payload> = listOf(),
-
-    @SerialName("user_expressions")
-    val userExpressions: Map<String, JsonElement> = mapOf(),
-
-    @SerialName("ename")
-    val errorName: String? = null,
-
-    @SerialName("evalue")
-    val errorValue: String? = null,
-
-    @SerialName("traceback")
-    val traceback: List<String>? = null,
-
-    val additionalInfo: JsonObject? = null,
-) : MessageContent()
 
 @Serializable
 class InspectRequest(
@@ -282,7 +308,7 @@ class InspectRequest(
 
     @SerialName("detail_level")
     val detailLevel: DetailLevel,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class InspectReply(
@@ -297,21 +323,21 @@ class CompleteRequest(
 
     @SerialName("cursor_pos")
     val cursorPos: Int,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class IsCompleteRequest(
     val code: String,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class IsCompleteReply(
     val status: String,
     val indent: String? = null,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
-class KernelInfoRequest : MessageContent()
+class KernelInfoRequest : AbstractMessageContent()
 
 @Serializable
 class HelpLink(
@@ -341,37 +367,37 @@ class KernelInfoReply(
 @Serializable
 class ShutdownRequest(
     val restart: Boolean,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ShutdownResponse(
     val restart: Boolean,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
-class InterruptRequest : MessageContent()
+class InterruptRequest : AbstractMessageContent()
 
 @Serializable
-class InterruptResponse : MessageContent()
+class InterruptResponse : AbstractMessageContent()
 
 @Serializable
-class DebugRequest : MessageContent()
+class DebugRequest : AbstractMessageContent()
 
 @Serializable
-class DebugResponse : MessageContent()
+class DebugResponse : AbstractMessageContent()
 
 @Serializable
 class StreamResponse(
     val name: String,
     val text: String,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class DisplayDataResponse(
     val data: JsonElement? = null,
     val metadata: JsonElement? = null,
     val transient: JsonElement? = null,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ExecutionInputReply(
@@ -379,7 +405,7 @@ class ExecutionInputReply(
 
     @SerialName("execution_count")
     val executionCount: Long,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ExecutionResultMessage(
@@ -388,32 +414,32 @@ class ExecutionResultMessage(
 
     @SerialName("execution_count")
     val executionCount: Long,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class StatusReply(
     @SerialName("execution_state")
     val status: KernelStatus,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ClearOutputReply(
     val wait: Boolean,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
-class DebugEventReply : MessageContent()
+class DebugEventReply : AbstractMessageContent()
 
 @Serializable
 class InputRequest(
     val prompt: String,
     val password: Boolean = false,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class InputReply(
     val value: String,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class HistoryRequest(
@@ -433,26 +459,26 @@ class HistoryRequest(
     // If hist_access_type is 'search'
     val pattern: String? = null,
     val unique: Boolean? = null,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class HistoryReply(
     val history: List<String>,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
-class ConnectRequest : MessageContent()
+class ConnectRequest : AbstractMessageContent()
 
 @Serializable(ConnectReplySerializer::class)
 class ConnectReply(
     val ports: JsonObject,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class CommInfoRequest(
     @SerialName("target_name")
     val targetName: String? = null,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class Comm(
@@ -463,7 +489,7 @@ class Comm(
 @Serializable
 class CommInfoReply(
     val comms: Map<String, Comm>,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class CommOpen(
@@ -472,33 +498,33 @@ class CommOpen(
     @SerialName("target_name")
     val targetName: String,
     val data: JsonObject = Json.EMPTY,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class CommMsg(
     @SerialName("comm_id")
     val commId: String,
     val data: JsonObject = Json.EMPTY,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class CommClose(
     @SerialName("comm_id")
     val commId: String,
     val data: JsonObject = Json.EMPTY,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ListErrorsRequest(
     val code: String,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable
 class ListErrorsReply(
     val code: String,
 
     val errors: List<ScriptDiagnostic>,
-) : MessageContent()
+) : AbstractMessageContent()
 
 @Serializable(MessageDataSerializer::class)
 data class MessageData(

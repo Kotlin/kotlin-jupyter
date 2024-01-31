@@ -33,7 +33,7 @@ fun JupyterCommunicationFacility.doWrappedInBusyIdle(action: () -> Unit) {
     }
 }
 
-fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(msgType: MessageType, content: MessageContent) {
+fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(msgType: MessageType, content: AbstractMessageContent) {
     socketManager.iopub.sendMessage(messageFactory.makeSimpleMessage(msgType, content))
 }
 
@@ -45,17 +45,4 @@ fun JupyterCommunicationFacility.sendOut(stream: JupyterOutType, text: String) {
     socketManager.iopub.sendMessage(
         messageFactory.makeReplyMessage(msgType = MessageType.STREAM, content = StreamResponse(stream.optionName(), text)),
     )
-}
-
-fun JupyterCommunicationFacility.sendResponse(response: Response, requestCount: Long, startedTime: String) {
-    val stdOut = response.stdOut
-    if (!stdOut.isNullOrEmpty()) {
-        sendOut(JupyterOutType.STDOUT, stdOut)
-    }
-
-    val stdErr = response.stdErr
-    if (!stdErr.isNullOrEmpty()) {
-        sendOut(JupyterOutType.STDERR, stdErr)
-    }
-    response.sendBody(socketManager, requestCount, messageFactory, startedTime)
 }

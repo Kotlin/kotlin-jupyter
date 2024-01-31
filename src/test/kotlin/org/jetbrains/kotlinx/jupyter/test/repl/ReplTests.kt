@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
@@ -24,9 +22,9 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
+import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
@@ -50,31 +48,25 @@ class ReplTests : AbstractSingleReplTest() {
         // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
-        shouldThrow<ReplCompilerException> {
-            eval(
-                """
-                fun stack(vararg tup: Int): Int = tup.sum()
-                val X = 1
-                val x = stack(1, X)
-                """.trimIndent(),
-            )
-
-            print("")
-        }
+        evalError<ReplCompilerException>(
+            """
+            fun stack(vararg tup: Int): Int = tup.sum()
+            val X = 1
+            val x = stack(1, X)
+            """.trimIndent(),
+        )
     }
 
     @Test
     fun `compilation error`() {
-        val ex = shouldThrow<ReplCompilerException> {
-            eval(
-                """
-                val foobar = 78
-                val foobaz = "dsdsda"
-                val ddd = ppp
-                val ooo = foobar
-                """.trimIndent(),
-            )
-        }
+        val ex = evalError<ReplCompilerException>(
+            """
+            val foobar = 78
+            val foobaz = "dsdsda"
+            val ddd = ppp
+            val ooo = foobar
+            """.trimIndent(),
+        )
 
         val diag = ex.firstError
         val location = diag?.location
@@ -89,17 +81,15 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun `runtime execution error`() {
-        val ex = shouldThrow<ReplEvalRuntimeException> {
-            eval(
-                """
-                try {
-                    (null as String)
-                } catch(e: NullPointerException) {
-                    throw RuntimeException("XYZ", e)
-                }
-                """.trimIndent(),
-            )
-        }
+        val ex = evalError<ReplEvalRuntimeException>(
+            """
+            try {
+                (null as String)
+            } catch(e: NullPointerException) {
+                throw RuntimeException("XYZ", e)
+            }
+            """.trimIndent(),
+        )
         with(ex.render()) {
             shouldContain(NullPointerException::class.qualifiedName!!)
             shouldContain("XYZ")
@@ -178,9 +168,7 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testScriptIsolation() {
-        shouldThrowAny {
-            eval("org.jetbrains.kotlinx.jupyter.ReplLineMagics.use")
-        }
+        evalError<ReplCompilerException>("org.jetbrains.kotlinx.jupyter.ReplLineMagics.use")
     }
 
     @Test
@@ -386,15 +374,13 @@ class ReplTests : AbstractSingleReplTest() {
         eval("1+1", 1)
         val res = eval("Out[1]")
         res.renderedValue shouldBe 2
-        shouldThrowAny { eval("Out[3]") }
+        evalError<ReplEvalRuntimeException>("Out[3]")
     }
 
     @Test
     fun testNoHistory() {
         eval("1+1", storeHistory = false)
-        shouldThrow<ReplEvalRuntimeException> {
-            eval("Out[1]")
-        }
+        evalError<ReplEvalRuntimeException>("Out[1]")
     }
 
     @Test
@@ -602,8 +588,6 @@ class ReplTests : AbstractSingleReplTest() {
         """.trimIndent()
 
         eval(code)
-        assertThrows<ReplEvalRuntimeException> {
-            eval(code)
-        }
+        evalError<ReplEvalRuntimeException>(code)
     }
 }

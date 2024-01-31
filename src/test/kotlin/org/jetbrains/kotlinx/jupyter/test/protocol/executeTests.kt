@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.JsonNull
@@ -16,14 +17,13 @@ import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
-import org.jetbrains.kotlinx.jupyter.compiler.util.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataResponse
 import org.jetbrains.kotlinx.jupyter.messaging.EXECUTION_INTERRUPTED_MESSAGE
-import org.jetbrains.kotlinx.jupyter.messaging.ExecuteReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
+import org.jetbrains.kotlinx.jupyter.messaging.ExecuteSuccessReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
@@ -40,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
@@ -368,7 +369,7 @@ class ExecuteTests : KernelServerTestsBase() {
     @Test
     fun testCounter() {
         fun checkCounter(message: Message, expectedCounter: Long) {
-            val data = message.data.content as ExecuteReply
+            val data = message.data.content as ExecuteSuccessReply
             assertEquals(expectedCounter, data.executionCount)
         }
         val res1 = doExecute("41", executeReplyChecker = { checkCounter(it, 1) })
@@ -419,8 +420,8 @@ class ExecuteTests : KernelServerTestsBase() {
         assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "7"), result2)
 
         val logText = file.readText()
-        assertTrue("2 + 2" in logText)
-        assertTrue("3 + 4" !in logText)
+        logText.shouldContain("2 + 2")
+        logText.shouldNotContain("3 + 4")
 
         file.delete()
     }

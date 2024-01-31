@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.execution
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.repl.InternalEvalResult
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 
 /**
  * Executes notebook cell code.

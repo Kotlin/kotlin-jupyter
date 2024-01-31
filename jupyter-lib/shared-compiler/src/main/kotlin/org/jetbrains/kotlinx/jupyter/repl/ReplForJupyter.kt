@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import java.io.File
 
 interface ReplForJupyter {

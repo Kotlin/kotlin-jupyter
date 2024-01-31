@@ -1,12 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.assertions.fail
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.DisplayContainer
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.DisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
@@ -55,6 +58,7 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
@@ -314,10 +318,58 @@ fun library(builder: JupyterIntegration.Builder.() -> Unit) = createLibrary(Note
 
 fun ReplForJupyter.evalEx(code: Code) = evalEx(EvalRequestData(code))
 
+inline fun <reified T : Throwable> ReplForJupyter.evalError(code: Code): T {
+    val result = evalEx(code)
+    result.shouldBeInstanceOf<EvalResultEx.Error>()
+    return result.error.shouldBeTypeOf()
+}
+
+inline fun <reified T : Throwable> ReplForJupyter.evalRenderedError(code: Code): DisplayResult? {
+    val result = evalEx(code)
+    result.shouldBeInstanceOf<EvalResultEx.RenderedError>()
+    result.error.shouldBeTypeOf<T>()
+
+    return result.displayError
+}
+
+fun ReplForJupyter.evalInterrupted(code: Code) {
+    val result = evalEx(code)
+    result.shouldBeInstanceOf<EvalResultEx.Interrupted>()
+}
+
+fun ReplForJupyter.evalExSuccess(code: Code): EvalResultEx.Success {
+    val result = evalEx(code)
+    result.shouldBeInstanceOf<EvalResultEx.Success>()
+    return result
+}
+
 fun ReplForJupyter.evalRaw(code: Code): Any? {
-    return evalEx(code).rawValue
+    return evalExSuccess(code).internalResult.result.value
 }
 
 fun ReplForJupyter.evalRendered(code: Code): Any? {
-    return evalEx(code).renderedValue
+    return evalExSuccess(code).renderedValue
+}
+
+val EvalResultEx.rawValue get(): Any? {
+    this.shouldBeTypeOf<EvalResultEx.Success>()
+    return this.internalResult.result.value
+}
+
+val EvalResultEx.renderedValue get(): Any? {
+    this.shouldBeTypeOf<EvalResultEx.Success>()
+    return this.renderedValue
+}
+
+val EvalResultEx.displayValue get(): Any? {
+    this.shouldBeTypeOf<EvalResultEx.Success>()
+    return this.displayValue
+}
+
+fun EvalResultEx.assertSuccess() {
+    when (this) {
+        is EvalResultEx.AbstractError -> throw error
+        is EvalResultEx.Interrupted -> throw InterruptedException()
+        is EvalResultEx.Success -> {}
+    }
 }

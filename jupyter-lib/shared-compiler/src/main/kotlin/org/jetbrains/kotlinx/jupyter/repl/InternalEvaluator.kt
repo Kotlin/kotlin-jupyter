@@ -2,9 +2,10 @@ package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.VariableState
-import org.jetbrains.kotlinx.jupyter.compiler.util.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
+import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
+import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import kotlin.reflect.KClass
 
 interface InternalEvaluator {

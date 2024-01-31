@@ -1,21 +1,7 @@
-package org.jetbrains.kotlinx.jupyter.compiler.util
+package org.jetbrains.kotlinx.jupyter.repl.result
 
 import kotlinx.serialization.Serializable
-
-typealias Classpath = List<String>
-
-@Serializable
-data class SerializedCompiledScript(
-    val fileName: String,
-    val data: String,
-    val isImplicitReceiver: Boolean,
-)
-
-@Serializable
-data class SerializedScriptSource(
-    val fileName: String,
-    val text: String,
-)
+import org.jetbrains.kotlinx.jupyter.repl.SerializedScriptSource
 
 @Serializable
 data class SerializedCompiledScriptsData(
@@ -49,22 +35,5 @@ data class SerializedCompiledScriptsData(
         fun addSource(source: SerializedScriptSource) {
             sources.add(source)
         }
-    }
-}
-
-fun buildScriptsData(action: SerializedCompiledScriptsData.Builder.() -> Unit): SerializedCompiledScriptsData {
-    return SerializedCompiledScriptsData.Builder().apply(action).build()
-}
-
-@Serializable
-class EvaluatedSnippetMetadata(
-    val newClasspath: Classpath = emptyList(),
-    val newSources: Classpath = emptyList(),
-    val compiledData: SerializedCompiledScriptsData = SerializedCompiledScriptsData.EMPTY,
-    val newImports: List<String> = emptyList(),
-    val evaluatedVariablesState: Map<String, String?> = mutableMapOf(),
-) {
-    companion object {
-        val EMPTY = EvaluatedSnippetMetadata()
     }
 }
