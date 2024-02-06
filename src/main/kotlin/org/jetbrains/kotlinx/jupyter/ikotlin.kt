@@ -191,6 +191,7 @@ fun kernelServer(replSettings: DefaultReplSettings) {
         try {
             controlThread.join()
             hbThread.join()
+            messageHandler.closeIfPossible()
         } catch (_: InterruptedException) {
         }
 

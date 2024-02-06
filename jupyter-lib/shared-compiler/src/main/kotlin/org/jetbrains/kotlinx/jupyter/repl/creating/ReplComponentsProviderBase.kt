@@ -35,6 +35,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
         commManager,
         explicitClientType,
         librariesScanner,
+        debugPort != null,
     )
 
     override fun provideScriptClasspath() = emptyList<File>()

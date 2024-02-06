@@ -19,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResourceLibraryDescriptorsProvide
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
+import java.io.Closeable
 import java.io.File
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
@@ -172,3 +173,7 @@ fun JsonElement.resolvePath(path: List<String>): JsonElement? {
 }
 
 data class MutablePair<T1, T2>(var first: T1, var second: T2)
+
+fun Any.closeIfPossible() {
+    if (this is Closeable) close()
+}

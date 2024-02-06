@@ -24,6 +24,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
+import org.jetbrains.kotlinx.jupyter.debug.DEBUG_THREAD_NAME
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
@@ -31,13 +32,30 @@ import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.util.JupyterClientDetector
+import java.io.Closeable
+import kotlin.concurrent.thread
 
 class NotebookImpl(
     private val runtimeProperties: ReplRuntimeProperties,
     override val commManager: CommManager,
     private val explicitClientType: JupyterClientType?,
     override val libraryLoader: LibraryLoader,
-) : MutableNotebook {
+    debugPortProvided: Boolean,
+) : MutableNotebook, Closeable {
+    private fun `$debugMethod`() {
+        try {
+            while (true) {
+                Thread.sleep(1000)
+            }
+        } catch (_: InterruptedException) {
+        }
+    }
+    private val debugThread = if (debugPortProvided) {
+        thread(
+            name = DEBUG_THREAD_NAME,
+            block = ::`$debugMethod`,
+        )
+    } else null
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null
 
@@ -169,5 +187,9 @@ class NotebookImpl(
     override fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String>): LibraryDefinition {
         return parseLibraryDescriptor(descriptorText)
             .convertToDefinition(options.entries.map { Variable(it.key, it.value) })
+    }
+
+    override fun close() {
+        debugThread?.interrupt()
     }
 }
