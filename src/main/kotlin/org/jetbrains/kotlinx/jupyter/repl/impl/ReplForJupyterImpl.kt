@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
@@ -103,6 +104,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadata
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
+import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
@@ -140,7 +142,7 @@ class ReplForJupyterImpl(
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
     private val libraryInfoCache: LibraryInfoCache,
     private val libraryReferenceParser: LibraryReferenceParser,
-) : ReplForJupyter, BaseKernelHost, UserHandlesProvider {
+) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
 
     override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
 
@@ -651,4 +653,8 @@ class ReplForJupyterImpl(
 
     override val host: KotlinKernelHost?
         get() = currentKernelHost
+
+    override fun close() {
+        notebook.closeIfPossible()
+    }
 }
