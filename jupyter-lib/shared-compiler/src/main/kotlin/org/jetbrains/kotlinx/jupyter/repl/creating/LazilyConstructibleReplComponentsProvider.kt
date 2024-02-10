@@ -2,7 +2,11 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
@@ -61,6 +65,18 @@ abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvide
 
     override val explicitClientType: JupyterClientType? by lazy { provideExplicitClientType() }
     protected abstract fun provideExplicitClientType(): JupyterClientType?
+
+    override val httpClient: HttpClient by lazy { provideHttpClient() }
+    protected abstract fun provideHttpClient(): HttpClient
+
+    override val libraryDescriptorsManager: LibraryDescriptorsManager by lazy { provideLibraryDescriptorsManager() }
+    protected abstract fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager
+
+    override val libraryInfoCache: LibraryInfoCache by lazy { provideLibraryInfoCache() }
+    protected abstract fun provideLibraryInfoCache(): LibraryInfoCache
+
+    override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
+    protected abstract fun provideLibraryReferenceParser(): LibraryReferenceParser
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)

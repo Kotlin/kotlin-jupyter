@@ -7,12 +7,15 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 import java.io.IOException
 
-class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
+class JsLibraryResourcesProcessor(
+    private val httpClient: HttpClient,
+) : LibraryResourcesProcessor {
     private var outputCounter = 0
 
     private fun loadBunch(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): ScriptModifierFunctionGenerator {
@@ -26,7 +29,7 @@ class JsLibraryResourcesProcessor : LibraryResourcesProcessor {
                         URLScriptModifierFunctionGenerator(path)
                     }
                     ResourcePathType.URL_EMBEDDED -> {
-                        val scriptText = getHttp(path).text
+                        val scriptText = httpClient.getHttp(path).text
                         CodeScriptModifierFunctionGenerator(scriptText)
                     }
                     ResourcePathType.LOCAL_PATH -> {

@@ -84,9 +84,8 @@ fun main(vararg args: String) {
     try {
         log.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val libraryInfoProvider = getDefaultClasspathResolutionInfoProvider()
         val kernelConfig = kernelArgs.getConfig()
-        val replConfig = ReplConfig.create(libraryInfoProvider, kernelArgs.homeDir)
+        val replConfig = ReplConfig.create(::getDefaultClasspathResolutionInfoProvider, homeDir = kernelArgs.homeDir)
         val runtimeProperties = createRuntimeProperties(kernelConfig)
         val replSettings = DefaultReplSettings(kernelConfig, replConfig, runtimeProperties)
         kernelServer(replSettings)
@@ -109,9 +108,9 @@ fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, 
 
     val kernelConfig = KernelArgs(cfgFile, cp, null, null, null, null).getConfig()
     val replConfig = ReplConfig.create(
-        resolutionInfoProvider ?: EmptyResolutionInfoProvider,
-        null,
-        true,
+        { httpUtil -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
+        homeDir = null,
+        embedded = true,
     )
     val replSettings = DefaultReplSettings(kernelConfig, replConfig, scriptReceivers = scriptReceivers.orEmpty())
     kernelServer(replSettings)

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.common.successful
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -11,13 +12,14 @@ import kotlin.script.experimental.api.SourceCodeCompletionVariant
 class CompletionMagicsProcessor(
     libraryDescriptorsProvider: LibraryDescriptorsProvider,
     parseOutCellMarker: Boolean = false,
+    private val httpClient: HttpClient,
 ) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider, parseOutCellMarker) {
 
     override fun variant(text: String, icon: String) = SourceCodeCompletionVariant(text, text, icon, icon)
     override fun key(variant: SourceCodeCompletionVariant) = variant.text
 
     override fun getHttpResponseText(url: String): String? {
-        val response = getHttp(url)
+        val response = httpClient.getHttp(url)
         val status = response.status
         if (!status.successful) {
             getLogger("magics completion").warn("Magic completion request failed: $status")

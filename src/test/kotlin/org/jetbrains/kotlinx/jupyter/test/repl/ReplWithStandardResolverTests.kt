@@ -16,8 +16,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.renderedValue

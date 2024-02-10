@@ -5,19 +5,19 @@ import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultLibraryDescriptorGlobalOptions
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResourceLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptions
-import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryReference
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.File
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -102,32 +102,10 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
     fun ensureStorageCreation(address: K) = cellVariables.putIfAbsent(address, mutableSetOf())
 }
 
-val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
-    val libraryFiles = KERNEL_LIBRARIES
-        .homeLibrariesDir(homeDir)
-        .listFiles(KERNEL_LIBRARIES::isLibraryDescriptor)
-        .orEmpty()
-    libraryFiles.toList().mapNotNull { file ->
-        val libraryName = file.nameWithoutExtension
-        log.info("Parsing descriptor for library '$libraryName'")
-        log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
-            libraryName to parseLibraryDescriptor(file.readText())
-        }
-    }.toMap()
-}
-
-val descriptorOptions = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
-    val globalOptions = KERNEL_LIBRARIES
-        .homeLibrariesDir(homeDir)
-        .resolve(KERNEL_LIBRARIES.optionsFileName())
-    if (globalOptions.exists()) {
-        parseLibraryDescriptorGlobalOptions(globalOptions.readText())
-    } else {
-        DefaultLibraryDescriptorGlobalOptions
-    }
-}
-
-class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLibraryDescriptorsProvider() {
+class HomeDirLibraryDescriptorsProvider(
+    private val homeDir: File?,
+    private val libraryDescriptorsManager: LibraryDescriptorsManager,
+) : ResourceLibraryDescriptorsProvider() {
     override fun getDescriptors(): Map<String, LibraryDescriptor> {
         return if (homeDir == null) super.getDescriptors()
         else libraryDescriptors(homeDir)
@@ -137,16 +115,42 @@ class HomeDirLibraryDescriptorsProvider(private val homeDir: File?) : ResourceLi
         return if (homeDir == null) super.getDescriptorGlobalOptions()
         else descriptorOptions(homeDir)
     }
+
+    val descriptorOptions = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
+        val globalOptions = libraryDescriptorsManager
+            .homeLibrariesDir(homeDir)
+            .resolve(libraryDescriptorsManager.optionsFileName())
+        if (globalOptions.exists()) {
+            parseLibraryDescriptorGlobalOptions(globalOptions.readText())
+        } else {
+            DefaultLibraryDescriptorGlobalOptions
+        }
+    }
+
+    val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
+        val libraryFiles = libraryDescriptorsManager
+            .homeLibrariesDir(homeDir)
+            .listFiles(libraryDescriptorsManager::isLibraryDescriptor)
+            .orEmpty()
+        libraryFiles.toList().mapNotNull { file ->
+            val libraryName = file.nameWithoutExtension
+            log.info("Parsing descriptor for library '$libraryName'")
+            log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
+                libraryName to parseLibraryDescriptor(file.readText())
+            }
+        }.toMap()
+    }
 }
 
 class LibraryDescriptorsByResolutionProvider(
     private val delegate: LibraryDescriptorsProvider,
     private val libraryResolver: LibraryResolver,
+    private val libraryReferenceParser: LibraryReferenceParser,
 ) : LibraryDescriptorsProvider by delegate {
     override fun getDescriptorForVersionsCompletion(fullName: String): LibraryDescriptor? {
         return super.getDescriptorForVersionsCompletion(fullName)
             ?: run {
-                val reference = parseLibraryReference(fullName)
+                val reference = libraryReferenceParser.parseLibraryReference(fullName)
                 val descriptorText = libraryResolver.resolve(reference, emptyList())?.originalDescriptorText ?: return@run null
                 parseLibraryDescriptor(descriptorText)
             }

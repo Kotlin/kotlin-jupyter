@@ -22,6 +22,10 @@ class ReplFactoryBase(
                 librariesScanner,
                 debugPort,
                 commHandlers,
+                httpClient,
+                libraryDescriptorsManager,
+                libraryInfoCache,
+                libraryReferenceParser,
             )
         }
     }

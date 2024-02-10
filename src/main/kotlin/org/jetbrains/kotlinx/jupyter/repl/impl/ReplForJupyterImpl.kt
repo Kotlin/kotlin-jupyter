@@ -32,6 +32,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.commands.doCommandCompletion
 import org.jetbrains.kotlinx.jupyter.commands.reportCommandErrors
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -48,10 +50,11 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
@@ -133,13 +136,18 @@ class ReplForJupyterImpl(
     override val librariesScanner: LibrariesScanner,
     override val debugPort: Int? = null,
     commHandlers: List<CommHandler> = listOf(),
+    private val httpClient: HttpClient,
+    private val libraryDescriptorsManager: LibraryDescriptorsManager,
+    private val libraryInfoCache: LibraryInfoCache,
+    private val libraryReferenceParser: LibraryReferenceParser,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider {
 
     override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
 
     private val libraryInfoSwitcher = getDefaultResolutionInfoSwitcher(
         resolutionInfoProvider,
-        KERNEL_LIBRARIES.homeLibrariesDir(homeDir),
+        libraryInfoCache,
+        libraryDescriptorsManager.homeLibrariesDir(homeDir),
         runtimeProperties.currentBranch,
     )
 
@@ -147,7 +155,7 @@ class ReplForJupyterImpl(
 
     private var currentKernelHost: KotlinKernelHost? = null
 
-    private val resourcesProcessor = LibraryResourcesProcessorImpl()
+    private val resourcesProcessor = LibraryResourcesProcessorImpl(httpClient)
 
     override val sessionOptions: SessionOptions = object : SessionOptions {
         override var resolveSources: Boolean
@@ -173,7 +181,11 @@ class ReplForJupyterImpl(
         runtimeProperties.jvmTargetForSnippets,
     )
 
-    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(libraryResolver, runtimeProperties.version)
+    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(
+        libraryResolver,
+        libraryReferenceParser,
+        runtimeProperties.version,
+    )
 
     private val magics = MagicsProcessor(
         FullMagicsHandler(
@@ -184,14 +196,14 @@ class ReplForJupyterImpl(
         parseOutCellMagic,
     )
     override val libraryDescriptorsProvider = run {
-        val provider = HomeDirLibraryDescriptorsProvider(homeDir)
+        val provider = HomeDirLibraryDescriptorsProvider(homeDir, libraryDescriptorsManager)
         if (libraryResolver != null) {
-            LibraryDescriptorsByResolutionProvider(provider, libraryResolver)
+            LibraryDescriptorsByResolutionProvider(provider, libraryResolver, libraryReferenceParser)
         } else {
             provider
         }
     }
-    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic)
+    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic, httpClient)
     private val errorsMagics = ErrorsMagicsProcessor(parseOutCellMagic)
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)

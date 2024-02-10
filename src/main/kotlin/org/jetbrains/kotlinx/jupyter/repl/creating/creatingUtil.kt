@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
@@ -14,7 +15,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import java.io.File
 
 fun createRepl(
-    resolutionInfoProvider: ResolutionInfoProvider = EmptyResolutionInfoProvider,
+    httpUtil: LibraryHttpUtil,
+    resolutionInfoProvider: ResolutionInfoProvider = EmptyResolutionInfoProvider(httpUtil.libraryInfoCache),
     scriptClasspath: List<File> = emptyList(),
     homeDir: File? = null,
     mavenRepositories: List<MavenRepositoryCoordinates> = listOf(),
@@ -38,6 +40,10 @@ fun createRepl(
         override fun provideDisplayHandler() = displayHandler
         override fun provideCommunicationFacility(): JupyterCommunicationFacility = communicationFacility
         override fun provideDebugPort(): Int? = debugPort
+        override fun provideHttpClient() = httpUtil.httpClient
+        override fun provideLibraryDescriptorsManager() = httpUtil.libraryDescriptorsManager
+        override fun provideLibraryInfoCache() = httpUtil.libraryInfoCache
+        override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
     }
     return componentsProvider.createRepl()
 }

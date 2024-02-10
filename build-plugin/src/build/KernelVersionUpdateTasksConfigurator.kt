@@ -6,12 +6,14 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.gradle.api.Project
+import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.Request
 
 class KernelVersionUpdateTasksConfigurator(
     private val project: Project,
+    private val settings: RootSettingsExtension,
 ) {
     fun registerTasks() {
         project.tasks.register(UPDATE_KOTLIN_VERSION_TASK) {
@@ -20,9 +22,10 @@ class KernelVersionUpdateTasksConfigurator(
                 val teamcityUrl = teamcityProject.url
                 val locator = "buildType:(id:${teamcityProject.projectId}),status:SUCCESS,branch:default:any,count:1"
 
-                val response = httpRequest(
-                    Request("GET", "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator")
-                        .header("accept", "application/json")
+                val response = settings.httpClient.httpRequest(
+                    buildRequest("GET", "$teamcityUrl/$TEAMCITY_REQUEST_ENDPOINT/?locator=$locator") {
+                        header("accept", "application/json")
+                    }
                 )
                 val builds = response.jsonObject["build"] as JsonArray
                 val lastBuild = builds[0] as JsonObject

@@ -3,11 +3,14 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import java.io.File
 import java.io.IOException
 
-class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
+class CssLibraryResourcesProcessor(
+    private val httpClient: HttpClient,
+) : LibraryResourcesProcessor {
     private fun loadCssAsText(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): String {
         val exceptions = mutableListOf<Exception>()
         for (resourceLocation in bundle.locations) {
@@ -24,7 +27,7 @@ class CssLibraryResourcesProcessor : LibraryResourcesProcessor {
                     ResourcePathType.URL -> """
                         <link rel="stylesheet" href="$path">
                     """.trimIndent()
-                    ResourcePathType.URL_EMBEDDED -> wrapInTag(getHttp(path).text)
+                    ResourcePathType.URL_EMBEDDED -> wrapInTag(httpClient.getHttp(path).text)
                     ResourcePathType.LOCAL_PATH -> wrapInTag(File(path).readText())
                     ResourcePathType.CLASSPATH_PATH -> wrapInTag(loadResourceFromClassLoader(path, classLoader))
                 }

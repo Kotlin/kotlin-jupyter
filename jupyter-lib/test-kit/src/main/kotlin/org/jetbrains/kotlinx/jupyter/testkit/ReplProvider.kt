@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
-import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import java.io.File
@@ -12,8 +12,10 @@ fun interface ReplProvider {
     operator fun invoke(classpath: List<File>): ReplForJupyter
 
     companion object {
+        private val httpUtil = createLibraryHttpUtil()
+
         val withoutLibraryResolution = ReplProvider { classpath ->
-            createRepl(EmptyResolutionInfoProvider, classpath, isEmbedded = true).apply {
+            createRepl(httpUtil, scriptClasspath = classpath, isEmbedded = true).apply {
                 initializeWithCurrentClasspath()
             }
         }
@@ -23,14 +25,14 @@ fun interface ReplProvider {
             shouldResolveToEmpty: (String?) -> Boolean = { false },
         ) = ReplProvider { classpath ->
             val resolver = run {
-                var res: LibraryResolver = ClasspathLibraryResolver(null, shouldResolve)
+                var res: LibraryResolver = ClasspathLibraryResolver(httpUtil.libraryDescriptorsManager, null, shouldResolve)
                 res = ToEmptyLibraryResolver(res, shouldResolveToEmpty)
                 res
             }
 
             createRepl(
-                EmptyResolutionInfoProvider,
-                classpath,
+                httpUtil = httpUtil,
+                scriptClasspath = classpath,
                 isEmbedded = true,
                 mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver = resolver,

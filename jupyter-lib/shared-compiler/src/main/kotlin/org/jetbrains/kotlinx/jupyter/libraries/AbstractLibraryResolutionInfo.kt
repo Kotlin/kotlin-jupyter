@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.util.createCachedFun
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import java.io.File
 import java.net.URL
 
@@ -25,12 +25,15 @@ abstract class AbstractLibraryResolutionInfo(
         override val shouldBeCachedLocally get() = false
     }
 
-    open class ByGitRef(private val ref: String) : AbstractLibraryResolutionInfo("ref") {
+    open class ByGitRef(
+        private val ref: String,
+        private val libraryDescriptorsManager: LibraryDescriptorsManager,
+    ) : AbstractLibraryResolutionInfo("ref") {
         override val valueKey: String
             get() = sha
 
         val sha: String by lazy {
-            KERNEL_LIBRARIES.getLatestCommitToLibraries(ref, null)?.sha ?: return@lazy ref
+            libraryDescriptorsManager.getLatestCommitToLibraries(ref, null)?.sha ?: return@lazy ref
         }
 
         override val args = listOf(Variable("ref", ref))
@@ -41,7 +44,10 @@ abstract class AbstractLibraryResolutionInfo(
         override val shouldBeCachedLocally get() = false
     }
 
-    class ByGitRefWithClasspathFallback(ref: String) : ByGitRef(ref) {
+    class ByGitRefWithClasspathFallback(
+        ref: String,
+        libraryDescriptorsManager: LibraryDescriptorsManager,
+    ) : ByGitRef(ref, libraryDescriptorsManager) {
         override val valueKey: String
             get() = "fallback_" + super.valueKey
     }
@@ -80,14 +86,6 @@ abstract class AbstractLibraryResolutionInfo(
     }
 
     companion object {
-        val getInfoByRef = createCachedFun { ref: String ->
-            ByGitRef(ref)
-        }
-
-        val getInfoByRefWithFallback = createCachedFun { ref: String ->
-            ByGitRefWithClasspathFallback(ref)
-        }
-
         fun replaceForbiddenChars(string: String): String {
             return string.replace("""[<>/\\:"|?*]""".toRegex(), "_")
         }

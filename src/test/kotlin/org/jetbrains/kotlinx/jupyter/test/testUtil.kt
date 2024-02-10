@@ -38,11 +38,14 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.withId
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.errorForUser
+import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
@@ -98,6 +101,13 @@ inline fun <reified T> classPathEntry(): File {
 
 val testLibraryResolver: LibraryResolver
     get() = getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
+
+val KERNEL_LIBRARIES = LibraryDescriptorsManager.getInstance(
+    SimpleHttpClient,
+    getLogger(),
+) { logger, message, exception ->
+    logger.errorForUser(message = message, throwable = exception)
+}
 
 fun assertUnit(value: Any?) = assertEquals(Unit, value)
 

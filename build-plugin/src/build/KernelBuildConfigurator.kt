@@ -160,7 +160,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun registerKotlinVersionUpdateTask() {
-        KernelVersionUpdateTasksConfigurator(project).registerTasks()
+        KernelVersionUpdateTasksConfigurator(project, settings).registerTasks()
     }
 
     private fun registerLibrariesUpdateTasks() {

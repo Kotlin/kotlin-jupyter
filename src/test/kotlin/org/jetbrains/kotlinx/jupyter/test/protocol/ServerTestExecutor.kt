@@ -67,8 +67,8 @@ class ThreadServerTestExecutor : ServerTestExecutor {
 
     override fun setUp(testInfo: TestInfo, kernelConfig: KernelConfig) {
         val replConfig = ReplConfig.create(
-            getDefaultClasspathResolutionInfoProvider(),
-            kernelConfig.homeDir,
+            ::getDefaultClasspathResolutionInfoProvider,
+            homeDir = kernelConfig.homeDir,
         )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
         serverThread = thread { kernelServer(replSettings) }

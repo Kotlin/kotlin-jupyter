@@ -8,8 +8,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
-import org.jetbrains.kotlinx.jupyter.libraries.parseReferenceWithArgs
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.NoopMagicsHandler
@@ -27,6 +27,9 @@ import kotlin.test.assertTrue
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
 class ParseArgumentsTests {
+
+    private val httpUtil = createLibraryHttpUtil()
+    private fun parseReferenceWithArgs(ref: String) = httpUtil.libraryReferenceParser.parseReferenceWithArgs(ref)
 
     @Test
     fun test1() {
@@ -143,10 +146,11 @@ class ParseMagicsTests {
     private val options = TestReplOptions()
 
     private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
-        val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider)
+        val httpUtil = createLibraryHttpUtil()
+        val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider(httpUtil.libraryInfoCache))
         val magicsHandler = FullMagicsHandler(
             options,
-            LibrariesProcessorImpl(testLibraryResolver, defaultRuntimeProperties.version),
+            LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
             switcher,
         )
         val processor = MagicsProcessor(magicsHandler)

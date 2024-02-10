@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.magics.splitLibraryCalls
 
 class LibrariesProcessorImpl(
     private val libraryResolver: LibraryResolver?,
+    private val libraryReferenceParser: LibraryReferenceParser,
     private val kernelVersion: KotlinKernelVersion?,
 ) : LibrariesProcessor {
 
@@ -34,7 +35,7 @@ class LibrariesProcessorImpl(
 
     override fun processNewLibraries(arg: String): List<LibraryDefinitionProducer> =
         splitLibraryCalls(arg).map {
-            val (libRef, vars) = parseReferenceWithArgs(it)
+            val (libRef, vars) = libraryReferenceParser.parseReferenceWithArgs(it)
             val library = libraryResolver?.resolve(libRef, vars)
                 ?: throw ReplException("Unknown library '$libRef'")
 

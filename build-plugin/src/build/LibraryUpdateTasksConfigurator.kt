@@ -12,6 +12,7 @@ import org.gradle.api.Project
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
+import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.Request
 import org.jetbrains.kotlinx.jupyter.common.Response
 import org.jetbrains.kotlinx.jupyter.common.ResponseWrapper
@@ -104,10 +105,11 @@ class LibraryUpdateTasksConfigurator(
                     json: JsonElement,
                     onFailure: (Response) -> Unit,
                 ): ResponseWrapper {
-                    val response = httpRequest(
-                        Request(method, "https://api.github.com/$request")
-                            .withJson(json)
-                            .withBasicAuth(user, password)
+                    val response = settings.httpClient.httpRequest(
+                        buildRequest(method, "https://api.github.com/$request") {
+                            withJson(json)
+                            withBasicAuth(user, password)
+                        }
                     )
                     println(response.text)
                     if (!response.status.successful) {

@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
-import org.jetbrains.kotlinx.jupyter.libraries.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode

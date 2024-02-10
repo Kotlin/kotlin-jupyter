@@ -11,6 +11,7 @@ import kotlin.math.max
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.Request
+import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.successful
 import java.util.TreeMap
 
@@ -76,9 +77,10 @@ class CompatibilityTableGenerator(
 
         val newVersions = TreeMap<KotlinKernelVersion, List<String>>().apply {
             val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/status:success,buildType:(id:${kernelTeamcity.projectId})"
-            val allBuildsResponse = httpRequest(
-                    Request("GET", allBuildsUrl)
-                            .header("Accept", "application/json")
+            val allBuildsResponse = settings.httpClient.httpRequest(
+                    buildRequest("GET", allBuildsUrl) {
+                        header("Accept", "application/json")
+                    }
             )
             val allBuildsJson = allBuildsResponse.jsonObject
             val allBuilds = allBuildsJson["build"]!!.jsonArray
@@ -87,8 +89,8 @@ class CompatibilityTableGenerator(
             }
             for (buildId in buildIds) {
                 val artifactUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/id:${buildId}/artifacts/content/teamcity-artifacts/${settings.versionsCompatFileName}"
-                val artifactResponse = httpRequest(
-                        Request("GET", artifactUrl)
+                val artifactResponse = settings.httpClient.httpRequest(
+                        buildRequest("GET", artifactUrl)
                 )
                 if(artifactResponse.status.successful) {
                     val verMap = artifactResponse.text

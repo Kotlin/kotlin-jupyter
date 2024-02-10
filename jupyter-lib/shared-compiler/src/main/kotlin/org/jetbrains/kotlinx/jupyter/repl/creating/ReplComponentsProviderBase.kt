@@ -2,9 +2,16 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCacheImpl
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParserImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
@@ -21,7 +28,7 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import java.io.File
 
 abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProvider() {
-    override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider
+    override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider(libraryInfoCache)
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
     override fun provideNotebook(): MutableNotebook = NotebookImpl(
         runtimeProperties,
@@ -47,4 +54,9 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideCommunicationFacility(): JupyterCommunicationFacility = CommunicationFacilityMock
     override fun provideDebugPort(): Int? = null
+
+    override fun provideHttpClient(): HttpClient = SimpleHttpClient
+    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager = LibraryDescriptorsManager.getInstance(httpClient)
+    override fun provideLibraryInfoCache(): LibraryInfoCache = LibraryInfoCacheImpl(libraryDescriptorsManager)
+    override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 }

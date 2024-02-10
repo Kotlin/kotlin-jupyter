@@ -18,7 +18,56 @@ fun interface ExceptionsHandler {
     }
 }
 
-class LibraryDescriptorsManager private constructor(
+interface LibraryDescriptorsManager {
+    val userLibrariesDir: File
+    val userCacheDir: File
+    val localLibrariesDir: File
+    val defaultBranch: String
+    val latestCommitOnDefaultBranch: String?
+    val commitHashFile: File
+
+    fun homeLibrariesDir(homeDir: File? = null): File
+    fun descriptorFileName(name: String): String
+    fun optionsFileName(): String
+    fun resourceLibraryPath(name: String): String
+    fun resourceOptionsPath(): String
+    fun isLibraryDescriptor(file: File): Boolean
+    fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String? = null): CommitInfo?
+    fun downloadGlobalDescriptorOptions(ref: String): String?
+    fun downloadLibraryDescriptor(ref: String, name: String): String
+    fun checkRefExistence(ref: String): Boolean
+    fun checkIfRefUpToDate(remoteRef: String?): Boolean
+    fun downloadLibraries(ref: String)
+
+    class CommitInfo(
+        val sha: String,
+        val timestamp: String,
+    )
+
+    companion object {
+        fun getInstance(
+            httpClient: HttpClient,
+            logger: Logger = LoggerFactory.getLogger(LibraryDescriptorsManager::class.java),
+            exceptionsHandler: ExceptionsHandler = ExceptionsHandler.DEFAULT,
+        ): LibraryDescriptorsManager {
+            return LibraryDescriptorsManagerImpl(
+                "Kotlin",
+                "kotlin-jupyter-libraries",
+                "",
+                "libraries",
+                "libraries",
+                "libraries",
+                "jupyterLibraries",
+                exceptionsHandler,
+                File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
+                httpClient,
+                logger,
+            )
+        }
+    }
+}
+
+private class LibraryDescriptorsManagerImpl(
     user: String,
     repo: String,
     private val remotePath: String,
@@ -28,20 +77,21 @@ class LibraryDescriptorsManager private constructor(
     private val resourcesPath: String,
     private val exceptionsHandler: ExceptionsHandler,
     userSettingsDir: File,
+    private val httpClient: HttpClient,
     private val logger: Logger,
-) {
+) : LibraryDescriptorsManager {
     private val authUser: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_USER")
     private val authToken: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_TOKEN")
     private val apiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"
-    val userLibrariesDir = userSettingsDir.resolve(userPath)
-    val userCacheDir = userSettingsDir.resolve("cache")
-    val localLibrariesDir = File(localPath)
-    val defaultBranch = "master"
-    val latestCommitOnDefaultBranch get() = getLatestCommitToLibraries(defaultBranch)?.sha
+    override val userLibrariesDir = userSettingsDir.resolve(userPath)
+    override val userCacheDir = userSettingsDir.resolve("cache")
+    override val localLibrariesDir = File(localPath)
+    override val defaultBranch = "master"
+    override val latestCommitOnDefaultBranch get() = getLatestCommitToLibraries(defaultBranch)?.sha
 
-    fun homeLibrariesDir(homeDir: File? = null) = (homeDir ?: File("")).resolve(homePath)
+    override fun homeLibrariesDir(homeDir: File?) = (homeDir ?: File("")).resolve(homePath)
 
-    val commitHashFile by lazy {
+    override val commitHashFile by lazy {
         localLibrariesDir.resolve(COMMIT_HASH_FILE).also { file ->
             if (!file.exists()) {
                 file.createDirsAndWrite()
@@ -49,17 +99,17 @@ class LibraryDescriptorsManager private constructor(
         }
     }
 
-    fun descriptorFileName(name: String) = "$name.$DESCRIPTOR_EXTENSION"
-    fun optionsFileName() = OPTIONS_FILE
+    override fun descriptorFileName(name: String) = "$name.$DESCRIPTOR_EXTENSION"
+    override fun optionsFileName() = OPTIONS_FILE
 
-    fun resourceLibraryPath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
-    fun resourceOptionsPath() = "$resourcesPath/${optionsFileName()}"
+    override fun resourceLibraryPath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
+    override fun resourceOptionsPath() = "$resourcesPath/${optionsFileName()}"
 
-    fun isLibraryDescriptor(file: File): Boolean {
+    override fun isLibraryDescriptor(file: File): Boolean {
         return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
     }
 
-    fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String? = null): CommitInfo? {
+    override fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): LibraryDescriptorsManager.CommitInfo? {
         return catchAll {
             var url = "$apiPrefix/commits?path=$remotePath&sha=$ref"
             if (sinceTimestamp != null) {
@@ -82,12 +132,12 @@ class LibraryDescriptorsManager private constructor(
                 val commit = arr[0] as JsonObject
                 val sha = (commit["sha"] as JsonPrimitive).content
                 val timestamp = (((commit["commit"] as JsonObject)["committer"] as JsonObject)["date"] as JsonPrimitive).content
-                CommitInfo(sha, timestamp)
+                LibraryDescriptorsManager.CommitInfo(sha, timestamp)
             }
         }
     }
 
-    fun downloadGlobalDescriptorOptions(ref: String): String? {
+    override fun downloadGlobalDescriptorOptions(ref: String): String? {
         val url = resolveAgainstRemotePath(OPTIONS_FILE, ref)
         logger.info("Requesting global descriptor options at $url")
         return try {
@@ -98,13 +148,13 @@ class LibraryDescriptorsManager private constructor(
         }
     }
 
-    fun downloadLibraryDescriptor(ref: String, name: String): String {
+    override fun downloadLibraryDescriptor(ref: String, name: String): String {
         val url = resolveAgainstRemotePath("$name.$DESCRIPTOR_EXTENSION", ref)
         logger.info("Requesting library descriptor at $url")
         return downloadSingleFile(url)
     }
 
-    fun checkRefExistence(ref: String): Boolean {
+    override fun checkRefExistence(ref: String): Boolean {
         val response = getGithubHttpWithAuth(resolveAgainstRemotePath("", ref))
         return response.status.successful
     }
@@ -126,7 +176,7 @@ class LibraryDescriptorsManager private constructor(
         }
     }
 
-    fun checkIfRefUpToDate(remoteRef: String?): Boolean {
+    override fun checkIfRefUpToDate(remoteRef: String?): Boolean {
         if (!commitHashFile.exists()) return false
         if (remoteRef == null) {
             logger.warn("Considering reference up-to-date because getting the last reference failed")
@@ -136,7 +186,7 @@ class LibraryDescriptorsManager private constructor(
         return localRef == remoteRef
     }
 
-    fun downloadLibraries(ref: String) {
+    override fun downloadLibraries(ref: String) {
         localLibrariesDir.mkdirs()
 
         val url = resolveAgainstRemotePath("", ref)
@@ -151,7 +201,7 @@ class LibraryDescriptorsManager private constructor(
             if (!fileName.endsWith(".$DESCRIPTOR_EXTENSION") && fileName != OPTIONS_FILE) continue
 
             val downloadUrl = item["download_url"]!!.jsonPrimitive.content
-            val descriptorResponse = getHttp(downloadUrl)
+            val descriptorResponse = httpClient.getHttp(downloadUrl)
 
             val descriptorText = descriptorResponse.text
             val file = localLibrariesDir.resolve(fileName)
@@ -163,16 +213,16 @@ class LibraryDescriptorsManager private constructor(
 
     private fun getGithubHttpWithAuth(url: String): ResponseWrapper {
         return if (authToken == null || authUser == null) {
-            getHttp(url)
+            httpClient.getHttp(url)
         } else {
-            getHttpWithAuth(url, authUser, authToken)
+            httpClient.getHttpWithAuth(url, authUser, authToken)
         }
     }
 
     private fun downloadSingleFile(contentsApiUrl: String): String {
         val response = getGithubHttpWithAuth(contentsApiUrl).jsonObject
         val downloadUrl = response["download_url"]!!.jsonPrimitive.content
-        val res = getHttp(downloadUrl)
+        val res = httpClient.getHttp(downloadUrl)
         res.assertSuccessful()
         return res.text
     }
@@ -193,33 +243,10 @@ class LibraryDescriptorsManager private constructor(
         null
     }
 
-    class CommitInfo(
-        val sha: String,
-        val timestamp: String,
-    )
-
     companion object {
         private const val GITHUB_API_HOST = "api.github.com"
         private const val DESCRIPTOR_EXTENSION = "json"
         private const val COMMIT_HASH_FILE = "commit_sha"
         private const val OPTIONS_FILE = "global.options"
-
-        fun getInstance(
-            logger: Logger = LoggerFactory.getLogger(LibraryDescriptorsManager::class.java),
-            exceptionsHandler: ExceptionsHandler = ExceptionsHandler.DEFAULT,
-        ): LibraryDescriptorsManager {
-            return LibraryDescriptorsManager(
-                "Kotlin",
-                "kotlin-jupyter-libraries",
-                "",
-                "libraries",
-                "libraries",
-                "libraries",
-                "jupyterLibraries",
-                exceptionsHandler,
-                File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
-                logger,
-            )
-        }
     }
 }

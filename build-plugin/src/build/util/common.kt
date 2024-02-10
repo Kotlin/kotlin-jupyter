@@ -8,11 +8,12 @@ import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.kotlin.dsl.exclude
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import java.io.File
 import java.nio.file.Path
 import java.util.*
 
-val BUILD_LIBRARIES = LibraryDescriptorsManager.getInstance()
+val BUILD_LIBRARIES = LibraryDescriptorsManager.getInstance(SimpleHttpClient)
 
 fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
 

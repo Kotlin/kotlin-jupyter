@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.common
 
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -14,26 +13,28 @@ class ResponseWrapper(
     val url: String,
 ) : Response by response
 
-fun httpRequest(request: Request): ResponseWrapper {
+fun HttpClient.httpRequest(request: Request): ResponseWrapper {
     return ResponseWrapper(
-        SimpleHttpClient.makeRequest(request),
+        makeRequest(request),
         request.url,
     )
 }
 
-fun getHttp(url: String) = httpRequest(Request("GET", url))
+fun HttpClient.getHttp(url: String) = httpRequest(buildRequest("GET", url))
 
-fun getHttpWithAuth(url: String, username: String, token: String): ResponseWrapper {
-    val request = Request("GET", url).withBasicAuth(username, token)
+fun HttpClient.getHttpWithAuth(url: String, username: String, token: String): ResponseWrapper {
+    val request = buildRequest("GET", url) {
+        withBasicAuth(username, token)
+    }
     return httpRequest(request)
 }
 
-fun Request.withBasicAuth(username: String, password: String): Request {
+fun RequestBuilder.withBasicAuth(username: String, password: String): RequestBuilder {
     val b64 = Base64.getEncoder().encode("$username:$password".toByteArray()).toString(Charsets.UTF_8)
-    return this.header("Authorization", "Basic $b64")
+    return header("Authorization", "Basic $b64")
 }
 
-fun Request.withJson(json: JsonElement): Request {
+fun RequestBuilder.withJson(json: JsonElement): RequestBuilder {
     return this
         .body(Json.encodeToString(json))
         .header("Content-Type", "application/json")

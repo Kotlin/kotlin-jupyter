@@ -2,7 +2,11 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.config.logger
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
@@ -76,6 +80,24 @@ class DefaultReplComponentsProvider(
                 null
             }
         }
+    }
+
+    private val httpUtil get() = _settings.replConfig.httpUtil
+
+    override fun provideHttpClient(): HttpClient {
+        return httpUtil.httpClient
+    }
+
+    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager {
+        return httpUtil.libraryDescriptorsManager
+    }
+
+    override fun provideLibraryInfoCache(): LibraryInfoCache {
+        return httpUtil.libraryInfoCache
+    }
+
+    override fun provideLibraryReferenceParser(): LibraryReferenceParser {
+        return httpUtil.libraryReferenceParser
     }
 
     companion object {

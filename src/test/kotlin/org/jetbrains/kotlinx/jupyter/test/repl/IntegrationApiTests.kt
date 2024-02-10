@@ -16,9 +16,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.mavenLocal
 import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
+import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
@@ -40,8 +40,15 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertNull
 
 class IntegrationApiTests {
+    private val httpUtil = createLibraryHttpUtil()
     private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
-        return createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, libraryResolver)
+        return createRepl(
+            httpUtil,
+            scriptClasspath = classpath,
+            homeDir = null,
+            mavenRepositories = testRepositories,
+            libraryResolver = libraryResolver,
+        )
     }
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter {
         return makeRepl(libs.toList().toLibraries())
@@ -164,7 +171,13 @@ class IntegrationApiTests {
     @Test
     fun `result code preprocessor`() {
         val displays = mutableListOf<Any>()
-        val repl = createRepl(EmptyResolutionInfoProvider, classpath, null, testRepositories, displayHandler = TestDisplayHandler(displays))
+        val repl = createRepl(
+            httpUtil,
+            scriptClasspath = classpath,
+            homeDir = null,
+            mavenRepositories = testRepositories,
+            displayHandler = TestDisplayHandler(displays),
+        )
 
         repl.eval {
             addLibrary(

@@ -1,23 +1,36 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import java.io.File
 
-fun getStandardResolver(homeDir: String? = null, infoProvider: ResolutionInfoProvider): LibraryResolver {
+fun getStandardResolver(
+    homeDir: String? = null,
+    infoProvider: ResolutionInfoProvider,
+    httpClient: HttpClient,
+    libraryDescriptorsManager: LibraryDescriptorsManager,
+): LibraryResolver {
     // Standard resolver doesn't cache results in memory
-    var res: LibraryResolver = FallbackLibraryResolver
-    val librariesDir: File? = homeDir?.let { KERNEL_LIBRARIES.homeLibrariesDir(File(it)) }
-    res = LocalLibraryResolver(res, librariesDir)
-    res = DefaultInfoLibraryResolver(res, infoProvider, listOf(KERNEL_LIBRARIES.userLibrariesDir))
+    var res: LibraryResolver = FallbackLibraryResolver(httpClient, libraryDescriptorsManager)
+    val librariesDir: File? = homeDir?.let { libraryDescriptorsManager.homeLibrariesDir(File(it)) }
+    res = LocalLibraryResolver(res, libraryDescriptorsManager, librariesDir)
+    res = DefaultInfoLibraryResolver(res, infoProvider, libraryDescriptorsManager, listOf(libraryDescriptorsManager.userLibrariesDir))
     return res
 }
 
-fun getDefaultClasspathResolutionInfoProvider(): ResolutionInfoProvider {
+fun getDefaultClasspathResolutionInfoProvider(httpUtil: LibraryHttpUtil): ResolutionInfoProvider {
     return StandardResolutionInfoProvider(
         AbstractLibraryResolutionInfo.ByClasspath,
+        httpUtil,
     )
 }
 
-fun getDefaultResolutionInfoSwitcher(provider: ResolutionInfoProvider, defaultDir: File, defaultRef: String): ResolutionInfoSwitcher<DefaultInfoSwitch> {
+fun getDefaultResolutionInfoSwitcher(
+    provider: ResolutionInfoProvider,
+    libraryInfoCache: LibraryInfoCache,
+    defaultDir: File,
+    defaultRef: String,
+): ResolutionInfoSwitcher<DefaultInfoSwitch> {
     val initialInfo = provider.fallback
 
     val dirInfo = if (initialInfo is AbstractLibraryResolutionInfo.ByDir) {
@@ -29,7 +42,7 @@ fun getDefaultResolutionInfoSwitcher(provider: ResolutionInfoProvider, defaultDi
     val refInfo = if (initialInfo is AbstractLibraryResolutionInfo.ByGitRef) {
         initialInfo
     } else {
-        AbstractLibraryResolutionInfo.getInfoByRefWithFallback(defaultRef)
+        libraryInfoCache.getLibraryInfoByRefWithFallback(defaultRef)
     }
 
     val classpathInfo = AbstractLibraryResolutionInfo.ByClasspath

@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
-import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
+import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
@@ -28,6 +28,8 @@ import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import java.io.File
 
 abstract class AbstractReplTest {
+    protected val httpUtil = createLibraryHttpUtil()
+
     private val classpathWithTestLib = buildList {
         addAll(classpath)
         add(classPathEntry<AbstractReplTest>())
@@ -55,18 +57,23 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeSimpleRepl(): ReplForJupyter {
-        return createRepl(resolutionInfoProvider, classpath)
+        return createRepl(httpUtil, scriptClasspath = classpath)
     }
 
     protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
-        return createRepl(resolutionInfoProvider, classpath, homeDir, libraryResolver = testLibraryResolver, displayHandler = displayHandler)
+        return createRepl(httpUtil, scriptClasspath = classpath, homeDir = homeDir, libraryResolver = testLibraryResolver, displayHandler = displayHandler)
     }
 
     protected fun makeReplWithStandardResolver(
         displayHandlerProvider: (MutableNotebook) -> DisplayHandler = { NoOpDisplayHandler },
     ): ReplForJupyter {
-        val standardResolutionInfoProvider = getDefaultClasspathResolutionInfoProvider()
-        val resolver = getStandardResolver(".", standardResolutionInfoProvider)
+        val standardResolutionInfoProvider = getDefaultClasspathResolutionInfoProvider(httpUtil)
+        val resolver = getStandardResolver(
+            ".",
+            standardResolutionInfoProvider,
+            httpUtil.httpClient,
+            httpUtil.libraryDescriptorsManager,
+        )
         val myHomeDir = homeDir
         val factory = object : ReplComponentsProviderBase() {
             override fun provideResolutionInfoProvider() = standardResolutionInfoProvider
@@ -86,17 +93,23 @@ abstract class AbstractReplTest {
 
     protected fun makeEmbeddedRepl(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-        return createRepl(resolutionInfoProvider, embeddedClasspath, isEmbedded = true, displayHandler = displayHandler)
+        return createRepl(
+            httpUtil,
+            scriptClasspath = embeddedClasspath,
+            isEmbedded = true,
+            displayHandler = displayHandler,
+        )
     }
 
-    protected fun makeReplWithLibraries(vararg libs: Pair<String, LibraryDefinition>) = makeReplWithLibraries(libs.toList().toLibraries())
+    protected fun makeReplWithLibraries(vararg libs: Pair<String, LibraryDefinition>) =
+        makeReplWithLibraries(libs.toList().toLibraries())
 
     protected fun makeReplWithLibraries(libraryResolver: LibraryResolver) = createRepl(
-        resolutionInfoProvider,
-        classpathWithTestLib,
-        homeDir,
-        testRepositories,
-        libraryResolver,
+        httpUtil,
+        scriptClasspath = classpathWithTestLib,
+        homeDir = homeDir,
+        mavenRepositories = testRepositories,
+        libraryResolver = libraryResolver,
     )
 
     protected fun makeReplEnablingSingleLibrary(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
@@ -109,8 +122,6 @@ abstract class AbstractReplTest {
     }
 
     companion object {
-        @JvmStatic
-        val resolutionInfoProvider = EmptyResolutionInfoProvider
 
         @JvmStatic
         protected val homeDir = File("")

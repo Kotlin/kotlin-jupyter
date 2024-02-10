@@ -2,7 +2,11 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
+import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
+import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
@@ -30,4 +34,8 @@ interface ReplComponentsProvider {
     val commManager: CommManager
     val commHandlers: List<CommHandler>
     val explicitClientType: JupyterClientType?
+    val httpClient: HttpClient
+    val libraryDescriptorsManager: LibraryDescriptorsManager
+    val libraryInfoCache: LibraryInfoCache
+    val libraryReferenceParser: LibraryReferenceParser
 }

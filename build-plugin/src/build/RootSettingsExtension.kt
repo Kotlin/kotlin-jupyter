@@ -20,11 +20,14 @@ import build.util.stringPropOrEmpty
 import build.util.typedProperty
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.provideDelegate
+import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import java.io.File
 
 class RootSettingsExtension(
     val project: Project
 ) {
+    val httpClient = SimpleHttpClient
+
     val kotlinLanguageLevel by project.prop<String>()
     val stableKotlinLanguageLevel by project.prop<String>()
     val jvmTarget = project.defaultVersionCatalog.versions.jvmTarget
