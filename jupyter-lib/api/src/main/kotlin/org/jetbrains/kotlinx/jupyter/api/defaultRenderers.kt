@@ -5,7 +5,7 @@ import kotlinx.serialization.json.buildJsonObject
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Array
-import java.util.Base64
+import java.util.*
 import javax.imageio.ImageIO
 
 val bufferedImageRenderer = createRenderer<BufferedImage> {
@@ -20,6 +20,7 @@ val bufferedImageRenderer = createRenderer<BufferedImage> {
             put(MimeTypes.PNG, JsonPrimitive(encodedData))
             put(MimeTypes.PLAIN_TEXT, JsonPrimitive("${it::class}: ${it.width}x${it.height} px"))
         },
+        metadataModifiers = listOf(),
     )
 }
 

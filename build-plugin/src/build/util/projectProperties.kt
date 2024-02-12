@@ -61,7 +61,6 @@ class ProjectPropertyDelegate<T>(
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> Project.prop(
     projectPropertyName: String? = null,
     default: T? = null

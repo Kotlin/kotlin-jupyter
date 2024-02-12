@@ -146,6 +146,9 @@ class ApiTest : AbstractSingleReplTest() {
                     "text/plain": "{\n    \"a\": [\n        1\n    ],\n    \"b\": {\n        \"inner1\": \"helloworld\"\n    }\n}"
                 },
                 "metadata": {
+                    "application/json": {
+                        "expanded": true
+                    }
                 }
             }
         """.trimIndent()
