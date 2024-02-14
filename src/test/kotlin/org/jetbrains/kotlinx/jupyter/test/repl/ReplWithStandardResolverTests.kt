@@ -25,9 +25,11 @@ import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.net.URLClassLoader
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 
@@ -283,6 +285,22 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         (client.renderedValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
+    }
+
+    @Test
+    @Timeout(60, unit = TimeUnit.SECONDS)
+    fun `mpp dependencies are not resolved for dataframe and kandy`() {
+        eval(
+            """
+            SessionOptions.resolveMpp = true
+            """.trimIndent(),
+        )
+
+        eval(
+            """
+            %use dataframe, kandy
+            """.trimIndent(),
+        )
     }
 
     @Test

@@ -97,7 +97,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
         val classpath = mutableListOf<File>()
         var existingRepositories: List<Repo>? = null
-        val dependsOnAnnotations = mutableListOf<String>()
+        val dependencies = mutableListOf<Dependency>()
 
         script.annotations.forEach { annotation ->
             when (annotation) {
@@ -124,7 +124,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                     existingRepositories?.forEach { addRepository(it) }
                 }
                 is DependsOn -> {
-                    dependsOnAnnotations.add(annotation.value)
+                    dependencies.add(annotation.toDependency())
                 }
                 else -> throw Exception("Unknown annotation ${annotation.javaClass}")
             }
@@ -132,7 +132,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
 
         try {
             tryResolve(
-                dependsOnAnnotations,
+                dependencies,
                 scriptDiagnostics,
                 classpath,
             )
@@ -147,51 +147,52 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         return makeResolutionResult(classpath, scriptDiagnostics)
     }
 
-    private suspend fun resolveWithOptions(annotationArgs: List<String>, options: Options): ResultWithDiagnostics<List<File>> {
-        return resolver.resolve(annotationArgs.map { ArtifactWithLocation(it, null) }, options)
+    private suspend fun resolveWithOptions(dependencies: List<Dependency>, options: Options): ResultWithDiagnostics<List<File>> {
+        return resolver.resolve(dependencies.map { ArtifactWithLocation(it.value, null) }, options)
     }
 
     private fun tryResolve(
-        annotationArgs: List<String>,
+        dependencies: List<Dependency>,
         scriptDiagnosticsResult: MutableList<ScriptDiagnostic>,
         classpathResult: MutableList<File>,
     ) {
-        if (annotationArgs.isEmpty()) return
+        if (dependencies.isEmpty()) return
 
-        log.info("Resolving $annotationArgs")
+        log.info("Resolving $dependencies")
         doResolve(
-            { resolveWithOptions(annotationArgs, resolverOptions) },
+            { resolveWithOptions(dependencies, resolverOptions) },
             onResolved = { files ->
                 addedClasspath.addAll(files)
                 classpathResult.addAll(files)
             },
             onFailure = { result ->
-                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve $annotationArgs:\n" + result.reports.joinToString("\n") { it.message })
+                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve $dependencies:\n" + result.reports.joinToString("\n") { it.message })
                 log.warn(diagnostics.message, diagnostics.exception)
                 scriptDiagnosticsResult.add(diagnostics)
             },
         )
 
-        if (resolveSources) {
+        if (dependencies.shouldResolveSources(resolveSources)) {
             doResolve(
-                { resolveWithOptions(annotationArgs, sourcesResolverOptions) },
+                { resolveWithOptions(dependencies, sourcesResolverOptions) },
                 onResolved = { files ->
                     addedSourcesClasspath.addAll(files)
                 },
                 onFailure = { result ->
-                    log.warn("Failed to resolve sources for $annotationArgs:\n" + result.reports.joinToString("\n") { it.message })
+                    log.warn("Failed to resolve sources for $dependencies:\n" + result.reports.joinToString("\n") { it.message })
                 },
             )
         }
 
-        if (resolveMpp) {
+        if (dependencies.shouldResolveAsMultiplatform(resolveMpp)) {
             doResolve(
-                { resolveWithOptions(annotationArgs, mppResolverOptions) },
+                { resolveWithOptions(dependencies, mppResolverOptions) },
                 onResolved = { files ->
-                    val resolvedArtifacts = mutableSetOf<String>()
-                    resolvedArtifacts.addAll(annotationArgs)
+                    val resolvedArtifacts = mutableSetOf<Dependency>()
+                    resolvedArtifacts.addAll(dependencies)
                     resolveMpp(files) { artifactCoordinates ->
-                        val notYetResolvedArtifacts = artifactCoordinates.filter { artifact ->
+                        val artifacts = artifactCoordinates.map { it.toDependency() }
+                        val notYetResolvedArtifacts = artifacts.filter { artifact ->
                             resolvedArtifacts.add(artifact)
                         }
 
