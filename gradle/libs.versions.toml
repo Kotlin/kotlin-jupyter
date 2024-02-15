@@ -2,7 +2,8 @@
 jvmTarget = "1.8"
 
 kotlin = "1.9.10"
-kotlinMavenResolver = "1.9.22"
+kotlinDependencies = "1.9.22"
+kotlinMavenResolver = "2.0.0-Beta4"
 stableKotlin = "1.9.10"
 gradleKotlin = "1.9.10"
 ksp = "1.9.10-1.0.13"
@@ -52,7 +53,7 @@ kotlin-dev-scriptingCompilerImplUnshaded = { group = "org.jetbrains.kotlin", nam
 kotlin-dev-scriptingCompilerImplEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingIdeServices = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-ide-services", version.ref = "kotlin" }
-kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies", version.ref = "kotlinMavenResolver" }
+kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies", version.ref = "kotlinDependencies" }
 kotlin-dev-scriptingDependenciesMavenAll = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven-all", version.ref = "kotlinMavenResolver" }
 kotlin-dev-scriptingCommon = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-common", version.ref = "kotlin" }
 kotlin-dev-scriptingJvm = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version.ref = "kotlin" }
