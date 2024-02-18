@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
 import org.jetbrains.kotlinx.jupyter.config.createRuntimeProperties
@@ -160,17 +161,16 @@ fun kernelServer(replSettings: DefaultReplSettings) {
             }
         }
 
-        conn.addMessageCallback(
-            rawMessageCallback(JupyterSocketType.CONTROL, null) { rawMessage ->
-                messageHandler.handleMessage(JupyterSocketType.CONTROL, rawMessage)
-            },
-        )
+        fun JupyterConnection.addMessageCallbackForSocket(socketType: JupyterSocketType) {
+            addMessageCallback(
+                rawMessageCallback(socketType, null) { rawMessage ->
+                    messageHandler.handleMessage(socketType, rawMessage)
+                },
+            )
+        }
 
-        conn.addMessageCallback(
-            rawMessageCallback(JupyterSocketType.SHELL, null) { rawMessage ->
-                messageHandler.handleMessage(JupyterSocketType.SHELL, rawMessage)
-            },
-        )
+        conn.addMessageCallbackForSocket(JupyterSocketType.CONTROL)
+        conn.addMessageCallbackForSocket(JupyterSocketType.SHELL)
 
         val controlThread = thread {
             socketLoop("Control: Interrupted", mainThread) {
