@@ -7,7 +7,7 @@ abstract class AbstractMessageRequestProcessor(
 ) : MessageRequestProcessor {
     protected val incomingMessage = rawIncomingMessage.toMessage()
 
-    override fun processControlMessage(message: RawMessage) {
+    override fun processControlMessage() {
         when (val content = incomingMessage.content) {
             is InterruptRequest -> processInterruptRequest(content)
             is ShutdownRequest -> processShutdownRequest(content)
@@ -15,7 +15,7 @@ abstract class AbstractMessageRequestProcessor(
         }
     }
 
-    override fun processShellMessage(message: RawMessage) {
+    override fun processShellMessage() {
         when (val content = incomingMessage.content) {
             is KernelInfoRequest -> processKernelInfoRequest(content)
             is HistoryRequest -> processHistoryRequest(content)
@@ -35,6 +35,13 @@ abstract class AbstractMessageRequestProcessor(
         }
     }
 
+    override fun processStdinMessage() {
+        when (val content = incomingMessage.content) {
+            is InputReply -> processInputReply(content)
+            else -> processUnknownStdinMessage(content)
+        }
+    }
+
     protected abstract fun processIsCompleteRequest(content: IsCompleteRequest)
     protected abstract fun processListErrorsRequest(content: ListErrorsRequest)
     protected abstract fun processCompleteRequest(content: CompleteRequest)
@@ -51,4 +58,7 @@ abstract class AbstractMessageRequestProcessor(
     protected abstract fun processShutdownRequest(content: ShutdownRequest)
     protected abstract fun processInterruptRequest(content: InterruptRequest)
     protected abstract fun processUnknownControlMessage(content: MessageContent)
+
+    protected abstract fun processInputReply(content: InputReply)
+    protected abstract fun processUnknownStdinMessage(content: MessageContent)
 }

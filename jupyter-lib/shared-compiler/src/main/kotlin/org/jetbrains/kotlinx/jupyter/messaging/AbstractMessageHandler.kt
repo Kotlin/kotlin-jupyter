@@ -9,8 +9,9 @@ abstract class AbstractMessageHandler : MessageHandler {
     override fun handleMessage(socketType: JupyterSocketType, message: RawMessage) {
         val processor = createProcessor(message)
         when (socketType) {
-            JupyterSocketType.SHELL -> processor.processShellMessage(message)
-            JupyterSocketType.CONTROL -> processor.processControlMessage(message)
+            JupyterSocketType.SHELL -> processor.processShellMessage()
+            JupyterSocketType.CONTROL -> processor.processControlMessage()
+            JupyterSocketType.STDIN -> processor.processStdinMessage()
             else -> {}
         }
     }

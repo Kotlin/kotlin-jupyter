@@ -55,6 +55,9 @@ open class IdeCompatibleMessageRequestProcessor(
     override fun processUnknownControlMessage(content: MessageContent) {
     }
 
+    override fun processUnknownStdinMessage(content: MessageContent) {
+    }
+
     override fun processIsCompleteRequest(content: IsCompleteRequest) {
         socketManager.shell.sendMessage(
             messageFactory.makeReplyMessage(MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply("complete")),
@@ -194,6 +197,9 @@ open class IdeCompatibleMessageRequestProcessor(
         socketManager.control.sendMessage(
             messageFactory.makeReplyMessage(MessageType.INTERRUPT_REPLY, content = incomingMessage.content),
         )
+    }
+
+    override fun processInputReply(content: InputReply) {
     }
 
     protected open fun runExecution(
