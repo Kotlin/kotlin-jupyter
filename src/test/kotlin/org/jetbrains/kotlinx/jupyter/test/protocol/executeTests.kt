@@ -26,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteSuccessReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
+import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
 import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
@@ -125,6 +126,8 @@ class ExecuteTests : KernelServerTestsBase() {
             shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory))
             executeRequestSent()
             inputs.forEach {
+                val request = stdin.receiveMessage()
+                request.content.shouldBeTypeOf<InputRequest>()
                 stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
             }
 

@@ -32,20 +32,6 @@ class KernelServerTest : KernelServerTestsBase() {
     }
 
     @Test
-    fun testStdin() {
-        with(connectClientSocket(JupyterSocketInfo.STDIN)) {
-            try {
-                sendMore("abc")
-                sendMore("def")
-                send("ok")
-            } finally {
-                close()
-                context.term()
-            }
-        }
-    }
-
-    @Test
     fun testShell() {
         with(connectClientSocket(JupyterSocketInfo.CONTROL)) {
             try {

@@ -12,7 +12,7 @@ enum class JupyterSocketInfo(
     HB(JupyterSocketType.HB, SocketType.REP, SocketType.REQ, SocketType.DEALER),
     SHELL(JupyterSocketType.SHELL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
     CONTROL(JupyterSocketType.CONTROL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
-    STDIN(JupyterSocketType.STDIN, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
+    STDIN(JupyterSocketType.STDIN, SocketType.REQ, SocketType.REP, SocketType.REP),
     IOPUB(JupyterSocketType.IOPUB, SocketType.PUB, SocketType.SUB, SocketType.SUB);
 
     fun zmqType(side: JupyterSocketSide): SocketType = when (side) {
