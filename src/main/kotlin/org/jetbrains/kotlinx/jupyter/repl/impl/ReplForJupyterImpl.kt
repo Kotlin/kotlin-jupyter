@@ -256,7 +256,7 @@ class ReplForJupyterImpl(
         implicitReceivers.invoke(v = scriptReceivers)
         if (!isEmbedded) {
             jvm {
-                val filteringClassLoader = FilteringClassLoader(ClassLoader.getSystemClassLoader()) { fqn ->
+                val filteringClassLoader = FilteringClassLoader(ReplForJupyterImpl::class.java.classLoader) { fqn ->
                     listOf(
                         "jupyter.kotlin.",
                         "org.jetbrains.kotlinx.jupyter.api",
