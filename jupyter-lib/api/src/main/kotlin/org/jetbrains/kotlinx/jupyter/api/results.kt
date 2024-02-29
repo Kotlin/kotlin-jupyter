@@ -19,6 +19,8 @@ import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
 import java.util.concurrent.atomic.AtomicLong
+import javax.swing.JFrame
+import javax.swing.JPanel
 
 /**
  * Type alias for FQNs - fully qualified names of classes
@@ -45,6 +47,12 @@ interface Renderable {
 }
 
 /**
+ * Wrapper for in-memory results that also tracks its corresponding mime-type.
+ * @see [DisplayResult.inMemoryOutput]
+ */
+data class InMemoryResult(val mimeType: String, val result: Any?)
+
+/**
  * Display result that may be converted to JSON for `display_data`
  * kernel response
  */
@@ -66,9 +74,20 @@ interface DisplayResult : Renderable {
     fun toJson(additionalMetadata: JsonObject = Json.EMPTY): JsonObject = toJson(additionalMetadata, null)
 
     /**
+     * This field is only relevant when using the embedded server, as it is able to send display data without
+     * transforming it into JSON first.
+     *
+     * In those cases, the data found here is considered the primary data source and any data found in the standard
+     * JSON data is considered fallback data. I.e. it is only used when the in-memory output becomes unavailable,
+     * like after saving and restoring a notebook file.
+     */
+    val inMemoryOutput: InMemoryResult?
+        get() = null
+
+    /**
      * Renders display result, generally should return `this`
      */
-    override fun render(notebook: Notebook) = this
+    override fun render(notebook: Notebook): DisplayResult = this
 }
 
 /**
@@ -126,6 +145,20 @@ fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): 
     this["transient"] = Json.encodeToJsonElement(newTransient)
     return id
 }
+
+/**
+ * Wrapper for [DisplayResult]s that contain in memory results.
+ * This is only applicable to the embedded server.
+ *
+ * @param inMemoryOutput the in-memory result + its mime-type that tells the client how to render it.
+ * @param fallbackResult fallback output the client can use as a placeholder for the in-memory result, if it is
+ * no longer available. Like when saving the notebook to disk.
+ */
+class InMemoryMimeTypedResult(
+    override val inMemoryOutput: InMemoryResult,
+    private val fallbackResult: Map<String, JsonPrimitive>,
+    id: String? = null,
+) : MimeTypedResultEx(Json.encodeToJsonElement(fallbackResult), id)
 
 /**
  * Convenient implementation of [DisplayResult],
@@ -227,6 +260,46 @@ fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(
 
 @Suppress("unused", "FunctionName")
 fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
+
+/**
+ * Display wrapper for [JFrame] objects. When the server is in embedded mode, the [JFrame] is
+ * returned directly as output. If not, a screenshot of the UI is returned instead.
+ *
+ * Usage:
+ * ```
+ * val frame: JFrame = getFrame()
+ * DISPLAY(SWING(frame))
+ * ```
+ */
+@Suppress("unused", "FunctionName")
+fun SWING(frame: JFrame): DisplayResult {
+    return InMemoryMimeTypedResult(
+        InMemoryResult(InMemoryMimeTypes.SWING, frame),
+        mapOf(
+            MimeTypes.PNG to encodeBufferedImage(frame.takeScreenshot())
+        )
+    )
+}
+
+/**
+ * Display wrapper for [JPanel] objects. When the server is in embedded mode, the [JPanel] is
+ * returned directly as output. If not, a screenshot of the UI is returned instead.
+ *
+ * Usage:
+ * ```
+ * val panel: JPanel = getPanel()
+ * DISPLAY(SWING(panel))
+ * ```
+ */
+@Suppress("unused", "FunctionName")
+fun SWING(panel: JPanel): DisplayResult {
+    return InMemoryMimeTypedResult(
+        InMemoryResult(InMemoryMimeTypes.SWING, panel),
+        mapOf(
+            MimeTypes.PNG to encodeBufferedImage(panel.takeScreenshot())
+        )
+    )
+}
 
 private val jsonPrettyPrinter = Json { prettyPrint = true }
 fun JSON(
@@ -377,4 +450,14 @@ object MimeTypes {
     const val PNG = "image/png"
     const val JPEG = "image/jpeg"
     const val SVG = "image/svg+xml"
+}
+
+/**
+ * Mimetypes for in-memory output.
+ */
+object InMemoryMimeTypes {
+    const val SWING = "application/vnd.idea.swing"
+    const val COMPOSE = "application/vnd.idea.compose"
+
+    val allTypes = listOf(SWING, COMPOSE)
 }

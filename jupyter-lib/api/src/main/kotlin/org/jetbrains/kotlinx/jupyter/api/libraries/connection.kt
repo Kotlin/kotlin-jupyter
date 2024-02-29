@@ -8,6 +8,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.InMemoryResult
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.util.*
 
@@ -38,6 +39,9 @@ interface RawMessage {
     val parentHeader: JsonObject?
     val metadata: JsonObject?
     val content: JsonElement
+    // For a kernel in embedded mode, sometimes it can be faster to just send a reference to the
+    // in-memory data instead of serializing/deserializing the data.
+    val inMemoryResult: InMemoryResult?
 }
 
 val RawMessage.type: String?

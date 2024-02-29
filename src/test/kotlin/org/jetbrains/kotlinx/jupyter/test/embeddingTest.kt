@@ -1,17 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
-import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
-import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
-import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
-import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.api.libraries.*
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
+import javax.swing.JFrame
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -122,6 +115,22 @@ class EmbedReplTest : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         assertEquals("[12, 13, 14]", result2.renderedValue)
+    }
+
+    @Test
+    fun testInMemoryCellValues() {
+        val code = """
+            import javax.swing.JFrame
+            val frame = JFrame("panel")
+            frame.setSize(300, 300)
+            frame
+        """.trimIndent()
+        val result  = eval(code)
+        assertTrue(result.renderedValue is InMemoryMimeTypedResult)
+        assertTrue(result.displayValue is InMemoryMimeTypedResult)
+        val display = result.displayValue as InMemoryMimeTypedResult
+        assertTrue(display.inMemoryOutput.result is JFrame)
+        assertEquals(InMemoryMimeTypes.SWING, display.inMemoryOutput.mimeType)
     }
 }
 

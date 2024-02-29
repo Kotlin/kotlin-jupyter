@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
+import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.withId
@@ -30,6 +31,11 @@ class SocketDisplayHandler(
             json["data"],
             json["metadata"],
             json["transient"],
+            if (display is InMemoryMimeTypedResult) {
+                display.inMemoryOutput
+            } else {
+                null
+            }
         )
         sendMessage(MessageType.DISPLAY_DATA, content)
     }
@@ -51,6 +57,11 @@ class SocketDisplayHandler(
             json["data"],
             json["metadata"],
             json["transient"],
+            if (display is InMemoryMimeTypedResult) {
+                display.inMemoryOutput
+            } else {
+                null
+            }
         )
         sendMessage(MessageType.UPDATE_DISPLAY_DATA, content)
     }
