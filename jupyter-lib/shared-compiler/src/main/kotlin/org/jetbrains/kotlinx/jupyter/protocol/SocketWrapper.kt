@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -129,6 +128,7 @@ class SocketWrapper(
             parentHeader.parseJson()?.jsonObject,
             metadata.parseJson()?.jsonObject,
             content.parseJson().orEmptyObject(),
+            null // In-memory results are never sent from the client to the kernel. Only the other way.
         )
     }
 
