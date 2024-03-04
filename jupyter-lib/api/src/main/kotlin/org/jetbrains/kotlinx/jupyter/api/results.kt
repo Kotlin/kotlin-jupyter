@@ -235,8 +235,11 @@ fun JSON(
     expanded: Boolean = true,
 ) = MimeTypedResultEx(
     buildJsonObject {
+        val encodedJson = jsonPrettyPrinter.encodeToString(json)
         put(MimeTypes.JSON, json)
-        put(MimeTypes.PLAIN_TEXT, JsonPrimitive(jsonPrettyPrinter.encodeToString(json)))
+        put(MimeTypes.PLAIN_TEXT, JsonPrimitive(encodedJson))
+        val backticks = "`".repeat(markdownCodeBlockBackticksCount(encodedJson))
+        put(MimeTypes.MARKDOWN, JsonPrimitive("${backticks}json\n$encodedJson\n$backticks"))
     },
     null,
     standardMetadataModifiers(
@@ -244,6 +247,13 @@ fun JSON(
         expandedJson = expanded,
     ),
 )
+
+private val markdownBackticksRegex = Regex("`{3,}")
+
+/** Return minimum number of backticks that are required to wrap [code] in Markdown code block without escaping it. */
+private fun markdownCodeBlockBackticksCount(code: String): Int {
+    return markdownBackticksRegex.findAll(code).maxOfOrNull { it.value.length + 1 } ?: 3
+}
 
 @Suppress("unused", "FunctionName")
 fun JSON(

@@ -122,7 +122,7 @@ class ApiTest : AbstractSingleReplTest() {
         val res = eval(
             """
             val jsonStr = ""${'"'}
-            {"a": [1], "b": {"inner1": "helloworld"}}
+            {"a": [1], "b": {"inner1": "helloworld\n````"}}
             ""${'"'}
 
             JSON(jsonStr)
@@ -140,10 +140,11 @@ class ApiTest : AbstractSingleReplTest() {
                             1
                         ],
                         "b": {
-                            "inner1": "helloworld"
+                            "inner1": "helloworld\n````"
                         }
                     },
-                    "text/plain": "{\n    \"a\": [\n        1\n    ],\n    \"b\": {\n        \"inner1\": \"helloworld\"\n    }\n}"
+                    "text/plain": "{\n    \"a\": [\n        1\n    ],\n    \"b\": {\n        \"inner1\": \"helloworld\\n````\"\n    }\n}",
+                    "text/markdown": "`````json\n{\n    \"a\": [\n        1\n    ],\n    \"b\": {\n        \"inner1\": \"helloworld\\n````\"\n    }\n}\n`````"
                 },
                 "metadata": {
                     "application/json": {
