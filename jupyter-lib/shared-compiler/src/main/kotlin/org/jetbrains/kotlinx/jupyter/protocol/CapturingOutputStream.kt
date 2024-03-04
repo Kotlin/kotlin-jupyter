@@ -77,6 +77,7 @@ class CapturingOutputStream(
     }
 
     override fun close() {
+        flush()
         super.close()
         timer.cancel()
     }

@@ -23,7 +23,12 @@ import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import org.jetbrains.kotlinx.jupyter.util.systemErrStream
+import org.jetbrains.kotlinx.jupyter.util.systemInStream
+import org.jetbrains.kotlinx.jupyter.util.systemOutStream
+import org.jetbrains.kotlinx.jupyter.util.withSubstitutedStream
 import java.io.InputStream
+import java.io.OutputStream
 import java.io.PrintStream
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
@@ -242,57 +247,61 @@ open class IdeCompatibleMessageRequestProcessor(
         }
     }
 
+    private val replOutputConfig get() = repl.options.outputConfig
+
+    private fun getCapturingStream(stream: PrintStream?, outType: JupyterOutType, captureOutput: Boolean): PrintStream {
+        return CapturingOutputStream(
+            stream,
+            replOutputConfig,
+            captureOutput,
+        ) { text ->
+            repl.notebook.currentCell?.appendStreamOutput(text)
+            this.sendOut(outType, text)
+        }.asPrintStream()
+    }
+
+    private fun OutputStream.asPrintStream() =
+        PrintStream(this, false, "UTF-8")
+
+    private fun <T> withForkedOut(body: () -> T): T {
+        return withSubstitutedStream(
+            ::systemOutStream,
+            newStreamFactory = { out: PrintStream -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
+        ) { forkedOut ->
+            KernelStreams.withOutStream(forkedOut, body)
+        }
+    }
+
+    private fun <T> withForkedErr(body: () -> T): T {
+        return withSubstitutedStream(
+            ::systemErrStream,
+            newStreamFactory = { err: PrintStream -> getCapturingStream(err, JupyterOutType.STDERR, false) },
+        ) {
+            val userErr = getCapturingStream(null, JupyterOutType.STDERR, true)
+            userErr.use {
+                KernelStreams.withErrStream(userErr, body)
+            }
+        }
+    }
+
+    private fun <T> withForkedIn(allowStdIn: Boolean, body: () -> T): T {
+        return withSubstitutedStream(
+            ::systemInStream,
+            newStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
+        ) {
+            body()
+        }
+    }
+
     protected open fun <T> evalWithIO(
         allowStdIn: Boolean,
         body: () -> T,
     ): T {
-        val config = repl.options.outputConfig
-        val out = System.out
-        val err = System.err
         repl.notebook.beginEvalSession()
-        val cell = { repl.notebook.currentCell }
-
-        fun getCapturingStream(stream: PrintStream?, outType: JupyterOutType, captureOutput: Boolean): CapturingOutputStream {
-            return CapturingOutputStream(
-                stream,
-                config,
-                captureOutput,
-            ) { text ->
-                cell()?.appendStreamOutput(text)
-                this.sendOut(outType, text)
+        return withForkedOut {
+            withForkedErr {
+                withForkedIn(allowStdIn, body)
             }
-        }
-
-        val forkedOut = getCapturingStream(out, JupyterOutType.STDOUT, config.captureOutput)
-        val forkedError = getCapturingStream(err, JupyterOutType.STDERR, false)
-        val userError = getCapturingStream(null, JupyterOutType.STDERR, true)
-
-        fun flushStreams() {
-            forkedOut.flush()
-            forkedError.flush()
-            userError.flush()
-        }
-
-        val printForkedOut = PrintStream(forkedOut, false, "UTF-8")
-        val printForkedErr = PrintStream(forkedError, false, "UTF-8")
-        val printUserError = PrintStream(userError, false, "UTF-8")
-
-        KernelStreams.setStreams(true, printForkedOut, printUserError)
-
-        System.setOut(printForkedOut)
-        System.setErr(printForkedErr)
-
-        val `in` = System.`in`
-        System.setIn(if (allowStdIn) stdinIn else DisabledStdinInputStream)
-        try {
-            return body()
-        } finally {
-            flushStreams()
-            System.setIn(`in`)
-            System.setErr(err)
-            System.setOut(out)
-
-            KernelStreams.setStreams(false, out, err)
         }
     }
 
