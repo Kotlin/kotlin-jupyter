@@ -388,6 +388,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
+ - ktor-client - Asynchronous HTTP client
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
@@ -400,7 +401,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
  - [reflection](https://kotlinlang.org/docs/reflection.html) - Imports for Kotlin Reflection
  - [roboquant](https://roboquant.org) - Algorithmic trading platform written in Kotlin
- - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Kotlin multi-format reflection-less serialization
+ - [serialization](https://github.com/Kotlin/kotlinx.serialization) - Deserialize JSON content using kotlinx.serialization and automatically generate classes for it
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
  - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
