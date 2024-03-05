@@ -8,11 +8,13 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import org.jetbrains.kotlinx.jupyter.api.JSON
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.displayValue
+import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeout
@@ -88,7 +90,9 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        assertEquals("""{"x":42}""", serialized.renderedValue)
+        val expectedJson = """{"x":42}"""
+        serialized.rawValue shouldBe expectedJson
+        serialized.renderedValue shouldBe JSON(expectedJson)
     }
 
     @Test
