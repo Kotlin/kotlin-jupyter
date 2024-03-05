@@ -388,7 +388,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
- - ktor-client - Asynchronous HTTP client
+ - [ktor-client](https://ktor.io/docs/request.html) - Asynchronous HTTP client
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
