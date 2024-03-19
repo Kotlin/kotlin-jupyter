@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import java.awt.image.BufferedImage
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -20,7 +21,8 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
-import javax.swing.JPanel
+import javax.swing.JComponent
+import kotlinx.serialization.json.jsonObject
 
 /**
  * Type alias for FQNs - fully qualified names of classes
@@ -144,6 +146,14 @@ fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): 
     newTransient["display_id"] = JsonPrimitive(id)
     this["transient"] = Json.encodeToJsonElement(newTransient)
     return id
+}
+
+/**
+ * Check if the JSON object contains a `display_id` entry.
+ */
+fun JsonObject.containsDisplayId(id: String): Boolean {
+    val transient = get("transient")?.let { if (it is JsonObject) it else null }
+    return (transient?.get("display_id") as? JsonPrimitive)?.content == id
 }
 
 /**
@@ -282,7 +292,7 @@ fun SWING(frame: JFrame): DisplayResult {
 }
 
 /**
- * Display wrapper for [JPanel] objects. When the server is in embedded mode, the [JPanel] is
+ * Display wrapper for [JComponent] objects. When the server is in embedded mode, the [JComponent] is
  * returned directly as output. If not, a screenshot of the UI is returned instead.
  *
  * Usage:
@@ -292,12 +302,16 @@ fun SWING(frame: JFrame): DisplayResult {
  * ```
  */
 @Suppress("unused", "FunctionName")
-fun SWING(panel: JPanel): DisplayResult {
+fun SWING(component: JComponent): DisplayResult {
+    val fallbackImage: BufferedImage? = component.takeScreenshot()
+    val fallback = if (fallbackImage == null) {
+        MimeTypes.PLAIN_TEXT to JsonPrimitive(component.toString())
+    } else {
+        MimeTypes.PNG to encodeBufferedImage(fallbackImage)
+    }
     return InMemoryMimeTypedResult(
-        InMemoryResult(InMemoryMimeTypes.SWING, panel),
-        mapOf(
-            MimeTypes.PNG to encodeBufferedImage(panel.takeScreenshot())
-        )
+        InMemoryResult(InMemoryMimeTypes.SWING, component),
+        mapOf(fallback)
     )
 }
 

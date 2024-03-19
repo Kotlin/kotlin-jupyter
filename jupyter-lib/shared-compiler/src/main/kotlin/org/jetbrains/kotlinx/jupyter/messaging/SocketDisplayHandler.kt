@@ -1,7 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.containsDisplayId
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.withId
@@ -27,22 +30,16 @@ class SocketDisplayHandler(
 
         notebook.currentCell?.addDisplay(display)
 
-        val content = DisplayDataResponse(
-            json["data"],
-            json["metadata"],
-            json["transient"],
-            if (display is InMemoryMimeTypedResult) {
-                display.inMemoryOutput
-            } else {
-                null
-            }
-        )
-        sendMessage(MessageType.DISPLAY_DATA, content)
+        val response: DisplayDataResponse = createResponse(json, display)
+        sendMessage(MessageType.DISPLAY_DATA, response)
     }
 
     override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
         val display = renderValue(notebook, host, value) ?: return
-        val json = display.toJson(Json.EMPTY, null).toMutableMap()
+        val json = display.toJson(Json.EMPTY, null)
+        if (id == null || !json.containsDisplayId(id)) {
+            throw RuntimeException("`update_display_data` response should provide an id of data being updated")
+        }
 
         val container = notebook.displays
         container.update(id, display)
@@ -50,9 +47,14 @@ class SocketDisplayHandler(
             it.cell.displays.update(id, display)
         }
 
-        json.setDisplayId(id)
-            ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
+        val response = createResponse(json, display)
+        sendMessage(MessageType.UPDATE_DISPLAY_DATA, response)
+    }
 
+    private fun createResponse(
+        json: JsonObject,
+        display: DisplayResult,
+    ): DisplayDataResponse {
         val content = DisplayDataResponse(
             json["data"],
             json["metadata"],
@@ -61,8 +63,8 @@ class SocketDisplayHandler(
                 display.inMemoryOutput
             } else {
                 null
-            }
+            },
         )
-        sendMessage(MessageType.UPDATE_DISPLAY_DATA, content)
+        return content
     }
 }

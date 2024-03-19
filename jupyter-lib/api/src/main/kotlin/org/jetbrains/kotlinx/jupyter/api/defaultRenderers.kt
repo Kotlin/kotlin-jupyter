@@ -5,10 +5,10 @@ import kotlinx.serialization.json.buildJsonObject
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Array
-import java.util.*
+import java.util.Base64
 import javax.imageio.ImageIO
 import javax.swing.JFrame
-import javax.swing.JPanel
+import javax.swing.JComponent
 
 /**
  * Convert a buffered image to a PNG file encoded as a Base64 Json string.
@@ -68,9 +68,9 @@ val swingJFrameInMemoryRenderer = createRenderer<JFrame> { frame: JFrame ->
 }
 
 /**
- * Renders a Swing [JPanel] in-memory, but also provides a screenshot of the UI as
+ * Renders a Swing [JComponent] in-memory, but also provides a screenshot of the UI as
  * fallback data.
  */
-val swingJPanelInMemoryRenderer: RendererFieldHandler = createRenderer<JPanel> { panel: JPanel ->
-    SWING(panel)
+val swingJComponentInMemoryRenderer: RendererFieldHandler = createRenderer<JComponent> { component: JComponent ->
+    SWING(component)
 }

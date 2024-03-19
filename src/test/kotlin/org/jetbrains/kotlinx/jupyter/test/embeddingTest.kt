@@ -1,12 +1,18 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import java.awt.Dimension
+import java.awt.image.BufferedImage
+import javax.swing.JButton
 import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import javax.swing.JFrame
+import javax.swing.JPanel
+import kotlin.test.DefaultAsserter.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertNotEquals
 
 class SomeSingleton {
     companion object {
@@ -78,6 +84,9 @@ val testLibraryDefinition2 = libraryDefinition {
     )
 }
 
+/**
+ * Class for testing the embedded kernel.
+ */
 class EmbedReplTest : AbstractSingleReplTest() {
     override val repl = makeEmbeddedRepl()
 
@@ -132,6 +141,46 @@ class EmbedReplTest : AbstractSingleReplTest() {
         assertTrue(display.inMemoryOutput.result is JFrame)
         assertEquals(InMemoryMimeTypes.SWING, display.inMemoryOutput.mimeType)
     }
+
+    @Test
+    fun testScreenshotOfJPanel() {
+        val panel = JPanel()
+        panel.size = Dimension(100, 50)
+        val button = JButton("Button 1")
+        button.size = Dimension(100, 50)
+        panel.add(button)
+        val screenshot = panel.takeScreenshot()
+        assertNotEmptyImage(screenshot)
+    }
+
+    @Test
+    fun testScreenshotOfJButton() {
+        val button = JButton("Test Button")
+        button.size = Dimension(400, 100)
+        val screenshot = button.takeScreenshot()
+        assertNotEmptyImage(screenshot)
+    }
+
+    // Check if a screenshot actually contains anything useful.
+    // We assume "useful" means an image with width/length > 0 and doesn't only consist of
+    // one color.
+    private fun assertNotEmptyImage(image: BufferedImage?) {
+        if (image == null) {
+            fail("`null` image was returned")
+        }
+        assertNotEquals(0, image.width)
+        assertNotEquals(0, image.height)
+        val topLeftColor = image.getRGB(0, 0)
+        for (x in 0 until image.width) {
+            for (y in 0 until image.height) {
+                if (image.getRGB(x, y) != topLeftColor) {
+                    return
+                }
+            }
+        }
+        fail("Image only contained a single color: $topLeftColor")
+    }
+
 }
 
 class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {

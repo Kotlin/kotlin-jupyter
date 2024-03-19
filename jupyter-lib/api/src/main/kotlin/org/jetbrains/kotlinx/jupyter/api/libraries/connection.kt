@@ -14,7 +14,7 @@ import java.util.*
 
 /**
  * Jupyter connection socket types
- * Here you can find an information about Jupyter sockets:
+ * Here you can find information about Jupyter sockets:
  * https://jupyter-client.readthedocs.io/en/stable/messaging.html#introduction
  *
  * For now, only adding callbacks for messages on `control` and `shell` sockets makes sense.
@@ -39,8 +39,10 @@ interface RawMessage {
     val parentHeader: JsonObject?
     val metadata: JsonObject?
     val content: JsonElement
-    // For a kernel in embedded mode, sometimes it can be faster to just send a reference to the
-    // in-memory data instead of serializing/deserializing the data.
+    // When using the kernel in embedded mode, this field makes it possible to send display data back
+    // as the original in-memory value rather than serializing it to JSON. This is not only faster
+    // and easier but also makes it possible to send display data that is otherwise not serializable
+    // to JSON.
     val inMemoryResult: InMemoryResult?
 }
 
