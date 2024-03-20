@@ -13,6 +13,8 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 
 fun createRepl(
     httpUtil: LibraryHttpUtil,
@@ -27,6 +29,7 @@ fun createRepl(
     displayHandler: DisplayHandler = NoOpDisplayHandler,
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
     debugPort: Int? = null,
+    inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder()
 ): ReplForJupyter {
     val componentsProvider = object : ReplComponentsProviderBase() {
         override fun provideResolutionInfoProvider() = resolutionInfoProvider
@@ -44,6 +47,7 @@ fun createRepl(
         override fun provideLibraryDescriptorsManager() = httpUtil.libraryDescriptorsManager
         override fun provideLibraryInfoCache() = httpUtil.libraryInfoCache
         override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
+        override fun provideInMemoryReplResultsHolder() = inMemoryReplResultsHolder
     }
     return componentsProvider.createRepl()
 }

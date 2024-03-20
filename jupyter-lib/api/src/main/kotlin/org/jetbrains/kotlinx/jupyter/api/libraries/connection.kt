@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
+import java.util.Locale
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -8,9 +9,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.api.InMemoryResult
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import java.util.*
 
 /**
  * Jupyter connection socket types
@@ -39,11 +38,6 @@ interface RawMessage {
     val parentHeader: JsonObject?
     val metadata: JsonObject?
     val content: JsonElement
-    // When using the kernel in embedded mode, this field makes it possible to send display data back
-    // as the original in-memory value rather than serializing it to JSON. This is not only faster
-    // and easier but also makes it possible to send display data that is otherwise not serializable
-    // to JSON.
-    val inMemoryResult: InMemoryResult?
 }
 
 val RawMessage.type: String?

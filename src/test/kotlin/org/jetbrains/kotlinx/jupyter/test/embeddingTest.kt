@@ -3,16 +3,26 @@ package org.jetbrains.kotlinx.jupyter.test
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import javax.swing.JButton
-import org.jetbrains.kotlinx.jupyter.api.*
-import org.jetbrains.kotlinx.jupyter.api.libraries.*
-import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
-import org.junit.jupiter.api.Test
 import javax.swing.JFrame
 import javax.swing.JPanel
 import kotlin.test.DefaultAsserter.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypes
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
+import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
+import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
+import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
+import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.takeScreenshot
+import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Test
 
 class SomeSingleton {
     companion object {
@@ -135,11 +145,16 @@ class EmbedReplTest : AbstractSingleReplTest() {
             frame
         """.trimIndent()
         val result  = eval(code)
-        assertTrue(result.renderedValue is InMemoryMimeTypedResult)
-        assertTrue(result.displayValue is InMemoryMimeTypedResult)
-        val display = result.displayValue as InMemoryMimeTypedResult
-        assertTrue(display.inMemoryOutput.result is JFrame)
-        assertEquals(InMemoryMimeTypes.SWING, display.inMemoryOutput.mimeType)
+        assertTrue(result.renderedValue is MimeTypedResult)
+        assertTrue(result.displayValue is MimeTypedResult)
+        val display = result.displayValue as MimeTypedResult
+        assertEquals(2, display.size)
+        assertTrue(display.containsKey("image/png"))
+        assertTrue(display.containsKey(InMemoryMimeTypes.SWING))
+        assertEquals("-1", display[InMemoryMimeTypes.SWING])
+        val inMemHolder = repl.notebook.sharedReplContext!!.inMemoryReplResultsHolder
+        assertEquals(1, inMemHolder.size)
+        assertTrue(inMemHolder.getReplResult("-1", JFrame::class) is JFrame)
     }
 
     @Test

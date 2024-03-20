@@ -26,6 +26,9 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 
 abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProvider() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider(libraryInfoCache)
@@ -60,4 +63,5 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager = LibraryDescriptorsManager.getInstance(httpClient)
     override fun provideLibraryInfoCache(): LibraryInfoCache = LibraryInfoCacheImpl(libraryDescriptorsManager)
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
+    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder = if (isEmbedded) DefaultInMemoryReplResultsHolder() else NoOpInMemoryReplResultsHolder()
 }

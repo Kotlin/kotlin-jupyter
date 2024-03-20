@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 
 abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     override val resolutionInfoProvider by lazy { provideResolutionInfoProvider() }
@@ -78,6 +79,9 @@ abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvide
     override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
     protected abstract fun provideLibraryReferenceParser(): LibraryReferenceParser
 
-    // TODO: add other methods incl. display handler and socket messages listener
+    override val inMemoryReplResultsHolder: InMemoryReplResultsHolder by lazy { provideInMemoryReplResultsHolder() }
+    protected abstract fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder
+
+// TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
 }

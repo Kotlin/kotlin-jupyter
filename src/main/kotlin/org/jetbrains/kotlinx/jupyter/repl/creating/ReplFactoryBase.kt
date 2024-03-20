@@ -26,6 +26,7 @@ class ReplFactoryBase(
                 libraryDescriptorsManager,
                 libraryInfoCache,
                 libraryReferenceParser,
+                inMemoryReplResultsHolder
             )
         }
     }

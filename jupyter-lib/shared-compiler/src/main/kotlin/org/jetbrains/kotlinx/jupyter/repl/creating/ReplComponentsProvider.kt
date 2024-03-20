@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 
 interface ReplComponentsProvider {
     val resolutionInfoProvider: ResolutionInfoProvider
@@ -38,4 +39,5 @@ interface ReplComponentsProvider {
     val libraryDescriptorsManager: LibraryDescriptorsManager
     val libraryInfoCache: LibraryInfoCache
     val libraryReferenceParser: LibraryReferenceParser
+    val inMemoryReplResultsHolder: InMemoryReplResultsHolder
 }

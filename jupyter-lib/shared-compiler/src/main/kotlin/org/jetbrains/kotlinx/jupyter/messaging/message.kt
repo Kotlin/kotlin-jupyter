@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.data
 import org.jetbrains.kotlinx.jupyter.protocol.protocolVersion
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 
 data class Message(
     val id: List<ByteArray> = listOf(),
@@ -42,7 +42,6 @@ fun Message.toRawMessage(): RawMessage {
         dataJson["parent_header"] as? JsonObject,
         dataJson["metadata"] as? JsonObject,
         dataJson["content"]!!,
-        data.inMemoryOutput
     )
 }
 

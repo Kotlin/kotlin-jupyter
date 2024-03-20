@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
 
 fun interface ReplProvider {
     operator fun invoke(classpath: List<File>): ReplForJupyter
@@ -36,6 +37,7 @@ fun interface ReplProvider {
                 isEmbedded = true,
                 mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver = resolver,
+                inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder()
             ).apply {
                 initializeWithCurrentClasspath()
             }

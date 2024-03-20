@@ -1,10 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import java.awt.*
+import java.awt.GraphicsConfiguration
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Robot
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 /**
@@ -39,7 +42,7 @@ fun JFrame.takeScreenshot(): BufferedImage {
 /**
  * Takes a screenshot of the Swing component. This is only possible if the
  * component has been given a size, see [JComponent.getSize]. Either manually
- * or through a [LayoutManager].
+ * or through a [java.awt.LayoutManager].
  *
  * If the size of the component cannot be determined, `null` is returned.
  */

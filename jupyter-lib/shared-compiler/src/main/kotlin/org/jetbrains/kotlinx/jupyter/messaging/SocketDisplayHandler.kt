@@ -2,11 +2,8 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
-import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.containsDisplayId
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
@@ -30,7 +27,7 @@ class SocketDisplayHandler(
 
         notebook.currentCell?.addDisplay(display)
 
-        val response: DisplayDataResponse = createResponse(json, display)
+        val response: DisplayDataResponse = createResponse(json)
         sendMessage(MessageType.DISPLAY_DATA, response)
     }
 
@@ -47,23 +44,15 @@ class SocketDisplayHandler(
             it.cell.displays.update(id, display)
         }
 
-        val response = createResponse(json, display)
+        val response = createResponse(json)
         sendMessage(MessageType.UPDATE_DISPLAY_DATA, response)
     }
 
-    private fun createResponse(
-        json: JsonObject,
-        display: DisplayResult,
-    ): DisplayDataResponse {
+    private fun createResponse(json: JsonObject): DisplayDataResponse {
         val content = DisplayDataResponse(
             json["data"],
             json["metadata"],
             json["transient"],
-            if (display is InMemoryMimeTypedResult) {
-                display.inMemoryOutput
-            } else {
-                null
-            },
         )
         return content
     }

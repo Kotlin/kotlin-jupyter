@@ -399,8 +399,6 @@ class DisplayDataResponse(
     val data: JsonElement? = null,
     val metadata: JsonElement? = null,
     val transient: JsonElement? = null,
-    @Transient
-    val inMemoryOutput: InMemoryResult? = null
 ) : AbstractMessageContent()
 
 @Serializable
@@ -539,14 +537,7 @@ data class MessageData(
     val parentHeader: MessageHeader? = null,
     val metadata: JsonElement? = null,
     val content: MessageContent? = null,
-) {
-    @Transient
-    val inMemoryOutput: InMemoryResult? = when(content) {
-        is ExecutionResultMessage -> content.inMemoryOutput
-        is DisplayDataResponse -> content.inMemoryOutput
-        else -> null
-    }
-}
+)
 
 object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
     override val descriptor: SerialDescriptor

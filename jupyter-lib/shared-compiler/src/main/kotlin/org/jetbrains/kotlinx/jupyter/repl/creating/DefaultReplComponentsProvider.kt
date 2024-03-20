@@ -17,11 +17,13 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.io.File
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 
 class DefaultReplComponentsProvider(
     private val _settings: DefaultReplSettings,
     private val _communicationFacility: JupyterCommunicationFacility,
     private val _commManager: CommManager,
+    private val _inMemoryResultsHolder: InMemoryReplResultsHolder,
 ) : ReplComponentsProviderBase() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider {
         return _settings.replConfig.resolutionInfoProvider
@@ -98,6 +100,10 @@ class DefaultReplComponentsProvider(
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser {
         return httpUtil.libraryReferenceParser
+    }
+
+    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder {
+        return _inMemoryResultsHolder
     }
 
     companion object {

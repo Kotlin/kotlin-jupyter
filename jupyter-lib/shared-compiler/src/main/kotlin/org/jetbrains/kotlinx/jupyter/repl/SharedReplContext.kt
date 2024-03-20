@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.execution.AfterCellExecutionsProcessor
 
 data class SharedReplContext(
@@ -39,4 +40,5 @@ data class SharedReplContext(
     val interruptionCallbacksProcessor: InterruptionCallbacksProcessor,
     val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor,
     val displayHandler: DisplayHandler,
+    val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
 )

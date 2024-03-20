@@ -86,7 +86,6 @@ fun JupyterCommunicationFacility.sendExecuteResult(
                 executionCount = requestCount,
                 data = resultJson["data"]!!,
                 metadata = resultJson["metadata"]!!,
-                inMemoryOutput = result.inMemoryOutput
             ),
         ),
     )

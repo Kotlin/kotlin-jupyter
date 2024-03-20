@@ -123,6 +123,9 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
+import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 
 class ReplForJupyterImpl(
     override val resolutionInfoProvider: ResolutionInfoProvider,
@@ -142,6 +145,7 @@ class ReplForJupyterImpl(
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
     private val libraryInfoCache: LibraryInfoCache,
     private val libraryReferenceParser: LibraryReferenceParser,
+    private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
 
     override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
@@ -347,6 +351,7 @@ class ReplForJupyterImpl(
         interruptionCallbacksProcessor,
         colorSchemeChangeCallbacksProcessor,
         displayHandler,
+        inMemoryReplResultsHolder
     ).also {
         notebook.sharedReplContext = it
         commHandlers.requireUniqueTargets()
@@ -379,10 +384,9 @@ class ReplForJupyterImpl(
 
             val result = evaluateUserCode(evalData.code, evalData.jupyterId)
             fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
-
             when (result) {
                 is InternalReplResult.Success -> {
-                    val rendered = result.internalResult.let { internalResult ->
+                    var rendered = result.internalResult.let { internalResult ->
                         log.catchAll {
                             renderersProcessor.renderResult(executor, internalResult.result)
                         }
@@ -390,6 +394,11 @@ class ReplForJupyterImpl(
                         log.catchAll {
                             if (it is Renderable) it.render(notebook) else it
                         }
+                    }
+
+
+                    if (rendered is InMemoryMimeTypedResult) {
+                        rendered = transformInMemoryResults(rendered, evalData)
                     }
 
                     val displayValue = log.catchAll {
@@ -437,6 +446,22 @@ class ReplForJupyterImpl(
                 }
             }
         }
+    }
+
+    /**
+     * If the render result is an in-memory value, we need to extract it from
+     * the mimetype and put it into the `InMemoryReplResultsHolder`. Then we
+     * construct a new DisplayResult where the in-memory value is replaced by
+     * its `jupyterId`. This allows us to re-use the existing Jupyter protocol
+     * infrastructure to send display results, but also allows a custom UI
+     * component on the Client side to find the in-memory value
+     * again by asking for it in the `InMemoryReplResultsHolder`.
+     */
+    private fun transformInMemoryResults(rendered: InMemoryMimeTypedResult, evalData: EvalRequestData): MimeTypedResult {
+        val id = evalData.jupyterId.toString()
+        val inMemoryValue = rendered.inMemoryOutput.result
+        inMemoryReplResultsHolder.setReplResult(id, inMemoryValue) // TODO Can this be null here?
+        return MimeTypedResult(mimeData = rendered.fallbackResult + Pair(rendered.inMemoryOutput.mimeType, id))
     }
 
     private fun calculateEvalMetadata(storeHistory: Boolean, internalMetadata: InternalMetadata): EvaluatedSnippetMetadata {
