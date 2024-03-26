@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import java.awt.image.BufferedImage
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -19,9 +19,6 @@ import org.jetbrains.kotlinx.jupyter.api.outputs.isIsolatedHtml
 import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
-import java.util.concurrent.atomic.AtomicLong
-import javax.swing.JFrame
-import javax.swing.JComponent
 
 /**
  * Type alias for FQNs - fully qualified names of classes
@@ -260,50 +257,6 @@ fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(
 
 @Suppress("unused", "FunctionName")
 fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
-
-/**
- * Display wrapper for [JFrame] objects. When the server is in embedded mode, the [JFrame] is
- * returned directly as output. If not, a screenshot of the UI is returned instead.
- *
- * Usage:
- * ```
- * val frame: JFrame = getFrame()
- * DISPLAY(SWING(frame))
- * ```
- */
-@Suppress("unused", "FunctionName")
-fun SWING(frame: JFrame): DisplayResult {
-    return InMemoryMimeTypedResult(
-        InMemoryResult(InMemoryMimeTypes.SWING, frame),
-        mapOf(
-            MimeTypes.PNG to encodeBufferedImage(frame.takeScreenshot()).content
-        )
-    )
-}
-
-/**
- * Display wrapper for [JComponent] objects. When the server is in embedded mode, the [JComponent] is
- * returned directly as output. If not, a screenshot of the UI is returned instead.
- *
- * Usage:
- * ```
- * val panel: JPanel = getPanel()
- * DISPLAY(SWING(panel))
- * ```
- */
-@Suppress("unused", "FunctionName")
-fun SWING(component: JComponent): DisplayResult {
-    val fallbackImage: BufferedImage? = component.takeScreenshot()
-    val fallback = if (fallbackImage == null) {
-        MimeTypes.PLAIN_TEXT to component.toString()
-    } else {
-        MimeTypes.PNG to encodeBufferedImage(fallbackImage).content
-    }
-    return InMemoryMimeTypedResult(
-        InMemoryResult(InMemoryMimeTypes.SWING, component),
-        mapOf(fallback),
-    )
-}
 
 private val jsonPrettyPrinter = Json { prettyPrint = true }
 fun JSON(

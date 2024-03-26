@@ -1,14 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Array
 import java.util.Base64
 import javax.imageio.ImageIO
-import javax.swing.JFrame
 import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 /**
  * Convert a buffered image to a PNG file encoded as a Base64 Json string.
@@ -59,12 +60,36 @@ val arrayRenderer = object : RendererHandler {
     }
 }
 
+private fun createInMemoryMimeTypedResult(
+    fallbackImage: BufferedImage?,
+    swingResult: Any,
+): InMemoryMimeTypedResult {
+    val fallback = if (fallbackImage == null) {
+        MimeTypes.PLAIN_TEXT to "No data available. Rerun the cell."
+    } else {
+        MimeTypes.PNG to encodeBufferedImage(fallbackImage).content
+    }
+    return InMemoryMimeTypedResult(
+        InMemoryResult(InMemoryMimeTypes.SWING, swingResult),
+        mapOf(fallback),
+    )
+}
 /**
  * Renders a Swing [JFrame] in-memory, but also provides a screenshot of the UI as
  * fallback data.
  */
 val swingJFrameInMemoryRenderer = createRenderer<JFrame> { frame: JFrame ->
-    SWING(frame)
+    val fallbackImage: BufferedImage? = frame.takeScreenshot()
+    createInMemoryMimeTypedResult(fallbackImage, frame)
+}
+
+/**
+ * Renders a Swing [JDialog] in-memory, but also provides a screenshot of the UI as
+ * fallback data.
+ */
+val swingJDialogInMemoryRenderer = createRenderer<JDialog> { dialog: JDialog ->
+    val fallbackImage: BufferedImage? = dialog.takeScreenshot()
+    createInMemoryMimeTypedResult(fallbackImage, dialog)
 }
 
 /**
@@ -72,5 +97,6 @@ val swingJFrameInMemoryRenderer = createRenderer<JFrame> { frame: JFrame ->
  * fallback data.
  */
 val swingJComponentInMemoryRenderer: RendererFieldHandler = createRenderer<JComponent> { component: JComponent ->
-    SWING(component)
+    val fallbackImage: BufferedImage? = component.takeScreenshot()
+    createInMemoryMimeTypedResult(fallbackImage, component)
 }

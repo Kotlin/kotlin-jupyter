@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter
 
+import java.io.File
+import kotlin.concurrent.thread
+import kotlin.script.experimental.jvm.util.classpathFromClassloader
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
@@ -24,12 +27,9 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
-import java.io.File
-import kotlin.concurrent.thread
-import kotlin.script.experimental.jvm.util.classpathFromClassloader
-import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
 
 val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
 
@@ -128,7 +128,7 @@ fun createMessageHandler(
     val executor: JupyterExecutor = JupyterExecutorImpl()
 
     val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
-    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager, DefaultInMemoryReplResultsHolder()).createRepl()
+    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager, NoOpInMemoryReplResultsHolder).createRepl()
     return MessageHandlerImpl(repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 

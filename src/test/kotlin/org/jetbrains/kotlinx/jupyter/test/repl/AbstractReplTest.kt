@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
@@ -15,6 +16,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.test.assertSuccess
@@ -25,9 +28,6 @@ import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
-import java.io.File
-import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
-import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 
 abstract class AbstractReplTest {
     protected val httpUtil = createLibraryHttpUtil()
@@ -89,7 +89,7 @@ abstract class AbstractReplTest {
             override fun provideDisplayHandler() = displayHandlerProvider(notebook)
             override fun provideCommunicationFacility() = CommunicationFacilityMock
             override fun provideDebugPort(): Int? = null
-            override fun provideInMemoryReplResultsHolder() = NoOpInMemoryReplResultsHolder()
+            override fun provideInMemoryReplResultsHolder() = NoOpInMemoryReplResultsHolder
         }
         return factory.createRepl()
     }

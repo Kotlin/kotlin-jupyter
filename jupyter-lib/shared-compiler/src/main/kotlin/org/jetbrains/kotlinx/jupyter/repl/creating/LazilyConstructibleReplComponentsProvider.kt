@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
+import java.io.File
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
@@ -14,9 +15,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
-import java.io.File
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 
 abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     override val resolutionInfoProvider by lazy { provideResolutionInfoProvider() }
@@ -82,6 +82,6 @@ abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvide
     override val inMemoryReplResultsHolder: InMemoryReplResultsHolder by lazy { provideInMemoryReplResultsHolder() }
     protected abstract fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder
 
-// TODO: add other methods incl. display handler and socket messages listener
+    // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
 }

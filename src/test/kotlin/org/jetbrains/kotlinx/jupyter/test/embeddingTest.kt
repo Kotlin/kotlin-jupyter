@@ -3,10 +3,14 @@ package org.jetbrains.kotlinx.jupyter.test
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JPanel
+import kotlin.reflect.KClass
 import kotlin.test.DefaultAsserter.fail
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypes
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -22,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.takeScreenshot
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class SomeSingleton {
@@ -137,42 +142,81 @@ class EmbedReplTest : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testInMemoryCellValues() {
-        val code = """
-            import javax.swing.JFrame
-            val frame = JFrame("panel")
-            frame.setSize(300, 300)
-            frame
-        """.trimIndent()
-        val result  = eval(code)
-        assertTrue(result.renderedValue is MimeTypedResult)
-        assertTrue(result.displayValue is MimeTypedResult)
-        val display = result.displayValue as MimeTypedResult
-        assertEquals(2, display.size)
-        assertTrue(display.containsKey("image/png"))
-        assertTrue(display.containsKey(InMemoryMimeTypes.SWING))
-        assertEquals("-1", display[InMemoryMimeTypes.SWING])
-        val inMemHolder = repl.notebook.sharedReplContext!!.inMemoryReplResultsHolder
-        assertEquals(1, inMemHolder.size)
-        assertTrue(inMemHolder.getReplResult("-1", JFrame::class) is JFrame)
+    fun testInMemoryValue() {
+        val types = listOf(
+            JFrame::class to """
+                import javax.swing.JFrame
+                val frame = JFrame("panel")
+                frame.setSize(300, 300)
+                frame.isVisible = true
+                frame
+            """.trimIndent(),
+            JDialog::class to """
+                import javax.swing.JDialog
+                val dialog = JDialog()
+                dialog.setSize(300, 300)
+                dialog.isVisible = true
+                dialog
+            """.trimIndent(),
+            JComponent::class to """
+                import javax.swing.JPanel
+                val panel = JPanel()
+                panel.setSize(300, 300)
+                panel
+            """.trimIndent()
+        )
+        types.forEach { (expectedOutputClass: KClass<*>, code: String) ->
+            val result  = eval(code)
+            assertTrue(result.renderedValue is MimeTypedResult)
+            assertTrue(result.displayValue is MimeTypedResult)
+            val display = result.displayValue as MimeTypedResult
+            assertEquals(2, display.size)
+            assertTrue(display.containsKey("image/png"))
+            assertTrue(display.containsKey(InMemoryMimeTypes.SWING))
+            assertEquals("-1", display[InMemoryMimeTypes.SWING])
+            val inMemHolder = repl.notebook.sharedReplContext!!.inMemoryReplResultsHolder
+            assertEquals(1, inMemHolder.size)
+            assertNotNull(inMemHolder.getReplResult("-1", expectedOutputClass))
+        }
+    }
+
+
+    @Test
+    fun testScreenshotWithNoSize() {
+        val panel = JPanel()
+        assertNull(panel.takeScreenshot())
     }
 
     @Test
-    fun testScreenshotOfJPanel() {
+    fun testScreenshotOfJFrame() {
+        val frame = JFrame()
+        frame.size = Dimension(100, 50)
+        val button = JButton("Button 1")
+        frame.contentPane.add(button)
+        frame.isVisible = true
+        val screenshot = frame.takeScreenshot()
+        assertNotEmptyImage(screenshot)
+    }
+
+    @Test
+    fun testScreenshotOfJDialog() {
+        val dialog = JDialog()
+        dialog.size = Dimension(100, 50)
+        val button = JButton("Button 1")
+        dialog.contentPane.add(button)
+        dialog.isVisible = true
+        val screenshot = dialog.takeScreenshot()
+        assertNotEmptyImage(screenshot)
+    }
+
+    @Test
+    fun testScreenshotOfJComponent() {
         val panel = JPanel()
         panel.size = Dimension(100, 50)
         val button = JButton("Button 1")
         button.size = Dimension(100, 50)
         panel.add(button)
         val screenshot = panel.takeScreenshot()
-        assertNotEmptyImage(screenshot)
-    }
-
-    @Test
-    fun testScreenshotOfJButton() {
-        val button = JButton("Test Button")
-        button.size = Dimension(400, 100)
-        val screenshot = button.takeScreenshot()
         assertNotEmptyImage(screenshot)
     }
 
