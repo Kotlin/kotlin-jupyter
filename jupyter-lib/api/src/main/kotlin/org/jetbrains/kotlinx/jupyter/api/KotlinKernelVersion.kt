@@ -32,25 +32,34 @@ class KotlinKernelVersion private constructor(
     }
 
     override fun toString() = buildString {
-        append(major); append(SEP)
-        append(minor); append(SEP)
+        append(major)
+        append(SEP)
+        append(minor)
+        append(SEP)
         append(micro)
         build?.also {
-            append(SEP); append(build)
+            append(SEP)
+            append(build)
             dev?.also {
-                append(SEP); append(DEV_PREFIX); append(dev)
+                append(SEP)
+                append(DEV_PREFIX)
+                append(dev)
             }
         }
     }
 
     fun toMavenVersion() = buildString {
-        append(major); append(SEP)
-        append(minor); append(SEP)
+        append(major)
+        append(SEP)
+        append(minor)
+        append(SEP)
         append(micro)
         build?.also {
-            append(DEV_SEP); append(build)
+            append(DEV_SEP)
+            append(build)
             dev?.also {
-                append(DEV_SEP); append(dev)
+                append(DEV_SEP)
+                append(dev)
             }
         }
     }

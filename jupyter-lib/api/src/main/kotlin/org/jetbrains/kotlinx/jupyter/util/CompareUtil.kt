@@ -4,11 +4,17 @@ import kotlin.reflect.KProperty1
 
 fun <T : Comparable<T>> compareNullable(s1: T?, s2: T?): Int {
     return if (s1 == null) {
-        if (s2 == null) 0
-        else -1
+        if (s2 == null) {
+            0
+        } else {
+            -1
+        }
     } else {
-        if (s2 == null) 1
-        else s1.compareTo(s2)
+        if (s2 == null) {
+            1
+        } else {
+            s1.compareTo(s2)
+        }
     }
 }
 

@@ -108,13 +108,19 @@ class HomeDirLibraryDescriptorsProvider(
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
 ) : ResourceLibraryDescriptorsProvider() {
     override fun getDescriptors(): Map<String, LibraryDescriptor> {
-        return if (homeDir == null) super.getDescriptors()
-        else libraryDescriptors(homeDir)
+        return if (homeDir == null) {
+            super.getDescriptors()
+        } else {
+            libraryDescriptors(homeDir)
+        }
     }
 
     override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions {
-        return if (homeDir == null) super.getDescriptorGlobalOptions()
-        else descriptorOptions(homeDir)
+        return if (homeDir == null) {
+            super.getDescriptorGlobalOptions()
+        } else {
+            descriptorOptions(homeDir)
+        }
     }
 
     val descriptorOptions = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->

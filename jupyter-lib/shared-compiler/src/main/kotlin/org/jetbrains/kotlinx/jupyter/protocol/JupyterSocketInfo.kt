@@ -13,7 +13,8 @@ enum class JupyterSocketInfo(
     SHELL(JupyterSocketType.SHELL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
     CONTROL(JupyterSocketType.CONTROL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
     STDIN(JupyterSocketType.STDIN, SocketType.REQ, SocketType.REP, SocketType.REP),
-    IOPUB(JupyterSocketType.IOPUB, SocketType.PUB, SocketType.SUB, SocketType.SUB);
+    IOPUB(JupyterSocketType.IOPUB, SocketType.PUB, SocketType.SUB, SocketType.SUB),
+    ;
 
     fun zmqType(side: JupyterSocketSide): SocketType = when (side) {
         JupyterSocketSide.SERVER -> zmqKernelType

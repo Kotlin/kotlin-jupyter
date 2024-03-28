@@ -49,7 +49,10 @@ class TypeConverterTests : AbstractReplTest() {
                     addTypeConverter(
                         ResultFieldUpdateHandler(
                             updateCondition = { value, _ -> value == 35 },
-                            updateAction = { _, _, _ -> ++resultInvocationCounter; null },
+                            updateAction = { _, _, _ ->
+                                ++resultInvocationCounter
+                                null
+                            },
                         ),
                     )
                 },

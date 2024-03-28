@@ -50,8 +50,11 @@ abstract class LibraryResolutionInfoParser(val name: String, private val paramet
 
             parameters.forEach {
                 if (!result.containsKey(it.name)) {
-                    if (it is Parameter.Optional) result[it.name] = it.default
-                    else return diagFailure("Parameter ${it.name} is required, but was not specified")
+                    if (it is Parameter.Optional) {
+                        result[it.name] = it.default
+                    } else {
+                        return diagFailure("Parameter ${it.name} is required, but was not specified")
+                    }
                 }
             }
 

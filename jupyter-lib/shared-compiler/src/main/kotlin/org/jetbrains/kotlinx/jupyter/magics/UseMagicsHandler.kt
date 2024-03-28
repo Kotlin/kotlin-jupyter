@@ -21,8 +21,11 @@ open class UseMagicsHandler(
 
     override fun handleUseLatestDescriptors() {
         handleSingleOptionalFlag {
-            libraryResolutionInfoSwitcher.switch = if (it == false) DefaultInfoSwitch.CLASSPATH
-            else DefaultInfoSwitch.GIT_REFERENCE
+            libraryResolutionInfoSwitcher.switch = if (it == false) {
+                DefaultInfoSwitch.CLASSPATH
+            } else {
+                DefaultInfoSwitch.GIT_REFERENCE
+            }
         }
     }
 }

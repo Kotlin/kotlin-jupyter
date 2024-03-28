@@ -33,7 +33,9 @@ open class MessageRequestProcessorImpl(
         // We are in console mode, so switch off all the loggers
         if (LoggingManagement.mainLoggerLevel() != Level.OFF) LoggingManagement.disableLogging()
 
-        val resStr = if (looksLikeReplCommand(content.code)) "complete" else {
+        val resStr = if (looksLikeReplCommand(content.code)) {
+            "complete"
+        } else {
             val result = try {
                 val check = repl.checkComplete(content.code)
                 when {

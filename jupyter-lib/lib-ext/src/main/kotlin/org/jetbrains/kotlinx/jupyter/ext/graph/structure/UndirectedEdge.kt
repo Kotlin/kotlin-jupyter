@@ -16,7 +16,11 @@ data class UndirectedEdge<out T>(
     override fun hashCode(): Int {
         var h1 = fromNode.hashCode()
         var h2 = toNode.hashCode()
-        if (h1 > h2) { val t = h2; h2 = h1; h1 = t }
+        if (h1 > h2) {
+            val t = h2
+            h2 = h1
+            h1 = t
+        }
         return 31 * h1 + h2
     }
 }

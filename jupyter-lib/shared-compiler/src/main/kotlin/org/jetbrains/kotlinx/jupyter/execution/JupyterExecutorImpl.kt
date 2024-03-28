@@ -37,8 +37,11 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
         return if (exception == null) {
             ExecutionResult.Success(execRes!!)
         } else {
-            if (exception.isInterruptedException()) ExecutionResult.Interrupted
-            else ExecutionResult.Failure(exception)
+            if (exception.isInterruptedException()) {
+                ExecutionResult.Interrupted
+            } else {
+                ExecutionResult.Failure(exception)
+            }
         }
     }
 

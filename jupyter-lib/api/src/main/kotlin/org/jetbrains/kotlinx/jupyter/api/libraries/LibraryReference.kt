@@ -15,7 +15,10 @@ data class LibraryReference(
     override fun toString(): String {
         val namePart = name ?: ""
         val infoPart = info.toString()
-        return if (infoPart.isEmpty()) namePart
-        else "$namePart@$infoPart"
+        return if (infoPart.isEmpty()) {
+            namePart
+        } else {
+            "$namePart@$infoPart"
+        }
     }
 }

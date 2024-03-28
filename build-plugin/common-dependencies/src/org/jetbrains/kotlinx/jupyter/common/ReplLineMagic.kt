@@ -13,7 +13,8 @@ enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, v
     ),
     OUTPUT("output capturing settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400"),
     LOG_LEVEL("set logging level", "[off|error|warn|info|debug]"),
-    LOG_HANDLER("manage logging handlers", "[list | remove <name> | add <name> --<type> [... typeArgs]]", visibleInHelp = false);
+    LOG_HANDLER("manage logging handlers", "[list | remove <name> | add <name> --<type> [... typeArgs]]", visibleInHelp = false),
+    ;
 
     val nameForUser = getNameForUser(name)
 

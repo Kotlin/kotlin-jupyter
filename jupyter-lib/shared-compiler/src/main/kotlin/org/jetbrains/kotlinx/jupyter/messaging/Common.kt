@@ -12,7 +12,7 @@ enum class MessageStatus {
     ERROR,
 
     @SerialName("abort")
-    ABORT;
+    ABORT,
 }
 
 interface MessageContent

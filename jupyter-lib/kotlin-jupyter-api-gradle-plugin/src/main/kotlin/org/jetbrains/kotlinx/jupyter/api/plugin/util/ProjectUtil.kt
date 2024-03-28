@@ -10,7 +10,7 @@ import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import java.io.File
-import java.util.Locale
+import java.util.*
 
 internal fun Project.configureDependency(scope: String, dependency: ExternalModuleDependency) {
     repositories {

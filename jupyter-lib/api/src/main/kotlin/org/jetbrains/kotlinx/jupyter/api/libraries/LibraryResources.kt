@@ -36,7 +36,7 @@ enum class ResourcePathType {
 
 enum class ResourceType {
     JS,
-    CSS
+    CSS,
 }
 
 @Serializable

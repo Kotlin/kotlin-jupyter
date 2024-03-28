@@ -21,8 +21,11 @@ fun String.findNthSubstring(s: String, n: Int, start: Int = 0): Int {
 fun SourceCode.Position.withNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
     val sep = code.text.determineSep()
     val absLineStart =
-        if (line == 1) 0
-        else newCode.text.findNthSubstring(sep, line - 1) + sep.length
+        if (line == 1) {
+            0
+        } else {
+            newCode.text.findNthSubstring(sep, line - 1) + sep.length
+        }
 
     var nextNewLinePos = newCode.text.indexOf(sep, absLineStart)
     if (nextNewLinePos == -1) nextNewLinePos = newCode.text.length

@@ -68,12 +68,19 @@ fun compilerDiagnosticToString(
     columnEnd: Int,
 ): String {
     val start =
-        if (line == -1 && column == -1) ""
-        else "$line:$column"
+        if (line == -1 && column == -1) {
+            ""
+        } else {
+            "$line:$column"
+        }
     val end =
-        if (lineEnd == -1 && columnEnd == -1) ""
-        else if (lineEnd == line) " - $columnEnd"
-        else " - $lineEnd:$columnEnd"
+        if (lineEnd == -1 && columnEnd == -1) {
+            ""
+        } else if (lineEnd == line) {
+            " - $columnEnd"
+        } else {
+            " - $lineEnd:$columnEnd"
+        }
     val loc = if (start.isEmpty() && end.isEmpty()) "" else " ($start$end)"
     return path + loc
 }

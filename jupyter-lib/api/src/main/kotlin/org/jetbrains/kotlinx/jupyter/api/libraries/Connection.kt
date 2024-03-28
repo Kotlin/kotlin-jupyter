@@ -23,7 +23,7 @@ enum class JupyterSocketType {
     SHELL,
     CONTROL,
     STDIN,
-    IOPUB;
+    IOPUB,
 }
 
 val JupyterSocketType.nameForUser get() = name.lowercase(Locale.getDefault())

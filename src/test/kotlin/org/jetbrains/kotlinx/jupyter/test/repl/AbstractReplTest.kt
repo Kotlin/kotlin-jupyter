@@ -114,8 +114,11 @@ abstract class AbstractReplTest {
 
     protected fun makeReplEnablingSingleLibrary(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
         val repl = makeReplWithLibraries("mylib" to definition)
-        val paramList = if (args.isEmpty()) ""
-        else args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
+        val paramList = if (args.isEmpty()) {
+            ""
+        } else {
+            args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
+        }
         val result = repl.evalEx("%use mylib$paramList")
         result.assertSuccess()
         return repl

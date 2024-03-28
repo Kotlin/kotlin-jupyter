@@ -6,8 +6,11 @@ package org.jetbrains.kotlinx.jupyter.magics
 fun splitLibraryCalls(text: String): List<String> {
     return libraryCommaRanges(text)
         .mapNotNull { (from, to) ->
-            if (from >= to) null
-            else text.substring(from + 1, to).trim().takeIf { it.isNotEmpty() }
+            if (from >= to) {
+                null
+            } else {
+                text.substring(from + 1, to).trim().takeIf { it.isNotEmpty() }
+            }
         }
 }
 

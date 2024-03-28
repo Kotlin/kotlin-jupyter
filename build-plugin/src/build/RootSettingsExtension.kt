@@ -117,7 +117,7 @@ class RootSettingsExtension(
     val nbExtensionDir: File = resourcesDir.resolve("notebook-extension")
     val distributionDir: File = project.file("distrib")
 
-    val mainClassFQN: String = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
+    val mainClassFQN: String = "org.jetbrains.kotlinx.jupyter.MainKt"
 
     val jarsPath: String = "jars"
     val configDir: String = "config"

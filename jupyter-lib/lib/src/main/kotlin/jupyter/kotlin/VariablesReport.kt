@@ -12,8 +12,9 @@ val Notebook.variablesReportAsHTML: MimeTypedResult get() {
 }
 
 val Notebook.variablesReport: String get() {
-    return if (variablesState.isEmpty()) ""
-    else {
+    return if (variablesState.isEmpty()) {
+        ""
+    } else {
         buildString {
             append("Visible vars: \n")
             variablesState.forEach { (name, currentState) ->

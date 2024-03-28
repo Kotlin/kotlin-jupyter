@@ -112,8 +112,11 @@ object TextRenderers {
         } else {
             val clazz = value::class
             val className = clazz.qualifiedName
-            if (className?.startsWith("java.lang.") == true) value.toString()
-            else null
+            if (className?.startsWith("java.lang.") == true) {
+                value.toString()
+            } else {
+                null
+            }
         }
     }
 

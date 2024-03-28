@@ -47,7 +47,9 @@ class FullMagicsHandler(
         }
         parser.parse(argv)
 
-        return if (parser.reset) OutputConfig() else {
+        return if (parser.reset) {
+            OutputConfig()
+        } else {
             with(parser) {
                 OutputConfig(
                     !dontCaptureStdout,

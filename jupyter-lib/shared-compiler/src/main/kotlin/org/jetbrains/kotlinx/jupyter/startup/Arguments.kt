@@ -2,7 +2,6 @@ package org.jetbrains.kotlinx.jupyter.startup
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
@@ -15,8 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import java.io.File
-import java.util.ArrayList
-import java.util.EnumMap
+import java.util.*
 
 typealias KernelPorts = Map<JupyterSocketType, Int>
 
@@ -161,7 +159,7 @@ fun createKotlinKernelConfig(
     debugPort,
 )
 
-const val mainClassName = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
+const val mainClassName = "org.jetbrains.kotlinx.jupyter.MainKt"
 
 fun KernelConfig.javaCmdLine(
     // Path to java executable or just "java" in case it's on path

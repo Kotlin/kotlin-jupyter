@@ -61,7 +61,9 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 }
 
                 processedMagics.code
-            } else code
+            } else {
+                code
+            }
             executorWorkflowListener?.codePreprocessed(preprocessedCode)
 
             if (preprocessedCode.isBlank()) {
@@ -195,8 +197,9 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         override fun loadKotlinArtifacts(artifacts: Collection<String>, version: String?) {
             val kotlinVersion = version ?: currentKotlinVersion
             val repositories = buildList {
-                if (kotlinVersion.contains("dev")) add("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-                else if (kotlinVersion.contains("SNAPSHOT")) add("*mavenLocal")
+                if (kotlinVersion.contains("dev")) {
+                    add("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+                } else if (kotlinVersion.contains("SNAPSHOT")) add("*mavenLocal")
             }
             val libraries = listOf(
                 libraryDefinition {

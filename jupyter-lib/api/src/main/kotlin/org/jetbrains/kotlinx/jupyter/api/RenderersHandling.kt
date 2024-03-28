@@ -51,7 +51,9 @@ class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
                 newName
             }
             code.replace(argTemplate, resName)
-        } else code
+        } else {
+            code
+        }
 
         return host.execute {
             execute(execCode)
@@ -202,7 +204,7 @@ inline fun <T : Any> createRenderer(kClass: KClass<T>, crossinline renderAction:
     return createRenderer({ it.isOfRuntimeType(kClass) }, { field ->
         @Suppress("UNCHECKED_CAST")
         renderAction(field.value as T)
-    },)
+    })
 }
 
 inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererFieldHandler {

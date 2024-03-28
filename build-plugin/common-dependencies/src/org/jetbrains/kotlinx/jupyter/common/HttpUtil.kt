@@ -56,8 +56,11 @@ val ResponseWrapper.jsonObject: JsonObject get() = decodeJson()
 val ResponseWrapper.jsonArray: JsonArray get() = decodeJson()
 
 inline fun <reified T> ResponseWrapper.decodeJsonIfSuccessfulOrNull(): T? {
-    return if (!status.successful) null
-    else Json.decodeFromString(text)
+    return if (!status.successful) {
+        null
+    } else {
+        Json.decodeFromString(text)
+    }
 }
 
 val ResponseWrapper.jsonOrNull: JsonElement? get() = decodeJsonIfSuccessfulOrNull()

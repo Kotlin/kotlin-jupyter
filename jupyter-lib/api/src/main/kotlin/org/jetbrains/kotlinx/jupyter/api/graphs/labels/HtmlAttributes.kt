@@ -20,8 +20,11 @@ abstract class HtmlAttributes<out Attr>(
         }
 
         operator fun setValue(thisRef: HtmlAttributes<*>, property: KProperty<*>, value: T?) {
-            if (value != null) thisRef.properties[property.name] = value
-            else thisRef.properties.remove(property.name)
+            if (value != null) {
+                thisRef.properties[property.name] = value
+            } else {
+                thisRef.properties.remove(property.name)
+            }
         }
     }
 

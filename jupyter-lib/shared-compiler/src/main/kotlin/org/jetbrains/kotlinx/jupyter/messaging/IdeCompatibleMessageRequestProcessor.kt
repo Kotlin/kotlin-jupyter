@@ -307,8 +307,11 @@ open class IdeCompatibleMessageRequestProcessor(
 
     private fun Code.presentableForThreadName(): String {
         val newName = substringBefore('\n').take(20)
-        return if (newName.length < length) "$newName..."
-        else this
+        return if (newName.length < length) {
+            "$newName..."
+        } else {
+            this
+        }
     }
 
     companion object {

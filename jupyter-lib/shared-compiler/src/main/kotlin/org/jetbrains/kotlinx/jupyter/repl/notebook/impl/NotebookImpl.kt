@@ -55,7 +55,9 @@ class NotebookImpl(
             name = DEBUG_THREAD_NAME,
             block = ::`$debugMethod`,
         )
-    } else null
+    } else {
+        null
+    }
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null
 

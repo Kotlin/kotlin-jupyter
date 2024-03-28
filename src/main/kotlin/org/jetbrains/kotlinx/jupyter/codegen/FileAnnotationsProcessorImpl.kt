@@ -74,8 +74,9 @@ class FileAnnotationsProcessorImpl(
         val foundAnnotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)
 
         foundAnnotations?.forEach {
-            if (collected.isEmpty() || collected[0].annotationClass == it.annotationClass) collected.add(it)
-            else {
+            if (collected.isEmpty() || collected[0].annotationClass == it.annotationClass) {
+                collected.add(it)
+            } else {
                 config = processCollected(config).valueOr { return it }
                 collected.add(it)
             }

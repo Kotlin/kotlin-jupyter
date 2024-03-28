@@ -100,11 +100,15 @@ fun DisplayResult?.toJson(): JsonObject {
 }
 
 @Suppress("unused")
-fun DisplayResult.withId(id: String) = if (id == this.id) this else object : DisplayResult {
-    override fun toJson(additionalMetadata: JsonObject, overrideId: String?) =
-        this@withId.toJson(additionalMetadata, overrideId ?: id)
+fun DisplayResult.withId(id: String) = if (id == this.id) {
+    this
+} else {
+    object : DisplayResult {
+        override fun toJson(additionalMetadata: JsonObject, overrideId: String?) =
+            this@withId.toJson(additionalMetadata, overrideId ?: id)
 
-    override val id = id
+        override val id = id
+    }
 }
 
 /**

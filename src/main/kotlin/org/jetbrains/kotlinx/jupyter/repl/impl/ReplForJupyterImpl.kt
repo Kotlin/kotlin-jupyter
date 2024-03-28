@@ -244,7 +244,9 @@ class ReplForJupyterImpl(
         override fun loadClass(name: String?, resolve: Boolean): Class<*> {
             val c = if (name != null && includeFilter(name)) {
                 parent.loadClass(name)
-            } else parent.parent.loadClass(name)
+            } else {
+                parent.parent.loadClass(name)
+            }
             if (resolve) {
                 resolveClass(c)
             }
@@ -369,8 +371,11 @@ class ReplForJupyterImpl(
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        return if (evalContextEnabled) fileAnnotationsProcessor.process(context, currentKernelHost!!)
-        else context.compilationConfiguration.asSuccess()
+        return if (evalContextEnabled) {
+            fileAnnotationsProcessor.process(context, currentKernelHost!!)
+        } else {
+            context.compilationConfiguration.asSuccess()
+        }
     }
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {

@@ -53,7 +53,9 @@ class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable
     fun toString(shortenTypes: Boolean): String {
         return if (shortenTypes) {
             shortenType(toString())
-        } else toString()
+        } else {
+            toString()
+        }
     }
 
     override fun toString(): String {
@@ -71,7 +73,9 @@ class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable
     override fun equals(other: Any?): Boolean {
         return if (other is KotlinFunctionInfo) {
             this.toString() == other.toString()
-        } else false
+        } else {
+            false
+        }
     }
 }
 

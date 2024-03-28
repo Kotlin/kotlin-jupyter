@@ -1,5 +1,6 @@
 @file:Suppress("UNUSED")
 @file:UseSerializers(ScriptDiagnosticSerializer::class)
+
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.InternalSerializationApi
@@ -92,7 +93,8 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     COMM_CLOSE(CommClose::class),
 
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
-    LIST_ERRORS_REPLY(ListErrorsReply::class);
+    LIST_ERRORS_REPLY(ListErrorsReply::class),
+    ;
 
     val type: String
         get() = name.lowercase()
@@ -128,7 +130,7 @@ class MessageMetadata
 @Serializable(DetailsLevelSerializer::class)
 enum class DetailLevel(val level: Int) {
     STANDARD(0),
-    DETAILED(1);
+    DETAILED(1),
 }
 
 @Serializable
@@ -140,7 +142,7 @@ enum class KernelStatus {
     IDLE,
 
     @SerialName("starting")
-    STARTING;
+    STARTING,
 }
 
 object MessageTypeSerializer : KSerializer<MessageType> {
@@ -597,7 +599,9 @@ object MessageDataSerializer : KSerializer<MessageData> {
             element["content"]?.let {
                 format.decodeFromJsonElement(contentSerializer, it)
             }
-        } else null
+        } else {
+            null
+        }
 
         return MessageData(header, parentHeader, metadata, content)
     }

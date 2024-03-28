@@ -256,8 +256,11 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         classpath: List<File>,
         scriptDiagnostics: List<ScriptDiagnostic>,
     ): ResultWithDiagnostics<List<File>> {
-        return if (scriptDiagnostics.isEmpty()) classpath.asSuccess()
-        else makeFailureResult(scriptDiagnostics)
+        return if (scriptDiagnostics.isEmpty()) {
+            classpath.asSuccess()
+        } else {
+            makeFailureResult(scriptDiagnostics)
+        }
     }
 
     private class Repo(

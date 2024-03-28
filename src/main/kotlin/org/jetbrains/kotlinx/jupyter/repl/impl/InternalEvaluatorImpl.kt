@@ -59,8 +59,9 @@ internal class InternalEvaluatorImpl(
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
         set(value) {
-            classWriter = if (!value) null
-            else {
+            classWriter = if (!value) {
+                null
+            } else {
                 val cw = ClassWriter()
                 System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
                 cw
@@ -120,8 +121,11 @@ internal class InternalEvaluatorImpl(
                             updateDataAfterExecution(compilingOptions.cellId, resultValue)
 
                             val resultType = compiledScript.resultField?.second?.typeName
-                            val typeProvider = if (resultType == null) KTypeProvider { typeOf<Any?>() }
-                            else KTypeProvider { eval("kotlin.reflect.typeOf<$resultType>()").result.value as KType }
+                            val typeProvider = if (resultType == null) {
+                                KTypeProvider { typeOf<Any?>() }
+                            } else {
+                                KTypeProvider { eval("kotlin.reflect.typeOf<$resultType>()").result.value as KType }
+                            }
 
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(

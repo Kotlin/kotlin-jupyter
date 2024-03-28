@@ -28,15 +28,21 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
 
     constructor(url: String, embed: Boolean = false) : this(
         listOf(
-            if (embed) embedSrc(downloadData(url), detectMime(URI(url)))
-            else referSrc(url),
+            if (embed) {
+                embedSrc(downloadData(url), detectMime(URI(url)))
+            } else {
+                referSrc(url)
+            },
         ),
     )
 
     constructor(file: File, embed: Boolean = false) : this(
         listOf(
-            if (embed) embedSrc(loadData(file), detectMime(file.toURI()))
-            else referSrc(file.absolutePath.toString()),
+            if (embed) {
+                embedSrc(loadData(file), detectMime(file.toURI()))
+            } else {
+                referSrc(file.absolutePath.toString())
+            },
         ),
     )
 

@@ -56,7 +56,9 @@ class ResultFieldUpdateHandler(
         if (tempField != null) {
             val fieldName = field.name
             host.execute("val $fieldName = $tempField; $fieldName")
-        } else null
+        } else {
+            null
+        }
     }
 
     override fun accepts(value: Any?, fieldInfo: FieldInfo): Boolean {

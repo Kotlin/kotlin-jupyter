@@ -216,8 +216,12 @@ private fun getByDirResolver(
             val optionsFile = librariesDir.resolve(libraryDescriptorsManager.optionsFileName())
             val options = if (optionsFile.exists() && optionsFile.isFile) {
                 parseLibraryDescriptorGlobalOptions(optionsFile.readText())
-            } else DefaultLibraryDescriptorGlobalOptions
+            } else {
+                DefaultLibraryDescriptorGlobalOptions
+            }
             descriptorText to options
-        } else null to DefaultLibraryDescriptorGlobalOptions
+        } else {
+            null to DefaultLibraryDescriptorGlobalOptions
+        }
     }
 }

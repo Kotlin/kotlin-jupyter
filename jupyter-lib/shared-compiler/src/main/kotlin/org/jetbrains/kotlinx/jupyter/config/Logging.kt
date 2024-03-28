@@ -48,8 +48,11 @@ object KernelStreams {
 }
 
 fun Logger.errorForUser(stream: PrintStream = KernelStreams.err, message: String, throwable: Throwable? = null) {
-    if (throwable == null) error(message)
-    else error(message, throwable)
+    if (throwable == null) {
+        error(message)
+    } else {
+        error(message, throwable)
+    }
 
     if (message.isNotEmpty()) {
         stream.print("[ERROR] ")

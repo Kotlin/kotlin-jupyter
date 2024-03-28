@@ -8,8 +8,11 @@ class DisplayResultWrapper private constructor(
 ) : DisplayResult by display, MutableDisplayResultWithCell {
     companion object {
         fun create(display: DisplayResult, cell: MutableCodeCell): DisplayResultWrapper {
-            return if (display is DisplayResultWrapper) DisplayResultWrapper(display.display, cell)
-            else DisplayResultWrapper(display, cell)
+            return if (display is DisplayResultWrapper) {
+                DisplayResultWrapper(display.display, cell)
+            } else {
+                DisplayResultWrapper(display, cell)
+            }
         }
     }
 }

@@ -176,8 +176,11 @@ class LibrariesScanner : LibraryLoader {
         }
 
         val notFoundReason =
-            if (myConstructors.isEmpty()) "no single constructor found"
-            else "no single constructor is applicable\n$errorStringBuilder"
+            if (myConstructors.isEmpty()) {
+                "no single constructor found"
+            } else {
+                "no single constructor is applicable\n$errorStringBuilder"
+            }
 
         throw ReplException("No suitable constructor found. Reason: $notFoundReason")
     }

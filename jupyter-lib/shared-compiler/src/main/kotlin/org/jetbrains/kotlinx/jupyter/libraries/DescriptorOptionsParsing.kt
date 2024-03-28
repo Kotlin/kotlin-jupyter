@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Transient
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 
