@@ -292,7 +292,7 @@ class ExecuteTests : KernelServerTestsBase() {
             answer
             """.trimIndent()
         val res = doExecute(code, inputs = listOf("42"))
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "42"), res)
+        res shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "42")
     }
 
     @Test
@@ -550,6 +550,9 @@ class ExecuteTests : KernelServerTestsBase() {
                 msgText shouldBe EXECUTION_INTERRUPTED_MESSAGE
             },
         ) shouldBe null
+
+        doExecute("1") shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "1")
+        doExecute("2") shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "2")
     }
 
     @Test
