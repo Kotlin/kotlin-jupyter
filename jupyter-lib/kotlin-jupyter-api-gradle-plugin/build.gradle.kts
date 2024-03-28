@@ -70,3 +70,7 @@ gradlePlugin {
         }
     }
 }
+
+signing {
+    isRequired = false
+}
