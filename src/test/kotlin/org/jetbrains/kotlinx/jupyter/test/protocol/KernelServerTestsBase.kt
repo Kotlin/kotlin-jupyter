@@ -41,7 +41,7 @@ abstract class KernelServerTestsBase {
     private val messageId = listOf(byteArrayOf(1))
 
     // Set to false to debug kernel execution
-    protected val runInSeparateProcess = true
+    protected val runInSeparateProcess = false
     private val executor = if (runInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
 
     open fun beforeEach() {}

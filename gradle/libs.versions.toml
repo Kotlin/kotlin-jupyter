@@ -1,12 +1,12 @@
 [versions]
 jvmTarget = "1.8"
 
-kotlin = "1.9.10"
+kotlin = "1.9.23"
 kotlinDependencies = "1.9.23"
 kotlinMavenResolver = "2.0.0-Beta5"
-stableKotlin = "1.9.10"
-gradleKotlin = "1.9.10"
-ksp = "1.9.10-1.0.13"
+stableKotlin = "1.9.23"
+gradleKotlin = "1.9.23"
+ksp = "1.9.23-1.0.19"
 shadowJar = "7.1.2"
 shadowJarUtil = "0.1.4-4"
 changelogPlugin = "1.12.1"
