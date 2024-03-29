@@ -148,13 +148,13 @@ tasks {
             classpath = files(shadowJar.get()) + classpath
         }
 
-        systemProperties = mutableMapOf(
-            "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
-
-            "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-            "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-            "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
-        )
+        systemProperties =
+            mutableMapOf(
+                "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
+                "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+                "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+                "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
+            )
     }
 
     CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {
@@ -184,57 +184,61 @@ tasks {
     }
 }
 
-val kernelShadowedJar = tasks.registerShadowJarTasksBy(
-    kernelShadowed,
-    withSources = false,
-    binaryTaskConfigurator = {
-        mergeServiceFiles()
-        transform(ComponentsXmlResourceTransformer())
-        manifest {
-            attributes["Implementation-Version"] = project.version
-        }
-    },
-)
-val embeddableKernelJar = tasks.registerShadowJarTasksBy(
-    embeddableKernel,
-    withSources = false,
-    binaryTaskConfigurator = {
-        mergeServiceFiles()
-        transform(ComponentsXmlResourceTransformer())
+val kernelShadowedJar =
+    tasks.registerShadowJarTasksBy(
+        kernelShadowed,
+        withSources = false,
+        binaryTaskConfigurator = {
+            mergeServiceFiles()
+            transform(ComponentsXmlResourceTransformer())
+            manifest {
+                attributes["Implementation-Version"] = project.version
+            }
+        },
+    )
+val embeddableKernelJar =
+    tasks.registerShadowJarTasksBy(
+        embeddableKernel,
+        withSources = false,
+        binaryTaskConfigurator = {
+            mergeServiceFiles()
+            transform(ComponentsXmlResourceTransformer())
 
-        transform(
-            ContentTransformer(
-                "META-INF/extensions/compiler.xml",
-                ContentModificationContext::transformPluginXmlContent,
-            ),
-        )
-        manifest {
-            attributes["Implementation-Version"] = project.version
-        }
+            transform(
+                ContentTransformer(
+                    "META-INF/extensions/compiler.xml",
+                    ContentModificationContext::transformPluginXmlContent,
+                ),
+            )
+            manifest {
+                attributes["Implementation-Version"] = project.version
+            }
 
-        relocatePackages {
-            +"kotlin.script.experimental.dependencies"
-            +"org.jetbrains.kotlin."
-            +"org.jetbrains.kotlinx.serialization."
-        }
-    },
-)
+            relocatePackages {
+                +"kotlin.script.experimental.dependencies"
+                +"org.jetbrains.kotlin."
+                +"org.jetbrains.kotlinx.serialization."
+            }
+        },
+    )
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
 val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
 
-val kernelZip = tasks.register("kernelZip", Zip::class) {
-    from(deploy)
-    include("*.jar")
-}
+val kernelZip =
+    tasks.register("kernelZip", Zip::class) {
+        from(deploy)
+        include("*.jar")
+    }
 
 changelog {
     githubUser = rootSettings.githubRepoUser
     githubRepository = rootSettings.githubRepoName
-    excludeLabels = listOf("wontfix", "duplicate", "no-changelog", "question")
-    customTagByIssueNumber = mapOf(
-        20 to "0.10.0.183",
-        318 to "0.10.0.183",
-    )
+    excludeLabels = setOf("wontfix", "duplicate", "no-changelog", "question")
+    customTagByIssueNumber =
+        mapOf(
+            20 to "0.10.0.183",
+            318 to "0.10.0.183",
+        )
 }
 
 kotlinPublications {

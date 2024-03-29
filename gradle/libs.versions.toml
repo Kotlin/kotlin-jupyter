@@ -1,5 +1,5 @@
 [versions]
-jvmTarget = "1.8"
+jvmTarget = "11"
 
 kotlin = "1.9.23"
 kotlinDependencies = "1.9.23"
@@ -7,9 +7,10 @@ kotlinMavenResolver = "2.0.0-Beta5"
 stableKotlin = "1.9.23"
 gradleKotlin = "1.9.23"
 ksp = "1.9.23-1.0.19"
-shadowJar = "7.1.2"
+shadowJar = "8.1.1"
+ant = "1.10.13"
 shadowJarUtil = "0.1.4-4"
-changelogPlugin = "1.12.1"
+changelogPlugin = "2.2.0"
 kotlinxSerialization = "1.6.3"
 json5k = "0.3.0"
 kotlinxCoroutines = "1.8.0"
@@ -19,13 +20,12 @@ ktlintGradle = "12.1.0"
 ktlint = "0.50.0"
 publishPlugin = "1.9.23-dev-44"
 pluginPublishPlugin = "1.2.1"
-versionsPlugin = "0.44.0"
+versionsPlugin = "0.51.0"
 
 slf4j = "2.0.12"
-# Beware, newer versions of logback (starting from 1.4.*) are compiled for Java 11 only
-logback = "1.3.6"
+logback = "1.5.3"
 http4k = "5.14.4.0"
-jupyterApi = "0.12.0-157"
+jupyterApi = "0.12.0-163"
 jetbrainsAnnotations = "24.1.0"
 
 junit = "5.10.2"
@@ -135,7 +135,8 @@ plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", v
 plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
 
 # id("com.github.johnrengelman.shadow")
-plugin-shadowJar = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadowJar" }
+plugin-shadowJar = { module = "com.github.johnrengelman:shadow", version.ref = "shadowJar" }
+plugin-ant = { module = "org.apache.ant:ant", version.ref = "ant" }
 
 plugin-shadowJar-util = { module = "org.jetbrains.gradle:shadow-jar-util", version.ref = "shadowJarUtil" }
 
@@ -146,7 +147,7 @@ plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref =
 plugin-publisher = { module = "org.jetbrains.kotlin:kotlin-libs-publisher", version.ref = "publishPlugin" }
 
 # id("org.hildan.github.changelog")
-plugin-changelog = { module = "gradle.plugin.org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
+plugin-changelog = { module = "org.hildan.gradle:gradle-github-changelog", version.ref = "changelogPlugin" }
 
 # id("com.github.ben-manes.versions")
 plugin-versionsUpdater = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "versionsPlugin" }
@@ -166,6 +167,7 @@ allGradlePlugins = [
     "plugin-serialization",
     "plugin-kotlinJupyterApi",
     "plugin-shadowJar",
+    "plugin-ant",
     "plugin-ktlint",
     "plugin-publisher",
     "plugin-changelog",

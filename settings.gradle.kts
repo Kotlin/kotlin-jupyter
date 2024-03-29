@@ -10,7 +10,7 @@ pluginManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.5.0")
+    id("org.gradle.toolchains.foojay-resolver-convention") version ("0.5.0")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -29,9 +29,13 @@ libSubproject("test-kit")
 exampleSubproject("getting-started")
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
+
 fun exampleSubproject(name: String) = subproject(name, "api-examples/")
 
-fun subproject(name: String, parentPath: String) {
+fun subproject(
+    name: String,
+    parentPath: String,
+) {
     include(name)
     project(":$name").projectDir = file("$parentPath$name")
 }
