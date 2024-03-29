@@ -6,6 +6,7 @@ kotlinDependencies = "1.9.23"
 kotlinMavenResolver = "2.0.0-Beta5"
 stableKotlin = "1.9.23"
 gradleKotlin = "1.9.23"
+kotlinDsl = "4.3.1"
 ksp = "1.9.23-1.0.19"
 shadowJar = "8.1.1"
 ant = "1.10.13"
@@ -159,6 +160,7 @@ jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-j
 
 [plugins]
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublishPlugin" }
+plugin-kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlinDsl" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

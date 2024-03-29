@@ -6,7 +6,7 @@ import build.util.devKotlin
 plugins {
     alias(libs.plugins.plugin.publish)
     `java-gradle-plugin`
-    `kotlin-dsl`
+    alias(libs.plugins.plugin.kotlin.dsl)
     kotlin("libs.publisher")
 }
 

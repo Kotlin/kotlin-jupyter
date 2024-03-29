@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-gradle-plugin`
-    `kotlin-dsl`
+    alias(libs.plugins.plugin.kotlin.dsl)
 }
 
 repositories {
