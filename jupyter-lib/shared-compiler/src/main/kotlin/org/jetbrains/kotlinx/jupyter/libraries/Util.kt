@@ -11,6 +11,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 
 sealed class Parameter(val name: String, open val default: String?) {
     class Required(name: String) : Parameter(name, null)
+
     class Optional(name: String, override val default: String) : Parameter(name, default)
 }
 
@@ -22,7 +23,11 @@ class Brackets(
 
     init {
         val endCharsStr = ",\\$close"
-        argRegex = Regex("""\s*((?<name>(\p{Alnum}|[._-])+)\s*=\s*)?((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""")
+        argRegex =
+            Regex(
+                """\s*((?<name>(\p{Alnum}|[._-])+)\s*=\s*)?""" +
+                    """((?<raw>[^$endCharsStr" \t\r\n]*)|("(?<quoted>((\\.)|[^"\\])*)"))\s*[$endCharsStr]""",
+            )
     }
 
     companion object {
@@ -32,7 +37,9 @@ class Brackets(
 }
 
 enum class DefaultInfoSwitch {
-    GIT_REFERENCE, DIRECTORY, CLASSPATH
+    GIT_REFERENCE,
+    DIRECTORY,
+    CLASSPATH,
 }
 
 fun diagFailure(message: String): ResultWithDiagnostics.Failure {
@@ -45,9 +52,14 @@ data class ArgParseResult(
 )
 
 private val unescapeRegex = Regex("""\\(.)""")
+
 private fun String.unescape() = unescapeRegex.replace(this, "$1")
 
-private fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): ArgParseResult? {
+private fun parseLibraryArgument(
+    str: String,
+    brackets: Brackets,
+    begin: Int,
+): ArgParseResult? {
     if (begin >= str.length) return null
 
     val match = brackets.argRegex.find(str, begin) ?: return null
@@ -63,7 +75,10 @@ private fun parseLibraryArgument(str: String, brackets: Brackets, begin: Int): A
     return ArgParseResult(Variable(name, value), endIndex)
 }
 
-fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
+fun parseCall(
+    str: String,
+    brackets: Brackets,
+): Pair<String, List<Variable>> {
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.substring(0, openBracketIndex).trim()
@@ -71,7 +86,11 @@ fun parseCall(str: String, brackets: Brackets): Pair<String, List<Variable>> {
     return name to parseLibraryArguments(argsString, brackets).map { it.variable }.toList()
 }
 
-fun parseLibraryArguments(argumentsString: String, brackets: Brackets, start: Int = 0): Sequence<ArgParseResult> {
+fun parseLibraryArguments(
+    argumentsString: String,
+    brackets: Brackets,
+    start: Int = 0,
+): Sequence<ArgParseResult> {
     val firstArg = parseLibraryArgument(argumentsString, brackets, start)
     return generateSequence(firstArg) {
         parseLibraryArgument(argumentsString, brackets, it.end)

@@ -8,10 +8,18 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 fun interface ExceptionsHandler {
-    fun handle(logger: Logger, message: String, exception: Throwable)
+    fun handle(
+        logger: Logger,
+        message: String,
+        exception: Throwable,
+    )
 
     object DEFAULT : ExceptionsHandler {
-        override fun handle(logger: Logger, message: String, exception: Throwable) {
+        override fun handle(
+            logger: Logger,
+            message: String,
+            exception: Throwable,
+        ) {
             logger.error(message)
             throw exception
         }
@@ -27,16 +35,33 @@ interface LibraryDescriptorsManager {
     val commitHashFile: File
 
     fun homeLibrariesDir(homeDir: File? = null): File
+
     fun descriptorFileName(name: String): String
+
     fun optionsFileName(): String
+
     fun resourceLibraryPath(name: String): String
+
     fun resourceOptionsPath(): String
+
     fun isLibraryDescriptor(file: File): Boolean
-    fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String? = null): CommitInfo?
+
+    fun getLatestCommitToLibraries(
+        ref: String,
+        sinceTimestamp: String? = null,
+    ): CommitInfo?
+
     fun downloadGlobalDescriptorOptions(ref: String): String?
-    fun downloadLibraryDescriptor(ref: String, name: String): String
+
+    fun downloadLibraryDescriptor(
+        ref: String,
+        name: String,
+    ): String
+
     fun checkRefExistence(ref: String): Boolean
+
     fun checkIfRefUpToDate(remoteRef: String?): Boolean
+
     fun downloadLibraries(ref: String)
 
     class CommitInfo(
@@ -100,16 +125,21 @@ private class LibraryDescriptorsManagerImpl(
     }
 
     override fun descriptorFileName(name: String) = "$name.$DESCRIPTOR_EXTENSION"
+
     override fun optionsFileName() = OPTIONS_FILE
 
     override fun resourceLibraryPath(name: String) = "$resourcesPath/${descriptorFileName(name)}"
+
     override fun resourceOptionsPath() = "$resourcesPath/${optionsFileName()}"
 
     override fun isLibraryDescriptor(file: File): Boolean {
         return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
     }
 
-    override fun getLatestCommitToLibraries(ref: String, sinceTimestamp: String?): LibraryDescriptorsManager.CommitInfo? {
+    override fun getLatestCommitToLibraries(
+        ref: String,
+        sinceTimestamp: String?,
+    ): LibraryDescriptorsManager.CommitInfo? {
         return catchAll {
             var url = "$apiPrefix/commits?path=$remotePath&sha=$ref"
             if (sinceTimestamp != null) {
@@ -148,7 +178,10 @@ private class LibraryDescriptorsManagerImpl(
         }
     }
 
-    override fun downloadLibraryDescriptor(ref: String, name: String): String {
+    override fun downloadLibraryDescriptor(
+        ref: String,
+        name: String,
+    ): String {
         val url = resolveAgainstRemotePath("$name.$DESCRIPTOR_EXTENSION", ref)
         logger.info("Requesting library descriptor at $url")
         return downloadSingleFile(url)
@@ -159,7 +192,10 @@ private class LibraryDescriptorsManagerImpl(
         return response.status.successful
     }
 
-    private fun resolveAgainstRemotePath(filePath: String, ref: String): String {
+    private fun resolveAgainstRemotePath(
+        filePath: String,
+        ref: String,
+    ): String {
         return buildString {
             append(apiPrefix)
             append("/contents")
@@ -236,12 +272,16 @@ private class LibraryDescriptorsManagerImpl(
         writeText(text)
     }
 
-    private fun <T> catchAll(message: String = "", body: () -> T): T? = try {
-        body()
-    } catch (e: Throwable) {
-        exceptionsHandler.handle(logger, message, e)
-        null
-    }
+    private fun <T> catchAll(
+        message: String = "",
+        body: () -> T,
+    ): T? =
+        try {
+            body()
+        } catch (e: Throwable) {
+            exceptionsHandler.handle(logger, message, e)
+            null
+        }
 
     companion object {
         private const val GITHUB_API_HOST = "api.github.com"

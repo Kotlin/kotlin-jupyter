@@ -14,8 +14,11 @@ class CompletionMagicsProcessor(
     parseOutCellMarker: Boolean = false,
     private val httpClient: HttpClient,
 ) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider, parseOutCellMarker) {
+    override fun variant(
+        text: String,
+        icon: String,
+    ) = SourceCodeCompletionVariant(text, text, icon, icon)
 
-    override fun variant(text: String, icon: String) = SourceCodeCompletionVariant(text, text, icon, icon)
     override fun key(variant: SourceCodeCompletionVariant) = variant.text
 
     override fun getHttpResponseText(url: String): String? {
@@ -28,7 +31,10 @@ class CompletionMagicsProcessor(
         return response.text
     }
 
-    fun process(code: String, cursor: Int): Result {
+    fun process(
+        code: String,
+        cursor: Int,
+    ): Result {
         val magics = magicsIntervals(code)
         var insideMagic = false
         val handler = Handler()

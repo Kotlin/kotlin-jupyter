@@ -46,13 +46,14 @@ class RenderingTests {
 
     @Test
     fun testLatex() {
-        val latex = """
+        val latex =
+            """
             \[
              \lim_{x\to 0}{\frac{e^x-1}{2x}}
              \overset{\left[\frac{0}{0}\right]}{\underset{\mathrm{H}}{=}}
              \lim_{x\to 0}{\frac{e^x}{2}}={\frac{1}{2}}
             \]
-        """.trimIndent()
+            """.trimIndent()
 
         LATEX(latex)
 
@@ -77,7 +78,7 @@ class RenderingTests {
         contentWriteAction: Writer.() -> Unit,
     ) {
         val file = renderedDir.resolve(fileName)
-        val writer = if (doRegenerate) FileOutputStream(file).writer() else StringWriter()
+        val writer = if (DO_REGENERATE) FileOutputStream(file).writer() else StringWriter()
         with(writer) {
             appendLine("<html><head></head><body>")
             contentWriteAction()
@@ -85,14 +86,17 @@ class RenderingTests {
             close()
         }
 
-        if (!doRegenerate) {
+        if (!DO_REGENERATE) {
             val actualVal = writer.toString()
             asserter(file.readText(), actualVal)
         }
     }
 
     private class AlmostEqualsMultilineComparator(val mayDiverge: Int) {
-        fun compare(expected: String, actual: String) {
+        fun compare(
+            expected: String,
+            actual: String,
+        ) {
             val expectedLines = expected.lines()
             val actualLines = actual.lines()
 
@@ -106,7 +110,7 @@ class RenderingTests {
     }
 
     companion object {
-        private const val doRegenerate = false
+        private const val DO_REGENERATE = false
 
         private val dataDir = File("src/test/testData")
         private val objectsDir = dataDir.resolve("objectsToRender")

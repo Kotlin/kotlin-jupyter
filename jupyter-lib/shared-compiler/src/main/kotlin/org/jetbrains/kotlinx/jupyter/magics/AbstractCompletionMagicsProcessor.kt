@@ -19,29 +19,38 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
     private val libraryDescriptorsProvider: LibraryDescriptorsProvider,
     parseOutCellMarker: Boolean = false,
 ) : AbstractMagicsProcessor(parseOutCellMarker) {
+    protected abstract fun variant(
+        text: String,
+        icon: String,
+    ): V
 
-    protected abstract fun variant(text: String, icon: String): V
     protected abstract fun key(variant: V): String
+
     protected abstract fun getHttpResponseText(url: String): String?
 
-    private val getVersions = createCachedFun { artifactLocation: ArtifactLocation ->
-        val responseText = getHttpResponseText(metadataUrl(artifactLocation)) ?: return@createCachedFun null
-        val document = loadXML(responseText)
-        val versionsTag = document
-            .getElementsByTagName("versions")
-            .singleOrNull() ?: return@createCachedFun emptyList()
+    private val getVersions =
+        createCachedFun { artifactLocation: ArtifactLocation ->
+            val responseText = getHttpResponseText(metadataUrl(artifactLocation)) ?: return@createCachedFun null
+            val document = loadXML(responseText)
+            val versionsTag =
+                document
+                    .getElementsByTagName("versions")
+                    .singleOrNull() ?: return@createCachedFun emptyList()
 
-        (versionsTag as? Element)?.getElementsByTagName("version")
-            ?.toList()
-            ?.map { it.textContent }
-            .orEmpty()
-    }
+            (versionsTag as? Element)?.getElementsByTagName("version")
+                ?.toList()
+                ?.map { it.textContent }
+                .orEmpty()
+        }
 
     protected inner class Handler {
         private val _completions = mutableListOf<V>()
         val completions: List<V> get() = _completions.distinctBy { key(it) }
 
-        fun handle(magicText: String, cursor: Int) {
+        fun handle(
+            magicText: String,
+            cursor: Int,
+        ) {
             val firstSpaceIndex = magicText.indexOf(' ')
             if (cursor <= firstSpaceIndex || firstSpaceIndex == -1) {
                 val magicPrefix = magicText.substring(0, cursor)
@@ -68,7 +77,10 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
             }
         }
 
-        private fun handleLibrary(librarySubstring: String, cursor: Int) {
+        private fun handleLibrary(
+            librarySubstring: String,
+            cursor: Int,
+        ) {
             val descriptors = libraryDescriptorsProvider.getDescriptors()
 
             val firstBracketIndex = librarySubstring.indexOf('(')
@@ -92,9 +104,10 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val libraryDescriptor = libraryDescriptorsProvider.getDescriptorForVersionsCompletion(libName) ?: return
                 val globalOptions = libraryDescriptorsProvider.getDescriptorGlobalOptions()
                 val parameters = libraryDescriptor.variables
-                val paramNames = parameters.properties
-                    .map { it.name }
-                    .filter { !globalOptions.isPropertyIgnored(it) }
+                val paramNames =
+                    parameters.properties
+                        .map { it.name }
+                        .filter { !globalOptions.isPropertyIgnored(it) }
                 if (paramNames.isEmpty()) return
 
                 if ('=' !in argCall) {
@@ -107,13 +120,14 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                 val argValuePrefix = argCall.substringAfter('=').trimStart()
 
                 val paramsHaveOrder = parameters.hasOrder
-                val paramName = argName.ifEmpty {
-                    if (paramsHaveOrder) {
-                        paramNames.getOrNull(argIndex)
-                    } else {
-                        paramNames.singleOrNull()
-                    } ?: return
-                }
+                val paramName =
+                    argName.ifEmpty {
+                        if (paramsHaveOrder) {
+                            paramNames.getOrNull(argIndex)
+                        } else {
+                            paramNames.singleOrNull()
+                        } ?: return
+                    }
 
                 for (dependencyStr in libraryDescriptor.dependencies) {
                     val match = MAVEN_DEP_REGEX.matchEntire(dependencyStr) ?: continue
@@ -125,13 +139,14 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                     val dependencyParamName = versionTemplate.substring(1)
                     if (dependencyParamName != paramName) continue
 
-                    val versions = (libraryDescriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
-                        if (repo.username == null && repo.password == null) {
-                            getVersions(ArtifactLocation(repo.path, group, artifact))
-                        } else {
-                            null
-                        }
-                    }.orEmpty()
+                    val versions =
+                        (libraryDescriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
+                            if (repo.username == null && repo.password == null) {
+                                getVersions(ArtifactLocation(repo.path, group, artifact))
+                            } else {
+                                null
+                            }
+                        }.orEmpty()
                     val matchingVersions = versions.filter { it.startsWith(argValuePrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {
                         variant(it, "version")
@@ -161,6 +176,7 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
         private fun NodeList.toList(): List<Node> {
             return object : AbstractList<Node>() {
                 override val size: Int get() = length
+
                 override fun get(index: Int) = item(index)
             }
         }

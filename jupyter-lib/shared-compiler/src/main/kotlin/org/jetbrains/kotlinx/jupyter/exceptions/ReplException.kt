@@ -8,26 +8,27 @@ import java.lang.reflect.InvocationTargetException
 open class ReplException(message: String, cause: Throwable? = null) : Exception(message, cause) {
     open fun getAdditionalInfoJson(): JsonObject? = null
 
-    open fun render(): String? = buildString {
-        appendLine(message)
-        val cause = cause
-        if (cause != null) {
-            when (cause) {
-                is InvocationTargetException -> appendLine(cause.targetException.toString())
-                is ReplCompilerException -> {
-                    appendLine("Error compiling code:")
-                    appendLine(cause.failedCode)
-                    cause.errorResult?.let { errors ->
-                        appendLine("\nErrors:")
-                        appendLine(errors.getErrors())
-                        appendLine()
+    open fun render(): String? =
+        buildString {
+            appendLine(message)
+            val cause = cause
+            if (cause != null) {
+                when (cause) {
+                    is InvocationTargetException -> appendLine(cause.targetException.toString())
+                    is ReplCompilerException -> {
+                        appendLine("Error compiling code:")
+                        appendLine(cause.failedCode)
+                        cause.errorResult?.let { errors ->
+                            appendLine("\nErrors:")
+                            appendLine(errors.getErrors())
+                            appendLine()
+                        }
                     }
+                    else -> appendLine(cause.toString())
                 }
-                else -> appendLine(cause.toString())
             }
+            appendLine(messageAndStackTrace(false))
         }
-        appendLine(messageAndStackTrace(false))
-    }
 }
 
 fun Throwable.messageAndStackTrace(withMessage: Boolean = true): String {

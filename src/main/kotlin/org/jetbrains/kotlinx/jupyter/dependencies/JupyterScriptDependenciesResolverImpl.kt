@@ -29,26 +29,28 @@ import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
 open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRepositoryCoordinates>) : JupyterScriptDependenciesResolver {
-
     private val log = getLogger("resolver")
 
     private val resolver: ExternalDependenciesResolver
-    private val resolverOptions = buildOptions(
-        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
-    )
+    private val resolverOptions =
+        buildOptions(
+            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+        )
 
-    private val sourcesResolverOptions = buildOptions(
-        DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
-        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
-        DependenciesResolverOptionsName.CLASSIFIER to "sources",
-        DependenciesResolverOptionsName.EXTENSION to "jar",
-    )
+    private val sourcesResolverOptions =
+        buildOptions(
+            DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
+            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+            DependenciesResolverOptionsName.CLASSIFIER to "sources",
+            DependenciesResolverOptionsName.EXTENSION to "jar",
+        )
 
-    private val mppResolverOptions = buildOptions(
-        DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
-        DependenciesResolverOptionsName.SCOPE to "compile,runtime",
-        DependenciesResolverOptionsName.EXTENSION to "module",
-    )
+    private val mppResolverOptions =
+        buildOptions(
+            DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
+            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+            DependenciesResolverOptionsName.EXTENSION to "module",
+        )
 
     private val repositories = arrayListOf<Repo>()
     private val addedClasspath = arrayListOf<File>()
@@ -58,10 +60,11 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
     private val addedSourcesClasspath = arrayListOf<File>()
 
     init {
-        resolver = CompoundDependenciesResolver(
-            FileSystemDependenciesResolver(),
-            RemoteResolverWrapper(MavenDependenciesResolver(true)),
-        )
+        resolver =
+            CompoundDependenciesResolver(
+                FileSystemDependenciesResolver(),
+                RemoteResolverWrapper(MavenDependenciesResolver(true)),
+            )
         mavenRepositories.forEach { addRepository(Repo(it)) }
     }
 
@@ -107,14 +110,15 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                         existingRepositories = ArrayList(repositories)
                     }
 
-                    val options = if (annotation.username.isNotEmpty() || annotation.password.isNotEmpty()) {
-                        buildOptions(
-                            DependenciesResolverOptionsName.USERNAME to annotation.username,
-                            DependenciesResolverOptionsName.PASSWORD to annotation.password,
-                        )
-                    } else {
-                        Options.Empty
-                    }
+                    val options =
+                        if (annotation.username.isNotEmpty() || annotation.password.isNotEmpty()) {
+                            buildOptions(
+                                DependenciesResolverOptionsName.USERNAME to annotation.username,
+                                DependenciesResolverOptionsName.PASSWORD to annotation.password,
+                            )
+                        } else {
+                            Options.Empty
+                        }
                     val repo = Repo(MavenRepositoryCoordinates(annotation.value), options)
 
                     if (!addRepository(repo)) {
@@ -147,7 +151,10 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         return makeResolutionResult(classpath, scriptDiagnostics)
     }
 
-    private suspend fun resolveWithOptions(dependencies: List<Dependency>, options: Options): ResultWithDiagnostics<List<File>> {
+    private suspend fun resolveWithOptions(
+        dependencies: List<Dependency>,
+        options: Options,
+    ): ResultWithDiagnostics<List<File>> {
         return resolver.resolve(dependencies.map { ArtifactWithLocation(it.value, null) }, options)
     }
 
@@ -166,7 +173,11 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                 classpathResult.addAll(files)
             },
             onFailure = { result ->
-                val diagnostics = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Failed to resolve $dependencies:\n" + result.reports.joinToString("\n") { it.message })
+                val diagnostics =
+                    ScriptDiagnostic(
+                        ScriptDiagnostic.unspecifiedError,
+                        "Failed to resolve $dependencies:\n" + result.reports.joinToString("\n") { it.message },
+                    )
                 log.warn(diagnostics.message, diagnostics.exception)
                 scriptDiagnosticsResult.add(diagnostics)
             },
@@ -192,9 +203,10 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                     resolvedArtifacts.addAll(dependencies)
                     resolveMpp(files) { artifactCoordinates ->
                         val artifacts = artifactCoordinates.map { it.toDependency() }
-                        val notYetResolvedArtifacts = artifacts.filter { artifact ->
-                            resolvedArtifacts.add(artifact)
-                        }
+                        val notYetResolvedArtifacts =
+                            artifacts.filter { artifact ->
+                                resolvedArtifacts.add(artifact)
+                            }
 
                         tryResolve(
                             notYetResolvedArtifacts,
@@ -224,15 +236,19 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         }
     }
 
-    private fun resolveMpp(moduleFiles: List<File>, jvmArtifactCallback: (List<String>) -> Unit) {
+    private fun resolveMpp(
+        moduleFiles: List<File>,
+        jvmArtifactCallback: (List<String>) -> Unit,
+    ) {
         val coordinates = mutableListOf<String>()
 
         for (moduleFile in moduleFiles) {
-            val json = try {
-                Json.parseToJsonElement(moduleFile.readText())
-            } catch (e: Throwable) {
-                continue
-            }
+            val json =
+                try {
+                    Json.parseToJsonElement(moduleFile.readText())
+                } catch (e: Throwable) {
+                    continue
+                }
 
             val variants = (json.resolvePath(listOf("variants")) as? JsonArray) ?: continue
             for (v in variants) {

@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.TypeName
 import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
 
 /**
- * Acceptance rule either says it accepts object or delegates it to some other rule returning null
+ * Acceptance rule either says it accepts an object or delegates it to some other rule returning null
  */
 fun interface AcceptanceRule<T> {
     fun accepts(obj: T): Boolean?
@@ -16,6 +16,7 @@ fun interface AcceptanceRule<T> {
  */
 interface FlagAcceptanceRule<T> : AcceptanceRule<T> {
     val acceptsFlag: Boolean
+
     fun appliesTo(obj: T): Boolean
 
     override fun accepts(obj: T): Boolean? {
@@ -62,13 +63,14 @@ class PatternNameAcceptanceRule(
 
                 when (c) {
                     '.' -> append("\\.")
-                    '*' -> when (nextC) {
-                        '*' -> {
-                            append(".*")
-                            ++i
+                    '*' ->
+                        when (nextC) {
+                            '*' -> {
+                                append(".*")
+                                ++i
+                            }
+                            else -> append("[^.]*")
                         }
-                        else -> append("[^.]*")
-                    }
                     '?' -> append(".?")
                     '[', ']', '(', ')', '{', '}', '\\', '$', '^', '+', '|' -> {
                         append('\\')

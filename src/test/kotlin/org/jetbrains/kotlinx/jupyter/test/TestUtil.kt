@@ -70,26 +70,28 @@ import kotlin.test.assertEquals
 
 val testDataDir = File("src/test/testData")
 
-const val standardResolverBranch = "master"
+const val STANDARD_RESOLVER_BRANCH = "master"
 
 val testRepositories = defaultRepositoriesCoordinates
 
-val standardResolverRuntimeProperties = object : ReplRuntimeProperties by defaultRuntimeProperties {
-    override val currentBranch: String
-        get() = standardResolverBranch
-}
+val standardResolverRuntimeProperties =
+    object : ReplRuntimeProperties by defaultRuntimeProperties {
+        override val currentBranch: String
+            get() = STANDARD_RESOLVER_BRANCH
+    }
 
-val classpath = scriptCompilationClasspathFromContext(
-    "lib",
-    "api",
-    "shared-compiler",
-    "kotlin-stdlib",
-    "kotlin-reflect",
-    "kotlin-script-runtime",
-    "kotlinx-serialization-json-jvm",
-    "kotlinx-serialization-core-jvm",
-    classLoader = TestDisplayHandler::class.java.classLoader,
-)
+val classpath =
+    scriptCompilationClasspathFromContext(
+        "lib",
+        "api",
+        "shared-compiler",
+        "kotlin-stdlib",
+        "kotlin-reflect",
+        "kotlin-script-runtime",
+        "kotlinx-serialization-json-jvm",
+        "kotlinx-serialization-core-jvm",
+        classLoader = TestDisplayHandler::class.java.classLoader,
+    )
 
 val KClass<*>.classPathEntry: File get() {
     return File(this.java.protectionDomain.codeSource.location.toURI().path)
@@ -102,16 +104,20 @@ inline fun <reified T> classPathEntry(): File {
 val testLibraryResolver: LibraryResolver
     get() = getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
 
-val KERNEL_LIBRARIES = LibraryDescriptorsManager.getInstance(
-    SimpleHttpClient,
-    getLogger(),
-) { logger, message, exception ->
-    logger.errorForUser(message = message, throwable = exception)
-}
+val KERNEL_LIBRARIES =
+    LibraryDescriptorsManager.getInstance(
+        SimpleHttpClient,
+        getLogger(),
+    ) { logger, message, exception ->
+        logger.errorForUser(message = message, throwable = exception)
+    }
 
 fun assertUnit(value: Any?) = assertEquals(Unit, value)
 
-fun assertStartsWith(expectedPrefix: String, actual: String) {
+fun assertStartsWith(
+    expectedPrefix: String,
+    actual: String,
+) {
     if (actual.startsWith(expectedPrefix)) return
     val actualStart = actual.substring(0, minOf(expectedPrefix.length, actual.length))
     throw AssertionError("Expected a string to start with '$expectedPrefix', but it starts with '$actualStart")
@@ -147,10 +153,11 @@ fun readLibraries(basePath: String? = null): Map<String, String> {
         .toMap()
 }
 
-fun CompletionResult.getOrFail(): CompletionResult.Success = when (this) {
-    is CompletionResult.Success -> this
-    else -> fail("Result should be success")
-}
+fun CompletionResult.getOrFail(): CompletionResult.Success =
+    when (this) {
+        is CompletionResult.Success -> this
+        else -> fail("Result should be success")
+    }
 
 fun Map<String, VariableState>.mapToStringValues(): Map<String, String?> {
     return mapValues { it.value.stringValue }
@@ -185,21 +192,35 @@ class InMemoryLibraryResolver(
         return reference.shouldBeCachedInMemory
     }
 
-    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun tryResolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         return definitionsCache[reference] ?: descriptorsCache[reference]?.convertToDefinition(arguments)
     }
 
-    override fun save(reference: LibraryReference, definition: LibraryDefinition) {
+    override fun save(
+        reference: LibraryReference,
+        definition: LibraryDefinition,
+    ) {
         definitionsCache[reference] = definition
     }
 }
 
 open class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
-    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleDisplay(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         list.add(value)
     }
 
-    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleUpdate(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         TODO("Not yet implemented")
     }
 }
@@ -208,14 +229,21 @@ class TestDisplayHandlerWithRendering(
     private val notebook: MutableNotebook,
     list: MutableList<Any> = mutableListOf(),
 ) : TestDisplayHandler(list) {
-
-    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleDisplay(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         super.handleDisplay(value, host, id)
         val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
         notebook.currentCell?.addDisplay(display)
     }
 
-    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleUpdate(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         super.handleUpdate(value, host, id)
         val display = renderValue(notebook, host, value) ?: return
         val container = notebook.displays
@@ -307,7 +335,10 @@ object NotebookMock : Notebook {
     override val libraryLoader: LibraryLoader
         get() = notImplemented()
 
-    override fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String>): LibraryDefinition {
+    override fun getLibraryFromDescriptor(
+        descriptorText: String,
+        options: Map<String, String>,
+    ): LibraryDefinition {
         notImplemented()
     }
 

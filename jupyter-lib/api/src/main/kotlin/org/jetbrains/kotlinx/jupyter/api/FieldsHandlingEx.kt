@@ -12,12 +12,21 @@ class FieldInfo(
 val FieldInfo.name: VariableName get() = kotlinProperty?.name ?: javaField.name
 val FieldInfo.isCellResult: Boolean get() = kotlinProperty == null && name.startsWith("res")
 
-private fun KProperty<*>.toFieldInfo() = FieldInfo(this, javaField ?: throw IllegalArgumentException("Property $this should have backing field"))
+private fun KProperty<*>.toFieldInfo() =
+    FieldInfo(this, javaField ?: throw IllegalArgumentException("Property $this should have backing field"))
 
 fun interface FieldHandlerExecutionEx<T> : FieldHandlerExecution<T> {
-    fun execute(host: KotlinKernelHost, value: T, fieldInfo: FieldInfo): FieldValue?
+    fun execute(
+        host: KotlinKernelHost,
+        value: T,
+        fieldInfo: FieldInfo,
+    ): FieldValue?
 
-    override fun execute(host: KotlinKernelHost, value: T, property: KProperty<*>) {
+    override fun execute(
+        host: KotlinKernelHost,
+        value: T,
+        property: KProperty<*>,
+    ) {
         execute(host, value, property.toFieldInfo())
     }
 }
@@ -32,9 +41,15 @@ interface FieldHandlerEx : FieldHandler {
      * @param value Property value
      * @param fieldInfo Property runtime information
      */
-    fun accepts(value: Any?, fieldInfo: FieldInfo): Boolean
+    fun accepts(
+        value: Any?,
+        fieldInfo: FieldInfo,
+    ): Boolean
 
-    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+    override fun accepts(
+        value: Any?,
+        property: KProperty<*>,
+    ): Boolean {
         return accepts(value, property.toFieldInfo())
     }
 
@@ -50,18 +65,22 @@ class ResultFieldUpdateHandler(
     val updateCondition: (value: Any?, field: Field) -> Boolean,
     updateAction: (host: KotlinKernelHost, value: Any?, field: Field) -> VariableName?,
 ) : FieldHandlerEx {
-    override val execution: FieldHandlerExecutionEx<Any?> = FieldHandlerExecutionEx { host, value, fieldInfo ->
-        val field = fieldInfo.javaField
-        val tempField = updateAction(host, value, field)
-        if (tempField != null) {
-            val fieldName = field.name
-            host.execute("val $fieldName = $tempField; $fieldName")
-        } else {
-            null
+    override val execution: FieldHandlerExecutionEx<Any?> =
+        FieldHandlerExecutionEx { host, value, fieldInfo ->
+            val field = fieldInfo.javaField
+            val tempField = updateAction(host, value, field)
+            if (tempField != null) {
+                val fieldName = field.name
+                host.execute("val $fieldName = $tempField; $fieldName")
+            } else {
+                null
+            }
         }
-    }
 
-    override fun accepts(value: Any?, fieldInfo: FieldInfo): Boolean {
+    override fun accepts(
+        value: Any?,
+        fieldInfo: FieldInfo,
+    ): Boolean {
         if (!fieldInfo.isCellResult) return false
         return updateCondition(value, fieldInfo.javaField)
     }

@@ -12,20 +12,22 @@ class LibrariesProcessorImpl(
     private val libraryReferenceParser: LibraryReferenceParser,
     private val kernelVersion: KotlinKernelVersion?,
 ) : LibrariesProcessor {
-
     private val _requests = mutableListOf<LibraryResolutionRequest>()
     override val requests: Collection<LibraryResolutionRequest>
         get() = _requests
 
-    private fun checkKernelVersionRequirements(name: String, library: LibraryDefinition) {
+    private fun checkKernelVersionRequirements(
+        name: String,
+        library: LibraryDefinition,
+    ) {
         library.minKernelVersion?.let { minVersion ->
             kernelVersion?.let { currentVersion ->
                 if (currentVersion < minVersion) {
                     throw ReplException(
                         """
-                            Library '$name' requires at least $minVersion version of kernel.
-                            Current kernel version is $currentVersion.
-                            Please update kernel, see https://github.com/Kotlin/kotlin-jupyter#updating for more info.
+                        Library '$name' requires at least $minVersion version of kernel.
+                        Current kernel version is $currentVersion.
+                        Please update kernel, see https://github.com/Kotlin/kotlin-jupyter#updating for more info.
                         """.trimIndent(),
                     )
                 }
@@ -36,8 +38,9 @@ class LibrariesProcessorImpl(
     override fun processNewLibraries(arg: String): List<LibraryDefinitionProducer> =
         splitLibraryCalls(arg).map {
             val (libRef, vars) = libraryReferenceParser.parseReferenceWithArgs(it)
-            val library = libraryResolver?.resolve(libRef, vars)
-                ?: throw ReplException("Unknown library '$libRef'")
+            val library =
+                libraryResolver?.resolve(libRef, vars)
+                    ?: throw ReplException("Unknown library '$libRef'")
 
             _requests.add(LibraryResolutionRequest(libRef, vars, library))
 

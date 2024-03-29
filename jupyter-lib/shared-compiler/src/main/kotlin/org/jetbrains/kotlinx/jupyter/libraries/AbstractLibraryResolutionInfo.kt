@@ -9,7 +9,6 @@ import java.net.URL
 abstract class AbstractLibraryResolutionInfo(
     private val typeKey: String,
 ) : LibraryResolutionInfo {
-
     class ByURL(val url: URL) : AbstractLibraryResolutionInfo("url") {
         override val args = listOf(Variable("url", url.toString()))
         override val shouldBeCachedLocally get() = false

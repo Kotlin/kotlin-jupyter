@@ -14,7 +14,10 @@ interface CodePreprocessor {
     /**
      * Performs code preprocessing
      */
-    fun process(code: String, host: KotlinKernelHost): Result
+    fun process(
+        code: String,
+        host: KotlinKernelHost,
+    ): Result
 
     data class Result(val code: Code, val libraries: List<LibraryDefinitionProducer> = emptyList())
 }

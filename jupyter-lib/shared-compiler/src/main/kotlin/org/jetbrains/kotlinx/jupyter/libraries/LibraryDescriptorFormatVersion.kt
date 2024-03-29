@@ -28,7 +28,12 @@ class LibraryDescriptorFormatVersion(
 object LibraryDescriptorFormatVersionSerializer : StringValueSerializer<LibraryDescriptorFormatVersion>(
     LibraryDescriptorFormatVersion::class,
     { it.toString() },
-    { str -> LibraryDescriptorFormatVersion.fromString(str) ?: throw SerializationException("Wrong format of library descriptor format version: $str") },
+    {
+            str ->
+        LibraryDescriptorFormatVersion.fromString(
+            str,
+        ) ?: throw SerializationException("Wrong format of library descriptor format version: $str")
+    },
 )
 
 /**
@@ -48,9 +53,10 @@ fun assertDescriptorFormatVersionCompatible(descriptor: LibraryDescriptor) {
     if (!isDescriptorFormatVersionCompatible(descriptor.formatVersion)) {
         throw ReplLibraryLoadingException(
             libraryName = descriptor.description?.let { "<$it>" },
-            message = "This descriptor format version is not supported: " +
-                "descriptor format version is ${descriptor.formatVersion}, " +
-                "kernel format version is $currentLibraryDescriptorFormatVersion",
+            message =
+                "This descriptor format version is not supported: " +
+                    "descriptor format version is ${descriptor.formatVersion}, " +
+                    "kernel format version is $currentLibraryDescriptorFormatVersion",
         )
     }
 }

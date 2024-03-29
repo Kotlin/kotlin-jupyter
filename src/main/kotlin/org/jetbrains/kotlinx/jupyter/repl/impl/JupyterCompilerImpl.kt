@@ -53,7 +53,6 @@ import kotlin.script.experimental.jvm.util.toSourceCodePosition
 import kotlin.script.experimental.util.LinkedSnippet
 
 interface JupyterCompiler {
-
     val version: KotlinKernelVersion
     val numberOfSnippets: Int
     val previousScriptsClasses: List<KClass<*>>
@@ -61,9 +60,18 @@ interface JupyterCompiler {
     val lastClassLoader: ClassLoader
 
     fun nextCounter(): Int
+
     fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit)
-    fun updateCompilationConfigOnAnnotation(handler: FileAnnotationHandler, callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>)
-    fun compileSync(snippet: SourceCode, options: JupyterCompilingOptions): Result
+
+    fun updateCompilationConfigOnAnnotation(
+        handler: FileAnnotationHandler,
+        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
+    )
+
+    fun compileSync(
+        snippet: SourceCode,
+        options: JupyterCompilingOptions,
+    ): Result
 
     data class Result(
         val snippet: LinkedSnippet<KJvmCompiledScript>,
@@ -72,7 +80,6 @@ interface JupyterCompiler {
 }
 
 interface JupyterCompilerWithCompletion : JupyterCompiler {
-
     val completer: ReplCompleter
 
     fun checkComplete(code: Code): CheckCompletenessResult
@@ -104,16 +111,18 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
 
-    private val refinementCallbacks = mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
+    private val refinementCallbacks =
+        mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
 
-    protected val compilationConfig: ScriptCompilationConfiguration = initialCompilationConfig.with {
-        refineConfiguration {
-            val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
-            handlers.forEach { beforeCompiling(it.handler) }
+    protected val compilationConfig: ScriptCompilationConfiguration =
+        initialCompilationConfig.with {
+            refineConfiguration {
+                val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
+                handlers.forEach { beforeCompiling(it.handler) }
 
-            beforeCompiling(::updateConfig)
+                beforeCompiling(::updateConfig)
+            }
         }
-    }
 
     override val version: KotlinKernelVersion = currentKernelVersion
 
@@ -126,11 +135,11 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     override val lastKClass: KClass<*>
         get() = classes.last()
 
-    private val _baseClassLoader: ClassLoader
+    private val _lastClassLoader: ClassLoader
         get() = basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
 
     override val lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader ?: _baseClassLoader
+        get() = classes.lastOrNull()?.java?.classLoader ?: _lastClassLoader
 
     override fun nextCounter() = executionCounter.getAndIncrement()
 
@@ -140,18 +149,22 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
         }
     }
 
-    override fun updateCompilationConfigOnAnnotation(handler: FileAnnotationHandler, callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>) {
+    override fun updateCompilationConfigOnAnnotation(
+        handler: FileAnnotationHandler,
+        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
+    ) {
         refinementCallbacks.add { context ->
             val ktFile = (context.script as KtFileScriptSource).ktFile
 
-            val withImport = context.compilationConfiguration.with {
-                defaultImports(handler.annotation.java.name)
-                refineConfiguration {
-                    onAnnotations(KotlinType(handler.annotation.qualifiedName!!)) {
-                        callback(it)
+            val withImport =
+                context.compilationConfiguration.with {
+                    defaultImports(handler.annotation.java.name)
+                    refineConfiguration {
+                        onAnnotations(KotlinType(handler.annotation.qualifiedName!!)) {
+                            callback(it)
+                        }
                     }
                 }
-            }
             val collectedData = getScriptCollectedData(ktFile, withImport, ktFile.project, lastClassLoader)
 
             withImport.refineOnAnnotations(context.script, collectedData)
@@ -159,7 +172,9 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     }
 
     private fun updateConfig(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        return refinementCallbacks.fold(context.compilationConfiguration.asSuccess()) { config: ResultWithDiagnostics<ScriptCompilationConfiguration>, callback ->
+        return refinementCallbacks.fold(
+            context.compilationConfiguration.asSuccess(),
+        ) { config: ResultWithDiagnostics<ScriptCompilationConfiguration>, callback ->
             config.valueOrNull()?.let { conf ->
                 callback(
                     ScriptConfigurationRefinementContext(
@@ -172,11 +187,15 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
         }
     }
 
-    private val getCompilationConfiguration = createCachedFun { options: JupyterCompilingOptions ->
-        compilationConfig.with { jupyterOptions(options) }
-    }
+    private val getCompilationConfiguration =
+        createCachedFun { options: JupyterCompilingOptions ->
+            compilationConfig.with { jupyterOptions(options) }
+        }
 
-    override fun compileSync(snippet: SourceCode, options: JupyterCompilingOptions): JupyterCompiler.Result {
+    override fun compileSync(
+        snippet: SourceCode,
+        options: JupyterCompilingOptions,
+    ): JupyterCompiler.Result {
         val compilationConfigWithJupyterOptions = getCompilationConfiguration(options)
         when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfigWithJupyterOptions) }) {
             is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, resultWithDiagnostics)
@@ -184,18 +203,20 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                 val result = resultWithDiagnostics.value
                 val compiledScript = result.get()
 
-                val configWithClassloader = basicEvaluationConfiguration.with {
-                    jvm {
-                        lastSnippetClassLoader(lastClassLoader)
-                        baseClassLoader(_baseClassLoader.parent)
+                val configWithClassloader =
+                    basicEvaluationConfiguration.with {
+                        jvm {
+                            lastSnippetClassLoader(lastClassLoader)
+                            baseClassLoader(_lastClassLoader.parent)
+                        }
                     }
-                }
                 val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
-                val newEvaluationConfiguration = configWithClassloader.with {
-                    jvm {
-                        actualClassLoader(classLoader)
+                val newEvaluationConfiguration =
+                    configWithClassloader.with {
+                        jvm {
+                            actualClassLoader(classLoader)
+                        }
                     }
-                }
 
                 when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
                     is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, kClassWithDiagnostics)
@@ -217,13 +238,10 @@ class JupyterCompilerWithCompletionImpl(
     evaluationConfig: ScriptEvaluationConfiguration,
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
     JupyterCompilerWithCompletion {
-
     override val completer: ReplCompleter
         get() = compiler
 
-    override fun checkComplete(
-        code: Code,
-    ): CheckCompletenessResult {
+    override fun checkComplete(code: Code): CheckCompletenessResult {
         val result = analyze(code)
         val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
         val diagnostics = analysisResult[ReplAnalyzerResult.analysisDiagnostics]!!
@@ -231,9 +249,7 @@ class JupyterCompilerWithCompletionImpl(
         return CheckCompletenessResult(isComplete)
     }
 
-    private fun analyze(
-        code: Code,
-    ): ResultWithDiagnostics<ReplAnalyzerResult> {
+    private fun analyze(code: Code): ResultWithDiagnostics<ReplAnalyzerResult> {
         val snippet = SourceCodeImpl(nextCounter(), code)
 
         return runBlocking {

@@ -44,18 +44,20 @@ class PatternAcceptanceRulesTests {
     }
 
     @Test
-    fun `simple case`() = testPattern(
-        "my.Name0",
-        listOf("my.Name0"),
-        listOf("my.Name", " my.Name0", "myoName0"),
-    )
+    fun `simple case`() =
+        testPattern(
+            "my.Name0",
+            listOf("my.Name0"),
+            listOf("my.Name", " my.Name0", "myoName0"),
+        )
 
     @Test
-    fun `special characters`() = testPattern(
-        "org.jetbrains.kotlin?.**.jupyter.*",
-        listOf("org.jetbrains.kotlin.my.package.jupyter.Integration", "org.jetbrains.kotlinx.some_package.jupyter.SomeClass"),
-        listOf("org.jetbrains.kotlin.my.package.jupyter.integration.MyClass"),
-    )
+    fun `special characters`() =
+        testPattern(
+            "org.jetbrains.kotlin?.**.jupyter.*",
+            listOf("org.jetbrains.kotlin.my.package.jupyter.Integration", "org.jetbrains.kotlinx.some_package.jupyter.SomeClass"),
+            listOf("org.jetbrains.kotlin.my.package.jupyter.integration.MyClass"),
+        )
 
     @Test
     fun `negative pattern serialization`() = testPatternSerialization("-:test.Line_*", false, "test.Line_*")

@@ -11,9 +11,8 @@ interface MutableNotebook : Notebook {
     var sharedReplContext: SharedReplContext?
 
     override val displays: MutableDisplayContainer
-    fun addCell(
-        data: EvalData,
-    ): MutableCodeCell
+
+    fun addCell(data: EvalData): MutableCodeCell
 
     fun popCell()
 

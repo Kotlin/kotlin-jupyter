@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
  * Performs code preprocessing (magics parsing) and snippet class postprocessing (variable converters and annotation handlers)
  */
 interface CellExecutor : ExecutionHost {
-
     fun execute(
         code: Code,
         processVariables: Boolean = true,

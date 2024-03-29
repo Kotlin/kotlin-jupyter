@@ -29,7 +29,10 @@ class ColorSchemeChangeCallbacksProcessorImpl : ColorSchemeChangeCallbacksProces
         register(extension, ProcessingPriority.DEFAULT)
     }
 
-    override fun register(extension: ColorSchemeChangedCallback, priority: Int) {
+    override fun register(
+        extension: ColorSchemeChangedCallback,
+        priority: Int,
+    ) {
         val scheme = currentScheme
         callbacks.add(MutablePair(extension, scheme), priority)
         if (scheme != null) {

@@ -23,31 +23,32 @@ abstract class CompletionResult {
         }
 
         override val message: AbstractMessageContent
-            get() = CompleteReply(
-                matches,
-                bounds.from,
-                bounds.to,
-                Paragraph(cursor, text),
-                CompleteReply.Metadata(
-                    metadata.map {
-                        CompleteReply.ExperimentalType(
-                            it.text,
-                            it.tail,
-                            bounds.from,
-                            bounds.to,
-                        )
-                    },
-                    metadata.map {
-                        CompleteReply.ExtendedMetadataEntry(
-                            it.text,
-                            it.displayText,
-                            it.icon,
-                            it.tail,
-                            it.deprecationLevel?.name,
-                        )
-                    },
-                ),
-            )
+            get() =
+                CompleteReply(
+                    matches,
+                    bounds.from,
+                    bounds.to,
+                    Paragraph(cursor, text),
+                    CompleteReply.Metadata(
+                        metadata.map {
+                            CompleteReply.ExperimentalType(
+                                it.text,
+                                it.tail,
+                                bounds.from,
+                                bounds.to,
+                            )
+                        },
+                        metadata.map {
+                            CompleteReply.ExtendedMetadataEntry(
+                                it.text,
+                                it.displayText,
+                                it.icon,
+                                it.tail,
+                                it.deprecationLevel?.name,
+                            )
+                        },
+                    ),
+                )
 
         @TestOnly
         fun sortedMatches(): List<String> = matches.sorted()

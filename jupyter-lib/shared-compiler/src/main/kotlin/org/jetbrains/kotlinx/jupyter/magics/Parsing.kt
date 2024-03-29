@@ -22,7 +22,11 @@ fun libraryCommaRanges(text: String): List<Pair<Int, Int>> {
  * Need special processing of ',' to skip call argument delimiters in brackets
  * E.g. "use lib1(3), lib2(2, 5)" should split into "lib1(3)" and "lib(2, 5)", not into "lib1(3)", "lib(2", "5)"
  */
-fun libraryCommaIndices(text: String, withFirst: Boolean = false, withLast: Boolean = false): List<Int> {
+fun libraryCommaIndices(
+    text: String,
+    withFirst: Boolean = false,
+    withLast: Boolean = false,
+): List<Int> {
     return buildList {
         var i = 0
         var commaDepth = 0
@@ -36,9 +40,10 @@ fun libraryCommaIndices(text: String, withFirst: Boolean = false, withLast: Bool
                 break
             }
             when (text[i]) {
-                ',' -> if (commaDepth == 0) {
-                    add(i)
-                }
+                ',' ->
+                    if (commaDepth == 0) {
+                        add(i)
+                    }
                 '(' -> commaDepth++
                 ')' -> commaDepth--
             }

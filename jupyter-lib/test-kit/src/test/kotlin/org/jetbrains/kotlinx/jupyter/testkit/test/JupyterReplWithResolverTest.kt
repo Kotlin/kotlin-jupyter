@@ -16,34 +16,35 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
         shouldResolveToEmpty = { it == "multik" },
     ),
 ) {
-
     @Test
     fun dataframe() {
-        val dfHtml = execHtml(
-            """
-            %use dataframe()
-            
-            val name by column<String>()
-            val height by column<Int>()
-            
-            dataFrameOf(name, height)(
-                "Bill", 135,
-                "Mark", 160
-            )            
-            """.trimIndent(),
-        )
+        val dfHtml =
+            execHtml(
+                """
+                %use dataframe()
+                
+                val name by column<String>()
+                val height by column<Int>()
+                
+                dataFrameOf(name, height)(
+                    "Bill", 135,
+                    "Mark", 160
+                )            
+                """.trimIndent(),
+            )
 
         dfHtml shouldContain "Bill"
     }
 
     @Test
     fun `failed code with use should still provide metadata`() {
-        val result = execEx(
-            """
-            %use dataframe
-            throw Exception()
-            """.trimIndent(),
-        )
+        val result =
+            execEx(
+                """
+                %use dataframe
+                throw Exception()
+                """.trimIndent(),
+            )
 
         result.shouldBeTypeOf<EvalResultEx.Error>()
         with(result.metadata) {

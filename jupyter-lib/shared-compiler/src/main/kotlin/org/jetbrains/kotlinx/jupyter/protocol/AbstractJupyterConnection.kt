@@ -28,7 +28,10 @@ abstract class AbstractJupyterConnection : JupyterConnection {
         socket.removeCallback(socketCallback)
     }
 
-    override fun send(socketName: JupyterSocketType, message: RawMessage) {
+    override fun send(
+        socketName: JupyterSocketType,
+        message: RawMessage,
+    ) {
         val socket = socketManager.fromSocketType(socketName)
         socket.sendRawMessage(message)
     }

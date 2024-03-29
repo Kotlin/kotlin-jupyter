@@ -43,22 +43,36 @@ abstract class AbstractMessageRequestProcessor(
     }
 
     protected abstract fun processIsCompleteRequest(content: IsCompleteRequest)
+
     protected abstract fun processListErrorsRequest(content: ListErrorsRequest)
+
     protected abstract fun processCompleteRequest(content: CompleteRequest)
+
     protected abstract fun processCommMsg(content: CommMsg)
+
     protected abstract fun processCommClose(content: CommClose)
+
     protected abstract fun processCommOpen(content: CommOpen)
+
     protected abstract fun processCommInfoRequest(content: CommInfoRequest)
+
     protected abstract fun processExecuteRequest(content: ExecuteRequest)
+
     protected abstract fun processConnectRequest(content: ConnectRequest)
+
     protected abstract fun processHistoryRequest(content: HistoryRequest)
+
     protected abstract fun processKernelInfoRequest(content: KernelInfoRequest)
+
     protected abstract fun processUnknownShellMessage(content: MessageContent)
 
     protected abstract fun processShutdownRequest(content: ShutdownRequest)
+
     protected abstract fun processInterruptRequest(content: InterruptRequest)
+
     protected abstract fun processUnknownControlMessage(content: MessageContent)
 
     protected abstract fun processInputReply(content: InputReply)
+
     protected abstract fun processUnknownStdinMessage(content: MessageContent)
 }

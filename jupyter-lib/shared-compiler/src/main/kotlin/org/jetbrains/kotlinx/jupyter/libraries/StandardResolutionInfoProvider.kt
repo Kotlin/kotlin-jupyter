@@ -31,12 +31,13 @@ class StandardResolutionInfoProvider(
     }
 
     private fun tryGetAsURL(url: String): LibraryResolutionInfo? {
-        val response = try {
-            httpUtil.httpClient.getHttp(url)
-        } catch (e: Throwable) {
-            LOG.warn("Unable to load library by URL $url", e)
-            return null
-        }
+        val response =
+            try {
+                httpUtil.httpClient.getHttp(url)
+            } catch (e: Throwable) {
+                LOG.warn("Unable to load library by URL $url", e)
+                return null
+            }
         return if (response.status.successful) AbstractLibraryResolutionInfo.ByURL(URL(url)) else null
     }
 

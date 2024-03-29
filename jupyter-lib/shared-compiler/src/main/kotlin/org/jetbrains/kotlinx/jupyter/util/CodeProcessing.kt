@@ -4,7 +4,11 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.determineSep
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
-fun String.findNthSubstring(s: String, n: Int, start: Int = 0): Int {
+fun String.findNthSubstring(
+    s: String,
+    n: Int,
+    start: Int = 0,
+): Int {
     if (n < 1 || start == -1) return -1
 
     var i = start
@@ -18,7 +22,10 @@ fun String.findNthSubstring(s: String, n: Int, start: Int = 0): Int {
     return i - s.length
 }
 
-fun SourceCode.Position.withNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
+fun SourceCode.Position.withNewAbsolute(
+    code: SourceCode,
+    newCode: SourceCode,
+): SourceCode.Position? {
     val sep = code.text.determineSep()
     val absLineStart =
         if (line == 1) {
@@ -38,6 +45,9 @@ fun SourceCode.Position.withNewAbsolute(code: SourceCode, newCode: SourceCode): 
     return SourceCode.Position(line, col, abs)
 }
 
-fun Int.toSourceCodePositionWithNewAbsolute(code: SourceCode, newCode: SourceCode): SourceCode.Position? {
+fun Int.toSourceCodePositionWithNewAbsolute(
+    code: SourceCode,
+    newCode: SourceCode,
+): SourceCode.Position? {
     return toSourceCodePosition(code).withNewAbsolute(code, newCode)
 }

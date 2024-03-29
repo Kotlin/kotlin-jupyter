@@ -41,19 +41,20 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testResolverRepoOrder() {
-        val res = eval(
-            """
-            @file:Repository("https://repo.osgeo.org/repository/release/")
-            @file:DependsOn("org.geotools:gt-shapefile:[23,)")
-            @file:DependsOn("org.geotools:gt-cql:[23,)")
-            
-            %use lets-plot@f2bb7075b316e7181ff8fddb1e045c4ed2c26442(api=2.0.1)
-            
-            @file:DependsOn("org.jetbrains.lets-plot:lets-plot-kotlin-geotools:2.0.1")
-            
-            import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:Repository("https://repo.osgeo.org/repository/release/")
+                @file:DependsOn("org.geotools:gt-shapefile:[23,)")
+                @file:DependsOn("org.geotools:gt-cql:[23,)")
+                
+                %use lets-plot@f2bb7075b316e7181ff8fddb1e045c4ed2c26442(api=2.0.1)
+                
+                @file:DependsOn("org.jetbrains.lets-plot:lets-plot-kotlin-geotools:2.0.1")
+                
+                import jetbrains.letsPlot.toolkit.geotools.toSpatialDataset
+                """.trimIndent(),
+            )
 
         Assertions.assertTrue(res.metadata.newClasspath.size >= 2)
     }
@@ -61,18 +62,21 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     fun testStandardLibraryResolver() {
         val baseClassLoader = repl.currentClassLoader.parent
-        fun urlClassLoadersCount() = generateSequence(repl.currentClassLoader) { classLoader ->
-            classLoader.parent?.takeIf { it != baseClassLoader }
-        }.filter { it is URLClassLoader }.count()
+
+        fun urlClassLoadersCount() =
+            generateSequence(repl.currentClassLoader) { classLoader ->
+                classLoader.parent?.takeIf { it != baseClassLoader }
+            }.filter { it is URLClassLoader }.count()
         urlClassLoadersCount() shouldBe 1
 
-        val res = eval(
-            """
-            %use krangl@d91d045946f59(0.16.2)
-            val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
-            df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                %use krangl@d91d045946f59(0.16.2)
+                val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
+                df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
+                """.trimIndent(),
+            )
         assertEquals("John Smith", res.renderedValue)
         urlClassLoadersCount() shouldBe 2
 
@@ -100,20 +104,22 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val libsCommit = "f2bb7075b316e7181ff8fddb1e045c4ed2c26442"
         val libraryPath = "src/test/testData/test-init.json"
 
-        val res1 = eval(
-            """
-            %use @file[$libraryPath](name=x, value=42)
-            x
-            """.trimIndent(),
-        )
+        val res1 =
+            eval(
+                """
+                %use @file[$libraryPath](name=x, value=42)
+                x
+                """.trimIndent(),
+            )
         assertEquals(42, res1.renderedValue)
 
-        val res2 = eval(
-            """
-            %use @url[https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/$commit/$libraryPath](name=y, value=43)
-            y
-            """.trimIndent(),
-        )
+        val res2 =
+            eval(
+                """
+                %use @url[https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/$commit/$libraryPath](name=y, value=43)
+                y
+                """.trimIndent(),
+            )
         assertEquals(43, res2.renderedValue)
 
         val res3 = eval("%use lets-plot@$libsCommit")
@@ -121,23 +127,25 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         assertUnit(res3.renderedValue)
         displays.clear()
 
-        val res4 = eval(
-            """
-            %use @$libraryPath(name=z, value=44)
-            z
-            """.trimIndent(),
-        )
+        val res4 =
+            eval(
+                """
+                %use @$libraryPath(name=z, value=44)
+                z
+                """.trimIndent(),
+            )
         assertEquals(44, res4.renderedValue)
     }
 
     @Test
     fun testHttpRedirection() {
-        val res = eval(
-            """
-            %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
-            1
-            """.trimIndent(),
-        ).renderedValue
+        val res =
+            eval(
+                """
+                %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
+                1
+                """.trimIndent(),
+            ).renderedValue
         assertEquals(1, res)
     }
 
@@ -159,13 +167,14 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     fun testLocalLibrariesStorage() {
         @Language("json")
-        val descriptorText = """
+        val descriptorText =
+            """
             {
               "init": [
                 "val y = 25"
               ]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val libName = "test-local"
         val file = KERNEL_LIBRARIES.userLibrariesDir.resolve(KERNEL_LIBRARIES.descriptorFileName(libName))
@@ -174,12 +183,13 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         file.parentFile.mkdirs()
         file.writeText(descriptorText)
 
-        val result = eval(
-            """
-            %use $libName
-            y
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                %use $libName
+                y
+                """.trimIndent(),
+            )
 
         assertEquals(25, result.renderedValue)
         file.delete()
@@ -226,9 +236,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         )
 
         var res: EvalResultEx? = null
-        val resultThread = thread(contextClassLoader = repl.currentClassLoader) {
-            res = eval("ds")
-        }
+        val resultThread =
+            thread(contextClassLoader = repl.currentClassLoader) {
+                res = eval("ds")
+            }
         resultThread.join()
         val resultValue = res?.renderedValue
         resultValue.shouldBeInstanceOf<MimeTypedResult>()
@@ -243,14 +254,16 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        val result = eval(
-            """USE {
-            dependencies {
-                implementation("org.apache.hadoop:hadoop-client-runtime:3.3.2")
-            }
-        }
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                USE {
+                    dependencies {
+                        implementation("org.apache.hadoop:hadoop-client-runtime:3.3.2")
+                    }
+                }
+                """.trimIndent(),
+            )
         with(result.metadata.newSources) {
             filter { "hadoop-client-runtime" in it }.shouldBeEmpty()
             filter { "hadoop-client-api" in it }.shouldNotBeEmpty()
@@ -265,25 +278,27 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        val result = eval(
-            """
-            @file:DependsOn("io.ktor:ktor-client-cio:2.0.1")
-            @file:DependsOn("io.ktor:ktor-client-core:2.0.1")
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                @file:DependsOn("io.ktor:ktor-client-cio:2.0.1")
+                @file:DependsOn("io.ktor:ktor-client-core:2.0.1")
+                """.trimIndent(),
+            )
         with(result.metadata.newClasspath) {
             filter { "ktor-client-cio-jvm" in it }.shouldNotBeEmpty()
         }
 
-        val client = eval(
-            """
-            import io.ktor.client.*
-            import io.ktor.client.engine.cio.*
-            
-            val client = HttpClient(CIO)
-            client
-            """.trimIndent(),
-        )
+        val client =
+            eval(
+                """
+                import io.ktor.client.*
+                import io.ktor.client.engine.cio.*
+                
+                val client = HttpClient(CIO)
+                client
+                """.trimIndent(),
+            )
         (client.renderedValue!!)::class.qualifiedName shouldBe "io.ktor.client.HttpClient"
     }
 
@@ -318,11 +333,12 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     fun testGGDslSourcesResolution() {
         eval("SessionOptions.resolveSources = true")
-        val res = eval(
-            """
+        val res =
+            eval(
+                """
                 %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
-            """.trimIndent(),
-        )
+                """.trimIndent(),
+            )
 
         res.metadata.newSources.shouldHaveSize(84)
     }

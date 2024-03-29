@@ -54,19 +54,20 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     fun testDataframe() {
         eval("SessionOptions.resolveSources = true")
 
-        val res = eval(
-            """
-            %use dataframe
-            
-            val name by column<String>()
-            val height by column<Int>()
-            
-            dataFrameOf(name, height)(
-                "Bill", 135,
-                "Mark", 160
+        val res =
+            eval(
+                """
+                %use dataframe
+                
+                val name by column<String>()
+                val height by column<Int>()
+                
+                dataFrameOf(name, height)(
+                    "Bill", 135,
+                    "Mark", 160
+                )
+                """.trimIndent(),
             )
-            """.trimIndent(),
-        )
 
         val value = res.renderedValue
         assertTrue(value is MimeTypedResult)
@@ -79,16 +80,17 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testSerialization() {
-        val serialized = eval(
-            """
-            %use serialization
-            
-            @Serializable
-            class C(val x: Int)
-            
-            Json.encodeToString(C(42))
-            """.trimIndent(),
-        )
+        val serialized =
+            eval(
+                """
+                %use serialization
+                
+                @Serializable
+                class C(val x: Int)
+                
+                Json.encodeToString(C(42))
+                """.trimIndent(),
+            )
 
         val expectedJson = """{"x":42}"""
         serialized.rawValue shouldBe expectedJson
@@ -111,13 +113,14 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testRuntimeDepsResolution() {
-        val res = eval(
-            """
-            %use krangl(0.17)
-            val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
-            df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                %use krangl(0.17)
+                val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
+                df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
+                """.trimIndent(),
+            )
         assertEquals("John Smith", res.renderedValue)
     }
 
@@ -136,31 +139,33 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testKlaxonClasspathDoesntLeak() {
-        val res = eval(
-            """
-            @file:DependsOn("src/test/testData/klaxon-2.1.8.jar")
-            import com.beust.klaxon.*
-            
-            class Person (val name: String, var age: Int = 23)
-            val klaxon = Klaxon()
-            val parseRes = klaxon.parse<Person>(""${'"'}
-                {
-                  "name": "John Smith"
-                }
-                ""${'"'})
-            parseRes?.age
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:DependsOn("src/test/testData/klaxon-2.1.8.jar")
+                import com.beust.klaxon.*
+                
+                class Person (val name: String, var age: Int = 23)
+                val klaxon = Klaxon()
+                val parseRes = klaxon.parse<Person>(""${'"'}
+                    {
+                      "name": "John Smith"
+                    }
+                    ""${'"'})
+                parseRes?.age
+                """.trimIndent(),
+            )
         assertEquals(23, res.renderedValue)
     }
 
     @Test
     fun testLibNewClasspath() {
-        val res = eval(
-            """
-            %use lets-plot
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                %use lets-plot
+                """.trimIndent(),
+            )
 
         with(res.metadata) {
             assertTrue(newClasspath.size >= 10)
@@ -210,13 +215,14 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun testTextRenderersOnRealData() {
-        val result = eval(
-            """
-            notebook.textRenderersProcessor.registerDefaultRenderers()
-            val text = java.io.File("src/test/testData/textRenderers/textData.txt").readText()
-            "<!---FUN (.+)-->".toRegex().findAll(text).toList()
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                notebook.textRenderersProcessor.registerDefaultRenderers()
+                val text = java.io.File("src/test/testData/textRenderers/textData.txt").readText()
+                "<!---FUN (.+)-->".toRegex().findAll(text).toList()
+                """.trimIndent(),
+            )
 
         val html = (result.displayValue as MimeTypedResult)["text/plain"]!!
         html shouldStartWith "ArrayList[MatcherMatchResult("

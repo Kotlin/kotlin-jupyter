@@ -2,7 +2,11 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 
-class ResolutionInfoSwitcher<T>(private val infoProvider: ResolutionInfoProvider, initialSwitchVal: T, private val switcher: (T) -> LibraryResolutionInfo) {
+class ResolutionInfoSwitcher<T>(
+    private val infoProvider: ResolutionInfoProvider,
+    initialSwitchVal: T,
+    private val switcher: (T) -> LibraryResolutionInfo,
+) {
     private val defaultInfoCache = hashMapOf<T, LibraryResolutionInfo>()
 
     var switch: T = initialSwitchVal

@@ -59,14 +59,15 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun `compilation error`() {
-        val ex = evalError<ReplCompilerException>(
-            """
-            val foobar = 78
-            val foobaz = "dsdsda"
-            val ddd = ppp
-            val ooo = foobar
-            """.trimIndent(),
-        )
+        val ex =
+            evalError<ReplCompilerException>(
+                """
+                val foobar = 78
+                val foobaz = "dsdsda"
+                val ddd = ppp
+                val ooo = foobar
+                """.trimIndent(),
+            )
 
         val diag = ex.firstError
         val location = diag?.location
@@ -81,15 +82,16 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun `runtime execution error`() {
-        val ex = evalError<ReplEvalRuntimeException>(
-            """
-            try {
-                (null as String)
-            } catch(e: NullPointerException) {
-                throw RuntimeException("XYZ", e)
-            }
-            """.trimIndent(),
-        )
+        val ex =
+            evalError<ReplEvalRuntimeException>(
+                """
+                try {
+                    (null as String)
+                } catch(e: NullPointerException) {
+                    throw RuntimeException("XYZ", e)
+                }
+                """.trimIndent(),
+            )
         with(ex.render()) {
             shouldContain(NullPointerException::class.qualifiedName!!)
             shouldContain("XYZ")
@@ -108,13 +110,14 @@ class ReplTests : AbstractSingleReplTest() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
         errorsRes.errors shouldHaveSize 1
 
-        val res = eval(
-            """
-            @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
-            import net.pearx.kasechange.*
-            1
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
+                import net.pearx.kasechange.*
+                1
+                """.trimIndent(),
+            )
 
         res.renderedValue shouldBe 1
     }
@@ -137,14 +140,14 @@ class ReplTests : AbstractSingleReplTest() {
     fun testDependencyConfigurationAnnotationCompletion() {
         eval(
             """
-                USE {
-                    repositories {
-                        mavenCentral()
-                    }
-                    dependencies {
-                        implementation("io.github.config4k:config4k:0.4.2")
-                    }
+            USE {
+                repositories {
+                    mavenCentral()
                 }
+                dependencies {
+                    implementation("io.github.config4k:config4k:0.4.2")
+                }
+            }
             """.trimIndent(),
         )
 
@@ -155,13 +158,14 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testExternalStaticFunctions() {
-        val res = eval(
-            """
-            @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
-            import pack.*
-            func()
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:DependsOn("src/test/testData/kernelTestPackage-1.0.jar")
+                import pack.*
+                func()
+                """.trimIndent(),
+            )
 
         res.renderedValue shouldBe 42
     }
@@ -173,13 +177,14 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testDependsOnAnnotations() {
-        val res = eval(
-            """
-            @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
-            @file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
-            @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:DependsOn("de.erichseifert.gral:gral-core:0.11")
+                @file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+                @file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
+                """.trimIndent(),
+            )
 
         val newClasspath = res.metadata.newClasspath
         newClasspath shouldHaveAtLeastSize 2
@@ -263,65 +268,71 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        val result = repl.listErrorsBlocking(
-            """
-            val a = AClass("42", 3.14)
-            val b: Int = "str"
-            val c = foob
-            """.trimIndent(),
-        )
+        val result =
+            repl.listErrorsBlocking(
+                """
+                val a = AClass("42", 3.14)
+                val b: Int = "str"
+                val c = foob
+                """.trimIndent(),
+            )
         val actualErrors = result.errors.toList()
         val path = actualErrors.first().sourcePath
-        actualErrors shouldBe withPath(
-            path,
-            listOf(
-                generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR"),
-            ),
-        )
+        actualErrors shouldBe
+            withPath(
+                path,
+                listOf(
+                    generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                    generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
+                    generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                    generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR"),
+                ),
+            )
     }
 
     @Test
     fun testFreeCompilerArg() {
-        val res = eval(
-            """
-            @file:CompilerArgs("-opt-in=kotlin.RequiresOptIn")
-            """.trimIndent(),
-        )
+        val res =
+            eval(
+                """
+                @file:CompilerArgs("-opt-in=kotlin.RequiresOptIn")
+                """.trimIndent(),
+            )
         res.renderedValue shouldBe Unit
 
-        val actualErrors = repl.listErrorsBlocking(
-            """
-            import kotlin.time.*
-            @OptIn(ExperimentalTime::class)
-            val mark = TimeSource.Monotonic.markNow()
-            """.trimIndent(),
-        ).errors.toList()
+        val actualErrors =
+            repl.listErrorsBlocking(
+                """
+                import kotlin.time.*
+                @OptIn(ExperimentalTime::class)
+                val mark = TimeSource.Monotonic.markNow()
+                """.trimIndent(),
+            ).errors.toList()
 
         actualErrors.shouldBeEmpty()
     }
 
     @Test
     fun testErrorsListWithMagic() {
-        val result = repl.listErrorsBlocking(
-            """
-            %use krangl
-            
-            val x = foobar
-            3 * 14
-            %trackClasspath
-            """.trimIndent(),
-        )
+        val result =
+            repl.listErrorsBlocking(
+                """
+                %use krangl
+                
+                val x = foobar
+                3 * 14
+                %trackClasspath
+                """.trimIndent(),
+            )
         val actualErrors = result.errors.toList()
         val path = actualErrors.first().sourcePath
-        actualErrors shouldBe withPath(
-            path,
-            listOf(
-                generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR"),
-            ),
-        )
+        actualErrors shouldBe
+            withPath(
+                path,
+                listOf(
+                    generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR"),
+                ),
+            )
     }
 
     @Test
@@ -331,7 +342,7 @@ class ReplTests : AbstractSingleReplTest() {
             """
                 
             %trackClasspath
-        
+            
             foo
             """.trimIndent()
 
@@ -388,19 +399,21 @@ class ReplTests : AbstractSingleReplTest() {
         val options = repl.options
 
         eval("%output --max-cell-size=100500 --no-stdout")
-        options.outputConfig shouldBe OutputConfig(
-            cellOutputMaxSize = 100500,
-            captureOutput = false,
-        )
+        options.outputConfig shouldBe
+            OutputConfig(
+                cellOutputMaxSize = 100500,
+                captureOutput = false,
+            )
 
         eval("%output --max-buffer=42 --max-buffer-newline=33 --max-time=2000")
-        options.outputConfig shouldBe OutputConfig(
-            cellOutputMaxSize = 100500,
-            captureOutput = false,
-            captureBufferMaxSize = 42,
-            captureNewlineBufferSize = 33,
-            captureBufferTimeLimitMs = 2000,
-        )
+        options.outputConfig shouldBe
+            OutputConfig(
+                cellOutputMaxSize = 100500,
+                captureOutput = false,
+                captureBufferMaxSize = 42,
+                captureNewlineBufferSize = 33,
+                captureBufferTimeLimitMs = 2000,
+            )
 
         eval("%output --reset-to-defaults")
         options.outputConfig shouldBe OutputConfig()
@@ -427,15 +440,16 @@ class ReplTests : AbstractSingleReplTest() {
         val testDataPath = "src/test/testData/nativeTest"
         val jarPath = "$testDataPath/org.RDKit.jar"
 
-        val res = eval(
-            """
-            @file:DependsOn("$jarPath")
-            import org.RDKit.RWMol
-            import org.RDKit.RWMol.MolFromSmiles
-            Native.loadLibrary(RWMol::class, "$libName", "$testDataPath")
-            MolFromSmiles("c1ccccc1")
-            """.trimIndent(),
-        ).renderedValue
+        val res =
+            eval(
+                """
+                @file:DependsOn("$jarPath")
+                import org.RDKit.RWMol
+                import org.RDKit.RWMol.MolFromSmiles
+                Native.loadLibrary(RWMol::class, "$libName", "$testDataPath")
+                MolFromSmiles("c1ccccc1")
+                """.trimIndent(),
+            ).renderedValue
 
         res.shouldNotBeNull()
         res::class.qualifiedName shouldBe "org.RDKit.RWMol"
@@ -443,12 +457,13 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testLambdaRendering() {
-        val res = eval(
-            """
-            val foo: (Int) -> Int = {it + 1}
-            foo
-            """.trimIndent(),
-        ).renderedValue
+        val res =
+            eval(
+                """
+                val foo: (Int) -> Int = {it + 1}
+                foo
+                """.trimIndent(),
+            ).renderedValue
         @Suppress("UNCHECKED_CAST")
         (res as (Int) -> Int)(1) shouldBe 2
     }
@@ -521,14 +536,15 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testStdlibJdkExtensionsUsage() {
         eval("USE_STDLIB_EXTENSIONS()")
-        val res = eval(
-            """
-            import kotlin.io.path.*
-            import java.nio.file.Paths
-            
-            Paths.get(".").absolute()
-            """.trimIndent(),
-        ).renderedValue
+        val res =
+            eval(
+                """
+                import kotlin.io.path.*
+                import java.nio.file.Paths
+                
+                Paths.get(".").absolute()
+                """.trimIndent(),
+            ).renderedValue
         res.shouldBeInstanceOf<Path>()
     }
 
@@ -583,9 +599,10 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testRegexBug413() {
-        val code = """
+        val code =
+            """
             Regex("(?<x>[0-9]*)").matchEntire("123456789")?.groups?.get("x")?.value
-        """.trimIndent()
+            """.trimIndent()
 
         eval(code)
         evalError<ReplEvalRuntimeException>(code)

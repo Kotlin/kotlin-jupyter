@@ -7,7 +7,11 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 interface CommHandler {
     val targetId: String
 
-    fun onReceive(comm: Comm, messageContent: JsonObject, repl: ReplForJupyter)
+    fun onReceive(
+        comm: Comm,
+        messageContent: JsonObject,
+        repl: ReplForJupyter,
+    )
 }
 
 fun ReplForJupyter.installCommHandler(commHandler: CommHandler) {

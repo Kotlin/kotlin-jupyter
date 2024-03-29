@@ -19,7 +19,6 @@ import kotlin.reflect.jvm.isAccessible
 class FieldsProcessorImpl(
     private val contextUpdater: ContextUpdater,
 ) : AbstractExtensionsProcessor<FieldHandler>(latterFirst = true), FieldsProcessorInternal {
-
     override fun registeredHandlers(): List<FieldHandlerWithPriority> {
         return extensions.elementsWithPriority().map { FieldHandlerWithPriority(it.first, it.second) }
     }
@@ -28,9 +27,10 @@ class FieldsProcessorImpl(
         val fieldHandlers = mutableSetOf<FieldHandler>()
         val exceptions = mutableListOf<Throwable>()
         var newResultField: FieldValue? = null
-        val variableInfos = contextUpdater.context.currentVariables.values.filter {
-            !it.name.startsWith(TEMP_PROPERTY_PREFIX)
-        }
+        val variableInfos =
+            contextUpdater.context.currentVariables.values.filter {
+                !it.name.startsWith(TEMP_PROPERTY_PREFIX)
+            }
 
         for (info in variableInfos) {
             val value = info.value ?: continue
@@ -71,7 +71,10 @@ class FieldsProcessorImpl(
     }
 }
 
-private fun FieldHandler.acceptsEx(value: Any?, fieldInfo: FieldInfo): Boolean {
+private fun FieldHandler.acceptsEx(
+    value: Any?,
+    fieldInfo: FieldInfo,
+): Boolean {
     return if (this is FieldHandlerEx) {
         this.accepts(value, fieldInfo)
     } else {
@@ -80,7 +83,11 @@ private fun FieldHandler.acceptsEx(value: Any?, fieldInfo: FieldInfo): Boolean {
     }
 }
 
-private fun <T> FieldHandlerExecution<T>.executeEx(host: KotlinKernelHost, value: T, fieldInfo: FieldInfo): FieldValue? {
+private fun <T> FieldHandlerExecution<T>.executeEx(
+    host: KotlinKernelHost,
+    value: T,
+    fieldInfo: FieldInfo,
+): FieldValue? {
     return if (this is FieldHandlerExecutionEx<T>) {
         this.execute(host, value, fieldInfo)
     } else {

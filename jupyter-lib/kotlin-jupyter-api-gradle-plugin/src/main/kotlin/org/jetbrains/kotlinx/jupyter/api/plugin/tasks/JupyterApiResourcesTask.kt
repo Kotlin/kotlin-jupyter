@@ -31,10 +31,11 @@ open class JupyterApiResourcesTask : DefaultTask() {
 
     @TaskAction
     fun createDescriptions() {
-        val resultObject = LibrariesScanResult(
-            definitions = libraryDefinitions.map { FQNAware(it) }.toTypedArray(),
-            producers = libraryProducers.map { FQNAware(it) }.toTypedArray(),
-        ) + getScanResultFromAnnotations()
+        val resultObject =
+            LibrariesScanResult(
+                definitions = libraryDefinitions.map { FQNAware(it) }.toTypedArray(),
+                producers = libraryProducers.map { FQNAware(it) }.toTypedArray(),
+            ) + getScanResultFromAnnotations()
         val json = Gson().toJson(resultObject)
 
         val jupyterDir = outputDir.resolve("META-INF/kotlin-jupyter-libraries")
@@ -78,7 +79,10 @@ open class JupyterApiResourcesTask : DefaultTask() {
     }
 
     companion object {
-        private inline fun <reified T> union(a: Array<T>, b: Array<T>): Array<T> {
+        private inline fun <reified T> union(
+            a: Array<T>,
+            b: Array<T>,
+        ): Array<T> {
             val result = mutableSetOf<T>()
             result.addAll(a)
             result.addAll(b)

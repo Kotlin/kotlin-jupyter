@@ -13,7 +13,6 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import java.io.File
 
 interface ReplForJupyter {
-
     fun <T> eval(execution: ExecutionCallback<T>): T
 
     fun evalEx(evalData: EvalRequestData): EvalResultEx
@@ -22,9 +21,16 @@ interface ReplForJupyter {
 
     fun checkComplete(code: Code): CheckCompletenessResult
 
-    suspend fun complete(code: Code, cursor: Int, callback: (CompletionResult) -> Unit)
+    suspend fun complete(
+        code: Code,
+        cursor: Int,
+        callback: (CompletionResult) -> Unit,
+    )
 
-    suspend fun listErrors(code: Code, callback: (ListErrorsResult) -> Unit)
+    suspend fun listErrors(
+        code: Code,
+        callback: (ListErrorsResult) -> Unit,
+    )
 
     val homeDir: File?
 

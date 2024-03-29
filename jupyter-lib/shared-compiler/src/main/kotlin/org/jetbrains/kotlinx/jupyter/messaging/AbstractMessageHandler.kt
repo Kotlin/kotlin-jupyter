@@ -6,7 +6,10 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 abstract class AbstractMessageHandler : MessageHandler {
     abstract fun createProcessor(message: RawMessage): MessageRequestProcessor
 
-    override fun handleMessage(socketType: JupyterSocketType, message: RawMessage) {
+    override fun handleMessage(
+        socketType: JupyterSocketType,
+        message: RawMessage,
+    ) {
         val processor = createProcessor(message)
         when (socketType) {
             JupyterSocketType.SHELL -> processor.processShellMessage()

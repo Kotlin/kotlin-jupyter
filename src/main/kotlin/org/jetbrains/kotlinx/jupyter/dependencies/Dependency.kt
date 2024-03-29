@@ -3,7 +3,9 @@ package org.jetbrains.kotlinx.jupyter.dependencies
 import jupyter.kotlin.DependsOn
 
 enum class DependencyAssumption {
-    NO, MAYBE, YES
+    NO,
+    MAYBE,
+    YES,
 }
 
 data class Dependency(
@@ -19,8 +21,7 @@ fun Dependency.shouldResolveSources(default: Boolean): Boolean {
     }
 }
 
-fun Iterable<Dependency>.shouldResolveSources(default: Boolean) =
-    any { it.shouldResolveSources(default) }
+fun Iterable<Dependency>.shouldResolveSources(default: Boolean) = any { it.shouldResolveSources(default) }
 
 fun Dependency.shouldResolveAsMultiplatform(default: Boolean): Boolean {
     return when (isMultiplatform) {
@@ -30,8 +31,7 @@ fun Dependency.shouldResolveAsMultiplatform(default: Boolean): Boolean {
     }
 }
 
-fun Iterable<Dependency>.shouldResolveAsMultiplatform(default: Boolean) =
-    any { it.shouldResolveAsMultiplatform(default) }
+fun Iterable<Dependency>.shouldResolveAsMultiplatform(default: Boolean) = any { it.shouldResolveAsMultiplatform(default) }
 
 /**
  * This is a temporary workaround: we consider these dependencies JVM-only

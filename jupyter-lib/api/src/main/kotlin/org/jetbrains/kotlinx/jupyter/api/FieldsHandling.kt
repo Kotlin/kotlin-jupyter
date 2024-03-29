@@ -23,8 +23,11 @@ typealias VariableUpdateCallback<T> = KotlinKernelHost.(T, KProperty<*>) -> Vari
 const val TEMP_PROPERTY_PREFIX = "___"
 
 fun interface FieldHandlerExecution<T> {
-
-    fun execute(host: KotlinKernelHost, value: T, property: KProperty<*>)
+    fun execute(
+        host: KotlinKernelHost,
+        value: T,
+        property: KProperty<*>,
+    )
 }
 
 interface FieldHandler {
@@ -37,7 +40,10 @@ interface FieldHandler {
      * @param value Property value
      * @param property Property compile-time information
      */
-    fun accepts(value: Any?, property: KProperty<*>): Boolean
+    fun accepts(
+        value: Any?,
+        property: KProperty<*>,
+    ): Boolean
 
     /**
      * Execution to handle conversion.
@@ -66,7 +72,10 @@ interface CompileTimeFieldHandler : FieldHandler {
      */
     fun acceptsType(type: KType): Boolean
 
-    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+    override fun accepts(
+        value: Any?,
+        property: KProperty<*>,
+    ): Boolean {
         return acceptsType(property.returnType.withNullability(false))
     }
 }
@@ -75,7 +84,6 @@ class FieldHandlerByClass(
     private val kType: KType,
     override val execution: FieldHandlerExecution<*>,
 ) : CompileTimeFieldHandler {
-
     @Deprecated(
         "This constructor is misleading, use either primary constructor or `FieldHandlerByRuntimeClass`",
         ReplaceWith(
@@ -85,6 +93,7 @@ class FieldHandlerByClass(
         DeprecationLevel.ERROR,
     )
     constructor(kClass: KClass<out Any>, execution: FieldHandlerExecution<*>) : this(kClass.starProjectedType, execution)
+
     override fun acceptsType(type: KType) = type.isSubtypeOf(kType)
 }
 
@@ -92,7 +101,10 @@ class FieldHandlerByRuntimeClass<T : Any>(
     private val kClass: KClass<T>,
     override val execution: FieldHandlerExecution<*>,
 ) : FieldHandler {
-    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+    override fun accepts(
+        value: Any?,
+        property: KProperty<*>,
+    ): Boolean {
         if (value == null) return false
         val valueClass = value::class
         return valueClass.isSubclassOfCatching(kClass)
@@ -103,15 +115,19 @@ object NullabilityEraser : FieldHandler {
     private val initCodes = mutableListOf<Code>()
     private val conversionCodes = mutableListOf<Code>()
 
-    override val execution: FieldHandlerExecution<Any?> = FieldHandlerExecution { _, _, property ->
-        val propName = property.name
-        val tempVarName = TEMP_PROPERTY_PREFIX + propName
-        val valOrVar = if (property is KMutableProperty) "var" else "val"
-        initCodes.add("val $tempVarName = $propName")
-        conversionCodes.add("$valOrVar $propName = $tempVarName!!")
-    }
+    override val execution: FieldHandlerExecution<Any?> =
+        FieldHandlerExecution { _, _, property ->
+            val propName = property.name
+            val tempVarName = TEMP_PROPERTY_PREFIX + propName
+            val valOrVar = if (property is KMutableProperty) "var" else "val"
+            initCodes.add("val $tempVarName = $propName")
+            conversionCodes.add("$valOrVar $propName = $tempVarName!!")
+        }
 
-    override fun accepts(value: Any?, property: KProperty<*>): Boolean {
+    override fun accepts(
+        value: Any?,
+        property: KProperty<*>,
+    ): Boolean {
         return value != null && property.returnType.isMarkedNullable
     }
 
@@ -150,4 +166,10 @@ data class VariableDeclaration(
 }
 
 fun KotlinKernelHost.declare(vararg variables: VariableDeclaration) = declare(variables.toList())
-fun KotlinKernelHost.declare(vararg variables: Pair<VariableName, Any?>) = declare(variables.map { VariableDeclaration(it.first, it.second) })
+
+fun KotlinKernelHost.declare(vararg variables: Pair<VariableName, Any?>) =
+    declare(
+        variables.map {
+            VariableDeclaration(it.first, it.second)
+        },
+    )

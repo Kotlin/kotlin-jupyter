@@ -6,19 +6,26 @@ import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorImpl
 import org.junit.jupiter.api.Test
 
 class TextRenderingTests {
-    private val processor = TextRenderersProcessorImpl().apply {
-        registerDefaultRenderers()
-    }
+    private val processor =
+        TextRenderersProcessorImpl().apply {
+            registerDefaultRenderers()
+        }
 
     private fun render(obj: Any?): String = processor.renderPreventingRecursion(obj)
-    private fun doTest(obj: Any?, expected: String) {
+
+    private fun doTest(
+        obj: Any?,
+        expected: String,
+    ) {
         render(obj) shouldBe expected
     }
 
     private class MyX(val v: Int)
+
     private class MyY(val ss: String, val x: MyX) {
         fun f(): Int = 42
     }
+
     private data class MyD(val a: Int, val b: Int)
 
     private class Node(

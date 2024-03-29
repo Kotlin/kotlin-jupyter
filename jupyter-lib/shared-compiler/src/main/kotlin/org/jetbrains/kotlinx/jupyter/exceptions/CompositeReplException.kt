@@ -5,7 +5,9 @@ import java.io.PrintWriter
 class CompositeReplException(
     private val exceptions: Collection<Throwable>,
     libraryProblemPart: LibraryProblemPart?,
-) : ReplException("CompositeException${libraryProblemPart?.message?.let { " in $it" }.orEmpty()}: ${exceptions.size} exceptions occurred.") {
+) : ReplException(
+        "CompositeException${libraryProblemPart?.message?.let { " in $it" }.orEmpty()}: ${exceptions.size} exceptions occurred.",
+    ) {
     override fun printStackTrace() {
         printStackTrace(System.err)
     }

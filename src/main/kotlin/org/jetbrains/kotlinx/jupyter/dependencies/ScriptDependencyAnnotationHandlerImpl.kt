@@ -10,13 +10,17 @@ import kotlin.script.experimental.jvm.withUpdatedClasspath
 
 open class ScriptDependencyAnnotationHandlerImpl(private val resolver: JupyterScriptDependenciesResolver) :
     ScriptDependencyAnnotationHandler {
-    override fun configure(configuration: ScriptCompilationConfiguration, annotations: List<Annotation>): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+    override fun configure(
+        configuration: ScriptCompilationConfiguration,
+        annotations: List<Annotation>,
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         if (annotations.isEmpty()) return configuration.asSuccess()
-        val scriptContents = object : ScriptContents {
-            override val annotations: Iterable<Annotation> = annotations
-            override val file: File? = null
-            override val text: CharSequence? = null
-        }
+        val scriptContents =
+            object : ScriptContents {
+                override val annotations: Iterable<Annotation> = annotations
+                override val file: File? = null
+                override val text: CharSequence? = null
+            }
         return resolver.resolveFromAnnotations(scriptContents)
             .onSuccess { classpath ->
                 onResolvedClasspath(configuration, classpath).asSuccess()

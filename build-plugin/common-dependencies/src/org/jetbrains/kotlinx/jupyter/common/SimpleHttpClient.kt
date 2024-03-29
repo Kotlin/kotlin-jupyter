@@ -26,18 +26,20 @@ object SimpleHttpClient : HttpClient {
         // Check for redirect
         if (responseCode in 300..399) {
             val newUrl = connection.getHeaderField("Location")
-            val newRequest = buildRequest(request) {
-                url(newUrl)
-            }
+            val newRequest =
+                buildRequest(request) {
+                    url(newUrl)
+                }
 
             return makeRequest(newRequest) // Recursive call for redirect
         }
 
-        val responseText = if (responseCode in 200..299) {
-            connection.inputStream.bufferedReader().use { it.readText() }
-        } else {
-            connection.errorStream.bufferedReader().use { it.readText() }
-        }
+        val responseText =
+            if (responseCode in 200..299) {
+                connection.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                connection.errorStream.bufferedReader().use { it.readText() }
+            }
 
         return ResponseImpl(Status(responseCode), responseText)
     }

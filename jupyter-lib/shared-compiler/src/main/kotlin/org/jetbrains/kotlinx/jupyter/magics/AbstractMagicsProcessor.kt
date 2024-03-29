@@ -44,7 +44,10 @@ open class AbstractMagicsProcessor(
         }
     }
 
-    fun getCleanCode(code: String, magicIntervals: Sequence<CodeInterval>): String {
+    fun getCleanCode(
+        code: String,
+        magicIntervals: Sequence<CodeInterval>,
+    ): String {
         val codes = codeIntervals(code, magicIntervals, true)
         return codes.joinToString("") { code.substring(it.from, it.to) }
     }

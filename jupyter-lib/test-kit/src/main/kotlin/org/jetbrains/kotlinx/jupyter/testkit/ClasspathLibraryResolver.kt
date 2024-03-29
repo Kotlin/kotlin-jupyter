@@ -12,7 +12,10 @@ class ClasspathLibraryResolver(
     parent: LibraryResolver? = null,
     val shouldResolve: LibraryNameFilter = { true },
 ) : ResourcesLibraryResolver(parent, libraryDescriptorsManager, ClasspathLibraryResolver::class.java.classLoader) {
-    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun tryResolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         if (!shouldResolve(reference.name)) return null
         return super.tryResolve(reference, arguments)
     }

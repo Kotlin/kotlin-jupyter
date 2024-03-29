@@ -11,13 +11,13 @@ class ReplCompilerException(
     message: String? = null,
 ) :
     ReplException(
-        message ?: errorResult?.getErrors() ?: "",
-        errorResult?.reports?.map { it.exception }?.firstOrNull(),
-    ) {
-
-    val firstError = errorResult?.reports?.firstOrNull {
-        it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
-    }
+            message ?: errorResult?.getErrors() ?: "",
+            errorResult?.reports?.map { it.exception }?.firstOrNull(),
+        ) {
+    val firstError =
+        errorResult?.reports?.firstOrNull {
+            it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
+        }
 
     override fun getAdditionalInfoJson(): JsonObject? {
         return firstError?.location?.let {
@@ -39,9 +39,10 @@ class ReplCompilerException(
 }
 
 fun <T> ResultWithDiagnostics<T>.getErrors(): String {
-    val filteredReports = reports.filter {
-        it.code != ScriptDiagnostic.incompleteCode
-    }
+    val filteredReports =
+        reports.filter {
+            it.code != ScriptDiagnostic.incompleteCode
+        }
 
     return filteredReports.joinToString("\n") { report ->
         report.location?.let { loc ->

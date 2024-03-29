@@ -6,5 +6,10 @@ interface DeclarationInfo {
 }
 
 enum class DeclarationKind {
-    UNKNOWN, CLASS, OBJECT, FUNCTION, PROPERTY, SCRIPT_INITIALIZER
+    UNKNOWN,
+    CLASS,
+    OBJECT,
+    FUNCTION,
+    PROPERTY,
+    SCRIPT_INITIALIZER,
 }

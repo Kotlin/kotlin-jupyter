@@ -5,7 +5,6 @@ data class CodeInterval(
      * Inclusive
      */
     val from: Int,
-
     /**
      * Exclusive
      */

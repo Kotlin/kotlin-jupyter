@@ -14,12 +14,12 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import java.io.File
-import java.util.*
+import java.util.EnumMap
 
 typealias KernelPorts = Map<JupyterSocketType, Int>
 
-const val kernelTransportProtocol = "tcp"
-const val kernelSignatureScheme = "hmac1-sha256"
+const val KERNEL_TRANSPORT_SCHEME = "tcp"
+const val KERNEL_SIGNATURE_SCHEME = "hmac1-sha256"
 
 fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
     return EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
@@ -88,16 +88,20 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
                 val fieldName = socket.portField
                 map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
             },
-            map["transport"]?.content ?: kernelTransportProtocol,
+            map["transport"]?.content ?: KERNEL_TRANSPORT_SCHEME,
         )
     }
 
-    override fun serialize(encoder: Encoder, value: KernelJupyterParams) {
-        val map = mutableMapOf(
-            "signature_scheme" to JsonPrimitive(value.signatureScheme),
-            "key" to JsonPrimitive(value.key),
-            "transport" to JsonPrimitive(value.transport),
-        )
+    override fun serialize(
+        encoder: Encoder,
+        value: KernelJupyterParams,
+    ) {
+        val map =
+            mutableMapOf(
+                "signature_scheme" to JsonPrimitive(value.signatureScheme),
+                "key" to JsonPrimitive(value.key),
+                "transport" to JsonPrimitive(value.transport),
+            )
         value.ports.forEach { (socket, port) ->
             map[socket.portField] = JsonPrimitive(port)
         }
@@ -135,42 +139,35 @@ data class KernelConfig(
 fun createKotlinKernelConfig(
     // Mapping of Jupyter sockets to the corresponding ports. Server is responsible for opening ports
     ports: KernelPorts,
-
     // Signature key that should be used for signing messages. See:
     // https://jupyter-client.readthedocs.io/en/stable/messaging.html#wire-protocol
     // https://jupyter-client.readthedocs.io/en/stable/kernels.html#connection-files
     signatureKey: String,
-
     // All JARs that should be in initial script (not whole kernel) classpath
     scriptClasspath: List<File> = emptyList(),
-
     // Home directory. In sub-folders of this directory libraries descriptors and their caches are stored
     homeDir: File? = null,
-
     // If not null, kernel should listen to the debugger on this port
     debugPort: Int? = null,
 ) = KernelConfig(
     ports,
-    kernelTransportProtocol,
-    kernelSignatureScheme,
+    KERNEL_TRANSPORT_SCHEME,
+    KERNEL_SIGNATURE_SCHEME,
     signatureKey,
     scriptClasspath,
     homeDir,
     debugPort,
 )
 
-const val mainClassName = "org.jetbrains.kotlinx.jupyter.MainKt"
+const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.MainKt"
 
 fun KernelConfig.javaCmdLine(
     // Path to java executable or just "java" in case it's on path
     javaExecutable: String,
-
     // Prefix for temporary directory where connection file should be stored
     tempDirPrefix: String,
-
     // Classpath for the whole kernel. Should include kernel artifact
     kernelClasspath: String,
-
     // Any JVM arguments such as -XmX
     extraJavaArguments: Collection<String> = emptyList(),
 ): List<String> {
@@ -184,7 +181,7 @@ fun KernelConfig.javaCmdLine(
         }
         add("-cp")
         add(kernelClasspath)
-        add(mainClassName)
+        add(MAIN_CLASS_NAME)
         addAll(args)
     }
 }
@@ -194,8 +191,8 @@ fun KernelArgs.getConfig(): KernelConfig {
 
     return KernelConfig(
         ports = cfg.ports,
-        transport = cfg.transport ?: kernelTransportProtocol,
-        signatureScheme = cfg.signatureScheme ?: kernelSignatureScheme,
+        transport = cfg.transport ?: KERNEL_TRANSPORT_SCHEME,
+        signatureScheme = cfg.signatureScheme ?: KERNEL_SIGNATURE_SCHEME,
         signatureKey = if (cfg.signatureScheme == null || cfg.key == null) "" else cfg.key,
         scriptClasspath = scriptClasspath,
         homeDir = homeDir,

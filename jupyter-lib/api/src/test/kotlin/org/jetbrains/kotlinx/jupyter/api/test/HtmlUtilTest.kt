@@ -9,7 +9,11 @@ class HtmlUtilTest {
     private val testFolder = File("src/test/testData/html")
     private val doRegenerate = false
 
-    private fun testEquality(sourceFile: String, expectedFile: String, transformer: (String) -> String) {
+    private fun testEquality(
+        sourceFile: String,
+        expectedFile: String,
+        transformer: (String) -> String,
+    ) {
         val sourceText = testFolder.resolve(sourceFile).readText()
         val actualResult = transformer(sourceText)
         if (doRegenerate) {
@@ -21,7 +25,8 @@ class HtmlUtilTest {
     }
 
     @Test
-    fun `escape iframe source`() = testEquality("iframeEscape.html", "iframeEscapeResult.html") { text ->
-        text.escapeForIframe()
-    }
+    fun `escape iframe source`() =
+        testEquality("iframeEscape.html", "iframeEscapeResult.html") { text ->
+            text.escapeForIframe()
+        }
 }

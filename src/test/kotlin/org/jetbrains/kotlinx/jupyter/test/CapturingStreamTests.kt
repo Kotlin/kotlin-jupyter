@@ -11,10 +11,11 @@ import java.io.PrintStream
 import java.util.concurrent.atomic.AtomicInteger
 
 class CapturingStreamTests {
-    private val nullOStream = object : OutputStream() {
-        override fun write(b: Int) {
+    private val nullOStream =
+        object : OutputStream() {
+            override fun write(b: Int) {
+            }
         }
-    }
 
     private fun getStream(
         stdout: OutputStream = nullOStream,
@@ -62,9 +63,10 @@ class CapturingStreamTests {
         val expected = arrayOf("012", "345", "678", "9\n", "for", "tra", "n")
 
         val i = AtomicInteger()
-        val s = getStream(maxBufferSize = 3) {
-            assertEquals(expected[i.getAndIncrement()], it)
-        }
+        val s =
+            getStream(maxBufferSize = 3) {
+                assertEquals(expected[i.getAndIncrement()], it)
+            }
 
         s.write(contents)
         s.flush()
@@ -78,9 +80,10 @@ class CapturingStreamTests {
         val expected = arrayOf("12345\n", "12\n", "345123456", "7890")
 
         val i = AtomicInteger()
-        val s = getStream(maxBufferSize = 9, maxBufferNewlineSize = 6) {
-            assertEquals(expected[i.getAndIncrement()], it)
-        }
+        val s =
+            getStream(maxBufferSize = 9, maxBufferNewlineSize = 6) {
+                assertEquals(expected[i.getAndIncrement()], it)
+            }
 
         s.write(contents)
         s.flush()
@@ -96,11 +99,12 @@ class CapturingStreamTests {
 
         val timeDelta = 2000L
         var i = 0
-        val s = getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
-            synchronized(this) {
-                assertEquals(expected[i++], it)
+        val s =
+            getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
+                synchronized(this) {
+                    assertEquals(expected[i++], it)
+                }
             }
-        }
 
         Thread.sleep(timeDelta / 2)
         strings.forEach {

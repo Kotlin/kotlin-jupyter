@@ -60,14 +60,10 @@ fun JupyterCommunicationFacility.sendResponse(
 data class ExecuteReplyMetadata(
     @SerialName("dependencies_met")
     val dependenciesMet: Boolean = true,
-
     val engine: String,
-
     val status: MessageStatus,
-
     @SerialName("started")
     val startedTime: String,
-
     @SerialName("eval_metadata")
     val evalMetadata: EvaluatedSnippetMetadata?,
 )
@@ -82,11 +78,12 @@ fun JupyterCommunicationFacility.sendExecuteResult(
     socketManager.iopub.sendMessage(
         messageFactory.makeReplyMessage(
             MessageType.EXECUTE_RESULT,
-            content = ExecutionResultMessage(
-                executionCount = requestCount,
-                data = resultJson["data"]!!,
-                metadata = resultJson["metadata"]!!,
-            ),
+            content =
+                ExecutionResultMessage(
+                    executionCount = requestCount,
+                    data = resultJson["data"]!!,
+                    metadata = resultJson["metadata"]!!,
+                ),
         ),
     )
 }
@@ -98,25 +95,28 @@ fun JupyterCommunicationFacility.sendExecuteReply(
     startedTime: String,
     metadata: EvaluatedSnippetMetadata? = null,
 ) {
-    val replyMetadata = ExecuteReplyMetadata(
-        true,
-        messageFactory.sessionId,
-        status,
-        startedTime,
-        metadata,
-    )
+    val replyMetadata =
+        ExecuteReplyMetadata(
+            true,
+            messageFactory.sessionId,
+            status,
+            startedTime,
+            metadata,
+        )
 
-    val replyContent = exception?.toExecuteErrorReply(requestCount)
-        ?: when (status) {
-            MessageStatus.ERROR, MessageStatus.ABORT -> ExecuteAbortReply()
-            MessageStatus.OK -> ExecuteSuccessReply(requestCount)
-        }
+    val replyContent =
+        exception?.toExecuteErrorReply(requestCount)
+            ?: when (status) {
+                MessageStatus.ERROR, MessageStatus.ABORT -> ExecuteAbortReply()
+                MessageStatus.OK -> ExecuteSuccessReply(requestCount)
+            }
 
-    val reply = messageFactory.makeReplyMessage(
-        MessageType.EXECUTE_REPLY,
-        content = replyContent as MessageReplyContent,
-        metadata = MessageFormat.encodeToJsonElement(replyMetadata),
-    )
+    val reply =
+        messageFactory.makeReplyMessage(
+            MessageType.EXECUTE_REPLY,
+            content = replyContent as MessageReplyContent,
+            metadata = MessageFormat.encodeToJsonElement(replyMetadata),
+        )
 
     when (status) {
         MessageStatus.ERROR -> System.err.println("Sending error: $reply")

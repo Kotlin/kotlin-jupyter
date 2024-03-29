@@ -7,10 +7,12 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.VariablesSubstitutionAware
  * Replace all $<name> substrings in [str] with corresponding
  * [mapping] values
  */
-fun replaceVariables(str: String, mapping: Map<String, String>) =
-    mapping.asSequence().fold(str) { s, template ->
-        s.replace("\$${template.key}", template.value)
-    }
+fun replaceVariables(
+    str: String,
+    mapping: Map<String, String>,
+) = mapping.asSequence().fold(str) { s, template ->
+    s.replace("\$${template.key}", template.value)
+}
 
 @JvmName("replaceVariablesString")
 fun Iterable<String>.replaceVariables(mapping: Map<String, String>) = map { replaceVariables(it, mapping) }

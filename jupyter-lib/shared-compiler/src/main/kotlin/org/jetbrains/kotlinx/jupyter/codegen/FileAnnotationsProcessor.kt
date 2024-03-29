@@ -7,8 +7,10 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 
 interface FileAnnotationsProcessor {
-
     fun register(handler: FileAnnotationHandler)
 
-    fun process(context: ScriptConfigurationRefinementContext, host: KotlinKernelHost): ResultWithDiagnostics<ScriptCompilationConfiguration>
+    fun process(
+        context: ScriptConfigurationRefinementContext,
+        host: KotlinKernelHost,
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration>
 }

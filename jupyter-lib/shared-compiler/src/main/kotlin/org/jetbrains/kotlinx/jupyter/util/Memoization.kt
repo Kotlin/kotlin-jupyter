@@ -7,7 +7,10 @@ fun <A, V> createCachedFun(calculate: (A) -> V): (A) -> V {
     return createCachedFun({ it }, calculate)
 }
 
-fun <A, K, V> createCachedFun(calculateKey: (A) -> K, calculate: (A) -> V): (A) -> V {
+fun <A, K, V> createCachedFun(
+    calculateKey: (A) -> K,
+    calculate: (A) -> V,
+): (A) -> V {
     val cache = ConcurrentHashMap<Optional<K>, Optional<V>>()
 
     @Suppress("UNCHECKED_CAST")

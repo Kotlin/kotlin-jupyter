@@ -29,35 +29,52 @@ import java.io.File
 
 abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProvider() {
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider(libraryInfoCache)
+
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
-    override fun provideNotebook(): MutableNotebook = NotebookImpl(
-        runtimeProperties,
-        commManager,
-        explicitClientType,
-        librariesScanner,
-        debugPort != null,
-    )
+
+    override fun provideNotebook(): MutableNotebook =
+        NotebookImpl(
+            runtimeProperties,
+            commManager,
+            explicitClientType,
+            librariesScanner,
+            debugPort != null,
+        )
 
     override fun provideScriptClasspath() = emptyList<File>()
+
     override fun provideHomeDir(): File? = null
+
     override fun provideMavenRepositories() = emptyList<MavenRepositoryCoordinates>()
+
     override fun provideLibraryResolver(): LibraryResolver? = null
+
     override fun provideRuntimeProperties(): ReplRuntimeProperties = defaultRuntimeProperties
+
     override fun provideScriptReceivers() = emptyList<Any>()
+
     override fun provideIsEmbedded() = false
+
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner()
+
     override fun provideCommManager(): CommManager = CommManagerImpl(communicationFacility)
-    override fun provideCommHandlers(): List<CommHandler> = listOf(
-        DebugPortCommHandler(),
-    )
+
+    override fun provideCommHandlers(): List<CommHandler> =
+        listOf(
+            DebugPortCommHandler(),
+        )
 
     override fun provideExplicitClientType(): JupyterClientType? = null
 
     override fun provideCommunicationFacility(): JupyterCommunicationFacility = CommunicationFacilityMock
+
     override fun provideDebugPort(): Int? = null
 
     override fun provideHttpClient(): HttpClient = SimpleHttpClient
+
     override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager = LibraryDescriptorsManager.getInstance(httpClient)
+
     override fun provideLibraryInfoCache(): LibraryInfoCache = LibraryInfoCacheImpl(libraryDescriptorsManager)
+
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 }

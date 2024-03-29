@@ -9,6 +9,8 @@ interface JupyterScriptDependenciesResolver {
     var resolveMpp: Boolean
 
     fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>>
+
     fun popAddedClasspath(): List<File>
+
     fun popAddedSources(): List<File>
 }

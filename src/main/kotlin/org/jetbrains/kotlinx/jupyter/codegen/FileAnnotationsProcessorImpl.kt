@@ -27,7 +27,6 @@ class FileAnnotationsProcessorImpl(
     val compiler: JupyterCompiler,
     val kernelHostProvider: KotlinKernelHostProvider,
 ) : FileAnnotationsProcessor {
-
     private val handlers = mutableMapOf<String, FileAnnotationCallback>()
 
     override fun register(handler: FileAnnotationHandler) {
@@ -48,10 +47,11 @@ class FileAnnotationsProcessorImpl(
             val clazz = collected[0].annotationClass
             return try {
                 when (clazz) {
-                    DependsOn::class, Repository::class -> dependencyAnnotationsHandler.configure(
-                        conf,
-                        collected,
-                    )
+                    DependsOn::class, Repository::class ->
+                        dependencyAnnotationsHandler.configure(
+                            conf,
+                            collected,
+                        )
                     CompilerArgs::class -> compilerArgsConfigurator.configure(conf, collected)
                     else -> {
                         handlers[clazz.qualifiedName!!]?.let { handler ->

@@ -33,7 +33,7 @@ class TypeConverterTests : AbstractReplTest() {
 
             evalRaw(
                 """
-            gen_a + gen_b + gen_c
+                gen_a + gen_b + gen_c
                 """.trimIndent(),
             ) shouldBe 3
         }

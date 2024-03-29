@@ -30,11 +30,12 @@ import java.io.File
 abstract class AbstractReplTest {
     protected val httpUtil = createLibraryHttpUtil()
 
-    private val classpathWithTestLib = buildList {
-        addAll(classpath)
-        add(classPathEntry<AbstractReplTest>())
-        add(classPathEntry<ReplForJupyterImpl>())
-    }
+    private val classpathWithTestLib =
+        buildList {
+            addAll(classpath)
+            add(classPathEntry<AbstractReplTest>())
+            add(classPathEntry<ReplForJupyterImpl>())
+        }
 
     fun ReplForJupyter.listErrorsBlocking(code: String): ListErrorsResult {
         return runBlocking {
@@ -46,7 +47,10 @@ abstract class AbstractReplTest {
         }
     }
 
-    fun ReplForJupyter.completeBlocking(code: String, cursor: Int): CompletionResult {
+    fun ReplForJupyter.completeBlocking(
+        code: String,
+        cursor: Int,
+    ): CompletionResult {
         return runBlocking {
             var res: CompletionResult? = null
             complete(code, cursor) {
@@ -61,33 +65,51 @@ abstract class AbstractReplTest {
     }
 
     protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
-        return createRepl(httpUtil, scriptClasspath = classpath, homeDir = homeDir, libraryResolver = testLibraryResolver, displayHandler = displayHandler)
+        return createRepl(
+            httpUtil,
+            scriptClasspath = classpath,
+            homeDir = homeDir,
+            libraryResolver = testLibraryResolver,
+            displayHandler = displayHandler,
+        )
     }
 
     protected fun makeReplWithStandardResolver(
         displayHandlerProvider: (MutableNotebook) -> DisplayHandler = { NoOpDisplayHandler },
     ): ReplForJupyter {
         val standardResolutionInfoProvider = getDefaultClasspathResolutionInfoProvider(httpUtil)
-        val resolver = getStandardResolver(
-            ".",
-            standardResolutionInfoProvider,
-            httpUtil.httpClient,
-            httpUtil.libraryDescriptorsManager,
-        )
+        val resolver =
+            getStandardResolver(
+                ".",
+                standardResolutionInfoProvider,
+                httpUtil.httpClient,
+                httpUtil.libraryDescriptorsManager,
+            )
         val myHomeDir = homeDir
-        val factory = object : ReplComponentsProviderBase() {
-            override fun provideResolutionInfoProvider() = standardResolutionInfoProvider
-            override fun provideScriptClasspath() = classpath
-            override fun provideHomeDir() = myHomeDir
-            override fun provideMavenRepositories() = testRepositories
-            override fun provideLibraryResolver() = resolver
-            override fun provideRuntimeProperties() = standardResolverRuntimeProperties
-            override fun provideScriptReceivers() = emptyList<Any>()
-            override fun provideIsEmbedded() = false
-            override fun provideDisplayHandler() = displayHandlerProvider(notebook)
-            override fun provideCommunicationFacility() = CommunicationFacilityMock
-            override fun provideDebugPort(): Int? = null
-        }
+        val factory =
+            object : ReplComponentsProviderBase() {
+                override fun provideResolutionInfoProvider() = standardResolutionInfoProvider
+
+                override fun provideScriptClasspath() = classpath
+
+                override fun provideHomeDir() = myHomeDir
+
+                override fun provideMavenRepositories() = testRepositories
+
+                override fun provideLibraryResolver() = resolver
+
+                override fun provideRuntimeProperties() = standardResolverRuntimeProperties
+
+                override fun provideScriptReceivers() = emptyList<Any>()
+
+                override fun provideIsEmbedded() = false
+
+                override fun provideDisplayHandler() = displayHandlerProvider(notebook)
+
+                override fun provideCommunicationFacility() = CommunicationFacilityMock
+
+                override fun provideDebugPort(): Int? = null
+            }
         return factory.createRepl()
     }
 
@@ -101,31 +123,34 @@ abstract class AbstractReplTest {
         )
     }
 
-    protected fun makeReplWithLibraries(vararg libs: Pair<String, LibraryDefinition>) =
-        makeReplWithLibraries(libs.toList().toLibraries())
+    protected fun makeReplWithLibraries(vararg libs: Pair<String, LibraryDefinition>) = makeReplWithLibraries(libs.toList().toLibraries())
 
-    protected fun makeReplWithLibraries(libraryResolver: LibraryResolver) = createRepl(
-        httpUtil,
-        scriptClasspath = classpathWithTestLib,
-        homeDir = homeDir,
-        mavenRepositories = testRepositories,
-        libraryResolver = libraryResolver,
-    )
+    protected fun makeReplWithLibraries(libraryResolver: LibraryResolver) =
+        createRepl(
+            httpUtil,
+            scriptClasspath = classpathWithTestLib,
+            homeDir = homeDir,
+            mavenRepositories = testRepositories,
+            libraryResolver = libraryResolver,
+        )
 
-    protected fun makeReplEnablingSingleLibrary(definition: LibraryDefinition, args: List<Variable> = emptyList()): ReplForJupyter {
+    protected fun makeReplEnablingSingleLibrary(
+        definition: LibraryDefinition,
+        args: List<Variable> = emptyList(),
+    ): ReplForJupyter {
         val repl = makeReplWithLibraries("mylib" to definition)
-        val paramList = if (args.isEmpty()) {
-            ""
-        } else {
-            args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
-        }
+        val paramList =
+            if (args.isEmpty()) {
+                ""
+            } else {
+                args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
+            }
         val result = repl.evalEx("%use mylib$paramList")
         result.assertSuccess()
         return repl
     }
 
     companion object {
-
         @JvmStatic
         protected val homeDir = File("")
     }

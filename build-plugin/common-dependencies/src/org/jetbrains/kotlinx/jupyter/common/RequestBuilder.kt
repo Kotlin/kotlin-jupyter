@@ -7,8 +7,14 @@ class RequestBuilder {
     private var body: String? = null
 
     fun method(method: String) = apply { this.method = method }
+
     fun url(url: String) = apply { this.url = url }
-    fun header(name: String, value: String) = apply { this.headers[name] = value }
+
+    fun header(
+        name: String,
+        value: String,
+    ) = apply { this.headers[name] = value }
+
     fun body(body: String?) = apply { this.body = body }
 
     fun build(): Request = RequestImpl(method, url, headers, body)
@@ -39,7 +45,10 @@ fun buildRequest(
     }
 }
 
-fun buildRequest(request: Request, buildAction: RequestBuilder.() -> Unit): Request {
+fun buildRequest(
+    request: Request,
+    buildAction: RequestBuilder.() -> Unit,
+): Request {
     return buildRequest(
         request.method,
         request.url,

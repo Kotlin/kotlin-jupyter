@@ -32,23 +32,29 @@ class ResourcesBuilder {
          * and a class-path fallback. If fallbacks are null, they are not used.
          */
         @OptIn(ExperimentalStdlibApi::class)
-        fun url(url: String, localFallBack: String? = null, classpathFallBack: String? = null, embed: Boolean = false) {
-            val libraryResource = ResourceFallbacksBundle(
-                buildList {
-                    if (embed) {
-                        add(ResourceLocation(url, ResourcePathType.URL_EMBEDDED))
-                    } else {
-                        add(ResourceLocation(url, ResourcePathType.URL))
-                    }
-                    localFallBack?.let {
-                        checkLocalPath(localFallBack)
-                        add(ResourceLocation(localFallBack, ResourcePathType.LOCAL_PATH))
-                    }
-                    classpathFallBack?.let {
-                        add(ResourceLocation(classpathFallBack, ResourcePathType.CLASSPATH_PATH))
-                    }
-                },
-            )
+        fun url(
+            url: String,
+            localFallBack: String? = null,
+            classpathFallBack: String? = null,
+            embed: Boolean = false,
+        ) {
+            val libraryResource =
+                ResourceFallbacksBundle(
+                    buildList {
+                        if (embed) {
+                            add(ResourceLocation(url, ResourcePathType.URL_EMBEDDED))
+                        } else {
+                            add(ResourceLocation(url, ResourcePathType.URL))
+                        }
+                        localFallBack?.let {
+                            checkLocalPath(localFallBack)
+                            add(ResourceLocation(localFallBack, ResourcePathType.LOCAL_PATH))
+                        }
+                        classpathFallBack?.let {
+                            add(ResourceLocation(classpathFallBack, ResourcePathType.CLASSPATH_PATH))
+                        }
+                    },
+                )
             bundles.add(libraryResource)
         }
 
@@ -79,7 +85,10 @@ class ResourcesBuilder {
     /**
      * Create a JS resource bundle
      */
-    fun js(name: String, block: BundleBuilder.() -> Unit) {
+    fun js(
+        name: String,
+        block: BundleBuilder.() -> Unit,
+    ) {
         val bundles = BundleBuilder().apply(block).bundles
         resources.add(
             LibraryResource(
@@ -93,7 +102,10 @@ class ResourcesBuilder {
     /**
      * Create a Css resource bundle
      */
-    fun css(name: String, block: BundleBuilder.() -> Unit) {
+    fun css(
+        name: String,
+        block: BundleBuilder.() -> Unit,
+    ) {
         val bundles = BundleBuilder().apply(block).bundles
         resources.add(
             LibraryResource(

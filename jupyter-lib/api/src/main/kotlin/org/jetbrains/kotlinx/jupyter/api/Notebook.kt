@@ -132,7 +132,11 @@ interface Notebook {
      */
     val libraryRequests: Collection<LibraryResolutionRequest>
     val libraryLoader: LibraryLoader
-    fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String> = emptyMap()): LibraryDefinition
+
+    fun getLibraryFromDescriptor(
+        descriptorText: String,
+        options: Map<String, String> = emptyMap(),
+    ): LibraryDefinition
 
     val commManager: CommManager
 }

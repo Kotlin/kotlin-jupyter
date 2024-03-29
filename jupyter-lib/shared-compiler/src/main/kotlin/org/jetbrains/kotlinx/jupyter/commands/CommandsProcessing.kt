@@ -22,17 +22,19 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
-fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) = joinToString("\n|    ", prefix = "    ", transform = transform)
+fun <T> Iterable<T>.joinToStringIndented(transform: ((T) -> CharSequence)? = null) =
+    joinToString("\n|    ", prefix = "    ", transform = transform)
 
 fun reportCommandErrors(code: String): ListErrorsResult {
     val (command, commandString) = replCommandOrNull(code)
     if (command != null) return ListErrorsResult(code)
 
     val sourceCode = SourceCodeImpl(0, code)
-    val location = SourceCode.Location(
-        0.toSourceCodePosition(sourceCode),
-        (commandString.length + 1).toSourceCodePosition(sourceCode),
-    )
+    val location =
+        SourceCode.Location(
+            0.toSourceCodePosition(sourceCode),
+            (commandString.length + 1).toSourceCodePosition(sourceCode),
+        )
     return ListErrorsResult(
         code,
         sequenceOf(
@@ -41,21 +43,29 @@ fun reportCommandErrors(code: String): ListErrorsResult {
     )
 }
 
-fun doCommandCompletion(code: String, cursor: Int): CompletionResult {
+fun doCommandCompletion(
+    code: String,
+    cursor: Int,
+): CompletionResult {
     assertLooksLikeReplCommand(code)
     val prefix = code.substring(1, cursor)
     val suitableCommands = ReplCommand.entries.filter { it.nameForUser.startsWith(prefix) }
-    val completions = suitableCommands.map {
-        SourceCodeCompletionVariant(it.nameForUser, it.nameForUser, "command", "command")
-    }
+    val completions =
+        suitableCommands.map {
+            SourceCodeCompletionVariant(it.nameForUser, it.nameForUser, "command", "command")
+        }
     return KotlinCompleter.getResult(code, cursor, completions)
 }
 
-fun runCommand(code: String, repl: ReplForJupyter): JupyterResponse {
+fun runCommand(
+    code: String,
+    repl: ReplForJupyter,
+): JupyterResponse {
     assertLooksLikeReplCommand(code)
     val args = code.trim().substring(1).split(" ")
-    val cmd = ReplCommand.valueOfOrNull(args[0])?.value
-        ?: return AbortJupyterResponse("Unknown command: $code\nTo see available commands, enter :help")
+    val cmd =
+        ReplCommand.valueOfOrNull(args[0])?.value
+            ?: return AbortJupyterResponse("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
         ReplCommand.CLASSPATH -> {
             val cp = repl.currentClasspath
@@ -66,17 +76,19 @@ fun runCommand(code: String, repl: ReplForJupyter): JupyterResponse {
         }
         ReplCommand.HELP -> {
             val commands = ReplCommand.entries.asIterable().joinToStringIndented { ":${it.nameForUser} - ${it.desc}" }
-            val magics = ReplLineMagic.entries.asIterable().filter { it.visibleInHelp }.joinToStringIndented {
-                var s = "%${it.nameForUser} - ${it.desc}"
-                if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
-                s
-            }
+            val magics =
+                ReplLineMagic.entries.asIterable().filter { it.visibleInHelp }.joinToStringIndented {
+                    var s = "%${it.nameForUser} - ${it.desc}"
+                    if (it.argumentsUsage != null) s += "\n        Usage: %${it.nameForUser} ${it.argumentsUsage}"
+                    s
+                }
             val libraryDescriptors = repl.libraryDescriptorsProvider.getDescriptors()
-            val libraries = libraryDescriptors.map { (libraryName, descriptor) ->
-                val link = if (descriptor.link != null) " (${descriptor.link})" else ""
-                val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
-                "$libraryName$link$description"
-            }.joinToStringIndented()
+            val libraries =
+                libraryDescriptors.map { (libraryName, descriptor) ->
+                    val link = if (descriptor.link != null) " (${descriptor.link})" else ""
+                    val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
+                    "$libraryName$link$description"
+                }.joinToStringIndented()
             OkJupyterResponse(
                 textResult(
                     """ |Kotlin Jupyter kernel.

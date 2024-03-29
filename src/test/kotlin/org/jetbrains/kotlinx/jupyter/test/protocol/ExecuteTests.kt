@@ -82,9 +82,10 @@ class ExecuteTests : KernelServerTestsBase() {
     override fun beforeEach() {
         try {
             _context = ZMQ.context(1)
-            shell = createClientSocket(JupyterSocketInfo.SHELL).apply {
-                makeRelaxed()
-            }
+            shell =
+                createClientSocket(JupyterSocketInfo.SHELL).apply {
+                    makeRelaxed()
+                }
             ioPub = createClientSocket(JupyterSocketInfo.IOPUB)
             stdin = createClientSocket(JupyterSocketInfo.STDIN)
             control = createClientSocket(JupyterSocketInfo.CONTROL)
@@ -123,7 +124,10 @@ class ExecuteTests : KernelServerTestsBase() {
             val shell = this.shell!!
             val ioPub = this.ioPub!!
             val stdin = this.stdin!!
-            shell.sendMessage(MessageType.EXECUTE_REQUEST, content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory))
+            shell.sendMessage(
+                MessageType.EXECUTE_REQUEST,
+                content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory),
+            )
             executeRequestSent()
             inputs.forEach {
                 val request = stdin.receiveMessage()
@@ -308,48 +312,51 @@ class ExecuteTests : KernelServerTestsBase() {
             """
             val xyz = 42
             """.trimIndent()
-        val res = doExecute(
-            code,
-            hasResult = false,
-            executeReplyChecker = { message ->
-                val metadata = message.data.metadata
-                assertTrue(metadata is JsonObject)
-                val snippetMetadata = MessageFormat.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
-                    metadata["eval_metadata"] ?: JsonNull,
-                )
-                val compiledData = snippetMetadata?.compiledData
-                assertNotNull(compiledData)
+        val res =
+            doExecute(
+                code,
+                hasResult = false,
+                executeReplyChecker = { message ->
+                    val metadata = message.data.metadata
+                    assertTrue(metadata is JsonObject)
+                    val snippetMetadata =
+                        MessageFormat.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
+                            metadata["eval_metadata"] ?: JsonNull,
+                        )
+                    val compiledData = snippetMetadata?.compiledData
+                    assertNotNull(compiledData)
 
-                val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
-                val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
-                dir.toFile().deleteOnExit()
-                val classesDir = dir.resolve("classes")
-                val sourcesDir = dir.resolve("sources")
+                    val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
+                    val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
+                    dir.toFile().deleteOnExit()
+                    val classesDir = dir.resolve("classes")
+                    val sourcesDir = dir.resolve("sources")
 
-                val names = deserializer.deserializeAndSave(compiledData, classesDir, sourcesDir)
-                val kClassName = names.single()
-                val classLoader = URLClassLoader(arrayOf(classesDir.toUri().toURL()), ClassLoader.getSystemClassLoader())
-                val loadedClass = classLoader.loadClass(kClassName).kotlin
+                    val names = deserializer.deserializeAndSave(compiledData, classesDir, sourcesDir)
+                    val kClassName = names.single()
+                    val classLoader = URLClassLoader(arrayOf(classesDir.toUri().toURL()), ClassLoader.getSystemClassLoader())
+                    val loadedClass = classLoader.loadClass(kClassName).kotlin
 
-                @Suppress("UNCHECKED_CAST")
-                val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
-                val constructor = loadedClass.constructors.single()
+                    @Suppress("UNCHECKED_CAST")
+                    val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
+                    val constructor = loadedClass.constructors.single()
 
-                val userHandlesProvider = object : UserHandlesProvider {
-                    override val host: Nothing? = null
-                    override val notebook: Notebook = NotebookMock
-                    override val sessionOptions: SessionOptions
-                        get() = throw NotImplementedError()
-                }
+                    val userHandlesProvider =
+                        object : UserHandlesProvider {
+                            override val host: Nothing? = null
+                            override val notebook: Notebook = NotebookMock
+                            override val sessionOptions: SessionOptions
+                                get() = throw NotImplementedError()
+                        }
 
-                val instance = constructor.call(emptyArray<Any>(), userHandlesProvider)
-                xyzProperty.get(instance) shouldBe 42
+                    val instance = constructor.call(emptyArray<Any>(), userHandlesProvider)
+                    xyzProperty.get(instance) shouldBe 42
 
-                val sourceFile = sourcesDir.resolve("Line_1.kts")
-                sourceFile.shouldBeAFile()
-                sourceFile.readText() shouldBe "val xyz = 42"
-            },
-        )
+                    val sourceFile = sourcesDir.resolve("Line_1.kts")
+                    sourceFile.shouldBeAFile()
+                    sourceFile.readText() shouldBe "val xyz = 42"
+                },
+            )
         assertNull(res)
     }
 
@@ -357,9 +364,9 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testLibraryLoadingErrors() {
         doExecute(
             """
-                USE {
-                    import("xyz.ods")
-                }
+            USE {
+                import("xyz.ods")
+            }
             """.trimIndent(),
             false,
             ioPubChecker = {
@@ -371,22 +378,27 @@ class ExecuteTests : KernelServerTestsBase() {
 
     @Test
     fun testCounter() {
-        fun checkCounter(message: Message, expectedCounter: Long) {
+        fun checkCounter(
+            message: Message,
+            expectedCounter: Long,
+        ) {
             val data = message.data.content as ExecuteSuccessReply
             assertEquals(expectedCounter, data.executionCount)
         }
         val res1 = doExecute("41", executeReplyChecker = { checkCounter(it, 1) })
         val res2 = doExecute("42", executeReplyChecker = { checkCounter(it, 2) })
-        val res3 = doExecute(
-            " \"\${Out[1]} \${Out[2]}\" ",
-            storeHistory = false,
-            executeReplyChecker = { checkCounter(it, 3) },
-        )
-        val res4 = doExecute(
-            "val x = try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }; x",
-            storeHistory = false,
-            executeReplyChecker = { checkCounter(it, 3) },
-        )
+        val res3 =
+            doExecute(
+                " \"\${Out[1]} \${Out[2]}\" ",
+                storeHistory = false,
+                executeReplyChecker = { checkCounter(it, 3) },
+            )
+        val res4 =
+            doExecute(
+                "val x = try { Out[3] } catch(e: ArrayIndexOutOfBoundsException) { null }; x",
+                storeHistory = false,
+                executeReplyChecker = { checkCounter(it, 3) },
+            )
 
         assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "41"), res1)
         assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "42"), res2)
@@ -437,7 +449,8 @@ class ExecuteTests : KernelServerTestsBase() {
         val targetName = "my_comm"
         val commId = "xyz"
 
-        val registerCode = """
+        val registerCode =
+            """
             import kotlinx.serialization.*
             import kotlinx.serialization.json.*
             
@@ -460,7 +473,7 @@ class ExecuteTests : KernelServerTestsBase() {
                     )
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
         doExecute(registerCode, false)
 
         shell.sendMessage(MessageType.COMM_OPEN, CommOpen(commId, targetName))
@@ -560,8 +573,8 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testBigDataFrame() {
         doExecute(
             """
-                %use dataframe
-                DataFrame.read("https://api.apis.guru/v2/list.json")
+            %use dataframe
+            DataFrame.read("https://api.apis.guru/v2/list.json")
             """.trimIndent(),
             ioPubChecker = { iopubSocket ->
                 iopubSocket.receiveDisplayDataResponse()

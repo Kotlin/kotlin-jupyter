@@ -16,20 +16,24 @@ abstract class SocketWithCancellationBase(
             socket.errno(),
         )
     }
+
     override fun recvString() = String(recv(), ZMQ.CHARSET)
 
     override fun sendMore(data: String): Boolean {
         assertNotCancelled()
         return socket.sendMore(data)
     }
+
     override fun sendMore(data: ByteArray): Boolean {
         assertNotCancelled()
         return socket.sendMore(data)
     }
+
     override fun send(data: ByteArray): Boolean {
         assertNotCancelled()
         return socket.send(data, 0, cancellationToken)
     }
+
     override fun send(data: String): Boolean = send(data.toByteArray(ZMQ.CHARSET))
 
     override fun makeRelaxed() {

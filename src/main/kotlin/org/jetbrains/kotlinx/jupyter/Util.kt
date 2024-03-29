@@ -27,16 +27,28 @@ import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 fun List<String>.joinToLines() = joinToString("\n")
 
-fun generateDiagnostic(fromLine: Int, fromCol: Int, toLine: Int, toCol: Int, message: String, severity: String) =
-    ScriptDiagnostic(
-        ScriptDiagnostic.unspecifiedError,
-        message,
-        ScriptDiagnostic.Severity.valueOf(severity),
-        null,
-        SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol)),
-    )
+fun generateDiagnostic(
+    fromLine: Int,
+    fromCol: Int,
+    toLine: Int,
+    toCol: Int,
+    message: String,
+    severity: String,
+) = ScriptDiagnostic(
+    ScriptDiagnostic.unspecifiedError,
+    message,
+    ScriptDiagnostic.Severity.valueOf(severity),
+    null,
+    SourceCode.Location(SourceCode.Position(fromLine, fromCol), SourceCode.Position(toLine, toCol)),
+)
 
-fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: ScriptDiagnostic.Severity): ScriptDiagnostic {
+fun generateDiagnosticFromAbsolute(
+    code: String,
+    from: Int,
+    to: Int,
+    message: String,
+    severity: ScriptDiagnostic.Severity,
+): ScriptDiagnostic {
     val snippet = SourceCodeImpl(0, code)
     return ScriptDiagnostic(
         ScriptDiagnostic.unspecifiedError,
@@ -47,16 +59,28 @@ fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: St
     )
 }
 
-fun CodeInterval.diagnostic(code: String, message: String, severity: ScriptDiagnostic.Severity = ScriptDiagnostic.Severity.ERROR): ScriptDiagnostic {
+fun CodeInterval.diagnostic(
+    code: String,
+    message: String,
+    severity: ScriptDiagnostic.Severity = ScriptDiagnostic.Severity.ERROR,
+): ScriptDiagnostic {
     return generateDiagnosticFromAbsolute(code, from, to, message, severity)
 }
 
-fun generateDiagnosticFromAbsolute(code: String, from: Int, to: Int, message: String, severity: String): ScriptDiagnostic {
+fun generateDiagnosticFromAbsolute(
+    code: String,
+    from: Int,
+    to: Int,
+    message: String,
+    severity: String,
+): ScriptDiagnostic {
     return generateDiagnosticFromAbsolute(code, from, to, message, ScriptDiagnostic.Severity.valueOf(severity))
 }
 
-fun withPath(path: String?, diagnostics: List<ScriptDiagnostic>): List<ScriptDiagnostic> =
-    diagnostics.map { it.copy(sourcePath = path) }
+fun withPath(
+    path: String?,
+    diagnostics: List<ScriptDiagnostic>,
+): List<ScriptDiagnostic> = diagnostics.map { it.copy(sourcePath = path) }
 
 fun ResultsRenderersProcessor.registerDefaultRenderers() {
     register(bufferedImageRenderer)
@@ -77,7 +101,10 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
      */
     private val variablesDeclarationInfo: MutableMap<V, K> = mutableMapOf()
 
-    fun addDeclaration(address: K, variableRef: V) {
+    fun addDeclaration(
+        address: K,
+        variableRef: V,
+    ) {
         ensureStorageCreation(address)
 
         // redeclaration of any type
@@ -91,7 +118,10 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
         cellVariables[address]?.add(variableRef)
     }
 
-    fun addUsage(address: K, variableRef: V) = cellVariables[address]?.add(variableRef)
+    fun addUsage(
+        address: K,
+        variableRef: V,
+    ) = cellVariables[address]?.add(variableRef)
 
     fun removeOldUsages(newAddress: K) {
         // remove known modifying usages in this cell
@@ -123,30 +153,34 @@ class HomeDirLibraryDescriptorsProvider(
         }
     }
 
-    val descriptorOptions = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
-        val globalOptions = libraryDescriptorsManager
-            .homeLibrariesDir(homeDir)
-            .resolve(libraryDescriptorsManager.optionsFileName())
-        if (globalOptions.exists()) {
-            parseLibraryDescriptorGlobalOptions(globalOptions.readText())
-        } else {
-            DefaultLibraryDescriptorGlobalOptions
-        }
-    }
-
-    val libraryDescriptors = createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
-        val libraryFiles = libraryDescriptorsManager
-            .homeLibrariesDir(homeDir)
-            .listFiles(libraryDescriptorsManager::isLibraryDescriptor)
-            .orEmpty()
-        libraryFiles.toList().mapNotNull { file ->
-            val libraryName = file.nameWithoutExtension
-            log.info("Parsing descriptor for library '$libraryName'")
-            log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
-                libraryName to parseLibraryDescriptor(file.readText())
+    val descriptorOptions =
+        createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
+            val globalOptions =
+                libraryDescriptorsManager
+                    .homeLibrariesDir(homeDir)
+                    .resolve(libraryDescriptorsManager.optionsFileName())
+            if (globalOptions.exists()) {
+                parseLibraryDescriptorGlobalOptions(globalOptions.readText())
+            } else {
+                DefaultLibraryDescriptorGlobalOptions
             }
-        }.toMap()
-    }
+        }
+
+    val libraryDescriptors =
+        createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
+            val libraryFiles =
+                libraryDescriptorsManager
+                    .homeLibrariesDir(homeDir)
+                    .listFiles(libraryDescriptorsManager::isLibraryDescriptor)
+                    .orEmpty()
+            libraryFiles.toList().mapNotNull { file ->
+                val libraryName = file.nameWithoutExtension
+                log.info("Parsing descriptor for library '$libraryName'")
+                log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
+                    libraryName to parseLibraryDescriptor(file.readText())
+                }
+            }.toMap()
+        }
 }
 
 class LibraryDescriptorsByResolutionProvider(

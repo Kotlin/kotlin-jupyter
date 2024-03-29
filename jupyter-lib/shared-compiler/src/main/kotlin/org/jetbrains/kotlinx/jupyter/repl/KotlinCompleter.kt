@@ -43,7 +43,10 @@ class KotlinCompleter {
             return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)
         }
 
-        private fun getTokenBounds(buf: String, cursor: Int): CodeInterval {
+        private fun getTokenBounds(
+            buf: String,
+            cursor: Int,
+        ): CodeInterval {
             require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
 
             val startSubstring = buf.substring(0, cursor)

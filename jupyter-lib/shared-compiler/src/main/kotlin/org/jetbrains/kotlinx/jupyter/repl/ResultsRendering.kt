@@ -6,7 +6,11 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 
-fun renderValue(notebook: MutableNotebook, executor: ExecutionHost, value: Any?): DisplayResult? {
+fun renderValue(
+    notebook: MutableNotebook,
+    executor: ExecutionHost,
+    value: Any?,
+): DisplayResult? {
     return notebook.postRender(notebook.renderersProcessor.renderValue(executor, value))
 }
 

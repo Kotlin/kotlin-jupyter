@@ -16,7 +16,10 @@ class CompiledScriptsSerializer {
     private val encoder = Base64.getEncoder()
     private val decoder = Base64.getDecoder()
 
-    fun serialize(script: KJvmCompiledScript, source: SourceCode): SerializedCompiledScriptsData {
+    fun serialize(
+        script: KJvmCompiledScript,
+        source: SourceCode,
+    ): SerializedCompiledScriptsData {
         val moduleInMemory = script.getCompiledModule() as KJvmCompiledModuleInMemory
 
         return buildScriptsData {
@@ -54,7 +57,11 @@ class CompiledScriptsSerializer {
      * it to the [scriptsDir] directory, returns the list of names of classes
      * which are meant to be implicit receivers. Saves script sources to [sourcesDir].
      */
-    fun deserializeAndSave(data: SerializedCompiledScriptsData, scriptsDir: Path, sourcesDir: Path): List<String> {
+    fun deserializeAndSave(
+        data: SerializedCompiledScriptsData,
+        scriptsDir: Path,
+        sourcesDir: Path,
+    ): List<String> {
         val classNames = mutableListOf<String>()
         deserializeCompiledScripts(data).forEach { (script, bytes) ->
             val file = scriptsDir.resolve(script.fileName).toFile()

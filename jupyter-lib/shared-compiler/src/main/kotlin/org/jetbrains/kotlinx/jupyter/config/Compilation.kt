@@ -39,7 +39,10 @@ data class JupyterCompilingOptions(
     }
 }
 
-val ScriptCompilationConfigurationKeys.jupyterOptions by PropertiesCollection.key(isTransient = true, defaultValue = JupyterCompilingOptions.DEFAULT)
+val ScriptCompilationConfigurationKeys.jupyterOptions by PropertiesCollection.key(
+    isTransient = true,
+    defaultValue = JupyterCompilingOptions.DEFAULT,
+)
 
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
@@ -57,11 +60,12 @@ fun getCompilationConfiguration(
         }
         fileExtension.put("jupyter.kts")
 
-        val classImports = listOf(
-            DependsOn::class,
-            Repository::class,
-            CompilerArgs::class,
-        ).map { it.java.name }
+        val classImports =
+            listOf(
+                DependsOn::class,
+                Repository::class,
+                CompilerArgs::class,
+            ).map { it.java.name }
         defaultImports(classImports + defaultGlobalImports)
 
         jvm {

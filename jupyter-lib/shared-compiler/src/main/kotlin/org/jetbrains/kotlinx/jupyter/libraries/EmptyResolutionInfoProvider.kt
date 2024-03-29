@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
 class EmptyResolutionInfoProvider(
     private val libraryInfoCache: LibraryInfoCache,
 ) : ResolutionInfoProvider {
-
     override var fallback: LibraryResolutionInfo
         get() = ByNothingLibraryResolutionInfo
         set(_) {}

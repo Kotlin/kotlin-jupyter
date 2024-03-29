@@ -11,7 +11,10 @@ interface RenderersProcessor {
     /**
      * Renders [value] in context of this execution [host]
      */
-    fun renderValue(host: ExecutionHost, value: Any?): Any?
+    fun renderValue(
+        host: ExecutionHost,
+        value: Any?,
+    ): Any?
 
     /**
      * Adds new [renderer] for this notebook.
@@ -19,7 +22,10 @@ interface RenderersProcessor {
      */
     fun registerWithoutOptimizing(renderer: RendererFieldHandler)
 
-    fun registerWithoutOptimizing(renderer: RendererFieldHandler, priority: Int)
+    fun registerWithoutOptimizing(
+        renderer: RendererFieldHandler,
+        priority: Int,
+    )
 
     fun unregister(renderer: RendererFieldHandler)
 

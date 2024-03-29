@@ -104,15 +104,20 @@ fun main(vararg args: String) {
  * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
-fun embedKernel(cfgFile: File, resolutionInfoProvider: ResolutionInfoProvider?, scriptReceivers: List<Any>? = null) {
+fun embedKernel(
+    cfgFile: File,
+    resolutionInfoProvider: ResolutionInfoProvider?,
+    scriptReceivers: List<Any>? = null,
+) {
     val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
 
     val kernelConfig = KernelArgs(cfgFile, cp, null, null, null, null).getConfig()
-    val replConfig = ReplConfig.create(
-        { httpUtil -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
-        homeDir = null,
-        embedded = true,
-    )
+    val replConfig =
+        ReplConfig.create(
+            { httpUtil -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
+            homeDir = null,
+            embedded = true,
+        )
     val replSettings = DefaultReplSettings(kernelConfig, replConfig, scriptReceivers = scriptReceivers.orEmpty())
     kernelServer(replSettings)
 }
@@ -172,17 +177,19 @@ fun kernelServer(replSettings: DefaultReplSettings) {
         conn.addMessageCallbackForSocket(JupyterSocketType.CONTROL)
         conn.addMessageCallbackForSocket(JupyterSocketType.SHELL)
 
-        val controlThread = thread {
-            socketLoop("Control: Interrupted", mainThread) {
-                socketManager.control.runCallbacksOnMessage()
+        val controlThread =
+            thread {
+                socketLoop("Control: Interrupted", mainThread) {
+                    socketManager.control.runCallbacksOnMessage()
+                }
             }
-        }
 
-        val hbThread = thread {
-            socketLoop("Heartbeat: Interrupted", mainThread) {
-                socketManager.heartbeat.onData { send(it) }
+        val hbThread =
+            thread {
+                socketLoop("Heartbeat: Interrupted", mainThread) {
+                    socketManager.heartbeat.onData { send(it) }
+                }
             }
-        }
 
         socketLoop("Main: Interrupted", controlThread, hbThread) {
             socketManager.shell.runCallbacksOnMessage()

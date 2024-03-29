@@ -25,12 +25,18 @@ import java.io.OutputStreamWriter
 import javax.swing.JLabel
 
 @Suppress("FunctionName")
-fun LATEX(latex: String, fontAsShapes: Boolean = true): Image {
+fun LATEX(
+    latex: String,
+    fontAsShapes: Boolean = true,
+): Image {
     val data = latexToSvgData(latex, fontAsShapes)
     return Image(data, "svg")
 }
 
-private fun latexToSvgData(latex: String, fontAsShapes: Boolean): ByteArray {
+private fun latexToSvgData(
+    latex: String,
+    fontAsShapes: Boolean,
+): ByteArray {
     val domImpl = GenericDOMImplementation.getDOMImplementation()
     val svgNS = "http://www.w3.org/2000/svg"
     val document = domImpl.createDocument(svgNS, "svg", null)

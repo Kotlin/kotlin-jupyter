@@ -4,5 +4,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 
 interface MessageHandler {
-    fun handleMessage(socketType: JupyterSocketType, message: RawMessage)
+    fun handleMessage(
+        socketType: JupyterSocketType,
+        message: RawMessage,
+    )
 }

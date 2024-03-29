@@ -1,7 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.common
 
 enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
-    USE("injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers", "klaxon(5.5), lets-plot"),
+    USE(
+        "injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers",
+        "klaxon(5.5), lets-plot",
+    ),
     TRACK_CLASSPATH("logs any changes of current classpath. Useful for debugging artifact resolution failures", "[on|off]"),
     TRACK_EXECUTION("logs pieces of code that are going to be executed. Useful for debugging of libraries support", "[all|generated|off]"),
     DUMP_CLASSES_FOR_SPARK("stores compiled repl classes in special folder for Spark integration", "[on|off]", visibleInHelp = false),
@@ -19,13 +22,15 @@ enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, v
     val nameForUser = getNameForUser(name)
 
     companion object : ReplEnum<ReplLineMagic> {
-        val type = object : ReplEnum.Type {
-            override val name = "magic"
-        }
+        val type =
+            object : ReplEnum.Type {
+                override val name = "magic"
+            }
 
-        private val enumValues = values().associate {
-            it.nameForUser to ReplEnum.CodeInsightValue(it, it.nameForUser, it.desc, type)
-        }
+        private val enumValues =
+            values().associate {
+                it.nameForUser to ReplEnum.CodeInsightValue(it, it.nameForUser, it.desc, type)
+            }
 
         override val codeInsightValues by lazy {
             enumValues.values.toList()

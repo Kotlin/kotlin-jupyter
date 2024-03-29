@@ -5,5 +5,6 @@ import kotlin.reflect.KProperty
 
 interface InternalVariablesMarkersProcessor {
     fun registerAll(markers: Iterable<InternalVariablesMarker>)
+
     fun isInternal(property: KProperty<*>): Boolean
 }

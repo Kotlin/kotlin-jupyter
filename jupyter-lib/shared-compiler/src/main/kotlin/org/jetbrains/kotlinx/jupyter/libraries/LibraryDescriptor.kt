@@ -28,27 +28,19 @@ data class LibraryDescriptor(
     @Serializable(DescriptorVariablesSerializer::class)
     @SerialName("properties")
     val variables: DescriptorVariables = DescriptorVariables(),
-
     val initCell: List<CodeExecution> = emptyList(),
-
     val imports: List<String> = emptyList(),
     val repositories: List<KernelRepository> = emptyList(),
     val init: List<CodeExecution> = emptyList(),
     val shutdown: List<CodeExecution> = emptyList(),
     @Serializable(RenderersSerializer::class)
     val renderers: List<ExactRendererTypeHandler> = emptyList(),
-
     val resources: List<LibraryResource> = emptyList(),
-
     val link: String? = null,
-
     val description: String? = null,
-
     @Serializable(KotlinKernelVersionSerializer::class)
     val minKernelVersion: KotlinKernelVersion? = null,
-
     val formatVersion: LibraryDescriptorFormatVersion? = null,
-
     val integrationTypeNameRules: List<PatternNameAcceptanceRule> = emptyList(),
 ) {
     fun convertToDefinition(
@@ -70,9 +62,16 @@ data class LibraryDescriptor(
      *
      * @return A name-to-value map of library arguments
      */
-    private fun substituteArguments(descriptorVariables: DescriptorVariables, arguments: List<Variable>): Map<String, String> {
+    private fun substituteArguments(
+        descriptorVariables: DescriptorVariables,
+        arguments: List<Variable>,
+    ): Map<String, String> {
         val result = mutableMapOf<String, String>()
-        fun addResult(name: String, value: String) {
+
+        fun addResult(
+            name: String,
+            value: String,
+        ) {
             result[name] = substituteKernelVars(value)
         }
 
@@ -93,7 +92,11 @@ data class LibraryDescriptor(
                 if (isNamed) {
                     addResult(arg.name, arg.value)
                 } else {
-                    if (parameters.lastIndex < i) throw ReplPreprocessingException("Number of unnamed arguments cannot be more than the number of parameters")
+                    if (parameters.lastIndex < i) {
+                        throw ReplPreprocessingException(
+                            "Number of unnamed arguments cannot be more than the number of parameters",
+                        )
+                    }
                     addResult(parameters[i].name, arg.value)
                 }
             }
@@ -142,10 +145,11 @@ data class LibraryDescriptor(
     }
 
     companion object {
-        private val kernelVariables = mapOf(
-            "kernelVersion" to currentKernelVersion.toString(),
-            "kernelMavenVersion" to currentKernelVersion.toMavenVersion(),
-        )
+        private val kernelVariables =
+            mapOf(
+                "kernelVersion" to currentKernelVersion.toString(),
+                "kernelMavenVersion" to currentKernelVersion.toMavenVersion(),
+            )
 
         fun substituteKernelVars(value: String): String {
             return replaceVariables(value, kernelVariables)

@@ -25,6 +25,7 @@ class CodeCellImpl(
     private var isStreamOutputUpToDate: Boolean = true
     private var collectedStreamOutput: String = ""
     private val streamBuilder = StringBuilder()
+
     override fun appendStreamOutput(output: String) {
         isStreamOutputUpToDate = false
         streamBuilder.append(output)

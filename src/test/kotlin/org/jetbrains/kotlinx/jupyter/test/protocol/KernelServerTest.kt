@@ -12,7 +12,6 @@ import org.zeromq.ZMQ
 
 @Execution(ExecutionMode.SAME_THREAD)
 class KernelServerTest : KernelServerTestsBase() {
-
     override val context: ZMQ.Context = ZMQ.context(1)
 
     private fun connectClientSocket(socketInfo: JupyterSocketInfo) = createClientSocket(socketInfo).apply { connect() }

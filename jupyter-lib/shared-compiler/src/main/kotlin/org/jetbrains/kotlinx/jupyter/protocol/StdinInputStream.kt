@@ -50,7 +50,11 @@ class StdinInputStream(
     }
 
     @Synchronized
-    override fun read(b: ByteArray, off: Int, len: Int): Int {
+    override fun read(
+        b: ByteArray,
+        off: Int,
+        len: Int,
+    ): Int {
         val buf = initializeCurrentBuf()
         val lenLeft = buf.size - currentBufPos
         if (lenLeft <= 0) {

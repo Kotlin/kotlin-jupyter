@@ -11,22 +11,27 @@ import java.io.IOException
 class CssLibraryResourcesProcessor(
     private val httpClient: HttpClient,
 ) : LibraryResourcesProcessor {
-    private fun loadCssAsText(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): String {
+    private fun loadCssAsText(
+        bundle: ResourceFallbacksBundle,
+        classLoader: ClassLoader,
+    ): String {
         val exceptions = mutableListOf<Exception>()
         for (resourceLocation in bundle.locations) {
             val path = resourceLocation.path
 
-            fun wrapInTag(text: String) = """
+            fun wrapInTag(text: String) =
+                """
                 <style>
                 $text
                 </style>
-            """.trimIndent()
+                """.trimIndent()
 
             return try {
                 when (resourceLocation.type) {
-                    ResourcePathType.URL -> """
+                    ResourcePathType.URL ->
+                        """
                         <link rel="stylesheet" href="$path">
-                    """.trimIndent()
+                        """.trimIndent()
                     ResourcePathType.URL_EMBEDDED -> wrapInTag(httpClient.getHttp(path).text)
                     ResourcePathType.LOCAL_PATH -> wrapInTag(File(path).readText())
                     ResourcePathType.CLASSPATH_PATH -> wrapInTag(loadResourceFromClassLoader(path, classLoader))
@@ -40,7 +45,10 @@ class CssLibraryResourcesProcessor(
         throw Exception("No resource fallback found! Related exceptions: $exceptions")
     }
 
-    override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {
+    override fun wrapLibrary(
+        resource: LibraryResource,
+        classLoader: ClassLoader,
+    ): String {
         return resource.bundles.joinToString("\n") { loadCssAsText(it, classLoader) }
     }
 }

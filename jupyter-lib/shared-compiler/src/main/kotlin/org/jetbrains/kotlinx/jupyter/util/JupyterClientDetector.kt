@@ -36,27 +36,39 @@ object JupyterClientDetector {
 
     private interface Detector {
         val type: JupyterClientType
-        fun isThisClient(command: String, arguments: List<String>): Boolean
+
+        fun isThisClient(
+            command: String,
+            arguments: List<String>,
+        ): Boolean
     }
 
-    private fun detector(type: JupyterClientType, predicate: (String, List<String>) -> Boolean) = object : Detector {
+    private fun detector(
+        type: JupyterClientType,
+        predicate: (String, List<String>) -> Boolean,
+    ) = object : Detector {
         override val type: JupyterClientType get() = type
-        override fun isThisClient(command: String, arguments: List<String>): Boolean {
+
+        override fun isThisClient(
+            command: String,
+            arguments: List<String>,
+        ): Boolean {
             return predicate(command, arguments)
         }
     }
 
-    private val detectors = listOf<Detector>(
-        detector(JupyterClientType.JUPYTER_NOTEBOOK) { command, args ->
-            "jupyter-notebook" in command || args.any { "jupyter-notebook" in it }
-        },
-        detector(JupyterClientType.JUPYTER_LAB) { command, args ->
-            "jupyter-lab" in command || args.any { "jupyter-lab" in it }
-        },
-        detector(JupyterClientType.KERNEL_TESTS) { command, _ ->
-            command.endsWith("idea64.exe")
-        },
-    )
+    private val detectors =
+        listOf<Detector>(
+            detector(JupyterClientType.JUPYTER_NOTEBOOK) { command, args ->
+                "jupyter-notebook" in command || args.any { "jupyter-notebook" in it }
+            },
+            detector(JupyterClientType.JUPYTER_LAB) { command, args ->
+                "jupyter-lab" in command || args.any { "jupyter-lab" in it }
+            },
+            detector(JupyterClientType.KERNEL_TESTS) { command, _ ->
+                command.endsWith("idea64.exe")
+            },
+        )
 
     private val LOG = logger<JupyterClientDetector>()
 }

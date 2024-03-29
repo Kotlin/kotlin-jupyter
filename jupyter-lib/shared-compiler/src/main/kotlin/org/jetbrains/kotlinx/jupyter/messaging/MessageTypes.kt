@@ -114,10 +114,8 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
 data class MessageHeader(
     @SerialName("msg_id")
     val id: String,
-
     @SerialName("msg_type")
     val type: MessageType,
-
     val session: String? = null,
     val username: String? = null,
     val version: String? = null,
@@ -165,7 +163,10 @@ object MessageTypeSerializer : KSerializer<MessageType> {
         return getMessageType(decoder.decodeString())
     }
 
-    override fun serialize(encoder: Encoder, value: MessageType) {
+    override fun serialize(
+        encoder: Encoder,
+        value: MessageType,
+    ) {
         encoder.encodeString(value.type)
     }
 }
@@ -190,7 +191,10 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
         return getDetailsLevel(decoder.decodeInt())
     }
 
-    override fun serialize(encoder: Encoder, value: DetailLevel) {
+    override fun serialize(
+        encoder: Encoder,
+        value: DetailLevel,
+    ) {
         encoder.encodeInt(value.level)
     }
 }
@@ -217,7 +221,10 @@ object ExecuteReplySerializer : KSerializer<ExecuteReply> {
         }
     }
 
-    override fun serialize(encoder: Encoder, value: ExecuteReply) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ExecuteReply,
+    ) {
         when (value) {
             is ExecuteAbortReply -> encoder.encodeSerializableValue(serializer(), value)
             is ExecuteErrorReply -> encoder.encodeSerializableValue(serializer(), value)
@@ -230,10 +237,8 @@ object ExecuteReplySerializer : KSerializer<ExecuteReply> {
 open class CompleteErrorReply(
     @SerialName("ename")
     val name: String,
-
     @SerialName("evalue")
     val value: String,
-
     val traceback: List<String>,
 ) : MessageReplyContent(MessageStatus.ERROR)
 
@@ -250,15 +255,11 @@ class ExecuteAbortReply : MessageReplyContent(MessageStatus.ABORT), ExecuteReply
 class ExecuteErrorReply(
     @SerialName("execution_count")
     val executionCount: Long,
-
     @SerialName("ename")
     val name: String,
-
     @SerialName("evalue")
     val value: String,
-
     val traceback: List<String>,
-
     val additionalInfo: JsonObject,
 ) : MessageReplyContent(MessageStatus.ERROR), ExecuteReply
 
@@ -266,12 +267,9 @@ class ExecuteErrorReply(
 class ExecuteSuccessReply(
     @SerialName("execution_count")
     val executionCount: Long,
-
     val payload: List<Payload> = listOf(),
-
     @SerialName("user_expressions")
     val userExpressions: Map<String, JsonElement> = mapOf(),
-
     val additionalInfo: JsonObject? = null,
 ) : MessageReplyContent(MessageStatus.OK), ExecuteReply
 
@@ -279,19 +277,14 @@ class ExecuteSuccessReply(
 data class ExecuteRequest(
     val code: String,
     val silent: Boolean = false,
-
     @SerialName("store_history")
     val storeHistory: Boolean = true,
-
     @SerialName("user_expressions")
     val userExpressions: Map<String, String> = mapOf(),
-
     @SerialName("user_variables")
     val userVariables: List<String> = listOf(),
-
     @SerialName("allow_stdin")
     val allowStdin: Boolean = true,
-
     @SerialName("stop_on_error")
     val stopOnError: Boolean = true,
 ) : AbstractMessageContent()
@@ -304,10 +297,8 @@ class Payload(
 @Serializable
 class InspectRequest(
     val code: String,
-
     @SerialName("cursor_pos")
     val cursorPos: Int,
-
     @SerialName("detail_level")
     val detailLevel: DetailLevel,
 ) : AbstractMessageContent()
@@ -322,7 +313,6 @@ class InspectReply(
 @Serializable
 class CompleteRequest(
     val code: String,
-
     @SerialName("cursor_pos")
     val cursorPos: Int,
 ) : AbstractMessageContent()
@@ -351,17 +341,12 @@ class HelpLink(
 class KernelInfoReply(
     @SerialName("protocol_version")
     val protocolVersion: String,
-
     val implementation: String,
-
     @SerialName("implementation_version")
     val implementationVersion: String,
-
     val banner: String,
-
     @SerialName("language_info")
     val languageInfo: LanguageInfo,
-
     @SerialName("help_links")
     val helpLinks: List<HelpLink>,
 ) : OkReply()
@@ -404,7 +389,6 @@ class DisplayDataResponse(
 @Serializable
 class ExecutionInputReply(
     val code: String,
-
     @SerialName("execution_count")
     val executionCount: Long,
 ) : AbstractMessageContent()
@@ -413,7 +397,6 @@ class ExecutionInputReply(
 class ExecutionResultMessage(
     val data: JsonElement,
     val metadata: JsonElement,
-
     @SerialName("execution_count")
     val executionCount: Long,
 ) : AbstractMessageContent()
@@ -449,15 +432,12 @@ class HistoryRequest(
     val raw: Boolean,
     @Suppress("PropertyName")
     val hist_access_type: String,
-
     // If hist_access_type is 'range'
     val session: Int? = null,
     val start: Int? = null,
     val stop: Int? = null,
-
     // hist_access_type is 'tail' or 'search'
     val n: Int? = null,
-
     // If hist_access_type is 'search'
     val pattern: String? = null,
     val unique: Boolean? = null,
@@ -524,7 +504,6 @@ class ListErrorsRequest(
 @Serializable
 class ListErrorsReply(
     val code: String,
-
     val errors: List<ScriptDiagnostic>,
 ) : AbstractMessageContent()
 
@@ -544,7 +523,10 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
         TODO("Not yet implemented")
     }
 
-    override fun serialize(encoder: Encoder, value: ScriptDiagnostic) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ScriptDiagnostic,
+    ) {
         require(encoder is JsonEncoder)
 
         encoder.encodeJsonElement(
@@ -594,25 +576,30 @@ object MessageDataSerializer : KSerializer<MessageData> {
         val parentHeader = element["parent_header"]?.let { format.decodeFromJsonElement<MessageHeader?>(it) }
         val metadata = element["metadata"]?.let { format.decodeFromJsonElement<JsonElement?>(it) }
 
-        val content = if (header != null) {
-            val contentSerializer = chooseSerializer(header.type)
-            element["content"]?.let {
-                format.decodeFromJsonElement(contentSerializer, it)
+        val content =
+            if (header != null) {
+                val contentSerializer = chooseSerializer(header.type)
+                element["content"]?.let {
+                    format.decodeFromJsonElement(contentSerializer, it)
+                }
+            } else {
+                null
             }
-        } else {
-            null
-        }
 
         return MessageData(header, parentHeader, metadata, content)
     }
 
-    override fun serialize(encoder: Encoder, value: MessageData) {
+    override fun serialize(
+        encoder: Encoder,
+        value: MessageData,
+    ) {
         require(encoder is JsonEncoder)
         val format = encoder.json
 
-        val content = value.content?.let {
-            format.encodeToJsonElement(serializer(it::class.createType()), it)
-        } ?: Json.EMPTY
+        val content =
+            value.content?.let {
+                format.encodeToJsonElement(serializer(it::class.createType()), it)
+            } ?: Json.EMPTY
 
         encoder.encodeJsonElement(
             messageDataJson(
@@ -640,7 +627,10 @@ object ConnectReplySerializer : KSerializer<ConnectReply> {
         return ConnectReply(json)
     }
 
-    override fun serialize(encoder: Encoder, value: ConnectReply) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ConnectReply,
+    ) {
         encoder.encodeSerializableValue(jsonSerializer, value.ports)
     }
 }

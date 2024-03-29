@@ -44,9 +44,10 @@ class AllLibrariesTest : AbstractSingleReplTest() {
         // "spark",
         private val disabled: Set<String> = setOf()
 
-        private val arguments: Map<String, () -> String> = mapOf(
-            "lib-ext" to { getResourceText("PUBLISHED_JUPYTER_API_VERSION") },
-        )
+        private val arguments: Map<String, () -> String> =
+            mapOf(
+                "lib-ext" to { getResourceText("PUBLISHED_JUPYTER_API_VERSION") },
+            )
 
         private val additionalTests: Map<String, AllLibrariesTest.() -> Unit> = mapOf()
 

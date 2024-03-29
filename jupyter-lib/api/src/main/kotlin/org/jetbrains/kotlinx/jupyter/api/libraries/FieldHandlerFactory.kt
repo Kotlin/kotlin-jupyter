@@ -13,7 +13,11 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 object FieldHandlerFactory {
-    fun createHandler(kType: KType, execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
+    fun createHandler(
+        kType: KType,
+        execution: FieldHandlerExecution<*>,
+        typeDetection: TypeDetection,
+    ): FieldHandler {
         return when (typeDetection) {
             TypeDetection.COMPILE_TIME -> FieldHandlerByClass(kType, execution)
             TypeDetection.RUNTIME -> FieldHandlerByRuntimeClass(kType.classifier as KClass<*>, execution)
@@ -21,11 +25,18 @@ object FieldHandlerFactory {
     }
 
     @Deprecated("Please use KType API", replaceWith = ReplaceWith("createHandler(kClass.starProjectedType, execution, typeDetection)"))
-    fun createHandler(kClass: KClass<*>, execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
+    fun createHandler(
+        kClass: KClass<*>,
+        execution: FieldHandlerExecution<*>,
+        typeDetection: TypeDetection,
+    ): FieldHandler {
         return createHandler(kClass.starProjectedType, execution, typeDetection)
     }
 
-    inline fun <reified T : Any> createHandler(execution: FieldHandlerExecution<*>, typeDetection: TypeDetection): FieldHandler {
+    inline fun <reified T : Any> createHandler(
+        execution: FieldHandlerExecution<*>,
+        typeDetection: TypeDetection,
+    ): FieldHandler {
         return createHandler(typeOf<T>(), execution, typeDetection)
     }
 
@@ -44,11 +55,17 @@ object FieldHandlerFactory {
         }
     }
 
-    inline fun <reified T : Any> createDeclareHandler(typeDetection: TypeDetection, noinline callback: VariableDeclarationCallback<T>): FieldHandler {
+    inline fun <reified T : Any> createDeclareHandler(
+        typeDetection: TypeDetection,
+        noinline callback: VariableDeclarationCallback<T>,
+    ): FieldHandler {
         return createHandler<T>(createDeclareExecution(callback), typeDetection)
     }
 
-    inline fun <reified T : Any> createUpdateHandler(typeDetection: TypeDetection, noinline callback: VariableUpdateCallback<T>): FieldHandler {
+    inline fun <reified T : Any> createUpdateHandler(
+        typeDetection: TypeDetection,
+        noinline callback: VariableUpdateCallback<T>,
+    ): FieldHandler {
         return createHandler<T>(createUpdateExecution(callback), typeDetection)
     }
 }

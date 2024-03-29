@@ -28,13 +28,12 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutionStackFrame
 import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.util.accepts
-import java.util.*
+import java.util.LinkedList
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
 
 internal class CellExecutorImpl(private val replContext: SharedReplContext) : CellExecutor {
-
     override fun execute(
         code: Code,
         processVariables: Boolean,
@@ -50,42 +49,44 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             val context = ExecutionContext(replContext, this@CellExecutorImpl, stackFrame.push())
 
             log.debug("Executing code:\n$code")
-            val preprocessedCode = if (processMagics) {
-                val processedMagics = codePreprocessor.process(code, context)
+            val preprocessedCode =
+                if (processMagics) {
+                    val processedMagics = codePreprocessor.process(code, context)
 
-                log.debug("Adding ${processedMagics.libraries.size} libraries")
-                val libraries = processedMagics.libraries.getDefinitions(notebook)
+                    log.debug("Adding ${processedMagics.libraries.size} libraries")
+                    val libraries = processedMagics.libraries.getDefinitions(notebook)
 
-                for (library in libraries) {
-                    context.addLibrary(library)
+                    for (library in libraries) {
+                        context.addLibrary(library)
+                    }
+
+                    processedMagics.code
+                } else {
+                    code
                 }
-
-                processedMagics.code
-            } else {
-                code
-            }
             executorWorkflowListener?.codePreprocessed(preprocessedCode)
 
             if (preprocessedCode.isBlank()) {
                 return InternalEvalResult(FieldValue(Unit, null), Unit)
             }
 
-            val result = baseHost.withHost(context) {
-                try {
-                    evaluator.eval(
-                        preprocessedCode,
-                        JupyterCompilingOptions(currentCellId, isUserCode),
-                        executorWorkflowListener,
-                    )
-                } catch (e: ReplException) {
-                    if (e.cause is ThreadDeath) {
-                        rethrowAsLibraryException(LibraryProblemPart.INTERRUPTION_CALLBACKS) {
-                            interruptionCallbacksProcessor.runCallbacks()
+            val result =
+                baseHost.withHost(context) {
+                    try {
+                        evaluator.eval(
+                            preprocessedCode,
+                            JupyterCompilingOptions(currentCellId, isUserCode),
+                            executorWorkflowListener,
+                        )
+                    } catch (e: ReplException) {
+                        if (e.cause is ThreadDeath) {
+                            rethrowAsLibraryException(LibraryProblemPart.INTERRUPTION_CALLBACKS) {
+                                interruptionCallbacksProcessor.runCallbacks()
+                            }
                         }
+                        throw e
                     }
-                    throw e
                 }
-            }
             var newResultField: FieldValue? = null
             val snippetClass = evaluator.lastKClass
 
@@ -136,7 +137,6 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         private val executor: CellExecutor,
         private val stackFrame: MutableExecutionStackFrame,
     ) : KotlinKernelHost, ExecutionHost {
-
         private val executionQueue = LinkedList<ExecutionCallback<*>>()
 
         private fun runChild(code: Code) {
@@ -194,19 +194,26 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }
         }
 
-        override fun loadKotlinArtifacts(artifacts: Collection<String>, version: String?) {
+        override fun loadKotlinArtifacts(
+            artifacts: Collection<String>,
+            version: String?,
+        ) {
             val kotlinVersion = version ?: currentKotlinVersion
-            val repositories = buildList {
-                if (kotlinVersion.contains("dev")) {
-                    add("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-                } else if (kotlinVersion.contains("SNAPSHOT")) add("*mavenLocal")
-            }
-            val libraries = listOf(
-                libraryDefinition {
-                    it.repositories = repositories.map(::KernelRepository)
-                    it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
-                },
-            )
+            val repositories =
+                buildList {
+                    if (kotlinVersion.contains("dev")) {
+                        add("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+                    } else if (kotlinVersion.contains("SNAPSHOT")) {
+                        add("*mavenLocal")
+                    }
+                }
+            val libraries =
+                listOf(
+                    libraryDefinition {
+                        it.repositories = repositories.map(::KernelRepository)
+                        it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
+                    },
+                )
             buildDependenciesInitCode(libraries)?.let { scheduleExecution(it) }
         }
 
@@ -225,18 +232,25 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             }.firstOrNull()
         }
 
-        override fun execute(code: Code) = executor.execute(
-            code,
-            processVariables = false,
-            invokeAfterCallbacks = false,
-            stackFrame = stackFrame,
-        ).result
+        override fun execute(code: Code) =
+            executor.execute(
+                code,
+                processVariables = false,
+                invokeAfterCallbacks = false,
+                stackFrame = stackFrame,
+            ).result
 
-        override fun display(value: Any, id: String?) {
+        override fun display(
+            value: Any,
+            id: String?,
+        ) {
             sharedContext.displayHandler.handleDisplay(value, this, id)
         }
 
-        override fun updateDisplay(value: Any, id: String?) {
+        override fun updateDisplay(
+            value: Any,
+            id: String?,
+        ) {
             sharedContext.displayHandler.handleUpdate(value, this, id)
         }
 
@@ -256,23 +270,25 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         }
 
         override fun declare(variables: Iterable<VariableDeclaration>) {
-            val tempDeclarations = variables.joinToString(
-                "\n",
-                "object $TEMP_OBJECT_NAME {\n",
-                "\n}\n$TEMP_OBJECT_NAME",
-            ) {
-                it.tempDeclaration
-            }
+            val tempDeclarations =
+                variables.joinToString(
+                    "\n",
+                    "object $TEMP_OBJECT_NAME {\n",
+                    "\n}\n$TEMP_OBJECT_NAME",
+                ) {
+                    it.tempDeclaration
+                }
             val result = execute(tempDeclarations).value as Any
             val resultClass = result::class
             val propertiesMap = resultClass.declaredMemberProperties.associateBy { it.name }
 
-            val declarations = variables.joinToString("\n") {
-                @Suppress("UNCHECKED_CAST")
-                val prop = propertiesMap[it.name] as KMutableProperty1<Any, Any?>
-                prop.set(result, it.value)
-                it.declaration
-            }
+            val declarations =
+                variables.joinToString("\n") {
+                    @Suppress("UNCHECKED_CAST")
+                    val prop = propertiesMap[it.name] as KMutableProperty1<Any, Any?>
+                    prop.set(result, it.value)
+                    it.declaration
+                }
             execute(declarations)
         }
 
@@ -282,9 +298,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         companion object {
             private const val TEMP_OBJECT_NAME = "___temp_declarations"
 
-            private val VariableDeclaration.mutabilityQualifier get() = if (isMutable) "var" else "val"
-            private val VariableDeclaration.declaration get() = """$mutabilityQualifier `$name`: $type = $TEMP_OBJECT_NAME.`$name` as $type"""
-            private val VariableDeclaration.tempDeclaration get() = """var `$name`: ${type.withNullability(true)} = null"""
+            private val VariableDeclaration.mutabilityQualifier get() =
+                if (isMutable) "var" else "val"
+            private val VariableDeclaration.declaration get() =
+                """$mutabilityQualifier `$name`: $type = $TEMP_OBJECT_NAME.`$name` as $type"""
+            private val VariableDeclaration.tempDeclaration get() =
+                """var `$name`: ${type.withNullability(true)} = null"""
         }
     }
 }

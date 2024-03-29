@@ -5,7 +5,7 @@ import io.kotest.matchers.collections.shouldBeOneOf
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
-import jupyter.kotlin.varsTableStyleClass
+import jupyter.kotlin.VARIABLES_TABLE_STYLE_CLASS
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
@@ -24,7 +24,10 @@ import kotlin.test.assertTrue
 class ApiTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
 
-    private fun jEval(jupyterId: Int, code: String): EvalResultEx {
+    private fun jEval(
+        jupyterId: Int,
+        code: String,
+    ): EvalResultEx {
         return eval(code, jupyterId = jupyterId)
     }
 
@@ -46,10 +49,11 @@ class ApiTest : AbstractSingleReplTest() {
 
     @Test
     fun compilerVersion() {
-        val jCompiler = getSimpleCompiler(
-            ScriptCompilationConfiguration(),
-            ScriptEvaluationConfiguration(),
-        )
+        val jCompiler =
+            getSimpleCompiler(
+                ScriptCompilationConfiguration(),
+                ScriptEvaluationConfiguration(),
+            )
         val version = jCompiler.version
         assertTrue(version.major >= 0)
     }
@@ -74,27 +78,28 @@ class ApiTest : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        val varsUpdate = mutableMapOf(
-            "x" to "1",
-            "y" to "abc",
-            "z" to "47",
-        )
+        val varsUpdate =
+            mutableMapOf(
+                "x" to "1",
+                "y" to "abc",
+                "z" to "47",
+            )
         val htmlText = eval("notebook.variablesReportAsHTML").renderedValue
         htmlText.shouldBeTypeOf<MimeTypedResult>()
         assertEquals(
             """
             <style>
-            table.$varsTableStyleClass, .$varsTableStyleClass th, .$varsTableStyleClass td {
+            table.$VARIABLES_TABLE_STYLE_CLASS, .$VARIABLES_TABLE_STYLE_CLASS th, .$VARIABLES_TABLE_STYLE_CLASS td {
               border: 1px solid black;
               border-collapse: collapse;
               text-align:center;
             }
-            .$varsTableStyleClass th, .$varsTableStyleClass td {
+            .$VARIABLES_TABLE_STYLE_CLASS th, .$VARIABLES_TABLE_STYLE_CLASS td {
               padding: 5px;
             }
             </style>
             <h2 style="text-align:center;">Variables State</h2>
-            <table class="$varsTableStyleClass" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
+            <table class="$VARIABLES_TABLE_STYLE_CLASS" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
               <tr>
                 <th>Variable</th>
                 <th>Value</th>
@@ -119,20 +124,22 @@ class ApiTest : AbstractSingleReplTest() {
 
     @Test
     fun `check that JSON output has correct metadata`() {
-        val res = eval(
-            """
-            val jsonStr = ""${'"'}
-            {"a": [1], "b": {"inner1": "helloworld\n````"}}
-            ""${'"'}
+        val res =
+            eval(
+                """
+                val jsonStr = ""${'"'}
+                {"a": [1], "b": {"inner1": "helloworld\n````"}}
+                ""${'"'}
 
-            JSON(jsonStr)
-            """.trimIndent(),
-        ).renderedValue
+                JSON(jsonStr)
+                """.trimIndent(),
+            ).renderedValue
         res.shouldBeInstanceOf<MimeTypedResultEx>()
         val displayJson = res.toJson(overrideId = null)
 
         val format = Json { prettyPrint = true }
-        format.encodeToString(displayJson) shouldBe """
+        format.encodeToString(displayJson) shouldBe
+            """
             {
                 "data": {
                     "application/json": {
@@ -152,6 +159,6 @@ class ApiTest : AbstractSingleReplTest() {
                     }
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
     }
 }

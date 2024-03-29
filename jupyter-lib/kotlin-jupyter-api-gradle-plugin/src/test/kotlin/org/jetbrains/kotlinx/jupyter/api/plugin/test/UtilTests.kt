@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
 class UtilTests {
-
     @Test
     fun testVersions() {
         val version = kernelVersion().trim()

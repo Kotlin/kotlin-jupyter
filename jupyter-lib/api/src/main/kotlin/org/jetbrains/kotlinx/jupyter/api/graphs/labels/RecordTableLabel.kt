@@ -13,11 +13,12 @@ abstract class RecordTableLabel : Label {
     override val text: String get() {
         val nProperties = properties.size
 
-        fun inTable(builderAction: StringBuilder.() -> Unit) = buildString {
-            append("<<table${attributes.html}>")
-            builderAction()
-            append("</table>>")
-        }
+        fun inTable(builderAction: StringBuilder.() -> Unit) =
+            buildString {
+                append("<<table${attributes.html}>")
+                builderAction()
+                append("</table>>")
+            }
 
         if (nProperties == 0) return inTable { append("<tr><td>$mainText</td></tr>") }
         return inTable {
@@ -35,7 +36,7 @@ abstract class RecordTableLabel : Label {
     }
 
     override val shape: String? get() = "plaintext"
-    open val attributes: TableAttributes get() = TableAttributes.DEFAULT
+    open val attributes: TableAttributes get() = TableAttributes.default
 
     abstract val mainText: String?
     abstract val properties: Collection<Iterable<String>>
@@ -71,7 +72,7 @@ abstract class RecordTableLabel : Label {
         }
 
         companion object : HtmlAttributesCompanion<TableAttributes>() {
-            override val DEFAULT = TableAttributes()
+            override val default = TableAttributes()
         }
     }
 }

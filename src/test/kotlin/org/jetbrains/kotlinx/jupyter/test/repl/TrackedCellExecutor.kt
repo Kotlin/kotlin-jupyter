@@ -14,14 +14,15 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import kotlin.reflect.KClass
 
 interface TrackedCellExecutor : CellExecutor {
-
     val executedCodes: List<Code>
 
     val results: List<Any?>
 
     companion object {
-
-        fun create(baseRepl: ReplForJupyter, mockEvaluator: Boolean): TrackedCellExecutor {
+        fun create(
+            baseRepl: ReplForJupyter,
+            mockEvaluator: Boolean,
+        ): TrackedCellExecutor {
             baseRepl as ReplForJupyterImpl
             val context = baseRepl.sharedContext
             val evaluator = if (mockEvaluator) MockedInternalEvaluator() else TrackedInternalEvaluatorImpl(context.evaluator)
@@ -35,7 +36,11 @@ fun ReplForJupyter.mockExecution() = TrackedCellExecutor.create(this, true)
 
 fun ReplForJupyter.trackExecution() = TrackedCellExecutor.create(this, false)
 
-internal class MockedCellExecutorImpl(private val executor: CellExecutor, override val executedCodes: List<Code>, override val results: List<Any?>) : TrackedCellExecutor, CellExecutor by executor
+internal class MockedCellExecutorImpl(
+    private val executor: CellExecutor,
+    override val executedCodes: List<Code>,
+    override val results: List<Any?>,
+) : TrackedCellExecutor, CellExecutor by executor
 
 interface TrackedInternalEvaluator : InternalEvaluator {
     val executedCodes: List<Code>
@@ -66,8 +71,9 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
     }
 }
 
-internal class TrackedInternalEvaluatorImpl(private val baseEvaluator: InternalEvaluator) : TrackedInternalEvaluator, InternalEvaluator by baseEvaluator {
-
+internal class TrackedInternalEvaluatorImpl(
+    private val baseEvaluator: InternalEvaluator,
+) : TrackedInternalEvaluator, InternalEvaluator by baseEvaluator {
     override val executedCodes = mutableListOf<Code>()
 
     override val results = mutableListOf<Any?>()

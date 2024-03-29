@@ -5,7 +5,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-fun closeWithTimeout(timeoutMs: Long, doClose: () -> Unit) {
+fun closeWithTimeout(
+    timeoutMs: Long,
+    doClose: () -> Unit,
+) {
     val closeExecutor = Executors.newSingleThreadExecutor()
     try {
         val future = closeExecutor.submit(doClose)

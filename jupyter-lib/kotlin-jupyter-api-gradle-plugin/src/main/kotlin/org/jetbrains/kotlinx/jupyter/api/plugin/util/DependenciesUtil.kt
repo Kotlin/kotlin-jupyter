@@ -14,7 +14,10 @@ internal const val KOTLIN_DEV_REPOSITORY_URL = "https://maven.pkg.jetbrains.spac
 
 internal val String.isDevKotlinVersion: Boolean get() = "-" in this
 
-internal fun RepositoryHandler.addMavenIfDoesNotExist(name: String, url: String): ArtifactRepository {
+internal fun RepositoryHandler.addMavenIfDoesNotExist(
+    name: String,
+    url: String,
+): ArtifactRepository {
     return findByName(name) ?: maven {
         this.name = name
         this.url = URI(url)
@@ -22,7 +25,10 @@ internal fun RepositoryHandler.addMavenIfDoesNotExist(name: String, url: String)
 }
 
 internal fun RepositoryHandler.addMavenCentralIfDoesNotExist(): ArtifactRepository {
-    return addMavenIfDoesNotExist(ArtifactRepositoryContainer.DEFAULT_MAVEN_CENTRAL_REPO_NAME, ArtifactRepositoryContainer.MAVEN_CENTRAL_URL)
+    return addMavenIfDoesNotExist(
+        ArtifactRepositoryContainer.DEFAULT_MAVEN_CENTRAL_REPO_NAME,
+        ArtifactRepositoryContainer.MAVEN_CENTRAL_URL,
+    )
 }
 
 private fun readFileProp(fileName: String): String {
@@ -37,6 +43,9 @@ internal fun kotlinVersion(): String {
     return readFileProp("KOTLIN_VERSION")
 }
 
-internal fun kernelDependency(moduleName: String, version: String? = null): ExternalModuleDependency {
+internal fun kernelDependency(
+    moduleName: String,
+    version: String? = null,
+): ExternalModuleDependency {
     return DefaultExternalModuleDependency(GROUP_ID, "kotlin-jupyter-$moduleName", version ?: kernelVersion())
 }

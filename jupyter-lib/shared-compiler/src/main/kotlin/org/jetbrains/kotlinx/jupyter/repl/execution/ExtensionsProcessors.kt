@@ -17,7 +17,10 @@ abstract class AbstractExtensionsProcessor<T : Any>(
 ) : ExtensionsProcessor<T> {
     protected val extensions = PriorityList<T>(latterFirst = latterFirst)
 
-    override fun register(extension: T, priority: Int) {
+    override fun register(
+        extension: T,
+        priority: Int,
+    ) {
         extensions.addOrUpdatePriority(extension, priority)
     }
 
@@ -49,7 +52,11 @@ class BeforeCellExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallb
 }
 
 class AfterCellExecutionsProcessor : AbstractExtensionsProcessor<AfterCellExecutionCallback>() {
-    fun process(host: KotlinKernelHost, snippetInstance: Any, result: FieldValue) {
+    fun process(
+        host: KotlinKernelHost,
+        snippetInstance: Any,
+        result: FieldValue,
+    ) {
         extensions.forEach {
             LOG.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.AFTER_CELL_CALLBACKS) {
@@ -67,11 +74,12 @@ class AfterCellExecutionsProcessor : AbstractExtensionsProcessor<AfterCellExecut
 class ShutdownExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
     fun process(executor: CellExecutor): List<ShutdownEvalResult> {
         return extensions.map {
-            val res = LOG.catchAll {
-                rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
-                    executor.execute(it)
+            val res =
+                LOG.catchAll {
+                    rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
+                        executor.execute(it)
+                    }
                 }
-            }
             ShutdownEvalResult(res)
         }
     }

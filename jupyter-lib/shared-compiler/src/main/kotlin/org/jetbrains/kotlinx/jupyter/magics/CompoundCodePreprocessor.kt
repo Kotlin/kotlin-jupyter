@@ -13,7 +13,6 @@ import org.jetbrains.kotlinx.jupyter.util.PriorityList
  * are run first
  */
 class CompoundCodePreprocessor(vararg preprocessors: CodePreprocessor) : CodePreprocessor, ExtensionsProcessor<CodePreprocessor> {
-
     private val preprocessors = PriorityList<CodePreprocessor>()
 
     init {
@@ -22,7 +21,10 @@ class CompoundCodePreprocessor(vararg preprocessors: CodePreprocessor) : CodePre
         }
     }
 
-    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+    override fun process(
+        code: String,
+        host: KotlinKernelHost,
+    ): CodePreprocessor.Result {
         var result = CodePreprocessor.Result(code, emptyList())
 
         fun iteration(preprocessor: CodePreprocessor) {
@@ -44,7 +46,10 @@ class CompoundCodePreprocessor(vararg preprocessors: CodePreprocessor) : CodePre
         return result
     }
 
-    override fun register(extension: CodePreprocessor, priority: Int) {
+    override fun register(
+        extension: CodePreprocessor,
+        priority: Int,
+    ) {
         preprocessors.add(extension, priority)
     }
 

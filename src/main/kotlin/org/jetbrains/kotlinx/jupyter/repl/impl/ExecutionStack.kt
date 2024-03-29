@@ -11,6 +11,7 @@ class MutableExecutionStackFrame(
 }
 
 fun ExecutionStackFrame?.traverseStack() = generateSequence(this) { it.previous }
+
 fun ExecutionStackFrame?.push() = MutableExecutionStackFrame(this)
 
 val ExecutionStackFrame?.libraryOptions: Map<String, String> get() {

@@ -2,7 +2,10 @@ package org.jetbrains.kotlinx.jupyter.util
 
 import kotlin.reflect.KProperty1
 
-fun <T : Comparable<T>> compareNullable(s1: T?, s2: T?): Int {
+fun <T : Comparable<T>> compareNullable(
+    s1: T?,
+    s2: T?,
+): Int {
     return if (s1 == null) {
         if (s2 == null) {
             0
@@ -18,13 +21,19 @@ fun <T : Comparable<T>> compareNullable(s1: T?, s2: T?): Int {
     }
 }
 
-fun <T : Comparable<T>, P : Comparable<P>> T.compareProperty(other: T, property: KProperty1<T, P?>): Int {
+fun <T : Comparable<T>, P : Comparable<P>> T.compareProperty(
+    other: T,
+    property: KProperty1<T, P?>,
+): Int {
     val thisP = property.get(this)
     val otherP = property.get(other)
     return compareNullable(thisP, otherP)
 }
 
-fun <T : Comparable<T>, P : Comparable<P>> T.compareByProperties(other: T, vararg properties: KProperty1<T, P?>): Int {
+fun <T : Comparable<T>, P : Comparable<P>> T.compareByProperties(
+    other: T,
+    vararg properties: KProperty1<T, P?>,
+): Int {
     for (prop in properties) {
         val comparison = compareProperty(other, prop)
         if (comparison != 0) return comparison

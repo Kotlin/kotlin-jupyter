@@ -9,7 +9,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import java.util.*
+import java.util.Locale
 
 /**
  * Jupyter connection socket types
@@ -79,7 +79,10 @@ interface JupyterConnection {
     /**
      * Send raw [message] to a given [socketName]
      */
-    fun send(socketName: JupyterSocketType, message: RawMessage)
+    fun send(
+        socketName: JupyterSocketType,
+        message: RawMessage,
+    )
 }
 
 interface CommManager {
@@ -90,7 +93,10 @@ interface CommManager {
      * @param data Content of comm_open message
      * @return Created comm
      */
-    fun openComm(target: String, data: JsonObject = Json.EMPTY): Comm
+    fun openComm(
+        target: String,
+        data: JsonObject = Json.EMPTY,
+    ): Comm
 
     /**
      * Closes a comm with a given ID. Sends comm_close request to frontend
@@ -98,7 +104,10 @@ interface CommManager {
      * @param id ID of a comm to close
      * @param data Content of comm_close message
      */
-    fun closeComm(id: String, data: JsonObject = Json.EMPTY)
+    fun closeComm(
+        id: String,
+        data: JsonObject = Json.EMPTY,
+    )
 
     /**
      * Get all comms for a given target, or all opened comms if `target` is `null`
@@ -111,7 +120,10 @@ interface CommManager {
      * @param target
      * @param callback
      */
-    fun registerCommTarget(target: String, callback: CommOpenCallback)
+    fun registerCommTarget(
+        target: String,
+        callback: CommOpenCallback,
+    )
 
     /**
      * Unregister target callback
@@ -150,7 +162,10 @@ interface Comm {
     /**
      * Closes a comm. Sends comm_close request to frontend if [notifyClient] is `true`
      */
-    fun close(data: JsonObject = Json.EMPTY, notifyClient: Boolean = true)
+    fun close(
+        data: JsonObject = Json.EMPTY,
+        notifyClient: Boolean = true,
+    )
 
     /**
      * Adds [action] callback for `comm_close` requests. Does not override existing callbacks
@@ -166,7 +181,11 @@ interface Comm {
 /**
  * Construct raw message callback
  */
-fun rawMessageCallback(socket: JupyterSocketType, messageType: String?, action: RawMessageAction): RawMessageCallback {
+fun rawMessageCallback(
+    socket: JupyterSocketType,
+    messageType: String?,
+    action: RawMessageAction,
+): RawMessageCallback {
     return object : RawMessageCallback {
         override val socket: JupyterSocketType get() = socket
         override val messageType: String? get() = messageType

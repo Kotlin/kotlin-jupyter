@@ -11,7 +11,10 @@ interface ResultsRenderersProcessor : RenderersProcessor {
     /**
      * Renders cell result [field] represented as [FieldValue] in the [host] context
      */
-    fun renderResult(host: ExecutionHost, field: FieldValue): Any?
+    fun renderResult(
+        host: ExecutionHost,
+        field: FieldValue,
+    ): Any?
 
     /**
      * Adds new [renderer] for this notebook.
@@ -20,5 +23,8 @@ interface ResultsRenderersProcessor : RenderersProcessor {
      */
     fun register(renderer: RendererFieldHandler): Code?
 
-    fun register(renderer: RendererFieldHandler, priority: Int): Code?
+    fun register(
+        renderer: RendererFieldHandler,
+        priority: Int,
+    ): Code?
 }

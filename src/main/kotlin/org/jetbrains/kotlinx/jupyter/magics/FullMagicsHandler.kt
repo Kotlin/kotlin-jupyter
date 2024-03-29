@@ -31,20 +31,30 @@ class FullMagicsHandler(
     librariesProcessor: LibrariesProcessor,
     switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
 ) : UseMagicsHandler(
-    librariesProcessor,
-    switcher,
-) {
+        librariesProcessor,
+        switcher,
+    ) {
+    private fun updateOutputConfig(
+        conf: OutputConfig,
+        argv: List<String>,
+    ): OutputConfig {
+        val parser =
+            object : CliktCommand() {
+                val max: Int by option("--max-cell-size", help = "Maximum cell output").int().default(conf.cellOutputMaxSize)
+                val maxBuffer: Int by option("--max-buffer", help = "Maximum buffer size").int().default(conf.captureBufferMaxSize)
+                val maxBufferNewline: Int by option(
+                    "--max-buffer-newline",
+                    help = "Maximum buffer size when newline got",
+                ).int().default(conf.captureNewlineBufferSize)
+                val maxTimeInterval: Long by option(
+                    "--max-time",
+                    help = "Maximum time wait for output to accumulate",
+                ).long().default(conf.captureBufferTimeLimitMs)
+                val dontCaptureStdout: Boolean by option("--no-stdout", help = "Don't capture output").flag(default = !conf.captureOutput)
+                val reset: Boolean by option("--reset-to-defaults", help = "Reset to defaults").flag()
 
-    private fun updateOutputConfig(conf: OutputConfig, argv: List<String>): OutputConfig {
-        val parser = object : CliktCommand() {
-            val max: Int by option("--max-cell-size", help = "Maximum cell output").int().default(conf.cellOutputMaxSize)
-            val maxBuffer: Int by option("--max-buffer", help = "Maximum buffer size").int().default(conf.captureBufferMaxSize)
-            val maxBufferNewline: Int by option("--max-buffer-newline", help = "Maximum buffer size when newline got").int().default(conf.captureNewlineBufferSize)
-            val maxTimeInterval: Long by option("--max-time", help = "Maximum time wait for output to accumulate").long().default(conf.captureBufferTimeLimitMs)
-            val dontCaptureStdout: Boolean by option("--no-stdout", help = "Don't capture output").flag(default = !conf.captureOutput)
-            val reset: Boolean by option("--reset-to-defaults", help = "Reset to defaults").flag()
-            override fun run() {}
-        }
+                override fun run() {}
+            }
         parser.parse(argv)
 
         return if (parser.reset) {
@@ -65,6 +75,7 @@ class FullMagicsHandler(
     override fun handleTrackExecution() {
         object : CliktCommand() {
             val logLevel by argument().enum<ExecutedCodeLogging>(true) { it.name.lowercase() }.optional()
+
             override fun run() {
                 repl.executedCodeLogging = logLevel ?: ExecutedCodeLogging.ALL
             }
@@ -99,6 +110,7 @@ class FullMagicsHandler(
                 ),
                 ignoreCase = false,
             )
+
             override fun run() {
                 setRootLoggingLevel(level)
             }
@@ -129,19 +141,26 @@ class FullMagicsHandler(
                 val appenderType = commandArgs.getOrNull(2) ?: throw ReplException("Log handler add command needs appender type argument")
                 val appenderTypeArgs = commandArgs.subList(3, commandArgs.size)
 
-                val appender: Appender<ILoggingEvent> = when (appenderType) {
-                    "--file" -> {
-                        val fileName = appenderTypeArgs.getOrNull(0) ?: throw ReplException("File appender needs file name to be specified")
-                        val res = FileAppender<ILoggingEvent>()
-                        res.file = fileName
-                        res
+                val appender: Appender<ILoggingEvent> =
+                    when (appenderType) {
+                        "--file" -> {
+                            val fileName =
+                                appenderTypeArgs.getOrNull(
+                                    0,
+                                ) ?: throw ReplException("File appender needs file name to be specified")
+                            val res = FileAppender<ILoggingEvent>()
+                            res.file = fileName
+                            res
+                        }
+                        else -> throw ReplException("Unknown appender type: $appenderType")
                     }
-                    else -> throw ReplException("Unknown appender type: $appenderType")
-                }
                 addAppender(appenderName, appender)
             }
             "remove" -> {
-                val appenderName = commandArgs.getOrNull(1) ?: throw ReplException("Log handler remove command needs appender name argument")
+                val appenderName =
+                    commandArgs.getOrNull(
+                        1,
+                    ) ?: throw ReplException("Log handler remove command needs appender name argument")
                 removeAppender(appenderName)
             }
             else -> throw ReplException("")

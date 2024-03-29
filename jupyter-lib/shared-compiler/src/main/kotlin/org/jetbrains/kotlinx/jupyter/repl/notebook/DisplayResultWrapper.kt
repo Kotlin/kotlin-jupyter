@@ -7,7 +7,10 @@ class DisplayResultWrapper private constructor(
     override val cell: MutableCodeCell,
 ) : DisplayResult by display, MutableDisplayResultWithCell {
     companion object {
-        fun create(display: DisplayResult, cell: MutableCodeCell): DisplayResultWrapper {
+        fun create(
+            display: DisplayResult,
+            cell: MutableCodeCell,
+        ): DisplayResultWrapper {
             return if (display is DisplayResultWrapper) {
                 DisplayResultWrapper(display.display, cell)
             } else {

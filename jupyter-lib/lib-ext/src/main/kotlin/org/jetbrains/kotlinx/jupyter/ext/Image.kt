@@ -56,17 +56,25 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
         this(data.toByteArray(outputFormat), outputFormat)
 
     fun withAttr(attr: HTMLAttr) = Image(attributes + attr)
-    fun withAttr(name: String, value: String) = withAttr(HTMLAttr(name, value))
+
+    fun withAttr(
+        name: String,
+        value: String,
+    ) = withAttr(HTMLAttr(name, value))
 
     fun withWidth(value: String) = withAttr("width", value)
+
     fun withWidth(value: Int) = withAttr("width", value.toString())
+
     fun withHeight(value: String) = withAttr("height", value)
+
     fun withHeight(value: Int) = withAttr("height", value.toString())
 
     companion object {
-        private val formatToMime = mapOf(
-            "svg" to "svg+xml",
-        )
+        private val formatToMime =
+            mapOf(
+                "svg" to "svg+xml",
+            )
 
         private fun BufferedImage.toByteArray(format: String): ByteArray {
             val stream = ByteArrayOutputStream()
@@ -78,7 +86,10 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             return HTMLAttr("src", url)
         }
 
-        fun embedSrc(data: ByteArray, format: String): HTMLAttr {
+        fun embedSrc(
+            data: ByteArray,
+            format: String,
+        ): HTMLAttr {
             val encoder = Base64.getEncoder()
             return HTMLAttr(
                 "src",

@@ -6,13 +6,19 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class CommandsTest {
-    private fun assertLooksLikeReplCommand(expectedValid: Boolean, code: String) {
+    private fun assertLooksLikeReplCommand(
+        expectedValid: Boolean,
+        code: String,
+    ) {
         val actualValid = looksLikeReplCommand(code)
         val expectedValidString = if (expectedValid) "valid" else "invalid"
         assertEquals(expectedValid, actualValid, "Validation failed for code \"$code\", expected it to be $expectedValidString command")
     }
 
-    private fun assertIsCommand(code: String, expectedCommandValue: String) {
+    private fun assertIsCommand(
+        code: String,
+        expectedCommandValue: String,
+    ) {
         assertLooksLikeReplCommand(true, code)
         val actualCommandValue = replCommandOrNull(code).second
         assertEquals(expectedCommandValue, actualCommandValue)

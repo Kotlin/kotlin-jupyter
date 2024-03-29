@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 class NotebookParserTest {
-
     @Test
     fun `parse simple notebook`() {
         val notebook = JupyterParser.parse(testData.resolve("testNotebook1.ipynb"))

@@ -11,7 +11,11 @@ class DebugPortCommHandler : CommHandler {
     override val targetId: String
         get() = OPEN_DEBUG_PORT_TARGET
 
-    override fun onReceive(comm: Comm, messageContent: JsonObject, repl: ReplForJupyter) {
+    override fun onReceive(
+        comm: Comm,
+        messageContent: JsonObject,
+        repl: ReplForJupyter,
+    ) {
         comm.sendData(OpenDebugPortReply(repl.debugPort))
     }
 }

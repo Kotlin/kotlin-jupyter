@@ -23,17 +23,19 @@ class ScriptDeclarationsCollectorImpl : ScriptDeclarationsCollectorInternal {
         val fileDeclarations = source.ktFile.declarations
         val scriptDeclaration = fileDeclarations[0] as? KtScript ?: return
 
-        lastDeclarations = scriptDeclaration.declarations.map { declaration ->
-            val kind = when (declaration) {
-                is KtClass -> DeclarationKind.CLASS
-                is KtObjectDeclaration -> DeclarationKind.OBJECT
-                is KtProperty -> DeclarationKind.PROPERTY
-                is KtFunction -> DeclarationKind.FUNCTION
-                is KtScriptInitializer -> DeclarationKind.SCRIPT_INITIALIZER
-                else -> DeclarationKind.UNKNOWN
+        lastDeclarations =
+            scriptDeclaration.declarations.map { declaration ->
+                val kind =
+                    when (declaration) {
+                        is KtClass -> DeclarationKind.CLASS
+                        is KtObjectDeclaration -> DeclarationKind.OBJECT
+                        is KtProperty -> DeclarationKind.PROPERTY
+                        is KtFunction -> DeclarationKind.FUNCTION
+                        is KtScriptInitializer -> DeclarationKind.SCRIPT_INITIALIZER
+                        else -> DeclarationKind.UNKNOWN
+                    }
+                DeclarationInfoImpl(declaration.name, kind)
             }
-            DeclarationInfoImpl(declaration.name, kind)
-        }
     }
 
     override fun getLastSnippetDeclarations(): List<DeclarationInfo> {

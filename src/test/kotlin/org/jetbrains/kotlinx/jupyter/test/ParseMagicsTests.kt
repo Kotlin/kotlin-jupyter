@@ -27,8 +27,8 @@ import kotlin.test.assertTrue
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
 class ParseArgumentsTests {
-
     private val httpUtil = createLibraryHttpUtil()
+
     private fun parseReferenceWithArgs(ref: String) = httpUtil.libraryReferenceParser.parseReferenceWithArgs(ref)
 
     @Test
@@ -135,7 +135,6 @@ class ParseArgumentsTests {
 }
 
 class ParseMagicsTests {
-
     private class TestReplOptions : ReplOptions {
         override var trackClasspath = false
         override var executedCodeLogging = ExecutedCodeLogging.OFF
@@ -145,14 +144,19 @@ class ParseMagicsTests {
 
     private val options = TestReplOptions()
 
-    private fun test(code: String, expectedProcessedCode: String, librariesChecker: (List<LibraryDefinition>) -> Unit = {}) {
+    private fun test(
+        code: String,
+        expectedProcessedCode: String,
+        librariesChecker: (List<LibraryDefinition>) -> Unit = {},
+    ) {
         val httpUtil = createLibraryHttpUtil()
         val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider(httpUtil.libraryInfoCache))
-        val magicsHandler = FullMagicsHandler(
-            options,
-            LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
-            switcher,
-        )
+        val magicsHandler =
+            FullMagicsHandler(
+                options,
+                LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
+                switcher,
+            )
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)
@@ -160,7 +164,10 @@ class ParseMagicsTests {
         }
     }
 
-    private fun intervals(code: String, parseOutCellMarker: Boolean): MagicsAndCodeIntervals {
+    private fun intervals(
+        code: String,
+        parseOutCellMarker: Boolean,
+    ): MagicsAndCodeIntervals {
         val processor = MagicsProcessor(NoopMagicsHandler, parseOutCellMarker)
 
         val magicsIntervals = processor.magicsIntervals(code)
@@ -169,7 +176,10 @@ class ParseMagicsTests {
         return magicsIntervals.toList() to codeIntervals.toList()
     }
 
-    private fun getParsedText(code: String, intervals: List<CodeInterval>): String {
+    private fun getParsedText(
+        code: String,
+        intervals: List<CodeInterval>,
+    ): String {
         return intervals.joinToString("") {
             code.substring(it.from, it.to)
         }
@@ -193,20 +203,20 @@ class ParseMagicsTests {
     fun `multiple magics`() {
         test(
             """
-                    %use lets-plot, krangl
-                    
-                    fun f() = 42
-                    %trackClasspath
-                    val x = 9
-                    
+            %use lets-plot, krangl
+            
+            fun f() = 42
+            %trackClasspath
+            val x = 9
+            
             """.trimIndent(),
             """
-                    
-                    
-                    fun f() = 42
-                    
-                    val x = 9
-                    
+            
+            
+            fun f() = 42
+            
+            val x = 9
+            
             """.trimIndent(),
         ) { libs ->
             assertEquals(2, libs.size)
@@ -216,7 +226,7 @@ class ParseMagicsTests {
 
         test(
             """
-                %trackClasspath off
+            %trackClasspath off
             """.trimIndent(),
             "",
         )
@@ -228,20 +238,20 @@ class ParseMagicsTests {
     fun `wrong magics should be tolerated`() {
         test(
             """
-                    %use lets-plot
-                    %use wrongLib
-                    val x = 9
-                    %wrongMagic
-                    fun f() = 42
-                    %trackExecution generated
+            %use lets-plot
+            %use wrongLib
+            val x = 9
+            %wrongMagic
+            fun f() = 42
+            %trackExecution generated
             """.trimIndent(),
             """
-                    
-                    
-                    val x = 9
-                    
-                    fun f() = 42
-                    
+            
+            
+            val x = 9
+            
+            fun f() = 42
+            
             """.trimIndent(),
         ) { libs ->
             assertEquals(1, libs.size)
@@ -282,17 +292,18 @@ class ParseMagicsTests {
 
     @Test
     fun `cell marker is recognised if specified`() {
-        val (magicsIntervals, codeIntervals) = intervals(
-            """
-            #%% some cell description
-            
-            fun f() = "pay respect"
-            % some magic
-            
-            %some another magic
-            """.trimIndent(),
-            true,
-        )
+        val (magicsIntervals, codeIntervals) =
+            intervals(
+                """
+                #%% some cell description
+                
+                fun f() = "pay respect"
+                % some magic
+                
+                %some another magic
+                """.trimIndent(),
+                true,
+            )
 
         assertEquals(3, magicsIntervals.size)
         assertEquals(2, codeIntervals.size)
@@ -300,7 +311,8 @@ class ParseMagicsTests {
 
     @Test
     fun `cell marker in the middle is not recognised`() {
-        val text = """
+        val text =
+            """
             #%% some cell description
             
             fun f() = "pay respect"
@@ -308,7 +320,7 @@ class ParseMagicsTests {
             #%% some another description - not recognised
             val x = 42
             %some another magic
-        """.trimIndent()
+            """.trimIndent()
 
         val (magicsIntervals, codeIntervals) = intervals(text, true)
 
@@ -328,17 +340,18 @@ class ParseMagicsTests {
 
     @Test
     fun `cell marker is not recognised if not specified`() {
-        val (magicsIntervals, codeIntervals) = intervals(
-            """
-            #%% some cell description
-            
-            fun f() = "pay respect"
-            % some magic
-            
-            %some another magic
-            """.trimIndent(),
-            false,
-        )
+        val (magicsIntervals, codeIntervals) =
+            intervals(
+                """
+                #%% some cell description
+                
+                fun f() = "pay respect"
+                % some magic
+                
+                %some another magic
+                """.trimIndent(),
+                false,
+            )
 
         assertEquals(2, magicsIntervals.size)
         assertEquals(2, codeIntervals.size)
@@ -346,10 +359,11 @@ class ParseMagicsTests {
 
     @Test
     fun `percent sign alone is parsed well`() {
-        val (magicsIntervals, codeIntervals) = intervals(
-            "%",
-            false,
-        )
+        val (magicsIntervals, codeIntervals) =
+            intervals(
+                "%",
+                false,
+            )
 
         assertEquals(1, magicsIntervals.size)
         assertEquals(0, codeIntervals.size)

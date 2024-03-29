@@ -8,13 +8,16 @@ import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesResolver) :
     ExternalDependenciesResolver by remoteResolver {
-
     override fun acceptsRepository(repositoryCoordinates: RepositoryCoordinates): Boolean {
         return hasRepository(repositoryCoordinates) ||
             remoteResolver.acceptsRepository(repositoryCoordinates)
     }
 
-    override fun addRepository(repositoryCoordinates: RepositoryCoordinates, options: ExternalDependenciesResolver.Options, sourceCodeLocation: SourceCode.LocationWithId?): ResultWithDiagnostics<Boolean> {
+    override fun addRepository(
+        repositoryCoordinates: RepositoryCoordinates,
+        options: ExternalDependenciesResolver.Options,
+        sourceCodeLocation: SourceCode.LocationWithId?,
+    ): ResultWithDiagnostics<Boolean> {
         val repository = getRepository(repositoryCoordinates) ?: repositoryCoordinates
         return remoteResolver.addRepository(repository, options, sourceCodeLocation)
     }
@@ -30,8 +33,9 @@ class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesReso
             listOf(
                 Shortcut("mavenLocal") {
                     // Simplified version, without looking in XML files
-                    val path = System.getProperty("maven.repo.local")
-                        ?: "$HOME_PATH/.m2/repository"
+                    val path =
+                        System.getProperty("maven.repo.local")
+                            ?: "$HOME_PATH/.m2/repository"
                     path.toURLString()
                 },
                 Shortcut("ivyLocal") {

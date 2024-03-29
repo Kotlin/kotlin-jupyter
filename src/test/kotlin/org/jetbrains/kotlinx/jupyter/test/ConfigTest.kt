@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.log
-import org.jetbrains.kotlinx.jupyter.startup.mainClassName
+import org.jetbrains.kotlinx.jupyter.startup.MAIN_CLASS_NAME
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -105,35 +105,37 @@ class ConfigTest {
 
     @Test
     fun `maven central versions should be sorted correctly`() {
-        val sortedVersions = listOf(
-            "0.8.0-1-2",
-            "0.12.0-1",
-            "yux",
-            "0.11.0-42",
-            "abcdef",
-            "0.11.0-2",
-            "0.10.4.2",
-            "0.8.0-1-1",
-            "0.8.0-42",
-            "0.10.3.1.dev1",
-        ).sortedWith(KotlinKernelVersion.STRING_VERSION_COMPARATOR)
+        val sortedVersions =
+            listOf(
+                "0.8.0-1-2",
+                "0.12.0-1",
+                "yux",
+                "0.11.0-42",
+                "abcdef",
+                "0.11.0-2",
+                "0.10.4.2",
+                "0.8.0-1-1",
+                "0.8.0-42",
+                "0.10.3.1.dev1",
+            ).sortedWith(KotlinKernelVersion.STRING_VERSION_COMPARATOR)
 
-        sortedVersions shouldBe listOf(
-            "abcdef",
-            "yux",
-            "0.8.0-1-1",
-            "0.8.0-1-2",
-            "0.8.0-42",
-            "0.10.3.1.dev1",
-            "0.10.4.2",
-            "0.11.0-2",
-            "0.11.0-42",
-            "0.12.0-1",
-        )
+        sortedVersions shouldBe
+            listOf(
+                "abcdef",
+                "yux",
+                "0.8.0-1-1",
+                "0.8.0-1-2",
+                "0.8.0-42",
+                "0.10.3.1.dev1",
+                "0.10.4.2",
+                "0.11.0-2",
+                "0.11.0-42",
+                "0.12.0-1",
+            )
     }
 
     @Test
     fun `kernel main class name should be consistent`() {
-        mainClassName shouldBe iKotlinClass.name
+        MAIN_CLASS_NAME shouldBe iKotlinClass.name
     }
 }

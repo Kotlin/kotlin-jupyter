@@ -20,12 +20,18 @@ interface KotlinKernelHost {
      * Try to display the given value. It is only displayed if it's an instance of [Renderable]
      * or may be converted to it
      */
-    fun display(value: Any, id: String? = null)
+    fun display(
+        value: Any,
+        id: String? = null,
+    )
 
     /**
      * Updates display data with given [id] with the new [value]
      */
-    fun updateDisplay(value: Any, id: String? = null)
+    fun updateDisplay(
+        value: Any,
+        id: String? = null,
+    )
 
     /**
      * Schedules execution of the given [execution] after the completing of execution of the current cell
@@ -58,7 +64,10 @@ interface KotlinKernelHost {
      * @param artifacts Names of the artifacts substituted to the above line
      * @param version Version of the artifacts to load. Current Kotlin version will be used by default
      */
-    fun loadKotlinArtifacts(artifacts: Collection<String>, version: String? = null)
+    fun loadKotlinArtifacts(
+        artifacts: Collection<String>,
+        version: String? = null,
+    )
 
     /**
      * Loads Kotlin standard library extensions for a current JDK

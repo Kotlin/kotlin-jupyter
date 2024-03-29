@@ -41,6 +41,7 @@ import kotlin.test.assertNull
 
 class IntegrationApiTests {
     private val httpUtil = createLibraryHttpUtil()
+
     private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
         return createRepl(
             httpUtil,
@@ -50,37 +51,41 @@ class IntegrationApiTests {
             libraryResolver = libraryResolver,
         )
     }
+
     private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter {
         return makeRepl(libs.toList().toLibraries())
     }
 
     @Test
     fun `field handling`() {
-        val lib = "mylib" to library {
-            val generated = mutableSetOf<Int>()
-            updateVariable<List<Int>> { list, property ->
+        val lib =
+            "mylib" to
+                library {
+                    val generated = mutableSetOf<Int>()
+                    updateVariable<List<Int>> { list, property ->
 
-                val size = list.size
-                val className = "TypedIntList$size"
-                val propRef = if (property.returnType.isMarkedNullable) property.name + "!!" else property.name
-                val converter = "$className($propRef)"
-                if (generated.contains(size)) {
-                    execute(converter).name!!
-                } else {
-                    val properties = (list.indices).joinToString("\n") { "val value$it : Int get() = list[$it]" }
+                        val size = list.size
+                        val className = "TypedIntList$size"
+                        val propRef = if (property.returnType.isMarkedNullable) property.name + "!!" else property.name
+                        val converter = "$className($propRef)"
+                        if (generated.contains(size)) {
+                            execute(converter).name!!
+                        } else {
+                            val properties = (list.indices).joinToString("\n") { "val value$it : Int get() = list[$it]" }
 
-                    val classDeclaration = """
-                    class $className(val list: List<Int>): List<Int> by list {
-                        $properties                    
+                            val classDeclaration =
+                                """
+                                class $className(val list: List<Int>): List<Int> by list {
+                                    $properties                    
+                                }
+                                $converter
+                                """.trimIndent()
+
+                            generated.add(size)
+                            execute(classDeclaration).name!!
+                        }
                     }
-                    $converter
-                    """.trimIndent()
-
-                    generated.add(size)
-                    execute(classDeclaration).name!!
                 }
-            }
-        }
 
         val repl = makeRepl(lib)
 
@@ -123,11 +128,13 @@ class IntegrationApiTests {
 
     @Test
     fun `after cell execution`() {
-        val lib = "mylib" to library {
-            afterCellExecution { _, _ ->
-                execute("2")
-            }
-        }
+        val lib =
+            "mylib" to
+                library {
+                    afterCellExecution { _, _ ->
+                        execute("2")
+                    }
+                }
         val repl = makeRepl(lib).trackExecution()
 
         repl.execute("%use mylib\n1")
@@ -139,27 +146,35 @@ class IntegrationApiTests {
 
     @Test
     fun `code preprocessors`() {
-        val lib = "mylib" to library {
-            addCodePreprocessor(
-                object : CodePreprocessor {
-                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
-                        return CodePreprocessor.Result(code.replace("2+2", "3+3"))
-                    }
+        val lib =
+            "mylib" to
+                library {
+                    addCodePreprocessor(
+                        object : CodePreprocessor {
+                            override fun process(
+                                code: String,
+                                host: KotlinKernelHost,
+                            ): CodePreprocessor.Result {
+                                return CodePreprocessor.Result(code.replace("2+2", "3+3"))
+                            }
 
-                    override fun accepts(code: String): Boolean {
-                        return code == "2+2"
-                    }
-                },
-            )
+                            override fun accepts(code: String): Boolean {
+                                return code == "2+2"
+                            }
+                        },
+                    )
 
-            addCodePreprocessor(
-                object : CodePreprocessor {
-                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
-                        return CodePreprocessor.Result(code.replace("1", "2"))
-                    }
-                },
-            )
-        }
+                    addCodePreprocessor(
+                        object : CodePreprocessor {
+                            override fun process(
+                                code: String,
+                                host: KotlinKernelHost,
+                            ): CodePreprocessor.Result {
+                                return CodePreprocessor.Result(code.replace("1", "2"))
+                            }
+                        },
+                    )
+                }
         val repl = makeRepl(lib).trackExecution()
 
         repl.execute("%use mylib")
@@ -171,13 +186,14 @@ class IntegrationApiTests {
     @Test
     fun `result code preprocessor`() {
         val displays = mutableListOf<Any>()
-        val repl = createRepl(
-            httpUtil,
-            scriptClasspath = classpath,
-            homeDir = null,
-            mavenRepositories = testRepositories,
-            displayHandler = TestDisplayHandler(displays),
-        )
+        val repl =
+            createRepl(
+                httpUtil,
+                scriptClasspath = classpath,
+                homeDir = null,
+                mavenRepositories = testRepositories,
+                displayHandler = TestDisplayHandler(displays),
+            )
 
         repl.eval {
             addLibrary(
@@ -188,17 +204,19 @@ class IntegrationApiTests {
                         if (result.name != null) return@afterCellExecution
 
                         val cellDeclarations = notebook.currentCell!!.declarations
-                        val propNamesWithOrder = cellDeclarations
-                            .filter { it.kind == DeclarationKind.PROPERTY }
-                            .withIndex()
-                            .associate {
-                                it.value.name to it.index
-                            }
+                        val propNamesWithOrder =
+                            cellDeclarations
+                                .filter { it.kind == DeclarationKind.PROPERTY }
+                                .withIndex()
+                                .associate {
+                                    it.value.name to it.index
+                                }
 
                         val props = kClass.declaredMemberProperties
-                        val lastProp = props.maxByOrNull { prop ->
-                            propNamesWithOrder[prop.name] ?: -1
-                        } ?: return@afterCellExecution
+                        val lastProp =
+                            props.maxByOrNull { prop ->
+                                propNamesWithOrder[prop.name] ?: -1
+                            } ?: return@afterCellExecution
 
                         lastProp.get(snippetInstance)?.let { this.display(it, null) }
                     }
@@ -228,11 +246,12 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        val res = repl.evalRendered(
-            """
-            ses.visualizeColor("red")
-            """.trimIndent(),
-        )
+        val res =
+            repl.evalRendered(
+                """
+                ses.visualizeColor("red")
+                """.trimIndent(),
+            )
 
         val result = res as Renderable
         val json = result.render(repl.notebook).toJson(Json.EMPTY, null)
@@ -243,15 +262,17 @@ class IntegrationApiTests {
 
     @Test
     fun `library options`() {
-        val libs = listOf(
-            "lib" to """
-                {
-                    "dependencies": [
-                        "src/test/testData/kotlin-jupyter-api-test-0.0.18.jar"
-                    ]
-                }
-            """.trimIndent(),
-        )
+        val libs =
+            listOf(
+                "lib" to
+                    """
+                    {
+                        "dependencies": [
+                            "src/test/testData/kotlin-jupyter-api-test-0.0.18.jar"
+                        ]
+                    }
+                    """.trimIndent(),
+            )
         val repl = makeRepl(libs.toLibraries())
         repl.evalRaw("%use lib(a = 42, b=foo)")
 
@@ -314,11 +335,13 @@ class IntegrationApiTests {
     @Test
     fun `interruption callbacks`() {
         var x = 0
-        val repl = makeRepl(
-            "lib1" to library {
-                onInterrupt { ++x }
-            },
-        )
+        val repl =
+            makeRepl(
+                "lib1" to
+                    library {
+                        onInterrupt { ++x }
+                    },
+            )
 
         repl.evalRaw("%use lib1")
         x shouldBe 0
@@ -330,16 +353,19 @@ class IntegrationApiTests {
     @Test
     fun `color scheme change`() {
         var y = 2
-        val repl = makeRepl(
-            "lib1" to library {
-                onColorSchemeChange { scheme ->
-                    y = when (scheme) {
-                        ColorScheme.LIGHT -> 3
-                        ColorScheme.DARK -> 4
-                    }
-                }
-            },
-        )
+        val repl =
+            makeRepl(
+                "lib1" to
+                    library {
+                        onColorSchemeChange { scheme ->
+                            y =
+                                when (scheme) {
+                                    ColorScheme.LIGHT -> 3
+                                    ColorScheme.DARK -> 4
+                                }
+                        }
+                    },
+            )
 
         repl.evalRaw("%use lib1")
         y shouldBe 2
@@ -353,30 +379,32 @@ class IntegrationApiTests {
 
     @Test
     fun `repositories with auth should generate correct code`() {
-        val lib = library {
-            repositories {
-                maven {
-                    url = "sftp://repo.mycompany.com:22/repo"
-                    credentials {
-                        username = "xx\"y"
-                        password = "678\n9"
+        val lib =
+            library {
+                repositories {
+                    maven {
+                        url = "sftp://repo.mycompany.com:22/repo"
+                        credentials {
+                            username = "xx\"y"
+                            password = "678\n9"
+                        }
                     }
+
+                    mavenLocal()
                 }
 
-                mavenLocal()
+                dependencies("my.group:dep:42")
             }
-
-            dependencies("my.group:dep:42")
-        }
 
         val code = buildDependenciesInitCode(listOf(lib))
 
-        code shouldBe """
+        code shouldBe
+            """
             @file:Repository("*mavenLocal")
             @file:Repository("sftp://repo.mycompany.com:22/repo", username="xx\"y", password="678\n9")
             @file:DependsOn("my.group:dep:42")
             
-        """.trimIndent()
+            """.trimIndent()
     }
 
     @Test
@@ -392,13 +420,14 @@ class IntegrationApiTests {
         }
 
         repl.evalRaw("42")
-        val res = assertDoesNotThrow {
-            repl.evalRendered(
-                """
-                "42"
-                """.trimIndent(),
-            )
-        }
+        val res =
+            assertDoesNotThrow {
+                repl.evalRendered(
+                    """
+                    "42"
+                    """.trimIndent(),
+                )
+            }
         assertNull(res)
     }
 }

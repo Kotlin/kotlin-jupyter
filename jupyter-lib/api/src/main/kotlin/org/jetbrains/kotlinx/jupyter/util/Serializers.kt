@@ -41,7 +41,10 @@ abstract class PrimitiveStringPropertySerializer<T : Any>(
         return ctr(p)
     }
 
-    override fun serialize(encoder: Encoder, value: T) {
+    override fun serialize(
+        encoder: Encoder,
+        value: T,
+    ) {
         encoder.encodeString(prop.get(value))
     }
 }
@@ -71,7 +74,10 @@ abstract class ListToMapSerializer<T, K, V>(
         return tempMap.map { (key, value) -> mapper(key, value) }
     }
 
-    override fun serialize(encoder: Encoder, value: List<T>) {
+    override fun serialize(
+        encoder: Encoder,
+        value: List<T>,
+    ) {
         val tempMap = value.associate(reverseMapper)
         utilSerializer.serialize(encoder, tempMap)
     }
@@ -95,7 +101,10 @@ abstract class StringValueSerializer<T : Any>(
         return deserializer(str)
     }
 
-    override fun serialize(encoder: Encoder, value: T) {
+    override fun serialize(
+        encoder: Encoder,
+        value: T,
+    ) {
         encoder.encodeString(serializer(value))
     }
 }
@@ -107,7 +116,8 @@ object KotlinKernelVersionSerializer : StringValueSerializer<KotlinKernelVersion
 )
 
 object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(ResourceFallbacksBundle::class.qualifiedName!!, PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor(ResourceFallbacksBundle::class.qualifiedName!!, PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): ResourceFallbacksBundle {
         return when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
@@ -129,34 +139,44 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
         }
     }
 
-    override fun serialize(encoder: Encoder, value: ResourceFallbacksBundle) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ResourceFallbacksBundle,
+    ) {
         encoder.encodeSerializableValue(serializer(), value.locations)
     }
 }
 
 object PatternNameAcceptanceRuleSerializer : KSerializer<PatternNameAcceptanceRule> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(PatternNameAcceptanceRule::class.qualifiedName!!, PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor(PatternNameAcceptanceRule::class.qualifiedName!!, PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): PatternNameAcceptanceRule {
         val rule = decoder.decodeString()
+
         fun throwError(): Nothing = throw SerializationException("Wrong format of pattern rule: $rule")
 
         val parts = rule.split(':').map { it.trim() }
-        val (sign, pattern) = when (parts.size) {
-            1 -> "+" to parts[0]
-            2 -> parts[0] to parts[1]
-            else -> throwError()
-        }
-        val accepts = when (sign) {
-            "+" -> true
-            "-" -> false
-            else -> throwError()
-        }
+        val (sign, pattern) =
+            when (parts.size) {
+                1 -> "+" to parts[0]
+                2 -> parts[0] to parts[1]
+                else -> throwError()
+            }
+        val accepts =
+            when (sign) {
+                "+" -> true
+                "-" -> false
+                else -> throwError()
+            }
 
         return PatternNameAcceptanceRule(accepts, pattern)
     }
 
-    override fun serialize(encoder: Encoder, value: PatternNameAcceptanceRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: PatternNameAcceptanceRule,
+    ) {
         encoder.encodeString("${ if (value.acceptsFlag) '+' else '-' }:${value.pattern}")
     }
 }
@@ -171,33 +191,38 @@ object KernelRepositorySerializer : KSerializer<KernelRepository> {
                 "Maven repository description has wrong format${reason?.let { ": $it" }.orEmpty()}",
             )
 
-        val repository: KernelRepository = when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
-            is JsonPrimitive -> {
-                if (!obj.isString) throwWrongFormat()
-                KernelRepository(obj.content)
+        val repository: KernelRepository =
+            when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
+                is JsonPrimitive -> {
+                    if (!obj.isString) throwWrongFormat()
+                    KernelRepository(obj.content)
+                }
+                is JsonObject -> {
+                    val map = Json.decodeFromJsonElement(serializer<Map<String, String>>(), obj)
+                    val path = map["path"] ?: map["url"] ?: throwWrongFormat("path is not specified")
+                    val username = map["username"]
+                    val password = map["password"]
+                    KernelRepository(path, username, password)
+                }
+                else -> throwWrongFormat()
             }
-            is JsonObject -> {
-                val map = Json.decodeFromJsonElement(serializer<Map<String, String>>(), obj)
-                val path = map["path"] ?: map["url"] ?: throwWrongFormat("path is not specified")
-                val username = map["username"]
-                val password = map["password"]
-                KernelRepository(path, username, password)
-            }
-            else -> throwWrongFormat()
-        }
         return repository
     }
 
-    override fun serialize(encoder: Encoder, value: KernelRepository) {
-        val json = if (value.username == null && value.password == null) {
-            JsonPrimitive(value.path)
-        } else {
-            buildJsonObject {
-                put("path", JsonPrimitive(value.path))
-                value.username?.let { put("username", JsonPrimitive(it)) }
-                value.password?.let { put("password", JsonPrimitive(it)) }
+    override fun serialize(
+        encoder: Encoder,
+        value: KernelRepository,
+    ) {
+        val json =
+            if (value.username == null && value.password == null) {
+                JsonPrimitive(value.path)
+            } else {
+                buildJsonObject {
+                    put("path", JsonPrimitive(value.path))
+                    value.username?.let { put("username", JsonPrimitive(it)) }
+                    value.password?.let { put("password", JsonPrimitive(it)) }
+                }
             }
-        }
         encoder.encodeSerializableValue(serializer(), json)
     }
 }

@@ -8,7 +8,10 @@ import kotlin.reflect.jvm.internal.ReflectProperties.Val
 import kotlin.reflect.jvm.isAccessible
 
 fun interface TextRenderer {
-    fun render(processor: TextRenderersProcessor, value: Any?): String?
+    fun render(
+        processor: TextRenderersProcessor,
+        value: Any?,
+    ): String?
 }
 
 class TextRendererWithDescription(private val description: String, action: TextRenderer) : TextRenderer by action {
@@ -22,7 +25,10 @@ data class TextRendererWithPriority(
     val priority: Int = ProcessingPriority.DEFAULT,
 )
 
-private fun String.indent(indent: String = "    ", exceptFirst: Boolean = false): String {
+private fun String.indent(
+    indent: String = "    ",
+    exceptFirst: Boolean = false,
+): String {
     val str = this
     return buildString {
         val lines = str.lines()
@@ -35,90 +41,99 @@ private fun String.indent(indent: String = "    ", exceptFirst: Boolean = false)
 }
 
 object TextRenderers {
-    val NULL = TextRendererWithDescription("renders null") { _, value ->
-        if (value == null) "null" else null
-    }
-
-    val PRIMITIVES = TextRendererWithDescription("renders strings, booleans and numbers") { _, value ->
-        when (value) {
-            is String -> value
-            is Number -> value.toString()
-            is Boolean -> value.toString()
-            else -> null
+    val NULL =
+        TextRendererWithDescription("renders null") { _, value ->
+            if (value == null) "null" else null
         }
-    }
 
-    val ITERABLES = TextRendererWithDescription("renders iterables, elements are rendered transitively") { processor, value ->
-        if (value !is Iterable<*>) {
-            null
-        } else {
+    val PRIMITIVES =
+        TextRendererWithDescription("renders strings, booleans and numbers") { _, value ->
             when (value) {
-                is ClosedRange<*> -> value.toString()
-                else -> renderIterable(
-                    processor,
-                    processor.render(value::class),
-                    value,
-                )
+                is String -> value
+                is Number -> value.toString()
+                is Boolean -> value.toString()
+                else -> null
             }
         }
-    }
 
-    val MAPS = TextRendererWithDescription("renders maps, keys and values are rendered transitively") { processor, value ->
-        if (value !is Map<*, *>) {
-            null
-        } else {
-            renderMap(processor, processor.render(value::class), value)
-        }
-    }
-
-    val CLASS = TextRendererWithDescription("renders KClass<*> objects") { _, value ->
-        if (value !is KClass<*>) {
-            null
-        } else {
-            value.simpleName
-        }
-    }
-
-    val OBJECT = TextRendererWithDescription("renders any objects") { processor, value ->
-        if (value == null) {
-            null
-        } else {
-            when (value) {
-                is Val<*> -> value.toString()
-                is KClass<*> -> value.simpleName
-                is Class<*> -> value.simpleName
-                else -> {
-                    val valueMap = when (value) {
-                        is MatchResult -> buildObjectMapByKotlinProperties(value, MatchResult::class)
-                        is MatchGroup -> buildObjectMapByKotlinProperties(value, MatchGroup::class)
-                        else -> buildObjectMapByJavaFields(value)
-                    }
-                    renderMap(
-                        processor,
-                        processor.render(value::class),
-                        valueMap,
-                        "=",
-                        openBracket = "(",
-                        closeBracket = ")",
-                    )
+    val ITERABLES =
+        TextRendererWithDescription("renders iterables, elements are rendered transitively") { processor, value ->
+            if (value !is Iterable<*>) {
+                null
+            } else {
+                when (value) {
+                    is ClosedRange<*> -> value.toString()
+                    else ->
+                        renderIterable(
+                            processor,
+                            processor.render(value::class),
+                            value,
+                        )
                 }
             }
         }
-    }
 
-    val AVOID = TextRendererWithDescription("skips text rendering for some kinds of objects such as java.lang.Class") { _, value ->
-        if (value == null) {
-            null
-        } else {
-            val clazz = value::class
-            val className = clazz.qualifiedName
-            if (className?.startsWith("java.lang.") == true) {
-                value.toString()
-            } else {
+    val MAPS =
+        TextRendererWithDescription("renders maps, keys and values are rendered transitively") { processor, value ->
+            if (value !is Map<*, *>) {
                 null
+            } else {
+                renderMap(processor, processor.render(value::class), value)
             }
         }
-    }
+
+    val CLASS =
+        TextRendererWithDescription("renders KClass<*> objects") { _, value ->
+            if (value !is KClass<*>) {
+                null
+            } else {
+                value.simpleName
+            }
+        }
+
+    val OBJECT =
+        TextRendererWithDescription("renders any objects") { processor, value ->
+            if (value == null) {
+                null
+            } else {
+                when (value) {
+                    is Val<*> -> value.toString()
+                    is KClass<*> -> value.simpleName
+                    is Class<*> -> value.simpleName
+                    else -> {
+                        val valueMap =
+                            when (value) {
+                                is MatchResult -> buildObjectMapByKotlinProperties(value, MatchResult::class)
+                                is MatchGroup -> buildObjectMapByKotlinProperties(value, MatchGroup::class)
+                                else -> buildObjectMapByJavaFields(value)
+                            }
+                        renderMap(
+                            processor,
+                            processor.render(value::class),
+                            valueMap,
+                            "=",
+                            openBracket = "(",
+                            closeBracket = ")",
+                        )
+                    }
+                }
+            }
+        }
+
+    val AVOID =
+        TextRendererWithDescription("skips text rendering for some kinds of objects such as java.lang.Class") { _, value ->
+            if (value == null) {
+                null
+            } else {
+                val clazz = value::class
+                val className = clazz.qualifiedName
+                if (className?.startsWith("java.lang.") == true) {
+                    value.toString()
+                } else {
+                    null
+                }
+            }
+        }
 
     private fun renderIterable(
         processor: TextRenderersProcessor,
@@ -189,18 +204,27 @@ object TextRenderers {
         return buildObjectMapByJavaFields(obj, clazz.declaredFields)
     }
 
-    private fun buildObjectMapByJavaFields(obj: Any, fields: Array<Field>): Map<String, Any?> {
+    private fun buildObjectMapByJavaFields(
+        obj: Any,
+        fields: Array<Field>,
+    ): Map<String, Any?> {
         return buildAbstractObjectMap(obj, fields.toList(), { it.name }) { f, o ->
             f.isAccessible = true
             f.get(o)
         }
     }
 
-    private fun buildObjectMapByKotlinProperties(obj: Any, clazz: KClass<*>): Map<String, Any?> {
+    private fun buildObjectMapByKotlinProperties(
+        obj: Any,
+        clazz: KClass<*>,
+    ): Map<String, Any?> {
         return buildObjectMapByKotlinProperties(obj, clazz.memberProperties)
     }
 
-    private fun buildObjectMapByKotlinProperties(obj: Any, properties: Collection<KProperty1<out Any, *>>): Map<String, Any?> {
+    private fun buildObjectMapByKotlinProperties(
+        obj: Any,
+        properties: Collection<KProperty1<out Any, *>>,
+    ): Map<String, Any?> {
         return buildAbstractObjectMap(obj, properties, { it.name }) { p, o ->
             @Suppress("UNCHECKED_CAST")
             (p as KProperty1<Any, Any?>)
@@ -218,13 +242,14 @@ object TextRenderers {
         return hashMapOf<String, Any?>().apply {
             for (prop in abstractProps) {
                 val name: String = nameGetter(prop)
-                val value: Any? = try {
-                    valueGetter(prop, obj)
-                } catch (e: IllegalAccessException) {
-                    "[exception thrown]"
-                } catch (e: RuntimeException) {
-                    "[inaccessible field]"
-                }
+                val value: Any? =
+                    try {
+                        valueGetter(prop, obj)
+                    } catch (e: IllegalAccessException) {
+                        "[exception thrown]"
+                    } catch (e: RuntimeException) {
+                        "[inaccessible field]"
+                    }
                 put(name, value)
             }
         }

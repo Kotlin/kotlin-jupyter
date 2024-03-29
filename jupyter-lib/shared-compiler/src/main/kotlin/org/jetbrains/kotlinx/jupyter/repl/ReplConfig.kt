@@ -26,12 +26,13 @@ data class ReplConfig(
 
             return ReplConfig(
                 mavenRepositories = defaultRepositoriesCoordinates,
-                libraryResolver = getStandardResolver(
-                    homeDir?.toString(),
-                    resolutionInfoProvider,
-                    httpUtil.httpClient,
-                    httpUtil.libraryDescriptorsManager,
-                ),
+                libraryResolver =
+                    getStandardResolver(
+                        homeDir?.toString(),
+                        resolutionInfoProvider,
+                        httpUtil.httpClient,
+                        httpUtil.libraryDescriptorsManager,
+                    ),
                 httpUtil = httpUtil,
                 resolutionInfoProvider = resolutionInfoProvider,
                 embedded = embedded,

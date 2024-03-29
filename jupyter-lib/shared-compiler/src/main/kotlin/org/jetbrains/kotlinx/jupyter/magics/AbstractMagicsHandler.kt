@@ -13,27 +13,34 @@ abstract class AbstractMagicsHandler : MagicsHandler {
     protected var parseOnly: Boolean = false
 
     protected fun argumentsList() = arg?.trim()?.takeIf { it.isNotEmpty() }?.split(" ") ?: emptyList()
+
     protected fun handleSingleOptionalFlag(action: (Boolean?) -> Unit) {
         object : CliktCommand() {
             val arg by nullableFlag()
+
             override fun run() {
                 action(arg)
             }
         }.parse(argumentsList())
     }
 
-    private val callbackMap: Map<ReplLineMagic, () -> Unit> = mapOf(
-        ReplLineMagic.USE to ::handleUse,
-        ReplLineMagic.TRACK_CLASSPATH to ::handleTrackClasspath,
-        ReplLineMagic.TRACK_EXECUTION to ::handleTrackExecution,
-        ReplLineMagic.DUMP_CLASSES_FOR_SPARK to ::handleDumpClassesForSpark,
-        ReplLineMagic.USE_LATEST_DESCRIPTORS to ::handleUseLatestDescriptors,
-        ReplLineMagic.OUTPUT to ::handleOutput,
-        ReplLineMagic.LOG_LEVEL to ::handleLogLevel,
-        ReplLineMagic.LOG_HANDLER to ::handleLogHandler,
-    )
+    private val callbackMap: Map<ReplLineMagic, () -> Unit> =
+        mapOf(
+            ReplLineMagic.USE to ::handleUse,
+            ReplLineMagic.TRACK_CLASSPATH to ::handleTrackClasspath,
+            ReplLineMagic.TRACK_EXECUTION to ::handleTrackExecution,
+            ReplLineMagic.DUMP_CLASSES_FOR_SPARK to ::handleDumpClassesForSpark,
+            ReplLineMagic.USE_LATEST_DESCRIPTORS to ::handleUseLatestDescriptors,
+            ReplLineMagic.OUTPUT to ::handleOutput,
+            ReplLineMagic.LOG_LEVEL to ::handleLogLevel,
+            ReplLineMagic.LOG_HANDLER to ::handleLogHandler,
+        )
 
-    override fun handle(magicText: String, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
+    override fun handle(
+        magicText: String,
+        tryIgnoreErrors: Boolean,
+        parseOnly: Boolean,
+    ) {
         try {
             val parts = magicText.split(' ', limit = 2)
             val keyword = parts[0]
@@ -52,7 +59,12 @@ abstract class AbstractMagicsHandler : MagicsHandler {
         }
     }
 
-    fun handle(magic: ReplLineMagic, arg: String?, tryIgnoreErrors: Boolean, parseOnly: Boolean) {
+    fun handle(
+        magic: ReplLineMagic,
+        arg: String?,
+        tryIgnoreErrors: Boolean,
+        parseOnly: Boolean,
+    ) {
         val callback = callbackMap[magic] ?: throw UnhandledMagicException(magic, this)
 
         this.arg = arg
@@ -63,12 +75,19 @@ abstract class AbstractMagicsHandler : MagicsHandler {
     }
 
     open fun handleUse() {}
+
     open fun handleTrackClasspath() {}
+
     open fun handleTrackExecution() {}
+
     open fun handleDumpClassesForSpark() {}
+
     open fun handleUseLatestDescriptors() {}
+
     open fun handleOutput() {}
+
     open fun handleLogLevel() {}
+
     open fun handleLogHandler() {}
 
     companion object {

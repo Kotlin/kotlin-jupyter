@@ -8,14 +8,16 @@ import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import kotlin.reflect.KClass
 
 class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
-
     private val handlers = mutableMapOf<String, ClassDeclarationsCallback>()
 
     override fun register(handler: ClassAnnotationHandler) {
         handlers[handler.annotation.qualifiedName!!] = handler.callback
     }
 
-    override fun process(executedSnippet: KClass<*>, host: KotlinKernelHost) {
+    override fun process(
+        executedSnippet: KClass<*>,
+        host: KotlinKernelHost,
+    ) {
         executedSnippet.nestedClasses
             .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }

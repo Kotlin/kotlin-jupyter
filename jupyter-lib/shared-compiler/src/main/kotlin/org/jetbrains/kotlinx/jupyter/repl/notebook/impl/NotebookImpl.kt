@@ -42,6 +42,7 @@ class NotebookImpl(
     override val libraryLoader: LibraryLoader,
     debugPortProvided: Boolean,
 ) : MutableNotebook, Closeable {
+    @Suppress("FunctionName")
     private fun `$debugMethod`() {
         try {
             while (true) {
@@ -50,14 +51,16 @@ class NotebookImpl(
         } catch (_: InterruptedException) {
         }
     }
-    private val debugThread = if (debugPortProvided) {
-        thread(
-            name = DEBUG_THREAD_NAME,
-            block = ::`$debugMethod`,
-        )
-    } else {
-        null
-    }
+
+    private val debugThread =
+        if (debugPortProvided) {
+            thread(
+                name = DEBUG_THREAD_NAME,
+                block = ::`$debugMethod`,
+            )
+        } else {
+            null
+        }
     private val cells = hashMapOf<Int, MutableCodeCell>()
     override var sharedReplContext: SharedReplContext? = null
 
@@ -108,9 +111,7 @@ class NotebookImpl(
         explicitClientType ?: JupyterClientDetector.detect()
     }
 
-    override fun addCell(
-        data: EvalData,
-    ): MutableCodeCell {
+    override fun addCell(data: EvalData): MutableCodeCell {
         val cell = CodeCellImpl(this, data.executionCounter, data.rawCode, lastCell)
         cells[data.executionCounter] = cell
         history.add(cell)
@@ -136,6 +137,7 @@ class NotebookImpl(
 
     private var _currentColorScheme: ColorScheme = ColorScheme.LIGHT
     override val currentColorScheme: ColorScheme get() = _currentColorScheme
+
     override fun changeColorScheme(newScheme: ColorScheme) {
         _currentColorScheme = newScheme
         val context = sharedReplContext ?: return
@@ -186,7 +188,10 @@ class NotebookImpl(
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()
 
-    override fun getLibraryFromDescriptor(descriptorText: String, options: Map<String, String>): LibraryDefinition {
+    override fun getLibraryFromDescriptor(
+        descriptorText: String,
+        options: Map<String, String>,
+    ): LibraryDefinition {
         return parseLibraryDescriptor(descriptorText)
             .convertToDefinition(options.entries.map { Variable(it.key, it.value) })
     }

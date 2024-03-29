@@ -18,7 +18,8 @@ class LibraryLoadingTest : AbstractSingleReplTest() {
 
     private inline fun <reified T> loadIntegration() {
         val fqn = T::class.qualifiedName!!
-        val json = """
+        val json =
+            """
             {
               "definitions": [],
               "producers": [
@@ -27,7 +28,7 @@ class LibraryLoadingTest : AbstractSingleReplTest() {
                 }
               ]
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val integrationTempDir = createTempDirectory(tempDir, "jupyterTests_$fqn")
         val jsonDir = integrationTempDir.resolve("META-INF").resolve("kotlin-jupyter-libraries")
@@ -35,11 +36,12 @@ class LibraryLoadingTest : AbstractSingleReplTest() {
         val jsonPath = jsonDir.resolve("libraries.json")
         jsonPath.writeText(json)
 
-        val classLoader = URLClassLoader(
-            arrayOf(
-                integrationTempDir.toUri().toURL(),
-            ),
-        )
+        val classLoader =
+            URLClassLoader(
+                arrayOf(
+                    integrationTempDir.toUri().toURL(),
+                ),
+            )
 
         repl.eval {
             repl.librariesScanner.addLibrariesFromClassLoader(

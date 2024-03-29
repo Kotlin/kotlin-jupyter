@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
-import java.util.*
+import java.util.ServiceLoader
 
 fun loadDefaultReplFactory(
     replComponentsProvider: ReplComponentsProvider,

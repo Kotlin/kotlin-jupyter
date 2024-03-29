@@ -14,21 +14,23 @@ fun interface ReplProvider {
     companion object {
         private val httpUtil = createLibraryHttpUtil()
 
-        val withoutLibraryResolution = ReplProvider { classpath ->
-            createRepl(httpUtil, scriptClasspath = classpath, isEmbedded = true).apply {
-                initializeWithCurrentClasspath()
+        val withoutLibraryResolution =
+            ReplProvider { classpath ->
+                createRepl(httpUtil, scriptClasspath = classpath, isEmbedded = true).apply {
+                    initializeWithCurrentClasspath()
+                }
             }
-        }
 
         fun withDefaultClasspathResolution(
             shouldResolve: (String?) -> Boolean = { true },
             shouldResolveToEmpty: (String?) -> Boolean = { false },
         ) = ReplProvider { classpath ->
-            val resolver = run {
-                var res: LibraryResolver = ClasspathLibraryResolver(httpUtil.libraryDescriptorsManager, null, shouldResolve)
-                res = ToEmptyLibraryResolver(res, shouldResolveToEmpty)
-                res
-            }
+            val resolver =
+                run {
+                    var res: LibraryResolver = ClasspathLibraryResolver(httpUtil.libraryDescriptorsManager, null, shouldResolve)
+                    res = ToEmptyLibraryResolver(res, shouldResolveToEmpty)
+                    res
+                }
 
             createRepl(
                 httpUtil = httpUtil,

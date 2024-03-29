@@ -13,12 +13,13 @@ class ReplWithReceiverTests : AbstractReplTest() {
     fun testReplWithReceiver() {
         val value = 5
         val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
-        val repl = createRepl(
-            httpUtil,
-            scriptClasspath = cp,
-            homeDir = null,
-            scriptReceivers = listOf(ConstReceiver(value)),
-        )
+        val repl =
+            createRepl(
+                httpUtil,
+                scriptClasspath = cp,
+                homeDir = null,
+                scriptReceivers = listOf(ConstReceiver(value)),
+            )
         val res = repl.evalRaw("value")
         assertEquals(value, res)
     }

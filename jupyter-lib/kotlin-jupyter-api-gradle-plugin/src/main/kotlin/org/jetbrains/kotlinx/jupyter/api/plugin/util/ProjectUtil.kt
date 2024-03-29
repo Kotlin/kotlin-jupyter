@@ -10,9 +10,12 @@ import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import java.io.File
-import java.util.*
+import java.util.Locale
 
-internal fun Project.configureDependency(scope: String, dependency: ExternalModuleDependency) {
+internal fun Project.configureDependency(
+    scope: String,
+    dependency: ExternalModuleDependency,
+) {
     repositories {
         if (kotlinVersion().isDevKotlinVersion) {
             addMavenIfDoesNotExist(KOTLIN_DEV_REPOSITORY_NAME, KOTLIN_DEV_REPOSITORY_URL)
@@ -21,8 +24,9 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
 
     // apply configuration to JVM-only project
     plugins.withId("org.jetbrains.kotlin.jvm") {
-        val configuration = project.configurations.findByName(scope)
-            ?: error("$scope configuration is not resolved for a Kotlin-JVM project. ${allConfigurationsNamesMessage()}")
+        val configuration =
+            project.configurations.findByName(scope)
+                ?: error("$scope configuration is not resolved for a Kotlin-JVM project. ${allConfigurationsNamesMessage()}")
         dependencies {
             configuration.invoke(dependency)
         }
@@ -35,12 +39,19 @@ internal fun Project.configureDependency(scope: String, dependency: ExternalModu
                 { target ->
                     val jvmTargetName = target.name
                     val capitalizedScope = scope.capitalize(Locale.ROOT)
-                    val possibleConfigurationNames = listOf(
-                        jvmTargetName + "Compilation" + capitalizedScope, // 1.8 onwards
-                        jvmTargetName + capitalizedScope, // 1.7 and before
-                    )
-                    val configuration = possibleConfigurationNames.mapNotNull { project.configurations.findByName(it) }.firstOrNull()
-                        ?: error("None of $possibleConfigurationNames configurations could be resolved for a multiplatform project. ${allConfigurationsNamesMessage()}")
+                    val possibleConfigurationNames =
+                        listOf(
+                            jvmTargetName + "Compilation" + capitalizedScope, // 1.8 onwards
+                            jvmTargetName + capitalizedScope, // 1.7 and before
+                        )
+                    val configuration =
+                        possibleConfigurationNames
+                            .mapNotNull { project.configurations.findByName(it) }
+                            .firstOrNull()
+                            ?: error(
+                                "None of $possibleConfigurationNames configurations could be resolved " +
+                                    "for a multiplatform project. ${allConfigurationsNamesMessage()}",
+                            )
                     dependencies {
                         configuration.invoke(dependency)
                     }
@@ -54,7 +65,10 @@ private fun Project.allConfigurationsNamesMessage(): String {
     return "All available configurations: ${configurations.names.joinToString(", ")}."
 }
 
-internal fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
+internal fun Project.getFlag(
+    propertyName: String,
+    default: Boolean = false,
+): Boolean {
     return findProperty(propertyName)?.let {
         when (it) {
             "true", true -> true
@@ -64,7 +78,10 @@ internal fun Project.getFlag(propertyName: String, default: Boolean = false): Bo
     } ?: default
 }
 
-internal fun Project.propertyByFlag(flagName: String, default: Boolean = false): Property<Boolean> {
+internal fun Project.propertyByFlag(
+    flagName: String,
+    default: Boolean = false,
+): Property<Boolean> {
     return objects.property<Boolean>().apply { set(provider { getFlag(flagName, default) }) }
 }
 

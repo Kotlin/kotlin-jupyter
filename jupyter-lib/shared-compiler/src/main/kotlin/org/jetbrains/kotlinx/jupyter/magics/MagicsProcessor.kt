@@ -8,7 +8,11 @@ class MagicsProcessor(
     private val handler: LibrariesAwareMagicsHandler,
     parseOutCellMarker: Boolean = false,
 ) : CodePreprocessor, AbstractMagicsProcessor(parseOutCellMarker), KernelInternalObject {
-    fun processMagics(code: String, parseOnly: Boolean = false, tryIgnoreErrors: Boolean = false): CodePreprocessor.Result {
+    fun processMagics(
+        code: String,
+        parseOnly: Boolean = false,
+        tryIgnoreErrors: Boolean = false,
+    ): CodePreprocessor.Result {
         val magics = magicsIntervals(code)
 
         for (magicRange in magics) {
@@ -17,7 +21,10 @@ class MagicsProcessor(
         return CodePreprocessor.Result(getCleanCode(code, magics), handler.getLibraries())
     }
 
-    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+    override fun process(
+        code: String,
+        host: KotlinKernelHost,
+    ): CodePreprocessor.Result {
         return processMagics(code)
     }
 }

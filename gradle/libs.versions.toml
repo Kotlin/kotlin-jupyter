@@ -17,7 +17,7 @@ kotlinxCoroutines = "1.8.0"
 jupyterNotebooksParser = "0.1.0-dev-1"
 
 ktlintGradle = "12.1.0"
-ktlint = "0.50.0"
+ktlint = "1.2.1"
 publishPlugin = "1.9.23-dev-44"
 pluginPublishPlugin = "1.2.1"
 versionsPlugin = "0.51.0"

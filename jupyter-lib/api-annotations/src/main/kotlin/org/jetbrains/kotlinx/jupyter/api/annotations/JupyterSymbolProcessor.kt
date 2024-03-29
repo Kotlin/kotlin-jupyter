@@ -17,10 +17,11 @@ class JupyterSymbolProcessor(
     private val logger: KSPLogger,
     private val generatedFilesPath: File,
 ) : SymbolProcessor {
-    private val fqnMap = mapOf(
-        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer" to "producers",
-        "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition" to "definitions",
-    )
+    private val fqnMap =
+        mapOf(
+            "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer" to "producers",
+            "org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition" to "definitions",
+        )
 
     private val annotationFqn = JupyterLibrary::class.qualifiedName!!
     private val annotationSimpleName = JupyterLibrary::class.simpleName!!
@@ -44,8 +45,9 @@ class JupyterSymbolProcessor(
 
     private fun processClass(clazz: KSClassDeclaration) {
         if (!hasLibraryAnnotation(clazz)) return
-        val classFqn = clazz.qualifiedName?.asString()
-            ?: throw Exception("Class $clazz was marked with $annotationSimpleName, but it has no qualified name (anonymous?).")
+        val classFqn =
+            clazz.qualifiedName?.asString()
+                ?: throw Exception("Class $clazz was marked with $annotationSimpleName, but it has no qualified name (anonymous?).")
 
         logger.info("Class $classFqn has $annotationSimpleName annotation")
 

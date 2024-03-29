@@ -8,14 +8,14 @@ import java.io.Closeable
 class JupyterConnectionImpl(
     private val config: KernelConfig,
 ) : AbstractJupyterConnection(), JupyterConnectionInternal, Closeable {
-
-    override val socketManager: JupyterSocketManager = JupyterSocketManagerImpl { socketInfo, context ->
-        openServerSocket(
-            socketInfo,
-            context,
-            config,
-        )
-    }
+    override val socketManager: JupyterSocketManager =
+        JupyterSocketManagerImpl { socketInfo, context ->
+            openServerSocket(
+                socketInfo,
+                context,
+                config,
+            )
+        }
 
     override fun close() {
         socketManager.close()

@@ -23,12 +23,18 @@ class KotlinContext(
     val currentFunctions: Map<String, KotlinFunctionInfo> get() = currentCellFunctionsNames.associateWith { functions[it]!! }
     val currentVariables: Map<String, KotlinVariableInfo> get() = currentCellVariablesNames.associateWith { variables[it]!! }
 
-    fun addVariable(name: String, info: KotlinVariableInfo) {
+    fun addVariable(
+        name: String,
+        info: KotlinVariableInfo,
+    ) {
         variables[name] = info
         currentCellVariablesNames.add(name)
     }
 
-    fun addFunction(name: String, info: KotlinFunctionInfo) {
+    fun addFunction(
+        name: String,
+        info: KotlinFunctionInfo,
+    ) {
         functions[name] = info
         currentCellFunctionsNames.add(name)
     }
@@ -39,14 +45,11 @@ class KotlinContext(
     }
 }
 
-private fun functionSignature(function: KFunction<*>) =
-    function.toString().replace("Line_\\d+\\.".toRegex(), "")
+private fun functionSignature(function: KFunction<*>) = function.toString().replace("Line_\\d+\\.".toRegex(), "")
 
-private fun shortenType(name: String) =
-    name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
+private fun shortenType(name: String) = name.replace("(\\b[_a-zA-Z$][_a-zA-Z0-9$]*\\b\\.)+".toRegex(), "")
 
 class KotlinFunctionInfo(val function: KFunction<*>, val line: Any) : Comparable<KotlinFunctionInfo> {
-
     val name: String
         get() = function.name
 

@@ -15,9 +15,10 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
     private val displays = mutableListOf<Any>()
-    override val repl = makeReplWithStandardResolver { notebook ->
-        TestDisplayHandlerWithRendering(notebook, displays)
-    }
+    override val repl =
+        makeReplWithStandardResolver { notebook ->
+            TestDisplayHandlerWithRendering(notebook, displays)
+        }
 
     @Test
     fun testDataframeDisplay() {
@@ -39,9 +40,10 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
             true,
         )
 
-        val declaredProperties = repl.notebook.currentCell!!.declarations
-            .filter { it.kind == DeclarationKind.PROPERTY }
-            .mapNotNull { it.name }
+        val declaredProperties =
+            repl.notebook.currentCell!!.declarations
+                .filter { it.kind == DeclarationKind.PROPERTY }
+                .mapNotNull { it.name }
 
         declaredProperties shouldBe listOf("name", "height")
 

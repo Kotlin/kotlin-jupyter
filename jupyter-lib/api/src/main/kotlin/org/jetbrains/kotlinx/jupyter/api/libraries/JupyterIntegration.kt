@@ -37,11 +37,9 @@ import kotlin.reflect.KProperty
  * Derive from this class and pass registration callback into constructor
  */
 abstract class JupyterIntegration : LibraryDefinitionProducer {
-
     abstract fun Builder.onLoaded()
 
     class Builder(val notebook: Notebook) {
-
         private val renderers = mutableListOf<RendererFieldHandler>()
 
         private val textRenderers = mutableListOf<TextRendererWithPriority>()
@@ -80,7 +78,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         private val colorSchemeChangedCallbacks = mutableListOf<ColorSchemeChangedCallback>()
 
-        private var _minimalKernelVersion: KotlinKernelVersion? = null
+        private var minKernelVersion: KotlinKernelVersion? = null
 
         private val options: MutableMap<String, String> = mutableMapOf()
 
@@ -134,11 +132,13 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         inline fun <reified T : Any> renderWithHost(noinline renderer: CodeCell.(ExecutionHost, T) -> Any) {
-            val execution = ResultHandlerExecution { host, property ->
-                val currentCell = notebook.currentCell
-                    ?: throw IllegalStateException("Current cell should not be null on renderer invocation")
-                FieldValue(renderer(currentCell, host, property.value as T), null)
-            }
+            val execution =
+                ResultHandlerExecution { host, property ->
+                    val currentCell =
+                        notebook.currentCell
+                            ?: throw IllegalStateException("Current cell should not be null on renderer invocation")
+                    FieldValue(renderer(currentCell, host, property.value as T), null)
+                }
             addRenderer(SubtypeRendererTypeHandler(T::class, execution))
         }
 
@@ -270,7 +270,10 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         fun preprocessCodeWithLibraries(callback: KotlinKernelHost.(Code) -> CodePreprocessor.Result) {
             addCodePreprocessor(
                 object : CodePreprocessor {
-                    override fun process(code: String, host: KotlinKernelHost): CodePreprocessor.Result {
+                    override fun process(
+                        code: String,
+                        host: KotlinKernelHost,
+                    ): CodePreprocessor.Result {
                         return host.callback(code)
                     }
                 },
@@ -315,14 +318,17 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         }
 
         fun setMinimalKernelVersion(version: KotlinKernelVersion) {
-            _minimalKernelVersion = version
+            minKernelVersion = version
         }
 
         fun setMinimalKernelVersion(version: String) {
             setMinimalKernelVersion(KotlinKernelVersion.from(version) ?: error("Wrong kernel version format: $version"))
         }
 
-        fun addOption(name: String, value: String) {
+        fun addOption(
+            name: String,
+            value: String,
+        ) {
             options[name] = value
         }
 
@@ -362,7 +368,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.integrationTypeNameRules = integrationTypeNameRules
                 it.interruptionCallbacks = interruptionCallbacks
                 it.colorSchemeChangedCallbacks = colorSchemeChangedCallbacks
-                it.minKernelVersion = _minimalKernelVersion
+                it.minKernelVersion = minKernelVersion
             }
     }
 

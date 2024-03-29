@@ -17,10 +17,11 @@ class JupyterCommunicationFacilityImpl(
 }
 
 fun JupyterCommunicationFacility.sendStatus(status: KernelStatus) {
-    val message = messageFactory.makeReplyMessageOrNull(
-        MessageType.STATUS,
-        content = StatusReply(status),
-    ) ?: messageFactory.makeSimpleMessage(MessageType.STATUS, content = StatusReply(status))
+    val message =
+        messageFactory.makeReplyMessageOrNull(
+            MessageType.STATUS,
+            content = StatusReply(status),
+        ) ?: messageFactory.makeSimpleMessage(MessageType.STATUS, content = StatusReply(status))
     socketManager.iopub.sendMessage(message)
 }
 
@@ -33,15 +34,22 @@ fun JupyterCommunicationFacility.doWrappedInBusyIdle(action: () -> Unit) {
     }
 }
 
-fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(msgType: MessageType, content: AbstractMessageContent) {
+fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(
+    msgType: MessageType,
+    content: AbstractMessageContent,
+) {
     socketManager.iopub.sendMessage(messageFactory.makeSimpleMessage(msgType, content))
 }
 
-fun JupyterCommunicationFacility.sendWrapped(message: Message) = doWrappedInBusyIdle {
-    socketManager.shell.sendMessage(message)
-}
+fun JupyterCommunicationFacility.sendWrapped(message: Message) =
+    doWrappedInBusyIdle {
+        socketManager.shell.sendMessage(message)
+    }
 
-fun JupyterCommunicationFacility.sendOut(stream: JupyterOutType, text: String) {
+fun JupyterCommunicationFacility.sendOut(
+    stream: JupyterOutType,
+    text: String,
+) {
     socketManager.iopub.sendMessage(
         messageFactory.makeReplyMessage(msgType = MessageType.STREAM, content = StreamResponse(stream.optionName(), text)),
     )

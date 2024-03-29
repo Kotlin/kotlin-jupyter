@@ -6,9 +6,15 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 interface MutableDisplayContainer : DisplayContainer {
     fun add(display: DisplayResultWrapper)
 
-    fun add(display: DisplayResult, cell: MutableCodeCell)
+    fun add(
+        display: DisplayResult,
+        cell: MutableCodeCell,
+    )
 
-    fun update(id: String?, display: DisplayResult)
+    fun update(
+        id: String?,
+        display: DisplayResult,
+    )
 
     override fun getAll(): List<MutableDisplayResultWithCell>
 

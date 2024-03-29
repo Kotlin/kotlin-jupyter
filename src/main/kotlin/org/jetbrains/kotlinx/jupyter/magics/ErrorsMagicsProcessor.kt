@@ -10,7 +10,6 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 class ErrorsMagicsProcessor(
     parseOutCellMarker: Boolean = false,
 ) : AbstractMagicsProcessor(parseOutCellMarker) {
-
     fun process(code: String): Result {
         val magics = magicsIntervals(code)
         val handler = Handler(code)
@@ -36,7 +35,10 @@ class ErrorsMagicsProcessor(
         private val _diagnostics = mutableListOf<ScriptDiagnostic>()
         val diagnostics: List<ScriptDiagnostic> get() = _diagnostics
 
-        fun handle(magicText: String, magicRange: CodeInterval) {
+        fun handle(
+            magicText: String,
+            magicRange: CodeInterval,
+        ) {
             val magicName = magicText.substringBefore(' ').trim()
             val magic = ReplLineMagic.valueOfOrNull(magicName)
 
@@ -46,7 +48,10 @@ class ErrorsMagicsProcessor(
             }
         }
 
-        fun addError(message: String, codeInterval: CodeInterval) {
+        fun addError(
+            message: String,
+            codeInterval: CodeInterval,
+        ) {
             _diagnostics.add(
                 codeInterval.diagnostic(code, message),
             )

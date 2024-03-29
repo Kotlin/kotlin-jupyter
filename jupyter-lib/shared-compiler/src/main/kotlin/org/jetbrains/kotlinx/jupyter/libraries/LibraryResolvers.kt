@@ -24,7 +24,10 @@ class DefaultInfoLibraryResolver(
     private val resolutionInfos = paths.map { AbstractLibraryResolutionInfo.ByDir(it) }
     private val byDirResolver = getByDirResolver(libraryDescriptorsManager)
 
-    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun resolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         val referenceInfo = reference.info
         if (referenceInfo !is AbstractLibraryResolutionInfo.Default) return parent.resolve(reference, arguments)
 
@@ -38,7 +41,10 @@ class DefaultInfoLibraryResolver(
         return parent.resolve(newReference, arguments)
     }
 
-    private fun transformReference(referenceInfo: AbstractLibraryResolutionInfo.Default, referenceName: String?): LibraryReference {
+    private fun transformReference(
+        referenceInfo: AbstractLibraryResolutionInfo.Default,
+        referenceName: String?,
+    ): LibraryReference {
         val transformedInfo = infoProvider.get(referenceInfo.string)
         return LibraryReference(transformedInfo, referenceName)
     }
@@ -53,10 +59,11 @@ class LocalLibraryResolver(
     private val pathsToCheck: List<File>
 
     init {
-        val paths = mutableListOf(
-            libraryDescriptorsManager.userCacheDir,
-            libraryDescriptorsManager.userLibrariesDir,
-        )
+        val paths =
+            mutableListOf(
+                libraryDescriptorsManager.userCacheDir,
+                libraryDescriptorsManager.userLibrariesDir,
+            )
         mainLibrariesDir?.let { paths.add(it) }
 
         pathsToCheck = paths
@@ -66,11 +73,15 @@ class LocalLibraryResolver(
         return reference.shouldBeCachedLocally
     }
 
-    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
-        val files = pathsToCheck.mapNotNull { dir ->
-            val file = reference.getFile(dir)
-            if (file.exists()) file else null
-        }
+    override fun tryResolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
+        val files =
+            pathsToCheck.mapNotNull { dir ->
+                val file = reference.getFile(dir)
+                if (file.exists()) file else null
+            }
 
         if (files.size > 1) {
             logger.warn("More than one file for library $reference found in local cache directories")
@@ -80,7 +91,10 @@ class LocalLibraryResolver(
         return parseLibraryDescriptor(jsonFile.readText()).convertToDefinition(arguments)
     }
 
-    override fun save(reference: LibraryReference, definition: LibraryDefinition) {
+    override fun save(
+        reference: LibraryReference,
+        definition: LibraryDefinition,
+    ) {
         val text = definition.originalDescriptorText ?: return
         val dir = pathsToCheck.first()
         val file = reference.getFile(dir)
@@ -96,7 +110,10 @@ open class ResourcesLibraryResolver(
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
     private val classLoader: ClassLoader,
 ) : ChainedLibraryResolver(parent) {
-    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun tryResolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         val text = resolveDescriptorFromResources(reference.name) ?: return null
         return parseLibraryDescriptor(text).convertToDefinition(arguments)
     }
@@ -130,50 +147,57 @@ class FallbackLibraryResolver(
     private val httpClient: HttpClient,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
 ) : ChainedLibraryResolver() {
-    private val resourcesResolver = ResourcesLibraryResolver(
-        null,
-        libraryDescriptorsManager,
-        ResourcesLibraryResolver::class.java.classLoader,
-    )
+    private val resourcesResolver =
+        ResourcesLibraryResolver(
+            null,
+            libraryDescriptorsManager,
+            ResourcesLibraryResolver::class.java.classLoader,
+        )
 
-    private val standardResolvers = listOf(
-        getByDirResolver(libraryDescriptorsManager),
-        resolverWithOptions<AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback> { name ->
-            if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
+    private val standardResolvers =
+        listOf(
+            getByDirResolver(libraryDescriptorsManager),
+            resolverWithOptions<AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback> { name ->
+                if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
 
-            val descriptorText = try {
-                libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
-            } catch (e: IOException) {
-                KernelStreams.err.println(
-                    "WARNING: Can't resolve library $name from the given reference. Using classpath version of this library. Error: $e",
-                )
-                KernelStreams.err.flush()
-                resourcesResolver.resolveDescriptorFromResources(name)
-            }
+                val descriptorText =
+                    try {
+                        libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
+                    } catch (e: IOException) {
+                        KernelStreams.err.println(
+                            "WARNING: Can't resolve library $name from the given reference. " +
+                                "Using classpath version of this library. Error: $e",
+                        )
+                        KernelStreams.err.flush()
+                        resourcesResolver.resolveDescriptorFromResources(name)
+                    }
 
-            descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
-        },
-        resolverWithOptions<AbstractLibraryResolutionInfo.ByGitRef> { name ->
-            if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
-            val descriptorText = libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
+                descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
+            },
+            resolverWithOptions<AbstractLibraryResolutionInfo.ByGitRef> { name ->
+                if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
+                val descriptorText = libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
 
-            descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
-        },
-        resolver<AbstractLibraryResolutionInfo.ByFile> {
-            file.readText()
-        },
-        resolver<AbstractLibraryResolutionInfo.ByURL> {
-            val response = httpClient.getHttp(url.toString())
-            response.text
-        },
-        resolver<ByNothingLibraryResolutionInfo> { "{}" },
-        resolverWithOptions<AbstractLibraryResolutionInfo.ByClasspath> { name ->
-            resourcesResolver.resolveDescriptorFromResources(name) to resourcesResolver.resolveDescriptorOptionsFromResources()
-        },
-        resolver<AbstractLibraryResolutionInfo.Default> { null },
-    )
+                descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
+            },
+            resolver<AbstractLibraryResolutionInfo.ByFile> {
+                file.readText()
+            },
+            resolver<AbstractLibraryResolutionInfo.ByURL> {
+                val response = httpClient.getHttp(url.toString())
+                response.text
+            },
+            resolver<ByNothingLibraryResolutionInfo> { "{}" },
+            resolverWithOptions<AbstractLibraryResolutionInfo.ByClasspath> { name ->
+                resourcesResolver.resolveDescriptorFromResources(name) to resourcesResolver.resolveDescriptorOptionsFromResources()
+            },
+            resolver<AbstractLibraryResolutionInfo.Default> { null },
+        )
 
-    override fun tryResolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun tryResolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         return standardResolvers.firstOrNull { it.accepts(reference) }?.resolve(reference, arguments)
     }
 }
@@ -186,7 +210,10 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(
         return kClass.isInstance(reference.info)
     }
 
-    override fun resolve(reference: LibraryReference, arguments: List<Variable>): LibraryDefinition? {
+    override fun resolve(
+        reference: LibraryReference,
+        arguments: List<Variable>,
+    ): LibraryDefinition? {
         if (!accepts(reference)) return null
         val (text, options) = resolveRaw(kClass.cast(reference.info), reference.name)
         text ?: return null
@@ -194,14 +221,17 @@ class SpecificLibraryResolver<T : LibraryResolutionInfo>(
     }
 }
 
-private inline fun <reified T : LibraryResolutionInfo> resolverWithOptions(noinline resolverFun: T.(String?) -> Pair<String?, LibraryDescriptorGlobalOptions>) = SpecificLibraryResolver(
+private inline fun <reified T : LibraryResolutionInfo> resolverWithOptions(
+    noinline resolverFun: T.(String?) -> Pair<String?, LibraryDescriptorGlobalOptions>,
+) = SpecificLibraryResolver(
     T::class,
     resolverFun,
 )
 
-private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolverFun: T.(String?) -> String?) = SpecificLibraryResolver(
-    T::class,
-) { info, descriptorText -> resolverFun(info, descriptorText) to DefaultLibraryDescriptorGlobalOptions }
+private inline fun <reified T : LibraryResolutionInfo> resolver(noinline resolverFun: T.(String?) -> String?) =
+    SpecificLibraryResolver(
+        T::class,
+    ) { info, descriptorText -> resolverFun(info, descriptorText) to DefaultLibraryDescriptorGlobalOptions }
 
 private fun getByDirResolver(
     libraryDescriptorsManager: LibraryDescriptorsManager,
@@ -214,11 +244,12 @@ private fun getByDirResolver(
             val descriptorText = jsonFile.readText()
 
             val optionsFile = librariesDir.resolve(libraryDescriptorsManager.optionsFileName())
-            val options = if (optionsFile.exists() && optionsFile.isFile) {
-                parseLibraryDescriptorGlobalOptions(optionsFile.readText())
-            } else {
-                DefaultLibraryDescriptorGlobalOptions
-            }
+            val options =
+                if (optionsFile.exists() && optionsFile.isFile) {
+                    parseLibraryDescriptorGlobalOptions(optionsFile.readText())
+                } else {
+                    DefaultLibraryDescriptorGlobalOptions
+                }
             descriptorText to options
         } else {
             null to DefaultLibraryDescriptorGlobalOptions

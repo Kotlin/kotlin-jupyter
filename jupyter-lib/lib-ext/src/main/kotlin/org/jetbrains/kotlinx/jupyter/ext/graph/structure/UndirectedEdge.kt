@@ -10,7 +10,7 @@ data class UndirectedEdge<out T>(
         return other is UndirectedEdge<*> && (
             (fromNode == other.fromNode) && (toNode == other.toNode) ||
                 (fromNode == other.toNode) && (toNode == other.fromNode)
-            )
+        )
     }
 
     override fun hashCode(): Int {

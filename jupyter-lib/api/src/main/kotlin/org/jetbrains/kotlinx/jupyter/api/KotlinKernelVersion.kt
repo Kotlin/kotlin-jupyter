@@ -31,57 +31,60 @@ class KotlinKernelVersion private constructor(
         return components.hashCode()
     }
 
-    override fun toString() = buildString {
-        append(major)
-        append(SEP)
-        append(minor)
-        append(SEP)
-        append(micro)
-        build?.also {
+    override fun toString() =
+        buildString {
+            append(major)
             append(SEP)
-            append(build)
-            dev?.also {
+            append(minor)
+            append(SEP)
+            append(micro)
+            build?.also {
                 append(SEP)
-                append(DEV_PREFIX)
-                append(dev)
+                append(build)
+                dev?.also {
+                    append(SEP)
+                    append(DEV_PREFIX)
+                    append(dev)
+                }
             }
         }
-    }
 
-    fun toMavenVersion() = buildString {
-        append(major)
-        append(SEP)
-        append(minor)
-        append(SEP)
-        append(micro)
-        build?.also {
-            append(DEV_SEP)
-            append(build)
-            dev?.also {
+    fun toMavenVersion() =
+        buildString {
+            append(major)
+            append(SEP)
+            append(minor)
+            append(SEP)
+            append(micro)
+            build?.also {
                 append(DEV_SEP)
-                append(dev)
+                append(build)
+                dev?.also {
+                    append(DEV_SEP)
+                    append(dev)
+                }
             }
         }
-    }
 
     companion object {
         const val SEP = '.'
         const val DEV_SEP = '-'
         const val DEV_PREFIX = "dev"
 
-        val STRING_VERSION_COMPARATOR = Comparator<String> { str1, str2 ->
-            val v1 = fromMavenVersion(str1) ?: from(str1)
-            val v2 = fromMavenVersion(str2) ?: from(str2)
+        val STRING_VERSION_COMPARATOR =
+            Comparator<String> { str1, str2 ->
+                val v1 = fromMavenVersion(str1) ?: from(str1)
+                val v2 = fromMavenVersion(str2) ?: from(str2)
 
-            when {
-                v1 != null && v2 != null -> {
-                    v1.compareTo(v2)
+                when {
+                    v1 != null && v2 != null -> {
+                        v1.compareTo(v2)
+                    }
+                    v1 != null -> 1
+                    v2 != null -> -1
+                    else -> str1.compareTo(str2)
                 }
-                v1 != null -> 1
-                v2 != null -> -1
-                else -> str1.compareTo(str2)
             }
-        }
 
         fun KotlinKernelVersion?.toMaybeUnspecifiedString() = this?.toString() ?: "unspecified"
 
@@ -127,18 +130,25 @@ class KotlinKernelVersion private constructor(
             return KotlinKernelVersion(intComponents)
         }
 
-        fun from(major: Int, minor: Int, micro: Int, build: Int? = null, dev: Int? = null): KotlinKernelVersion? {
-            val components = mutableListOf<Int>().apply {
-                add(major)
-                add(minor)
-                add(micro)
-                build?.let {
-                    add(build)
-                    dev?.let {
-                        add(dev)
+        fun from(
+            major: Int,
+            minor: Int,
+            micro: Int,
+            build: Int? = null,
+            dev: Int? = null,
+        ): KotlinKernelVersion? {
+            val components =
+                mutableListOf<Int>().apply {
+                    add(major)
+                    add(minor)
+                    add(micro)
+                    build?.let {
+                        add(build)
+                        dev?.let {
+                            add(dev)
+                        }
                     }
                 }
-            }
 
             if (!validateComponents(components)) return null
             return KotlinKernelVersion(components)
@@ -148,7 +158,10 @@ class KotlinKernelVersion private constructor(
             return components.size in 3..5 && components.all { it >= 0 }
         }
 
-        private fun maxSize(a: Collection<*>, b: Collection<*>): Int {
+        private fun maxSize(
+            a: Collection<*>,
+            b: Collection<*>,
+        ): Int {
             return if (a.size > b.size) a.size else b.size
         }
     }

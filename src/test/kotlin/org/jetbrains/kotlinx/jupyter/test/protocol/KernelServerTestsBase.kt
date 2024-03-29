@@ -25,17 +25,18 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.zeromq.ZMQ
 import java.io.File
-import java.util.*
+import java.util.UUID
 
 abstract class KernelServerTestsBase {
     protected abstract val context: ZMQ.Context
 
-    protected val kernelConfig = createKotlinKernelConfig(
-        ports = createRandomKernelPorts(),
-        signatureKey = "",
-        scriptClasspath = classpath,
-        homeDir = File(""),
-    )
+    protected val kernelConfig =
+        createKotlinKernelConfig(
+            ports = createRandomKernelPorts(),
+            signatureKey = "",
+            scriptClasspath = classpath,
+            homeDir = File(""),
+        )
 
     private val sessionId = UUID.randomUUID().toString()
     private val messageId = listOf(byteArrayOf(1))
@@ -45,6 +46,7 @@ abstract class KernelServerTestsBase {
     private val executor = if (runInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
 
     open fun beforeEach() {}
+
     open fun afterEach() {}
 
     @BeforeEach
@@ -61,7 +63,10 @@ abstract class KernelServerTestsBase {
 
     fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
 
-    fun JupyterSocketBase.sendMessage(msgType: MessageType, content: AbstractMessageContent?) {
+    fun JupyterSocketBase.sendMessage(
+        msgType: MessageType,
+        content: AbstractMessageContent?,
+    ) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 

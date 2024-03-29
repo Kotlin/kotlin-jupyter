@@ -18,13 +18,14 @@ class CapturingOutputStream(
     private var overallOutputSize = 0
     private var newlineFound = false
 
-    private val timer = timer(
-        initialDelay = conf.captureBufferTimeLimitMs,
-        period = conf.captureBufferTimeLimitMs,
-        action = {
-            flush()
-        },
-    )
+    private val timer =
+        timer(
+            initialDelay = conf.captureBufferTimeLimitMs,
+            period = conf.captureBufferTimeLimitMs,
+            action = {
+                flush()
+            },
+        )
 
     val contents: ByteArray
         @TestOnly
@@ -62,11 +63,12 @@ class CapturingOutputStream(
     @Synchronized
     private fun flushBuffers(vararg buffers: ByteArrayOutputStream) {
         newlineFound = false
-        val str = buffers.map { stream ->
-            val str = stream.toString("UTF-8")
-            stream.reset()
-            str
-        }.reduce { acc, s -> acc + s }
+        val str =
+            buffers.map { stream ->
+                val str = stream.toString("UTF-8")
+                stream.reset()
+                str
+            }.reduce { acc, s -> acc + s }
         if (str.isNotEmpty()) {
             onCaptured(str)
         }

@@ -14,13 +14,13 @@ data class RawMessageImpl(
     override val metadata: JsonObject?,
     override val content: JsonElement,
 ) : RawMessage {
-    override fun toString(): String =
-        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] $data"
+    override fun toString(): String = "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] $data"
 }
 
-val MessageFormat = Json {
-    ignoreUnknownKeys = true
-}
+val MessageFormat =
+    Json {
+        ignoreUnknownKeys = true
+    }
 
 fun messageDataJson(
     header: JsonObject,

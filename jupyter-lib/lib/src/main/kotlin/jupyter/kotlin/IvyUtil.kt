@@ -3,11 +3,25 @@ package jupyter.kotlin
 import java.io.File
 
 fun clearIvyCache() = deleteCacheDir()
-fun clearIvyCache(group: String) = deleteCacheDir(group)
-fun clearIvyCache(group: String, artifact: String) = deleteCacheDir(group, artifact)
-fun clearIvyCache(group: String, artifact: String, version: String) = deleteCacheDir(group, artifact, version)
 
-private fun deleteCacheDir(group: String? = null, artifact: String? = null, version: String? = null) {
+fun clearIvyCache(group: String) = deleteCacheDir(group)
+
+fun clearIvyCache(
+    group: String,
+    artifact: String,
+) = deleteCacheDir(group, artifact)
+
+fun clearIvyCache(
+    group: String,
+    artifact: String,
+    version: String,
+) = deleteCacheDir(group, artifact, version)
+
+private fun deleteCacheDir(
+    group: String? = null,
+    artifact: String? = null,
+    version: String? = null,
+) {
     val userHomeDir = File(System.getProperty("user.home"))
     val ivyCacheDir = userHomeDir.resolve(".ivy2/cache")
 
@@ -33,12 +47,13 @@ private fun deleteCacheDir(group: String? = null, artifact: String? = null, vers
         return
     }
 
-    val filesToDelete = listOf(
-        "ivy-$version.xml",
-        "ivy-$version.xml.original",
-        "ivydata-$version.properties",
-        "jars/$artifact-$version.jar",
-    )
+    val filesToDelete =
+        listOf(
+            "ivy-$version.xml",
+            "ivy-$version.xml.original",
+            "ivydata-$version.properties",
+            "jars/$artifact-$version.jar",
+        )
     filesToDelete.forEach {
         deleteDir.resolve(it).delete()
     }

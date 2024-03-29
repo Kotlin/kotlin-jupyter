@@ -9,6 +9,7 @@ import kotlin.concurrent.withLock
 import kotlin.reflect.KMutableProperty0
 
 fun getLogger(name: String = "ikotlin"): Logger = LoggerFactory.getLogger(name)
+
 inline fun <reified T> logger(): Logger = LoggerFactory.getLogger(T::class.java)
 
 object KernelStreams {
@@ -38,16 +39,26 @@ object KernelStreams {
         }
     }
 
-    fun <T> withOutStream(outStream: PrintStream, body: () -> T): T {
+    fun <T> withOutStream(
+        outStream: PrintStream,
+        body: () -> T,
+    ): T {
         return withStream(::_out, outStream, outLock, body)
     }
 
-    fun <T> withErrStream(errStream: PrintStream, body: () -> T): T {
+    fun <T> withErrStream(
+        errStream: PrintStream,
+        body: () -> T,
+    ): T {
         return withStream(::_err, errStream, errLock, body)
     }
 }
 
-fun Logger.errorForUser(stream: PrintStream = KernelStreams.err, message: String, throwable: Throwable? = null) {
+fun Logger.errorForUser(
+    stream: PrintStream = KernelStreams.err,
+    message: String,
+    throwable: Throwable? = null,
+) {
     if (throwable == null) {
         error(message)
     } else {
@@ -62,9 +73,14 @@ fun Logger.errorForUser(stream: PrintStream = KernelStreams.err, message: String
     stream.flush()
 }
 
-fun <T> Logger.catchAll(stream: PrintStream = KernelStreams.err, msg: String = "", body: () -> T): T? = try {
-    body()
-} catch (e: Throwable) {
-    this.errorForUser(stream, msg, e)
-    null
-}
+fun <T> Logger.catchAll(
+    stream: PrintStream = KernelStreams.err,
+    msg: String = "",
+    body: () -> T,
+): T? =
+    try {
+        body()
+    } catch (e: Throwable) {
+        this.errorForUser(stream, msg, e)
+        null
+    }

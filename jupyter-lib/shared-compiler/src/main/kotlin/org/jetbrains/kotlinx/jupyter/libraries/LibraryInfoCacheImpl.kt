@@ -14,11 +14,13 @@ class LibraryInfoCacheImpl(
         return infoByRefWithFallback(reference)
     }
 
-    private val infoByRef = createCachedFun { ref: String ->
-        AbstractLibraryResolutionInfo.ByGitRef(ref, libraryDescriptorsManager)
-    }
+    private val infoByRef =
+        createCachedFun { ref: String ->
+            AbstractLibraryResolutionInfo.ByGitRef(ref, libraryDescriptorsManager)
+        }
 
-    private val infoByRefWithFallback = createCachedFun { ref: String ->
-        AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback(ref, libraryDescriptorsManager)
-    }
+    private val infoByRefWithFallback =
+        createCachedFun { ref: String ->
+            AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback(ref, libraryDescriptorsManager)
+        }
 }

@@ -16,9 +16,10 @@ enum class JupyterSocketInfo(
     IOPUB(JupyterSocketType.IOPUB, SocketType.PUB, SocketType.SUB, SocketType.SUB),
     ;
 
-    fun zmqType(side: JupyterSocketSide): SocketType = when (side) {
-        JupyterSocketSide.SERVER -> zmqKernelType
-        JupyterSocketSide.CLIENT -> zmqClientType
-        JupyterSocketSide.IDE_CLIENT -> zmqIdeClientType
-    }
+    fun zmqType(side: JupyterSocketSide): SocketType =
+        when (side) {
+            JupyterSocketSide.SERVER -> zmqKernelType
+            JupyterSocketSide.CLIENT -> zmqClientType
+            JupyterSocketSide.IDE_CLIENT -> zmqIdeClientType
+        }
 }

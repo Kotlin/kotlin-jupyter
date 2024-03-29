@@ -19,34 +19,35 @@ open class MessageRequestProcessorImpl(
     executionCount: AtomicLong,
     repl: ReplForJupyter,
 ) : IdeCompatibleMessageRequestProcessor(
-    rawIncomingMessage,
-    messageFactoryProvider,
-    socketManager,
-    commManager,
-    executor,
-    executionCount,
-    repl,
-),
+        rawIncomingMessage,
+        messageFactoryProvider,
+        socketManager,
+        commManager,
+        executor,
+        executionCount,
+        repl,
+    ),
     JupyterCommunicationFacility {
-
     override fun processIsCompleteRequest(content: IsCompleteRequest) {
         // We are in console mode, so switch off all the loggers
         if (LoggingManagement.mainLoggerLevel() != Level.OFF) LoggingManagement.disableLogging()
 
-        val resStr = if (looksLikeReplCommand(content.code)) {
-            "complete"
-        } else {
-            val result = try {
-                val check = repl.checkComplete(content.code)
-                when {
-                    check.isComplete -> "complete"
-                    else -> "incomplete"
-                }
-            } catch (ex: ReplCompilerException) {
-                "invalid"
+        val resStr =
+            if (looksLikeReplCommand(content.code)) {
+                "complete"
+            } else {
+                val result =
+                    try {
+                        val check = repl.checkComplete(content.code)
+                        when {
+                            check.isComplete -> "complete"
+                            else -> "incomplete"
+                        }
+                    } catch (ex: ReplCompilerException) {
+                        "invalid"
+                    }
+                result
             }
-            result
-        }
         socketManager.shell.sendMessage(
             messageFactory.makeReplyMessage(MessageType.IS_COMPLETE_REPLY, content = IsCompleteReply(resStr)),
         )

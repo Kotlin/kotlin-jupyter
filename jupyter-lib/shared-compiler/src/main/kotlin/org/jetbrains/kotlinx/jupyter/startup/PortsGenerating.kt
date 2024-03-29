@@ -29,7 +29,11 @@ object GeneratedPortsHolder {
     fun addPort(port: Int): Boolean = (port !in usedPorts) && isPortAvailable(port) && usedPorts.add(port)
 }
 
-fun randomIntsInRange(rangeStart: Int, rangeEnd: Int, limit: Int = rangeEnd - rangeStart): Sequence<Int> {
+fun randomIntsInRange(
+    rangeStart: Int,
+    rangeEnd: Int,
+    limit: Int = rangeEnd - rangeStart,
+): Sequence<Int> {
     return generateSequence { Random.nextInt(rangeStart, rangeEnd) }.take(limit)
 }
 
@@ -44,7 +48,13 @@ class PortsGenerator(
     companion object
 }
 
-fun PortsGenerator.Companion.create(portRangeStart: Int, portRangeEnd: Int) = PortsGenerator { randomIntsInRange(portRangeStart, portRangeEnd) }
+fun PortsGenerator.Companion.create(
+    portRangeStart: Int,
+    portRangeEnd: Int,
+) = PortsGenerator {
+    randomIntsInRange(portRangeStart, portRangeEnd)
+}
 
-fun createRandomKernelPorts() = PortsGenerator.create(32768, 65536)
-    .let { generator -> createKernelPorts { generator.randomPort() } }
+fun createRandomKernelPorts() =
+    PortsGenerator.create(32768, 65536)
+        .let { generator -> createKernelPorts { generator.randomPort() } }

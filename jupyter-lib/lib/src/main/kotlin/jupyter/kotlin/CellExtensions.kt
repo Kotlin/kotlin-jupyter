@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package jupyter.kotlin
 
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
@@ -14,17 +16,34 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 
 private val ScriptTemplateWithDisplayHelpers.host: KotlinKernelHost get() = userHandlesProvider.host!!
 val ScriptTemplateWithDisplayHelpers.notebook get() = userHandlesProvider.notebook
+
 fun ScriptTemplateWithDisplayHelpers.DISPLAY(value: Any) = DISPLAY(value, null)
-fun ScriptTemplateWithDisplayHelpers.DISPLAY(value: Any, id: String? = null) = host.display(value, id)
-fun ScriptTemplateWithDisplayHelpers.UPDATE_DISPLAY(value: Any, id: String?) = host.updateDisplay(value, id)
+
+fun ScriptTemplateWithDisplayHelpers.DISPLAY(
+    value: Any,
+    id: String? = null,
+) = host.display(value, id)
+
+fun ScriptTemplateWithDisplayHelpers.UPDATE_DISPLAY(
+    value: Any,
+    id: String?,
+) = host.updateDisplay(value, id)
+
 fun ScriptTemplateWithDisplayHelpers.EXECUTE(code: String) = host.scheduleExecution(CodeExecution(code).toExecutionCallback())
+
 fun ScriptTemplateWithDisplayHelpers.EXECUTE(executionCallback: ExecutionCallback<*>) = host.scheduleExecution(executionCallback)
 
 fun ScriptTemplateWithDisplayHelpers.USE(library: LibraryDefinition) = host.scheduleExecution { addLibrary(library) }
-fun ScriptTemplateWithDisplayHelpers.USE(libraryProducer: LibraryDefinitionProducer) = host.scheduleExecution { addLibraries(libraryProducer.getDefinitions(notebook)) }
+
+fun ScriptTemplateWithDisplayHelpers.USE(libraryProducer: LibraryDefinitionProducer) =
+    host.scheduleExecution {
+        addLibraries(libraryProducer.getDefinitions(notebook))
+    }
+
 fun ScriptTemplateWithDisplayHelpers.USE(builder: JupyterIntegration.Builder.() -> Unit) = USE(createLibrary(notebook, builder))
 
 fun ScriptTemplateWithDisplayHelpers.USE_STDLIB_EXTENSIONS() = host.loadStdlibJdkExtensions()
+
 val ScriptTemplateWithDisplayHelpers.Out: ResultsAccessor get() = notebook.resultsAccessor
 val ScriptTemplateWithDisplayHelpers.JavaRuntimeUtils get() = notebook.jreInfo
 val ScriptTemplateWithDisplayHelpers.SessionOptions get() = userHandlesProvider.sessionOptions

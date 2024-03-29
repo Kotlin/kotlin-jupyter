@@ -13,7 +13,11 @@ import java.io.File
 import kotlin.concurrent.thread
 
 interface ServerTestExecutor {
-    fun setUp(testInfo: TestInfo, kernelConfig: KernelConfig)
+    fun setUp(
+        testInfo: TestInfo,
+        kernelConfig: KernelConfig,
+    )
+
     fun tearDown()
 }
 
@@ -23,7 +27,10 @@ class ProcessServerTestExecutor : ServerTestExecutor {
     private lateinit var fileErr: File
     private lateinit var serverProcess: Process
 
-    override fun setUp(testInfo: TestInfo, kernelConfig: KernelConfig) {
+    override fun setUp(
+        testInfo: TestInfo,
+        kernelConfig: KernelConfig,
+    ) {
         val testName = testInfo.displayName
         val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg)
 
@@ -31,10 +38,11 @@ class ProcessServerTestExecutor : ServerTestExecutor {
         fileOut = File.createTempFile("tmp-kernel-out-$testName", ".txt")
         fileErr = File.createTempFile("tmp-kernel-err-$testName", ".txt")
 
-        serverProcess = ProcessBuilder(command)
-            .redirectOutput(fileOut)
-            .redirectError(fileErr)
-            .start()
+        serverProcess =
+            ProcessBuilder(command)
+                .redirectOutput(fileOut)
+                .redirectError(fileErr)
+                .start()
     }
 
     override fun tearDown() {
@@ -65,11 +73,15 @@ class ProcessServerTestExecutor : ServerTestExecutor {
 class ThreadServerTestExecutor : ServerTestExecutor {
     private lateinit var serverThread: Thread
 
-    override fun setUp(testInfo: TestInfo, kernelConfig: KernelConfig) {
-        val replConfig = ReplConfig.create(
-            ::getDefaultClasspathResolutionInfoProvider,
-            homeDir = kernelConfig.homeDir,
-        )
+    override fun setUp(
+        testInfo: TestInfo,
+        kernelConfig: KernelConfig,
+    ) {
+        val replConfig =
+            ReplConfig.create(
+                ::getDefaultClasspathResolutionInfoProvider,
+                homeDir = kernelConfig.homeDir,
+            )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
         serverThread = thread { kernelServer(replSettings) }
     }

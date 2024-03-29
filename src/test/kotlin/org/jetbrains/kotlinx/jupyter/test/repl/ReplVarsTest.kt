@@ -20,6 +20,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
     private val cellVars get() = repl.notebook.cellVariables
 
     private fun cellVarsAt(i: Int) = cellVars[i]!!
+
     private val firstCellVars get() = cellVarsAt(0)
     private val secondCellVars get() = cellVarsAt(1)
 
@@ -34,11 +35,12 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        varState.mapToStringValues() shouldBe mutableMapOf(
-            "x" to "1",
-            "y" to "0",
-            "z" to "47",
-        )
+        varState.mapToStringValues() shouldBe
+            mutableMapOf(
+                "x" to "1",
+                "y" to "0",
+                "z" to "47",
+            )
 
         varState.getStringValue("x") shouldBe "1"
         varState.getStringValue("y") shouldBe "0"

@@ -18,7 +18,10 @@ class JsLibraryResourcesProcessor(
 ) : LibraryResourcesProcessor {
     private var outputCounter = 0
 
-    private fun loadBunch(bundle: ResourceFallbacksBundle, classLoader: ClassLoader): ScriptModifierFunctionGenerator {
+    private fun loadBunch(
+        bundle: ResourceFallbacksBundle,
+        classLoader: ClassLoader,
+    ): ScriptModifierFunctionGenerator {
         val exceptions = mutableListOf<Exception>()
         for (resourceLocation in bundle.locations) {
             val path = resourceLocation.path
@@ -51,11 +54,17 @@ class JsLibraryResourcesProcessor(
         throw Exception("No resource fallback found! Related exceptions: $exceptions")
     }
 
-    private fun loadResourceAsText(resource: LibraryResource, classLoader: ClassLoader): List<ScriptModifierFunctionGenerator> {
+    private fun loadResourceAsText(
+        resource: LibraryResource,
+        classLoader: ClassLoader,
+    ): List<ScriptModifierFunctionGenerator> {
         return resource.bundles.map { loadBunch(it, classLoader) }
     }
 
-    override fun wrapLibrary(resource: LibraryResource, classLoader: ClassLoader): String {
+    override fun wrapLibrary(
+        resource: LibraryResource,
+        classLoader: ClassLoader,
+    ): String {
         val resourceName = resource.name
         val resourceIndex = """["$resourceName"]"""
         val callResourceIndex = """["call_$resourceName"]"""
@@ -63,12 +72,14 @@ class JsLibraryResourcesProcessor(
         ++outputCounter
 
         val generators = loadResourceAsText(resource, classLoader)
-        val jsScriptModifiers = generators.joinToString(",\n", "[", "]") {
-            it.getScriptText()
-        }
+        val jsScriptModifiers =
+            generators.joinToString(",\n", "[", "]") {
+                it.getScriptText()
+            }
 
         @Language("js")
-        val wrapper = """
+        val wrapper =
+            """
             if(!window.kotlinQueues) {
                 window.kotlinQueues = {};
             }
@@ -102,7 +113,7 @@ class JsLibraryResourcesProcessor(
                     e.appendChild(script);
                 });
             })();
-        """.trimIndent()
+            """.trimIndent()
 
         // language=html
         return """
@@ -110,7 +121,7 @@ class JsLibraryResourcesProcessor(
             <script type="text/javascript">
                 $wrapper
             </script>
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private interface ScriptModifierFunctionGenerator {
@@ -128,7 +139,7 @@ class JsLibraryResourcesProcessor(
                     script.textContent = $escapedCode
                     script.type = "text/javascript";
                 })
-            """.trimIndent()
+                """.trimIndent()
         }
     }
 
@@ -142,7 +153,7 @@ class JsLibraryResourcesProcessor(
                     script.src = "$url"
                     script.type = "text/javascript";
                 })
-            """.trimIndent()
+                """.trimIndent()
         }
     }
 

@@ -4,7 +4,6 @@ data class LibraryReference(
     val info: LibraryResolutionInfo,
     val name: String? = null,
 ) : LibraryCacheable by info {
-
     val key: String
 
     init {

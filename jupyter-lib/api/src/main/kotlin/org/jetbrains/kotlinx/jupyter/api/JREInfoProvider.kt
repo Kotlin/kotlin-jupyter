@@ -20,7 +20,10 @@ interface JREInfoProvider {
      * @param message Exception message
      * @param condition Condition to check
      */
-    fun assertVersion(message: String = "JRE version requirements are not satisfied", condition: (Int) -> Boolean)
+    fun assertVersion(
+        message: String = "JRE version requirements are not satisfied",
+        condition: (Int) -> Boolean,
+    )
 
     /**
      * Does nothing if current JRE version is higher or equal than [minVersion], throws [AssertionError] otherwise
@@ -35,5 +38,8 @@ interface JREInfoProvider {
      * @param minVersion Minimal accepted version
      * @param maxVersion Maximal accepted version
      */
-    fun assertVersionInRange(minVersion: Int, maxVersion: Int)
+    fun assertVersionInRange(
+        minVersion: Int,
+        maxVersion: Int,
+    )
 }

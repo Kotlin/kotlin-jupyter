@@ -31,31 +31,33 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
             myThread.contextClassLoader = classLoader
 
             var execException: Throwable? = null
-            val execRes: T? = try {
-                executionInProgress.set(true)
-                body()
-            } catch (e: Throwable) {
-                execException = e
-                null
-            } finally {
-                myThread.name = IDLE_EXECUTOR_NAME
-                executionInProgress.set(false)
-                if (Thread.interrupted()) {
-                    LOG.info("Clearing interrupted status")
+            val execRes: T? =
+                try {
+                    executionInProgress.set(true)
+                    body()
+                } catch (e: Throwable) {
+                    execException = e
+                    null
+                } finally {
+                    myThread.name = IDLE_EXECUTOR_NAME
+                    executionInProgress.set(false)
+                    if (Thread.interrupted()) {
+                        LOG.info("Clearing interrupted status")
+                    }
                 }
-            }
 
             val exception = execException
 
-            val result = if (exception == null) {
-                ExecutionResult.Success(execRes!!)
-            } else {
-                if (exception.isInterruptedException()) {
-                    ExecutionResult.Interrupted
+            val result =
+                if (exception == null) {
+                    ExecutionResult.Success(execRes!!)
                 } else {
-                    ExecutionResult.Failure(exception)
+                    if (exception.isInterruptedException()) {
+                        ExecutionResult.Interrupted
+                    } else {
+                        ExecutionResult.Failure(exception)
+                    }
                 }
-            }
 
             resultFuture.complete(result)
         }
@@ -69,20 +71,26 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
 
     private val executionInProgress = AtomicBoolean(false)
 
-    private val executorThread = thread(name = IDLE_EXECUTOR_NAME) {
-        while (true) {
-            tasksQueue.take().execute()
+    private val executorThread =
+        thread(name = IDLE_EXECUTOR_NAME) {
+            while (true) {
+                tasksQueue.take().execute()
+            }
         }
-    }
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    override fun <T : Any> runExecution(name: String, classLoader: ClassLoader?, body: () -> T): ExecutionResult<T> {
-        val task = Task(
-            name,
-            classLoader ?: Thread.currentThread().contextClassLoader,
-            body,
-        )
+    override fun <T : Any> runExecution(
+        name: String,
+        classLoader: ClassLoader?,
+        body: () -> T,
+    ): ExecutionResult<T> {
+        val task =
+            Task(
+                name,
+                classLoader ?: Thread.currentThread().contextClassLoader,
+                body,
+            )
         tasksQueue.put(task)
         return task.join()
     }

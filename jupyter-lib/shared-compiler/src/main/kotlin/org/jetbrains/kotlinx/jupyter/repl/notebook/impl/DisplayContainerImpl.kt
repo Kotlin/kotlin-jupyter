@@ -16,7 +16,10 @@ class DisplayContainerImpl : MutableDisplayContainer {
         }
     }
 
-    override fun add(display: DisplayResult, cell: MutableCodeCell) {
+    override fun add(
+        display: DisplayResult,
+        cell: MutableCodeCell,
+    ) {
         add(DisplayResultWrapper.create(display, cell))
     }
 
@@ -32,7 +35,10 @@ class DisplayContainerImpl : MutableDisplayContainer {
         }
     }
 
-    override fun update(id: String?, display: DisplayResult) {
+    override fun update(
+        id: String?,
+        display: DisplayResult,
+    ) {
         synchronized(displays) {
             val initialDisplays = displays[id] ?: return
             val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }

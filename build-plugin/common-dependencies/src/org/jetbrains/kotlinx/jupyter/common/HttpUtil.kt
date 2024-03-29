@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import java.io.IOException
-import java.util.*
+import java.util.Base64
 
 class ResponseWrapper(
     response: Response,
@@ -22,14 +22,22 @@ fun HttpClient.httpRequest(request: Request): ResponseWrapper {
 
 fun HttpClient.getHttp(url: String) = httpRequest(buildRequest("GET", url))
 
-fun HttpClient.getHttpWithAuth(url: String, username: String, token: String): ResponseWrapper {
-    val request = buildRequest("GET", url) {
-        withBasicAuth(username, token)
-    }
+fun HttpClient.getHttpWithAuth(
+    url: String,
+    username: String,
+    token: String,
+): ResponseWrapper {
+    val request =
+        buildRequest("GET", url) {
+            withBasicAuth(username, token)
+        }
     return httpRequest(request)
 }
 
-fun RequestBuilder.withBasicAuth(username: String, password: String): RequestBuilder {
+fun RequestBuilder.withBasicAuth(
+    username: String,
+    password: String,
+): RequestBuilder {
     val b64 = Base64.getEncoder().encode("$username:$password".toByteArray()).toString(Charsets.UTF_8)
     return header("Authorization", "Basic $b64")
 }

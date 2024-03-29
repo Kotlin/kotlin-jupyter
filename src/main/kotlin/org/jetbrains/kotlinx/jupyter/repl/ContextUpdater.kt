@@ -17,7 +17,6 @@ import kotlin.script.experimental.util.LinkedSnippet
  * to use in completion and KotlinContext.
  */
 class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvmReplEvaluator) {
-
     private var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
 
     fun update() {
@@ -64,7 +63,10 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
     }
 
     @Throws(IllegalAccessException::class)
-    private fun findVariables(fields: Array<Field>, o: Any) {
+    private fun findVariables(
+        fields: Array<Field>,
+        o: Any,
+    ) {
         for (field in fields) {
             val fieldName = field.name
             if (fieldName.contains("$\$implicitReceiver") || fieldName.contains("script$")) {

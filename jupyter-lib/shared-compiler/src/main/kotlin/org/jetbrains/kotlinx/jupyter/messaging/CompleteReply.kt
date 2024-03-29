@@ -6,23 +6,17 @@ import kotlinx.serialization.Serializable
 @Serializable
 class CompleteReply(
     val matches: List<String>,
-
     @SerialName("cursor_start")
     val cursorStart: Int,
-
     @SerialName("cursor_end")
     val cursorEnd: Int,
-
     val paragraph: Paragraph,
-
     val metadata: Metadata,
 ) : OkReply() {
-
     @Serializable
     class Metadata(
         @SerialName("_jupyter_types_experimental")
         val experimentalTypes: List<ExperimentalType>,
-
         @SerialName("_jupyter_extended_metadata")
         val extended: List<ExtendedMetadataEntry>,
     )

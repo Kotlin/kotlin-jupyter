@@ -60,7 +60,10 @@ interface DisplayResult : Renderable {
      * @param additionalMetadata Additional reply metadata
      * @return Display JSON
      */
-    fun toJson(additionalMetadata: JsonObject = Json.EMPTY, overrideId: String? = null): JsonObject
+    fun toJson(
+        additionalMetadata: JsonObject = Json.EMPTY,
+        overrideId: String? = null,
+    ): JsonObject
 
     @Deprecated("Use full version instead", ReplaceWith("toJson(additionalMetadata, null)"))
     fun toJson(additionalMetadata: JsonObject = Json.EMPTY): JsonObject = toJson(additionalMetadata, null)
@@ -83,6 +86,7 @@ interface DisplayResultWithCell : DisplayResult {
  */
 interface DisplayContainer {
     fun getAll(): List<DisplayResultWithCell>
+
     fun getById(id: String?): List<DisplayResultWithCell>
 }
 
@@ -100,16 +104,19 @@ fun DisplayResult?.toJson(): JsonObject {
 }
 
 @Suppress("unused")
-fun DisplayResult.withId(id: String) = if (id == this.id) {
-    this
-} else {
-    object : DisplayResult {
-        override fun toJson(additionalMetadata: JsonObject, overrideId: String?) =
-            this@withId.toJson(additionalMetadata, overrideId ?: id)
+fun DisplayResult.withId(id: String) =
+    if (id == this.id) {
+        this
+    } else {
+        object : DisplayResult {
+            override fun toJson(
+                additionalMetadata: JsonObject,
+                overrideId: String?,
+            ) = this@withId.toJson(additionalMetadata, overrideId ?: id)
 
-        override val id = id
+            override val id = id
+        }
     }
-}
 
 /**
  * Sets display ID to JSON.
@@ -118,7 +125,10 @@ fun DisplayResult.withId(id: String) = if (id == this.id) {
  * If ID was set, [force] is true and [id] is `null`, just returns old ID
  * If ID was set, [force] is true and [id] is not `null`, sets ID to [id] and returns it back
  */
-fun MutableJsonObject.setDisplayId(id: String? = null, force: Boolean = false): String? {
+fun MutableJsonObject.setDisplayId(
+    id: String? = null,
+    force: Boolean = false,
+): String? {
     val transient = get("transient")?.let { Json.decodeFromJsonElement<MutableJsonObject>(it) }
     val oldId = (transient?.get("display_id") as? JsonPrimitive)?.content
 
@@ -147,17 +157,17 @@ open class MimeTypedResultEx(
     override val id: String? = null,
     metadataModifiers: List<MetadataModifier> = emptyList(),
 ) : DisplayResult {
-    private val _metadataModifiers: MutableSet<MetadataModifier> = mutableSetOf()
+    private val metadataModifiers: MutableSet<MetadataModifier> = mutableSetOf()
+
     fun addMetadataModifier(metadataModifier: MetadataModifier) {
-        _metadataModifiers.add(metadataModifier)
+        metadataModifiers.add(metadataModifier)
     }
 
     fun removeMetadataModifier(metadataModifier: MetadataModifier) {
-        _metadataModifiers.remove(metadataModifier)
+        metadataModifiers.remove(metadataModifier)
     }
 
-    fun hasMetadataModifiers(predicate: (MetadataModifier) -> Boolean): Boolean =
-        _metadataModifiers.any(predicate)
+    fun hasMetadataModifiers(predicate: (MetadataModifier) -> Boolean): Boolean = metadataModifiers.any(predicate)
 
     init {
         for (metadataModifier in metadataModifiers) {
@@ -167,10 +177,11 @@ open class MimeTypedResultEx(
 
     @Deprecated(
         "Use primary constructor instead",
-        replaceWith = ReplaceWith(
-            "MimeTypedResultEx(mimeData, id, standardMetadataModifiers(isolatedHtml = isolatedHtml))",
-            "org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers",
-        ),
+        replaceWith =
+            ReplaceWith(
+                "MimeTypedResultEx(mimeData, id, standardMetadataModifiers(isolatedHtml = isolatedHtml))",
+                "org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers",
+            ),
     )
     constructor(
         mimeData: JsonElement,
@@ -189,20 +200,25 @@ open class MimeTypedResultEx(
     @Suppress("unused") // Left for binary compatibility
     var isolatedHtml by hasModifier(IsolatedHtmlMarker)
 
-    override fun toJson(additionalMetadata: JsonObject, overrideId: String?): JsonObject {
-        val metadata = buildJsonObject {
-            for (modifier in _metadataModifiers) {
-                with(modifier) { modifyMetadata() }
+    override fun toJson(
+        additionalMetadata: JsonObject,
+        overrideId: String?,
+    ): JsonObject {
+        val metadata =
+            buildJsonObject {
+                for (modifier in metadataModifiers) {
+                    with(modifier) { modifyMetadata() }
+                }
+                additionalMetadata.forEach { key, value ->
+                    put(key, value)
+                }
             }
-            additionalMetadata.forEach { key, value ->
-                put(key, value)
-            }
-        }
 
-        val result: MutableJsonObject = hashMapOf(
-            "data" to mimeData,
-            "metadata" to metadata,
-        )
+        val result: MutableJsonObject =
+            hashMapOf(
+                "data" to mimeData,
+                "metadata" to metadata,
+            )
         result.setDisplayId(overrideId ?: id)
         return Json.encodeToJsonElement(result) as JsonObject
     }
@@ -230,9 +246,14 @@ open class MimeTypedResultEx(
 fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult = mimeResult(*mimeToData)
 
 @Suppress("unused", "FunctionName")
-fun HTML(text: String, isolated: Boolean = false) = htmlResult(text, isolated)
+fun HTML(
+    text: String,
+    isolated: Boolean = false,
+) = htmlResult(text, isolated)
 
 private val jsonPrettyPrinter = Json { prettyPrint = true }
+
+@Suppress("FunctionName")
 fun JSON(
     json: JsonElement,
     isolated: Boolean = false,
@@ -267,8 +288,13 @@ fun JSON(
 ) = JSON(Json.parseToJsonElement(jsonText), isolated, expanded)
 
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
+
 fun textResult(text: String): MimeTypedResult = mimeResult(MimeTypes.PLAIN_TEXT to text)
-fun htmlResult(text: String, isolated: Boolean = false) = MimeTypedResult(mapOf(MimeTypes.HTML to text), isolated)
+
+fun htmlResult(
+    text: String,
+    isolated: Boolean = false,
+) = MimeTypedResult(mapOf(MimeTypes.HTML to text), isolated)
 
 data class HtmlData(val style: String, val body: String, val script: String) {
     override fun toString(): String {
@@ -276,7 +302,8 @@ data class HtmlData(val style: String, val body: String, val script: String) {
     }
 
     @Language("html")
-    fun toString(colorScheme: ColorScheme?): String = """
+    fun toString(colorScheme: ColorScheme?): String =
+        """
         <html${if (colorScheme == ColorScheme.DARK) " theme='dark'" else ""}>
         <head>
             <style type="text/css">
@@ -290,10 +317,12 @@ data class HtmlData(val style: String, val body: String, val script: String) {
             $script
         </script>
         </html>
-    """.trimIndent()
+        """.trimIndent()
 
-    fun toSimpleHtml(colorScheme: ColorScheme?, isolated: Boolean = false): MimeTypedResult =
-        HTML(toString(colorScheme), isolated)
+    fun toSimpleHtml(
+        colorScheme: ColorScheme?,
+        isolated: Boolean = false,
+    ): MimeTypedResult = HTML(toString(colorScheme), isolated)
 
     fun toIFrame(colorScheme: ColorScheme?): MimeTypedResult {
         val iFramedText = generateIframePlaneText(colorScheme)
@@ -303,8 +332,9 @@ data class HtmlData(val style: String, val body: String, val script: String) {
     fun generateIframePlaneText(colorScheme: ColorScheme?): String {
         @Suppress("CssUnresolvedCustomProperty")
         @Language("css")
-        val styleData = HtmlData(
-            """
+        val styleData =
+            HtmlData(
+                """
                 :root {
                     --scroll-bg: #f5f5f5;
                     --scroll-fg: #b3b3b3;
@@ -326,10 +356,10 @@ data class HtmlData(val style: String, val body: String, val script: String) {
                 body::-webkit-scrollbar-track {
                     background-color: var(--scroll-bg);
                 }
-            """.trimIndent(),
-            "",
-            "",
-        )
+                """.trimIndent(),
+                "",
+                "",
+            )
 
         val wholeData = this + styleData
         val text = wholeData.toString(colorScheme)
@@ -339,7 +369,8 @@ data class HtmlData(val style: String, val body: String, val script: String) {
         val cleanText = text.escapeForIframe()
 
         @Language("html")
-        val iFramedText = """
+        val iFramedText =
+            """
             <iframe onload="o_$fName()" style="width:100%;" class="result_container" id="$id" frameBorder="0" srcdoc="$cleanText"></iframe>
             <script>
                 function o_$fName() {
@@ -352,7 +383,7 @@ data class HtmlData(val style: String, val body: String, val script: String) {
                     el.height = h === 0 ? 0 : h + 41;
                 }
             </script>
-        """.trimIndent()
+            """.trimIndent()
 
         return iFramedText
     }

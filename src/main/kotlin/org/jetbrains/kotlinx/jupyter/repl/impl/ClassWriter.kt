@@ -18,19 +18,23 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
  * so this class provides writing classes on disk.
  */
 class ClassWriter(_outputDir: String = "") {
-    val outputDir: Path = if (_outputDir == "") {
-        val tempDir = Files.createTempDirectory("kotlin-jupyter")
-        tempDir.toFile().deleteOnExit()
-        tempDir.toAbsolutePath()
-    } else {
-        Paths.get(_outputDir)
-    }
+    val outputDir: Path =
+        if (_outputDir == "") {
+            val tempDir = Files.createTempDirectory("kotlin-jupyter")
+            tempDir.toFile().deleteOnExit()
+            tempDir.toAbsolutePath()
+        } else {
+            Paths.get(_outputDir)
+        }
 
     init {
         logger.info("Created ClassWriter with path <$outputDir>")
     }
 
-    fun writeClasses(code: SourceCode, classes: KJvmCompiledScript) {
+    fun writeClasses(
+        code: SourceCode,
+        classes: KJvmCompiledScript,
+    ) {
         try {
             val moduleInMemory = classes.getCompiledModule() as KJvmCompiledModuleInMemory
             moduleInMemory.compilerOutputFiles.forEach { (name, bytes) ->
@@ -45,7 +49,10 @@ class ClassWriter(_outputDir: String = "") {
         }
     }
 
-    private fun writeClass(classBytes: ByteArray, path: Path) {
+    private fun writeClass(
+        classBytes: ByteArray,
+        path: Path,
+    ) {
         try {
             FileOutputStream(path.toAbsolutePath().toString()).use { fos ->
                 BufferedOutputStream(fos).use { out ->

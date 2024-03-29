@@ -18,27 +18,36 @@ class RenderersProcessorImpl(
     private var counter = 0
     private val renderers = PriorityList<HandlerWithInfo>()
 
-    override tailrec fun renderResult(host: ExecutionHost, field: FieldValue): Any? {
+    override tailrec fun renderResult(
+        host: ExecutionHost,
+        field: FieldValue,
+    ): Any? {
         val value = field.value
-        val (handler, id) = renderers.firstOrNull { it.handler.acceptsField(field) }
-            ?: return value
+        val (handler, id) =
+            renderers.firstOrNull { it.handler.acceptsField(field) }
+                ?: return value
         return if (id == null) {
-            val newField = rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
-                handler.execution.execute(host, field)
-            }
+            val newField =
+                rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
+                    handler.execution.execute(host, field)
+                }
             renderResult(host, newField)
         } else {
             val methodName = getMethodName(id)
             contextUpdater.update()
             val functionInfo = contextUpdater.context.allFunctions[methodName]!!
-            val resultValue = rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
-                functionInfo.function.call(functionInfo.line, value)
-            }
+            val resultValue =
+                rethrowAsLibraryException(LibraryProblemPart.RENDERERS) {
+                    functionInfo.function.call(functionInfo.line, value)
+                }
             renderResult(host, FieldValue(resultValue, null))
         }
     }
 
-    override fun renderValue(host: ExecutionHost, value: Any?): Any? {
+    override fun renderValue(
+        host: ExecutionHost,
+        value: Any?,
+    ): Any? {
         return renderResult(host, FieldValue(value, null))
     }
 
@@ -46,7 +55,10 @@ class RenderersProcessorImpl(
         return register(renderer, ProcessingPriority.DEFAULT)
     }
 
-    override fun register(renderer: RendererFieldHandler, priority: Int): Code? {
+    override fun register(
+        renderer: RendererFieldHandler,
+        priority: Int,
+    ): Code? {
         return register(renderer, true, priority)
     }
 
@@ -54,11 +66,18 @@ class RenderersProcessorImpl(
         registerWithoutOptimizing(renderer, ProcessingPriority.DEFAULT)
     }
 
-    override fun registerWithoutOptimizing(renderer: RendererFieldHandler, priority: Int) {
+    override fun registerWithoutOptimizing(
+        renderer: RendererFieldHandler,
+        priority: Int,
+    ) {
         register(renderer, false, priority)
     }
 
-    private fun register(renderer: RendererFieldHandler, doOptimization: Boolean, priority: Int): Code? {
+    private fun register(
+        renderer: RendererFieldHandler,
+        doOptimization: Boolean,
+        priority: Int,
+    ): Code? {
         if (!doOptimization || renderer !is PrecompiledRendererTypeHandler || !renderer.mayBePrecompiled) {
             renderers.add(HandlerWithInfo(renderer, null), priority)
             return null
@@ -77,9 +96,10 @@ class RenderersProcessorImpl(
     }
 
     override fun unregister(renderer: RendererFieldHandler) {
-        val rendererInfosToRemove = renderers.elements().filter {
-            it.handler === renderer
-        }
+        val rendererInfosToRemove =
+            renderers.elements().filter {
+                it.handler === renderer
+            }
         for (rendererInfo in rendererInfosToRemove) {
             renderers.remove(rendererInfo)
         }

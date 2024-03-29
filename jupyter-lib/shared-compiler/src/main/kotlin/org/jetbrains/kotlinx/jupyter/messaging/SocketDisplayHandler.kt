@@ -14,27 +14,39 @@ class SocketDisplayHandler(
 ) : DisplayHandler {
     private val socket = communicationFacility.socketManager.iopub
 
-    private fun sendMessage(type: MessageType, content: DisplayDataResponse) {
+    private fun sendMessage(
+        type: MessageType,
+        content: DisplayDataResponse,
+    ) {
         val messageFactory = communicationFacility.messageFactory
         val message = messageFactory.makeReplyMessage(type, content = content)
         socket.sendMessage(message)
     }
 
-    override fun handleDisplay(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleDisplay(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
         val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
 
-        val content = DisplayDataResponse(
-            json["data"],
-            json["metadata"],
-            json["transient"],
-        )
+        val content =
+            DisplayDataResponse(
+                json["data"],
+                json["metadata"],
+                json["transient"],
+            )
         sendMessage(MessageType.DISPLAY_DATA, content)
     }
 
-    override fun handleUpdate(value: Any, host: ExecutionHost, id: String?) {
+    override fun handleUpdate(
+        value: Any,
+        host: ExecutionHost,
+        id: String?,
+    ) {
         val display = renderValue(notebook, host, value) ?: return
         val json = display.toJson(Json.EMPTY, null).toMutableMap()
 
@@ -47,11 +59,12 @@ class SocketDisplayHandler(
         json.setDisplayId(id)
             ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
 
-        val content = DisplayDataResponse(
-            json["data"],
-            json["metadata"],
-            json["transient"],
-        )
+        val content =
+            DisplayDataResponse(
+                json["data"],
+                json["metadata"],
+                json["transient"],
+            )
         sendMessage(MessageType.UPDATE_DISPLAY_DATA, content)
     }
 }

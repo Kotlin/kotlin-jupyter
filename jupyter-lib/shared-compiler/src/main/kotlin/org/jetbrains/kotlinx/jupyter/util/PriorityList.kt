@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.util
 
-import java.util.*
+import java.util.TreeSet
 
 class PriorityList<T>(
     private val latterFirst: Boolean = true,
@@ -33,7 +33,10 @@ class PriorityList<T>(
      * Adds [value] to the list with specified [priority]
      * Complexity: O(log n)
      */
-    fun add(value: T, priority: Int) {
+    fun add(
+        value: T,
+        priority: Int,
+    ) {
         if (latterFirst) {
             ++count
         } else {
@@ -71,7 +74,10 @@ class PriorityList<T>(
      * Otherwise, removes all existing elements from the list and adds [value] with a given [priority].
      * Complexity: O(n + k * log(n)) where k is a number of elements equal to [value]
      */
-    fun addOrUpdatePriority(value: T, priority: Int) {
+    fun addOrUpdatePriority(
+        value: T,
+        priority: Int,
+    ) {
         val maxPriority: Int? = c.filter { it.value == value }.maxByOrNull { it.priority }?.priority
         if (maxPriority != null) {
             if (maxPriority >= priority) {

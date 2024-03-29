@@ -37,14 +37,16 @@ internal class InternalEvaluatorImpl(
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
 ) :
     InternalEvaluator {
-
     private var classWriter: ClassWriter? = null
 
     private val scriptsSerializer = CompiledScriptsSerializer()
 
     private val registeredCompiledScripts = SerializedCompiledScriptsData.Builder()
 
-    private fun serializeAndRegisterScript(compiledScript: KJvmCompiledScript, source: SourceCode) {
+    private fun serializeAndRegisterScript(
+        compiledScript: KJvmCompiledScript,
+        source: SourceCode,
+    ) {
         if (!serializeScriptData) return
         val serializedData = scriptsSerializer.serialize(compiledScript, source)
         registeredCompiledScripts.addData(serializedData)
@@ -59,13 +61,14 @@ internal class InternalEvaluatorImpl(
     override var writeCompiledClasses: Boolean
         get() = classWriter != null
         set(value) {
-            classWriter = if (!value) {
-                null
-            } else {
-                val cw = ClassWriter()
-                System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
-                cw
-            }
+            classWriter =
+                if (!value) {
+                    null
+                } else {
+                    val cw = ClassWriter()
+                    System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
+                    cw
+                }
         }
 
     // TODO: change to false after plugin migration
@@ -84,7 +87,11 @@ internal class InternalEvaluatorImpl(
 
     private var isExecuting = false
 
-    override fun eval(code: Code, compilingOptions: JupyterCompilingOptions, evaluatorWorkflowListener: EvaluatorWorkflowListener?): InternalEvalResult {
+    override fun eval(
+        code: Code,
+        compilingOptions: JupyterCompilingOptions,
+        evaluatorWorkflowListener: EvaluatorWorkflowListener?,
+    ): InternalEvalResult {
         try {
             if (isExecuting) {
                 error("Recursive execution is not supported")
@@ -121,11 +128,12 @@ internal class InternalEvaluatorImpl(
                             updateDataAfterExecution(compilingOptions.cellId, resultValue)
 
                             val resultType = compiledScript.resultField?.second?.typeName
-                            val typeProvider = if (resultType == null) {
-                                KTypeProvider { typeOf<Any?>() }
-                            } else {
-                                KTypeProvider { eval("kotlin.reflect.typeOf<$resultType>()").result.value as KType }
-                            }
+                            val typeProvider =
+                                if (resultType == null) {
+                                    KTypeProvider { typeOf<Any?>() }
+                                } else {
+                                    KTypeProvider { eval("kotlin.reflect.typeOf<$resultType>()").result.value as KType }
+                                }
 
                             if (resultValue is ResultValue.Unit) {
                                 InternalEvalResult(
@@ -171,7 +179,10 @@ internal class InternalEvaluatorImpl(
         }
     }
 
-    private fun getVisibleVariables(target: ResultValue, cellId: Int): Map<String, VariableStateImpl> {
+    private fun getVisibleVariables(
+        target: ResultValue,
+        cellId: Int,
+    ): Map<String, VariableStateImpl> {
         val kClass = target.scriptClass ?: return emptyMap()
         val cellClassInstance = target.scriptInstance!!
 
@@ -198,7 +209,10 @@ internal class InternalEvaluatorImpl(
         }
     }
 
-    private fun updateDataAfterExecution(lastExecutionCellId: Int, resultValue: ResultValue) {
+    private fun updateDataAfterExecution(
+        lastExecutionCellId: Int,
+        resultValue: ResultValue,
+    ) {
         variablesWatcher.ensureStorageCreation(lastExecutionCellId)
         variablesHolder += getVisibleVariables(resultValue, lastExecutionCellId)
 

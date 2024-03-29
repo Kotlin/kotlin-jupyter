@@ -11,11 +11,12 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptio
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 
-fun String.parseIniConfig() =
-    lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
+fun String.parseIniConfig() = lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
 
-fun readResourceAsIniFile(fileName: String, classLoader: ClassLoader) =
-    classLoader.getResource(fileName)?.readText()?.parseIniConfig().orEmpty()
+fun readResourceAsIniFile(
+    fileName: String,
+    classLoader: ClassLoader,
+) = classLoader.getResource(fileName)?.readText()?.parseIniConfig().orEmpty()
 
 private val correctClassLoader = KernelStreams::class.java.classLoader
 
@@ -25,10 +26,10 @@ val defaultRuntimeProperties by lazy {
     )
 }
 
-private const val resourcesLibraryPath = "jupyterLibraries"
+private const val RESOURCES_LIBRARY_PATH = "jupyterLibraries"
 
 val librariesFromResources: Map<String, LibraryDescriptor> by lazy {
-    val listText = correctClassLoader.getResource("$resourcesLibraryPath/libraries.list")
+    val listText = correctClassLoader.getResource("$RESOURCES_LIBRARY_PATH/libraries.list")
     val logger = getLogger("Kotlin Jupyter libraries parsing")
 
     listText
@@ -37,7 +38,7 @@ val librariesFromResources: Map<String, LibraryDescriptor> by lazy {
         .orEmpty()
         .filter { it.isNotEmpty() }
         .mapNotNull { descriptorFile ->
-            correctClassLoader.getResource("$resourcesLibraryPath/$descriptorFile")?.readText()?.let { text ->
+            correctClassLoader.getResource("$RESOURCES_LIBRARY_PATH/$descriptorFile")?.readText()?.let { text ->
                 val libraryName = descriptorFile.removeSuffix(".json")
                 logger.info("Parsing library $libraryName from resources")
                 logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
@@ -49,9 +50,10 @@ val librariesFromResources: Map<String, LibraryDescriptor> by lazy {
 }
 
 val descriptorOptionsFromResources: LibraryDescriptorGlobalOptions by lazy {
-    val optionsText = correctClassLoader
-        .getResource("$resourcesLibraryPath/global.options")
-        ?.readText() ?: return@lazy DefaultLibraryDescriptorGlobalOptions
+    val optionsText =
+        correctClassLoader
+            .getResource("$RESOURCES_LIBRARY_PATH/global.options")
+            ?.readText() ?: return@lazy DefaultLibraryDescriptorGlobalOptions
 
     try {
         parseLibraryDescriptorGlobalOptions(optionsText)

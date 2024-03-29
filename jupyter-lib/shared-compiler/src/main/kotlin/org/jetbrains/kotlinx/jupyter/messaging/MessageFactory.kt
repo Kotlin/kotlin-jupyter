@@ -10,6 +10,7 @@ interface MessageFactory {
     val contextMessage: RawMessage?
 
     fun updateSessionInfo(message: RawMessage)
+
     fun updateContextMessage(contextMessage: RawMessage?)
 
     fun makeReplyMessageOrNull(
@@ -26,13 +27,17 @@ fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader {
     return makeHeader(msgType, sessionId = sessionId, username = username)
 }
 
-fun MessageFactory.makeSimpleMessage(msgType: MessageType, content: AbstractMessageContent): Message {
+fun MessageFactory.makeSimpleMessage(
+    msgType: MessageType,
+    content: AbstractMessageContent,
+): Message {
     return Message(
         id = messageId,
-        data = MessageData(
-            header = makeDefaultHeader(msgType),
-            content = content,
-        ),
+        data =
+            MessageData(
+                header = makeDefaultHeader(msgType),
+                content = content,
+            ),
     )
 }
 

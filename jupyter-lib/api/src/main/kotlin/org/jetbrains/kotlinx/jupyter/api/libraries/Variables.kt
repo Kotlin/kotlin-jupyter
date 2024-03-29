@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.util.ListToMapSerializer
 
 @Serializable
 data class Variable(val name: String, val value: String, val ignored: Boolean = false)
+
 object VariablesMapSerializer : ListToMapSerializer<Variable, String, String>(
     serializer(),
     ::Variable,
@@ -37,22 +38,26 @@ object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
 
     override fun deserialize(decoder: Decoder): DescriptorVariables {
         val hasOrder: Boolean
-        val properties: List<Variable> = when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
-            is JsonArray -> {
-                hasOrder = true
-                Json.decodeFromJsonElement(obj)
-            }
-            is JsonObject -> {
-                hasOrder = false
-                Json.decodeFromJsonElement(VariablesMapSerializer, obj)
-            }
-            else -> throw SerializationException("Library descriptor should be either object or array")
-        }.filter { !it.ignored }
+        val properties: List<Variable> =
+            when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
+                is JsonArray -> {
+                    hasOrder = true
+                    Json.decodeFromJsonElement(obj)
+                }
+                is JsonObject -> {
+                    hasOrder = false
+                    Json.decodeFromJsonElement(VariablesMapSerializer, obj)
+                }
+                else -> throw SerializationException("Library descriptor should be either object or array")
+            }.filter { !it.ignored }
 
         return DescriptorVariables(properties, hasOrder)
     }
 
-    override fun serialize(encoder: Encoder, value: DescriptorVariables) {
+    override fun serialize(
+        encoder: Encoder,
+        value: DescriptorVariables,
+    ) {
         if (value.hasOrder) {
             encoder.encodeSerializableValue(serializer(), value.properties)
         } else {

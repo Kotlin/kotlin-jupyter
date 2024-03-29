@@ -32,21 +32,22 @@ class LibraryReferenceParserImpl(private val libraryInfoCache: LibraryInfoCache)
         return defaultParsers[type]?.getInfo(vars) ?: AbstractLibraryResolutionInfo.Default(type)
     }
 
-    private val defaultParsers = listOf(
-        LibraryResolutionInfoParser.make("ref", listOf(Parameter.Required("ref"))) { args ->
-            libraryInfoCache.getLibraryInfoByRef(args["ref"] ?: error("Argument 'ref' should be specified"))
-        },
-        LibraryResolutionInfoParser.make("file", listOf(Parameter.Required("path"))) { args ->
-            AbstractLibraryResolutionInfo.ByFile(File(args["path"] ?: error("Argument 'path' should be specified")))
-        },
-        LibraryResolutionInfoParser.make("dir", listOf(Parameter.Required("dir"))) { args ->
-            AbstractLibraryResolutionInfo.ByDir(File(args["dir"] ?: error("Argument 'dir' should be specified")))
-        },
-        LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
-            AbstractLibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
-        },
-        LibraryResolutionInfoParser.make("classpath", listOf()) {
-            AbstractLibraryResolutionInfo.ByClasspath
-        },
-    ).associateBy { it.name }
+    private val defaultParsers =
+        listOf(
+            LibraryResolutionInfoParser.make("ref", listOf(Parameter.Required("ref"))) { args ->
+                libraryInfoCache.getLibraryInfoByRef(args["ref"] ?: error("Argument 'ref' should be specified"))
+            },
+            LibraryResolutionInfoParser.make("file", listOf(Parameter.Required("path"))) { args ->
+                AbstractLibraryResolutionInfo.ByFile(File(args["path"] ?: error("Argument 'path' should be specified")))
+            },
+            LibraryResolutionInfoParser.make("dir", listOf(Parameter.Required("dir"))) { args ->
+                AbstractLibraryResolutionInfo.ByDir(File(args["dir"] ?: error("Argument 'dir' should be specified")))
+            },
+            LibraryResolutionInfoParser.make("url", listOf(Parameter.Required("url"))) { args ->
+                AbstractLibraryResolutionInfo.ByURL(URL(args["url"] ?: error("Argument 'url' should be specified")))
+            },
+            LibraryResolutionInfoParser.make("classpath", listOf()) {
+                AbstractLibraryResolutionInfo.ByClasspath
+            },
+        ).associateBy { it.name }
 }

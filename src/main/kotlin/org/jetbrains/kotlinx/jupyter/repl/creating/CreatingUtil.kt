@@ -28,23 +28,38 @@ fun createRepl(
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
     debugPort: Int? = null,
 ): ReplForJupyter {
-    val componentsProvider = object : ReplComponentsProviderBase() {
-        override fun provideResolutionInfoProvider() = resolutionInfoProvider
-        override fun provideScriptClasspath() = scriptClasspath
-        override fun provideHomeDir() = homeDir
-        override fun provideMavenRepositories() = mavenRepositories
-        override fun provideLibraryResolver() = libraryResolver
-        override fun provideRuntimeProperties() = runtimeProperties
-        override fun provideScriptReceivers() = scriptReceivers
-        override fun provideIsEmbedded() = isEmbedded
-        override fun provideDisplayHandler() = displayHandler
-        override fun provideCommunicationFacility(): JupyterCommunicationFacility = communicationFacility
-        override fun provideDebugPort(): Int? = debugPort
-        override fun provideHttpClient() = httpUtil.httpClient
-        override fun provideLibraryDescriptorsManager() = httpUtil.libraryDescriptorsManager
-        override fun provideLibraryInfoCache() = httpUtil.libraryInfoCache
-        override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
-    }
+    val componentsProvider =
+        object : ReplComponentsProviderBase() {
+            override fun provideResolutionInfoProvider() = resolutionInfoProvider
+
+            override fun provideScriptClasspath() = scriptClasspath
+
+            override fun provideHomeDir() = homeDir
+
+            override fun provideMavenRepositories() = mavenRepositories
+
+            override fun provideLibraryResolver() = libraryResolver
+
+            override fun provideRuntimeProperties() = runtimeProperties
+
+            override fun provideScriptReceivers() = scriptReceivers
+
+            override fun provideIsEmbedded() = isEmbedded
+
+            override fun provideDisplayHandler() = displayHandler
+
+            override fun provideCommunicationFacility(): JupyterCommunicationFacility = communicationFacility
+
+            override fun provideDebugPort(): Int? = debugPort
+
+            override fun provideHttpClient() = httpUtil.httpClient
+
+            override fun provideLibraryDescriptorsManager() = httpUtil.libraryDescriptorsManager
+
+            override fun provideLibraryInfoCache() = httpUtil.libraryInfoCache
+
+            override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
+        }
     return componentsProvider.createRepl()
 }
 

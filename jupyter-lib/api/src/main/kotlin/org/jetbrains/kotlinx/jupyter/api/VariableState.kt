@@ -15,30 +15,32 @@ data class VariableStateImpl(
     override val property: KProperty1<Any, *>,
     override val scriptInstance: Any,
 ) : VariableState {
-    private val stringCache = VariableStateCache<String?> {
-        value.getOrNull()?.let { value ->
-            try {
-                value.toString()
-            } catch (e: Throwable) {
-                "${value::class.simpleName}: [exception thrown: $e]"
-            }
-        }
-    }
-
-    private val valCache = VariableStateCache<Result<Any?>>(
-        { oldValue, newValue ->
-            oldValue.getOrNull() !== newValue.getOrNull()
-        },
-        {
-            property.asAccessible { prop ->
+    private val stringCache =
+        VariableStateCache<String?> {
+            value.getOrNull()?.let { value ->
                 try {
-                    Result.success(prop.get(scriptInstance))
-                } catch (ex: Throwable) {
-                    Result.failure(ex)
+                    value.toString()
+                } catch (e: Throwable) {
+                    "${value::class.simpleName}: [exception thrown: $e]"
                 }
             }
-        },
-    )
+        }
+
+    private val valCache =
+        VariableStateCache<Result<Any?>>(
+            { oldValue, newValue ->
+                oldValue.getOrNull() !== newValue.getOrNull()
+            },
+            {
+                property.asAccessible { prop ->
+                    try {
+                        Result.success(prop.get(scriptInstance))
+                    } catch (ex: Throwable) {
+                        Result.failure(ex)
+                    }
+                }
+            },
+        )
 
     fun update(): Boolean {
         return (valCache.forceUpdate()).also { isChanged ->

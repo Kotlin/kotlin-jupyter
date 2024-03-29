@@ -14,7 +14,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.doWrappedInBusyIdle
 import org.jetbrains.kotlinx.jupyter.messaging.sendSimpleMessageToIoPub
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -23,7 +23,10 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
     private val commTargetToIds = ConcurrentHashMap<String, CopyOnWriteArrayList<String>>()
     private val commIdToComm = ConcurrentHashMap<String, CommImpl>()
 
-    override fun openComm(target: String, data: JsonObject): Comm {
+    override fun openComm(
+        target: String,
+        data: JsonObject,
+    ): Comm {
         val id = UUID.randomUUID().toString()
         val newComm = registerNewComm(target, id)
 
@@ -36,7 +39,10 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         return newComm
     }
 
-    override fun processCommOpen(message: Message, content: CommOpen): Comm? {
+    override fun processCommOpen(
+        message: Message,
+        content: CommOpen,
+    ): Comm? {
         val target = content.targetName
         val id = content.commId
         val data = content.data
@@ -57,7 +63,10 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         } catch (e: Throwable) {
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
-                CommClose(id, commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}")),
+                CommClose(
+                    id,
+                    commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}"),
+                ),
             )
             removeComm(id)
         }
@@ -65,7 +74,10 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         return newComm
     }
 
-    private fun registerNewComm(target: String, id: String): Comm {
+    private fun registerNewComm(
+        target: String,
+        id: String,
+    ): Comm {
         val commIds = commTargetToIds.getOrPut(target) { CopyOnWriteArrayList() }
         val newComm = CommImpl(target, id)
         commIds.add(id)
@@ -73,12 +85,18 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         return newComm
     }
 
-    override fun closeComm(id: String, data: JsonObject) {
+    override fun closeComm(
+        id: String,
+        data: JsonObject,
+    ) {
         val comm = commIdToComm[id] ?: return
         comm.close(data, notifyClient = true)
     }
 
-    override fun processCommClose(message: Message, content: CommClose) {
+    override fun processCommClose(
+        message: Message,
+        content: CommClose,
+    ) {
         val comm = commIdToComm[content.commId] ?: return
         comm.close(content.data, notifyClient = false)
     }
@@ -98,11 +116,17 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         }
     }
 
-    override fun processCommMessage(message: Message, content: CommMsg) {
+    override fun processCommMessage(
+        message: Message,
+        content: CommMsg,
+    ) {
         commIdToComm[content.commId]?.messageReceived(content.data)
     }
 
-    override fun registerCommTarget(target: String, callback: (Comm, JsonObject) -> Unit) {
+    override fun registerCommTarget(
+        target: String,
+        callback: (Comm, JsonObject) -> Unit,
+    ) {
         commOpenCallbacks[target] = callback
     }
 
@@ -114,7 +138,6 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         override val target: String,
         override val id: String,
     ) : Comm {
-
         private val onMessageCallbacks = mutableListOf<CommMsgCallback>()
         private val onCloseCallbacks = mutableListOf<CommCloseCallback>()
         private var closed = false
@@ -124,6 +147,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
                 throw AssertionError("Comm '$target' has been already closed")
             }
         }
+
         override fun send(data: JsonObject) {
             assertOpen()
             connection.sendSimpleMessageToIoPub(
@@ -152,7 +176,10 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
             onCloseCallbacks.remove(callback)
         }
 
-        override fun close(data: JsonObject, notifyClient: Boolean) {
+        override fun close(
+            data: JsonObject,
+            notifyClient: Boolean,
+        ) {
             assertOpen()
             closed = true
             onMessageCallbacks.clear()

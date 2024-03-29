@@ -19,9 +19,10 @@ typealias ClassLoaderNodeRenderer = ClassLoaderRenderingConfiguration.(ClassLoad
 
 val DefaultClassLoaderNodeRenderer: ClassLoaderNodeRenderer = { node ->
     when {
-        node is URLClassLoader && withUrlDependencies -> node.urLs.joinToString("\\n", "URL ClassLoader:\\n") {
-            it.toString()
-        }
+        node is URLClassLoader && withUrlDependencies ->
+            node.urLs.joinToString("\\n", "URL ClassLoader:\\n") {
+                it.toString()
+            }
         else -> node.toString()
     }
 }
@@ -33,17 +34,20 @@ class ClassLoaderNode(
     override val inNodes by lazy {
         node.parent?.let { listOf(ClassLoaderNode(it, conf)) } ?: emptyList()
     }
-    override val label = TextLabel(
-        conf.renderer(conf, node),
-    )
+    override val label =
+        TextLabel(
+            conf.renderer(conf, node),
+        )
 }
 
 fun GraphNode.Companion.fromClassLoader(
     classLoader: ClassLoader,
     conf: ClassLoaderRenderingConfiguration = ClassLoaderRenderingConfiguration.DEFAULT,
 ) = ClassLoaderNode(classLoader, conf)
+
 fun GraphNode.Companion.fromClassLoader(
     kClass: KClass<*>,
     conf: ClassLoaderRenderingConfiguration = ClassLoaderRenderingConfiguration.DEFAULT,
 ) = fromClassLoader(kClass.java.classLoader, conf)
+
 inline fun <reified T> GraphNode.Companion.fromClassLoader() = fromClassLoader(T::class)

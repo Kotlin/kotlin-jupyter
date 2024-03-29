@@ -16,4 +16,5 @@ class KClassNode(node: KClass<*>) : NodeWrapper<KClass<*>>(node) {
 }
 
 fun GraphNode.Companion.fromClass(kClass: KClass<*>) = KClassNode(kClass)
+
 inline fun <reified T> GraphNode.Companion.fromClass() = fromClass(T::class)

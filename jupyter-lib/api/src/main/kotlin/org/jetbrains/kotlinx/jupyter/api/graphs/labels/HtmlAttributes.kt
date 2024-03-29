@@ -14,12 +14,19 @@ abstract class HtmlAttributes<out Attr>(
     protected fun <T : Any> attr() = AttributeDelegate<T>()
 
     class AttributeDelegate<T : Any> {
-        operator fun getValue(thisRef: HtmlAttributes<*>, property: KProperty<*>): T? {
+        operator fun getValue(
+            thisRef: HtmlAttributes<*>,
+            property: KProperty<*>,
+        ): T? {
             @Suppress("UNCHECKED_CAST")
             return thisRef.properties[property.name] as T?
         }
 
-        operator fun setValue(thisRef: HtmlAttributes<*>, property: KProperty<*>, value: T?) {
+        operator fun setValue(
+            thisRef: HtmlAttributes<*>,
+            property: KProperty<*>,
+            value: T?,
+        ) {
             if (value != null) {
                 thisRef.properties[property.name] = value
             } else {
@@ -29,11 +36,10 @@ abstract class HtmlAttributes<out Attr>(
     }
 
     abstract class HtmlAttributesCompanion<T : HtmlAttributes<T>> {
-        @Suppress("PropertyName")
-        abstract val DEFAULT: T
+        abstract val default: T
 
         fun build(action: T.() -> Unit): T {
-            return DEFAULT.copy().apply { action() }
+            return default.copy().apply { action() }
         }
     }
 }

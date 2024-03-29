@@ -4,7 +4,10 @@ class ReplLibraryException(
     libraryName: String? = null,
     val part: LibraryProblemPart,
     cause: Throwable? = null,
-) : ReplException("The problem is found in ${libraryName?.let { "library $it" } ?: "one of the loaded libraries"}: check library ${part.message}", cause)
+) : ReplException(
+        "The problem is found in ${libraryName?.let { "library $it" } ?: "one of the loaded libraries"}: check library ${part.message}",
+        cause,
+    )
 
 enum class LibraryProblemPart(val message: String) {
     PREBUILT("imports, dependencies and repositories"),
@@ -25,7 +28,10 @@ enum class LibraryProblemPart(val message: String) {
     CODE_PREPROCESSORS("code preprocessors"),
 }
 
-fun <T> rethrowAsLibraryException(part: LibraryProblemPart, action: () -> T): T {
+fun <T> rethrowAsLibraryException(
+    part: LibraryProblemPart,
+    action: () -> T,
+): T {
     return try {
         action()
     } catch (e: Throwable) {

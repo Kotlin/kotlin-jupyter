@@ -17,12 +17,11 @@ import kotlin.test.assertEquals
 class ResourcesTaskTests {
     private val projectDir = createTempDirectory("jupyter-gradle-test-project").toFile()
 
-    private fun setupTest(
-        taskSetup: String = "",
-    ) {
+    private fun setupTest(taskSetup: String = "") {
         val buildFile = projectDir.resolve("build.gradle")
         val taskSetupIndented = taskSetup.prependIndent("    ".repeat(2))
-        val buildFileText = """
+        val buildFileText =
+            """
             ${pluginsBlock()}
             
             tasks {
@@ -30,16 +29,20 @@ class ResourcesTaskTests {
             $taskSetupIndented
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
         buildFile.writeText(buildFileText)
     }
 
-    private fun runResourcesTask(args: Array<String>? = null, type: String = ""): BuildResult {
-        val arguments = args?.toMutableList() ?: mutableListOf(
-            "-Pkotlin.jupyter.add.api=false",
-            "--stacktrace",
-            "--info",
-        )
+    private fun runResourcesTask(
+        args: Array<String>? = null,
+        type: String = "",
+    ): BuildResult {
+        val arguments =
+            args?.toMutableList() ?: mutableListOf(
+                "-Pkotlin.jupyter.add.api=false",
+                "--stacktrace",
+                "--info",
+            )
         val taskName = RESOURCES_TASK_NAME.withPrefix(type)
         arguments.add(0, taskName)
 
@@ -51,7 +54,10 @@ class ResourcesTaskTests {
             .build()
     }
 
-    private fun assertLibrariesJsonContents(expected: LibrariesScanResult, type: String = "") {
+    private fun assertLibrariesJsonContents(
+        expected: LibrariesScanResult,
+        type: String = "",
+    ) {
         val librariesJsonText = projectDir.resolve(buildLibrariesJsonPath(type)).readText()
         val libraryInfo = Json.decodeFromString<LibrariesScanResult>(serializer(), librariesJsonText)
 
@@ -279,17 +285,19 @@ class ResourcesTaskTests {
                 "build/processedResources/$type/main"
             }
         }
-        private fun buildLibrariesJsonPath(type: String = "") = "${mainSourceSetBuildResourcesPath(type)}/$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME"
 
-        private fun pluginsBlock(ktPluginId: String = "jvm") = """
+        private fun buildLibrariesJsonPath(type: String = "") =
+            "${mainSourceSetBuildResourcesPath(type)}/$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME"
+
+        private fun pluginsBlock(ktPluginId: String = "jvm") =
+            """
             plugins {
                 id 'org.jetbrains.kotlin.$ktPluginId' version '$KOTLIN_VERSION'
                 id 'org.jetbrains.kotlin.jupyter.api'
                 id 'com.google.devtools.ksp' version '$KSP_VERSION'
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        private fun String.withPrefix(prefix: String) =
-            if (prefix.isEmpty()) this else prefix + capitalize()
+        private fun String.withPrefix(prefix: String) = if (prefix.isEmpty()) this else prefix + capitalize()
     }
 }

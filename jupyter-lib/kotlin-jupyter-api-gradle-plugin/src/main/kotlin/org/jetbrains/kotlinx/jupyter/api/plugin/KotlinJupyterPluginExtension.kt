@@ -23,23 +23,26 @@ class KotlinJupyterPluginExtension(
     }
 
     @JvmOverloads
-    fun addApiDependency(version: String? = null) = with(project) {
-        configureDependency("compileOnly", kernelDependency("api", version))
-    }
-
-    @JvmOverloads
-    fun addScannerDependency(version: String? = null) = with(project) {
-        configurations.whenAdded({ it.name == "ksp" }) { kspConf ->
-            val annotationsDependency = kernelDependency("api-annotations", version)
-            dependencies {
-                kspConf(annotationsDependency)
-            }
-            configureDependency("compileOnly", annotationsDependency)
+    fun addApiDependency(version: String? = null) =
+        with(project) {
+            configureDependency("compileOnly", kernelDependency("api", version))
         }
-    }
 
     @JvmOverloads
-    fun addTestKitDependency(version: String? = null) = with(project) {
-        configureDependency("testImplementation", kernelDependency("test-kit", version))
-    }
+    fun addScannerDependency(version: String? = null) =
+        with(project) {
+            configurations.whenAdded({ it.name == "ksp" }) { kspConf ->
+                val annotationsDependency = kernelDependency("api-annotations", version)
+                dependencies {
+                    kspConf(annotationsDependency)
+                }
+                configureDependency("compileOnly", annotationsDependency)
+            }
+        }
+
+    @JvmOverloads
+    fun addTestKitDependency(version: String? = null) =
+        with(project) {
+            configureDependency("testImplementation", kernelDependency("test-kit", version))
+        }
 }

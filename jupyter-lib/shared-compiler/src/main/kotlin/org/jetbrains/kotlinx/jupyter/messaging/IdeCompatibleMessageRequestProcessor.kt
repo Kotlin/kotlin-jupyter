@@ -17,8 +17,8 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.CapturingOutputStream
 import org.jetbrains.kotlinx.jupyter.protocol.DisabledStdinInputStream
+import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.StdinInputStream
-import org.jetbrains.kotlinx.jupyter.protocol.protocolVersion
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -44,10 +44,11 @@ open class IdeCompatibleMessageRequestProcessor(
     protected val repl: ReplForJupyter,
 ) : AbstractMessageRequestProcessor(rawIncomingMessage),
     JupyterCommunicationFacility {
-    final override val messageFactory = run {
-        messageFactoryProvider.update(rawIncomingMessage)
-        messageFactoryProvider.provide()!!
-    }
+    final override val messageFactory =
+        run {
+            messageFactoryProvider.update(rawIncomingMessage)
+            messageFactoryProvider.provide()!!
+        }
 
     protected val stdinIn: InputStream = StdinInputStream(socketManager.stdin, messageFactory)
 
@@ -111,9 +112,10 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 
     override fun processExecuteRequest(content: ExecuteRequest) {
-        val count = executionCount.getAndUpdate {
-            if (content.storeHistory) it + 1 else it
-        }
+        val count =
+            executionCount.getAndUpdate {
+                if (content.storeHistory) it + 1 else it
+            }
         val startedTime = ISO8601DateNow
 
         doWrappedInBusyIdle {
@@ -124,22 +126,23 @@ open class IdeCompatibleMessageRequestProcessor(
                     content = ExecutionInputReply(code, count),
                 ),
             )
-            val response: JupyterResponse = if (looksLikeReplCommand(code)) {
-                runCommand(code, repl)
-            } else {
-                evalWithIO(content.allowStdin) {
-                    runExecution("Execution of code '${code.presentableForThreadName()}'") {
-                        repl.evalEx(
-                            EvalRequestData(
-                                code,
-                                count.toInt(),
-                                content.storeHistory,
-                                content.silent,
-                            ),
-                        )
+            val response: JupyterResponse =
+                if (looksLikeReplCommand(code)) {
+                    runCommand(code, repl)
+                } else {
+                    evalWithIO(content.allowStdin) {
+                        runExecution("Execution of code '${code.presentableForThreadName()}'") {
+                            repl.evalEx(
+                                EvalRequestData(
+                                    code,
+                                    count.toInt(),
+                                    content.storeHistory,
+                                    content.silent,
+                                ),
+                            )
+                        }
                     }
                 }
-            }
 
             sendResponse(response, count, startedTime)
         }
@@ -149,9 +152,10 @@ open class IdeCompatibleMessageRequestProcessor(
         sendWrapped(
             messageFactory.makeReplyMessage(
                 MessageType.CONNECT_REPLY,
-                content = ConnectReply(
-                    Json.EMPTY,
-                ),
+                content =
+                    ConnectReply(
+                        Json.EMPTY,
+                    ),
             ),
         )
     }
@@ -169,14 +173,15 @@ open class IdeCompatibleMessageRequestProcessor(
         sendWrapped(
             messageFactory.makeReplyMessage(
                 MessageType.KERNEL_INFO_REPLY,
-                content = KernelInfoReply(
-                    protocolVersion,
-                    "Kotlin",
-                    currentKernelVersion.toMaybeUnspecifiedString(),
-                    "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",
-                    notebookLanguageInfo,
-                    listOf(),
-                ),
+                content =
+                    KernelInfoReply(
+                        PROTOCOL_VERSION,
+                        "Kotlin",
+                        currentKernelVersion.toMaybeUnspecifiedString(),
+                        "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",
+                        notebookLanguageInfo,
+                        listOf(),
+                    ),
             ),
         )
     }
@@ -212,11 +217,12 @@ open class IdeCompatibleMessageRequestProcessor(
         execution: () -> EvalResultEx,
     ): JupyterResponse {
         return when (
-            val res = executor.runExecution(
-                executionName,
-                repl.currentClassLoader,
-                execution,
-            )
+            val res =
+                executor.runExecution(
+                    executionName,
+                    repl.currentClassLoader,
+                    execution,
+                )
         ) {
             is ExecutionResult.Success -> {
                 try {
@@ -249,7 +255,11 @@ open class IdeCompatibleMessageRequestProcessor(
 
     private val replOutputConfig get() = repl.options.outputConfig
 
-    private fun getCapturingStream(stream: PrintStream?, outType: JupyterOutType, captureOutput: Boolean): PrintStream {
+    private fun getCapturingStream(
+        stream: PrintStream?,
+        outType: JupyterOutType,
+        captureOutput: Boolean,
+    ): PrintStream {
         return CapturingOutputStream(
             stream,
             replOutputConfig,
@@ -260,8 +270,7 @@ open class IdeCompatibleMessageRequestProcessor(
         }.asPrintStream()
     }
 
-    private fun OutputStream.asPrintStream() =
-        PrintStream(this, false, "UTF-8")
+    private fun OutputStream.asPrintStream() = PrintStream(this, false, "UTF-8")
 
     private fun <T> withForkedOut(body: () -> T): T {
         return withSubstitutedStream(
@@ -284,7 +293,10 @@ open class IdeCompatibleMessageRequestProcessor(
         }
     }
 
-    private fun <T> withForkedIn(allowStdIn: Boolean, body: () -> T): T {
+    private fun <T> withForkedIn(
+        allowStdIn: Boolean,
+        body: () -> T,
+    ): T {
         return withSubstitutedStream(
             ::systemInStream,
             newStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },

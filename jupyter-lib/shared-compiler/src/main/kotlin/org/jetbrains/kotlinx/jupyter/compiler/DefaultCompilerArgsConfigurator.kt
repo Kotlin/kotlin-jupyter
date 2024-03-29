@@ -9,17 +9,21 @@ import kotlin.script.experimental.api.asSuccess
 class DefaultCompilerArgsConfigurator(
     jvmTargetVersion: String = JavaRuntime.version,
 ) : CompilerArgsConfigurator {
-    private val argsList = mutableListOf(
-        "-jvm-target",
-        jvmTargetVersion,
-        "-no-stdlib",
-    )
+    private val argsList =
+        mutableListOf(
+            "-jvm-target",
+            jvmTargetVersion,
+            "-no-stdlib",
+        )
 
     override fun getArgs(): List<String> {
         return argsList.toList()
     }
 
-    override fun configure(configuration: ScriptCompilationConfiguration, annotations: List<Annotation>): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+    override fun configure(
+        configuration: ScriptCompilationConfiguration,
+        annotations: List<Annotation>,
+    ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         annotations.forEach {
             when (it) {
                 is CompilerArgs -> argsList.addAll(it.values)

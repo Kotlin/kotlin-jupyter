@@ -14,14 +14,15 @@ object LoggingManagement {
     private val loggerContext
         get() = rootLogger?.loggerContext
 
-    private val basicEncoder = run {
-        if (loggerContext == null) return@run null
-        val encoder = PatternLayoutEncoder()
-        encoder.context = loggerContext
-        encoder.pattern = "%-4relative [%thread] %-5level %logger{35} - %msg %n"
-        encoder.start()
-        encoder
-    }
+    private val basicEncoder =
+        run {
+            if (loggerContext == null) return@run null
+            val encoder = PatternLayoutEncoder()
+            encoder.context = loggerContext
+            encoder.pattern = "%-4relative [%thread] %-5level %logger{35} - %msg %n"
+            encoder.start()
+            encoder
+        }
 
     fun setRootLoggingLevel(level: Level) {
         rootLogger?.level = level
@@ -41,7 +42,10 @@ object LoggingManagement {
         return result
     }
 
-    fun addAppender(name: String, appender: Appender<ILoggingEvent>) {
+    fun addAppender(
+        name: String,
+        appender: Appender<ILoggingEvent>,
+    ) {
         if (loggerContext == null || basicEncoder == null) return
 
         appender.name = name

@@ -31,10 +31,11 @@ class LibrariesScanner : LibraryLoader {
     ): List<I> {
         return filter {
             val typeName = it.fqn
-            val acceptance = unionAcceptance(
-                host.acceptsIntegrationTypeName(typeName),
-                integrationTypeNameRules.accepts(typeName),
-            )
+            val acceptance =
+                unionAcceptance(
+                    host.acceptsIntegrationTypeName(typeName),
+                    integrationTypeNameRules.accepts(typeName),
+                )
             log.debug("Acceptance result for $typeName: $acceptance")
             when (acceptance) {
                 true -> processedFQNs.add(typeName)
@@ -74,11 +75,16 @@ class LibrariesScanner : LibraryLoader {
         }
     }
 
-    private fun scanForLibraries(classLoader: ClassLoader, host: KotlinKernelHost, integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf()): LibrariesScanResult {
-        val results = classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
-            val contents = url.readText()
-            Json.decodeFromString<LibrariesScanResult>(contents)
-        }
+    private fun scanForLibraries(
+        classLoader: ClassLoader,
+        host: KotlinKernelHost,
+        integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
+    ): LibrariesScanResult {
+        val results =
+            classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
+                val contents = url.readText()
+                Json.decodeFromString<LibrariesScanResult>(contents)
+            }
 
         val definitions = mutableListOf<LibrariesDefinitionDeclaration>()
         val producers = mutableListOf<LibrariesProducerDeclaration>()
@@ -105,7 +111,10 @@ class LibrariesScanner : LibraryLoader {
         val definitions = mutableListOf<LibraryDefinition>()
         val arguments = listOf(notebook, libraryOptions)
 
-        fun <T> withErrorsHandling(declaration: LibrariesInstantiable<*>, action: () -> T): T {
+        fun <T> withErrorsHandling(
+            declaration: LibrariesInstantiable<*>,
+            action: () -> T,
+        ): T {
             return try {
                 action()
             } catch (e: Throwable) {
@@ -153,8 +162,9 @@ class LibrariesScanner : LibraryLoader {
         if (obj != null) return obj
 
         val argsCount = arguments.size
-        val myConstructors = constructors
-            .sortedByDescending { it.parameterCount }
+        val myConstructors =
+            constructors
+                .sortedByDescending { it.parameterCount }
 
         val errorStringBuilder = StringBuilder()
         for (constructor in myConstructors) {
@@ -164,9 +174,10 @@ class LibrariesScanner : LibraryLoader {
                 continue
             }
 
-            val isSuitable = constructor.parameterTypes
-                .zip(arguments)
-                .all { (paramType, arg) -> paramType.isInstance(arg) }
+            val isSuitable =
+                constructor.parameterTypes
+                    .zip(arguments)
+                    .all { (paramType, arg) -> paramType.isInstance(arg) }
 
             if (!isSuitable) {
                 errorStringBuilder.appendLine("\t$constructor: wrong parameter types")

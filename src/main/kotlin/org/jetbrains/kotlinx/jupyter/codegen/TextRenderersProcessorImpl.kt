@@ -6,7 +6,11 @@ import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.execution.AbstractExtensionsProcessor
 
-class TextRenderersProcessorImpl : AbstractExtensionsProcessor<TextRenderer>(latterFirst = true), TextRenderersProcessorWithPreventingRecursion {
+class TextRenderersProcessorImpl :
+    AbstractExtensionsProcessor<TextRenderer>(
+        latterFirst = true,
+    ),
+    TextRenderersProcessorWithPreventingRecursion {
     private val cache = mutableListOf<CacheEntry>()
 
     override fun registeredRenderers(): List<TextRendererWithPriority> {
@@ -21,27 +25,30 @@ class TextRenderersProcessorImpl : AbstractExtensionsProcessor<TextRenderer>(lat
 
         cache.add(CacheEntry(value))
         val cacheEntry = cache.last()
+
         fun cached(rendered: String): String {
             cacheEntry.v = rendered
             return rendered
         }
 
         for (renderer in extensions) {
-            val res = rethrowAsLibraryException(LibraryProblemPart.TEXT_RENDERERS) {
-                renderer.render(this, value)
-            }
+            val res =
+                rethrowAsLibraryException(LibraryProblemPart.TEXT_RENDERERS) {
+                    renderer.render(this, value)
+                }
             if (res != null) return cached(res)
         }
         return cached(value.toString())
     }
 
     override fun renderPreventingRecursion(value: Any?): String {
-        val res = try {
-            cache.clear()
-            render(value)
-        } finally {
-            cache.clear()
-        }
+        val res =
+            try {
+                cache.clear()
+                render(value)
+            } finally {
+                cache.clear()
+            }
         return res
     }
 

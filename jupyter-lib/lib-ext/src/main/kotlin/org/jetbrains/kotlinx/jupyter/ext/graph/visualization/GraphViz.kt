@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 
 fun <T> MultiGraph<T>.dotText(): String {
     val nodesNumbers = nodes.mapIndexed { index, hierarchyElement -> hierarchyElement to index }.toMap()
+
     fun id(el: GraphNode<T>) = "n${nodesNumbers[el]}"
 
     return buildString {

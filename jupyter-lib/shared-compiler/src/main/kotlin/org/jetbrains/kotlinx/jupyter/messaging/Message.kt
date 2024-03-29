@@ -8,12 +8,12 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.data
-import org.jetbrains.kotlinx.jupyter.protocol.protocolVersion
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 
 data class Message(
     val id: List<ByteArray> = listOf(),
@@ -53,18 +53,21 @@ fun makeReplyMessage(
     parentHeader: MessageHeader? = null,
     metadata: JsonElement? = null,
     content: MessageContent? = null,
-) =
-    Message(
-        id = msg.id,
-        MessageData(
-            header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
-            parentHeader = parentHeader ?: MessageFormat.decodeFromJsonElement<MessageHeader>(msg.header),
-            metadata = metadata,
-            content = content,
-        ),
-    )
+) = Message(
+    id = msg.id,
+    MessageData(
+        header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
+        parentHeader = parentHeader ?: MessageFormat.decodeFromJsonElement<MessageHeader>(msg.header),
+        metadata = metadata,
+        content = content,
+    ),
+)
 
-fun makeHeader(msgType: MessageType? = null, incomingMsg: RawMessage? = null, sessionId: String? = null): MessageHeader {
+fun makeHeader(
+    msgType: MessageType? = null,
+    incomingMsg: RawMessage? = null,
+    sessionId: String? = null,
+): MessageHeader {
     val parentHeader = incomingMsg?.header?.let { MessageFormat.decodeFromJsonElement<MessageHeader>(it) }
     return makeHeader(
         msgType ?: MessageType.NONE,
@@ -76,13 +79,17 @@ fun makeHeader(msgType: MessageType? = null, incomingMsg: RawMessage? = null, se
 private val ISO8601DateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSxxx'['VV']'")
 val ISO8601DateNow: String get() = ZonedDateTime.now().format(ISO8601DateFormatter)
 
-fun makeHeader(type: MessageType, sessionId: String?, username: String?): MessageHeader {
+fun makeHeader(
+    type: MessageType,
+    sessionId: String?,
+    username: String?,
+): MessageHeader {
     return MessageHeader(
         UUID.randomUUID().toString(),
         type,
         sessionId,
         username,
-        protocolVersion,
+        PROTOCOL_VERSION,
         ISO8601DateNow,
     )
 }

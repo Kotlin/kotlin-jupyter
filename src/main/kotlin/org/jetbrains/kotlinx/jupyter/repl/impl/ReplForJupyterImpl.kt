@@ -143,15 +143,15 @@ class ReplForJupyterImpl(
     private val libraryInfoCache: LibraryInfoCache,
     private val libraryReferenceParser: LibraryReferenceParser,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
-
     override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
 
-    private val libraryInfoSwitcher = getDefaultResolutionInfoSwitcher(
-        resolutionInfoProvider,
-        libraryInfoCache,
-        libraryDescriptorsManager.homeLibrariesDir(homeDir),
-        runtimeProperties.currentBranch,
-    )
+    private val libraryInfoSwitcher =
+        getDefaultResolutionInfoSwitcher(
+            resolutionInfoProvider,
+            libraryInfoCache,
+            libraryDescriptorsManager.homeLibrariesDir(homeDir),
+            runtimeProperties.currentBranch,
+        )
 
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
 
@@ -159,19 +159,26 @@ class ReplForJupyterImpl(
 
     private val resourcesProcessor = LibraryResourcesProcessorImpl(httpClient)
 
-    override val sessionOptions: SessionOptions = object : SessionOptions {
-        override var resolveSources: Boolean
-            get() = resolver.resolveSources
-            set(value) { resolver.resolveSources = value }
+    override val sessionOptions: SessionOptions =
+        object : SessionOptions {
+            override var resolveSources: Boolean
+                get() = resolver.resolveSources
+                set(value) {
+                    resolver.resolveSources = value
+                }
 
-        override var resolveMpp: Boolean
-            get() = resolver.resolveMpp
-            set(value) { resolver.resolveMpp = value }
+            override var resolveMpp: Boolean
+                get() = resolver.resolveMpp
+                set(value) {
+                    resolver.resolveMpp = value
+                }
 
-        override var serializeScriptData: Boolean
-            get() = internalEvaluator.serializeScriptData
-            set(value) { internalEvaluator.serializeScriptData = value }
-    }
+            override var serializeScriptData: Boolean
+                get() = internalEvaluator.serializeScriptData
+                set(value) {
+                    internalEvaluator.serializeScriptData = value
+                }
+        }
 
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
@@ -179,32 +186,36 @@ class ReplForJupyterImpl(
 
     private val ctx = KotlinContext()
 
-    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(
-        runtimeProperties.jvmTargetForSnippets,
-    )
+    private val compilerArgsConfigurator: CompilerArgsConfigurator =
+        DefaultCompilerArgsConfigurator(
+            runtimeProperties.jvmTargetForSnippets,
+        )
 
-    private val librariesProcessor: LibrariesProcessor = LibrariesProcessorImpl(
-        libraryResolver,
-        libraryReferenceParser,
-        runtimeProperties.version,
-    )
+    private val librariesProcessor: LibrariesProcessor =
+        LibrariesProcessorImpl(
+            libraryResolver,
+            libraryReferenceParser,
+            runtimeProperties.version,
+        )
 
-    private val magics = MagicsProcessor(
-        FullMagicsHandler(
-            options,
-            librariesProcessor,
-            libraryInfoSwitcher,
-        ),
-        parseOutCellMagic,
-    )
-    override val libraryDescriptorsProvider = run {
-        val provider = HomeDirLibraryDescriptorsProvider(homeDir, libraryDescriptorsManager)
-        if (libraryResolver != null) {
-            LibraryDescriptorsByResolutionProvider(provider, libraryResolver, libraryReferenceParser)
-        } else {
-            provider
+    private val magics =
+        MagicsProcessor(
+            FullMagicsHandler(
+                options,
+                librariesProcessor,
+                libraryInfoSwitcher,
+            ),
+            parseOutCellMagic,
+        )
+    override val libraryDescriptorsProvider =
+        run {
+            val provider = HomeDirLibraryDescriptorsProvider(homeDir, libraryDescriptorsManager)
+            if (libraryResolver != null) {
+                LibraryDescriptorsByResolutionProvider(provider, libraryResolver, libraryReferenceParser)
+            } else {
+                provider
+            }
         }
-    }
     private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic, httpClient)
     private val errorsMagics = ErrorsMagicsProcessor(parseOutCellMagic)
 
@@ -231,22 +242,27 @@ class ReplForJupyterImpl(
         get() = compilerConfiguration[ScriptCompilationConfiguration.fileExtension]!!
 
     private val ScriptCompilationConfiguration.classpath
-        get() = this[ScriptCompilationConfiguration.dependencies]
-            ?.filterIsInstance<JvmDependency>()
-            ?.flatMap { it.classpath }
-            .orEmpty()
+        get() =
+            this[ScriptCompilationConfiguration.dependencies]
+                ?.filterIsInstance<JvmDependency>()
+                ?.flatMap { it.classpath }
+                .orEmpty()
 
     override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
     private val currentSources = mutableSetOf<String>()
 
     private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) :
         ClassLoader(parent) {
-        override fun loadClass(name: String?, resolve: Boolean): Class<*> {
-            val c = if (name != null && includeFilter(name)) {
-                parent.loadClass(name)
-            } else {
-                parent.parent.loadClass(name)
-            }
+        override fun loadClass(
+            name: String?,
+            resolve: Boolean,
+        ): Class<*> {
+            val c =
+                if (name != null && includeFilter(name)) {
+                    parent.loadClass(name)
+                } else {
+                    parent.parent.loadClass(name)
+                }
             if (resolve) {
                 resolveClass(c)
             }
@@ -254,26 +270,28 @@ class ReplForJupyterImpl(
         }
     }
 
-    private val evaluatorConfiguration = ScriptEvaluationConfiguration {
-        implicitReceivers.invoke(v = scriptReceivers)
-        if (!isEmbedded) {
-            jvm {
-                val filteringClassLoader = FilteringClassLoader(ReplForJupyterImpl::class.java.classLoader) { fqn ->
-                    listOf(
-                        "jupyter.kotlin.",
-                        "org.jetbrains.kotlinx.jupyter.api",
-                        "kotlin.",
-                        "kotlinx.serialization.",
-                    ).any { fqn.startsWith(it) } ||
-                        (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
+    private val evaluatorConfiguration =
+        ScriptEvaluationConfiguration {
+            implicitReceivers.invoke(v = scriptReceivers)
+            if (!isEmbedded) {
+                jvm {
+                    val filteringClassLoader =
+                        FilteringClassLoader(ReplForJupyterImpl::class.java.classLoader) { fqn ->
+                            listOf(
+                                "jupyter.kotlin.",
+                                "org.jetbrains.kotlinx.jupyter.api",
+                                "kotlin.",
+                                "kotlinx.serialization.",
+                            ).any { fqn.startsWith(it) } ||
+                                (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
+                        }
+                    val scriptClassloader =
+                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
+                    baseClassLoader(scriptClassloader)
                 }
-                val scriptClassloader =
-                    URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
-                baseClassLoader(scriptClassloader)
             }
+            constructorArgs(this@ReplForJupyterImpl)
         }
-        constructorArgs(this@ReplForJupyterImpl)
-    }
 
     private val jupyterCompiler by lazy {
         JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration)
@@ -287,36 +305,41 @@ class ReplForJupyterImpl(
 
     private val contextUpdater = ContextUpdater(ctx, evaluator)
 
-    private val internalEvaluator: InternalEvaluator = InternalEvaluatorImpl(
-        jupyterCompiler,
-        evaluator,
-        contextUpdater,
-        options.executedCodeLogging != ExecutedCodeLogging.OFF,
-        internalVariablesMarkersProcessor,
-    )
+    private val internalEvaluator: InternalEvaluator =
+        InternalEvaluatorImpl(
+            jupyterCompiler,
+            evaluator,
+            contextUpdater,
+            options.executedCodeLogging != ExecutedCodeLogging.OFF,
+            internalVariablesMarkersProcessor,
+        )
 
     @Suppress("unused")
     private val debugUtilityProvider = DebugUtilityProvider(notebook)
 
-    private val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion = TextRenderersProcessorImpl().apply {
-        // registerDefaultRenderers()
-    }
+    private val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion =
+        TextRenderersProcessorImpl().apply {
+            // registerDefaultRenderers()
+        }
 
-    private val renderersProcessor: ResultsRenderersProcessor = RenderersProcessorImpl(contextUpdater).apply {
-        registerDefaultRenderers()
-    }
+    private val renderersProcessor: ResultsRenderersProcessor =
+        RenderersProcessorImpl(contextUpdater).apply {
+            registerDefaultRenderers()
+        }
 
     override val currentClassLoader: ClassLoader get() = internalEvaluator.lastClassLoader
 
     override val throwableRenderersProcessor: ThrowableRenderersProcessor = ThrowableRenderersProcessorImpl()
 
-    private val fieldsProcessor: FieldsProcessorInternal = FieldsProcessorImpl(contextUpdater).apply {
-        register(NullabilityEraser, ProcessingPriority.LOWEST)
-    }
+    private val fieldsProcessor: FieldsProcessorInternal =
+        FieldsProcessorImpl(contextUpdater).apply {
+            register(NullabilityEraser, ProcessingPriority.LOWEST)
+        }
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
-    private val fileAnnotationsProcessor: FileAnnotationsProcessor = FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
+    private val fileAnnotationsProcessor: FileAnnotationsProcessor =
+        FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
 
     private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(this)
 
@@ -328,34 +351,36 @@ class ReplForJupyterImpl(
 
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
-    internal val sharedContext = SharedReplContext(
-        classAnnotationsProcessor,
-        fileAnnotationsProcessor,
-        fieldsProcessor,
-        renderersProcessor,
-        textRenderersProcessor,
-        throwableRenderersProcessor,
-        codePreprocessor,
-        resourcesProcessor,
-        librariesProcessor,
-        librariesScanner,
-        notebook,
-        beforeCellExecutionsProcessor,
-        shutdownExecutionsProcessor,
-        afterCellExecutionsProcessor,
-        internalEvaluator,
-        this,
-        internalVariablesMarkersProcessor,
-        interruptionCallbacksProcessor,
-        colorSchemeChangeCallbacksProcessor,
-        displayHandler,
-    ).also {
-        notebook.sharedReplContext = it
-        commHandlers.requireUniqueTargets()
-        commHandlers.forEach { handler -> installCommHandler(handler) }
-    }
+    internal val sharedContext =
+        SharedReplContext(
+            classAnnotationsProcessor,
+            fileAnnotationsProcessor,
+            fieldsProcessor,
+            renderersProcessor,
+            textRenderersProcessor,
+            throwableRenderersProcessor,
+            codePreprocessor,
+            resourcesProcessor,
+            librariesProcessor,
+            librariesScanner,
+            notebook,
+            beforeCellExecutionsProcessor,
+            shutdownExecutionsProcessor,
+            afterCellExecutionsProcessor,
+            internalEvaluator,
+            this,
+            internalVariablesMarkersProcessor,
+            interruptionCallbacksProcessor,
+            colorSchemeChangeCallbacksProcessor,
+            displayHandler,
+        ).also {
+            notebook.sharedReplContext = it
+            commHandlers.requireUniqueTargets()
+            commHandlers.forEach { handler -> installCommHandler(handler) }
+        }
 
     private var evalContextEnabled = false
+
     private fun <T> withEvalContext(action: () -> T): T {
         return synchronized(this) {
             evalContextEnabled = true
@@ -383,23 +408,26 @@ class ReplForJupyterImpl(
             beforeCellExecutionsProcessor.process(executor)
 
             val result = evaluateUserCode(evalData.code, evalData.jupyterId)
+
             fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
 
             when (result) {
                 is InternalReplResult.Success -> {
-                    val rendered = result.internalResult.let { internalResult ->
-                        log.catchAll {
-                            renderersProcessor.renderResult(executor, internalResult.result)
+                    val rendered =
+                        result.internalResult.let { internalResult ->
+                            log.catchAll {
+                                renderersProcessor.renderResult(executor, internalResult.result)
+                            }
+                        }?.let {
+                            log.catchAll {
+                                if (it is Renderable) it.render(notebook) else it
+                            }
                         }
-                    }?.let {
-                        log.catchAll {
-                            if (it is Renderable) it.render(notebook) else it
-                        }
-                    }
 
-                    val displayValue = log.catchAll {
-                        notebook.postRender(rendered)
-                    }
+                    val displayValue =
+                        log.catchAll {
+                            notebook.postRender(rendered)
+                        }
 
                     EvalResultEx.Success(
                         result.internalResult,
@@ -416,16 +444,18 @@ class ReplForJupyterImpl(
                         EvalResultEx.Interrupted(getMetadata())
                     } else {
                         val originalError = (error as? ReplEvalRuntimeException)?.cause
-                        val renderedError = log.catchAll {
-                            originalError?.let {
-                                throwableRenderersProcessor.renderThrowable(originalError)
+                        val renderedError =
+                            log.catchAll {
+                                originalError?.let {
+                                    throwableRenderersProcessor.renderThrowable(originalError)
+                                }
                             }
-                        }
 
                         if (renderedError != null) {
-                            val displayError = log.catchAll {
-                                notebook.postRender(renderedError)
-                            }
+                            val displayError =
+                                log.catchAll {
+                                    notebook.postRender(renderedError)
+                                }
                             EvalResultEx.RenderedError(
                                 error,
                                 renderedError,
@@ -444,14 +474,19 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun calculateEvalMetadata(storeHistory: Boolean, internalMetadata: InternalMetadata): EvaluatedSnippetMetadata {
-        val newClasspath = log.catchAll {
-            updateClasspath()
-        } ?: emptyList()
+    private fun calculateEvalMetadata(
+        storeHistory: Boolean,
+        internalMetadata: InternalMetadata,
+    ): EvaluatedSnippetMetadata {
+        val newClasspath =
+            log.catchAll {
+                updateClasspath()
+            } ?: emptyList()
 
-        val newSources = log.catchAll {
-            updateSources()
-        } ?: emptyList()
+        val newSources =
+            log.catchAll {
+                updateSources()
+            } ?: emptyList()
 
         if (!storeHistory) {
             log.catchAll { notebook.popCell() }
@@ -469,34 +504,36 @@ class ReplForJupyterImpl(
         val compiledData: SerializedCompiledScriptsData
         val newImports: List<String>
         var throwable: Throwable? = null
-        val internalResult: InternalEvalResult? = try {
-            log.debug("Current cell id: $jupyterId")
-            val executorWorkflowListener = object : ExecutorWorkflowListener {
-                override fun internalIdGenerated(id: Int) {
-                    cell.internalId = id
-                }
+        val internalResult: InternalEvalResult? =
+            try {
+                log.debug("Current cell id: $jupyterId")
+                val executorWorkflowListener =
+                    object : ExecutorWorkflowListener {
+                        override fun internalIdGenerated(id: Int) {
+                            cell.internalId = id
+                        }
 
-                override fun codePreprocessed(preprocessedCode: Code) {
-                    cell.preprocessedCode = preprocessedCode
-                }
+                        override fun codePreprocessed(preprocessedCode: Code) {
+                            cell.preprocessedCode = preprocessedCode
+                        }
 
-                override fun compilationFinished() {
-                    cell.declarations = declarationsCollector.getLastSnippetDeclarations()
-                }
+                        override fun compilationFinished() {
+                            cell.declarations = declarationsCollector.getLastSnippetDeclarations()
+                        }
+                    }
+                executor.execute(
+                    code,
+                    isUserCode = true,
+                    currentCellId = jupyterId - 1,
+                    executorWorkflowListener = executorWorkflowListener,
+                )
+            } catch (t: Throwable) {
+                throwable = t
+                null
+            } finally {
+                compiledData = internalEvaluator.popAddedCompiledScripts()
+                newImports = importsCollector.popAddedImports()
             }
-            executor.execute(
-                code,
-                isUserCode = true,
-                currentCellId = jupyterId - 1,
-                executorWorkflowListener = executorWorkflowListener,
-            )
-        } catch (t: Throwable) {
-            throwable = t
-            null
-        } finally {
-            compiledData = internalEvaluator.popAddedCompiledScripts()
-            newImports = importsCollector.popAddedImports()
-        }
 
         if (internalResult != null) {
             cell.resultVal = internalResult.result.value
@@ -557,13 +594,17 @@ class ReplForJupyterImpl(
     }
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
-    override suspend fun complete(code: String, cursor: Int, callback: (CompletionResult) -> Unit) =
-        doWithLock(
-            CompletionArgs(code, cursor, callback),
-            completionQueue,
-            CompletionResult.Empty(code, cursor),
-            ::doComplete,
-        )
+
+    override suspend fun complete(
+        code: String,
+        cursor: Int,
+        callback: (CompletionResult) -> Unit,
+    ) = doWithLock(
+        CompletionArgs(code, cursor, callback),
+        completionQueue,
+        CompletionResult.Empty(code, cursor),
+        ::doComplete,
+    )
 
     private fun doComplete(args: CompletionArgs): CompletionResult {
         if (looksLikeReplCommand(args.code)) return doCommandCompletion(args.code, args.cursor)
@@ -584,8 +625,11 @@ class ReplForJupyterImpl(
     }
 
     private val listErrorsQueue = LockQueue<ListErrorsResult, ListErrorsArgs>()
-    override suspend fun listErrors(code: String, callback: (ListErrorsResult) -> Unit) =
-        doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
+
+    override suspend fun listErrors(
+        code: String,
+        callback: (ListErrorsResult) -> Unit,
+    ) = doWithLock(ListErrorsArgs(code, callback), listErrorsQueue, ListErrorsResult(code), ::doListErrors)
 
     private fun doListErrors(args: ListErrorsArgs): ListErrorsResult {
         if (looksLikeReplCommand(args.code)) return reportCommandErrors(args.code)
@@ -604,14 +648,15 @@ class ReplForJupyterImpl(
     ) {
         queue.add(args)
 
-        val result = synchronized(this) {
-            val lastArgs = queue.get()
-            if (lastArgs !== args) {
-                default
-            } else {
-                action(args)
+        val result =
+            synchronized(this) {
+                val lastArgs = queue.get()
+                if (lastArgs !== args) {
+                    default
+                } else {
+                    action(args)
+                }
             }
-        }
         args.callback(result)
     }
 
@@ -647,7 +692,10 @@ class ReplForJupyterImpl(
         log.info("Classpath used in script: $scriptClasspath")
     }
 
-    override fun <T> withHost(currentHost: KotlinKernelHost, callback: () -> T): T {
+    override fun <T> withHost(
+        currentHost: KotlinKernelHost,
+        callback: () -> T,
+    ): T {
         try {
             currentKernelHost = currentHost
             return callback()
