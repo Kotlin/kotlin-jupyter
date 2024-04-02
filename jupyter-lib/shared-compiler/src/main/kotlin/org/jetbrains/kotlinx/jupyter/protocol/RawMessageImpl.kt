@@ -1,12 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import java.util.Base64
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import java.util.Base64
 
 data class RawMessageImpl(
     override val id: List<ByteArray> = listOf(),
