@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
+import java.util.Base64
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -14,7 +15,7 @@ data class RawMessageImpl(
     override val metadata: JsonObject?,
     override val content: JsonElement,
 ) : RawMessage {
-    override fun toString(): String = "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] $data"
+    override fun toString(): String = "msg[${id.joinToString { Base64.getEncoder().encodeToString(it) }}] $data"
 }
 
 val MessageFormat =
