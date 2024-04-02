@@ -1,12 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.TypeName
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
@@ -15,13 +16,16 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 import org.jetbrains.kotlinx.jupyter.util.accepts
 import org.jetbrains.kotlinx.jupyter.util.unionAcceptance
 
-class LibrariesScanner : LibraryLoader {
+class LibrariesScanner(
+    loggerFactory: KernelLoggerFactory,
+) : LibraryLoader {
+    private val logger = loggerFactory.getLogger(this::class)
+
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
 
@@ -36,7 +40,7 @@ class LibrariesScanner : LibraryLoader {
                     host.acceptsIntegrationTypeName(typeName),
                     integrationTypeNameRules.accepts(typeName),
                 )
-            log.debug("Acceptance result for $typeName: $acceptance")
+            logger.debug("Acceptance result for $typeName: $acceptance")
             when (acceptance) {
                 true -> processedFQNs.add(typeName)
                 false -> {
@@ -56,9 +60,9 @@ class LibrariesScanner : LibraryLoader {
         integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
     ) {
         val scanResult = scanForLibraries(classLoader, host, integrationTypeNameRules)
-        log.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
+        logger.debug("Scanning for libraries is done. Detected FQNs: ${Json.encodeToString(scanResult)}")
         val libraries = instantiateLibraries(classLoader, scanResult, notebook, libraryOptions)
-        log.debug("Number of detected definitions: ${libraries.size}")
+        logger.debug("Number of detected definitions: ${libraries.size}")
         host.addLibraries(libraries)
     }
 
@@ -119,7 +123,7 @@ class LibrariesScanner : LibraryLoader {
                 action()
             } catch (e: Throwable) {
                 val errorMessage = "Failed to load library integration class '${declaration.fqn}'"
-                log.errorForUser(message = errorMessage, throwable = e)
+                logger.errorForUser(message = errorMessage, throwable = e)
                 throw ReplException(errorMessage, e)
             }
         }
@@ -149,7 +153,7 @@ class LibrariesScanner : LibraryLoader {
     ): T? {
         val clazz = classLoader.loadClass(data.fqn)
         if (clazz == null) {
-            log.warn("Library ${data.fqn} wasn't found in classloader $classLoader")
+            logger.warn("Library ${data.fqn} wasn't found in classloader $classLoader")
             return null
         }
 
@@ -194,9 +198,5 @@ class LibrariesScanner : LibraryLoader {
             }
 
         throw ReplException("No suitable constructor found. Reason: $notFoundReason")
-    }
-
-    companion object {
-        private val log = getLogger("libraries scanning")
     }
 }

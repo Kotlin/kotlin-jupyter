@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KTypeProvider
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
@@ -30,6 +31,7 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
+    private val loggerFactory: KernelLoggerFactory,
     val compiler: JupyterCompiler,
     private val evaluator: BasicJvmReplEvaluator,
     private val contextUpdater: ContextUpdater,
@@ -65,7 +67,7 @@ internal class InternalEvaluatorImpl(
                 if (!value) {
                     null
                 } else {
-                    val cw = ClassWriter()
+                    val cw = ClassWriter(loggerFactory)
                     System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
                     cw
                 }

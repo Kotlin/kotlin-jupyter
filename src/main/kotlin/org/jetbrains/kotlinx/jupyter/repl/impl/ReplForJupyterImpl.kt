@@ -10,14 +10,17 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
+import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
@@ -60,7 +63,6 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
-import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.magics.CompletionMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
@@ -125,6 +127,7 @@ import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 
 class ReplForJupyterImpl(
+    private val loggerFactory: KernelLoggerFactory,
     override val resolutionInfoProvider: ResolutionInfoProvider,
     override val displayHandler: DisplayHandler = NoOpDisplayHandler,
     private val scriptClasspath: List<File> = emptyList(),
@@ -138,11 +141,13 @@ class ReplForJupyterImpl(
     override val librariesScanner: LibrariesScanner,
     override val debugPort: Int? = null,
     commHandlers: List<CommHandler> = listOf(),
-    private val httpClient: HttpClient,
+    httpClient: HttpClient,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
-    private val libraryInfoCache: LibraryInfoCache,
+    libraryInfoCache: LibraryInfoCache,
     private val libraryReferenceParser: LibraryReferenceParser,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
+    private val logger = loggerFactory.getLogger(this::class)
+
     override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
 
     private val libraryInfoSwitcher =
@@ -157,7 +162,11 @@ class ReplForJupyterImpl(
 
     private var currentKernelHost: KotlinKernelHost? = null
 
-    private val resourcesProcessor = LibraryResourcesProcessorImpl(httpClient)
+    private val resourcesProcessor =
+        LibraryResourcesProcessorImpl(
+            loggerFactory,
+            httpClient,
+        )
 
     override val sessionOptions: SessionOptions =
         object : SessionOptions {
@@ -182,7 +191,11 @@ class ReplForJupyterImpl(
 
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
-    private val resolver: JupyterScriptDependenciesResolver = JupyterScriptDependenciesResolverImpl(mavenRepositories)
+    private val resolver: JupyterScriptDependenciesResolver =
+        JupyterScriptDependenciesResolverImpl(
+            loggerFactory,
+            mavenRepositories,
+        )
 
     private val ctx = KotlinContext()
 
@@ -198,26 +211,44 @@ class ReplForJupyterImpl(
             runtimeProperties.version,
         )
 
+    val loggingManager = LoggingManager(loggerFactory)
+
     private val magics =
         MagicsProcessor(
             FullMagicsHandler(
                 options,
                 librariesProcessor,
                 libraryInfoSwitcher,
+                loggingManager,
             ),
             parseOutCellMagic,
         )
     override val libraryDescriptorsProvider =
         run {
-            val provider = HomeDirLibraryDescriptorsProvider(homeDir, libraryDescriptorsManager)
+            val provider =
+                HomeDirLibraryDescriptorsProvider(
+                    loggerFactory,
+                    homeDir,
+                    libraryDescriptorsManager,
+                )
             if (libraryResolver != null) {
                 LibraryDescriptorsByResolutionProvider(provider, libraryResolver, libraryReferenceParser)
             } else {
                 provider
             }
         }
-    private val completionMagics = CompletionMagicsProcessor(libraryDescriptorsProvider, parseOutCellMagic, httpClient)
-    private val errorsMagics = ErrorsMagicsProcessor(parseOutCellMagic)
+    private val completionMagics =
+        CompletionMagicsProcessor(
+            loggerFactory,
+            libraryDescriptorsProvider,
+            parseOutCellMagic,
+            httpClient,
+        )
+    private val errorsMagics =
+        ErrorsMagicsProcessor(
+            loggerFactory,
+            parseOutCellMagic,
+        )
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
 
@@ -303,10 +334,16 @@ class ReplForJupyterImpl(
 
     private val completer = KotlinCompleter()
 
-    private val contextUpdater = ContextUpdater(ctx, evaluator)
+    private val contextUpdater =
+        ContextUpdater(
+            loggerFactory,
+            ctx,
+            evaluator,
+        )
 
     private val internalEvaluator: InternalEvaluator =
         InternalEvaluatorImpl(
+            loggerFactory,
             jupyterCompiler,
             evaluator,
             contextUpdater,
@@ -346,13 +383,14 @@ class ReplForJupyterImpl(
     private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor = ColorSchemeChangeCallbacksProcessorImpl()
 
     private val beforeCellExecutionsProcessor = BeforeCellExecutionsProcessor()
-    private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor()
-    private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor()
+    private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor(loggerFactory)
+    private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor(loggerFactory)
 
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext =
         SharedReplContext(
+            loggerFactory,
             classAnnotationsProcessor,
             fileAnnotationsProcessor,
             fieldsProcessor,
@@ -415,17 +453,17 @@ class ReplForJupyterImpl(
                 is InternalReplResult.Success -> {
                     val rendered =
                         result.internalResult.let { internalResult ->
-                            log.catchAll {
+                            logger.catchAll {
                                 renderersProcessor.renderResult(executor, internalResult.result)
                             }
                         }?.let {
-                            log.catchAll {
+                            logger.catchAll {
                                 if (it is Renderable) it.render(notebook) else it
                             }
                         }
 
                     val displayValue =
-                        log.catchAll {
+                        logger.catchAll {
                             notebook.postRender(rendered)
                         }
 
@@ -445,7 +483,7 @@ class ReplForJupyterImpl(
                     } else {
                         val originalError = (error as? ReplEvalRuntimeException)?.cause
                         val renderedError =
-                            log.catchAll {
+                            logger.catchAll {
                                 originalError?.let {
                                     throwableRenderersProcessor.renderThrowable(originalError)
                                 }
@@ -453,7 +491,7 @@ class ReplForJupyterImpl(
 
                         if (renderedError != null) {
                             val displayError =
-                                log.catchAll {
+                                logger.catchAll {
                                     notebook.postRender(renderedError)
                                 }
                             EvalResultEx.RenderedError(
@@ -479,17 +517,17 @@ class ReplForJupyterImpl(
         internalMetadata: InternalMetadata,
     ): EvaluatedSnippetMetadata {
         val newClasspath =
-            log.catchAll {
+            logger.catchAll {
                 updateClasspath()
             } ?: emptyList()
 
         val newSources =
-            log.catchAll {
+            logger.catchAll {
                 updateSources()
             } ?: emptyList()
 
         if (!storeHistory) {
-            log.catchAll { notebook.popCell() }
+            logger.catchAll { notebook.popCell() }
         }
 
         val variablesStateUpdate = notebook.variablesState.mapValues { "" }
@@ -506,7 +544,7 @@ class ReplForJupyterImpl(
         var throwable: Throwable? = null
         val internalResult: InternalEvalResult? =
             try {
-                log.debug("Current cell id: $jupyterId")
+                logger.debug("Current cell id: $jupyterId")
                 val executorWorkflowListener =
                     object : ExecutorWorkflowListener {
                         override fun internalIdGenerated(id: Int) {
@@ -687,9 +725,9 @@ class ReplForJupyterImpl(
     }
 
     init {
-        log.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
-        log.info("Kernel version: ${runtimeProperties.version}")
-        log.info("Classpath used in script: $scriptClasspath")
+        logger.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
+        logger.info("Kernel version: ${runtimeProperties.version}")
+        logger.info("Classpath used in script: $scriptClasspath")
     }
 
     override fun <T> withHost(

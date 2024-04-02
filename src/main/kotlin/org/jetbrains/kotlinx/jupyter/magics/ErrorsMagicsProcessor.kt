@@ -1,15 +1,19 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.diagnostic
-import org.jetbrains.kotlinx.jupyter.log
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 class ErrorsMagicsProcessor(
+    loggerFactory: KernelLoggerFactory,
     parseOutCellMarker: Boolean = false,
 ) : AbstractMagicsProcessor(parseOutCellMarker) {
+    val logger = loggerFactory.getLogger(this::class)
+
     fun process(code: String): Result {
         val magics = magicsIntervals(code)
         val handler = Handler(code)
@@ -18,7 +22,7 @@ class ErrorsMagicsProcessor(
             if (code[magicRange.from] != MAGICS_SIGN) continue
 
             val magicText = code.substring(magicRange.from + 1, magicRange.to)
-            log.catchAll(msg = "Handling errors of $magicText failed") {
+            logger.catchAll(msg = "Handling errors of $magicText failed") {
                 handler.handle(magicText, magicRange)
             }
         }

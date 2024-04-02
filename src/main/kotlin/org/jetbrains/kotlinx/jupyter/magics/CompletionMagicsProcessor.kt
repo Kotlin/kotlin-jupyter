@@ -1,19 +1,22 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.common.successful
 import org.jetbrains.kotlinx.jupyter.config.catchAll
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
-import org.jetbrains.kotlinx.jupyter.log
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 class CompletionMagicsProcessor(
+    loggerFactory: KernelLoggerFactory,
     libraryDescriptorsProvider: LibraryDescriptorsProvider,
     parseOutCellMarker: Boolean = false,
     private val httpClient: HttpClient,
 ) : AbstractCompletionMagicsProcessor<SourceCodeCompletionVariant>(libraryDescriptorsProvider, parseOutCellMarker) {
+    private val logger = loggerFactory.getLogger(this::class)
+
     override fun variant(
         text: String,
         icon: String,
@@ -25,7 +28,7 @@ class CompletionMagicsProcessor(
         val response = httpClient.getHttp(url)
         val status = response.status
         if (!status.successful) {
-            getLogger("magics completion").warn("Magic completion request failed: $status")
+            logger.warn("Magic completion request failed: $status")
             return null
         }
         return response.text
@@ -45,7 +48,7 @@ class CompletionMagicsProcessor(
                 if (code[magicRange.from] != MAGICS_SIGN || cursor == magicRange.from) continue
 
                 val magicText = code.substring(magicRange.from + 1, magicRange.to)
-                log.catchAll(msg = "Handling completion of $magicText failed") {
+                logger.catchAll(msg = "Handling completion of $magicText failed") {
                     handler.handle(magicText, cursor - magicRange.from - 1)
                 }
             }

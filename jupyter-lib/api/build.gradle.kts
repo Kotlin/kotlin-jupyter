@@ -1,3 +1,4 @@
+import build.util.compileOnly
 import build.util.excludeKotlinDependencies
 
 plugins {
@@ -13,6 +14,7 @@ repositories {
 dependencies {
     compileOnly(libs.kotlin.gradle.stdlib)
     compileOnly(libs.kotlin.gradle.reflect)
+    compileOnly(libs.logging.slf4j.api)
 
     api(libs.serialization.json) {
         excludeKotlinDependencies(

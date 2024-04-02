@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
@@ -12,7 +13,7 @@ fun interface ReplProvider {
     operator fun invoke(classpath: List<File>): ReplForJupyter
 
     companion object {
-        private val httpUtil = createLibraryHttpUtil()
+        private val httpUtil = createLibraryHttpUtil(DefaultKernelLoggerFactory)
 
         val withoutLibraryResolution =
             ReplProvider { classpath ->

@@ -6,9 +6,9 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.TestInfo
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.concurrent.thread
 
@@ -34,7 +34,7 @@ class ProcessServerTestExecutor : ServerTestExecutor {
         val testName = testInfo.displayName
         val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg)
 
-        testLogger = LoggerFactory.getLogger("testKernel_$testName")
+        testLogger = testLoggerFactory.getLogger("testKernel_$testName")
         fileOut = File.createTempFile("tmp-kernel-out-$testName", ".txt")
         fileErr = File.createTempFile("tmp-kernel-err-$testName", ".txt")
 
@@ -80,6 +80,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
         val replConfig =
             ReplConfig.create(
                 ::getDefaultClasspathResolutionInfoProvider,
+                testLoggerFactory,
                 homeDir = kernelConfig.homeDir,
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.LoggingManagement.mainLoggerLevel
+import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
@@ -44,6 +44,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -420,7 +421,8 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
         assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
-        assertEquals(if (runInSeparateProcess) DEBUG else OFF, mainLoggerLevel())
+        val loggingManager = LoggingManager(testLoggerFactory)
+        assertEquals(if (runInSeparateProcess) DEBUG else OFF, loggingManager.mainLoggerLevel())
     }
 
     @Test

@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.kotlinx.jupyter.config.getLogger
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
@@ -28,8 +28,11 @@ import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesReso
 import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
-open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRepositoryCoordinates>) : JupyterScriptDependenciesResolver {
-    private val log = getLogger("resolver")
+open class JupyterScriptDependenciesResolverImpl(
+    loggerFactory: KernelLoggerFactory,
+    mavenRepositories: List<MavenRepositoryCoordinates>,
+) : JupyterScriptDependenciesResolver {
+    private val logger = loggerFactory.getLogger("resolver")
 
     private val resolver: ExternalDependenciesResolver
     private val resolverOptions =
@@ -105,7 +108,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
         script.annotations.forEach { annotation ->
             when (annotation) {
                 is Repository -> {
-                    log.info("Adding repository: ${annotation.value}")
+                    logger.info("Adding repository: ${annotation.value}")
                     if (existingRepositories == null) {
                         existingRepositories = ArrayList(repositories)
                     }
@@ -142,7 +145,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
             )
         } catch (e: Exception) {
             val diagnostic = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unhandled exception during resolve", exception = e)
-            log.error(diagnostic.message, e)
+            logger.error(diagnostic.message, e)
             scriptDiagnostics.add(diagnostic)
         }
         // Hack: after first resolution add "standard" Central repo to the end of the list, giving it the lowest priority
@@ -165,7 +168,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
     ) {
         if (dependencies.isEmpty()) return
 
-        log.info("Resolving $dependencies")
+        logger.info("Resolving $dependencies")
         doResolve(
             { resolveWithOptions(dependencies, resolverOptions) },
             onResolved = { files ->
@@ -178,7 +181,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                         ScriptDiagnostic.unspecifiedError,
                         "Failed to resolve $dependencies:\n" + result.reports.joinToString("\n") { it.message },
                     )
-                log.warn(diagnostics.message, diagnostics.exception)
+                logger.warn(diagnostics.message, diagnostics.exception)
                 scriptDiagnosticsResult.add(diagnostics)
             },
         )
@@ -190,7 +193,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                     addedSourcesClasspath.addAll(files)
                 },
                 onFailure = { result ->
-                    log.warn("Failed to resolve sources for $dependencies:\n" + result.reports.joinToString("\n") { it.message })
+                    logger.warn("Failed to resolve sources for $dependencies:\n" + result.reports.joinToString("\n") { it.message })
                 },
             )
         }
@@ -230,7 +233,7 @@ open class JupyterScriptDependenciesResolverImpl(mavenRepositories: List<MavenRe
                 onFailure(result)
             }
             is ResultWithDiagnostics.Success -> {
-                log.info("Resolved: " + result.value.joinToString())
+                logger.info("Resolved: " + result.value.joinToString())
                 onResolved(result.value)
             }
         }

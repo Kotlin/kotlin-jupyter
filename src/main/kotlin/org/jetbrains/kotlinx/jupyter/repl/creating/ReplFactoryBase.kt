@@ -9,6 +9,7 @@ class ReplFactoryBase(
     override fun createRepl(): ReplForJupyter {
         return with(componentsProvider) {
             ReplForJupyterImpl(
+                loggerFactory,
                 resolutionInfoProvider,
                 displayHandler,
                 scriptClasspath,

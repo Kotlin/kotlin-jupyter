@@ -139,4 +139,6 @@ interface Notebook {
     ): LibraryDefinition
 
     val commManager: CommManager
+
+    val loggerFactory: KernelLoggerFactory
 }

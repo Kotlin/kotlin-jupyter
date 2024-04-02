@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
@@ -27,7 +28,7 @@ import kotlin.test.assertTrue
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
 class ParseArgumentsTests {
-    private val httpUtil = createLibraryHttpUtil()
+    private val httpUtil = createLibraryHttpUtil(testLoggerFactory)
 
     private fun parseReferenceWithArgs(ref: String) = httpUtil.libraryReferenceParser.parseReferenceWithArgs(ref)
 
@@ -149,13 +150,14 @@ class ParseMagicsTests {
         expectedProcessedCode: String,
         librariesChecker: (List<LibraryDefinition>) -> Unit = {},
     ) {
-        val httpUtil = createLibraryHttpUtil()
+        val httpUtil = createLibraryHttpUtil(testLoggerFactory)
         val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider(httpUtil.libraryInfoCache))
         val magicsHandler =
             FullMagicsHandler(
                 options,
                 LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
                 switcher,
+                LoggingManager(testLoggerFactory),
             )
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {

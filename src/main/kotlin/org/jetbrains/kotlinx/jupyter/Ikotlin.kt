@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.createRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
@@ -26,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
+import org.slf4j.Logger
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
@@ -71,27 +73,40 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort, clientType, jvmTargetForSnippets)
 }
 
-fun printClassPath() {
+fun printClassPath(logger: Logger) {
     val cl = ClassLoader.getSystemClassLoader()
 
     val cp = classpathFromClassloader(cl)
 
     if (cp != null) {
-        log.info("Current classpath: " + cp.joinToString())
+        logger.info("Current classpath: " + cp.joinToString())
     }
 }
 
 fun main(vararg args: String) {
+    val loggerFactory = DefaultKernelLoggerFactory
+    val logger = loggerFactory.getLogger(iKotlinClass)
     try {
-        log.info("Kernel args: " + args.joinToString { it })
+        logger.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val kernelConfig = kernelArgs.getConfig()
-        val replConfig = ReplConfig.create(::getDefaultClasspathResolutionInfoProvider, homeDir = kernelArgs.homeDir)
+        val replConfig =
+            ReplConfig.create(
+                ::getDefaultClasspathResolutionInfoProvider,
+                loggerFactory,
+                homeDir = kernelArgs.homeDir,
+            )
         val runtimeProperties = createRuntimeProperties(kernelConfig)
-        val replSettings = DefaultReplSettings(kernelConfig, replConfig, runtimeProperties)
+        val replSettings =
+            DefaultReplSettings(
+                kernelConfig,
+                replConfig,
+                loggerFactory,
+                runtimeProperties,
+            )
         kernelServer(replSettings)
     } catch (e: Exception) {
-        log.error("exception running kernel with args: \"${args.joinToString()}\"", e)
+        logger.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
 }
 
@@ -99,7 +114,7 @@ fun main(vararg args: String) {
  * This function is to be run in projects which use kernel as a library,
  * so we don't have a big need in covering it with tests
  *
- * The expected use case for this function is embedding into a Java application that doesn't necessarily support extensions written in Kotlin
+ * The expected use case for this function is embedded into a Java application that doesn't necessarily support extensions written in Kotlin
  * The signature of this function should thus be simple, and e.g. allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
  * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
  */
@@ -114,11 +129,17 @@ fun embedKernel(
     val kernelConfig = KernelArgs(cfgFile, cp, null, null, null, null).getConfig()
     val replConfig =
         ReplConfig.create(
-            { httpUtil -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
+            { httpUtil, _ -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
             homeDir = null,
             embedded = true,
         )
-    val replSettings = DefaultReplSettings(kernelConfig, replConfig, scriptReceivers = scriptReceivers.orEmpty())
+    val replSettings =
+        DefaultReplSettings(
+            kernelConfig,
+            replConfig,
+            DefaultKernelLoggerFactory,
+            scriptReceivers = scriptReceivers.orEmpty(),
+        )
     kernelServer(replSettings)
 }
 
@@ -126,24 +147,27 @@ fun createMessageHandler(
     replSettings: DefaultReplSettings,
     socketManager: JupyterBaseSockets,
 ): MessageHandler {
+    val loggerFactory = replSettings.loggerFactory
     val messageFactoryProvider: MessageFactoryProvider = MessageFactoryProviderImpl()
     val communicationFacility: JupyterCommunicationFacility = JupyterCommunicationFacilityImpl(socketManager, messageFactoryProvider)
 
-    val executor: JupyterExecutor = JupyterExecutorImpl()
+    val executor: JupyterExecutor = JupyterExecutorImpl(loggerFactory)
 
     val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
     val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager).createRepl()
-    return MessageHandlerImpl(repl, commManager, messageFactoryProvider, socketManager, executor)
+    return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 
 fun kernelServer(replSettings: DefaultReplSettings) {
     val kernelConfig = replSettings.kernelConfig
-    log.info("Starting server with config: $kernelConfig")
+    val loggerFactory = replSettings.loggerFactory
+    val logger = loggerFactory.getLogger(iKotlinClass)
+    logger.info("Starting server with config: $kernelConfig")
 
-    JupyterConnectionImpl(kernelConfig).use { conn: JupyterConnectionInternal ->
-        printClassPath()
+    JupyterConnectionImpl(loggerFactory, kernelConfig).use { conn: JupyterConnectionInternal ->
+        printClassPath(logger)
 
-        log.info("Begin listening for events")
+        logger.info("Begin listening for events")
 
         val socketManager = conn.socketManager
         val messageHandler = createMessageHandler(replSettings, socketManager)
@@ -159,7 +183,7 @@ fun kernelServer(replSettings: DefaultReplSettings) {
                 try {
                     loopBody()
                 } catch (e: InterruptedException) {
-                    log.debug(interruptedMessage)
+                    logger.debug(interruptedMessage)
                     threadsToInterrupt.forEach { it.interrupt() }
                     break
                 }
@@ -202,6 +226,6 @@ fun kernelServer(replSettings: DefaultReplSettings) {
         } catch (_: InterruptedException) {
         }
 
-        log.info("Shutdown server")
+        logger.info("Shutdown server")
     }
 }

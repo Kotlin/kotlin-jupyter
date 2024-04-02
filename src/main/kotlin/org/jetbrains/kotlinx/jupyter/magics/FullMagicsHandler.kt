@@ -14,10 +14,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
-import org.jetbrains.kotlinx.jupyter.LoggingManagement.addAppender
-import org.jetbrains.kotlinx.jupyter.LoggingManagement.allLogAppenders
-import org.jetbrains.kotlinx.jupyter.LoggingManagement.removeAppender
-import org.jetbrains.kotlinx.jupyter.LoggingManagement.setRootLoggingLevel
+import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
@@ -30,6 +27,7 @@ class FullMagicsHandler(
     private val repl: ReplOptions,
     librariesProcessor: LibrariesProcessor,
     switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
+    private val loggingManager: LoggingManager,
 ) : UseMagicsHandler(
         librariesProcessor,
         switcher,
@@ -112,7 +110,7 @@ class FullMagicsHandler(
             )
 
             override fun run() {
-                setRootLoggingLevel(level)
+                loggingManager.setRootLoggingLevel(level)
             }
         }.parse(argumentsList())
     }
@@ -123,7 +121,7 @@ class FullMagicsHandler(
         when (command) {
             "list" -> {
                 println("Log appenders:")
-                allLogAppenders().forEach {
+                loggingManager.allLogAppenders().forEach {
                     println(
                         buildString {
                             append(it.name)
@@ -154,14 +152,14 @@ class FullMagicsHandler(
                         }
                         else -> throw ReplException("Unknown appender type: $appenderType")
                     }
-                addAppender(appenderName, appender)
+                loggingManager.addAppender(appenderName, appender)
             }
             "remove" -> {
                 val appenderName =
                     commandArgs.getOrNull(
                         1,
                     ) ?: throw ReplException("Log handler remove command needs appender name argument")
-                removeAppender(appenderName)
+                loggingManager.removeAppender(appenderName)
             }
             else -> throw ReplException("")
         }

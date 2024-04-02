@@ -4,7 +4,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 
 fun interface ExceptionsHandler {
@@ -24,6 +23,10 @@ fun interface ExceptionsHandler {
             throw exception
         }
     }
+}
+
+fun interface CommonLoggerFactory {
+    fun getLogger(clazz: Class<*>): Logger
 }
 
 interface LibraryDescriptorsManager {
@@ -72,7 +75,7 @@ interface LibraryDescriptorsManager {
     companion object {
         fun getInstance(
             httpClient: HttpClient,
-            logger: Logger = LoggerFactory.getLogger(LibraryDescriptorsManager::class.java),
+            loggerFactory: CommonLoggerFactory,
             exceptionsHandler: ExceptionsHandler = ExceptionsHandler.DEFAULT,
         ): LibraryDescriptorsManager {
             return LibraryDescriptorsManagerImpl(
@@ -86,7 +89,7 @@ interface LibraryDescriptorsManager {
                 exceptionsHandler,
                 File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
                 httpClient,
-                logger,
+                loggerFactory,
             )
         }
     }
@@ -103,8 +106,10 @@ private class LibraryDescriptorsManagerImpl(
     private val exceptionsHandler: ExceptionsHandler,
     userSettingsDir: File,
     private val httpClient: HttpClient,
-    private val logger: Logger,
+    loggerFactory: CommonLoggerFactory,
 ) : LibraryDescriptorsManager {
+    private val logger = loggerFactory.getLogger(this::class.java)
+
     private val authUser: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_USER")
     private val authToken: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_TOKEN")
     private val apiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"

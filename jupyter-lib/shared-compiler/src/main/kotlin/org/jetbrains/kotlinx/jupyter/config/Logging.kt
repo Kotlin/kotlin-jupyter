@@ -2,15 +2,10 @@ package org.jetbrains.kotlinx.jupyter.config
 
 import org.jetbrains.kotlinx.jupyter.exceptions.renderException
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.PrintStream
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.reflect.KMutableProperty0
-
-fun getLogger(name: String = "ikotlin"): Logger = LoggerFactory.getLogger(name)
-
-inline fun <reified T> logger(): Logger = LoggerFactory.getLogger(T::class.java)
 
 object KernelStreams {
     private val outLock = ReentrantLock()

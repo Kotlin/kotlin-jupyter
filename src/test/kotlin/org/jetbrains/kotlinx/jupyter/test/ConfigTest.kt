@@ -3,9 +3,9 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.shouldBe
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.api.logger
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
-import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.startup.MAIN_CLASS_NAME
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -17,7 +17,7 @@ class ConfigTest {
     @Test
     fun testBranch() {
         val branch = defaultRuntimeProperties.currentBranch
-        log.debug("Runtime git branch is: $branch")
+        LOG.debug("Runtime git branch is: $branch")
 
         if (!branch.matches(Regex("pull/[1-9]\\d*"))) {
             assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
@@ -32,7 +32,7 @@ class ConfigTest {
     @Test
     fun testVersion() {
         val version = defaultRuntimeProperties.version
-        log.debug("Runtime version is: {}", version)
+        LOG.debug("Runtime version is: {}", version)
 
         assertNotNull(version)
     }
@@ -137,5 +137,9 @@ class ConfigTest {
     @Test
     fun `kernel main class name should be consistent`() {
         MAIN_CLASS_NAME shouldBe iKotlinClass.name
+    }
+
+    companion object {
+        val LOG = testLoggerFactory.logger<ConfigTest>()
     }
 }

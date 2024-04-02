@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
+import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 
 class LibraryHttpUtil(
     val httpClient: HttpClient,
@@ -11,8 +13,12 @@ class LibraryHttpUtil(
     val libraryReferenceParser: LibraryReferenceParser,
 )
 
-fun createLibraryHttpUtil(httpClient: HttpClient = SimpleHttpClient): LibraryHttpUtil {
-    val libraryDescriptorsManager = LibraryDescriptorsManager.getInstance(httpClient)
+fun createLibraryHttpUtil(
+    loggerFactory: KernelLoggerFactory,
+    httpClient: HttpClient = SimpleHttpClient,
+): LibraryHttpUtil {
+    val libraryDescriptorsManager =
+        LibraryDescriptorsManager.getInstance(httpClient, loggerFactory.asCommonFactory())
     val libraryInfoCache = LibraryInfoCacheImpl(libraryDescriptorsManager)
     val libraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 

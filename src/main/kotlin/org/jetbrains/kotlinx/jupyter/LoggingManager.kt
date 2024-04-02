@@ -6,10 +6,12 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.OutputStreamAppender
-import org.slf4j.LoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 
-object LoggingManagement {
-    private val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as? Logger
+class LoggingManager(
+    loggerFactory: KernelLoggerFactory,
+) {
+    private val rootLogger = loggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as? Logger
 
     private val loggerContext
         get() = rootLogger?.loggerContext

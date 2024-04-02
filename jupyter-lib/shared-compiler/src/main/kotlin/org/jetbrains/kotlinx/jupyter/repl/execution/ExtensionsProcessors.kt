@@ -4,9 +4,10 @@ import org.jetbrains.kotlinx.jupyter.api.AfterCellExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.config.catchAll
-import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ShutdownEvalResult
@@ -51,40 +52,40 @@ class BeforeCellExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallb
     }
 }
 
-class AfterCellExecutionsProcessor : AbstractExtensionsProcessor<AfterCellExecutionCallback>() {
+class AfterCellExecutionsProcessor(
+    loggerFactory: KernelLoggerFactory,
+) : AbstractExtensionsProcessor<AfterCellExecutionCallback>() {
+    private val logger = loggerFactory.getLogger(this::class)
+
     fun process(
         host: KotlinKernelHost,
         snippetInstance: Any,
         result: FieldValue,
     ) {
         extensions.forEach {
-            LOG.catchAll {
+            logger.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.AFTER_CELL_CALLBACKS) {
                     it(host, snippetInstance, result)
                 }
             }
         }
     }
-
-    companion object {
-        val LOG = logger<AfterCellExecutionsProcessor>()
-    }
 }
 
-class ShutdownExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
+class ShutdownExecutionsProcessor(
+    loggerFactory: KernelLoggerFactory,
+) : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
+    private val logger = loggerFactory.getLogger(this::class)
+
     fun process(executor: CellExecutor): List<ShutdownEvalResult> {
         return extensions.map {
             val res =
-                LOG.catchAll {
+                logger.catchAll {
                     rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
                         executor.execute(it)
                     }
                 }
             ShutdownEvalResult(res)
         }
-    }
-
-    companion object {
-        val LOG = logger<ShutdownExecutionsProcessor>()
     }
 }

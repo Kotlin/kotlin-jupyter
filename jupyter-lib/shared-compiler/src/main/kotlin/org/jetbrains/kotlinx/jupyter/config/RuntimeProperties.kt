@@ -2,12 +2,6 @@ package org.jetbrains.kotlinx.jupyter.config
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
-import org.jetbrains.kotlinx.jupyter.libraries.DefaultLibraryDescriptorGlobalOptions
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorGlobalOptions
-import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
-import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 
@@ -18,48 +12,12 @@ fun readResourceAsIniFile(
     classLoader: ClassLoader,
 ) = classLoader.getResource(fileName)?.readText()?.parseIniConfig().orEmpty()
 
-private val correctClassLoader = KernelStreams::class.java.classLoader
+val kernelClassLoader = KernelStreams::class.java.classLoader
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(
-        readResourceAsIniFile("kotlin-jupyter-compiler.properties", correctClassLoader),
+        readResourceAsIniFile("kotlin-jupyter-compiler.properties", kernelClassLoader),
     )
-}
-
-private const val RESOURCES_LIBRARY_PATH = "jupyterLibraries"
-
-val librariesFromResources: Map<String, LibraryDescriptor> by lazy {
-    val listText = correctClassLoader.getResource("$RESOURCES_LIBRARY_PATH/libraries.list")
-    val logger = getLogger("Kotlin Jupyter libraries parsing")
-
-    listText
-        ?.readText()
-        ?.lineSequence()
-        .orEmpty()
-        .filter { it.isNotEmpty() }
-        .mapNotNull { descriptorFile ->
-            correctClassLoader.getResource("$RESOURCES_LIBRARY_PATH/$descriptorFile")?.readText()?.let { text ->
-                val libraryName = descriptorFile.removeSuffix(".json")
-                logger.info("Parsing library $libraryName from resources")
-                logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
-                    libraryName to parseLibraryDescriptor(text)
-                }
-            }
-        }
-        .toMap()
-}
-
-val descriptorOptionsFromResources: LibraryDescriptorGlobalOptions by lazy {
-    val optionsText =
-        correctClassLoader
-            .getResource("$RESOURCES_LIBRARY_PATH/global.options")
-            ?.readText() ?: return@lazy DefaultLibraryDescriptorGlobalOptions
-
-    try {
-        parseLibraryDescriptorGlobalOptions(optionsText)
-    } catch (e: ReplException) {
-        DefaultLibraryDescriptorGlobalOptions
-    }
 }
 
 fun propertyMissingError(propertyDescription: String): Nothing {

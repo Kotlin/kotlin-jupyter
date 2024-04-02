@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -36,6 +37,7 @@ import java.io.Closeable
 import kotlin.concurrent.thread
 
 class NotebookImpl(
+    override val loggerFactory: KernelLoggerFactory,
     private val runtimeProperties: ReplRuntimeProperties,
     override val commManager: CommManager,
     private val explicitClientType: JupyterClientType?,
@@ -107,8 +109,12 @@ class NotebookImpl(
     override val jreInfo: JREInfoProvider
         get() = JavaRuntime
 
+    private val clientDetector by lazy {
+        JupyterClientDetector(loggerFactory)
+    }
+
     override val jupyterClientType: JupyterClientType by lazy {
-        explicitClientType ?: JupyterClientDetector.detect()
+        explicitClientType ?: clientDetector.detect()
     }
 
     override fun addCell(data: EvalData): MutableCodeCell {

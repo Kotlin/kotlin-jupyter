@@ -1,10 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import java.io.File
 
 fun getStandardResolver(
+    loggerFactory: KernelLoggerFactory,
     homeDir: String? = null,
     infoProvider: ResolutionInfoProvider,
     httpClient: HttpClient,
@@ -13,13 +15,17 @@ fun getStandardResolver(
     // Standard resolver doesn't cache results in memory
     var res: LibraryResolver = FallbackLibraryResolver(httpClient, libraryDescriptorsManager)
     val librariesDir: File? = homeDir?.let { libraryDescriptorsManager.homeLibrariesDir(File(it)) }
-    res = LocalLibraryResolver(res, libraryDescriptorsManager, librariesDir)
+    res = LocalLibraryResolver(res, loggerFactory, libraryDescriptorsManager, librariesDir)
     res = DefaultInfoLibraryResolver(res, infoProvider, libraryDescriptorsManager, listOf(libraryDescriptorsManager.userLibrariesDir))
     return res
 }
 
-fun getDefaultClasspathResolutionInfoProvider(httpUtil: LibraryHttpUtil): ResolutionInfoProvider {
+fun getDefaultClasspathResolutionInfoProvider(
+    httpUtil: LibraryHttpUtil,
+    loggerFactory: KernelLoggerFactory,
+): ResolutionInfoProvider {
     return StandardResolutionInfoProvider(
+        loggerFactory,
         AbstractLibraryResolutionInfo.ByClasspath,
         httpUtil,
     )

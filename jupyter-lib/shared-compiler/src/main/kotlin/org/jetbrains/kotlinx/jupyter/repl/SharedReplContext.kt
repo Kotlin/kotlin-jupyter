@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
@@ -19,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.execution.AfterCellExecutionsProcessor
 
 data class SharedReplContext(
+    val loggerFactory: KernelLoggerFactory,
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
     val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessorInternal,

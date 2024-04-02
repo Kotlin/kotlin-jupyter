@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -17,17 +19,19 @@ data class ReplConfig(
 ) {
     companion object {
         fun create(
-            resolutionInfoProviderFactory: (LibraryHttpUtil) -> ResolutionInfoProvider,
-            httpUtil: LibraryHttpUtil = createLibraryHttpUtil(),
+            resolutionInfoProviderFactory: (LibraryHttpUtil, KernelLoggerFactory) -> ResolutionInfoProvider,
+            loggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory,
+            httpUtil: LibraryHttpUtil = createLibraryHttpUtil(loggerFactory),
             homeDir: File? = null,
             embedded: Boolean = false,
         ): ReplConfig {
-            val resolutionInfoProvider = resolutionInfoProviderFactory(httpUtil)
+            val resolutionInfoProvider = resolutionInfoProviderFactory(httpUtil, loggerFactory)
 
             return ReplConfig(
                 mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver =
                     getStandardResolver(
+                        loggerFactory,
                         homeDir?.toString(),
                         resolutionInfoProvider,
                         httpUtil.httpClient,

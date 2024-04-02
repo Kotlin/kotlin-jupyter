@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.slf4j.LoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.IOException
@@ -17,7 +18,12 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
  * Spark may need saving them somewhere to send them to the executors,
  * so this class provides writing classes on disk.
  */
-class ClassWriter(_outputDir: String = "") {
+class ClassWriter(
+    loggerFactory: KernelLoggerFactory,
+    _outputDir: String = "",
+) {
+    private val logger = loggerFactory.getLogger(this::class)
+
     val outputDir: Path =
         if (_outputDir == "") {
             val tempDir = Files.createTempDirectory("kotlin-jupyter")
@@ -63,9 +69,5 @@ class ClassWriter(_outputDir: String = "") {
         } catch (e: IOException) {
             logger.error(e.message)
         }
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(ClassWriter::class.java)
     }
 }

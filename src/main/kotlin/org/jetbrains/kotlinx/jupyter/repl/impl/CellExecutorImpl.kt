@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
@@ -21,7 +22,6 @@ import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
-import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutionStackFrame
@@ -33,7 +33,11 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
 
-internal class CellExecutorImpl(private val replContext: SharedReplContext) : CellExecutor {
+internal class CellExecutorImpl(
+    private val replContext: SharedReplContext,
+) : CellExecutor {
+    private val logger = replContext.loggerFactory.getLogger(this::class)
+
     override fun execute(
         code: Code,
         processVariables: Boolean,
@@ -48,12 +52,12 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
         with(replContext) {
             val context = ExecutionContext(replContext, this@CellExecutorImpl, stackFrame.push())
 
-            log.debug("Executing code:\n$code")
+            logger.debug("Executing code:\n$code")
             val preprocessedCode =
                 if (processMagics) {
                     val processedMagics = codePreprocessor.process(code, context)
 
-                    log.debug("Adding ${processedMagics.libraries.size} libraries")
+                    logger.debug("Adding ${processedMagics.libraries.size} libraries")
                     val libraries = processedMagics.libraries.getDefinitions(notebook)
 
                     for (library in libraries) {
@@ -91,19 +95,19 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
             val snippetClass = evaluator.lastKClass
 
             if (processVariables) {
-                log.catchAll {
+                logger.catchAll {
                     fieldsProcessor.process(context)?.let { newResultField = it }
                 }
             }
 
             if (processAnnotations) {
-                log.catchAll {
+                logger.catchAll {
                     classAnnotationsProcessor.process(snippetClass, context)
                 }
             }
 
             // TODO: scan classloader only when new classpath was added
-            log.catchAll {
+            logger.catchAll {
                 librariesScanner.addLibrariesFromClassLoader(
                     evaluator.lastClassLoader,
                     context,
@@ -112,7 +116,7 @@ internal class CellExecutorImpl(private val replContext: SharedReplContext) : Ce
                 )
             }
 
-            log.catchAll {
+            logger.catchAll {
                 rethrowAsLibraryException(LibraryProblemPart.COLOR_SCHEME_CHANGE_CALLBACKS) {
                     colorSchemeChangeCallbacksProcessor.runCallbacks()
                 }

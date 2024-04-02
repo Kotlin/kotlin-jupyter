@@ -2,14 +2,15 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.commands.runCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
-import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
@@ -41,9 +42,12 @@ open class IdeCompatibleMessageRequestProcessor(
     protected val commManager: CommManagerInternal,
     protected val executor: JupyterExecutor,
     protected val executionCount: AtomicLong,
+    loggerFactory: KernelLoggerFactory,
     protected val repl: ReplForJupyter,
 ) : AbstractMessageRequestProcessor(rawIncomingMessage),
     JupyterCommunicationFacility {
+    private val logger = loggerFactory.getLogger(this::class)
+
     final override val messageFactory =
         run {
             messageFactoryProvider.update(rawIncomingMessage)
@@ -195,7 +199,7 @@ open class IdeCompatibleMessageRequestProcessor(
         // Instead the controlThread will be interrupted,
         // which will then interrupt the mainThread and make kernelServer return
         if (repl.isEmbedded) {
-            LOG.info("Interrupting controlThread to trigger kernel shutdown")
+            logger.info("Interrupting controlThread to trigger kernel shutdown")
             throw InterruptedException()
         } else {
             exitProcess(0)
@@ -324,9 +328,5 @@ open class IdeCompatibleMessageRequestProcessor(
         } else {
             this
         }
-    }
-
-    companion object {
-        private val LOG = logger<MessageRequestProcessor>()
     }
 }

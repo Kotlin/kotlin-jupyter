@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
@@ -18,6 +19,10 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import java.io.File
 
 abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
+    override val loggerFactory: KernelLoggerFactory by lazy { provideLoggerFactory() }
+
+    protected abstract fun provideLoggerFactory(): KernelLoggerFactory
+
     override val resolutionInfoProvider by lazy { provideResolutionInfoProvider() }
 
     protected abstract fun provideResolutionInfoProvider(): ResolutionInfoProvider

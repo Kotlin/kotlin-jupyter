@@ -1,10 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -25,15 +27,19 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
+import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 
 abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProvider() {
+    override fun provideLoggerFactory(): KernelLoggerFactory = DefaultKernelLoggerFactory
+
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider(libraryInfoCache)
 
     override fun provideDisplayHandler(): DisplayHandler = NoOpDisplayHandler
 
     override fun provideNotebook(): MutableNotebook =
         NotebookImpl(
+            loggerFactory,
             runtimeProperties,
             commManager,
             explicitClientType,
@@ -55,7 +61,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideIsEmbedded() = false
 
-    override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner()
+    override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(loggerFactory)
 
     override fun provideCommManager(): CommManager = CommManagerImpl(communicationFacility)
 
@@ -72,7 +78,8 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideHttpClient(): HttpClient = SimpleHttpClient
 
-    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager = LibraryDescriptorsManager.getInstance(httpClient)
+    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager =
+        LibraryDescriptorsManager.getInstance(httpClient, loggerFactory.asCommonFactory())
 
     override fun provideLibraryInfoCache(): LibraryInfoCache = LibraryInfoCacheImpl(libraryDescriptorsManager)
 

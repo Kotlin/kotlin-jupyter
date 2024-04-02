@@ -4,18 +4,22 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.getHttp
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import java.io.File
 import java.io.IOException
 
 class JsLibraryResourcesProcessor(
+    loggerFactory: KernelLoggerFactory,
     private val httpClient: HttpClient,
 ) : LibraryResourcesProcessor {
+    private val logger = loggerFactory.getLogger(this::class)
+
     private var outputCounter = 0
 
     private fun loadBunch(
@@ -156,6 +160,4 @@ class JsLibraryResourcesProcessor(
                 """.trimIndent()
         }
     }
-
-    private val logger = getLogger(JsLibraryResourcesProcessor::class.simpleName!!)
 }

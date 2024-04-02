@@ -2,8 +2,10 @@ package org.jetbrains.kotlinx.jupyter
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
@@ -134,9 +136,12 @@ class VariablesUsagesPerCellWatcher<K : Any, V : Any> {
 }
 
 class HomeDirLibraryDescriptorsProvider(
+    loggerFactory: KernelLoggerFactory,
     private val homeDir: File?,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
-) : ResourceLibraryDescriptorsProvider() {
+) : ResourceLibraryDescriptorsProvider(loggerFactory) {
+    private val logger = loggerFactory.getLogger(this::class)
+
     override fun getDescriptors(): Map<String, LibraryDescriptor> {
         return if (homeDir == null) {
             super.getDescriptors()
@@ -175,8 +180,8 @@ class HomeDirLibraryDescriptorsProvider(
                     .orEmpty()
             libraryFiles.toList().mapNotNull { file ->
                 val libraryName = file.nameWithoutExtension
-                log.info("Parsing descriptor for library '$libraryName'")
-                log.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
+                logger.info("Parsing descriptor for library '$libraryName'")
+                logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
                     libraryName to parseLibraryDescriptor(file.readText())
                 }
             }.toMap()

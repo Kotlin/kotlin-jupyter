@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.test.evalInterrupted
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
@@ -40,7 +41,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertNull
 
 class IntegrationApiTests {
-    private val httpUtil = createLibraryHttpUtil()
+    private val httpUtil = createLibraryHttpUtil(testLoggerFactory)
 
     private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
         return createRepl(

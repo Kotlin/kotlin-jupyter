@@ -4,7 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlinx.jupyter.config.logger
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import java.io.Closeable
 import java.util.concurrent.ArrayBlockingQueue
@@ -12,7 +13,11 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-class JupyterExecutorImpl : JupyterExecutor, Closeable {
+class JupyterExecutorImpl(
+    loggerFactory: KernelLoggerFactory,
+) : JupyterExecutor, Closeable {
+    private val logger = loggerFactory.getLogger(this::class)
+
     private inner class Task<T : Any>(
         private val name: String,
         private val classLoader: ClassLoader,
@@ -42,7 +47,7 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
                     myThread.name = IDLE_EXECUTOR_NAME
                     executionInProgress.set(false)
                     if (Thread.interrupted()) {
-                        LOG.info("Clearing interrupted status")
+                        logger.info("Clearing interrupted status")
                     }
                 }
 
@@ -103,16 +108,16 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
      */
     override fun interruptExecutions() {
         // We interrupt only current execution and don't clear the queue, it's intended
-        LOG.info("Stopping execution...")
+        logger.info("Stopping execution...")
 
         if (executionInProgress.get()) {
             val execution = executorThread
             val executionName = execution.name
-            LOG.info("Stopping $executionName...")
+            logger.info("Stopping $executionName...")
 
             // We hope that user implemented isInterrupted checks on their side
             execution.interrupt()
-            LOG.info("$executionName interrupted")
+            logger.info("$executionName interrupted")
             Thread.sleep(100)
 
             if (execution.name == executionName) {
@@ -121,9 +126,9 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
                 try {
                     @Suppress("DEPRECATION")
                     execution.stop()
-                    LOG.info("$executionName stopped")
+                    logger.info("$executionName stopped")
                 } catch (e: UnsupportedOperationException) {
-                    LOG.warn(
+                    logger.warn(
                         "We tried to stop $executionName thread, but it's not supported in the current version of JRE",
                         e,
                     )
@@ -145,6 +150,5 @@ class JupyterExecutorImpl : JupyterExecutor, Closeable {
     companion object {
         private const val IDLE_EXECUTOR_NAME = "<idle>"
         private const val MAX_QUEUED_TASKS = 256
-        private val LOG = logger<JupyterExecutorImpl>()
     }
 }

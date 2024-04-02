@@ -1,13 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.zeromq.ZMQ
@@ -24,12 +24,13 @@ private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
 class SocketWrapper(
+    loggerFactory: KernelLoggerFactory,
     val name: String,
     socket: ZMQ.Socket,
     private val address: String,
     private val hmac: HMAC,
 ) : SocketWithCancellationBase(socket), JupyterSocket {
-    private val logger = getLogger(this::class.simpleName!!)
+    private val logger = loggerFactory.getLogger(this::class)
     private val lock = ReentrantLock()
 
     override fun bind(): Boolean {
@@ -144,12 +145,14 @@ class SocketWrapper(
 }
 
 fun createSocket(
+    loggerFactory: KernelLoggerFactory,
     socketInfo: JupyterSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
     side: JupyterSocketSide,
 ): JupyterSocket {
     return SocketWrapper(
+        loggerFactory,
         socketInfo.name,
         context.socket(socketInfo.zmqType(side)),
         kernelConfig.addressForSocket(socketInfo),
@@ -163,11 +166,12 @@ fun KernelConfig.addressForSocket(socketInfo: JupyterSocketInfo): String {
 }
 
 fun openServerSocket(
+    loggerFactory: KernelLoggerFactory,
     socketInfo: JupyterSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
 ): JupyterSocket {
-    return createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
+    return createSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
         bind()
     }
 }

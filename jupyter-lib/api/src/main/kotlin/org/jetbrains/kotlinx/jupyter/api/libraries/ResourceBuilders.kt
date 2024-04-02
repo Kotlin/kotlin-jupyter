@@ -1,7 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import java.io.File
-import java.util.logging.Logger
 
 /**
  * Build a resource tree using [ResourcesBuilder]. The builder allows to construct `js` and `css` bundles. Each bundle
@@ -9,21 +10,24 @@ import java.util.logging.Logger
  * found, local resource is used.
  */
 fun JupyterIntegration.Builder.resources(block: ResourcesBuilder.() -> Unit) {
-    val resources = ResourcesBuilder().apply(block)
+    val resources = ResourcesBuilder(notebook.loggerFactory).apply(block)
     resources.resources.forEach {
         resource(it)
     }
 }
 
-class ResourcesBuilder {
+class ResourcesBuilder(
+    loggerFactory: KernelLoggerFactory,
+) {
+    private val logger = loggerFactory.getLogger(this::class)
     internal val resources = ArrayList<LibraryResource>()
 
-    class BundleBuilder {
+    inner class BundleBuilder {
         internal val bundles = ArrayList<ResourceFallbacksBundle>()
 
         private fun checkLocalPath(localPath: String) {
             if (!File(localPath).exists()) {
-                Logger.getLogger("JupyterIntegration").warning("A resource with local file path '$localPath' not found.")
+                logger.warn("A resource with local file path '$localPath' not found.")
             }
         }
 

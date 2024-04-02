@@ -20,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.createSocket
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -61,7 +62,14 @@ abstract class KernelServerTestsBase {
         executor.tearDown()
     }
 
-    fun createClientSocket(socketInfo: JupyterSocketInfo) = createSocket(socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
+    fun createClientSocket(socketInfo: JupyterSocketInfo) =
+        createSocket(
+            testLoggerFactory,
+            socketInfo,
+            context,
+            kernelConfig,
+            JupyterSocketSide.CLIENT,
+        )
 
     fun JupyterSocketBase.sendMessage(
         msgType: MessageType,

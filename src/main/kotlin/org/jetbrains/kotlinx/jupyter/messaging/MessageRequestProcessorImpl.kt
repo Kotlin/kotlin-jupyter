@@ -1,13 +1,14 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import ch.qos.logback.classic.Level
-import org.jetbrains.kotlinx.jupyter.LoggingManagement
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import java.util.concurrent.atomic.AtomicLong
 
 open class MessageRequestProcessorImpl(
@@ -17,6 +18,7 @@ open class MessageRequestProcessorImpl(
     commManager: CommManagerInternal,
     executor: JupyterExecutor,
     executionCount: AtomicLong,
+    loggerFactory: KernelLoggerFactory,
     repl: ReplForJupyter,
 ) : IdeCompatibleMessageRequestProcessor(
         rawIncomingMessage,
@@ -25,12 +27,16 @@ open class MessageRequestProcessorImpl(
         commManager,
         executor,
         executionCount,
+        loggerFactory,
         repl,
     ),
     JupyterCommunicationFacility {
     override fun processIsCompleteRequest(content: IsCompleteRequest) {
         // We are in console mode, so switch off all the loggers
-        if (LoggingManagement.mainLoggerLevel() != Level.OFF) LoggingManagement.disableLogging()
+        val loggingManager = (repl as? ReplForJupyterImpl)?.loggingManager
+        if (loggingManager != null) {
+            if (loggingManager.mainLoggerLevel() != Level.OFF) loggingManager.disableLogging()
+        }
 
         val resStr =
             if (looksLikeReplCommand(content.code)) {

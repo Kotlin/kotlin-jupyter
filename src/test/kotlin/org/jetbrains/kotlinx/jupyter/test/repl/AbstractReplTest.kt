@@ -23,12 +23,13 @@ import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
 import java.io.File
 
 abstract class AbstractReplTest {
-    protected val httpUtil = createLibraryHttpUtil()
+    protected val httpUtil = createLibraryHttpUtil(testLoggerFactory)
 
     private val classpathWithTestLib =
         buildList {
@@ -77,9 +78,14 @@ abstract class AbstractReplTest {
     protected fun makeReplWithStandardResolver(
         displayHandlerProvider: (MutableNotebook) -> DisplayHandler = { NoOpDisplayHandler },
     ): ReplForJupyter {
-        val standardResolutionInfoProvider = getDefaultClasspathResolutionInfoProvider(httpUtil)
+        val standardResolutionInfoProvider =
+            getDefaultClasspathResolutionInfoProvider(
+                httpUtil,
+                testLoggerFactory,
+            )
         val resolver =
             getStandardResolver(
+                testLoggerFactory,
                 ".",
                 standardResolutionInfoProvider,
                 httpUtil.httpClient,

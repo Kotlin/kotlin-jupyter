@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
@@ -9,6 +10,7 @@ import java.io.Closeable
 import java.util.concurrent.atomic.AtomicLong
 
 class MessageHandlerImpl(
+    private val loggerFactory: KernelLoggerFactory,
     private val repl: ReplForJupyter,
     private val commManager: CommManagerInternal,
     private val messageFactoryProvider: MessageFactoryProvider,
@@ -25,6 +27,7 @@ class MessageHandlerImpl(
             commManager,
             executor,
             executionCount,
+            loggerFactory,
             repl,
         )
     }

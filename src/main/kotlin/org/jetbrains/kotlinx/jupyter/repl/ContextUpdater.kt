@@ -3,9 +3,9 @@ package org.jetbrains.kotlinx.jupyter.repl
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
-import org.slf4j.LoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import java.lang.reflect.Field
-import java.util.HashSet
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
@@ -16,7 +16,12 @@ import kotlin.script.experimental.util.LinkedSnippet
  * ContextUpdater updates current user-defined functions and variables
  * to use in completion and KotlinContext.
  */
-class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvmReplEvaluator) {
+class ContextUpdater(
+    loggerFactory: KernelLoggerFactory,
+    val context: KotlinContext,
+    private val evaluator: BasicJvmReplEvaluator,
+) {
+    private val logger = loggerFactory.getLogger(this::class)
     private var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
 
     fun update() {
@@ -80,7 +85,6 @@ class ContextUpdater(val context: KotlinContext, private val evaluator: BasicJvm
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(ContextUpdater::class.java)
         private val objectMethods = HashSet(listOf(*Any::class.java.methods))
     }
 }

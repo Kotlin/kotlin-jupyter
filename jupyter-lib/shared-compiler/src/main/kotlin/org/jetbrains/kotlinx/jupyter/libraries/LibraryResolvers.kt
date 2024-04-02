@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
@@ -8,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.getHttp
 import org.jetbrains.kotlinx.jupyter.config.KernelStreams
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import java.io.File
 import java.io.IOException
@@ -52,10 +53,11 @@ class DefaultInfoLibraryResolver(
 
 class LocalLibraryResolver(
     parent: LibraryResolver?,
+    loggerFactory: KernelLoggerFactory,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
     mainLibrariesDir: File?,
 ) : ChainedLibraryResolver(parent) {
-    private val logger = getLogger()
+    private val logger = loggerFactory.getLogger(this::class)
     private val pathsToCheck: List<File>
 
     init {

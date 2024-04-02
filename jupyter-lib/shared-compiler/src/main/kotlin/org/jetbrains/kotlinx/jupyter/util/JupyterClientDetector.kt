@@ -1,20 +1,25 @@
 package org.jetbrains.kotlinx.jupyter.util
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
-import org.jetbrains.kotlinx.jupyter.config.logger
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 
-object JupyterClientDetector {
+class JupyterClientDetector(
+    loggerFactory: KernelLoggerFactory,
+) {
+    private val logger = loggerFactory.getLogger(this::class)
+
     fun detect(): JupyterClientType {
         return try {
             doDetect()
         } catch (e: LinkageError) {
-            LOG.error("Unable to detect Jupyter client type because of incompatible JVM version", e)
+            logger.error("Unable to detect Jupyter client type because of incompatible JVM version", e)
             JupyterClientType.UNKNOWN
         }
     }
 
     private fun doDetect(): JupyterClientType {
-        LOG.info("Detecting Jupyter client type")
+        logger.info("Detecting Jupyter client type")
         val currentHandle = ProcessHandle.current()
         val ancestors = generateSequence(currentHandle) { it.parent().orElse(null) }.toList()
 
@@ -23,14 +28,14 @@ object JupyterClientDetector {
             val command = info.command().orElse("")
             val arguments = info.arguments().orElse(emptyArray()).toList()
 
-            LOG.info("Inspecting process: $command ${arguments.joinToString(" ")}")
+            logger.info("Inspecting process: $command ${arguments.joinToString(" ")}")
             val correctDetector = detectors.firstOrNull { it.isThisClient(command, arguments) } ?: continue
 
-            LOG.info("Detected type is ${correctDetector.type}")
+            logger.info("Detected type is ${correctDetector.type}")
             return correctDetector.type
         }
 
-        LOG.info("Client type has not been detected")
+        logger.info("Client type has not been detected")
         return JupyterClientType.UNKNOWN
     }
 
@@ -69,6 +74,4 @@ object JupyterClientDetector {
                 command.endsWith("idea64.exe")
             },
         )
-
-    private val LOG = logger<JupyterClientDetector>()
 }

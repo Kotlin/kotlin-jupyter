@@ -1,10 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
-import org.jetbrains.kotlinx.jupyter.config.logger
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -23,6 +24,12 @@ class DefaultReplComponentsProvider(
     private val _communicationFacility: JupyterCommunicationFacility,
     private val _commManager: CommManager,
 ) : ReplComponentsProviderBase() {
+    private val logger = loggerFactory.getLogger(this::class)
+
+    override fun provideLoggerFactory(): KernelLoggerFactory {
+        return _settings.loggerFactory
+    }
+
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider {
         return _settings.replConfig.resolutionInfoProvider
     }
@@ -76,7 +83,7 @@ class DefaultReplComponentsProvider(
             try {
                 JupyterClientType.valueOf(typeName.toUpperCaseAsciiOnly())
             } catch (e: IllegalArgumentException) {
-                LOG.warn("Unknown client type: $typeName")
+                logger.warn("Unknown client type: $typeName")
                 null
             }
         }
@@ -98,9 +105,5 @@ class DefaultReplComponentsProvider(
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser {
         return httpUtil.libraryReferenceParser
-    }
-
-    companion object {
-        private val LOG = logger<DefaultReplComponentsProvider>()
     }
 }

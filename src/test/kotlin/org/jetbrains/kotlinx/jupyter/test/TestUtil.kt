@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.api.HtmlData
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -40,16 +41,15 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
-import org.jetbrains.kotlinx.jupyter.config.getLogger
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
-import org.jetbrains.kotlinx.jupyter.log
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
@@ -62,6 +62,7 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
@@ -79,6 +80,8 @@ val standardResolverRuntimeProperties =
         override val currentBranch: String
             get() = STANDARD_RESOLVER_BRANCH
     }
+
+val testLoggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory
 
 val classpath =
     scriptCompilationClasspathFromContext(
@@ -102,12 +105,15 @@ inline fun <reified T> classPathEntry(): File {
 }
 
 val testLibraryResolver: LibraryResolver
-    get() = getResolverFromNamesMap(parseLibraryDescriptors(readLibraries()))
+    get() =
+        getResolverFromNamesMap(
+            parseLibraryDescriptors(testLoggerFactory, readLibraries()),
+        )
 
 val KERNEL_LIBRARIES =
     LibraryDescriptorsManager.getInstance(
         SimpleHttpClient,
-        getLogger(),
+        testLoggerFactory.asCommonFactory(),
     ) { logger, message, exception ->
         logger.errorForUser(message = message, throwable = exception)
     }
@@ -125,7 +131,9 @@ fun assertStartsWith(
 
 fun Collection<Pair<String, String>>.toLibraries(): LibraryResolver {
     val libJsons = associate { it.first to it.second }
-    return getResolverFromNamesMap(parseLibraryDescriptors(libJsons))
+    return getResolverFromNamesMap(
+        parseLibraryDescriptors(testLoggerFactory, libJsons),
+    )
 }
 
 @JvmName("toLibrariesStringLibraryDefinition")
@@ -143,10 +151,12 @@ fun getResolverFromNamesMap(
 }
 
 fun readLibraries(basePath: String? = null): Map<String, String> {
+    val logger = testLoggerFactory.getLogger("test")
+
     return KERNEL_LIBRARIES.homeLibrariesDir(basePath?.let(::File))
         .listFiles()?.filter(KERNEL_LIBRARIES::isLibraryDescriptor)
         ?.map {
-            log.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
+            logger.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
             it.nameWithoutExtension to it.readText()
         }
         .orEmpty()
@@ -262,6 +272,8 @@ object NotebookMock : Notebook {
     override val variablesState = mutableMapOf<String, VariableStateImpl>()
     override val cellVariables = mapOf<Int, Set<String>>()
     override val resultsAccessor = ResultsAccessor { getResult(it) }
+
+    override val loggerFactory: KernelLoggerFactory get() = DefaultKernelLoggerFactory
 
     override fun getCell(id: Int): MutableCodeCell {
         return cells[id] ?: throw ArrayIndexOutOfBoundsException(
