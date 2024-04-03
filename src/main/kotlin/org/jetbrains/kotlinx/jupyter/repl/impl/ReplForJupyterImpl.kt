@@ -54,19 +54,19 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
-import org.jetbrains.kotlinx.jupyter.libraries.LibraryInfoCache
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.CompletionMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
+import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
@@ -80,7 +80,6 @@ import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.KotlinCompleter
@@ -143,20 +142,14 @@ class ReplForJupyterImpl(
     commHandlers: List<CommHandler> = listOf(),
     httpClient: HttpClient,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
-    libraryInfoCache: LibraryInfoCache,
     private val libraryReferenceParser: LibraryReferenceParser,
+    libraryInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
+    librariesProcessor: LibrariesProcessor,
+    override val options: ReplOptions,
+    override val sessionOptions: SessionOptions,
+    customMagicsHandler: LibrariesAwareMagicsHandler?,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
     private val logger = loggerFactory.getLogger(this::class)
-
-    override val options: ReplOptions = ReplOptionsImpl { internalEvaluator }
-
-    private val libraryInfoSwitcher =
-        getDefaultResolutionInfoSwitcher(
-            resolutionInfoProvider,
-            libraryInfoCache,
-            libraryDescriptorsManager.homeLibrariesDir(homeDir),
-            runtimeProperties.currentBranch,
-        )
 
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
 
@@ -168,33 +161,14 @@ class ReplForJupyterImpl(
             httpClient,
         )
 
-    override val sessionOptions: SessionOptions =
-        object : SessionOptions {
-            override var resolveSources: Boolean
-                get() = resolver.resolveSources
-                set(value) {
-                    resolver.resolveSources = value
-                }
-
-            override var resolveMpp: Boolean
-                get() = resolver.resolveMpp
-                set(value) {
-                    resolver.resolveMpp = value
-                }
-
-            override var serializeScriptData: Boolean
-                get() = internalEvaluator.serializeScriptData
-                set(value) {
-                    internalEvaluator.serializeScriptData = value
-                }
-        }
-
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
 
     private val resolver: JupyterScriptDependenciesResolver =
         JupyterScriptDependenciesResolverImpl(
             loggerFactory,
             mavenRepositories,
+            sessionOptions::resolveSources,
+            sessionOptions::resolveMpp,
         )
 
     private val ctx = KotlinContext()
@@ -204,23 +178,19 @@ class ReplForJupyterImpl(
             runtimeProperties.jvmTargetForSnippets,
         )
 
-    private val librariesProcessor: LibrariesProcessor =
-        LibrariesProcessorImpl(
-            libraryResolver,
-            libraryReferenceParser,
-            runtimeProperties.version,
-        )
-
     val loggingManager = LoggingManager(loggerFactory)
+
+    private val magicsHandler =
+        customMagicsHandler ?: FullMagicsHandler(
+            options,
+            librariesProcessor,
+            libraryInfoSwitcher,
+            loggingManager,
+        )
 
     private val magics =
         MagicsProcessor(
-            FullMagicsHandler(
-                options,
-                librariesProcessor,
-                libraryInfoSwitcher,
-                loggingManager,
-            ),
+            magicsHandler,
             parseOutCellMagic,
         )
     override val libraryDescriptorsProvider =
@@ -347,8 +317,10 @@ class ReplForJupyterImpl(
             jupyterCompiler,
             evaluator,
             contextUpdater,
-            options.executedCodeLogging != ExecutedCodeLogging.OFF,
             internalVariablesMarkersProcessor,
+            options::executedCodeLogging,
+            sessionOptions::serializeScriptData,
+            options::writeCompiledClasses,
         )
 
     @Suppress("unused")

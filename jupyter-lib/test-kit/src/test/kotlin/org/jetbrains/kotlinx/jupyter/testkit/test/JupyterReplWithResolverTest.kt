@@ -38,6 +38,12 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
 
     @Test
     fun `failed code with use should still provide metadata`() {
+        execEx(
+            """
+            SessionOptions.serializeScriptData = true
+            """.trimIndent(),
+        )
+
         val result =
             execEx(
                 """

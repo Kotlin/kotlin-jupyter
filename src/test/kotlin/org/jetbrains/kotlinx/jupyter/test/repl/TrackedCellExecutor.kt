@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
@@ -48,7 +49,7 @@ interface TrackedInternalEvaluator : InternalEvaluator {
 }
 
 internal class MockedInternalEvaluator : TrackedInternalEvaluator {
-    override var logExecution: Boolean = false
+    override var executionLogging: ExecutedCodeLogging = ExecutedCodeLogging.OFF
     override var writeCompiledClasses: Boolean = false
     override var serializeScriptData: Boolean = false
     override val lastKClass: KClass<*> = Unit::class

@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import kotlin.reflect.KClass
 
 interface InternalEvaluator {
-    var logExecution: Boolean
+    var executionLogging: ExecutedCodeLogging
     var writeCompiledClasses: Boolean
     var serializeScriptData: Boolean
 

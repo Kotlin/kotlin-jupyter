@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
+import kotlin.reflect.KMutableProperty0
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -31,6 +32,8 @@ import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 open class JupyterScriptDependenciesResolverImpl(
     loggerFactory: KernelLoggerFactory,
     mavenRepositories: List<MavenRepositoryCoordinates>,
+    resolveSourcesOption: KMutableProperty0<Boolean>,
+    resolveMppOption: KMutableProperty0<Boolean>,
 ) : JupyterScriptDependenciesResolver {
     private val logger = loggerFactory.getLogger("resolver")
 
@@ -58,8 +61,8 @@ open class JupyterScriptDependenciesResolverImpl(
     private val repositories = arrayListOf<Repo>()
     private val addedClasspath = arrayListOf<File>()
 
-    override var resolveSources: Boolean = false
-    override var resolveMpp: Boolean = false
+    override var resolveSources: Boolean by resolveSourcesOption
+    override var resolveMpp: Boolean by resolveMppOption
     private val addedSourcesClasspath = arrayListOf<File>()
 
     init {

@@ -14,11 +14,13 @@ import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
+import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
 import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -35,8 +37,10 @@ internal class InternalEvaluatorImpl(
     val compiler: JupyterCompiler,
     private val evaluator: BasicJvmReplEvaluator,
     private val contextUpdater: ContextUpdater,
-    override var logExecution: Boolean,
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
+    executionLoggingProperty: KMutableProperty0<ExecutedCodeLogging>,
+    serializeScriptDataProperty: KMutableProperty0<Boolean>,
+    writeCompiledClassesProperty: KMutableProperty0<Boolean>,
 ) :
     InternalEvaluator {
     private var classWriter: ClassWriter? = null
@@ -60,21 +64,25 @@ internal class InternalEvaluatorImpl(
         return data
     }
 
-    override var writeCompiledClasses: Boolean
-        get() = classWriter != null
-        set(value) {
-            classWriter =
-                if (!value) {
-                    null
-                } else {
-                    val cw = ClassWriter(loggerFactory)
-                    System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
-                    cw
-                }
-        }
+    override var writeCompiledClasses: Boolean by writeCompiledClassesProperty
 
-    // TODO: change to false after plugin migration
-    override var serializeScriptData: Boolean = true
+    private fun withClassWriter(block: ClassWriter.() -> Unit) {
+        if (!writeCompiledClasses) {
+            classWriter = null
+            return
+        }
+        val myClassWriter =
+            classWriter ?: run {
+                val cw = ClassWriter(loggerFactory)
+                System.setProperty("spark.repl.class.outputDir", cw.outputDir.toString())
+                cw
+            }
+        myClassWriter.apply(block)
+    }
+
+    override var executionLogging: ExecutedCodeLogging by executionLoggingProperty
+
+    override var serializeScriptData: Boolean by serializeScriptDataProperty
 
     override val lastKClass get() = compiler.lastKClass
 
@@ -100,7 +108,7 @@ internal class InternalEvaluatorImpl(
             }
 
             isExecuting = true
-            if (logExecution) {
+            if (executionLogging == ExecutedCodeLogging.ALL) {
                 println("Executing:\n$code")
             }
             val id = compiler.nextCounter()
@@ -113,7 +121,9 @@ internal class InternalEvaluatorImpl(
             evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()
 
-            classWriter?.writeClasses(codeLine, compiledScript)
+            withClassWriter {
+                writeClasses(codeLine, compiledScript)
+            }
             val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evalConfig) }
             contextUpdater.update()
 

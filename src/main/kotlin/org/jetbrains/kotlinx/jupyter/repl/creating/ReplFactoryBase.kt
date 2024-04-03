@@ -25,8 +25,12 @@ class ReplFactoryBase(
                 commHandlers,
                 httpClient,
                 libraryDescriptorsManager,
-                libraryInfoCache,
                 libraryReferenceParser,
+                libraryInfoSwitcher,
+                librariesProcessor,
+                replOptions,
+                sessionOptions,
+                magicsHandler,
             )
         }
     }
