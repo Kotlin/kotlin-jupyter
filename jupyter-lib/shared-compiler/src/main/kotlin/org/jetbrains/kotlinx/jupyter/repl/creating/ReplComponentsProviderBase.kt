@@ -40,7 +40,7 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 
-abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProvider() {
+abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProviderImpl() {
     override fun provideLoggerFactory(): KernelLoggerFactory = DefaultKernelLoggerFactory
 
     override fun provideResolutionInfoProvider(): ResolutionInfoProvider = EmptyResolutionInfoProvider(libraryInfoCache)

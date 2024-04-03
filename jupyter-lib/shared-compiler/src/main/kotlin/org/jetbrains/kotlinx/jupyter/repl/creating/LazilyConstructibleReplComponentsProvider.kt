@@ -24,111 +24,56 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import java.io.File
 
-abstract class LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
-    override val loggerFactory: KernelLoggerFactory by lazy { provideLoggerFactory() }
+interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
+    fun provideLoggerFactory(): KernelLoggerFactory
 
-    protected abstract fun provideLoggerFactory(): KernelLoggerFactory
+    fun provideResolutionInfoProvider(): ResolutionInfoProvider
 
-    override val resolutionInfoProvider by lazy { provideResolutionInfoProvider() }
+    fun provideDisplayHandler(): DisplayHandler
 
-    protected abstract fun provideResolutionInfoProvider(): ResolutionInfoProvider
+    fun provideNotebook(): MutableNotebook
 
-    override val displayHandler by lazy { provideDisplayHandler() }
+    fun provideScriptClasspath(): List<File>
 
-    protected abstract fun provideDisplayHandler(): DisplayHandler
+    fun provideHomeDir(): File?
 
-    override val notebook by lazy { provideNotebook() }
+    fun provideDebugPort(): Int?
 
-    protected abstract fun provideNotebook(): MutableNotebook
+    fun provideMavenRepositories(): List<MavenRepositoryCoordinates>
 
-    override val scriptClasspath: List<File> by lazy { provideScriptClasspath() }
+    fun provideLibraryResolver(): LibraryResolver?
 
-    protected abstract fun provideScriptClasspath(): List<File>
+    fun provideRuntimeProperties(): ReplRuntimeProperties
 
-    override val homeDir: File? by lazy { provideHomeDir() }
+    fun provideScriptReceivers(): List<Any>
 
-    protected abstract fun provideHomeDir(): File?
+    fun provideIsEmbedded(): Boolean
 
-    override val debugPort: Int? by lazy { provideDebugPort() }
+    fun provideLibrariesScanner(): LibrariesScanner
 
-    protected abstract fun provideDebugPort(): Int?
+    fun provideCommunicationFacility(): JupyterCommunicationFacility
 
-    override val mavenRepositories: List<MavenRepositoryCoordinates> by lazy { provideMavenRepositories() }
+    fun provideCommManager(): CommManager
 
-    protected abstract fun provideMavenRepositories(): List<MavenRepositoryCoordinates>
+    fun provideCommHandlers(): List<CommHandler>
 
-    override val libraryResolver: LibraryResolver? by lazy { provideLibraryResolver() }
+    fun provideExplicitClientType(): JupyterClientType?
 
-    protected abstract fun provideLibraryResolver(): LibraryResolver?
+    fun provideHttpClient(): HttpClient
 
-    override val runtimeProperties: ReplRuntimeProperties by lazy { provideRuntimeProperties() }
+    fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager
 
-    protected abstract fun provideRuntimeProperties(): ReplRuntimeProperties
+    fun provideLibraryInfoCache(): LibraryInfoCache
 
-    override val scriptReceivers: List<Any> by lazy { provideScriptReceivers() }
+    fun provideLibraryInfoSwitcher(): ResolutionInfoSwitcher<DefaultInfoSwitch>
 
-    protected abstract fun provideScriptReceivers(): List<Any>
+    fun provideLibrariesProcessor(): LibrariesProcessor
 
-    override val isEmbedded: Boolean by lazy { provideIsEmbedded() }
+    fun provideReplOptions(): ReplOptions
 
-    protected abstract fun provideIsEmbedded(): Boolean
+    fun provideSessionOptions(): SessionOptions
 
-    override val librariesScanner: LibrariesScanner by lazy { provideLibrariesScanner() }
+    fun provideMagicsHandler(): LibrariesAwareMagicsHandler?
 
-    protected abstract fun provideLibrariesScanner(): LibrariesScanner
-
-    override val communicationFacility: JupyterCommunicationFacility by lazy { provideCommunicationFacility() }
-
-    protected abstract fun provideCommunicationFacility(): JupyterCommunicationFacility
-
-    override val commManager: CommManager by lazy { provideCommManager() }
-
-    protected abstract fun provideCommManager(): CommManager
-
-    override val commHandlers: List<CommHandler> by lazy { provideCommHandlers() }
-
-    protected abstract fun provideCommHandlers(): List<CommHandler>
-
-    override val explicitClientType: JupyterClientType? by lazy { provideExplicitClientType() }
-
-    protected abstract fun provideExplicitClientType(): JupyterClientType?
-
-    override val httpClient: HttpClient by lazy { provideHttpClient() }
-
-    protected abstract fun provideHttpClient(): HttpClient
-
-    override val libraryDescriptorsManager: LibraryDescriptorsManager by lazy { provideLibraryDescriptorsManager() }
-
-    protected abstract fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager
-
-    override val libraryInfoCache: LibraryInfoCache by lazy { provideLibraryInfoCache() }
-
-    protected abstract fun provideLibraryInfoCache(): LibraryInfoCache
-
-    override val libraryInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch> by lazy { provideLibraryInfoSwitcher() }
-
-    protected abstract fun provideLibraryInfoSwitcher(): ResolutionInfoSwitcher<DefaultInfoSwitch>
-
-    override val librariesProcessor: LibrariesProcessor by lazy { provideLibrariesProcessor() }
-
-    protected abstract fun provideLibrariesProcessor(): LibrariesProcessor
-
-    override val replOptions: ReplOptions by lazy { provideReplOptions() }
-
-    protected abstract fun provideReplOptions(): ReplOptions
-
-    override val sessionOptions: SessionOptions by lazy { provideSessionOptions() }
-
-    protected abstract fun provideSessionOptions(): SessionOptions
-
-    override val magicsHandler: LibrariesAwareMagicsHandler? by lazy { provideMagicsHandler() }
-
-    protected abstract fun provideMagicsHandler(): LibrariesAwareMagicsHandler?
-
-    override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
-
-    protected abstract fun provideLibraryReferenceParser(): LibraryReferenceParser
-
-    // TODO: add other methods incl. display handler and socket messages listener
-    // Inheritors should be constructed of connection (JupyterConnection)
+    fun provideLibraryReferenceParser(): LibraryReferenceParser
 }

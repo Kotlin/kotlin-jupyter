@@ -178,14 +178,14 @@ class ReplForJupyterImpl(
             runtimeProperties.jvmTargetForSnippets,
         )
 
-    val loggingManager = LoggingManager(loggerFactory)
+    val loggingManager = if (customMagicsHandler == null) LoggingManager(loggerFactory) else null
 
     private val magicsHandler =
         customMagicsHandler ?: FullMagicsHandler(
             options,
             librariesProcessor,
             libraryInfoSwitcher,
-            loggingManager,
+            loggingManager!!,
         )
 
     private val magics =
