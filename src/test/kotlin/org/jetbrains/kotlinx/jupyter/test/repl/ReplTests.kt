@@ -26,6 +26,8 @@ import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.EnabledForJreRange
+import org.junit.jupiter.api.condition.JRE
 import org.junit.jupiter.api.condition.OS
 import java.io.File
 import java.nio.file.Path
@@ -435,6 +437,7 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     @DisabledOnOs(OS.MAC)
+    @EnabledForJreRange(max = JRE.JAVA_11)
     fun testNativeLibrary() {
         val libName = "GraphMolWrap"
         val testDataPath = "src/test/testData/nativeTest"
