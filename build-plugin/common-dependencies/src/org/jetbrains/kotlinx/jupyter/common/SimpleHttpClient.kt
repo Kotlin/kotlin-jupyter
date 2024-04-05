@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.common
 
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -34,12 +35,14 @@ object SimpleHttpClient : HttpClient {
             return makeRequest(newRequest) // Recursive call for redirect
         }
 
-        val responseText =
+        val stream: InputStream? =
             if (responseCode in 200..299) {
-                connection.inputStream.bufferedReader().use { it.readText() }
+                connection.inputStream
             } else {
-                connection.errorStream.bufferedReader().use { it.readText() }
+                connection.errorStream
             }
+
+        val responseText = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
 
         return ResponseImpl(Status(responseCode), responseText)
     }
