@@ -817,7 +817,7 @@ use the Gradle plugin. You may turn this behavior off by setting `kotlin.jupyter
 to `false`. If you want to include this artifact into your build manually, you'll find the instructions
 [here][maven-search-testkit].
 
-For the examples of integration testing see `org.jetbrains.kotlinx.jupyter.testkit.test.JupyterReplTestingTest` in
+For the examples of integration testing see [`JupyterReplTestingTest`][jupyter-repl-testing-test] in
 this repository or [related tests in DataFrame][dataframe-integration-tests].
 
 ### Integration using other build systems
@@ -846,5 +846,6 @@ Classes derived from `LibraryDefinition` should be added to the `definitions` ar
 Classes derived from `LibraryDefinitionProducer` should be added to the `producers` array.
 
 [libs-repo]: https://github.com/Kotlin/kotlin-jupyter-libraries
-[dataframe-integration-tests]: https://github.com/Kotlin/dataframe/tree/master/src/test/kotlin/org/jetbrains/dataframe/jupyter
+[jupyter-repl-testing-test]: https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/test-kit/src/test/kotlin/org/jetbrains/kotlinx/jupyter/testkit/test/JupyterReplTestingTest.kt
+[dataframe-integration-tests]: https://github.com/Kotlin/dataframe/tree/master/core/generated-sources/src/test/kotlin/org/jetbrains/kotlinx/dataframe/jupyter
 [maven-search-testkit]: https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlin-jupyter-test-kit
