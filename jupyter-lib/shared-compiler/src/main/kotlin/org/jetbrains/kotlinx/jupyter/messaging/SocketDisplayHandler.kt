@@ -1,8 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.api.containsDisplayId
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.api.setDisplayId
 import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
@@ -28,18 +29,13 @@ class SocketDisplayHandler(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
+        val display = renderValue(notebook, host, value, id)?.let { if (id != null) it.withId(id) else it } ?: return
         val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
 
-        val content =
-            DisplayDataResponse(
-                json["data"],
-                json["metadata"],
-                json["transient"],
-            )
-        sendMessage(MessageType.DISPLAY_DATA, content)
+        val response: DisplayDataResponse = createResponse(json)
+        sendMessage(MessageType.DISPLAY_DATA, response)
     }
 
     override fun handleUpdate(
@@ -47,8 +43,11 @@ class SocketDisplayHandler(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value) ?: return
-        val json = display.toJson(Json.EMPTY, null).toMutableMap()
+        val display = renderValue(notebook, host, value, id) ?: return
+        val json = display.toJson(Json.EMPTY, null)
+        if (id == null || !json.containsDisplayId(id)) {
+            throw RuntimeException("`update_display_data` response should provide an id of data being updated")
+        }
 
         val container = notebook.displays
         container.update(id, display)
@@ -56,15 +55,17 @@ class SocketDisplayHandler(
             it.cell.displays.update(id, display)
         }
 
-        json.setDisplayId(id)
-            ?: throw RuntimeException("`update_display_data` response should provide an id of data being updated")
+        val response = createResponse(json)
+        sendMessage(MessageType.UPDATE_DISPLAY_DATA, response)
+    }
 
+    private fun createResponse(json: JsonObject): DisplayDataResponse {
         val content =
             DisplayDataResponse(
                 json["data"],
                 json["metadata"],
                 json["transient"],
             )
-        sendMessage(MessageType.UPDATE_DISPLAY_DATA, content)
+        return content
     }
 }

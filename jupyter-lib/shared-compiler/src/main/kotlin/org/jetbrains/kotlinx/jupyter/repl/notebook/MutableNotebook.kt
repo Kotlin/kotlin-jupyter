@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 
 interface MutableNotebook : Notebook {
+    // Can be `null` before the REPL has completed initialization
     var sharedReplContext: SharedReplContext?
 
     override val displays: MutableDisplayContainer

@@ -13,7 +13,7 @@ import java.util.Locale
 
 /**
  * Jupyter connection socket types
- * Here you can find an information about Jupyter sockets:
+ * Here you can find information about Jupyter sockets:
  * https://jupyter-client.readthedocs.io/en/stable/messaging.html#introduction
  *
  * For now, only adding callbacks for messages on `control` and `shell` sockets makes sense.

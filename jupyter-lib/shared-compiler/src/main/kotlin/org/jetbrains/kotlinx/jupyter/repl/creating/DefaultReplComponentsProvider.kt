@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.SocketDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.io.File
 
@@ -23,6 +24,7 @@ open class DefaultReplComponentsProvider(
     private val _settings: DefaultReplSettings,
     private val _communicationFacility: JupyterCommunicationFacility,
     private val _commManager: CommManager,
+    private val _inMemoryResultsHolder: InMemoryReplResultsHolder,
 ) : ReplComponentsProviderBase() {
     private val logger by lazy {
         loggerFactory.getLogger(this::class)
@@ -107,5 +109,9 @@ open class DefaultReplComponentsProvider(
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser {
         return httpUtil.libraryReferenceParser
+    }
+
+    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder {
+        return _inMemoryResultsHolder
     }
 }

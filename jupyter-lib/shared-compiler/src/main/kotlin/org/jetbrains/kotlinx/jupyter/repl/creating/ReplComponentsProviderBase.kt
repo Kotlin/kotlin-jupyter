@@ -35,6 +35,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptionsImpl
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.SessionOptionsImpl
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
@@ -122,4 +124,6 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     }
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
+
+    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder
 }

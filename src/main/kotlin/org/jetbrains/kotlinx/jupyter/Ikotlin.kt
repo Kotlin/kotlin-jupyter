@@ -25,6 +25,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import org.slf4j.Logger
@@ -154,7 +155,7 @@ fun createMessageHandler(
     val executor: JupyterExecutor = JupyterExecutorImpl(loggerFactory)
 
     val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
-    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager).createRepl()
+    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager, NoOpInMemoryReplResultsHolder).createRepl()
     return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 

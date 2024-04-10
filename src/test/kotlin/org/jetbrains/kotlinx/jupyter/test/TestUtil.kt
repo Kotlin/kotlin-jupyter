@@ -245,7 +245,7 @@ class TestDisplayHandlerWithRendering(
         id: String?,
     ) {
         super.handleDisplay(value, host, id)
-        val display = renderValue(notebook, host, value)?.let { if (id != null) it.withId(id) else it } ?: return
+        val display = renderValue(notebook, host, value, id)?.let { if (id != null) it.withId(id) else it } ?: return
         notebook.currentCell?.addDisplay(display)
     }
 
@@ -255,7 +255,7 @@ class TestDisplayHandlerWithRendering(
         id: String?,
     ) {
         super.handleUpdate(value, host, id)
-        val display = renderValue(notebook, host, value) ?: return
+        val display = renderValue(notebook, host, value, id) ?: return
         val container = notebook.displays
         container.update(id, display)
         container.getById(id).distinctBy { it.cell.id }.forEach {
@@ -424,5 +424,14 @@ fun EvalResultEx.assertSuccess() {
         is EvalResultEx.AbstractError -> throw error
         is EvalResultEx.Interrupted -> throw InterruptedException()
         is EvalResultEx.Success -> {}
+    }
+}
+
+fun Any?.shouldBeInstanceOf(kclass: KClass<*>) {
+    if (this == null) {
+        throw AssertionError("Expected instance of ${kclass.qualifiedName}, but got null")
+    }
+    if (!kclass.isInstance(this)) {
+        throw AssertionError("Expected instance of ${kclass.qualifiedName}, but got ${this::class.qualifiedName}")
     }
 }

@@ -45,6 +45,11 @@ interface Renderable {
 }
 
 /**
+ * Wrapper for in-memory results that also tracks its corresponding mime-type.
+ */
+data class InMemoryResult(val mimeType: String, val result: Any?)
+
+/**
  * Display result that may be converted to JSON for `display_data`
  * kernel response
  */
@@ -71,7 +76,7 @@ interface DisplayResult : Renderable {
     /**
      * Renders display result, generally should return `this`
      */
-    override fun render(notebook: Notebook) = this
+    override fun render(notebook: Notebook): DisplayResult = this
 }
 
 /**
@@ -139,6 +144,34 @@ fun MutableJsonObject.setDisplayId(
     newTransient["display_id"] = JsonPrimitive(id)
     this["transient"] = Json.encodeToJsonElement(newTransient)
     return id
+}
+
+/**
+ * Check if the JSON object contains a `display_id` entry.
+ */
+fun JsonObject.containsDisplayId(id: String): Boolean {
+    val transient: JsonObject? = get("transient") as? JsonObject
+    return (transient?.get("display_id") as? JsonPrimitive)?.content == id
+}
+
+/**
+ * Wrapper for [DisplayResult]s that contain in memory results.
+ * This is only applicable to the embedded server.
+ *
+ * @param inMemoryOutput the in-memory result + its mime-type that tells the client how to render it.
+ * @param fallbackResult fallback output the client can use as a placeholder for the in-memory result, if it is
+ * no longer available. Like when saving the notebook to disk.
+ */
+class InMemoryMimeTypedResult(
+    val inMemoryOutput: InMemoryResult,
+    val fallbackResult: Map<String, JsonElement>,
+) : DisplayResult {
+    override fun toJson(
+        additionalMetadata: JsonObject,
+        overrideId: String?,
+    ): JsonObject {
+        throw UnsupportedOperationException("This method is not supported for in-memory values")
+    }
 }
 
 /**
@@ -422,4 +455,14 @@ object MimeTypes {
     const val PNG = "image/png"
     const val JPEG = "image/jpeg"
     const val SVG = "image/svg+xml"
+}
+
+/**
+ * Mimetypes for in-memory output.
+ */
+object InMemoryMimeTypes {
+    const val SWING = "application/vnd.idea.swing"
+    const val COMPOSE = "application/vnd.idea.compose"
+
+    val allTypes = listOf(SWING, COMPOSE)
 }

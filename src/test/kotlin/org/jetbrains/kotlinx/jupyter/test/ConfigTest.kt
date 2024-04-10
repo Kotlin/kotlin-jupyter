@@ -19,7 +19,18 @@ class ConfigTest {
         val branch = defaultRuntimeProperties.currentBranch
         LOG.debug("Runtime git branch is: $branch")
 
-        if (!branch.matches(Regex("pull/[1-9]\\d*"))) {
+        val developers =
+            listOf(
+                "ileasile",
+                "nikolay-egorov",
+                "ark-1",
+                "cm",
+            )
+
+        val pullRegex = "(pull/[1-9]\\d*)"
+        val developersRegex = developers.joinToString("|", "(", ")") + "/.*"
+
+        if (!branch.matches(Regex("$pullRegex|$developersRegex"))) {
             assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
         }
 

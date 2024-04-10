@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.test.assertSuccess
@@ -126,6 +127,7 @@ abstract class AbstractReplTest {
             scriptClasspath = embeddedClasspath,
             isEmbedded = true,
             displayHandler = displayHandler,
+            inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder(),
         )
     }
 

@@ -12,6 +12,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import java.io.File
 
 fun createRepl(
@@ -27,6 +29,7 @@ fun createRepl(
     displayHandler: DisplayHandler = NoOpDisplayHandler,
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
     debugPort: Int? = null,
+    inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,
 ): ReplForJupyter {
     val componentsProvider =
         object : ReplComponentsProviderBase() {
@@ -59,6 +62,8 @@ fun createRepl(
             override fun provideLibraryInfoCache() = httpUtil.libraryInfoCache
 
             override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
+
+            override fun provideInMemoryReplResultsHolder() = inMemoryReplResultsHolder
         }
     return componentsProvider.createRepl()
 }
