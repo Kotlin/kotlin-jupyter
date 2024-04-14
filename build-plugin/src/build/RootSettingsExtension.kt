@@ -34,6 +34,7 @@ class RootSettingsExtension(
 
     val githubRepoUser by project.prop<String>()
     val githubRepoName by project.prop<String>()
+    val githubRepoToken: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_TOKEN")
     val projectRepoUrl by project.prop<String>()
     val docsRepo by project.prop<String>()
     val librariesRepoUrl by project.prop<String>()

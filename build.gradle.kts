@@ -232,6 +232,7 @@ val kernelZip =
 
 changelog {
     githubUser = rootSettings.githubRepoUser
+    githubToken = rootSettings.githubRepoToken
     githubRepository = rootSettings.githubRepoName
     excludeLabels = setOf("wontfix", "duplicate", "no-changelog", "question")
     customTagByIssueNumber =
