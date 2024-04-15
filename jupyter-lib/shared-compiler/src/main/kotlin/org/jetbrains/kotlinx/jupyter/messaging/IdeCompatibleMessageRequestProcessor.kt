@@ -54,7 +54,8 @@ open class IdeCompatibleMessageRequestProcessor(
             messageFactoryProvider.provide()!!
         }
 
-    protected val stdinIn: InputStream = StdinInputStream(socketManager.stdin, messageFactory)
+    @Suppress("LeakingThis")
+    protected val stdinIn: InputStream = StdinInputStream(this)
 
     override fun processUnknownShellMessage(content: MessageContent) {
         socketManager.shell.sendMessage(

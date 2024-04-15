@@ -27,6 +27,8 @@ import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.debug.DEBUG_THREAD_NAME
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.messaging.getInput
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
@@ -40,6 +42,7 @@ class NotebookImpl(
     override val loggerFactory: KernelLoggerFactory,
     private val runtimeProperties: ReplRuntimeProperties,
     override val commManager: CommManager,
+    private val communicationFacility: JupyterCommunicationFacility,
     private val explicitClientType: JupyterClientType?,
     override val libraryLoader: LibraryLoader,
     debugPortProvided: Boolean,
@@ -200,6 +203,13 @@ class NotebookImpl(
     ): LibraryDefinition {
         return parseLibraryDescriptor(descriptorText)
             .convertToDefinition(options.entries.map { Variable(it.key, it.value) })
+    }
+
+    override fun prompt(
+        prompt: String,
+        password: Boolean,
+    ): String {
+        return communicationFacility.getInput(prompt, password)
     }
 
     override fun close() {

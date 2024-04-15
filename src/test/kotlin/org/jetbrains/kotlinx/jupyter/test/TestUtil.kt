@@ -363,6 +363,13 @@ object NotebookMock : Notebook {
 
     override val commManager: CommManager
         get() = CommManagerImpl(CommunicationFacilityMock)
+
+    override fun prompt(
+        prompt: String,
+        password: Boolean,
+    ): String {
+        notImplemented()
+    }
 }
 
 object ReplComponentsProviderMock : ReplComponentsProviderBase()

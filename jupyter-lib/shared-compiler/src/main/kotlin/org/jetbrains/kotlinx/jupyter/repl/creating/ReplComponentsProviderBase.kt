@@ -54,6 +54,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
             loggerFactory,
             runtimeProperties,
             commManager,
+            communicationFacility,
             explicitClientType,
             librariesScanner,
             debugPort != null,

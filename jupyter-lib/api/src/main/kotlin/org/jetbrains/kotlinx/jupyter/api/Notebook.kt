@@ -141,4 +141,9 @@ interface Notebook {
     val commManager: CommManager
 
     val loggerFactory: KernelLoggerFactory
+
+    fun prompt(
+        prompt: String = "stdin:",
+        password: Boolean = false,
+    ): String
 }

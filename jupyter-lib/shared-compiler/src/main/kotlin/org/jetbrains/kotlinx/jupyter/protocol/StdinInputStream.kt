@@ -1,37 +1,22 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import org.jetbrains.kotlinx.jupyter.messaging.InputReply
-import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
-import org.jetbrains.kotlinx.jupyter.messaging.MessageFactory
-import org.jetbrains.kotlinx.jupyter.messaging.MessageType
-import org.jetbrains.kotlinx.jupyter.messaging.makeReplyMessage
-import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.messaging.getInput
 import java.io.InputStream
 import kotlin.math.min
 
 class StdinInputStream(
-    private val stdinSocket: JupyterSocketBase,
-    private val messageFactory: MessageFactory,
+    private val communicationFacility: JupyterCommunicationFacility,
 ) : InputStream() {
     private var currentBuf: ByteArray? = null
     private var currentBufPos = 0
-
-    private fun getInput(): String {
-        stdinSocket.sendMessage(
-            messageFactory.makeReplyMessage(MessageType.INPUT_REQUEST, content = InputRequest("stdin:")),
-        )
-        val msg = stdinSocket.receiveMessage()
-        val content = msg?.data?.content as? InputReply
-
-        return content?.value ?: throw UnsupportedOperationException("Unexpected input message $msg")
-    }
 
     private fun initializeCurrentBuf(): ByteArray {
         val buf = currentBuf
         return if (buf != null) {
             buf
         } else {
-            val newBuf = getInput().toByteArray()
+            val newBuf = communicationFacility.getInput().toByteArray()
             currentBuf = newBuf
             currentBufPos = 0
             newBuf

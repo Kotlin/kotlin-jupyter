@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.protocol.receiveMessage
 import org.jetbrains.kotlinx.jupyter.util.Provider
 
 interface JupyterCommunicationFacility {
@@ -53,4 +54,19 @@ fun JupyterCommunicationFacility.sendOut(
     socketManager.iopub.sendMessage(
         messageFactory.makeReplyMessage(msgType = MessageType.STREAM, content = StreamResponse(stream.optionName(), text)),
     )
+}
+
+fun JupyterCommunicationFacility.getInput(
+    prompt: String = "stdin:",
+    password: Boolean = false,
+): String {
+    val stdinSocket = socketManager.stdin
+    val request = InputRequest(prompt, password)
+    stdinSocket.sendMessage(
+        messageFactory.makeReplyMessage(MessageType.INPUT_REQUEST, content = request),
+    )
+    val msg = stdinSocket.receiveMessage()
+    val content = msg?.data?.content as? InputReply
+
+    return content?.value ?: throw UnsupportedOperationException("Unexpected input message $msg")
 }
