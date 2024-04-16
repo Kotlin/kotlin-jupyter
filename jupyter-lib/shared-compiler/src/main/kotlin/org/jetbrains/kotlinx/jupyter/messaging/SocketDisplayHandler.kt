@@ -44,7 +44,7 @@ class SocketDisplayHandler(
         id: String?,
     ) {
         val display = renderValue(notebook, host, value, id) ?: return
-        val json = display.toJson(Json.EMPTY, null)
+        val json = display.toJson(Json.EMPTY, id)
         if (id == null || !json.containsDisplayId(id)) {
             throw RuntimeException("`update_display_data` response should provide an id of data being updated")
         }

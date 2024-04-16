@@ -215,6 +215,10 @@ class ExecuteTests : KernelServerTestsBase() {
         return receiveMessageOfType(MessageType.DISPLAY_DATA)
     }
 
+    private fun JupyterSocket.receiveUpdateDisplayDataResponse(): DisplayDataResponse {
+        return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
+    }
+
     @Test
     fun testExecute() {
         val res = doExecute("2+2") as JsonObject
@@ -584,4 +588,20 @@ class ExecuteTests : KernelServerTestsBase() {
             },
         )
     }
+
+    // Verify we do not crash when sending UPDATE_DISPLAY messages
+    @Test
+    fun testUpdateDisplay() {
+        doExecute(
+            """
+                UPDATE_DISPLAY("b", "id1")
+                "hello"
+            """.trimIndent(),
+            ioPubChecker = { iopubSocket ->
+                // In case of an error, this would return STREAM
+                iopubSocket.receiveUpdateDisplayDataResponse()
+            }
+        )
+    }
+
 }
