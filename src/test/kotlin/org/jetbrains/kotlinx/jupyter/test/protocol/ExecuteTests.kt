@@ -594,14 +594,13 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testUpdateDisplay() {
         doExecute(
             """
-                UPDATE_DISPLAY("b", "id1")
-                "hello"
+            UPDATE_DISPLAY("b", "id1")
+            "hello"
             """.trimIndent(),
             ioPubChecker = { iopubSocket ->
                 // In case of an error, this would return STREAM
                 iopubSocket.receiveUpdateDisplayDataResponse()
-            }
+            },
         )
     }
-
 }
