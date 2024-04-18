@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
+import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
@@ -131,19 +132,41 @@ interface Notebook {
      * All requests for libraries made during this session
      */
     val libraryRequests: Collection<LibraryResolutionRequest>
+
+    /**
+     * [LibraryLoader] of the current session
+     */
     val libraryLoader: LibraryLoader
 
+    /**
+     * Converts descriptor JSON text into [LibraryDefinition]
+     */
     fun getLibraryFromDescriptor(
         descriptorText: String,
         options: Map<String, String> = emptyMap(),
     ): LibraryDefinition
 
+    /**
+     * Manages custom messages
+     */
     val commManager: CommManager
 
+    /**
+     * Logger factory of the current session
+     */
     val loggerFactory: KernelLoggerFactory
 
+    /**
+     * Prompts the user for input and returns the entered value as a String.
+     *
+     * @param prompt The message displayed to the user as a prompt.
+     * @param isPassword A flag indicating whether the input should be treated as a password.
+     * Default value is false.
+     * Clients usually hide passwords from users by displaying the asterisks ("*") instead of the actual password.
+     * @return The user-entered input as a String.
+     */
     fun prompt(
-        prompt: String = "stdin:",
-        password: Boolean = false,
+        prompt: String = DefaultPromptOptions.PROMPT,
+        isPassword: Boolean = DefaultPromptOptions.IS_PASSWORD,
     ): String
 }

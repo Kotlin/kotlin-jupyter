@@ -3,6 +3,9 @@ package org.jetbrains.kotlinx.jupyter.api
 import org.slf4j.Logger
 import kotlin.reflect.KClass
 
+/**
+ * Factory interface for creating slf4j-compatible loggers.
+ */
 interface KernelLoggerFactory {
     fun getLogger(category: String): Logger
 

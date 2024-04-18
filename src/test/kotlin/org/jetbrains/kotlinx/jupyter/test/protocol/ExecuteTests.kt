@@ -292,16 +292,16 @@ class ExecuteTests : KernelServerTestsBase() {
         assertNull(res)
     }
 
-    // TODO: investigate, why this test is hanging
     @Test
     fun testReadLine() {
         val code =
             """
-            val answer = readLine()
-            answer
+            val answer1 = readLine()!!.toInt()
+            val answer2 = notebook.prompt("Your answer:").toInt()
+            answer1 + answer2
             """.trimIndent()
-        val res = doExecute(code, inputs = listOf("42"))
-        res shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "42")
+        val res = doExecute(code, inputs = listOf("42", "43"))
+        res shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "85")
     }
 
     @Test

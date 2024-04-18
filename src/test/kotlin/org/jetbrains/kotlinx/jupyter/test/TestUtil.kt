@@ -366,7 +366,7 @@ object NotebookMock : Notebook {
 
     override fun prompt(
         prompt: String,
-        password: Boolean,
+        isPassword: Boolean,
     ): String {
         notImplemented()
     }

@@ -85,6 +85,10 @@ interface JupyterConnection {
     )
 }
 
+/**
+ * Manages custom messages in the notebook, for more info see
+ * https://jupyter-client.readthedocs.io/en/latest/messaging.html#custom-messages
+ */
 interface CommManager {
     /**
      * Creates a comm with a given target, generates unique ID for it. Sends comm_open request to frontend

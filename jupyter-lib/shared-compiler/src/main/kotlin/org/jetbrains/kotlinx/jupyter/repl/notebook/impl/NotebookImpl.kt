@@ -207,9 +207,9 @@ class NotebookImpl(
 
     override fun prompt(
         prompt: String,
-        password: Boolean,
+        isPassword: Boolean,
     ): String {
-        return communicationFacility.getInput(prompt, password)
+        return communicationFacility.getInput(prompt, isPassword)
     }
 
     override fun close() {

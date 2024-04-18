@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.protocol.receiveMessage
+import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import org.jetbrains.kotlinx.jupyter.util.Provider
 
 interface JupyterCommunicationFacility {
@@ -57,8 +58,8 @@ fun JupyterCommunicationFacility.sendOut(
 }
 
 fun JupyterCommunicationFacility.getInput(
-    prompt: String = "stdin:",
-    password: Boolean = false,
+    prompt: String = DefaultPromptOptions.PROMPT,
+    password: Boolean = DefaultPromptOptions.IS_PASSWORD,
 ): String {
     val stdinSocket = socketManager.stdin
     val request = InputRequest(prompt, password)
