@@ -3,15 +3,19 @@ import os
 import shlex
 import subprocess
 import sys
-from typing import List, AnyStr
+from typing import List, AnyStr, Optional
 
 from kotlin_kernel import env_names
 from kotlin_kernel import port_generator
 
+_CLIENT_TYPE_PREFIX = '-client='
 
-def run_kernel(*args) -> None:
+
+def run_kernel(*args: str) -> None:
+    args = list(args)
+    client_type = _extract_argument(args, _CLIENT_TYPE_PREFIX)
     try:
-        run_kernel_impl(*args)
+        run_kernel_impl(*args, client_type=client_type)
     except KeyboardInterrupt:
         print('Kernel interrupted')
         try:
@@ -21,13 +25,21 @@ def run_kernel(*args) -> None:
             os._exit(130)
 
 
+def _extract_argument(args: list[str], prefix: str) -> Optional[str]:
+    for arg_index in range(len(args)):
+        if args[arg_index].startswith(prefix):
+            return args.pop(arg_index).removeprefix(prefix)
+    return None
+
+
 def module_install_path() -> str:
     abspath: AnyStr = os.path.abspath(__file__)
     current_dir: AnyStr = os.path.dirname(abspath)
     return str(current_dir)
 
 
-def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables_dir: str = None) -> None:
+def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables_dir: str = None, *,
+                    client_type: str) -> None:
     abspath = os.path.abspath(__file__)
     current_dir = os.path.dirname(abspath)
 
@@ -82,6 +94,8 @@ def run_kernel_impl(connection_file: str, jar_args_file: str = None, executables
             connection_file,
             '-home=' + executables_dir
         ]
+        if client_type is not None:
+            jar_args.append(_CLIENT_TYPE_PREFIX + client_type)
         if debug_port is not None:
             jar_args.append('-debugPort=' + str(debug_port))
         subprocess.call([java] + jvm_args + ['-jar'] + debug_list + jar_args)
