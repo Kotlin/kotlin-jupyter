@@ -24,6 +24,14 @@ fun encodeBufferedImage(image: BufferedImage): JsonPrimitive {
     return JsonPrimitive(encodedData)
 }
 
+fun RendererFieldHandler.named(name: String): RendererFieldHandler {
+    return object : RendererFieldHandler by this {
+        override fun toString(): String {
+            return name
+        }
+    }
+}
+
 val bufferedImageRenderer: RendererFieldHandler =
     createRenderer<BufferedImage> {
         val encodedData: JsonPrimitive = encodeBufferedImage(it)
@@ -34,7 +42,7 @@ val bufferedImageRenderer: RendererFieldHandler =
             },
             metadataModifiers = listOf(),
         )
-    }
+    }.named("Default BufferedImage renderer")
 
 /**
  * Renders any array (primitive or non-primitive) into a list.
@@ -87,7 +95,7 @@ val swingJFrameInMemoryRenderer =
     createRenderer<JFrame> { frame: JFrame ->
         val fallbackImage: BufferedImage? = frame.takeScreenshot()
         createSwingInMemoryMimeTypedResult(fallbackImage, frame)
-    }
+    }.named("Default Swing JFrame renderer")
 
 /**
  * Renders a Swing [JDialog] in-memory, but also provides a screenshot of the UI as
@@ -97,7 +105,7 @@ val swingJDialogInMemoryRenderer =
     createRenderer<JDialog> { dialog: JDialog ->
         val fallbackImage: BufferedImage? = dialog.takeScreenshot()
         createSwingInMemoryMimeTypedResult(fallbackImage, dialog)
-    }
+    }.named("Default Swing JDialog renderer")
 
 /**
  * Renders a Swing [JComponent] in-memory, but also provides a screenshot of the UI as
@@ -107,4 +115,4 @@ val swingJComponentInMemoryRenderer: RendererFieldHandler =
     createRenderer<JComponent> { component: JComponent ->
         val fallbackImage: BufferedImage? = component.takeScreenshot()
         createSwingInMemoryMimeTypedResult(fallbackImage, component)
-    }
+    }.named("Default Swing JComponent renderer")
