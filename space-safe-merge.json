@@ -1,0 +1,12 @@
+{
+    "version": "1.0",
+    "builds": [
+        {
+            "teamcity": {
+                "configuration": "KDS_KotlinJupyter_Conda",
+                "url": "https://buildserver.labs.intellij.net",
+                "token": "${teamcity-safe-merge}"
+            }
+        }
+    ]
+}
