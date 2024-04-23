@@ -28,9 +28,10 @@ class ConfigTest {
             )
 
         val pullRegex = "(pull/[1-9]\\d*)"
+        val mergeRegex = "(refs/merge/.*)"
         val developersRegex = developers.joinToString("|", "(", ")") + "/.*"
 
-        if (!branch.matches(Regex("$pullRegex|$developersRegex"))) {
+        if (!branch.matches(Regex("$pullRegex|$mergeRegex|$developersRegex"))) {
             assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
         }
 
