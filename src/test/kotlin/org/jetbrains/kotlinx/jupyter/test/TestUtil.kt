@@ -22,6 +22,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
@@ -58,7 +59,9 @@ import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
+import org.jetbrains.kotlinx.jupyter.repl.notebook.DisplayResultWrapper
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
+import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayResultWithCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -235,16 +238,14 @@ open class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : Di
     }
 }
 
-class TestDisplayHandlerWithRendering(
+open class TestDisplayHandlerWithRendering(
     private val notebook: MutableNotebook,
-    list: MutableList<Any> = mutableListOf(),
-) : TestDisplayHandler(list) {
+) : DisplayHandler {
     override fun handleDisplay(
         value: Any,
         host: ExecutionHost,
         id: String?,
     ) {
-        super.handleDisplay(value, host, id)
         val display = renderValue(notebook, host, value, id)?.let { if (id != null) it.withId(id) else it } ?: return
         notebook.currentCell?.addDisplay(display)
     }
@@ -254,7 +255,6 @@ class TestDisplayHandlerWithRendering(
         host: ExecutionHost,
         id: String?,
     ) {
-        super.handleUpdate(value, host, id)
         val display = renderValue(notebook, host, value, id) ?: return
         val container = notebook.displays
         container.update(id, display)
@@ -432,6 +432,17 @@ fun EvalResultEx.assertSuccess() {
         is EvalResultEx.Interrupted -> throw InterruptedException()
         is EvalResultEx.Success -> {}
     }
+}
+
+val MimeTypedResult.text get() = this[MimeTypes.PLAIN_TEXT] as String
+
+fun MutableDisplayResultWithCell.shouldBeText(): String {
+    shouldBeInstanceOf<DisplayResultWrapper>()
+
+    val display = display
+    display.shouldBeInstanceOf<MimeTypedResult>()
+
+    return display.text
 }
 
 fun Any?.shouldBeInstanceOf(kclass: KClass<*>) {

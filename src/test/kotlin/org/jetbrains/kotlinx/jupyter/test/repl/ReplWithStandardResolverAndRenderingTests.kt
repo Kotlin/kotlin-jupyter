@@ -8,16 +8,18 @@ import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeText
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
-    private val displays = mutableListOf<Any>()
+    private val displays get() = repl.notebook.displays.getAll()
+
     override val repl =
         makeReplWithStandardResolver { notebook ->
-            TestDisplayHandlerWithRendering(notebook, displays)
+            TestDisplayHandlerWithRendering(notebook)
         }
 
     @Test
@@ -73,7 +75,8 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
         result.renderedValue shouldBe Unit
         result.rawValue shouldBe 42
 
-        displays.size shouldBe 1
-        displays.single() shouldBe "42: hi from host.display"
+        val displayResult = displays.single()
+
+        displayResult.shouldBeText() shouldBe "42: hi from host.display"
     }
 }

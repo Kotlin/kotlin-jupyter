@@ -3,13 +3,25 @@ package org.jetbrains.kotlinx.jupyter.config
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 
-val defaultGlobalImports =
+private val dateTimeImports =
     listOf(
-        "kotlin.math.*",
-        "jupyter.kotlin.*",
-        "org.jetbrains.kotlinx.jupyter.api.*",
-        "org.jetbrains.kotlinx.jupyter.api.libraries.*",
-    )
+        "nanoseconds",
+        "microseconds",
+        "milliseconds",
+        "seconds",
+        "minutes",
+        "hours",
+        "days",
+    ).map { "kotlin.time.Duration.Companion.$it" }
+
+val defaultGlobalImports =
+    buildList {
+        add("kotlin.math.*")
+        add("jupyter.kotlin.*")
+        add("org.jetbrains.kotlinx.jupyter.api.*")
+        add("org.jetbrains.kotlinx.jupyter.api.libraries.*")
+        addAll(dateTimeImports)
+    }
 
 val defaultRepositories =
     listOf(
