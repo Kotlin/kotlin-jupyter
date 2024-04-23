@@ -5,7 +5,8 @@
             "teamcity": {
                 "configuration": "KDS_KotlinJupyter_Conda",
                 "url": "https://buildserver.labs.intellij.net",
-                "token": "${teamcity-safe-merge}"
+                "token": "${teamcity-safe-merge}",
+                "ssl-keystore": "BuildServer client"
             }
         }
     ]
