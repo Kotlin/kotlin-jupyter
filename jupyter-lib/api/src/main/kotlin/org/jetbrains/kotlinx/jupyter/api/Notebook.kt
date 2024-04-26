@@ -12,6 +12,12 @@ import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
  */
 interface Notebook {
     /**
+     * Represents the execution host for the Kotlin kernel.
+     * Could be `null` outside of the execution, so use it with care.
+     */
+    val executionHost: KotlinKernelHost?
+
+    /**
      * All executed cells of this notebook
      */
     val cellsList: Collection<CodeCell>

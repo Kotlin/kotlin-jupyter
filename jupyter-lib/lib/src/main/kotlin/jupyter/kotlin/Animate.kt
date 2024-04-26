@@ -2,218 +2,121 @@
 
 package jupyter.kotlin
 
+import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.outputs.Frame
+import org.jetbrains.kotlinx.jupyter.api.outputs.animate
 import java.util.UUID
 import kotlin.time.Duration
 
 private fun generateId() = UUID.randomUUID().toString()
 
 /**
- * The `Frame` class represents a single frame in an animation.
- *
- * @param delayBefore The delay duration before displaying the content of the frame.
- * @param content The content of the frame. In the end, the content is passed to [DISPLAY] or [UPDATE_DISPLAY]
- * and handled by the dedicated display handler.
- * @param T The type of the content.
- */
-class Frame<out T>(
-    val delayBefore: Duration,
-    val content: T,
-)
-
-/**
- * Displays all the frames left in this [frames] iterator, with respect to the delays.
- *
- * @param frames An iterator over [Frame] elements to be displayed.
- * @throws InterruptedException if any thread has interrupted the current thread
- * while the current thread is waiting for the frame delays.
+ * @see Notebook.animate
  */
 @Throws(InterruptedException::class)
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(frames: Iterator<Frame<*>>) {
-    val displayId = generateId()
-    var isFirst = true
-    frames.forEachRemaining { frame ->
-        val frameContent = frame.content ?: "null"
-        val frameDelay = frame.delayBefore.inWholeMilliseconds
-        Thread.sleep(frameDelay)
-        if (isFirst) {
-            DISPLAY(frameContent, displayId)
-            isFirst = false
-        } else {
-            UPDATE_DISPLAY(frameContent, displayId)
-        }
-    }
+    notebook.animate(frames)
 }
 
 /**
- * Displays all the frames in this sequence, with respect to the delays.
- *
- * @param sequence A sequence of [Frame] elements to be displayed.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(sequence: Sequence<Frame<*>>) {
-    ANIMATE(sequence.iterator())
+    notebook.animate(sequence)
 }
 
 /**
- * Displays all the frames in this iterable, with respect to the delays.
- *
- * @param iterable Iterable of [Frame] elements to be displayed.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(iterable: Iterable<Frame<*>>) {
-    ANIMATE(iterable.iterator())
+    notebook.animate(iterable)
 }
 
 /**
- * Triggers the animation using a chain of frames, beginning with [firstFrame]
- * and subsequently obtained through the [nextFrame] function.
- *
- * @param firstFrame The first frame of the animation.
- * @param nextFrame Function that takes the current frame and returns the next frame,
- * or null if the animation is finished.
+ * @see Notebook.animate
  */
 fun <T> ScriptTemplateWithDisplayHelpers.ANIMATE(
     firstFrame: Frame<T>,
     nextFrame: (Frame<T>) -> Frame<T>?,
 ) {
-    ANIMATE(generateSequence(firstFrame, nextFrame))
+    notebook.animate(firstFrame, nextFrame)
 }
 
 /**
- * Triggers the animation sequence consisting of frames that are produced by the [nextFrame] function.
- *
- * @param nextFrame A function that returns the next frame in the animation sequence.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(nextFrame: () -> Frame<*>?) {
-    ANIMATE(generateSequence(nextFrame))
+    notebook.animate(nextFrame)
 }
 
 /**
- * Animates a sequence of frames by displaying them with respect to their delays.
- *
- * @param framesCount The number of frames to animate.
- * @param frameByIndex A function that maps an index to a frame.
- *                     The index represents the position of the frame in the sequence.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     framesCount: Int,
     frameByIndex: (index: Int) -> Frame<*>,
 ) {
-    ANIMATE(
-        sequence {
-            repeat(framesCount) { frameIndex ->
-                yield(frameByIndex(frameIndex))
-            }
-        },
-    )
+    notebook.animate(framesCount, frameByIndex)
 }
 
 /**
- * Animates a sequence of values by displaying them with specified delay.
- * The first value is displayed without a delay.
- *
- * @param delay The delay duration between each frame.
- * @param iterator An iterator over the values to be animated.
- *
- * @throws InterruptedException if any thread is interrupted while waiting for frame delays.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     iterator: Iterator<*>,
 ) {
-    ANIMATE(
-        object : Iterator<Frame<*>> {
-            private var isFirst = true
-
-            override fun hasNext(): Boolean {
-                return iterator.hasNext()
-            }
-
-            override fun next(): Frame<*> {
-                val content = iterator.next()
-                return Frame(if (isFirst) Duration.ZERO else delay, content).also {
-                    isFirst = false
-                }
-            }
-        },
-    )
+    notebook.animate(delay, iterator)
 }
 
 /**
- * Animates a sequence of values with a specified delay between each frame.
- * The first value is displayed without a delay.
- *
- * @param delay The delay duration between each frame.
- * @param sequence The sequence of frames to animate.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     sequence: Sequence<*>,
 ) {
-    ANIMATE(delay, sequence.iterator())
+    notebook.animate(delay, sequence)
 }
 
 /**
- * Animates a sequence of values with a specified delay between each frame.
- * The first value is displayed without a delay.
- *
- * @param delay The delay duration between each frame.
- * @param nextValue A function that provides the next value in the sequence.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     nextValue: () -> Any?,
 ) {
-    ANIMATE(delay, generateSequence(nextValue))
+    notebook.animate(delay, nextValue)
 }
 
 /**
- * Animates a sequence of values with a specified delay between each frame.
- * The first value is displayed without a delay.
- *
- * @param delay The delay duration between each frame.
- * @param firstValue The initial value of the sequence.
- * @param nextValue A function that generates the next value based on the current value in the sequence.
- * @param T The type of the values in the sequence.
+ * @see Notebook.animate
  */
 fun <T : Any> ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     firstValue: T?,
     nextValue: (T) -> T?,
 ) {
-    ANIMATE(delay, generateSequence(firstValue, nextValue))
+    notebook.animate(delay, firstValue, nextValue)
 }
 
 /**
- * Animates an iterable sequence of values, each one (except first) appearing after a specified delay.
- *
- * @param delay The time delay to wait before displaying each frame.
- * @param iterable The set of elements to display as animation frames.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     iterable: Iterable<*>,
 ) {
-    ANIMATE(delay, iterable.iterator())
+    notebook.animate(delay, iterable)
 }
 
 /**
- * Animates a sequence of values with a specified delay between each frame.
- * The first value is displayed without a delay.
- *
- * @param framesCount The number of frames to animate.
- * @param delay The delay duration between each frame.
- * @param valueByIndex The function that generates the content of each frame based on the frame index.
+ * @see Notebook.animate
  */
 fun ScriptTemplateWithDisplayHelpers.ANIMATE(
     delay: Duration,
     framesCount: Int,
     valueByIndex: (index: Int) -> Any?,
 ) {
-    ANIMATE(
-        delay,
-        sequence {
-            repeat(framesCount) { frameIndex ->
-                yield(valueByIndex(frameIndex))
-            }
-        },
-    )
+    notebook.animate(delay, framesCount, valueByIndex)
 }

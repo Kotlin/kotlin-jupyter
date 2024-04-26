@@ -1,3 +1,3 @@
 package jupyter.kotlin.providers
 
-interface UserHandlesProvider : KotlinKernelHostProvider, NotebookProvider, SessionOptionsProvider
+interface UserHandlesProvider : NotebookProvider, SessionOptionsProvider

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 
 object NoOpDisplayHandler : DisplayHandler {
     override fun handleDisplay(

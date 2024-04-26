@@ -5,6 +5,7 @@ import jupyter.kotlin.DependsOn
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
+import jupyter.kotlin.providers.KotlinKernelHostProvider
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -26,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.getLogger
+import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
@@ -74,7 +76,6 @@ import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
-import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
@@ -160,8 +161,6 @@ class ReplForJupyterImpl(
     private val logger = loggerFactory.getLogger(this::class)
 
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
-
-    private var currentKernelHost: KotlinKernelHost? = null
 
     private val resourcesProcessor =
         LibraryResourcesProcessorImpl(
@@ -310,6 +309,12 @@ class ReplForJupyterImpl(
         BasicJvmReplEvaluator()
     }
 
+    private val hostProvider =
+        object : KotlinKernelHostProvider {
+            override val host: KotlinKernelHost?
+                get() = notebook.executionHost
+        }
+
     private val completer = KotlinCompleter()
 
     private val contextUpdater =
@@ -356,9 +361,14 @@ class ReplForJupyterImpl(
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
     private val fileAnnotationsProcessor: FileAnnotationsProcessor =
-        FileAnnotationsProcessorImpl(ScriptDependencyAnnotationHandlerImpl(resolver), compilerArgsConfigurator, jupyterCompiler, this)
+        FileAnnotationsProcessorImpl(
+            ScriptDependencyAnnotationHandlerImpl(resolver),
+            compilerArgsConfigurator,
+            jupyterCompiler,
+            hostProvider,
+        )
 
-    private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(this)
+    private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(hostProvider)
 
     private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor = ColorSchemeChangeCallbacksProcessorImpl()
 
@@ -416,7 +426,7 @@ class ReplForJupyterImpl(
 
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) {
-            fileAnnotationsProcessor.process(context, currentKernelHost!!)
+            fileAnnotationsProcessor.process(context, hostProvider.host!!)
         } else {
             context.compilationConfiguration.asSuccess()
         }
@@ -744,15 +754,12 @@ class ReplForJupyterImpl(
         callback: () -> T,
     ): T {
         try {
-            currentKernelHost = currentHost
+            notebook.executionHost = currentHost
             return callback()
         } finally {
-            currentKernelHost = null
+            notebook.executionHost = null
         }
     }
-
-    override val host: KotlinKernelHost?
-        get() = currentKernelHost
 
     override fun close() {
         notebook.closeIfPossible()

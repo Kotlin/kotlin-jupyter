@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.messaging.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.shouldBeText
 import org.junit.jupiter.api.Test
@@ -68,6 +68,26 @@ class AnimateTests : AbstractSingleReplTest() {
         eval(
             """
             ANIMATE(10.milliseconds, generateSequence(1) { it + 1 }.take(300))
+            """.trimIndent(),
+        )
+
+        displaysCount shouldBe 1
+        updatesCount shouldBe 299
+
+        val displayResult = displays.single()
+
+        displayResult.shouldBeText().toInt() shouldBe 300
+    }
+
+    @Test
+    fun `animate in Notebook API works as expected`() {
+        myHandler.addHandler(
+            UpdateAsserter { value, _ -> value shouldBe (updatesCount + 1) },
+        )
+
+        eval(
+            """
+            notebook.animate(10.milliseconds, generateSequence(1) { it + 1 }.take(300))
             """.trimIndent(),
         )
 

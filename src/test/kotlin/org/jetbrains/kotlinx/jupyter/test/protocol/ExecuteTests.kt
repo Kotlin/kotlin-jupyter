@@ -348,7 +348,6 @@ class ExecuteTests : KernelServerTestsBase() {
 
                     val userHandlesProvider =
                         object : UserHandlesProvider {
-                            override val host: Nothing? = null
                             override val notebook: Notebook = NotebookMock
                             override val sessionOptions: SessionOptions
                                 get() = throw NotImplementedError()

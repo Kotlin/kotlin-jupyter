@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
-import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
@@ -140,7 +139,7 @@ internal class CellExecutorImpl(
         private val sharedContext: SharedReplContext,
         private val executor: CellExecutor,
         private val stackFrame: MutableExecutionStackFrame,
-    ) : KotlinKernelHost, ExecutionHost {
+    ) : KotlinKernelHost {
         private val executionQueue = LinkedList<ExecutionCallback<*>>()
 
         private fun runChild(code: Code) {

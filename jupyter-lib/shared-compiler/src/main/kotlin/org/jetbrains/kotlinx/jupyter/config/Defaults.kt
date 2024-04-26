@@ -20,6 +20,7 @@ val defaultGlobalImports =
         add("jupyter.kotlin.*")
         add("org.jetbrains.kotlinx.jupyter.api.*")
         add("org.jetbrains.kotlinx.jupyter.api.libraries.*")
+        add("org.jetbrains.kotlinx.jupyter.api.outputs.*")
         addAll(dateTimeImports)
     }
 

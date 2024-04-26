@@ -14,7 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 
-private val ScriptTemplateWithDisplayHelpers.host: KotlinKernelHost get() = userHandlesProvider.host!!
+private val ScriptTemplateWithDisplayHelpers.host: KotlinKernelHost get() = notebook.executionHost!!
 val ScriptTemplateWithDisplayHelpers.notebook get() = userHandlesProvider.notebook
 
 fun ScriptTemplateWithDisplayHelpers.DISPLAY(value: Any) = DISPLAY(value, null)

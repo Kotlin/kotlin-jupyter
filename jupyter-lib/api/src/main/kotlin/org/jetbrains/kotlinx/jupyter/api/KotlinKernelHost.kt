@@ -1,12 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
+import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 /**
  * Interface representing kernel engine, the core facility for compiling and executing code snippets
  */
-interface KotlinKernelHost {
+interface KotlinKernelHost : ExecutionHost {
     /**
      * Try to display the given value. It is only displayed if it's an instance of [Renderable]
      * or may be converted to it

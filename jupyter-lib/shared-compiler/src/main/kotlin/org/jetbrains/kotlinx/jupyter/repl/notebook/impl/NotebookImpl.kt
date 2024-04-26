@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -211,6 +212,14 @@ class NotebookImpl(
     ): String {
         return communicationFacility.getInput(prompt, isPassword)
     }
+
+    private var _executionHost: KotlinKernelHost? = null
+
+    override var executionHost
+        get() = _executionHost
+        set(value) {
+            _executionHost = value
+        }
 
     override fun close() {
         debugThread?.interrupt()

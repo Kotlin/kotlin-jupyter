@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.notebook
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
@@ -10,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 interface MutableNotebook : Notebook {
     // Can be `null` before the REPL has completed initialization
     var sharedReplContext: SharedReplContext?
+    override var executionHost: KotlinKernelHost?
 
     override val displays: MutableDisplayContainer
 
