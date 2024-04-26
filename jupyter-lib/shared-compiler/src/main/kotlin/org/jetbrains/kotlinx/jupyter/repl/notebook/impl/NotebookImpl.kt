@@ -213,13 +213,7 @@ class NotebookImpl(
         return communicationFacility.getInput(prompt, isPassword)
     }
 
-    private var _executionHost: KotlinKernelHost? = null
-
-    override var executionHost
-        get() = _executionHost
-        set(value) {
-            _executionHost = value
-        }
+    override var executionHost: KotlinKernelHost? = null
 
     override fun close() {
         debugThread?.interrupt()
