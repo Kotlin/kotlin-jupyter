@@ -25,10 +25,10 @@ def run_kernel(*args: str) -> None:
             os._exit(130)
 
 
-def _extract_argument(args: list[str], prefix: str) -> Optional[str]:
+def _extract_argument(args: List[str], prefix: str) -> Optional[str]:
     for arg_index in range(len(args)):
         if args[arg_index].startswith(prefix):
-            return args.pop(arg_index).removeprefix(prefix)
+            return args.pop(arg_index)[len(prefix):]
     return None
 
 
