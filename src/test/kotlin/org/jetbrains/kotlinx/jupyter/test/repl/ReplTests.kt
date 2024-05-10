@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
+import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.sequences.shouldBeEmpty
 import io.kotest.matchers.sequences.shouldHaveSize
@@ -14,6 +15,8 @@ import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
@@ -609,5 +612,27 @@ class ReplTests : AbstractSingleReplTest() {
 
         eval(code)
         evalError<ReplEvalRuntimeException>(code)
+    }
+
+    @Test
+    fun testRendererRecursion() {
+        eval(
+            """
+            class A(val map: Map<*, *>)
+            
+            USE {
+                render<A> {
+                    textResult(it.map.toString())
+                }
+                render<Map<*, *>> {
+                    A(it)
+                }
+            }
+            """.trimIndent(),
+        )
+        eval("mapOf<String, String>()").renderedValue.shouldBeInstanceOf<MimeTypedResult> {
+            it shouldContainKey MimeTypes.PLAIN_TEXT
+            it[MimeTypes.PLAIN_TEXT] shouldBe "{}"
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.PrecompiledRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
@@ -23,6 +24,9 @@ class RenderersProcessorImpl(
         field: FieldValue,
     ): Any? {
         val value = field.value
+        if (value is DisplayResult) {
+            return value
+        }
         val (handler, id) =
             renderers.firstOrNull { it.handler.acceptsField(field) }
                 ?: return value
