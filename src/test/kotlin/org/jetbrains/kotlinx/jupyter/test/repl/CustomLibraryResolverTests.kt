@@ -1,4 +1,3 @@
-
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -300,6 +299,45 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val expectedResults = (1..5).toList()
         val actualResults = repl.results.filter { it != null && it != Unit }.map { it as Int }
         assertEquals(expectedResults, actualResults)
+    }
+
+    @Test
+    fun testClassAnnotations() {
+        val lib =
+            "lib" to
+                library {
+                    import<TestAnnotation>()
+                    onClassAnnotation<TestAnnotation> {
+                        val annotatedClassNames = it.map { it.simpleName }.joinToString { "\"$it\"" }
+                        scheduleExecution("val annotatedClasses = listOf($annotatedClassNames)")
+                    }
+                }
+        val repl = makeReplWithLibraries(lib).trackExecution()
+
+        repl.execute(
+            """
+            %use lib
+            """.trimIndent(),
+        )
+        repl.execute(
+            """
+            @TestAnnotation
+            class A
+            @TestAnnotation
+            interface B {
+              @TestAnnotation
+              interface C
+              interface D {
+                @TestAnnotation
+                class E
+              }
+            }
+            """.trimIndent(),
+        )
+
+        val res = repl.execute("annotatedClasses")
+
+        assertEquals(listOf("A", "B", "C", "E"), res.result.value)
     }
 
     @Test

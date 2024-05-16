@@ -14,11 +14,23 @@ class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
         handlers[handler.annotation.qualifiedName!!] = handler.callback
     }
 
+    /** Retrieves all nested classes of the given class recursively. */
+    private fun KClass<*>.allNestedClasses(): List<KClass<*>> =
+        buildList {
+            fun addAndTraverseChildren(clazz: KClass<*>) {
+                add(clazz)
+                for (it in clazz.nestedClasses) {
+                    addAndTraverseChildren(it)
+                }
+            }
+            addAndTraverseChildren(this@allNestedClasses)
+        }
+
     override fun process(
         executedSnippet: KClass<*>,
         host: KotlinKernelHost,
     ) {
-        executedSnippet.nestedClasses
+        executedSnippet.allNestedClasses()
             .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }
             .forEach { (annotationClass, classesList) ->
