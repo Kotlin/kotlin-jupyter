@@ -24,9 +24,11 @@ import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.withPath
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.EnabledForJreRange
@@ -634,5 +636,25 @@ class ReplTests : AbstractSingleReplTest() {
             it shouldContainKey MimeTypes.PLAIN_TEXT
             it[MimeTypes.PLAIN_TEXT] shouldBe "{}"
         }
+    }
+
+    @Test
+    @Disabled("Reproduces KTNB-709")
+    fun `check that root package is imported correctly`() {
+        // Commenting this execution makes test pass
+        eval("notebook")
+        eval(
+            """
+            @file:DependsOn("com.sealwu:kscript-tools:1.0.22")
+            """.trimIndent(),
+        )
+        val result =
+            eval(
+                """
+                evalBash("foo")
+                """.trimIndent(),
+            )
+
+        result.shouldBeInstanceOf<EvalResultEx.Success>()
     }
 }
