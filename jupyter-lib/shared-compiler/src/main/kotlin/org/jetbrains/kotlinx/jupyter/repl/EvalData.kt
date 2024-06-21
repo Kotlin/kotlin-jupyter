@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
+
 class EvalData(
-    val executionCounter: Int,
+    val executionCount: ExecutionCount,
     val rawCode: String,
 ) {
-    constructor(evalRequestData: EvalRequestData) : this(evalRequestData.jupyterId, evalRequestData.code)
+    constructor(evalRequestData: EvalRequestData) : this(evalRequestData.executionCount, evalRequestData.code)
 }

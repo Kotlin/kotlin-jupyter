@@ -51,6 +51,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
+import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
@@ -76,6 +77,7 @@ import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
@@ -436,7 +438,7 @@ class ReplForJupyterImpl(
         return withEvalContext {
             beforeCellExecutionsProcessor.process(executor)
 
-            val result = evaluateUserCode(evalData.code, evalData.jupyterId)
+            val result = evaluateUserCode(evalData.code, evalData.executionCount)
 
             fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
             when (result) {
@@ -524,7 +526,7 @@ class ReplForJupyterImpl(
         rendered: InMemoryMimeTypedResult,
         evalData: EvalRequestData,
     ): MimeTypedResultEx {
-        val id = evalData.jupyterId.toString()
+        val id = evalData.executionCount.toString()
         val inMemoryValue = rendered.inMemoryOutput.result
         inMemoryReplResultsHolder.setReplResult(id, inMemoryValue)
         val mimeData = rendered.fallbackResult + Pair(rendered.inMemoryOutput.mimeType, JsonPrimitive(id))
@@ -555,15 +557,15 @@ class ReplForJupyterImpl(
 
     private fun evaluateUserCode(
         code: Code,
-        jupyterId: Int,
+        executionCount: ExecutionCount,
     ): InternalReplResult {
-        val cell: MutableCodeCell = notebook.addCell(EvalData(jupyterId, code))
+        val cell: MutableCodeCell = notebook.addCell(EvalData(executionCount, code))
         val compiledData: SerializedCompiledScriptsData
         val newImports: List<String>
         var throwable: Throwable? = null
         val internalResult: InternalEvalResult? =
             try {
-                logger.debug("Current cell id: $jupyterId")
+                logger.debug("Current cell id: $executionCount")
                 val executorWorkflowListener =
                     object : ExecutorWorkflowListener {
                         override fun internalIdGenerated(id: Int) {
@@ -581,7 +583,7 @@ class ReplForJupyterImpl(
                 executor.execute(
                     code,
                     isUserCode = true,
-                    currentCellId = jupyterId - 1,
+                    currentCellId = CellId.fromExecutionCount(executionCount),
                     executorWorkflowListener = executorWorkflowListener,
                 )
             } catch (t: Throwable) {

@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.session.JupyterSessionInfo
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
@@ -28,7 +29,7 @@ class ApiTest : AbstractSingleReplTest() {
         jupyterId: Int,
         code: String,
     ): EvalResultEx {
-        return eval(code, jupyterId = jupyterId)
+        return eval(code, ExecutionCount(jupyterId))
     }
 
     @Test

@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.createRenderer
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.rawValue
@@ -24,7 +25,7 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
 
     @Test
     fun testDataframeDisplay() {
-        eval("SessionOptions.resolveSources = true", 1, false)
+        eval("SessionOptions.resolveSources = true", ExecutionCount(1), false)
 
         eval(
             """
@@ -38,7 +39,7 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
                 "Mark", 160
             )
             """.trimIndent(),
-            2,
+            ExecutionCount(2),
             true,
         )
 
@@ -51,7 +52,7 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
 
         eval(
             """DISPLAY((Out[2] as DataFrame<*>).filter { it.index() >= 0 && it.index() <= 10 }, "")""",
-            3,
+            ExecutionCount(3),
             false,
         )
     }

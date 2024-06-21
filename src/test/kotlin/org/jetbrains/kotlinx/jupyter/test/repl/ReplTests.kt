@@ -21,6 +21,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
@@ -389,7 +390,7 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testOut() {
-        eval("1+1", 1)
+        eval("1+1", ExecutionCount(1))
         val res = eval("Out[1]")
         res.renderedValue shouldBe 2
         evalError<ReplEvalRuntimeException>("Out[3]")

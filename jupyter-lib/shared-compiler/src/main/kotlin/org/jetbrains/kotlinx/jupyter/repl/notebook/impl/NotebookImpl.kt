@@ -122,8 +122,9 @@ class NotebookImpl(
     }
 
     override fun addCell(data: EvalData): MutableCodeCell {
-        val cell = CodeCellImpl(this, data.executionCounter, data.rawCode, lastCell)
-        cells[data.executionCounter] = cell
+        val cellId = data.executionCount.value
+        val cell = CodeCellImpl(this, cellId, data.rawCode, lastCell)
+        cells[cellId] = cell
         history.add(cell)
         mainCellCreated = true
         return cell

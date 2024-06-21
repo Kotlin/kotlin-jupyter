@@ -12,8 +12,8 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.util.Locale
 
 /**
- * Jupyter connection socket types
- * Here you can find information about Jupyter sockets:
+ * Jupyter connection socket types.
+ * You can find information about each Jupyter socket type here:
  * https://jupyter-client.readthedocs.io/en/stable/messaging.html#introduction
  *
  * For now, only adding callbacks for messages on `control` and `shell` sockets makes sense.

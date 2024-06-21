@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.InternalEvaluator
@@ -41,13 +42,17 @@ internal class InternalEvaluatorImpl(
     executionLoggingProperty: KMutableProperty0<ExecutedCodeLogging>,
     serializeScriptDataProperty: KMutableProperty0<Boolean>,
     writeCompiledClassesProperty: KMutableProperty0<Boolean>,
-) :
-    InternalEvaluator {
+) : InternalEvaluator {
     private var classWriter: ClassWriter? = null
 
     private val scriptsSerializer = CompiledScriptsSerializer()
 
     private val registeredCompiledScripts = SerializedCompiledScriptsData.Builder()
+
+    // Track the mapping between the fully qualified name of the compiled script to the
+    // Jupyter execution request counter. This can be used to enhance a stacktrace so we
+    // can map each line of the stacktrace to the relevant code cell and line number.
+    private val requestCountToScriptTracker = mutableMapOf<String, ExecutionCount>()
 
     private fun serializeAndRegisterScript(
         compiledScript: KJvmCompiledScript,
@@ -120,7 +125,7 @@ internal class InternalEvaluatorImpl(
             val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
             evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()
-
+            requestCountToScriptTracker[compiledScript.scriptClassFQName] = compilingOptions.cellId.toExecutionCount()
             withClassWriter {
                 writeClasses(codeLine, compiledScript)
             }
@@ -132,12 +137,13 @@ internal class InternalEvaluatorImpl(
                     val pureResult = resultWithDiagnostics.value.get()
                     return when (val resultValue = pureResult.result) {
                         is ResultValue.Error -> throw ReplEvalRuntimeException(
+                            requestCountToScriptTracker,
                             resultValue.error.message.orEmpty(),
                             resultValue.error,
                         )
                         is ResultValue.Unit, is ResultValue.Value -> {
                             serializeAndRegisterScript(compiledScript, codeLine)
-                            updateDataAfterExecution(compilingOptions.cellId, resultValue)
+                            updateDataAfterExecution(compilingOptions.cellId.value, resultValue)
 
                             val resultType = compiledScript.resultField?.second?.typeName
                             val typeProvider =
@@ -162,6 +168,7 @@ internal class InternalEvaluatorImpl(
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
+                                requestCountToScriptTracker,
                                 "This snippet was not evaluated",
                                 resultWithDiagnostics.reports.firstOrNull()?.exception,
                             )

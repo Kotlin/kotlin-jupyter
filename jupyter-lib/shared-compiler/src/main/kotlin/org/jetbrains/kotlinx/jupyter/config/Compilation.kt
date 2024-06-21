@@ -6,6 +6,7 @@ import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
@@ -30,12 +31,28 @@ import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.PropertiesCollection
 
+@JvmInline
+value class CellId(val value: Int) {
+    fun toExecutionCount(): ExecutionCount = ExecutionCount(value + 1)
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun fromExecutionCount(count: ExecutionCount): CellId {
+            return CellId(count.value - 1)
+        }
+
+        // Marker CellId for code executed outside the context of a cell.
+        val NO_CELL: CellId = CellId(-1)
+    }
+}
+
 data class JupyterCompilingOptions(
-    val cellId: Int,
+    val cellId: CellId,
     val isUserCode: Boolean,
 ) {
     companion object {
-        val DEFAULT = JupyterCompilingOptions(-1, false)
+        val DEFAULT = JupyterCompilingOptions(CellId.NO_CELL, false)
     }
 }
 

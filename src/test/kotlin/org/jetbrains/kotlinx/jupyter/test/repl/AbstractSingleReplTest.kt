@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -12,9 +13,9 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
 
     protected fun eval(
         code: Code,
-        jupyterId: Int = -1,
+        executionCount: ExecutionCount = ExecutionCount.NO_COUNT,
         storeHistory: Boolean = true,
-    ) = repl.evalEx(EvalRequestData(code, jupyterId, storeHistory))
+    ) = repl.evalEx(EvalRequestData(code, executionCount, storeHistory))
 
     protected inline fun <reified T : Throwable> evalError(code: Code): T {
         val result = eval(code)

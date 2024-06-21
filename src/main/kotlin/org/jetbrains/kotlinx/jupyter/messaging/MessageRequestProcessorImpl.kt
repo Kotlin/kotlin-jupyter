@@ -9,7 +9,6 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
-import java.util.concurrent.atomic.AtomicLong
 
 open class MessageRequestProcessorImpl(
     rawIncomingMessage: RawMessage,
@@ -17,7 +16,7 @@ open class MessageRequestProcessorImpl(
     socketManager: JupyterBaseSockets,
     commManager: CommManagerInternal,
     executor: JupyterExecutor,
-    executionCount: AtomicLong,
+    executionCounter: ExecutionCounter,
     loggerFactory: KernelLoggerFactory,
     repl: ReplForJupyter,
 ) : IdeCompatibleMessageRequestProcessor(
@@ -26,7 +25,7 @@ open class MessageRequestProcessorImpl(
         socketManager,
         commManager,
         executor,
-        executionCount,
+        executionCounter,
         loggerFactory,
         repl,
     ),

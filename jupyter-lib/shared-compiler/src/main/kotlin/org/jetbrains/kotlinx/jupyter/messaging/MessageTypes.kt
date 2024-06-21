@@ -43,6 +43,7 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     EXECUTE_REPLY(ExecuteReply::class),
     EXECUTE_INPUT(ExecutionInputReply::class),
     EXECUTE_RESULT(ExecutionResultMessage::class),
+    ERROR(ExecuteErrorReply::class),
 
     INSPECT_REQUEST(InspectRequest::class),
     INSPECT_REPLY(InspectReply::class),
@@ -254,11 +255,16 @@ class ExecuteAbortReply : MessageReplyContent(MessageStatus.ABORT), ExecuteReply
 @Serializable
 class ExecuteErrorReply(
     @SerialName("execution_count")
-    val executionCount: Long,
+    val executionCount: ExecutionCount,
     @SerialName("ename")
     val name: String,
     @SerialName("evalue")
     val value: String,
+    /**
+     * The full error, line by line, that will be displayed to the user.
+     * It should contain all information relevant to the exception,
+     * including message, exception type, stack trace and cell information.
+     */
     val traceback: List<String>,
     val additionalInfo: JsonObject,
 ) : MessageReplyContent(MessageStatus.ERROR), ExecuteReply
@@ -266,7 +272,7 @@ class ExecuteErrorReply(
 @Serializable
 class ExecuteSuccessReply(
     @SerialName("execution_count")
-    val executionCount: Long,
+    val executionCount: ExecutionCount,
     val payload: List<Payload> = listOf(),
     @SerialName("user_expressions")
     val userExpressions: Map<String, JsonElement> = mapOf(),
@@ -390,7 +396,7 @@ class DisplayDataResponse(
 class ExecutionInputReply(
     val code: String,
     @SerialName("execution_count")
-    val executionCount: Long,
+    val executionCount: ExecutionCount,
 ) : AbstractMessageContent()
 
 @Serializable
@@ -398,7 +404,7 @@ class ExecutionResultMessage(
     val data: JsonElement,
     val metadata: JsonElement,
     @SerialName("execution_count")
-    val executionCount: Long,
+    val executionCount: ExecutionCount,
 ) : AbstractMessageContent()
 
 @Serializable

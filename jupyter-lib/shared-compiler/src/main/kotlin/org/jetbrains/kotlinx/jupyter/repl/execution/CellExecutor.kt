@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.execution
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
+import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 
 /**
@@ -16,7 +17,7 @@ interface CellExecutor : ExecutionHost {
         processMagics: Boolean = true,
         invokeAfterCallbacks: Boolean = true,
         isUserCode: Boolean = false,
-        currentCellId: Int = -1,
+        currentCellId: CellId = CellId.NO_CELL,
         stackFrame: ExecutionStackFrame? = null,
         executorWorkflowListener: ExecutorWorkflowListener? = null,
     ): InternalEvalResult

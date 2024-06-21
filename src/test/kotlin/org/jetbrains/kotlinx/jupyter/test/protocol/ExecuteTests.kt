@@ -22,8 +22,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataResponse
 import org.jetbrains.kotlinx.jupyter.messaging.EXECUTION_INTERRUPTED_MESSAGE
+import org.jetbrains.kotlinx.jupyter.messaging.ExecuteErrorReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteSuccessReply
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
@@ -173,8 +175,8 @@ class ExecuteTests : KernelServerTestsBase() {
             allowStdin = false,
             ioPubChecker = {
                 val msg = it.receiveMessage()
-                assertEquals(MessageType.STREAM, msg.type)
-                assertStartsWith("Input from stdin is unsupported by the client", (msg.content as StreamResponse).text)
+                assertEquals(MessageType.ERROR, msg.type)
+                assertStartsWith("Input from stdin is unsupported by the client", (msg.content as ExecuteErrorReply).value)
             },
         )
     }
@@ -209,6 +211,10 @@ class ExecuteTests : KernelServerTestsBase() {
 
     private fun JupyterSocket.receiveStreamResponse(): String {
         return receiveMessageOfType<StreamResponse>(MessageType.STREAM).text
+    }
+
+    private fun JupyterSocket.receiveErrorResponse(): String {
+        return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
     }
 
     private fun JupyterSocket.receiveDisplayDataResponse(): DisplayDataResponse {
@@ -316,11 +322,12 @@ class ExecuteTests : KernelServerTestsBase() {
         val code =
             """
             val xyz = 42
+            xyz
             """.trimIndent()
         val res =
             doExecute(
                 code,
-                hasResult = false,
+                hasResult = true,
                 executeReplyChecker = { message ->
                     val metadata = message.data.metadata
                     assertTrue(metadata is JsonObject)
@@ -358,10 +365,10 @@ class ExecuteTests : KernelServerTestsBase() {
 
                     val sourceFile = sourcesDir.resolve("Line_1.kts")
                     sourceFile.shouldBeAFile()
-                    sourceFile.readText() shouldBe "val xyz = 42"
+                    sourceFile.readText() shouldBe code
                 },
             )
-        assertNull(res)
+        res shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "42")
     }
 
     @Test
@@ -374,7 +381,7 @@ class ExecuteTests : KernelServerTestsBase() {
             """.trimIndent(),
             false,
             ioPubChecker = {
-                val msgText = it.receiveStreamResponse()
+                val msgText = it.receiveErrorResponse()
                 assertTrue("The problem is found in one of the loaded libraries" in msgText)
             },
         )
@@ -384,10 +391,10 @@ class ExecuteTests : KernelServerTestsBase() {
     fun testCounter() {
         fun checkCounter(
             message: Message,
-            expectedCounter: Long,
+            expectedCounter: Int,
         ) {
             val data = message.data.content as ExecuteSuccessReply
-            assertEquals(expectedCounter, data.executionCount)
+            assertEquals(ExecutionCount(expectedCounter), data.executionCount)
         }
         val res1 = doExecute("41", executeReplyChecker = { checkCounter(it, 1) })
         val res2 = doExecute("42", executeReplyChecker = { checkCounter(it, 2) })
@@ -601,5 +608,77 @@ class ExecuteTests : KernelServerTestsBase() {
                 iopubSocket.receiveUpdateDisplayDataResponse()
             },
         )
+    }
+
+    @Test
+    fun testExecuteExceptionInSameCell() {
+        val code =
+            """
+            val foo = "bar"
+            TODO()
+            """.trimIndent()
+        val shell = this.shell!!
+        val ioPub = this.ioPub!!
+        shell.sendMessage(
+            MessageType.EXECUTE_REQUEST,
+            content = ExecuteRequest(code),
+        )
+        assertEquals(MessageType.STATUS, ioPub.receiveMessage().type)
+        assertEquals(MessageType.EXECUTE_INPUT, ioPub.receiveMessage().type)
+
+        // If execution throws an exception, we should send an ERROR
+        // message type with the appropriate metadata.
+        val message = ioPub.receiveMessage()
+        assertEquals(MessageType.ERROR, message.type)
+        message.content.shouldBeTypeOf<ExecuteErrorReply>()
+        val content = message.content as ExecuteErrorReply
+        content.name shouldBe "kotlin.NotImplementedError"
+        content.value shouldBe "An operation is not implemented."
+
+        // Stacktrace should be enhanced with cell information
+        content.traceback.size shouldBe 42
+        content.traceback[1] shouldBe "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+        content.traceback[40] shouldBe "at Cell In[1], line 2"
+    }
+
+    @Test
+    fun testExecuteExceptionInOtherCell() {
+        doExecute(
+            """
+            val callback: (Int) -> Int = { i: Int ->
+                if (i == 42) TODO()
+                else i
+            }
+            """.trimIndent(),
+            hasResult = false,
+        )
+        val code =
+            """
+            callback(42)
+            """.trimIndent()
+        val shell = this.shell!!
+        val ioPub = this.ioPub!!
+        shell.sendMessage(
+            MessageType.EXECUTE_REQUEST,
+            content = ExecuteRequest(code),
+        )
+        assertEquals(MessageType.STATUS, ioPub.receiveMessage().type)
+        assertEquals(MessageType.EXECUTE_INPUT, ioPub.receiveMessage().type)
+
+        // If execution throws an exception, we should send an ERROR
+        // message type with the appropriate metadata.
+        val message = ioPub.receiveMessage()
+        assertEquals(MessageType.ERROR, message.type)
+        message.content.shouldBeTypeOf<ExecuteErrorReply>()
+        val content = message.content as ExecuteErrorReply
+        content.name shouldBe "kotlin.NotImplementedError"
+        content.value shouldBe "An operation is not implemented."
+
+        // Stacktrace should be enhanced with cell information
+        content.traceback.size shouldBe 44
+        content.traceback[1] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+        content.traceback[2] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
+        content.traceback[3] shouldBe "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
+        content.traceback[42] shouldBe "at Cell In[1], line 2"
     }
 }

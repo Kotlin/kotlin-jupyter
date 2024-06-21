@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
@@ -12,8 +13,16 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 
 const val EXECUTION_INTERRUPTED_MESSAGE = "The execution was interrupted"
 
-interface JupyterResponse {
+sealed interface JupyterResponse {
     val status: MessageStatus
+
+    /**
+     * Error message if any.
+     * The value of this will depend on the implementation:
+     * - [OkJupyterResponse]: Will be `null`
+     * - [AbortJupyterResponse]: Will be the reason the execution was aborted.
+     * - [ErrorJupyterResponse]: Will be the [exception] stacktrace.
+     */
     val stdErr: String? get() = null
     val displayResult: DisplayResult? get() = null
     val exception: ReplException? get() = null
@@ -44,16 +53,22 @@ class AbortJupyterResponse(
 
 fun JupyterCommunicationFacility.sendResponse(
     response: JupyterResponse,
-    requestCount: Long,
+    executionCount: ExecutionCount,
     startedTime: String,
 ) {
-    val stdErr = response.stdErr
-    if (!stdErr.isNullOrEmpty()) {
-        sendOut(JupyterOutType.STDERR, stdErr)
+    when (response) {
+        is AbortJupyterResponse -> {
+            val errorMessage = response.stdErr!!
+            sendOut(JupyterOutType.STDERR, errorMessage)
+        }
+        is ErrorJupyterResponse -> {
+            sendError(response, executionCount, startedTime)
+        }
+        is OkJupyterResponse -> {
+            sendExecuteResult(response.displayResult, executionCount)
+        }
     }
-
-    sendExecuteResult(response.displayResult, requestCount)
-    sendExecuteReply(response.status, response.exception, requestCount, startedTime, response.metadata)
+    sendExecuteReply(response.status, response.exception, executionCount, startedTime, response.metadata)
 }
 
 @Serializable
@@ -70,7 +85,7 @@ data class ExecuteReplyMetadata(
 
 fun JupyterCommunicationFacility.sendExecuteResult(
     result: DisplayResult?,
-    requestCount: Long,
+    executionCount: ExecutionCount,
 ) {
     if (result == null) return
     val resultJson = result.toJson(Json.EMPTY, null)
@@ -80,7 +95,7 @@ fun JupyterCommunicationFacility.sendExecuteResult(
             MessageType.EXECUTE_RESULT,
             content =
                 ExecutionResultMessage(
-                    executionCount = requestCount,
+                    executionCount = executionCount,
                     data = resultJson["data"]!!,
                     metadata = resultJson["metadata"]!!,
                 ),
@@ -91,7 +106,7 @@ fun JupyterCommunicationFacility.sendExecuteResult(
 fun JupyterCommunicationFacility.sendExecuteReply(
     status: MessageStatus,
     exception: ReplException?,
-    requestCount: Long,
+    executionCount: ExecutionCount,
     startedTime: String,
     metadata: EvaluatedSnippetMetadata? = null,
 ) {
@@ -105,10 +120,10 @@ fun JupyterCommunicationFacility.sendExecuteReply(
         )
 
     val replyContent =
-        exception?.toExecuteErrorReply(requestCount)
+        exception?.toExecuteErrorReply(executionCount)
             ?: when (status) {
                 MessageStatus.ERROR, MessageStatus.ABORT -> ExecuteAbortReply()
-                MessageStatus.OK -> ExecuteSuccessReply(requestCount)
+                MessageStatus.OK -> ExecuteSuccessReply(executionCount)
             }
 
     val reply =
@@ -133,12 +148,57 @@ fun Throwable.toErrorJupyterResponse(metadata: EvaluatedSnippetMetadata? = null)
     return ErrorJupyterResponse(exception.render(), exception, metadata)
 }
 
-fun ReplException.toExecuteErrorReply(requestCount: Long): ExecuteErrorReply {
+fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply {
     return ExecuteErrorReply(
-        requestCount,
+        executionCount,
         javaClass.canonicalName,
         message ?: "",
         stackTrace.map { it.toString() },
+        getAdditionalInfoJson() ?: Json.EMPTY,
+    )
+}
+
+/**
+ * For errors in the user's REPL code, return a reply that includes the
+ * location in the user's code if it is available.
+ */
+fun ReplEvalRuntimeException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply {
+    val userException = this.cause!!
+    val traceBack =
+        buildString {
+            // IntelliJ will check for the first occurrence of "\n<exceptionType>: <exceptionMessage>"`
+            // (note the newline) and hide every above it under a fold named "Stacktrace..."
+            //
+            // So by printing the full stacktrace as the first thing, we ensure that it gets
+            // hidden by default and only the top exception type/message + cell information
+            // is shown to the user.
+            userException.stackTraceToString().lines().mapIndexed { index, el ->
+                // Account for the first line being the exception type + message and last (empty) line
+                // being created by stackTraceToString()
+                val i = index - 1
+                val error = if (i >= 0 && i < cellErrorLocations.size) cellErrorLocations[i] else null
+                val newLine =
+                    if (error != null) {
+                        el + " at Cell In[${error.jupyterRequestCount}], line ${error.lineNumber}"
+                    } else {
+                        el
+                    }
+                newLine
+            }.forEach {
+                if (it.isNotEmpty()) appendLine(it)
+            }
+            appendLine()
+            appendLine("${userException.javaClass.canonicalName}: ${userException.message}")
+            val topError = cellErrorLocations.firstOrNull { it != null }
+            if (topError != null) {
+                appendLine("at Cell In[${topError.jupyterRequestCount}], line ${topError.lineNumber}")
+            }
+        }
+    return ExecuteErrorReply(
+        executionCount,
+        userException.javaClass.canonicalName,
+        userException.message ?: "",
+        traceBack.lines(),
         getAdditionalInfoJson() ?: Json.EMPTY,
     )
 }

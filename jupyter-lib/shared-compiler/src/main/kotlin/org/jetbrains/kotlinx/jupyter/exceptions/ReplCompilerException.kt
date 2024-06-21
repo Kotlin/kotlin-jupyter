@@ -14,7 +14,7 @@ class ReplCompilerException(
             message ?: errorResult?.getErrors() ?: "",
             errorResult?.reports?.map { it.exception }?.firstOrNull(),
         ) {
-    val firstError =
+    val firstError: ScriptDiagnostic? =
         errorResult?.reports?.firstOrNull {
             it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
         }
