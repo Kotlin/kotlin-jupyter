@@ -34,6 +34,7 @@ import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
+    private val repl: ReplForJupyterImpl,
     private val loggerFactory: KernelLoggerFactory,
     val compiler: JupyterCompiler,
     private val evaluator: BasicJvmReplEvaluator,
@@ -52,7 +53,7 @@ internal class InternalEvaluatorImpl(
     // Track the mapping between the fully qualified name of the compiled script to the
     // Jupyter execution request counter. This can be used to enhance a stacktrace so we
     // can map each line of the stacktrace to the relevant code cell and line number.
-    private val requestCountToScriptTracker = mutableMapOf<String, ExecutionCount>()
+    private val scriptFqnToExecutionCountTracker = mutableMapOf<String, ExecutionCount>()
 
     private fun serializeAndRegisterScript(
         compiledScript: KJvmCompiledScript,
@@ -125,7 +126,7 @@ internal class InternalEvaluatorImpl(
             val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
             evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()
-            requestCountToScriptTracker[compiledScript.scriptClassFQName] = compilingOptions.cellId.toExecutionCount()
+            scriptFqnToExecutionCountTracker[compiledScript.scriptClassFQName] = compilingOptions.cellId.toExecutionCount()
             withClassWriter {
                 writeClasses(codeLine, compiledScript)
             }
@@ -137,7 +138,8 @@ internal class InternalEvaluatorImpl(
                     val pureResult = resultWithDiagnostics.value.get()
                     return when (val resultValue = pureResult.result) {
                         is ResultValue.Error -> throw ReplEvalRuntimeException(
-                            requestCountToScriptTracker,
+                            repl.fileExtension,
+                            scriptFqnToExecutionCountTracker,
                             resultValue.error.message.orEmpty(),
                             resultValue.error,
                         )
@@ -168,7 +170,8 @@ internal class InternalEvaluatorImpl(
                         }
                         is ResultValue.NotEvaluated -> {
                             throw ReplEvalRuntimeException(
-                                requestCountToScriptTracker,
+                                repl.fileExtension,
+                                scriptFqnToExecutionCountTracker,
                                 "This snippet was not evaluated",
                                 resultWithDiagnostics.reports.firstOrNull()?.exception,
                             )

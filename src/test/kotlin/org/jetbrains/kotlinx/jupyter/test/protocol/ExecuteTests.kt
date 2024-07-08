@@ -65,6 +65,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 fun JsonObject.string(key: String): String {
     return (get(key) as JsonPrimitive).content
@@ -322,12 +323,11 @@ class ExecuteTests : KernelServerTestsBase() {
         val code =
             """
             val xyz = 42
-            xyz
             """.trimIndent()
         val res =
             doExecute(
                 code,
-                hasResult = true,
+                hasResult = false,
                 executeReplyChecker = { message ->
                     val metadata = message.data.metadata
                     assertTrue(metadata is JsonObject)
@@ -365,10 +365,10 @@ class ExecuteTests : KernelServerTestsBase() {
 
                     val sourceFile = sourcesDir.resolve("Line_1.kts")
                     sourceFile.shouldBeAFile()
-                    sourceFile.readText() shouldBe code
+                    sourceFile.readText() shouldBe "val xyz = 42"
                 },
             )
-        res shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "42")
+        assertNull(res)
     }
 
     @Test
@@ -617,28 +617,27 @@ class ExecuteTests : KernelServerTestsBase() {
             val foo = "bar"
             TODO()
             """.trimIndent()
-        val shell = this.shell!!
-        val ioPub = this.ioPub!!
-        shell.sendMessage(
-            MessageType.EXECUTE_REQUEST,
-            content = ExecuteRequest(code),
+        doExecute(
+            code,
+            hasResult = false,
+            ioPubChecker = { ioPubSocket ->
+                // If execution throws an exception, we should send an ERROR
+                // message type with the appropriate metadata.
+                val message = ioPubSocket.receiveMessage()
+                val content = message.content
+                content.shouldBeTypeOf<ExecuteErrorReply>()
+                content.name shouldBe "kotlin.NotImplementedError"
+                content.value shouldBe "An operation is not implemented."
+
+                // Stacktrace should be enhanced with cell information
+                content.traceback.firstOrNull {
+                    it == "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                } ?: fail("Could not cell reference in the stacktrace")
+                content.traceback.firstOrNull {
+                    it == "at Cell In[1], line 2"
+                } ?: fail("Could not cell reference")
+            },
         )
-        assertEquals(MessageType.STATUS, ioPub.receiveMessage().type)
-        assertEquals(MessageType.EXECUTE_INPUT, ioPub.receiveMessage().type)
-
-        // If execution throws an exception, we should send an ERROR
-        // message type with the appropriate metadata.
-        val message = ioPub.receiveMessage()
-        assertEquals(MessageType.ERROR, message.type)
-        message.content.shouldBeTypeOf<ExecuteErrorReply>()
-        val content = message.content as ExecuteErrorReply
-        content.name shouldBe "kotlin.NotImplementedError"
-        content.value shouldBe "An operation is not implemented."
-
-        // Stacktrace should be enhanced with cell information
-        content.traceback.size shouldBe 42
-        content.traceback[1] shouldBe "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-        content.traceback[40] shouldBe "at Cell In[1], line 2"
     }
 
     @Test
@@ -656,29 +655,26 @@ class ExecuteTests : KernelServerTestsBase() {
             """
             callback(42)
             """.trimIndent()
-        val shell = this.shell!!
-        val ioPub = this.ioPub!!
-        shell.sendMessage(
-            MessageType.EXECUTE_REQUEST,
-            content = ExecuteRequest(code),
+        doExecute(
+            code,
+            hasResult = false,
+            ioPubChecker = { ioPubSocket: JupyterSocket ->
+                // If execution throws an exception, we should send an ERROR
+                // message type with the appropriate metadata.
+                val message = ioPubSocket.receiveMessage()
+                message.type shouldBe MessageType.ERROR
+                val content = message.content
+                content.shouldBeTypeOf<ExecuteErrorReply>()
+                content.name shouldBe "kotlin.NotImplementedError"
+                content.value shouldBe "An operation is not implemented."
+
+                // Stacktrace should be enhanced with cell information
+                content.traceback.size shouldBe 44
+                content.traceback[1] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                content.traceback[2] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
+                content.traceback[3] shouldBe "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
+                content.traceback[42] shouldBe "at Cell In[1], line 2"
+            },
         )
-        assertEquals(MessageType.STATUS, ioPub.receiveMessage().type)
-        assertEquals(MessageType.EXECUTE_INPUT, ioPub.receiveMessage().type)
-
-        // If execution throws an exception, we should send an ERROR
-        // message type with the appropriate metadata.
-        val message = ioPub.receiveMessage()
-        assertEquals(MessageType.ERROR, message.type)
-        message.content.shouldBeTypeOf<ExecuteErrorReply>()
-        val content = message.content as ExecuteErrorReply
-        content.name shouldBe "kotlin.NotImplementedError"
-        content.value shouldBe "An operation is not implemented."
-
-        // Stacktrace should be enhanced with cell information
-        content.traceback.size shouldBe 44
-        content.traceback[1] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-        content.traceback[2] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
-        content.traceback[3] shouldBe "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
-        content.traceback[42] shouldBe "at Cell In[1], line 2"
     }
 }

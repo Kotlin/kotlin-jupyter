@@ -43,6 +43,10 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
     EXECUTE_REPLY(ExecuteReply::class),
     EXECUTE_INPUT(ExecutionInputReply::class),
     EXECUTE_RESULT(ExecutionResultMessage::class),
+
+    // "error" is not a message type defined by the protocol, but is a custom
+    // type used by the Jupyter plugin to route errors to the appropriate error
+    // console view.
     ERROR(ExecuteErrorReply::class),
 
     INSPECT_REQUEST(InspectRequest::class),

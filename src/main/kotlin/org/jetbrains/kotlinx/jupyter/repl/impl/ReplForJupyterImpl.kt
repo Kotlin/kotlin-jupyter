@@ -328,6 +328,7 @@ class ReplForJupyterImpl(
 
     private val internalEvaluator: InternalEvaluator =
         InternalEvaluatorImpl(
+            this,
             loggerFactory,
             jupyterCompiler,
             evaluator,

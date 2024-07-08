@@ -11,7 +11,8 @@ class ErrorLocation(val jupyterRequestCount: Int, val lineNumber: Int)
  * Errors resulting from evaluating the user's REPL code.
  */
 class ReplEvalRuntimeException(
-    jupyterRequestCountToScriptFQName: Map<String, ExecutionCount>,
+    fileExtension: String,
+    scriptFqnToJupyterExecutionCount: Map<String, ExecutionCount>,
     message: String,
     cause: Throwable? = null,
 ) : ReplException(message, cause) {
@@ -26,13 +27,13 @@ class ReplEvalRuntimeException(
             // - Method in cell: `at Line_5_jupyter.methodName(Line_5.jupyter.kts:7)`
             // - Class inside cell: `at Line_7_jupyter$ClassName.<init>(Line_7.jupyter.kts:12)`
             // - Lambda defined in cell: `at Line_4_jupyter$callback$1.invoke(Line_4.jupyter.kts:2)`
-            val pattern = "(Line_\\d+_jupyter).*\\(Line_\\d+.jupyter.kts:(\\d++)\\)".toRegex()
+            val pattern = "(?<scriptFQN>Line_\\d+_jupyter).*\\(Line_\\d+.$fileExtension:(?<lineNumber>\\d+)\\)".toRegex()
             cause.stackTrace.map { stackLine: StackTraceElement ->
                 val line = stackLine.toString()
                 pattern.find(line)?.let { match: MatchResult ->
-                    val scriptFQName: String? = match.groups[1]?.value
-                    val requestCount: Int? = jupyterRequestCountToScriptFQName[scriptFQName]?.value
-                    val lineNumber: Int? = match.groups[2]?.value?.toInt()
+                    val scriptFQName: String? = match.groups["scriptFQN"]?.value
+                    val requestCount: Int? = scriptFqnToJupyterExecutionCount[scriptFQName]?.value
+                    val lineNumber: Int? = match.groups["lineNumber"]?.value?.toInt()
                     if (requestCount != null && lineNumber != null) {
                         ErrorLocation(requestCount, lineNumber)
                     } else {

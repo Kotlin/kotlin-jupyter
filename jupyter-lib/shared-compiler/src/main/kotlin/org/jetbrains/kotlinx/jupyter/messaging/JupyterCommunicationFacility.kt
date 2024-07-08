@@ -91,7 +91,6 @@ fun JupyterCommunicationFacility.sendError(
             metadata = MessageFormat.encodeToJsonElement(replyMetadata),
         )
 
-    System.err.println("Sending error: $reply")
     socketManager.iopub.sendMessage(reply)
 }
 
