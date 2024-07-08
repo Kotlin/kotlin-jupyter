@@ -13,9 +13,9 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
 
     protected fun eval(
         code: Code,
-        executionCount: ExecutionCount = ExecutionCount.NO_COUNT,
+        executionCount: Int = -1,
         storeHistory: Boolean = true,
-    ) = repl.evalEx(EvalRequestData(code, executionCount, storeHistory))
+    ) = repl.evalEx(EvalRequestData(code, ExecutionCount(executionCount), storeHistory))
 
     protected inline fun <reified T : Throwable> evalError(code: Code): T {
         val result = eval(code)

@@ -8,7 +8,6 @@ import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.maps.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
-import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
@@ -91,7 +90,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var y = 123
             val z = x
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
@@ -103,7 +102,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 1024 
             y += 123
             """.trimIndent(),
-            ExecutionCount(2),
+            2,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
@@ -141,7 +140,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var y = 123
             private val z = x
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
@@ -153,7 +152,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = 1024 
             y += x
             """.trimIndent(),
-            ExecutionCount(2),
+            2,
         )
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
@@ -225,7 +224,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = "abcd"
             var f = 47
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         firstCellVars shouldContain "x"
 
@@ -234,7 +233,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 341
             var f = "abcd"
             """.trimIndent(),
-            ExecutionCount(2),
+            2,
         )
         cellVars.shouldNotBeEmpty()
 
@@ -249,7 +248,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val x = "abcd"
             private var f = 47
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         firstCellVars shouldContain "x"
 
@@ -258,7 +257,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 341
             private var f = "abcd"
             """.trimIndent(),
-            ExecutionCount(2),
+            2,
         )
         cellVars.shouldNotBeEmpty()
 
@@ -277,7 +276,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             
             val z = setOf(1, 2, 4)
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         varState.getStringValue("l") shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
         varState.getStringValue("m") shouldBe "SingletonMap: [exception thrown: java.lang.StackOverflowError]"
@@ -292,7 +291,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = 47
             internal val z = 47
             """.trimIndent(),
-            ExecutionCount(1),
+            1,
         )
         firstCellVars shouldContain "x"
         firstCellVars shouldContain "z"
@@ -303,7 +302,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             f += x
             protected val z = "abcd"
             """.trimIndent(),
-            ExecutionCount(2),
+            2,
         )
         cellVars.shouldNotBeEmpty()
 
@@ -313,11 +312,11 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testVariableModification() {
-        eval("var x = sqrt(25.0)", ExecutionCount(1))
+        eval("var x = sqrt(25.0)", 1)
         varState.getStringValue("x") shouldBe "5.0"
         varState.getValue("x") shouldBe 5.0
 
-        eval("x = x * x", ExecutionCount(2))
+        eval("x = x * x", 2)
         varState.getStringValue("x") shouldBe "25.0"
         varState.getValue("x") shouldBe 25.0
     }
