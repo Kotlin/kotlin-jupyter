@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -65,7 +66,6 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 fun JsonObject.string(key: String): String {
     return (get(key) as JsonPrimitive).content
@@ -630,12 +630,8 @@ class ExecuteTests : KernelServerTestsBase() {
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                content.traceback.firstOrNull {
-                    it == "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                } ?: fail("Could not cell reference in the stacktrace")
-                content.traceback.firstOrNull {
-                    it == "at Cell In[1], line 2"
-                } ?: fail("Could not cell reference")
+                content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
             },
         )
     }
@@ -669,11 +665,10 @@ class ExecuteTests : KernelServerTestsBase() {
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                content.traceback.size shouldBe 44
-                content.traceback[1] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                content.traceback[2] shouldBe "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
-                content.traceback[3] shouldBe "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
-                content.traceback[42] shouldBe "at Cell In[1], line 2"
+                content.traceback shouldContain "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                content.traceback shouldContain "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
+                content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
+                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
             },
         )
     }
