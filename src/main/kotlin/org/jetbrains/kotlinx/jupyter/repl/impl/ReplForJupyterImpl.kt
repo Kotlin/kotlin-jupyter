@@ -552,7 +552,8 @@ class ReplForJupyterImpl(
             logger.catchAll { notebook.popCell() }
         }
 
-        val variablesStateUpdate = notebook.variablesState.mapValues { "" }
+        // send type information
+        val variablesStateUpdate = notebook.variablesState.mapValues { it.value.property.toString() }
         return EvaluatedSnippetMetadata(newClasspath, newSources, internalMetadata, variablesStateUpdate)
     }
 
