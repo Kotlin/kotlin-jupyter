@@ -27,6 +27,9 @@ val embeddableKernel: Configuration by configurations.creating
 val scriptClasspathShadowed: Configuration by configurations.creating
 val ideScriptClasspathShadowed: Configuration by configurations.creating
 
+val spaceUsername: String by properties
+val spaceToken: String by properties
+
 ktlint {
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
@@ -275,6 +278,14 @@ kotlinPublications {
     }
 
     localRepositories {
+        maven {
+            name = "intellij-deps"
+            url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+            credentials {
+                username = spaceUsername
+                password = spaceToken
+            }
+        }
         localMavenRepository(rootSettings.artifactsDir.resolve("maven"))
     }
 
