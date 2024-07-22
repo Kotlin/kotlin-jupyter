@@ -277,7 +277,7 @@ kotlinPublications {
         }
     }
 
-    localRepositories {
+    remoteRepositories {
         maven {
             name = "intellij-deps"
             url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
@@ -286,6 +286,9 @@ kotlinPublications {
                 password = spaceToken
             }
         }
+    }
+
+    localRepositories {
         localMavenRepository(rootSettings.artifactsDir.resolve("maven"))
     }
 
