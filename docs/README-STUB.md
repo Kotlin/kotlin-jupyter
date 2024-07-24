@@ -7,437 +7,699 @@
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
-# Kotlin Kernel for IPython/Jupyter
+# Kotlin Kernel for Jupyter notebooks
 
-[Kotlin](https://kotlinlang.org/) ([[kotlin_version]]) [kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) for [Jupyter](https://jupyter.org).
+The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to write and run [Kotlin](https://kotlinlang.org/) code within the
+[Jupyter Notebook](https://jupyter.org) environment. This [Kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) essentially acts as a bridge between Jupyter Notebook and the Kotlin compiler.
 
-The kernel is a powerful engine designed to enhance your Kotlin REPL experience. It offers support for executing code cells,
-providing basic code completion, and analyzing errors. With the Kotlin kernel, you gain access to a range of features,
-including an API for handling outputs, retrieving information from previously executed code snippets,
-executing generic Kotlin code effortlessly, seamless integration with libraries, and more.
+<img src="images/kotlin_notebook.gif" width="900" height="700" alt="Alt text for the GIF">
 
-![Screenshot in Jupyter](images/kotlin_notebook_screenshot.png)
+The Kotlin Kernel for notebooks supports running code cells to immediately see outputs, basic code completion, error analysis,
+and other interactive coding features, enhancing the interactive experience provided by the [Kotlin REPL](https://www.jetbrains.com/help/idea/kotlin-repl.html#kotlin-repl).
 
-Beta version. Tested with Jupyter Notebook, Jupyter Lab, and Jupyter Console
-on Windows, Ubuntu Linux, and macOS. The minimal supported versions of clients are given in the table below:
+With the Kotlin Kernel for notebooks, you gain access to a range of features like:
+* Accessing APIs within cells and using APIs for handling outputs.
+* Retrieving information from previously executed code snippets, allowing quick project exploration.
+* Importing various libraries with a single line of code or even integrating new libraries into your project.
 
-| Client           | Version |
-|:-----------------|:--------|
-| Jupyter Lab      | 1.2.6   |
-| Jupyter Notebook | 6.0.3   |
-| Jupyter Console  | 6.1.0   |
-
-To start using the Kotlin kernel for Jupyter, take a look at the [introductory guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
-
-Example notebooks can be found in the [samples](../samples) folder.
-
-Try samples online: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
+You can leverage Kotlin Kernel's benefits in [IntelliJ IDEA](https://www.jetbrains.com/idea/) through the [Kotlin Notebook plugin](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook), in your [Jupyter Notebook](https://jupyter.org/), or in [Datalore](https://www.jetbrains.com/datalore/).
 
 ## Contents
+<details>
+<summary>Click here to expand the table of contents.</summary>
 
-<!-- Start Document Outline -->
+<!-- TOC -->
+* [Kotlin Kernel for Jupyter notebooks](#kotlin-kernel-for-jupyter-notebooks)
+  * [Contents](#contents)
+  * [Get started](#get-started)
+  * [Versions and support](#versions-and-support)
+    * [Kotlin version support](#kotlin-version-support)
+    * [Jupyter environments](#jupyter-environments)
+    * [Operating systems](#operating-systems)
+  * [Install the Kotlin Kernel for notebooks](#install-the-kotlin-kernel-for-notebooks)
+    * [Install the Kotlin Notebook plugin](#install-the-kotlin-notebook-plugin)
+    * [Install with Conda](#install-with-conda)
+    * [Install with Pip](#install-with-pip)
+    * [Install from sources](#install-from-sources)
+    * [Troubleshoot your installation](#troubleshoot-your-installation)
+  * [Update the Kotlin Kernel for notebooks](#update-the-kotlin-kernel-for-notebooks)
+    * [Update the Kotlin Notebook plugin](#update-the-kotlin-notebook-plugin)
+    * [Update with Conda](#update-with-conda)
+    * [Update with Pip](#update-with-pip)
+    * [Update in Datalore](#update-in-datalore)
+  * [Use the Kotlin Kernel for notebooks](#use-the-kotlin-kernel-for-notebooks)
+    * [Use the Kotlin Notebook](#use-the-kotlin-notebook)
+    * [Use other Jupyter clients](#use-other-jupyter-clients)
+    * [Use Datalore](#use-datalore)
+    * [Create kernels](#create-kernels)
+  * [Features](#features)
+    * [REPL commands](#repl-commands)
+    * [Dependencies resolving](#dependencies-resolving)
+      * [Annotations](#annotations)
+      * [Gradle-like syntax](#gradle-like-syntax)
+      * [Handling dependencies](#handling-dependencies)
+    * [Default repositories](#default-repositories)
+    * [Line magics](#line-magics)
+    * [Supported libraries](#supported-libraries)
+      * [List of supported libraries](#list-of-supported-libraries)
+    * [Rich output](#rich-output)
+    * [Rendering](#rendering)
+      * [Common rendering semantics](#common-rendering-semantics)
+    * [Autocompletion](#autocompletion)
+    * [Error analysis](#error-analysis)
+  * [Debug your Kotlin notebook client](#debug-your-kotlin-notebook-client)
+  * [Integrate new libraries](#integrate-new-libraries)
+  * [Documentation](#documentation)
+  * [Contribute](#contribute)
+<!-- TOC -->
 
-* [Installation](#installation)
-	* [Kotlin Notebook plugin](#kotlin-notebook-plugin)
-	* [Conda](#conda)
-	* [Pip](#pip)
-	* [From sources](#from-sources)
-	* [Troubleshooting](#troubleshooting)
-* [Updating](#updating)
-	* [Kotlin Notebook](#kotlin-notebook)
-	* [Datalore](#datalore)
-	* [Conda](#conda-1)
-	* [Pip](#pip-1)
-* [Usage](#usage)
-	* [Kotlin Notebook](#kotlin-notebook-1)
-	* [Other clients](#other-clients)
-	* [Creating Kernels](#creating-kernels)
-* [Supported functionality](#supported-functionality)
-	* [REPL commands](#repl-commands)
-	* [Dependencies resolving](#dependencies-resolving)
-	* [Default repositories](#default-repositories)
-	* [Line Magics](#line-magics)
-	* [Supported Libraries](#supported-libraries)
-		* [List of supported libraries:](#list-of-supported-libraries)
-	* [Rich output](#rich-output)
-	* [Rendering](#rendering)
-		* [Renderers](#renderers)
-		* [DisplayResult and Renderable](#displayresult-and-renderable)
-		* [Text rendering](#text-rendering)
-		* [Throwables rendering](#throwables-rendering)
-		* [Common rendering semantics](#common-rendering-semantics)
-	* [Autocompletion](#autocompletion)
-	* [Error analysis](#error-analysis)
-* [Debugging](#debugging)
-* [Adding new libraries](#adding-new-libraries)
-* [Documentation](#documentation)
-* [Contributing](#contributing)
+</details>
 
-<!-- End Document Outline -->
+## Get started
 
-## Installation
+Start using the Kotlin Kernel for Jupyter notebooks:
 
-There are several ways to use the kernel:
+* See the [introductory notebook guide](https://github.com/cheptsov/kotlin-jupyter-demo/blob/master/index.ipynb).
+* Check [notebook samples](https://github.com/Kotlin/kotlin-jupyter/tree/master/samples).
+* Try the sample notebooks online: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
+* Explore the Kotlin Notebook docs to learn about [features](https://www.jetbrains.com/help/idea/kotlin-notebook.html), [use cases](https://kotlinlang.org/docs/kotlin-notebook-overview.html), and [tutorials](https://kotlinlang.org/docs/get-started-with-kotlin-notebooks.html).
 
-### Kotlin Notebook plugin
+## Versions and support
 
-Simply download and use the latest version of the [Kotlin Notebook plugin](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook) from the Marketplace.
-The Kotlin kernel is embedded in it.
+> **Note:** The Kotlin Kernel for Jupyter notebooks is in [Beta](https://kotlinlang.org/docs/components-stability.html#stability-levels-explained).
 
-Check out the [blog post](https://blog.jetbrains.com/kotlin/2023/07/introducing-kotlin-notebook/) for a quick introduction to Kotlin Notebook.
+### Kotlin version support
 
-### Conda
+The Kotlin Kernel for notebooks works with Kotlin versions starting from 1.9.23.
 
-If you have `conda` installed, run the following command to install the stable package version:
+### Jupyter environments
 
-`conda install -c jetbrains kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains/kotlin-jupyter-kernel))
+We tested the Kotlin Kernel for notebooks with the following clients:
 
-To install the conda package from the dev channel:
+| Client           | Minimal supported version |
+|:-----------------|:--------------------------|
+| JupyterLab       | 1.2.6                     |
+| Jupyter Notebook | 6.0.3                     |
+| Jupyter Console  | 6.1.0                     |
 
-`conda install -c jetbrains-dev kotlin-jupyter-kernel` ([package home](https://anaconda.org/jetbrains-dev/kotlin-jupyter-kernel))
+### Operating systems
 
-Uninstall: `conda remove kotlin-jupyter-kernel`
+We tested the Kotlin Kernel for notebooks with all the mentioned clients on the following operating systems:
+* Windows
+* Ubuntu Linux
+* macOS
 
-### Pip
+## Install the Kotlin Kernel for notebooks
 
-You can also install this package using `pip`:
+You can use the Kotlin Kernel for notebooks on:
+* [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+* [Jupyter Notebook](https://jupyter.org/)
+* [Datalore](https://www.jetbrains.com/datalore/)
 
-Stable:
-`pip install kotlin-jupyter-kernel` ([package home](https://pypi.org/project/kotlin-jupyter-kernel/))
+To use our Kernel in IntelliJ IDEA, you need to install the [Kotlin Notebook plugin](#install-the-kotlin-notebook-plugin). To use it in your Jupyter notebooks,
+you can install it through [Conda](#install-with-conda), [Pip](#install-with-pip), or [sources](#install-from-sources).
 
-Dev:
-`pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel` ([package home](https://test.pypi.org/project/kotlin-jupyter-kernel/))
+In Datalore, the Kotlin Kernel
+for notebooks comes integrated by default.
 
-Uninstall: `pip uninstall kotlin-jupyter-kernel`
+### Install the Kotlin Notebook plugin
 
-### From sources
+If you use IntelliJ IDEA, you need to install the Kotlin Notebook plugin that contains the Kotlin Kernel for Jupyter notebooks.
 
-To install the kernel from sources, clone the repository and run the following command in the root folder:
+Install the Kotlin Notebook plugin by downloading its latest version from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook).
+
+Alternatively, access the Kotlin Notebook plugin from **Settings** | **Plugins** | **Marketplace** within IntelliJ IDEA.
+
+> **Note:** For a quick introduction to Kotlin Notebook, see this [blog post](https://blog.jetbrains.com/kotlin/2023/07/introducing-kotlin-notebook/).
+
+### Install with Conda
+
+If you use Jupyter Notebook and Conda, run this Conda command to install the stable version [package](https://anaconda.org/jetbrains/kotlin-jupyter-kernel) of the Kotlin Kernel for Jupyter notebooks:
+
+`conda install -c jetbrains kotlin-jupyter-kernel`
+
+Alternatively, run this Conda command to install the [package](https://anaconda.org/jetbrains-dev/kotlin-jupyter-kernel) from the developers channel:
+
+`conda install -c jetbrains-dev kotlin-jupyter-kernel`
+
+To uninstall the Kotlin Kernel for Jupyter notebooks, run this Conda command:
+
+`conda remove kotlin-jupyter-kernel`
+
+### Install with Pip
+
+If you use Jupyter Notebook and Pip, run this Pip command to install the stable version [package](https://pypi.org/project/kotlin-jupyter-kernel) of the Kotlin Kernel for Jupyter notebooks:
+
+`pip install kotlin-jupyter-kernel`
+
+Alternatively, run this Pip command to install the [package](https://test.pypi.org/project/kotlin-jupyter-kernel) from the developers channel:
+
+`pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel`
+
+To uninstall the Kotlin Kernel for Jupyter notebooks, run this Pip command:
+
+`pip uninstall kotlin-jupyter-kernel`
+
+### Install from sources
+
+If you use either IntelliJ IDEA or Jupyter Notebook, you can install the Kotlin Kernel for Jupyter notebooks from sources.
+
+Clone this repository and run the following Gradle command in the root folder:
 
 `./gradlew install`
 
-Default installation path is `~/.ipython/kernels/kotlin/`.
-To install to some other location use option `-PinstallPath=`, but note that Jupyter
-looks for the kernel specs files only in predefined places. For more detailed info
-see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#kernel-specs).
+The default installation path is `~/.ipython/kernels/kotlin/`. You can also install the package in another location using the `-PinstallPath=` option.
+However, Jupyter only looks for the kernel specification files in predefined places. For more details, see [Jupyter docs](https://jupyter-client.readthedocs.io/en/stable/kernels.html#kernel-specs).
 
-Uninstall: `./gradlew uninstall`
+To uninstall the Kotlin Kernel for Jupyter notebooks from sources, run this Gradle command:
 
-### Troubleshooting
+`./gradlew uninstall`
 
-There could be a problem with kernel spec detection because of different
-python environments and installation modes. If you are using pip or conda
-to install the package, try running post-install fixup script:
+### Troubleshoot your installation
+
+When installing the Kotlin Kernel for Jupyter notebooks, issues can occur while detecting the kernel specification file.
+These issues occur due to different Python environments and installation modes.
+
+If you are using Pip or Conda to install the package, run this post-install fixup script:
+
 ```bash
 python -m kotlin_kernel fix-kernelspec-location
 ```
 
-This script replaces kernel specs to the "user" path where they are always detected.
-Don't forget to re-run this script on the kernel update.
+This script replaces the kernel specification files with the detected user path.
 
-## Updating
+> **Note:** Don't forget to re-run this script when updating the Kotlin Kernel for notebooks.
 
-To update the Kotlin kernel, follow the instructions below based on your installation method:
+## Update the Kotlin Kernel for notebooks
 
-### Kotlin Notebook
+See how to update the Kotlin Kernel for Jupyter notebooks using the Kotlin Notebook plugin, Conda, Pip, and Datalore.
 
-If you are using the Kotlin Notebook plugin, update it to the latest version
-within the IDE or manually download and install the latest plugin version
-from the [Marketplace](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook).
+### Update the Kotlin Notebook plugin
 
-### Datalore
+If you use the Kotlin Notebook plugin, update it to the latest version
+in **Settings** | **Plugins** | **Installed** within IntelliJ IDEA.
 
-To update the kernel in Datalore, simply add an `environment.yml` to the Notebook files containing:
-```yaml
-datalore-env-format-version: "0.2"
-datalore-package-manager: "pip"
-datalore-base-env: "default"
-dependencies:
-- pip:
-  - kotlin-jupyter-kernel=={VERSION}
-```
-where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
-Stop and restart the machine afterwards.
+Alternatively, you can download and install the latest plugin version
+from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook).
 
-### Conda
+### Update with Conda
 
-If you have `conda` installed, just run the following command to update the stable package version:
+If you use Jupyter Notebook and Conda, run this Conda command to update the stable version package:
 
 `conda update -c jetbrains kotlin-jupyter-kernel`
 
-To update the conda package from the dev channel:
+Alternatively, run this Conda command to update the package from the developers channel:
 
 `conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
-If you want to change to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
 
-For example, for the stable version:
+You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
+stable package:
 
-`conda install -c jetbrains kotlin-jupyter-kernel={VERSION}`
+`conda install -c jetbrains kotlin-jupyter-kernel={0.11.0.198}`
 
-### Pip
+### Update with Pip
 
-To update the kernel using Pip, simply run:
+If you use Jupyter Notebook and Pip, run this Pip command to update the stable version package:
 
-Stable:
 `pip install kotlin-jupyter-kernel --upgrade`
 
-Dev:
+Alternatively, run this Conda command to update the package from the developers channel:
+
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
-If you want to change to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
 
-For example, for the stable version:
+You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
+stable package:
 
-`pip install kotlin-jupyter-kernel=={VERSION} --ignore-installed`
+`pip install kotlin-jupyter-kernel=={0.11.0.198} --ignore-installed`
 
-## Usage
+### Update in Datalore
 
-### Kotlin Notebook
+To update the Kotlin Kernel for notebooks in Datalore:
 
-Within IDEA with installed Kotlin Notebook plugin, just open a notebook, and you're good to go.
+1. Add an `environment.yml` file to the Notebook files containing the following
+   snippet:
 
-### Other clients
+   ```yaml
+   datalore-env-format-version: "0.2"
+   datalore-package-manager: "pip"
+   datalore-base-env: "default"
+   dependencies:
+   - pip:
+   - kotlin-jupyter-kernel=={VERSION}
+   ```
 
-Run one of the following commands in console:
+2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
 
-- `jupyter console --kernel=kotlin`
-- `jupyter notebook`
-- `jupyter lab`
+3. Stop and restart the machine in Datalore.
 
-To start using `kotlin` kernel inside Jupyter Notebook or JupyterLab create a new notebook with `kotlin` kernel.
+## Use the Kotlin Kernel for notebooks
 
-The default kernel will use the JDK pointed to by the environment variable `KOTLIN_JUPYTER_JAVA_HOME`,
-or `JAVA_HOME` if the first is not set.
+See how to use the Kotlin Kernel for Jupyter notebooks with the Kotlin Notebook plugin, Jupyter clients, and Datalore.
 
-JVM arguments will be set from the environment variable `KOTLIN_JUPYTER_JAVA_OPTS` or `JAVA_OPTS` if the first is not set.
-Additionally, arguments from `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA` will be added.
-Arguments are parsed using [`shlex.split`](https://docs.python.org/3/library/shlex.html).
+### Use the Kotlin Notebook
 
-### Creating Kernels
+After [installing](#install-the-kotlin-notebook-plugin) the Kotlin Notebook plugin in IntelliJ IDEA, create a new notebook by selecting **File** | **New** | **Kotlin Notebook**, or right-click
+on a folder and select **New** | **Kotlin Notebook**.
 
-To create a kernel for a specific JDK, JVM arguments, and environment variables, you can use the `add-kernel` script:
+Now you're good to go!
+
+### Use other Jupyter clients
+
+You can use our Kotlin Kernel through JupyterLab, Jupyter Notebook, and Jupyter Console clients:
+
+1. Run one of the following commands in the console:
+
+* **In JupyterLab:**
+
+  `jupyter lab`
+
+* **In Jupyter Notebook:**
+
+  `jupyter notebook`
+
+* **In Jupyter Console:**
+
+  `jupyter console --kernel=kotlin`
+
+2. Create a new notebook and set `kotlin` as kernel. This step applies to Jupyter Notebook or JupyterLab, and it's not required for
+   Jupyter Console.
+
+The default kernel uses the JDK that the environment points in the `KOTLIN_JUPYTER_JAVA_HOME` variable. In case the `KOTLIN_JUPYTER_JAVA_HOME` variable is not set,
+the kernel also uses the JDK from the `JAVA_HOME` variable.
+
+The kernel uses the arguments that the environment points in the `KOTLIN_JUPYTER_JAVA_OPTS` variable.
+In case the `KOTLIN_JUPYTER_JAVA_OPTS` variable is not set, the kernel also uses the JVM arguments from the `JAVA_OPTS` variable.
+
+Additionally, the kernel uses arguments that the environment points in the `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA` variable.
+The arguments are parsed using the Python [`shlex.split()`](https://docs.python.org/3/library/shlex.html) function.
+
+### Use Datalore
+
+You can also use our Kotlin Kernel for notebooks in Datalore.
+
+To create a Kotlin notebook in Datalore, click on **New notebook** and select **Kotlin** as kernel.
+
+### Create kernels
+
+You can create a custom Kotlin Kernel for Jupyter Notebook.
+This allows you to tailor the kernel's environment to your specific requirements, such as using a particular JDK, setting JVM arguments, or defining environment variables.
+
+To create a custom Kotlin Kernel for Jupyter Notebook, use the `add-kernel` script:
+
 ```bash
 python -m kotlin_kernel add-kernel [--name name] [--jdk jdk_home_dir] [--set-jvm-args] [--jvm-arg arg]* [--env KEY VALUE]* [--force]
 ```
-The command uses `argparse`, so `--help`, `@argfile` (you will need to escape the `@` in powershell), and `--opt=value` are all supported.  `--jvm-arg=arg` in particular
-is needed when passing JVM arguments that start with `-`.
 
-If `jdk` not specified, `name` is required.  If `name` is not specified but `jdk` is the name will be
-`JDK $vendor $version` detected from the JDK.  Regardless, the actual name of the kernel will be `Kotlin ($name)`,
-and the directory will be `kotlin_$name` with the spaces in `name` replaced by underscores
-(so make sure it's compatible with your file system).
+In the `add-kernel` script, the `name` argument is required if the `jdk` argument is not specified.  Alternatively, if the `jdk` argument is specified,
+but the `name` argument is not, then the name is taken from the `JDK $vendor $version` argument, which is detected from the JDK.
 
-JVM arguments are joined with a `' '`, so multiple JVM arguments in the same argument are supported.
-The arguments will be added to existing ones (see above section) unless `--set-jvm-args` is present, in which case they
-will be set to `KOTLIN_JUPYTER_JAVA_OPTS`.  Note that both adding and setting work fine alongside `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA`.
+Regardless of how the name is determined, the format of the kernel name is `Kotlin ($name)`,
+and the format of the directory name is `kotlin_$name`. The directory name includes spaces in `name`, replaced by underscores. Ensure
+this format is compatible with your file system.
 
-While jupyter kernel environment variable substitutions are supported in `env`, note that if the used environment
-variable doesn't exist, nothing will be replaced.
+JVM arguments are joined with a space (`' '`), supporting multiple arguments within the same entry.
+The new arguments are added to existing ones, unless the `--set-jvm-args` flag is used. In this case, JVM
+arguments are set to the `KOTLIN_JUPYTER_JAVA_OPTS` variable. Both adding and setting arguments work alongside the `KOTLIN_JUPYTER_JAVA_OPTS_EXTRA` variable.
 
-An example:
+While Jupyter Kernel environment variable substitutions are supported in the `env` argument, no replacement occurs
+if the used environment variable doesn't exist.
+
+The `add-kernel` script utilizes the `argparse` Python library, supporting the `--help`, `@argfile` (you don't need the `@` symbol in PowerShell), and `--opt=value` arguments.
+The `--jvm-arg=arg` argument is required when passing JVM arguments that start with the `-` symbol.
+
+Here's an example of an `add-kernel` script to create a custom Kotlin Kernel for Jupyter Notebook:
+
 ```bash
 python -m kotlin_kernel add-kernel --name "JDK 15 Big 2 GPU" --jdk ~/.jdks/openjdk-15.0.2 --jvm-arg=-Xmx8G --env CUDA_VISIBLE_DEVICES 0,1
 ```
 
-## Supported functionality
+## Features
+
+Explore the sections below to learn about the features of the Kotlin Kernel for Jupyter notebooks. You can leverage these
+features using Kotlin Notebook in IntelliJ IDEA, Datalore, or other [Jupyter Notebook clients](#jupyter-environments).
+
+The features of the Kotlin Kernel for Jupyter notebooks include:
+
+* [REPL commands](#repl-commands)
+* [Dependencies resolving](#dependencies-resolving)
+* [Default repositories](#default-repositories)
+* [Line magics](#line-magics)
+* [Supported libraries](#supported-libraries)
+* [Rich output](#rich-output)
+* [Rendering](#rendering)
+* [Autocompletion](#autocompletion)
+* [Error analysis](#error-analysis)
+
+<details>
+<summary>Click here to expand the features.</summary>
 
 ### REPL commands
 
-The following REPL commands are supported:
-[[supported_commands]]
- 
+Our Kotlin Kernel for notebooks comes with a set of REPL commands that let you explore your notebook environment. The following REPL commands are supported:
+
+| Command      | Description                                                                                                                                       |
+|:-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
+| `:help`      | Displays help information with details of the notebook version, line magics, and supported libraries.                                             |
+| `:classpath` | Displays the current classpath of your notebook environment, showing a list of locations where the notebook searches for libraries and resources. |
+| `:vars`      | Displays information about the declared variables and their values.                                                                               |
+
 ### Dependencies resolving
 
-It is possible to add dynamic dependencies to the notebook using the following annotations:
-- `@file:DependsOn(<coordinates>)` - adds artifacts to classpath. Supports absolute and relative paths to class
-  directories or jars, ivy and maven artifacts represented by the colon separated string
-- `@file:Repository(<absolute-path>)` - adds a directory for relative path resolution or ivy/maven repository.
-  To specify Maven local, use `@file:Repository("*mavenLocal")`.
+You can easily add dynamic dependencies to your notebook from a remote Maven repository or local ones (local JARs).
+You can add dependencies through annotations or Gradle-like syntax.
 
-Alternative way to do the same is using Gradle-like syntax:
+#### Annotations
+
+You can add dynamic dependencies to the notebook using the following annotations:
+
+* **`@file:DependsOn(<coordinates>)`:** In this annotation, you need to specify the coordinates of the dependency.
+  This annotation adds artifacts (like JAR files) to the notebook's classpath. It supports absolute and relative paths to
+  class directories or JARs, as well as Ivy and Maven artifacts:
+
+   ```kotlin 
+   @file:DependsOn(“io.ktor:ktor-client-core-jvm:$ktorVersion“)
+   ```
+
+* **`@file:Repository(<absolute-path>)`:** In this annotation, you need to specify the absolute path of the dependency.
+  This annotation adds a directory or an Ivy or Maven repository to the notebook environment. To specify a Maven local
+  repository, use:
+
+   ```kotlin
+   @file:Repository("*mavenLocal")
+   ```
+
+#### Gradle-like syntax
+
+You can load any library from the Maven repository using Gradle-like syntax in any cell, specifying repositories, locations, and so on:
 
 ```kotlin
 USE {
-    repositories {
-        maven {
-            url = "https://my.secret.repo/maven/"
-            credentials {
-                username = USER
-                password = TOKEN
-            }
-        }
-    }
+	repositories {
+		maven {
+			url = "https://my.secret.repo/maven/"
+			credentials {
+				username = USER
+				password = TOKEN
+			}
+		}
+	}
 
-    dependencies {
-        val ktorVersion = "2.0.3"
+	dependencies {
+		val ktorVersion = "2.0.3"
 
-        implementation("my.secret:artifact:1.0-beta")
-        implementation("io.ktor:ktor-client-core:$ktorVersion")
-        implementation("io.ktor:ktor-client-apache:$ktorVersion")
-    }
+		implementation("my.secret:artifact:1.0-beta")
+		implementation("io.ktor:ktor-client-core:$ktorVersion")
+		implementation("io.ktor:ktor-client-apache:$ktorVersion")
+	}
 }
 ```
 
-The same syntax can be used in [integrations creating](libraries.md).
+> **Note:** You can use the same Gradle-like syntax to [integrate new libraries](libraries.md).
 
-Note that dependencies in remote repositories are resolved via Maven resolver.
-Caches are stored in `~/.m2/repository` folder by default. Sometimes, due to network
-issues or running several artifacts resolutions in parallel, caches may get corrupted.
-If you have some troubles with artifacts resolution, please remove caches, restart kernel
-and try again.
+#### Handling dependencies
+
+When adding dependencies, consider the following:
+
+* Dependencies in remote repositories are resolved via Maven resolver.
+* Caches are stored in the `~/.m2/repository` folder by default. However, due to network issues or several artifact
+  resolutions running in parallel, caches may become corrupted.
+* If you have issues with artifacts resolution, remove caches, restart kernel,
+  and try again.
+* While you can utilize Gradle-like syntax, Gradle is not running under the hood, and Gradle metadata is not resolved.
+  Therefore, advanced dependency configurations are not available. For example, top-level Multiplatform dependencies are not supported.
+  In these cases, you need to use the `-jvm` variant manually.
 
 ### Default repositories
 
-The following maven repositories are included by default:
-- [Maven Central](https://repo.maven.apache.org/maven2)
-- [JitPack](https://jitpack.io/)
+The following Maven repositories are included by default:
+* [Maven Central](https://repo.maven.apache.org/maven2)
+* [JitPack](https://jitpack.io/)
 
-### Line Magics
+You can directly use libraries and dependencies from these repositories within your Kotlin code running in the Jupyter Notebook environment.
 
-The following line magics are supported:
-[[magics]]
- 
- See detailed info about line magics [here](magics.md).
- 
-### Supported Libraries
+### Line magics
 
-When a library is included with `%use` keyword, the following functionality is added to the notebook:
-- repositories to search for library artifacts
-- artifact dependencies
-- default imports
-- library initialization code
-- renderers for special types, e.g. charts and data frames
+Line magics are special commands, starting with the % character, that interact with the notebook on a per-line basis.
+Line magics allow you to import libraries, configure output settings, and perform more operations.
 
-This behavior is defined by `json` library descriptor. Descriptors for all supported libraries can be found in [libraries](https://github.com/Kotlin/kotlin-jupyter-libraries) repository.
-A library descriptor may provide a set of properties with default values that can be overridden when library is included.
-The major use case for library properties is to specify a particular version of library. If descriptor has only one property, it can be
+You can use the following line magics in your notebooks using the Kotlin Kernel:
+
+|Command               | Description                                                                                                                                                                                                                                                                                                                                         |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|**`%use`**            | Imports supported libraries and injects code from these libraries. Usage example: `%use klaxon(5.5), lets-plot`.                                                                                                                                                                                                                                    |
+|**`%trackClasspath`** | Logs any changes of the current classpath. This command is useful for debugging artifact resolution failures. Usage example: `%trackClasspath [on\|off]`.                                                                                                                                                                                           |
+|**`%trackExecution`** | Logs pieces of code to be executed. This command is useful for debugging libraries support. Usage example: `%trackExecution [all\|generated\|off]`.                                                                                                                                                                                                 |
+|**`%useLatestDescriptors`** | Sets the latest versions of available library descriptors instead of bundled descriptors (used by default). Note that bundled descriptors are preferred because the current kernel version might not support the latest descriptors. For better notebook stability, avoid using this line magic. Usage example: `%useLatestDescriptors [on\|off]`.  |
+|**`%output`**         | Configures the output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`.                                                                                                                                                                                                                |
+|**`%logLevel`**       | Sets logging level. Usage example: `%logLevel [off\|error\|warn\|info\|debug]`.                                                                                                                                                                                                                                                                     |
+
+> **Note:** For more information, see [Line magics](magics.md).
+
+### Supported libraries
+
+Kotlin Kernel for Jupyter notebooks comes with a set of integrated libraries, which you can import into your notebook by running the `%use` line magic before the library's name within a cell.
+
+When you import a library using the `%use` line magic, the following functionality is added to the notebook:
+
+* Repositories to search for library artifacts
+* Artifact dependencies
+* Default imports
+* Library initialization code
+* Renderers for special types. For example, charts and data frames
+
+This behavior is defined by the [JSON library descriptor](libraries.md#library-integration-methods), which provides a set of properties with default values that can be overridden when the library is imported.
+
+To check the descriptors of all supported libraries, see the [libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries).
+
+The major use case for library properties is to specify a particular library version. If the descriptor has only one property, the library version can be
 defined without naming:
+
 ```
 %use krangl(0.10)
 ```
-If library descriptor defines more than one property, property names should be used:
+
+If the descriptor has more than one property, you need to use the property name:
+
 ```
 %use spark(scala=2.11.10, spark=2.4.2)
+
 ```
-Several libraries can be included in single `%use` statement, separated by `,`:
+
+You can include several libraries in a single `%use` statement, separated by commas (`,`):
+
 ```
 %use lets-plot, krangl, mysql(8.0.15)
 ```
-You can also specify the source of library descriptor. By default, it's taken from the [libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries). If you want to try descriptor from another revision, use the following syntax:
+
+You can also specify the source of the library descriptor. By default, it's taken from the [libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries).
+To try a descriptor from another revision, use the following syntax:
+
 ```
-// Specify some git tag from this repository
+// Uses a specific version from the default repository
 %use lets-plot@0.8.2.5
-// Specify commit sha, with more verbose syntax
+
+// Uses a specific commit of the library
 %use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
-// Specify git ref along with library arguments
+
+// Uses a specific version of the library from a custom repository
 %use krangl@dev(0.10)
 ```
-Note that using descriptor from specific revision is better than using `%useLatestDescriptors`.
 
-Other options are resolving library descriptor from a local file or from remote URL:
+> **Note:** Using a fixed version of a library is preferred over using the `%useLatestDescriptors` line magic.
+
+Additionally, you can try resolving the library descriptor from a local file or a remote URL:
+
 ```
-// Load library from file
+// Loads the library from a file
 %use mylib@file[/home/user/lib.json]
-// Load library from file: kernel will guess it's a file actually
+
+// Loads the library from a file, and the Kernel detects it's a file
 %use @/home/user/libs/lib.json
-// Or use another approach: specify a directory and file name without 
-// extension (it should be JSON in such case) before it
+
+// Specifies a directory and a file name without extension (the extension file should be JSON) 
 %use lib@/home/user/libs
-// Load library descriptor from a remote URL
+
+// Loads the library descriptor from a remote URL
 %use herlib@url[https://site.com/lib.json]
-// If your URL responds with 200(OK), you may skip `url[]` part:
+
+// Loads the library descriptor from a remote URL. The `url[]` part can be omitted if the URL responds with 200(OK)
 %use @https://site.com/lib.json
-// You may omit library name for file and URL resolution:
+
+// Loads the library dependencies from a specified JSON file. The library name and URL resolution can be omitted
 %use @file[lib.json]
 ```
 
-#### List of supported libraries:
-[[supported_libraries]]
+#### List of supported libraries
+
+Here you can find all the supported libraries you can use in you Kotlin notebooks through the `%use` line magic.
+
+<details>
+<summary>Click to see the list of supported libraries.</summary>
+
+* **[2p-kt](https://github.com/gciatto/kt-math):** Kotlin multi-platform ecosystem for symbolic AI.
+* **[biokotlin](https://github.com/maize-genetics/BioKotlin):** High-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
+* **[combinatoricskt](https://github.com/shiguruikai/combinatoricskt):** Combinatorics library for Kotlin.
+* **[coroutines](https://github.com/Kotlin/kotlinx.coroutines):** Asynchronous programming and reactive streams support.
+* **[dataframe](https://github.com/Kotlin/dataframe):** Kotlin framework for structured data processing.
+* **[datetime](https://github.com/Kotlin/kotlinx-datetime):** Kotlin date/time library.
+* **[deeplearning4j](https://github.com/eclipse/deeplearning4j):** Deep learning library for the JVM.
+* **[deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j):** Deep learning library for the JVM (with CUDA support).
+* **default:** Default imports for DataFrame and Kandy libraries.
+* **[develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin):** Library to use the Develocity API in Kotlin scripts or projects.
+* **[exposed](https://github.com/JetBrains/Exposed):** Kotlin SQL framework.
+* **[fuel](https://github.com/kittinunf/fuel):** HTTP networking library.
+* **[gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin):** (**Note:** This library is deprecated. Use `develocity-api-kotlin` instead.) A library to use the Gradle Enterprise API in Kotlin scripts or projects.
+* **[gral](https://github.com/eseifert/gral):** Java library for displaying plots.
+* **[jdsp](https://github.com/psambit9791/jDSP):** Java library for signal processing.
+* **[jupyter-js](https://github.com/yidafu/kotlin-jupyter-js):** Experimental `%javascript`, `%typescript`, and `%jsx` line magic support.
+* **[kalasim](https://www.kalasim.org):** Discrete event simulator.
+* **[kaliningraph](https://github.com/breandan/kaliningraph):** Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms.
+* **[kandy](https://github.com/Kotlin/kandy):** Kotlin plotting DSL for Lets-Plot library.
+* **[kandy-echarts](https://github.com/Kotlin/kandy):** Kotlin plotting DSL for Apache ECharts.
+* **[khttp](https://github.com/jkcclemens/khttp):** HTTP networking library.
+* **[klaxon](https://github.com/cbeust/klaxon):** JSON parser for Kotlin.
+* **[kmath](https://github.com/mipt-npm/kmath):** Experimental Kotlin algebra-based mathematical library.
+* **[kotlin-dl](https://github.com/Kotlin/kotlindl):** KotlinDL library which provides Keras-like API for deep learning.
+* **[kotlin-statistics](https://github.com/thomasnield/kotlin-statistics):** Idiomatic statistical operators for Kotlin.
+* **[krangl](https://github.com/holgerbrandl/krangl):** Kotlin DSL for data wrangling.
+* **[kraphviz](https://github.com/nidi3/graphviz-java):** Graphviz wrapper for JVM.
+* **[kravis](https://github.com/holgerbrandl/kravis):** Kotlin grammar for data visualization.
+* **[kt-math](https://github.com/gciatto/kt-math):** Kotlin multi-platform port of Java Math.
+* **[ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util):** Asynchronous HTTP client.
+* **[lets-plot](https://github.com/JetBrains/lets-plot-kotlin):** Multiplatform plotting library based on Grammar of Graphics.
+* **[lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin):** Lets-Plot visualization for GeoTools toolkit.
+* **[lib-ext](https://github.com/Kotlin/kotlin-jupyter):** Extended functionality for Jupyter Kernel.
+* **[londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit):** - Natural Language Processing (NLP) toolkit for Kotlin on the JVM.
+* **[multik](https://github.com/Kotlin/multik):** Multidimensional array library for Kotlin.
+* **[mysql](https://github.com/mysql/mysql-connector-j):** MySql JDBC Connector.
+* **[openai](https://openai.com/blog/chatgpt):** OpenAI API for Jupyter Notebooks.
+* **[plotly](https://github.com/mipt-npm/plotly.kt):** (beta) Plotly.kt Jupyter integration for static plots.
+* **[plotly-server](https://github.com/mipt-npm/plotly.kt):** (beta) Plotly.kt Jupyter integration for dynamic plots.
+* **[rdkit](https://www.rdkit.org/):** Open-Source Cheminformatics software.
+* **[reflection](https://kotlinlang.org/docs/reflection.html):** Imports for Kotlin Reflection.
+* **[roboquant](https://roboquant.org):** Algorithmic trading platform written in Kotlin.
+* **[serialization](https://github.com/Kotlin/kotlin-jupyter-http-util):** Deserialize JSON content using kotlinx.serialization and automatically generate corresponding classes.
+* **[smile](https://github.com/haifengl/smile):** Statistical machine intelligence and learning engine.
+* **[spark](https://github.com/JetBrains/kotlin-spark-api):** Kotlin API for Apache Spark. Unified analytics engine for large-scale data processing.
+* **[spark-streaming](https://github.com/JetBrains/kotlin-spark-api):** Kotlin API for Apache Spark streaming. Scalable, high-throughput, fault-tolerant stream processing of live data streams.
+* **[webtau](https://github.com/testingisdocumenting/webtau):** WebTau end-to-end testing across layers.
+
+</details>
 
 ### Rich output
 
-By default, the return values from REPL statements are displayed in the text form. To use richer representations, e.g.
-to display graphics or html, it is possible to send MIME-encoded result to the client using the `MIME` helper function:
+By default, our Kotlin Kernel for Jupyter notebooks displays return values in text form. However, you can enrich the output by rendering graphics, HTML, or other MIME-encoded data format.
+
+One approach is to send MIME-encoded results to the client using the `MIME` helper function:
+
 ```kotlin
 fun MIME(vararg mimeToData: Pair<String, String>): MimeTypedResult 
 ```
-E.g.:
+
+For example:
+
 ```kotlin
 MIME("text/html" to "<p>Some <em>HTML</em></p>", "text/plain" to "No HTML for text clients")
-
 ```
-HTML outputs can also be rendered with `HTML` helper function:
+
+Another approach is to use the `HTML` helper function, which provides a simpler way to display HTML content directly:
+
 ```kotlin
 fun HTML(text: String): MimeTypedResult
 ```
 
+For example:
+
+```kotlin
+HTML("<p>This is an example of <strong>HTML</strong> content rendered using the HTML helper function.</p>")
+```
+
 ### Rendering
 
-Rendering is a procedure of transforming of the value to the form that is appropriate for displaying in Jupyter client. Kernel supports several features that allow you to render values.
+Rendering is the procedure of transforming a value to a form that is appropriate for displaying it in the Jupyter client.
+The Kotlin Kernel for Jupyter notebook supports various features and mechanisms for rendering values:
 
-#### Renderers
+* **Renderers:** Transform values into other representations. Renderers are controlled via the `RenderersProcessor` method, and you can access it with the [notebook API entry point](https://github.com/Kotlin/kotlin-jupyter/blob/master/docs/libraries.md#supported-integration-features).
+  The Kotlin kernel iterates through a list of available renderers, trying to find one that can handle the given data. A library can define one or more renderers.
 
-Renderers can transform a value into another value. Library can define one or several renderers. Rendering with renderers is controlled via `RenderersProcessor`. You can access it via `notebook`. Renderers are applied until at least one renderer can be applied.
+* **`DisplayResult` and `Renderable`:** Objects implementing `DisplayResult` and `Renderable` interfaces are rendered to output JSON.
 
-#### DisplayResult and Renderable
+* **Text rendering:** Render objects to strings using text renderers. Text renderers are controlled via the `TextRenderersProcessor` method, and you can access the method with the [notebook API entry point](https://github.com/Kotlin/kotlin-jupyter/blob/master/docs/libraries.md#supported-integration-features). A library can define one or more renderers.
+  The Kotlin Kernel iterates until at least one renderer returns a non-null string for a passed argument.
+  This kind of renderer can be easily composed with each other. For example, a text renderer for iterables can render its elements with a text renderer processor recursively.
 
-If object implements `DisplayResult` or `Renderable`, it will be rendered to output `JsonObject` via its own corresponding method.
-
-#### Text rendering
-
-Text renderers render objects to strings. Library can define one or several text renderers. Rendering with text renderers is controlled via `TextRenderersProcessor`. You can access it via `notebook`. Text renderers are applied until at least one renderer returns non-null string for a passed argument. This kind of renderers can be easily composed with each other. I.e. text renderer for iterables can render its elements with text renderers processor recursively.
-
-#### Throwables rendering
-
-Throwable renderers do the same thing as renderers do, but only for results of the cells that were not
-successfully executed, and some exception was generated.
+* **Throwables rendering:** Throwable renderers behave as regular renderers but handle exceptions and errors generated during cell execution.
 
 #### Common rendering semantics
 
-Successfully evaluated value is firstly transformed with RenderersProcessor. Resulting value is checked. If it's Renderable or DisplayResult, it is transformed into output JSON using `toJson()` method. If it's Unit, the cell won't have result at all. Otherwise, value is passed to `TextRenderersProcessor`. It tries to render the value to string using defined text renderers having in mind their priority. If all the renderers returned null, value is transformed to string using `toString()`. Resulting string is wrapped to `text/plain` MIME JSON.
+Successful value evaluation triggers a rendering process. Initially, the `RenderersProcessor` attempts to convert the value
+into a `Renderable` or `DisplayResult` object. If successful, the result is transformed into JSON output using the `toJson()` method.
+For `Unit` values, no output is generated.
 
-If the cell execution finished unsuccessfully and exception was generated, then the first applicable throwable renderer
-will be chosen for this exception, and exception will be passed to this renderer's `render()` method. Returned value
-will be displayed. If no applicable throwable renderer was found, exception message and stacktrace will be printed
-to stderr.
+If the value cannot be rendered as `Renderable` or `DisplayResult`, the `TextRenderersProcessor` takes over.
+It iterates to render the value to a string using the defined text renderers, seeking a non-null string representation. If no suitable renderer is found,
+the value is transformed into a string using the `toString()` method. The resulting string is wrapped in a `text/plain` MIME JSON.
+
+Upon execution failure, an exception is generated. The first applicable throwable renderer
+is chosen for this exception, and the exception is passed to this renderer's `render()` method so the returned value
+is displayed. If no applicable throwable renderer is found, the exception's message and stack trace are printed to standard error.
 
 ### Autocompletion
 
-Press `TAB` to get the list of suggested items for completion. In Jupyter Notebook, you don't need to press `TAB`,
-completion is requested automatically. Completion works for all globally defined symbols and for local symbols
-which were loaded into notebook during cells evaluation.
+When working with the Kotlin notebooks, press `TAB` to get the list of suggested items for completion.
+
+In Jupyter Notebook, you don't need to press `TAB`. Completion is requested automatically.
+
+Completion works for both globally defined symbols and local symbols,
+which were loaded into the notebook during cell evaluation.
 
 ### Error analysis
 
-If you use Jupyter Notebook as Jupyter client, you will also see that compilation errors and warnings are underlined in
-red and in yellow correspondingly. This is achieved by kernel-level extension of Jupyter notebook which sends
-error-analysis requests to kernel and renders their results. If you hover the cursor over underlined text, you will get
-an error message which can help you to fix the error.
+If you use Jupyter Notebook, you'll notice that compilation errors and warnings are underlined in
+red and yellow, correspondingly. If you hover the cursor over underlined text, you'll get
+an error message that can help you to fix the error.
 
-## Debugging
+This error analysis is achieved by the kernel-level extension of Jupyter Notebook. The extension sends
+error-analysis requests to the kernel and renders their results.
 
-1. Run `./gradlew installDebug`. Debugger port is selected automatically.
-   Default port is 1044, consequent ports will be used if it's in use. If you want an exact port, specify `-PdebugPort=<port>` Gradle option.
-2. Run `jupyter notebook`, open the desired notebook.
-3. Attach a remote debugger to JVM with corresponding port (debug port number will be printed in terminal on kernel startup).
+</details>
 
-## Adding new libraries
+## Debug your Kotlin notebook client
 
-Read [this article](libraries.md) if you want to support new `JVM` library in the kernel.
+1. Run the `./gradlew installDebug` Gradle command. The debugger port is selected automatically.
+   The default port is 1044, and if it's unavailable, the consequent ports are used. If you want an exact port, specify the `-PdebugPort=<port>` Gradle option.
+2. Run the corresponding command to [open the desired notebook client](#use-other-jupyter-clients).
+3. Attach a remote debugger to the JVM with the corresponding port (the debug port number is printed in the terminal when the kernel starts).
+
+## Integrate new libraries
+
+Read [this article](libraries.md) if you want to integrate new `JVM` libraries in the Kotlin Kernel for Jupyter notebooks.
 
 ## Documentation
 
-There is a [site](https://ileasile.github.io/kotlin-jupyter-docs) with rendered KDoc comments from the codebase.
-If you are a library author you may be interested in `api` module
-(see [adding new libraries](#adding-new-libraries)). There is also a `lib` module which contains entities
-available from the Notebook cells and `shared-compiler` module which may be used for Jupyter REPL integration
-into standalone application or IDEA plugin.
+To learn more, explore the available documentation:
 
-## Contributing
+* [Docs site](https://ileasile.github.io/kotlin-jupyter-docs) with rendered KDoc comments from the codebase.
+* [Docs about integrating new libraries](libraries.md). If you are a library author, you may be interested in the `api` module in our project. There is
+  also a `lib` module that contains entities available from the Notebook cells, and a `shared-compiler` module for Jupyter REPL integration
+  into a standalone application or IDEA plugin.
+* Explore the Kotlin Notebook docs to learn about [features](https://www.jetbrains.com/help/idea/kotlin-notebook.html), [use cases](https://kotlinlang.org/docs/kotlin-notebook-overview.html), and [tutorials](https://kotlinlang.org/docs/get-started-with-kotlin-notebooks.html).
+
+## Contribute
 
 We welcome contributions to further enhance our project! If you come across any issues or have feature requests, please don't hesitate to [file an issue](https://github.com/Kotlin/kotlin-jupyter/issues).
 
-For issues specifically related to the Kotlin Notebook plugin, kindly utilize [another tracker](https://youtrack.jetbrains.com/issues/KTNB).
+For issues specifically related to the Kotlin Notebook plugin, utilize [this tracker](https://youtrack.jetbrains.com/issues/KTNB).
 
-Pull requests are highly appreciated! When submitting a pull request, please ensure that it corresponds to an existing issue. If you are planning a substantial change, we recommend discussing it with a [project maintainer](https://github.com/ileasile). You can reach out to me through [email](mailto:ilya.muradyan@jetbrains.com), [Kotlin Slack](https://kotlinlang.slack.com/archives/C05333T208Y), or [Telegram](https://t.me/ileasile). We look forward to your contributions!
+Pull requests are highly appreciated! When submitting a pull request, ensure it corresponds to an existing issue.
+
+If you are planning a substantial change, we recommend discussing it with a [project maintainer](https://github.com/ileasile).
+You can reach out to me through [email](mailto:ilya.muradyan@jetbrains.com), [Kotlin Slack](https://kotlinlang.slack.com/archives/C05333T208Y), or [Telegram](https://t.me/ileasile).
+
+We look forward to your contributions!
