@@ -360,7 +360,7 @@ Other options are resolving library descriptor from a local file or from remote 
 ```
 
 #### List of supported libraries:
- - [2p-kt](https://github.com/gciatto/kt-math) - Kotlin Multi-Platform ecosystem for symbolic AI
+ - [2p-kt](https://github.com/tuProlog/2p-kt) - Kotlin Multi-Platform ecosystem for symbolic AI
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
@@ -384,10 +384,10 @@ Other options are resolving library descriptor from a local file or from remote 
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
  - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning
- - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin
  - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ - [ksl](https://github.com/rossetti/KSL) - KSL - Kotlin Simulation Library for Monte Carlo and Discrete-Event Simulation
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
  - [ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util) - Asynchronous HTTP client
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
