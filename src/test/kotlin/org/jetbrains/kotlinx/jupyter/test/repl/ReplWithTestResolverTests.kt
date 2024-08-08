@@ -177,7 +177,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     @Test
     fun testLibraryCompletion() {
         complete("%u|").sortedMatches() shouldBe listOf("use", "useLatestDescriptors")
-        complete("%use kot|").sortedMatches() shouldContainAll listOf("kotlin-dl", "kotlin-statistics")
+        complete("%use kot|").sortedMatches() shouldContainAll listOf("kotlin-dl")
         with(complete("%use dataframe(0.8.0-|)").sortedMatches()) {
             shouldHaveAtLeastSize(10)
             shouldContain("0.8.0-rc-1")
