@@ -156,7 +156,7 @@ dependencies:
 - pip:
   - kotlin-jupyter-kernel=={VERSION}
 ```
-where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.12.0-167`.
 Stop and restart the machine afterwards.
 
 ### Conda
@@ -169,7 +169,7 @@ To update the conda package from the dev channel:
 
 `conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
-If you want to change to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+If you want to change to a specific version of the kernel, take the `install` command from above and add `={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.12.0-167`.
 
 For example, for the stable version:
 
@@ -185,7 +185,7 @@ Stable:
 Dev:
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
-If you want to change to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.11.0.198`.
+If you want to change to a specific version of the kernel, take the `install` command from above and add `=={VERSION}` to `kotlin-jupyter-kernel` where `{VERSION}` should be replaced by the latest PyPi version of the Kotlin Jupyter kernel, such as `0.12.0-167`.
 
 For example, for the stable version:
 

@@ -2,6 +2,7 @@ package build
 
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
+import build.util.exampleKernel
 import build.util.taskTempFile
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
@@ -74,6 +75,7 @@ class ReadmeGenerator(
         "supported_commands" to ::processCommands,
         "magics" to ::processMagics,
         "kotlin_version" to ::processKotlinVersion,
+        "kernel_version" to ::processKernelVersion,
         "repo_url" to ::processRepoUrl
     )
 
@@ -120,6 +122,10 @@ class ReadmeGenerator(
 
     private fun processKotlinVersion(): String {
         return project.defaultVersionCatalog.versions.devKotlin
+    }
+
+    private fun processKernelVersion(): String {
+        return project.defaultVersionCatalog.versions.exampleKernel
     }
 
     private fun processRepoUrl(): String {
