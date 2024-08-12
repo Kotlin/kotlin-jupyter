@@ -298,12 +298,15 @@ The following maven repositories are included by default:
 ### Line Magics
 
 The following line magics are supported:
- - `%use` - injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers. Usage example: `%use klaxon(5.5), lets-plot`
- - `%trackClasspath` - logs any changes of current classpath. Useful for debugging artifact resolution failures. Usage example: `%trackClasspath [on|off]`
- - `%trackExecution` - logs pieces of code that are going to be executed. Useful for debugging of libraries support. Usage example: `%trackExecution [all|generated|off]`
- - `%useLatestDescriptors` - use latest versions of library descriptors available. By default, bundled descriptors are used. Note that default behavior is preferred: latest descriptors versions might be not supported by current version of kernel. So if you care about stability of the notebook, avoid using this line magic. Usage example: `%useLatestDescriptors [on|off]`
- - `%output` - output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`
- - `%logLevel` - set logging level. Usage example: `%logLevel [off|error|warn|info|debug]`
+
+| Magic | Description | Usage example |
+| ----- | ----------- | ------------- |
+| `%use` | injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers | `%use klaxon(5.5), lets-plot` |
+| `%trackClasspath` | logs any changes of current classpath. Useful for debugging artifact resolution failures | `%trackClasspath [on/off]` |
+| `%trackExecution` | logs pieces of code that are going to be executed. Useful for debugging of libraries support | `%trackExecution [all/generated/off]` |
+| `%useLatestDescriptors` | use latest versions of library descriptors available. By default, bundled descriptors are used. Note that default behavior is preferred: latest descriptors versions might be not supported by current version of kernel. So if you care about stability of the notebook, avoid using this line magic | `%useLatestDescriptors [on/off]` |
+| `%output` | output capturing settings | `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400` |
+| `%logLevel` | set logging level | `%logLevel [off/error/warn/info/debug]` |
  
  See detailed info about line magics [here](magics.md).
  

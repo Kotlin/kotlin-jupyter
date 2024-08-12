@@ -100,12 +100,21 @@ class ReadmeGenerator(
     }
 
     private fun processMagics(): String {
-        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString("\n") {
-            val description = " - `%${it.nameForUser}` - ${it.desc}."
+        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString(
+            "\n",
+            """
+                
+                | Magic | Description | Usage example |
+                | ----- | ----------- | ------------- |
+                
+            """.trimIndent(),
+        ) {
+            val magicName = "`%${it.nameForUser}`"
+            val description = it.desc
             val usage = if (it.argumentsUsage == null) ""
-            else " Usage example: `%${it.nameForUser} ${it.argumentsUsage}`"
+            else "`%${it.nameForUser} ${it.argumentsUsage}`"
 
-            description + usage
+            "| $magicName | $description | $usage |"
         }
     }
 
