@@ -9,7 +9,7 @@
 
 # Kotlin Kernel for Jupyter notebooks
 
-The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to write and run [Kotlin](https://kotlinlang.org/) code within the
+The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to write and run [Kotlin](https://kotlinlang.org/) [[kotlin_version]] code within the
 [Jupyter Notebook](https://jupyter.org) environment. This [Kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) essentially acts as a bridge between Jupyter Notebook and the Kotlin compiler.
 
 <img src="images/kotlin_notebook.gif" width="900" height="700" alt="Alt text for the GIF">
@@ -36,7 +36,7 @@ You can leverage Kotlin Kernel's benefits in [IntelliJ IDEA](https://www.jetbrai
     * [Kotlin version support](#kotlin-version-support)
     * [Jupyter environments](#jupyter-environments)
     * [Operating systems](#operating-systems)
-  * [Install the Kotlin Kernel for notebooks](#install-the-kotlin-kernel-for-notebooks)
+  * [Install the Kotlin Kernel in various clients](#install-the-kotlin-kernel-in-various-clients)
     * [Install the Kotlin Notebook plugin](#install-the-kotlin-notebook-plugin)
     * [Install with Conda](#install-with-conda)
     * [Install with Pip](#install-with-pip)
@@ -109,18 +109,20 @@ We tested the Kotlin Kernel for notebooks with all the mentioned clients on the 
 * Ubuntu Linux
 * macOS
 
-## Install the Kotlin Kernel for notebooks
+## Install the Kotlin Kernel in various clients
 
-You can use the Kotlin Kernel for notebooks on:
-* [IntelliJ IDEA](https://www.jetbrains.com/idea/)
-* [Jupyter Notebook](https://jupyter.org/)
+You can create, open, and work with Kotlin notebooks on various clients:
+
+* [Kotlin Notebook in IntelliJ IDEA](https://www.jetbrains.com/idea/)
 * [Datalore](https://www.jetbrains.com/datalore/)
+* [Jupyter Notebook and JupyterLab](https://jupyter.org/)
 
-To use our Kernel in IntelliJ IDEA, you need to install the [Kotlin Notebook plugin](#install-the-kotlin-notebook-plugin). To use it in your Jupyter notebooks,
-you can install it through [Conda](#install-with-conda), [Pip](#install-with-pip), or [sources](#install-from-sources).
+Our Kotlin Kernel is fully integrated into Kotlin Notebook, which you can use directly within IntelliJ IDEA by [installing the Kotlin Notebook plugin](#install-the-kotlin-notebook-plugin). 
 
-In Datalore, the Kotlin Kernel
-for notebooks comes integrated by default.
+In Datalore, Kotlin is supported natively, with the Kotlin Kernel already bundled for an out-of-the-box experience. 
+
+For other Jupyter clients, you'll need to install the Kotlin Kernel separately using [conda](#install-with-conda), [pip](#install-with-pip), 
+or [sources](#install-from-sources)).
 
 ### Install the Kotlin Notebook plugin
 
@@ -310,7 +312,7 @@ To create a Kotlin notebook in Datalore, click on **New notebook** and select **
 You can create a custom Kotlin Kernel for Jupyter Notebook.
 This allows you to tailor the kernel's environment to your specific requirements, such as using a particular JDK, setting JVM arguments, or defining environment variables.
 
-To create a custom Kotlin Kernel for Jupyter Notebook, use the `add-kernel` script:
+To create a custom Kotlin Kernel for Jupyter Notebook, use the `add-kernel` command from the installed `kotlin_kernel` python package:
 
 ```bash
 python -m kotlin_kernel add-kernel [--name name] [--jdk jdk_home_dir] [--set-jvm-args] [--jvm-arg arg]* [--env KEY VALUE]* [--force]
@@ -450,6 +452,8 @@ Line magics allow you to import libraries, configure output settings, and perfor
 
 You can use the following line magics in your notebooks using the Kotlin Kernel:
 
+[[magics]]
+
 |Command               | Description                                                                                                                                                                                                                                                                                                                                         |
 |----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |**`%use`**            | Imports supported libraries and injects code from these libraries. Usage example: `%use klaxon(5.5), lets-plot`.                                                                                                                                                                                                                                    |
@@ -541,6 +545,8 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
 
 <details>
 <summary>Click to see the list of supported libraries.</summary>
+
+[[supported_libraries]]
 
 * **[2p-kt](https://github.com/gciatto/kt-math):** Kotlin multi-platform ecosystem for symbolic AI.
 * **[biokotlin](https://github.com/maize-genetics/BioKotlin):** High-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.

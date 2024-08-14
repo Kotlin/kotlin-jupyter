@@ -192,10 +192,10 @@ Here's an example of how to use the `dependencies` feature via the Descriptor AP
 
 ```json
 {
-	"dependencies": [
-		"<dependency1>", 
-		"<dependency2>"
-	]
+    "dependencies": [
+        "<dependency1>",
+        "<dependency2>"
+    ]
 }
 ```
 
@@ -206,8 +206,8 @@ Here's an example of how to use the `dependencies` feature via the JupyterIntegr
 ```kotlin
 USE {
     dependencies("<dependency1>", "<dependency2>") 
-	// or 
-	dependencies { 
+    // or 
+    dependencies { 
         implementation("<dependency1>") 
     }
 }
@@ -225,14 +225,14 @@ Here's an example of how to use the `repositories` feature via the Descriptor AP
 
 ```json
 {
-	"repositories": [
-		"<repo1-url>", 
-		{
-			"path": "<repo2-url>", 
-			"username": "auth-username", 
-			"password": "auth-token"
-		}
-	]
+    "repositories": [
+        "<repo1-url>", 
+        {
+            "path": "<repo2-url>", 
+            "username": "auth-username", 
+            "password": "auth-token"
+        }
+    ]
 }
 ```
 
@@ -243,13 +243,13 @@ Here's an example of how to use the `repositories` feature via the JupyterIntegr
 ```kotlin
 USE { 
     repositories("<repo1>", "<repo2>") 
-	// or 
-	repositories { 
+    // or 
+    repositories { 
         maven { 
             url = "<repo1-url>"
-			credentials { 
+            credentials { 
                 username = "auth-username"
-				password = "auth-token" 
+                password = "auth-token" 
             } 
         } 
     }
@@ -267,10 +267,10 @@ Here's an example of how to use the `imports` feature via the Descriptor API:
 
 ```json
 {
-	"imports": [
-		"my.package.*", 
-		"my.package.Clazz"
-	]
+    "imports": [
+        "my.package.*", 
+        "my.package.Clazz"
+    ]
 }
 ```
 
@@ -281,9 +281,9 @@ Here's an example of how to use the `imports` feature via the JupyterIntegration
 ```kotlin
 USE { 
     imports("my.package.*", "my.package.Clazz") 
-	// or 
-	import<Clazz>()
-	importPackage<Clazz>()
+    // or 
+    import<Clazz>()
+    importPackage<Clazz>()
 }
 ```
 
@@ -298,10 +298,10 @@ Here's an example of how to use this type of callback via the Descriptor API:
 
 ```json
 {
-	"init": [
-		"val x = 3", 
-		"%use dataframe"
-	]
+    "init": [
+        "val x = 3", 
+        "%use dataframe"
+    ]
 }
 ```
 
@@ -312,8 +312,8 @@ Here's an example of how to use this type of callback via the JupyterIntegration
 ```kotlin
 USE { 
     onLoaded { 
-        println("Integration loaded")
-		// Makes the variable visible inside the notebook 
+        println("Integration loaded") 
+        // Makes the variable visible inside the notebook 
         scheduleExecution("val x = 3") 
     }
 }
@@ -330,10 +330,10 @@ Here's an example of how to use this type of callback via the Descriptor API:
 
 ```json
 {
-	"initCell": [
-		"val y = x + 1", 
-		"println(\"abc\")"
-	]
+    "initCell": [
+      "val y = x + 1",
+      "println(\"abc\")"
+    ]
 }
 ```
 
@@ -344,8 +344,8 @@ Here's an example of how to use this type of callback via the JupyterIntegration
 ```kotlin
 USE { 
     beforeCellExecution { 
-        println("Before cell execution")
-		// Variable x will be visible inside the notebook 
+        println("Before cell execution") 
+        // Variable x will be visible inside the notebook 
         scheduleExecution("val x = 3") 
     }
 }
@@ -362,8 +362,8 @@ Here's an example of how to use this type of callback via the JupyterIntegration
 ```kotlin
 USE { 
     afterCellExecution { snippetInstance, resultField -> 
-        println("After cell execution: ${resultField.name} = ${resultField.value}")
-		// Variable x will be visible inside the notebook 
+        println("After cell execution: ${resultField.name} = ${resultField.value}") 
+        // Variable x will be visible inside the notebook 
         scheduleExecution("val x = 3") 
     }
 }
@@ -395,10 +395,10 @@ Here's an example of how to use this type of callback via the Descriptor API:
 
 ```json
 {
-	"shutdown": [
-		"val y = x + 1", 
-		"println(\"abc\")"
-	]
+    "shutdown": [
+        "val y = x + 1", 
+        "println(\"abc\")"
+    ]
 }
 ```
 
@@ -427,10 +427,10 @@ Here's an example of how to use this type of callback via the JupyterIntegration
 var isDark = notebook.currentColorScheme == ColorScheme.DARK
 USE { 
     println("Dark? - $isDark")
-	
-	onColorSchemeChange { colorScheme -> 
+    
+    onColorSchemeChange { colorScheme -> 
         isDark = colorScheme == ColorScheme.DARK
-		println("Color scheme is changed") 
+        println("Color scheme is changed") 
     }
 }
 ```
@@ -447,9 +447,9 @@ Here's an example of how to use the `renderers` feature via the Descriptor API:
 
 ```json
 {
-	"renderers": {
-		"org.jetbrains.letsPlot.intern.Plot": "HTML(frontendContext.getHtml($it as org.jetbrains.letsPlot.intern.Plot))"
-	}
+    "renderers": {
+        "org.jetbrains.letsPlot.intern.Plot": "HTML(frontendContext.getHtml($it as org.jetbrains.letsPlot.intern.Plot))"
+    }
 }
 ```
 
@@ -514,8 +514,8 @@ USE {
         // MyWrapper class should be previously defined in the notebook 
         execute("MyWrapper(${kProperty.name})").name 
     }
-	
-	onVariable<MyType2> { value, kProperty -> 
+  
+    onVariable<MyType2> { value, kProperty -> 
         println("Variable ${kProperty.name}=$value executed!") 
     }
 }
@@ -563,7 +563,7 @@ annotation class MyAnnotation
 USE { 
     onFileAnnotation<MyAnnotation> { 
         val myAnno = it.first() as MyAnnotation
-		println("My annotation object: $myAnno") 
+        println("My annotation object: $myAnno") 
     }
 }
 ```
@@ -638,10 +638,10 @@ Here's an example of how to use typename rules via the Descriptor API:
 
 ```json5
 {
-	"integrationTypeNameRules": [
-		"-:org.jetbrains.kotlinx.dataframe.**", 
-		//"+:org.jetbrains.kotlinx.dataframe.**",
-	]
+    "integrationTypeNameRules": [
+        "-:org.jetbrains.kotlinx.dataframe.**", 
+        //"+:org.jetbrains.kotlinx.dataframe.**",
+    ]
 }
 ```
 
@@ -671,7 +671,7 @@ Here's an example of how to define the minimal kernel version via the Descriptor
 
 ```json
 {
-	"minKernelVersion": "0.11.0.1"
+    "minKernelVersion": "0.11.0.1"
 }
 ```
 
@@ -703,19 +703,19 @@ Options ending with `-renovate-hint` are ignored in descriptors and shouldn't be
 
 ```json
 {
-	"properties": [
-		{
-			"name": "api", 
-			"value": "4.4.1"
-		}, 
-		{
-			"name": "api-renovate-hint", 
-			"value": "update: package=org.jetbrains.lets-plot:lets-plot-kotlin-kernel"
-		}
-	], 
-	"dependencies": [
-		"org.company:library:$api"
-	]
+    "properties": [
+        {
+            "name": "api", 
+            "value": "4.4.1"
+        }, 
+        {
+            "name": "api-renovate-hint", 
+            "value": "update: package=org.jetbrains.lets-plot:lets-plot-kotlin-kernel"
+        }
+    ], 
+    "dependencies": [
+        "org.company:library:$api"
+    ]
 }
 ```
 
@@ -724,8 +724,8 @@ Options ending with `-renovate-hint` are ignored in descriptors and shouldn't be
 Here's an example of how to use library options via the JupyterIntegration API:
 
 ```kotlin
-USE {
-	addOption("api", "4.4.1")
+USE { 
+    addOption("api", "4.4.1")
 }
 ```
 
@@ -744,7 +744,7 @@ Here's an example of adding links to the library site via the Descriptor API:
 
 ```json
 {
-	"link": "https://github.com/Kotlin/kandy"
+    "link": "https://github.com/Kotlin/kandy"
 }
 ```
 
@@ -769,7 +769,7 @@ Here's an example of adding a library description via the Descriptor API:
 
 ```json
 {
-	"description": "Kotlin plotting DSL for Lets-Plot"
+    "description": "Kotlin plotting DSL for Lets-Plot"
 }
 ```
 
@@ -835,7 +835,7 @@ For `build.gradle`:
 
 ```groovy
 plugins {
-	id "org.jetbrains.kotlin.jupyter.api" version "<jupyterApiVersion>"
+    id "org.jetbrains.kotlin.jupyter.api" version "<jupyterApiVersion>"
 }
 ```
 
@@ -866,10 +866,10 @@ can still add the dependency manually by using the method from the `kotlinJupyte
 
 ```groovy
 kotlinJupyter {
-	// Uses the default version
-	addApiDependency()
-	// Uses a custom artifact version
-	addApiDependency("0.10.0.1") 
+    // Uses the default version
+    addApiDependency()
+    // Uses a custom artifact version
+    addApiDependency("0.10.0.1") 
 }
 ```
 
@@ -899,9 +899,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.*
 internal class Integration : JupyterIntegration() { 
     override fun Builder.onLoaded() { 
         render<MyClass> { HTML(it.toHTML()) }
-		import("org.my.lib.*")
-		import("org.my.lib.io.*")
-	}
+        import("org.my.lib.*")
+        import("org.my.lib.io.*")
+    }
 }
 ```
 
@@ -925,7 +925,7 @@ For `build.gradle`:
 
 ```groovy
 processJupyterApiResources {
-	libraryProducers = ["org.my.lib.Integration"]
+    libraryProducers = ["org.my.lib.Integration"]
 }
 ```
 
@@ -970,12 +970,12 @@ resources. This file should contain FQNs of all integration classes in the JSON 
 
 ```json
 {
-	"definitions": [], 
-	"producers": [
-		{
-			"fqn": "org.jetbrains.kotlinx.jupyter.example.GettingStartedIntegration"
-		}
-	]
+    "definitions": [], 
+    "producers": [
+        {
+            "fqn": "org.jetbrains.kotlinx.jupyter.example.GettingStartedIntegration"
+        }
+    ]
 }
 ```
 
