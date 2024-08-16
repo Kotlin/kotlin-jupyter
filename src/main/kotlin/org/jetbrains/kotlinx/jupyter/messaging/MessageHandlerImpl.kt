@@ -7,7 +7,6 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import java.io.Closeable
-import java.util.concurrent.atomic.AtomicLong
 
 class MessageHandlerImpl(
     private val loggerFactory: KernelLoggerFactory,
@@ -17,7 +16,7 @@ class MessageHandlerImpl(
     private val socketManager: JupyterBaseSockets,
     private val executor: JupyterExecutor,
 ) : AbstractMessageHandler(), Closeable {
-    private val executionCount = AtomicLong(1)
+    private val executionCounter = ExecutionCounter(1)
 
     override fun createProcessor(message: RawMessage): MessageRequestProcessor {
         return MessageRequestProcessorImpl(
@@ -26,7 +25,7 @@ class MessageHandlerImpl(
             socketManager,
             commManager,
             executor,
-            executionCount,
+            executionCounter,
             loggerFactory,
             repl,
         )

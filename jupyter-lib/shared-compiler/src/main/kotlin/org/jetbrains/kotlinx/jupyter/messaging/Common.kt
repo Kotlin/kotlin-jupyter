@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// See https://jupyter-client.readthedocs.io/en/latest/messaging.html#request-reply
+// for the definition of these values.
 @Serializable
 enum class MessageStatus {
     @SerialName("ok")

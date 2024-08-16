@@ -28,7 +28,7 @@ class ApiTest : AbstractSingleReplTest() {
         jupyterId: Int,
         code: String,
     ): EvalResultEx {
-        return eval(code, jupyterId = jupyterId)
+        return eval(code, jupyterId)
     }
 
     @Test

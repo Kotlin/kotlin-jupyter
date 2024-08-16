@@ -2,6 +2,7 @@ package build
 
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
+import build.util.exampleKernel
 import build.util.taskTempFile
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
@@ -74,6 +75,7 @@ class ReadmeGenerator(
         "supported_commands" to ::processCommands,
         "magics" to ::processMagics,
         "kotlin_version" to ::processKotlinVersion,
+        "kernel_version" to ::processKernelVersion,
         "repo_url" to ::processRepoUrl
     )
 
@@ -100,17 +102,30 @@ class ReadmeGenerator(
     }
 
     private fun processMagics(): String {
-        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString("\n") {
-            val description = " - `%${it.nameForUser}` - ${it.desc}."
+        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString(
+            "\n",
+            """
+                
+                | Magic | Description | Usage example |
+                | ----- | ----------- | ------------- |
+                
+            """.trimIndent(),
+        ) {
+            val magicName = "`%${it.nameForUser}`"
+            val description = it.desc
             val usage = if (it.argumentsUsage == null) ""
-            else " Usage example: `%${it.nameForUser} ${it.argumentsUsage}`"
+            else "`%${it.nameForUser} ${it.argumentsUsage}`"
 
-            description + usage
+            "| $magicName | $description | $usage |"
         }
     }
 
     private fun processKotlinVersion(): String {
         return project.defaultVersionCatalog.versions.devKotlin
+    }
+
+    private fun processKernelVersion(): String {
+        return project.defaultVersionCatalog.versions.exampleKernel
     }
 
     private fun processRepoUrl(): String {

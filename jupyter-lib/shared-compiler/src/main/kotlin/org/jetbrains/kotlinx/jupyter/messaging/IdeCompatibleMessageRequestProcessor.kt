@@ -31,7 +31,6 @@ import org.jetbrains.kotlinx.jupyter.util.withSubstitutedStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -41,7 +40,7 @@ open class IdeCompatibleMessageRequestProcessor(
     final override val socketManager: JupyterBaseSockets,
     protected val commManager: CommManagerInternal,
     protected val executor: JupyterExecutor,
-    protected val executionCount: AtomicLong,
+    protected val executionCounter: ExecutionCounter,
     loggerFactory: KernelLoggerFactory,
     protected val repl: ReplForJupyter,
 ) : AbstractMessageRequestProcessor(rawIncomingMessage),
@@ -117,10 +116,7 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 
     override fun processExecuteRequest(content: ExecuteRequest) {
-        val count =
-            executionCount.getAndUpdate {
-                if (content.storeHistory) it + 1 else it
-            }
+        val count = executionCounter.next(content.storeHistory)
         val startedTime = ISO8601DateNow
 
         doWrappedInBusyIdle {
@@ -140,7 +136,7 @@ open class IdeCompatibleMessageRequestProcessor(
                             repl.evalEx(
                                 EvalRequestData(
                                     code,
-                                    count.toInt(),
+                                    count,
                                     content.storeHistory,
                                     content.silent,
                                 ),

@@ -27,6 +27,9 @@ val embeddableKernel: Configuration by configurations.creating
 val scriptClasspathShadowed: Configuration by configurations.creating
 val ideScriptClasspathShadowed: Configuration by configurations.creating
 
+val spaceUsername: String by properties
+val spaceToken: String by properties
+
 ktlint {
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
@@ -271,6 +274,17 @@ kotlinPublications {
         developers {
             developer("nikitinas", "Anatoly Nikitin", "Anatoly.Nikitin@jetbrains.com")
             developer("ileasile", "Ilya Muradyan", "Ilya.Muradyan@jetbrains.com")
+        }
+    }
+
+    remoteRepositories {
+        maven {
+            name = "intellij-deps"
+            url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+            credentials {
+                username = spaceUsername
+                password = spaceToken
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
+import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
@@ -44,7 +45,7 @@ internal class CellExecutorImpl(
         processMagics: Boolean,
         invokeAfterCallbacks: Boolean,
         isUserCode: Boolean,
-        currentCellId: Int,
+        currentCellId: CellId,
         stackFrame: ExecutionStackFrame?,
         executorWorkflowListener: ExecutorWorkflowListener?,
     ): InternalEvalResult {

@@ -44,6 +44,7 @@ private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSIO
 fun Project.versionCatalog(name: String): NamedVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { NamedVersionCatalogsExtension(this, name) }
 val Project.defaultVersionCatalog get(): NamedVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
 
+val NamedVersionCatalogsExtension.Versions.exampleKernel get() = get("jupyterApi")
 val NamedVersionCatalogsExtension.Versions.devKotlin get() = get("kotlin")
 val NamedVersionCatalogsExtension.Versions.stableKotlin get() = get("stableKotlin")
 val NamedVersionCatalogsExtension.Versions.gradleKotlin get() = get("gradleKotlin")
