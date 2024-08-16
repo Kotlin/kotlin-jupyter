@@ -454,15 +454,6 @@ You can use the following line magics in your notebooks using the Kotlin Kernel:
 
 [[magics]]
 
-|Command               | Description                                                                                                                                                                                                                                                                                                                                         |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|**`%use`**            | Imports supported libraries and injects code from these libraries. Usage example: `%use klaxon(5.5), lets-plot`.                                                                                                                                                                                                                                    |
-|**`%trackClasspath`** | Logs any changes of the current classpath. This command is useful for debugging artifact resolution failures. Usage example: `%trackClasspath [on\|off]`.                                                                                                                                                                                           |
-|**`%trackExecution`** | Logs pieces of code to be executed. This command is useful for debugging libraries support. Usage example: `%trackExecution [all\|generated\|off]`.                                                                                                                                                                                                 |
-|**`%useLatestDescriptors`** | Sets the latest versions of available library descriptors instead of bundled descriptors (used by default). Note that bundled descriptors are preferred because the current kernel version might not support the latest descriptors. For better notebook stability, avoid using this line magic. Usage example: `%useLatestDescriptors [on\|off]`.  |
-|**`%output`**         | Configures the output capturing settings. Usage example: `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400`.                                                                                                                                                                                                                |
-|**`%logLevel`**       | Sets logging level. Usage example: `%logLevel [off\|error\|warn\|info\|debug]`.                                                                                                                                                                                                                                                                     |
-
 > **Note:** For more information, see [Line magics](magics.md).
 
 ### Supported libraries
@@ -547,54 +538,6 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
 <summary>Click to see the list of supported libraries.</summary>
 
 [[supported_libraries]]
-
-* **[2p-kt](https://github.com/gciatto/kt-math):** Kotlin multi-platform ecosystem for symbolic AI.
-* **[biokotlin](https://github.com/maize-genetics/BioKotlin):** High-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
-* **[combinatoricskt](https://github.com/shiguruikai/combinatoricskt):** Combinatorics library for Kotlin.
-* **[coroutines](https://github.com/Kotlin/kotlinx.coroutines):** Asynchronous programming and reactive streams support.
-* **[dataframe](https://github.com/Kotlin/dataframe):** Kotlin framework for structured data processing.
-* **[datetime](https://github.com/Kotlin/kotlinx-datetime):** Kotlin date/time library.
-* **[deeplearning4j](https://github.com/eclipse/deeplearning4j):** Deep learning library for the JVM.
-* **[deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j):** Deep learning library for the JVM (with CUDA support).
-* **default:** Default imports for DataFrame and Kandy libraries.
-* **[develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin):** Library to use the Develocity API in Kotlin scripts or projects.
-* **[exposed](https://github.com/JetBrains/Exposed):** Kotlin SQL framework.
-* **[fuel](https://github.com/kittinunf/fuel):** HTTP networking library.
-* **[gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin):** (**Note:** This library is deprecated. Use `develocity-api-kotlin` instead.) A library to use the Gradle Enterprise API in Kotlin scripts or projects.
-* **[gral](https://github.com/eseifert/gral):** Java library for displaying plots.
-* **[jdsp](https://github.com/psambit9791/jDSP):** Java library for signal processing.
-* **[jupyter-js](https://github.com/yidafu/kotlin-jupyter-js):** Experimental `%javascript`, `%typescript`, and `%jsx` line magic support.
-* **[kalasim](https://www.kalasim.org):** Discrete event simulator.
-* **[kaliningraph](https://github.com/breandan/kaliningraph):** Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms.
-* **[kandy](https://github.com/Kotlin/kandy):** Kotlin plotting DSL for Lets-Plot library.
-* **[kandy-echarts](https://github.com/Kotlin/kandy):** Kotlin plotting DSL for Apache ECharts.
-* **[khttp](https://github.com/jkcclemens/khttp):** HTTP networking library.
-* **[klaxon](https://github.com/cbeust/klaxon):** JSON parser for Kotlin.
-* **[kmath](https://github.com/mipt-npm/kmath):** Experimental Kotlin algebra-based mathematical library.
-* **[kotlin-dl](https://github.com/Kotlin/kotlindl):** KotlinDL library which provides Keras-like API for deep learning.
-* **[kotlin-statistics](https://github.com/thomasnield/kotlin-statistics):** Idiomatic statistical operators for Kotlin.
-* **[krangl](https://github.com/holgerbrandl/krangl):** Kotlin DSL for data wrangling.
-* **[kraphviz](https://github.com/nidi3/graphviz-java):** Graphviz wrapper for JVM.
-* **[kravis](https://github.com/holgerbrandl/kravis):** Kotlin grammar for data visualization.
-* **[kt-math](https://github.com/gciatto/kt-math):** Kotlin multi-platform port of Java Math.
-* **[ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util):** Asynchronous HTTP client.
-* **[lets-plot](https://github.com/JetBrains/lets-plot-kotlin):** Multiplatform plotting library based on Grammar of Graphics.
-* **[lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin):** Lets-Plot visualization for GeoTools toolkit.
-* **[lib-ext](https://github.com/Kotlin/kotlin-jupyter):** Extended functionality for Jupyter Kernel.
-* **[londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit):** - Natural Language Processing (NLP) toolkit for Kotlin on the JVM.
-* **[multik](https://github.com/Kotlin/multik):** Multidimensional array library for Kotlin.
-* **[mysql](https://github.com/mysql/mysql-connector-j):** MySql JDBC Connector.
-* **[openai](https://openai.com/blog/chatgpt):** OpenAI API for Jupyter Notebooks.
-* **[plotly](https://github.com/mipt-npm/plotly.kt):** (beta) Plotly.kt Jupyter integration for static plots.
-* **[plotly-server](https://github.com/mipt-npm/plotly.kt):** (beta) Plotly.kt Jupyter integration for dynamic plots.
-* **[rdkit](https://www.rdkit.org/):** Open-Source Cheminformatics software.
-* **[reflection](https://kotlinlang.org/docs/reflection.html):** Imports for Kotlin Reflection.
-* **[roboquant](https://roboquant.org):** Algorithmic trading platform written in Kotlin.
-* **[serialization](https://github.com/Kotlin/kotlin-jupyter-http-util):** Deserialize JSON content using kotlinx.serialization and automatically generate corresponding classes.
-* **[smile](https://github.com/haifengl/smile):** Statistical machine intelligence and learning engine.
-* **[spark](https://github.com/JetBrains/kotlin-spark-api):** Kotlin API for Apache Spark. Unified analytics engine for large-scale data processing.
-* **[spark-streaming](https://github.com/JetBrains/kotlin-spark-api):** Kotlin API for Apache Spark streaming. Scalable, high-throughput, fault-tolerant stream processing of live data streams.
-* **[webtau](https://github.com/testingisdocumenting/webtau):** WebTau end-to-end testing across layers.
 
 </details>
 

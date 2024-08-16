@@ -2,21 +2,21 @@ package org.jetbrains.kotlinx.jupyter.common
 
 enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     USE(
-        "injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers",
+        "Imports supported libraries and injects code from these libraries (artifact resolution, default imports, initialization code, and type renderers).",
         "klaxon(5.5), lets-plot",
     ),
-    TRACK_CLASSPATH("logs any changes of current classpath. Useful for debugging artifact resolution failures", "[on|off]"),
-    TRACK_EXECUTION("logs pieces of code that are going to be executed. Useful for debugging of libraries support", "[all|generated|off]"),
-    DUMP_CLASSES_FOR_SPARK("stores compiled repl classes in special folder for Spark integration", "[on|off]", visibleInHelp = false),
+    TRACK_CLASSPATH("Logs any changes of the current classpath. This command is useful for debugging artifact resolution failures.", "[on/off]"),
+    TRACK_EXECUTION("Logs pieces of code to be executed. This command is useful for debugging libraries support.", "[all/generated/off]"),
+    DUMP_CLASSES_FOR_SPARK("Stores compiled REPL classes in a special folder for integrating with Spark.", "[on/off]", visibleInHelp = false),
     USE_LATEST_DESCRIPTORS(
-        "use latest versions of library descriptors available. By default, bundled descriptors are used. " +
-            "Note that default behavior is preferred: latest descriptors versions might be not supported by current version of kernel. " +
-            "So if you care about stability of the notebook, avoid using this line magic",
-        "[on|off]",
+        "Sets the latest versions of available library descriptors instead of bundled descriptors (used by default). " +
+            "Note that bundled descriptors are preferred because the current kernel version might not support the latest descriptors. " +
+            "For better notebook stability, use bundled descriptors.",
+        "[on/off]",
     ),
-    OUTPUT("output capturing settings", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400"),
-    LOG_LEVEL("set logging level", "[off|error|warn|info|debug]"),
-    LOG_HANDLER("manage logging handlers", "[list | remove <name> | add <name> --<type> [... typeArgs]]", visibleInHelp = false),
+    OUTPUT("Configures the output capturing settings.", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400"),
+    LOG_LEVEL("Sets logging level.", "[off/error/warn/info/debug]"),
+    LOG_HANDLER("Manages logging handlers.", "[list / remove <name> / add <name> --<type> [... typeArgs]]", visibleInHelp = false),
     ;
 
     val nameForUser = getNameForUser(name)
