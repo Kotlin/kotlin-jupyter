@@ -96,27 +96,25 @@ class ReadmeGenerator(
     }
 
     private fun processCommands(): String {
-        return ReplCommand.values().joinToString("\n") {
-            " - `:${it.nameForUser}` - ${it.desc}"
+        return ReplCommand.values().joinToString(
+            "\n",
+            tableHeader(listOf("Command", "Description"))
+        ) {
+            tableRow(listOf("`:${it.nameForUser}`", it.desc))
         }
     }
 
     private fun processMagics(): String {
         return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString(
             "\n",
-            """
-                
-                | Magic | Description | Usage example |
-                | ----- | ----------- | ------------- |
-                
-            """.trimIndent(),
+            tableHeader(listOf("Magic", "Description", "Usage example"))
         ) {
             val magicName = "`%${it.nameForUser}`"
             val description = it.desc
             val usage = if (it.argumentsUsage == null) ""
             else "`%${it.nameForUser} ${it.argumentsUsage}`"
 
-            "| $magicName | $description | $usage |"
+            tableRow(listOf(magicName, description, usage))
         }
     }
 
@@ -130,5 +128,20 @@ class ReadmeGenerator(
 
     private fun processRepoUrl(): String {
         return "${settings.projectRepoUrl}.git"
+    }
+
+    private fun tableHeader(titles: List<String>): String {
+        return """
+            
+            ${tableRow(titles)}
+            ${titles.joinToString("|", "|", "|") {
+                ":" + "-".repeat(it.length + 1)
+            }}
+            
+        """.trimIndent()
+    }
+
+    private fun tableRow(contents: List<String>): String {
+        return contents.joinToString(" | ", "| ", " |")
     }
 }

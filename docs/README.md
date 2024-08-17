@@ -245,9 +245,12 @@ python -m kotlin_kernel add-kernel --name "JDK 15 Big 2 GPU" --jdk ~/.jdks/openj
 ### REPL commands
 
 The following REPL commands are supported:
- - `:help` - display help
- - `:classpath` - show current classpath
- - `:vars` - get visible variables values
+
+| Command | Description |
+|:--------|:------------|
+| `:help` | Displays help information with details of the notebook version, line magics, and supported libraries. |
+| `:classpath` | Displays the current classpath of your notebook environment, showing a list of locations where the notebook searches for libraries and resources. |
+| `:vars` | Displays information about the declared variables and their values. |
  
 ### Dependencies resolving
 
@@ -300,7 +303,7 @@ The following maven repositories are included by default:
 The following line magics are supported:
 
 | Magic | Description | Usage example |
-| ----- | ----------- | ------------- |
+|:------|:------------|:--------------|
 | `%use` | injects code for supported libraries: artifact resolution, default imports, initialization code, type renderers | `%use klaxon(5.5), lets-plot` |
 | `%trackClasspath` | logs any changes of current classpath. Useful for debugging artifact resolution failures | `%trackClasspath [on/off]` |
 | `%trackExecution` | logs pieces of code that are going to be executed. Useful for debugging of libraries support | `%trackExecution [all/generated/off]` |
