@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
@@ -109,7 +111,7 @@ abstract class AbstractReplTest {
 
                 override fun provideScriptReceivers() = emptyList<Any>()
 
-                override fun provideIsEmbedded() = false
+                override fun provideKernelRunMode() = StandaloneKernelRunMode
 
                 override fun provideDisplayHandler() = displayHandlerProvider(notebook)
 
@@ -125,7 +127,7 @@ abstract class AbstractReplTest {
         return createRepl(
             httpUtil,
             scriptClasspath = embeddedClasspath,
-            isEmbedded = true,
+            kernelRunMode = EmbeddedKernelRunMode,
             displayHandler = displayHandler,
             inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder(),
         )

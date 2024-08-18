@@ -2,7 +2,9 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
@@ -57,6 +59,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
             communicationFacility,
             explicitClientType,
             librariesScanner,
+            kernelRunMode,
             debugPort != null,
         )
 
@@ -72,7 +75,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideScriptReceivers() = emptyList<Any>()
 
-    override fun provideIsEmbedded() = false
+    override fun provideKernelRunMode(): KernelRunMode = StandaloneKernelRunMode
 
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(loggerFactory)
 

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
@@ -132,7 +133,7 @@ fun embedKernel(
         ReplConfig.create(
             { httpUtil, _ -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
             homeDir = null,
-            embedded = true,
+            kernelRunMode = EmbeddedKernelRunMode,
         )
     val replSettings =
         DefaultReplSettings(

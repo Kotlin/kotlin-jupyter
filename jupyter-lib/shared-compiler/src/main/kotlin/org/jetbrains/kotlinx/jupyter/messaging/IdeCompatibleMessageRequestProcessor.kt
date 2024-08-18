@@ -192,14 +192,14 @@ open class IdeCompatibleMessageRequestProcessor(
         socketManager.control.sendMessage(
             messageFactory.makeReplyMessage(MessageType.SHUTDOWN_REPLY, content = incomingMessage.content),
         )
-        // exitProcess would kill the entire process that embedded the kernel
-        // Instead the controlThread will be interrupted,
-        // which will then interrupt the mainThread and make kernelServer return
-        if (repl.isEmbedded) {
+        if (repl.kernelRunMode.shouldKillProcessOnShutdown) {
+            exitProcess(0)
+        } else {
+            // exitProcess would kill the entire process that embedded the kernel
+            // Instead the controlThread will be interrupted,
+            // which will then interrupt the mainThread and make kernelServer return
             logger.info("Interrupting controlThread to trigger kernel shutdown")
             throw InterruptedException()
-        } else {
-            exitProcess(0)
         }
     }
 

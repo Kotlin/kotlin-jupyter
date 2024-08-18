@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
@@ -34,7 +35,7 @@ abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructib
     override val libraryResolver: LibraryResolver? by lazy { provideLibraryResolver() }
     override val runtimeProperties: ReplRuntimeProperties by lazy { provideRuntimeProperties() }
     override val scriptReceivers: List<Any> by lazy { provideScriptReceivers() }
-    override val isEmbedded: Boolean by lazy { provideIsEmbedded() }
+    override val kernelRunMode: KernelRunMode by lazy { provideKernelRunMode() }
     override val librariesScanner: LibrariesScanner by lazy { provideLibrariesScanner() }
     override val communicationFacility: JupyterCommunicationFacility by lazy { provideCommunicationFacility() }
     override val commManager: CommManager by lazy { provideCommManager() }

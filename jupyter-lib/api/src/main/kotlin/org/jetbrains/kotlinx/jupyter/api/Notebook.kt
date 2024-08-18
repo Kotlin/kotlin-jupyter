@@ -116,6 +116,12 @@ interface Notebook {
     val jupyterClientType: JupyterClientType
 
     /**
+     * Kernel Run mode. Determines some capabilities of a running kernel depending on the
+     * environment it's running under
+     */
+    val kernelRunMode: KernelRunMode
+
+    /**
      * Renderers processor gives an ability to render values and
      * and add new renderers
      */

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
@@ -37,7 +38,7 @@ interface ReplComponentsProvider {
     val libraryResolver: LibraryResolver?
     val runtimeProperties: ReplRuntimeProperties
     val scriptReceivers: List<Any>
-    val isEmbedded: Boolean
+    val kernelRunMode: KernelRunMode
     val librariesScanner: LibrariesScanner
     val communicationFacility: JupyterCommunicationFacility
     val commManager: CommManager

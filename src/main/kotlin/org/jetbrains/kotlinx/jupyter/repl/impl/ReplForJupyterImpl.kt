@@ -20,6 +20,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
@@ -145,7 +146,7 @@ class ReplForJupyterImpl(
     override val libraryResolver: LibraryResolver? = null,
     override val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     private val scriptReceivers: List<Any> = emptyList(),
-    override val isEmbedded: Boolean = false,
+    override val kernelRunMode: KernelRunMode,
     override val notebook: MutableNotebook,
     override val librariesScanner: LibrariesScanner,
     override val debugPort: Int? = null,
@@ -261,42 +262,17 @@ class ReplForJupyterImpl(
     override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
     private val currentSources = mutableSetOf<String>()
 
-    private class FilteringClassLoader(parent: ClassLoader, val includeFilter: (String) -> Boolean) :
-        ClassLoader(parent) {
-        override fun loadClass(
-            name: String?,
-            resolve: Boolean,
-        ): Class<*> {
-            val c =
-                if (name != null && includeFilter(name)) {
-                    parent.loadClass(name)
-                } else {
-                    parent.parent.loadClass(name)
-                }
-            if (resolve) {
-                resolveClass(c)
-            }
-            return c
-        }
-    }
-
     private val evaluatorConfiguration =
         ScriptEvaluationConfiguration {
             implicitReceivers.invoke(v = scriptReceivers)
-            if (!isEmbedded) {
+            val intermediaryClassLoader =
+                kernelRunMode.createIntermediaryClassLoader(
+                    ReplForJupyterImpl::class.java.classLoader,
+                )
+            if (intermediaryClassLoader != null) {
                 jvm {
-                    val filteringClassLoader =
-                        FilteringClassLoader(ReplForJupyterImpl::class.java.classLoader) { fqn ->
-                            listOf(
-                                "jupyter.kotlin.",
-                                "org.jetbrains.kotlinx.jupyter.api",
-                                "kotlin.",
-                                "kotlinx.serialization.",
-                            ).any { fqn.startsWith(it) } ||
-                                (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
-                        }
                     val scriptClassloader =
-                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), filteringClassLoader)
+                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), intermediaryClassLoader)
                     baseClassLoader(scriptClassloader)
                 }
             }

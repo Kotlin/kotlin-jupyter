@@ -19,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
@@ -27,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.TextRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
@@ -364,6 +366,9 @@ object NotebookMock : Notebook {
 
     override val jupyterClientType: JupyterClientType
         get() = JupyterClientType.UNKNOWN
+
+    override val kernelRunMode: KernelRunMode
+        get() = StandaloneKernelRunMode
 
     override val commManager: CommManager
         get() = CommManagerImpl(CommunicationFacilityMock)
