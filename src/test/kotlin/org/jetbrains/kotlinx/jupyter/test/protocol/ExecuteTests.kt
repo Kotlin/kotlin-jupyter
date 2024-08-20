@@ -54,6 +54,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.condition.EnabledForJreRange
+import org.junit.jupiter.api.condition.JRE
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
@@ -562,12 +564,13 @@ class ExecuteTests : KernelServerTestsBase() {
     }
 
     @Test
+    @EnabledForJreRange(max = JRE.JAVA_19, disabledReason = "Thread.stop() is not supported on JDK 20+")
     fun testInterrupt() {
         doExecute(
             "while(true);",
             hasResult = false,
             executeRequestSent = {
-                Thread.sleep(15000)
+                Thread.sleep(15_000)
                 interruptExecution()
             },
             ioPubChecker = { iopubSocket ->

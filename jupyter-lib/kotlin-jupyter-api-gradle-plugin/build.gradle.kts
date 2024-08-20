@@ -47,8 +47,7 @@ java {
 }
 
 buildSettings {
-    // see https://docs.gradle.org/current/userguide/compatibility.html#kotlin
-    withLanguageLevel("1.4")
+    withLanguageLevel(rootSettings.gradleCompatibleKotlinLanguageLevel)
     withTests()
 }
 

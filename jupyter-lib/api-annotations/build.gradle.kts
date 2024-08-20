@@ -14,10 +14,7 @@ dependencies {
 }
 
 buildSettings {
-    // 1.3 is compatible with Gradle 6.*
-    // 1.4 is only compatible with Gradle 7.*
-    // Keep that in mind while updating this version
-    withLanguageLevel("1.4")
+    withLanguageLevel(rootSettings.gradleCompatibleKotlinLanguageLevel)
 }
 
 kotlinPublications {
