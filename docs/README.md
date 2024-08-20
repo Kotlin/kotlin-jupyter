@@ -380,6 +380,7 @@ Other options are resolving library descriptor from a local file or from remote 
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - [Deprecated: use develocity-api-kotlin] A library to use the Gradle Enterprise API in Kotlin scripts or projects
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [intellij-sdk](https://plugins.jetbrains.com/docs/intellij/welcome.html) - IntelliJ SDK that could be used in embedded mode of Kotlin Notebook
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`/`%typescript`/`%jsx` line magic support
  - [kalasim](https://www.kalasim.org) - Discrete event simulator
