@@ -18,7 +18,7 @@ class ReplFactoryBase(
                 libraryResolver,
                 runtimeProperties,
                 scriptReceivers,
-                isEmbedded,
+                kernelRunMode,
                 notebook,
                 librariesScanner,
                 debugPort,

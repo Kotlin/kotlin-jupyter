@@ -452,7 +452,6 @@ Line magics allow you to import libraries, configure output settings, and perfor
 
 You can use the following line magics in your notebooks using the Kotlin Kernel:
 
-
 | Magic | Description | Usage example |
 | ----- | ----------- | ------------- |
 | `%use` | Imports supported libraries and injects code from these libraries (artifact resolution, default imports, initialization code, and type renderers). | `%use klaxon(5.5), lets-plot` |

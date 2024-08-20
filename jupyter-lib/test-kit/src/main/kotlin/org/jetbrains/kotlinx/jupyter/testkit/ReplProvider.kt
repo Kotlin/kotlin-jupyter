@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
+import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
@@ -18,7 +19,7 @@ fun interface ReplProvider {
 
         val withoutLibraryResolution =
             ReplProvider { classpath ->
-                createRepl(httpUtil, scriptClasspath = classpath, isEmbedded = true).apply {
+                createRepl(httpUtil, scriptClasspath = classpath, kernelRunMode = EmbeddedKernelRunMode).apply {
                     initializeWithCurrentClasspath()
                 }
             }
@@ -37,7 +38,7 @@ fun interface ReplProvider {
             createRepl(
                 httpUtil = httpUtil,
                 scriptClasspath = classpath,
-                isEmbedded = true,
+                kernelRunMode = EmbeddedKernelRunMode,
                 mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver = resolver,
                 inMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,

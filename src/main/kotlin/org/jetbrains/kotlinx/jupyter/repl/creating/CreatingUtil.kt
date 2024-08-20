@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
@@ -25,7 +27,7 @@ fun createRepl(
     libraryResolver: LibraryResolver? = null,
     runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
     scriptReceivers: List<Any> = emptyList(),
-    isEmbedded: Boolean = false,
+    kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
     displayHandler: DisplayHandler = NoOpDisplayHandler,
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
     debugPort: Int? = null,
@@ -47,7 +49,7 @@ fun createRepl(
 
             override fun provideScriptReceivers() = scriptReceivers
 
-            override fun provideIsEmbedded() = isEmbedded
+            override fun provideKernelRunMode() = kernelRunMode
 
             override fun provideDisplayHandler() = displayHandler
 

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
@@ -48,7 +49,7 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
 
     fun provideScriptReceivers(): List<Any>
 
-    fun provideIsEmbedded(): Boolean
+    fun provideKernelRunMode(): KernelRunMode
 
     fun provideLibrariesScanner(): LibrariesScanner
 

@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
@@ -46,6 +47,7 @@ class NotebookImpl(
     private val communicationFacility: JupyterCommunicationFacility,
     private val explicitClientType: JupyterClientType?,
     override val libraryLoader: LibraryLoader,
+    override val kernelRunMode: KernelRunMode,
     debugPortProvided: Boolean,
 ) : MutableNotebook, Closeable {
     @Suppress("FunctionName")

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
@@ -66,8 +67,8 @@ open class DefaultReplComponentsProvider(
         return _settings.scriptReceivers
     }
 
-    override fun provideIsEmbedded(): Boolean {
-        return _settings.replConfig.embedded
+    override fun provideKernelRunMode(): KernelRunMode {
+        return _settings.replConfig.kernelRunMode
     }
 
     override fun provideCommunicationFacility(): JupyterCommunicationFacility {

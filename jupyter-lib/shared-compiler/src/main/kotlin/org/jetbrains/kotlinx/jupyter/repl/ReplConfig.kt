@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryHttpUtil
@@ -15,7 +17,7 @@ data class ReplConfig(
     val libraryResolver: LibraryResolver? = null,
     val httpUtil: LibraryHttpUtil,
     val resolutionInfoProvider: ResolutionInfoProvider,
-    val embedded: Boolean = false,
+    val kernelRunMode: KernelRunMode,
 ) {
     companion object {
         fun create(
@@ -23,7 +25,7 @@ data class ReplConfig(
             loggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory,
             httpUtil: LibraryHttpUtil = createLibraryHttpUtil(loggerFactory),
             homeDir: File? = null,
-            embedded: Boolean = false,
+            kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
         ): ReplConfig {
             val resolutionInfoProvider = resolutionInfoProviderFactory(httpUtil, loggerFactory)
 
@@ -39,7 +41,7 @@ data class ReplConfig(
                     ),
                 httpUtil = httpUtil,
                 resolutionInfoProvider = resolutionInfoProvider,
-                embedded = embedded,
+                kernelRunMode = kernelRunMode,
             )
         }
     }
