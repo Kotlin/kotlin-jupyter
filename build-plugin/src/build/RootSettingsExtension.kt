@@ -30,6 +30,7 @@ class RootSettingsExtension(
 
     val kotlinLanguageLevel by project.prop<String>()
     val stableKotlinLanguageLevel by project.prop<String>()
+    val gradleCompatibleKotlinLanguageLevel by project.prop<String>()
     val jvmTarget = project.defaultVersionCatalog.versions.jvmTarget
 
     val githubRepoUser by project.prop<String>()

@@ -119,6 +119,7 @@ buildSettings {
         requiresOptIn()
         skipPrereleaseCheck()
         samConversionsClass()
+        jdkRelease(rootSettings.jvmTarget)
     }
     withTests()
 }

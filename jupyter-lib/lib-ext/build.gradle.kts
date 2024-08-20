@@ -33,6 +33,7 @@ buildSettings {
     withTests()
     withCompilerArgs {
         requiresOptIn()
+        jdkRelease(libs.versions.jvmTarget.get())
     }
 }
 

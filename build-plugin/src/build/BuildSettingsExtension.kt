@@ -65,6 +65,7 @@ class BuildSettingsExtension(private val project: Project) {
         fun requiresOptIn() = args.add("-opt-in=kotlin.RequiresOptIn")
         fun allowResultReturnType() = args.add("-Xallow-result-return-type")
         fun useOldBackend() = args.add("-Xuse-old-backend")
+        fun jdkRelease(release: String) = args.add("-Xjdk-release=$release")
 
         fun samConversions(type: String) = args.add("-Xsam-conversions=$type")
         fun samConversionsClass() = samConversions("class")
