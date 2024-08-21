@@ -391,7 +391,6 @@ Other options are resolving library descriptor from a local file or from remote 
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
  - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning
- - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [ksl](https://github.com/rossetti/KSL) - KSL - Kotlin Simulation Library for Monte Carlo and Discrete-Event Simulation
