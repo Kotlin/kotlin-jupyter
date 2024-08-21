@@ -228,6 +228,7 @@ private class LibraryDescriptorsManagerImpl(
     }
 
     override fun downloadLibraries(ref: String) {
+        localLibrariesDir.deleteRecursively()
         localLibrariesDir.mkdirs()
 
         val url = resolveAgainstRemotePath("", ref)

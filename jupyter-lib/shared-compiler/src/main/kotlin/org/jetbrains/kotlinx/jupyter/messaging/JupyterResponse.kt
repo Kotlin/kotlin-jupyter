@@ -7,6 +7,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.exceptions.messageAndStackTrace
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
@@ -153,7 +154,7 @@ fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteEr
         executionCount,
         javaClass.canonicalName,
         message ?: "",
-        stackTrace.map { it.toString() },
+        messageAndStackTrace(false).lines(),
         getAdditionalInfoJson() ?: Json.EMPTY,
     )
 }
