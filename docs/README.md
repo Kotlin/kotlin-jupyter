@@ -215,12 +215,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`conda install -c jetbrains kotlin-jupyter-kernel={0.11.0.198}`
+`conda install -c jetbrains kotlin-jupyter-kernel={0.12.0-167}`
 
 ### Update with Pip
 
@@ -233,12 +233,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`pip install kotlin-jupyter-kernel=={0.11.0.198} --ignore-installed`
+`pip install kotlin-jupyter-kernel=={0.12.0-167} --ignore-installed`
 
 ### Update in Datalore
 
@@ -256,7 +256,7 @@ To update the Kotlin Kernel for notebooks in Datalore:
    - kotlin-jupyter-kernel=={VERSION}
    ```
 
-2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
 
 3. Stop and restart the machine in Datalore.
 
@@ -365,11 +365,11 @@ The features of the Kotlin Kernel for Jupyter notebooks include:
 
 Our Kotlin Kernel for notebooks comes with a set of REPL commands that let you explore your notebook environment. The following REPL commands are supported:
 
-| Command      | Description                                                                                                                                       |
-|:-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `:help`      | Displays help information with details of the notebook version, line magics, and supported libraries.                                             |
+| Command | Description |
+|:--------|:------------|
+| `:help` | Displays help information with details of the notebook version, line magics, and supported libraries. |
 | `:classpath` | Displays the current classpath of your notebook environment, showing a list of locations where the notebook searches for libraries and resources. |
-| `:vars`      | Displays information about the declared variables and their values.                                                                               |
+| `:vars` | Displays information about the declared variables and their values. |
 
 ### Dependencies resolving
 
@@ -452,8 +452,9 @@ Line magics allow you to import libraries, configure output settings, and perfor
 
 You can use the following line magics in your notebooks using the Kotlin Kernel:
 
+
 | Magic | Description | Usage example |
-| ----- | ----------- | ------------- |
+|:------|:------------|:--------------|
 | `%use` | Imports supported libraries and injects code from these libraries (artifact resolution, default imports, initialization code, and type renderers). | `%use klaxon(5.5), lets-plot` |
 | `%trackClasspath` | Logs any changes of the current classpath. This command is useful for debugging artifact resolution failures. | `%trackClasspath [on/off]` |
 | `%trackExecution` | Logs pieces of code to be executed. This command is useful for debugging libraries support. | `%trackExecution [all/generated/off]` |
@@ -544,54 +545,53 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
 <details>
 <summary>Click to see the list of supported libraries.</summary>
 
- - [2p-kt](https://github.com/tuProlog/2p-kt) - Kotlin multi-platform ecosystem for symbolic AI.
- - [biokotlin](https://github.com/maize-genetics/BioKotlin) - High-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
- - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - Combinatorics library for Kotlin.
- - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support.
- - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing.
- - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library.
- - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM.
- - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (with CUDA support).
- - default - Default imports for DataFrame and Kandy libraries.
- - [develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin) - Library to use the Develocity API in Kotlin scripts or projects.
- - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework.
- - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library.
- - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - (Note: This library is deprecated. Use `develocity-api-kotlin` instead.) A library to use the Gradle Enterprise API in Kotlin scripts or projects.
- - [gral](https://github.com/eseifert/gral) - Java library for displaying plots.
- - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing.
- - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`, `%typescript`, and `%jsx` line magic support.
- - [kalasim](https://www.kalasim.org) - Discrete event simulator.
- - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms.
- - [kandy](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Lets-Plot library.
- - [kandy-echarts](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Apache ECharts.
- - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library.
- - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin.
- - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library.
- - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning.
- - [kotlin-statistics](https://github.com/thomasnield/kotlin-statistics) - Idiomatic statistical operators for Kotlin.
- - [krangl](https://github.com/holgerbrandl/krangl) - Kotlin DSL for data wrangling.
- - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for the JVM.
- - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization.
- - [ksl](https://github.com/rossetti/KSL) - KSL (Kotlin Simulation Library) for Monte Carlo and Discrete-Event simulation.
- - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of Java Math.
- - [ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util) - Asynchronous HTTP client.
- - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot. Multiplatform plotting library based on Grammar of Graphics.
- - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for the GeoTools toolkit.
- - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel.
- - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - Natural Language Processing (NLP) toolkit for Kotlin on the JVM.
- - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin.
- - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC connector.
- - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter notebooks.
- - [plotly](https://github.com/mipt-npm/plotly.kt) - Jupyter integration with Plotly.kt for static plots. Note: this library is in beta version.
- - [plotly-server](https://github.com/mipt-npm/plotly.kt) - Jupyter integration with Plotly.kt for dynamic plots. Note: this library is in beta version.
- - [rdkit](https://www.rdkit.org/) - Open-source cheminformatics software.
- - [reflection](https://kotlinlang.org/docs/reflection.html) - Imports for Kotlin Reflection.
- - [roboquant](https://roboquant.org) - Algorithmic trading platform written in Kotlin.
- - [serialization](https://github.com/Kotlin/kotlin-jupyter-http-util) - Deserialization of JSON content using kotlinx.serialization and automatic generation of classes for it.
- - [smile](https://github.com/haifengl/smile) - Statistical machine intelligence and learning engine.
- - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark. Unified analytics engine for large-scale data processing.
- - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming. Scalable, high-throughput, fault-tolerant stream processing of live data streams.
- - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers.
+ - [2p-kt](https://github.com/tuProlog/2p-kt) - Kotlin Multi-Platform ecosystem for symbolic AI
+ - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
+ - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
+ - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
+ - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing
+ - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library
+ - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
+ - [deeplearning4j-cuda](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM (CUDA support)
+ - default - Default imports: dataframe and Kandy libraries
+ - [develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin) - A library to use the Develocity API in Kotlin scripts or projects
+ - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
+ - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
+ - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - [Deprecated: use develocity-api-kotlin] A library to use the Gradle Enterprise API in Kotlin scripts or projects
+ - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
+ - [intellij-sdk](https://plugins.jetbrains.com/docs/intellij/welcome.html) - IntelliJ SDK that could be used in embedded mode of Kotlin Notebook
+ - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
+ - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`/`%typescript`/`%jsx` line magic support
+ - [kalasim](https://www.kalasim.org) - Discrete event simulator
+ - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
+ - [kandy](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Lets-Plot
+ - [kandy-echarts](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Apache ECharts
+ - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
+ - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
+ - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
+ - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning
+ - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
+ - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
+ - [ksl](https://github.com/rossetti/KSL) - KSL - Kotlin Simulation Library for Monte Carlo and Discrete-Event Simulation
+ - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
+ - [ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util) - Asynchronous HTTP client
+ - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
+ - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
+ - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
+ - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
+ - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
+ - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
+ - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
+ - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
+ - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
+ - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
+ - [reflection](https://kotlinlang.org/docs/reflection.html) - Imports for Kotlin Reflection
+ - [roboquant](https://roboquant.org) - Algorithmic trading platform written in Kotlin
+ - [serialization](https://github.com/Kotlin/kotlin-jupyter-http-util) - Deserialize JSON content using kotlinx.serialization and automatically generate classes for it
+ - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
+ - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
+ - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
+ - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers
 
 </details>
 

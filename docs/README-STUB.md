@@ -215,12 +215,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `[[kernel_version]]`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`conda install -c jetbrains kotlin-jupyter-kernel={0.11.0.198}`
+`conda install -c jetbrains kotlin-jupyter-kernel={[[kernel_version]]}`
 
 ### Update with Pip
 
@@ -233,12 +233,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `[[kernel_version]]`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`pip install kotlin-jupyter-kernel=={0.11.0.198} --ignore-installed`
+`pip install kotlin-jupyter-kernel=={[[kernel_version]]} --ignore-installed`
 
 ### Update in Datalore
 
@@ -256,7 +256,7 @@ To update the Kotlin Kernel for notebooks in Datalore:
    - kotlin-jupyter-kernel=={VERSION}
    ```
 
-2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.11.0.198`).
+2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `[[kernel_version]]`).
 
 3. Stop and restart the machine in Datalore.
 
@@ -364,12 +364,7 @@ The features of the Kotlin Kernel for Jupyter notebooks include:
 ### REPL commands
 
 Our Kotlin Kernel for notebooks comes with a set of REPL commands that let you explore your notebook environment. The following REPL commands are supported:
-
-| Command      | Description                                                                                                                                       |
-|:-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `:help`      | Displays help information with details of the notebook version, line magics, and supported libraries.                                             |
-| `:classpath` | Displays the current classpath of your notebook environment, showing a list of locations where the notebook searches for libraries and resources. |
-| `:vars`      | Displays information about the declared variables and their values.                                                                               |
+[[supported_commands]]
 
 ### Dependencies resolving
 
