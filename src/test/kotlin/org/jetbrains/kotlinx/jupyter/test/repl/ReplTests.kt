@@ -324,7 +324,7 @@ class ReplTests : AbstractSingleReplTest() {
         val result =
             repl.listErrorsBlocking(
                 """
-                %use krangl
+                %use dataframe
                 
                 val x = foobar
                 3 * 14

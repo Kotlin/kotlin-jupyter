@@ -327,7 +327,7 @@ A library descriptor may provide a set of properties with default values that ca
 The major use case for library properties is to specify a particular version of library. If descriptor has only one property, it can be
 defined without naming:
 ```
-%use krangl(0.10)
+%use dataframe(0.10)
 ```
 If library descriptor defines more than one property, property names should be used:
 ```
@@ -335,7 +335,7 @@ If library descriptor defines more than one property, property names should be u
 ```
 Several libraries can be included in single `%use` statement, separated by `,`:
 ```
-%use lets-plot, krangl, mysql(8.0.15)
+%use kandy, dataframe, mysql(8.0.15)
 ```
 You can also specify the source of library descriptor. By default, it's taken from the [libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries). If you want to try descriptor from another revision, use the following syntax:
 ```
@@ -344,7 +344,7 @@ You can also specify the source of library descriptor. By default, it's taken fr
 // Specify commit sha, with more verbose syntax
 %use lets-plot@ref[24a040fe22335648885b106e2f4ddd63b4d49469]
 // Specify git ref along with library arguments
-%use krangl@dev(0.10)
+%use dataframe@dev(0.10)
 ```
 Note that using descriptor from specific revision is better than using `%useLatestDescriptors`.
 

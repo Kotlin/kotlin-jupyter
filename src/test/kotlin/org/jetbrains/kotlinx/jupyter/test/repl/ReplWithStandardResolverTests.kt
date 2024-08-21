@@ -32,6 +32,7 @@ import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverTests : AbstractSingleReplTest() {
@@ -364,5 +365,32 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             shouldHaveAtLeastSize(70)
             shouldNotContain("applyColorScheme")
         }
+    }
+
+    @Test
+    fun testTwoLibrariesInUse() {
+        val code = "%use lets-plot, krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b"
+        eval(code)
+        assertEquals(1, displays.count())
+    }
+
+    @Test
+    fun testKranglImportInfixFun() {
+        eval("""%use krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b, lets-plot""")
+        val res = eval(""" "a" to {it["a"]} """)
+        assertNotNull(res.renderedValue)
+    }
+
+    @Test
+    fun testRuntimeDepsResolution() {
+        val res =
+            eval(
+                """
+                %use krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b(0.17)
+                val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
+                df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
+                """.trimIndent(),
+            )
+        assertEquals("John Smith", res.renderedValue)
     }
 }
