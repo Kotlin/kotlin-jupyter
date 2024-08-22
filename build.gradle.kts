@@ -79,6 +79,7 @@ dependencies {
 
     deploy(projects.lib)
     deploy(projects.api)
+    deploy(libs.logging.slf4j.api)
     deploy(libs.kotlin.dev.scriptRuntime.get())
 
     kernelShadowed(projects.kotlinJupyterKernel)
@@ -91,13 +92,11 @@ dependencies {
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
 
-    scriptClasspathShadowed(projects.lib)
-    scriptClasspathShadowed(projects.api)
+    scriptClasspathShadowed.extendsFrom(deploy)
     scriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
     }
     scriptClasspathShadowed(libs.kotlin.dev.stdlib)
-    scriptClasspathShadowed(libs.kotlin.dev.scriptRuntime)
 
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
     embeddableKernel(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
