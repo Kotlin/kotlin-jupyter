@@ -51,7 +51,7 @@ You can leverage Kotlin Kernel's benefits in [IntelliJ IDEA](https://www.jetbrai
     * [Use the Kotlin Notebook](#use-the-kotlin-notebook)
     * [Use other Jupyter clients](#use-other-jupyter-clients)
     * [Use Datalore](#use-datalore)
-    * [Create kernels](#create-kernels)
+    * [Create custom kernels](#create-custom-kernels)
   * [Features](#features)
     * [REPL commands](#repl-commands)
     * [Dependencies resolving](#dependencies-resolving)
@@ -122,7 +122,7 @@ Our Kotlin Kernel is fully integrated into Kotlin Notebook, which you can use di
 In Datalore, Kotlin is supported natively, with the Kotlin Kernel already bundled for an out-of-the-box experience. 
 
 For other Jupyter clients, you'll need to install the Kotlin Kernel separately using [conda](#install-with-conda), [pip](#install-with-pip), 
-or [sources](#install-from-sources)).
+or [sources](#install-from-sources).
 
 ### Install the Kotlin Notebook plugin
 
@@ -303,11 +303,9 @@ The arguments are parsed using the Python [`shlex.split()`](https://docs.python.
 
 ### Use Datalore
 
-You can also use our Kotlin Kernel for notebooks in Datalore.
-
 To create a Kotlin notebook in Datalore, click on **New notebook** and select **Kotlin** as kernel.
 
-### Create kernels
+### Create custom kernels
 
 You can create a custom Kotlin Kernel for Jupyter Notebook.
 This allows you to tailor the kernel's environment to your specific requirements, such as using a particular JDK, setting JVM arguments, or defining environment variables.
