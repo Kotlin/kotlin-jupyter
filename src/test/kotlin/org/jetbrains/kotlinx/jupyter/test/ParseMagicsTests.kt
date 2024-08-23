@@ -189,14 +189,14 @@ class ParseMagicsTests {
 
     @Test
     fun `single magic`() {
-        test("%use krangl", "") { libs ->
+        test("%use dataframe", "") { libs ->
             assertEquals(1, libs.size)
         }
     }
 
     @Test
     fun `trailing newlines should be left`() {
-        test("\n%use krangl\n\n", "\n\n\n") { libs ->
+        test("\n%use dataframe\n\n", "\n\n\n") { libs ->
             assertEquals(1, libs.size)
         }
     }
@@ -205,7 +205,7 @@ class ParseMagicsTests {
     fun `multiple magics`() {
         test(
             """
-            %use lets-plot, krangl
+            %use lets-plot, dataframe
             
             fun f() = 42
             %trackClasspath

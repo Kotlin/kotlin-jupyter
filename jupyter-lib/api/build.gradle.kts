@@ -25,12 +25,13 @@ dependencies {
 }
 
 buildSettings {
-    withLanguageVersion("1.6")
-    withApiVersion("1.6")
+    withLanguageVersion(rootSettings.gradleCompatibleKotlinLanguageLevel)
+    withApiVersion(rootSettings.gradleCompatibleKotlinLanguageLevel)
     withTests()
     withCompilerArgs {
         requiresOptIn()
         allowResultReturnType()
+        jdkRelease(libs.versions.jvmTarget.get())
     }
 }
 

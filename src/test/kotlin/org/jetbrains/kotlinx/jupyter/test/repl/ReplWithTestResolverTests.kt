@@ -98,33 +98,6 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testTwoLibrariesInUse() {
-        val code = "%use lets-plot, krangl"
-        eval(code)
-        assertEquals(1, displays.count())
-    }
-
-    @Test
-    fun testKranglImportInfixFun() {
-        eval("""%use krangl, lets-plot""")
-        val res = eval(""" "a" to {it["a"]} """)
-        assertNotNull(res.renderedValue)
-    }
-
-    @Test
-    fun testRuntimeDepsResolution() {
-        val res =
-            eval(
-                """
-                %use krangl(0.17)
-                val df = DataFrame.readCSV("src/test/testData/resolve-with-runtime.csv")
-                df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
-                """.trimIndent(),
-            )
-        assertEquals("John Smith", res.renderedValue)
-    }
-
-    @Test
     fun testNullableErasure() {
         eval(
             """
