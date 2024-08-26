@@ -4,17 +4,21 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
+import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.commands.runCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
-import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
+import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stderrContext
+import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdinContext
+import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdoutContext
+import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.substitutionEngineType
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.CapturingOutputStream
 import org.jetbrains.kotlinx.jupyter.protocol.DisabledStdinInputStream
@@ -24,14 +28,40 @@ import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import org.jetbrains.kotlinx.jupyter.util.systemErrStream
-import org.jetbrains.kotlinx.jupyter.util.systemInStream
-import org.jetbrains.kotlinx.jupyter.util.systemOutStream
-import org.jetbrains.kotlinx.jupyter.util.withSubstitutedStream
+import org.jetbrains.kotlinx.jupyter.util.StreamSubstitutionManager
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
 import kotlin.system.exitProcess
+
+private object StdIOSubstitutionManager {
+    private var engineType: StreamSubstitutionType? = null
+
+    // We assume that inside one environment there is only one correct value for this property
+    var substitutionEngineType: StreamSubstitutionType
+        get() = engineType ?: throw UninitializedPropertyAccessException("Substitution engine type is not initialized yet")
+        set(value) {
+            if (engineType == null) {
+                engineType = value
+            } else {
+                require(engineType == value) {
+                    "Attempt to set substitution engine type to $value which is different from already set value"
+                }
+            }
+        }
+
+    val stdoutContext by lazy {
+        StreamSubstitutionManager.StdOut(substitutionEngineType)
+    }
+
+    val stdinContext by lazy {
+        StreamSubstitutionManager.StdIn(substitutionEngineType)
+    }
+
+    val stderrContext by lazy {
+        StreamSubstitutionManager.StdErr(substitutionEngineType)
+    }
+}
 
 @Suppress("MemberVisibilityCanBePrivate")
 open class IdeCompatibleMessageRequestProcessor(
@@ -46,6 +76,10 @@ open class IdeCompatibleMessageRequestProcessor(
 ) : AbstractMessageRequestProcessor(rawIncomingMessage),
     JupyterCommunicationFacility {
     private val logger = loggerFactory.getLogger(this::class)
+
+    init {
+        substitutionEngineType = repl.notebook.kernelRunMode.streamSubstitutionType
+    }
 
     final override val messageFactory =
         run {
@@ -274,36 +308,30 @@ open class IdeCompatibleMessageRequestProcessor(
     private fun OutputStream.asPrintStream() = PrintStream(this, false, "UTF-8")
 
     private fun <T> withForkedOut(body: () -> T): T {
-        return withSubstitutedStream(
-            ::systemOutStream,
-            newStreamFactory = { out: PrintStream -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
-        ) { forkedOut ->
-            KernelStreams.withOutStream(forkedOut, body)
-        }
+        return stdoutContext.withSubstitutedStreams(
+            systemStreamFactory = { out: PrintStream? -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
+            kernelStreamFactory = { null },
+            body = body,
+        )
     }
 
     private fun <T> withForkedErr(body: () -> T): T {
-        return withSubstitutedStream(
-            ::systemErrStream,
-            newStreamFactory = { err: PrintStream -> getCapturingStream(err, JupyterOutType.STDERR, false) },
-        ) {
-            val userErr = getCapturingStream(null, JupyterOutType.STDERR, true)
-            userErr.use {
-                KernelStreams.withErrStream(userErr, body)
-            }
-        }
+        return stderrContext.withSubstitutedStreams(
+            systemStreamFactory = { err: PrintStream? -> getCapturingStream(err, JupyterOutType.STDERR, false) },
+            kernelStreamFactory = { getCapturingStream(null, JupyterOutType.STDERR, true) },
+            body = body,
+        )
     }
 
     private fun <T> withForkedIn(
         allowStdIn: Boolean,
         body: () -> T,
     ): T {
-        return withSubstitutedStream(
-            ::systemInStream,
-            newStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
-        ) {
-            body()
-        }
+        return stdinContext.withSubstitutedStreams(
+            systemStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
+            kernelStreamFactory = { null },
+            body = body,
+        )
     }
 
     protected open fun <T> evalWithIO(

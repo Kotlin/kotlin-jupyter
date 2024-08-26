@@ -2,6 +2,9 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import org.jetbrains.kotlinx.jupyter.util.FilteringClassLoader
 
+/**
+ * Represents settings that depend on the environment in which kernel is running
+ */
 interface KernelRunMode {
     val name: String
 
@@ -17,6 +20,8 @@ interface KernelRunMode {
     val inMemoryOutputsSupported: Boolean
 
     val isRunInsideIntellijProcess: Boolean
+
+    val streamSubstitutionType: StreamSubstitutionType
 }
 
 abstract class AbstractKernelRunMode(override val name: String) : KernelRunMode {
@@ -31,6 +36,8 @@ object StandaloneKernelRunMode : AbstractKernelRunMode("Standalone") {
     override val shouldKillProcessOnShutdown: Boolean get() = true
     override val inMemoryOutputsSupported: Boolean get() = false
     override val isRunInsideIntellijProcess: Boolean get() = false
+    override val streamSubstitutionType: StreamSubstitutionType
+        get() = StreamSubstitutionType.BLOCKING
 }
 
 object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
@@ -39,6 +46,8 @@ object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
     override val shouldKillProcessOnShutdown: Boolean get() = false
     override val inMemoryOutputsSupported: Boolean get() = false
     override val isRunInsideIntellijProcess: Boolean get() = false
+    override val streamSubstitutionType: StreamSubstitutionType
+        get() = StreamSubstitutionType.BLOCKING
 }
 
 fun createDefaultFilteringClassLoader(parent: ClassLoader): ClassLoader {
