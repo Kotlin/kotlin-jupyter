@@ -223,6 +223,7 @@ open class IdeCompatibleMessageRequestProcessor(
 
     override fun processShutdownRequest(content: ShutdownRequest) {
         repl.evalOnShutdown()
+        executor.close()
         socketManager.control.sendMessage(
             messageFactory.makeReplyMessage(MessageType.SHUTDOWN_REPLY, content = incomingMessage.content),
         )
@@ -238,7 +239,7 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 
     override fun processInterruptRequest(content: InterruptRequest) {
-        executor.interruptExecutions()
+        executor.interruptExecution()
         socketManager.control.sendMessage(
             messageFactory.makeReplyMessage(MessageType.INTERRUPT_REPLY, content = incomingMessage.content),
         )

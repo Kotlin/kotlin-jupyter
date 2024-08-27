@@ -7,7 +7,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
-import java.io.Closeable
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
@@ -15,7 +14,7 @@ import kotlin.concurrent.thread
 
 class JupyterExecutorImpl(
     loggerFactory: KernelLoggerFactory,
-) : JupyterExecutor, Closeable {
+) : JupyterExecutor {
     private val logger = loggerFactory.getLogger(this::class)
 
     private inner class Task<T : Any>(
@@ -106,7 +105,7 @@ class JupyterExecutorImpl(
      * the simple calculation (like `while (true) 1`). Consider replacing with
      * something smarter in the future.
      */
-    override fun interruptExecutions() {
+    override fun interruptExecution() {
         // We interrupt only current execution and don't clear the queue, it's intended
         logger.info("Stopping execution...")
 
@@ -143,7 +142,7 @@ class JupyterExecutorImpl(
 
     override fun close() {
         tasksQueue.clear()
-        interruptExecutions()
+        interruptExecution()
         coroutineScope.cancel("Jupyter executor was shut down")
     }
 
