@@ -273,18 +273,18 @@ open class IdeCompatibleMessageRequestProcessor(
                             OkJupyterResponse(replResult.displayError, replResult.metadata)
                         }
                         is EvalResultEx.Interrupted -> {
-                            AbortJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE, replResult.metadata)
+                            ErrorJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE, metadata = replResult.metadata)
                         }
                     }
                 } catch (e: Throwable) {
-                    AbortJupyterResponse("error:  Unable to convert result to a string: $e")
+                    ErrorJupyterResponse("error:  Unable to convert result to a string: $e")
                 }
             }
             is ExecutionResult.Failure -> {
                 res.throwable.toErrorJupyterResponse()
             }
             ExecutionResult.Interrupted -> {
-                AbortJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE)
+                ErrorJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE)
             }
         }
     }

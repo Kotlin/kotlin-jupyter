@@ -574,7 +574,7 @@ class ExecuteTests : KernelServerTestsBase() {
                 interruptExecution()
             },
             ioPubChecker = { iopubSocket ->
-                val msgText = iopubSocket.receiveStreamResponse()
+                val msgText = iopubSocket.receiveErrorResponse()
                 msgText shouldBe EXECUTION_INTERRUPTED_MESSAGE
             },
         ) shouldBe null

@@ -39,7 +39,7 @@ class OkJupyterResponse(
 
 class ErrorJupyterResponse(
     override val stdErr: String?,
-    override val exception: ReplException?,
+    override val exception: ReplException? = null,
     override val metadata: EvaluatedSnippetMetadata? = null,
 ) : JupyterResponse {
     override val status: MessageStatus get() = MessageStatus.ERROR
@@ -69,7 +69,7 @@ fun JupyterCommunicationFacility.sendResponse(
             sendExecuteResult(response.displayResult, executionCount)
         }
     }
-    sendExecuteReply(response.status, response.exception, executionCount, startedTime, response.metadata)
+    sendExecuteReply(response, executionCount, startedTime)
 }
 
 @Serializable
@@ -105,25 +105,24 @@ fun JupyterCommunicationFacility.sendExecuteResult(
 }
 
 fun JupyterCommunicationFacility.sendExecuteReply(
-    status: MessageStatus,
-    exception: ReplException?,
+    response: JupyterResponse,
     executionCount: ExecutionCount,
     startedTime: String,
-    metadata: EvaluatedSnippetMetadata? = null,
 ) {
     val replyMetadata =
         ExecuteReplyMetadata(
             true,
             messageFactory.sessionId,
-            status,
+            response.status,
             startedTime,
-            metadata,
+            response.metadata,
         )
 
     val replyContent =
-        exception?.toExecuteErrorReply(executionCount)
-            ?: when (status) {
-                MessageStatus.ERROR, MessageStatus.ABORT -> ExecuteAbortReply()
+        response.exception?.toExecuteErrorReply(executionCount)
+            ?: when (response.status) {
+                MessageStatus.ABORT -> ExecuteAbortReply()
+                MessageStatus.ERROR -> toAbortErrorReply(executionCount, response.stdErr)
                 MessageStatus.OK -> ExecuteSuccessReply(executionCount)
             }
 
@@ -134,7 +133,7 @@ fun JupyterCommunicationFacility.sendExecuteReply(
             metadata = MessageFormat.encodeToJsonElement(replyMetadata),
         )
 
-    when (status) {
+    when (response.status) {
         MessageStatus.ERROR -> System.err.println("Sending error: $reply")
         MessageStatus.ABORT -> System.err.println("Sending abort: $reply")
         MessageStatus.OK -> {}
