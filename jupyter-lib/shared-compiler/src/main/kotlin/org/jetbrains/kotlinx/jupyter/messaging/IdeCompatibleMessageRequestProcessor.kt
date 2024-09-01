@@ -291,13 +291,24 @@ open class IdeCompatibleMessageRequestProcessor(
 
     private val replOutputConfig get() = repl.options.outputConfig
 
+    /**
+     * Creates a capturing [PrintStream] that forwards its output to the given [parentStream] (if not null)
+     * and optionally captures the output for further processing.
+     * Captured output is sent as a [MessageType.STREAM] message back to the client.
+     *
+     * @param parentStream the parent [PrintStream] to forward the output to, can be null
+     * @param outType the type of output (stdout or stderr) to be associated with the captured output
+     * @param captureOutput a flag indicating whether to capture the output
+     * @return a new [PrintStream] that wraps the forwards output to the [parentStream]
+     * and captures output if [captureOutput] is true
+     */
     private fun getCapturingStream(
-        stream: PrintStream?,
+        parentStream: PrintStream?,
         outType: JupyterOutType,
         captureOutput: Boolean,
     ): PrintStream {
         return CapturingOutputStream(
-            stream,
+            parentStream,
             replOutputConfig,
             captureOutput,
         ) { text ->

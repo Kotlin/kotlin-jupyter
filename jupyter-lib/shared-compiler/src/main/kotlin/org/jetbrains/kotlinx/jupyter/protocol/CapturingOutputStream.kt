@@ -7,8 +7,20 @@ import java.io.OutputStream
 import java.io.PrintStream
 import kotlin.concurrent.timer
 
+/**
+ * An [OutputStream] that captures the written content while optionally forwarding it
+ * to a [parentStream] [PrintStream].
+ * Capturing only happens if [captureOutput] is true.
+ * The captured content is passed to a callback function [onCaptured] when certain buffer conditions are met.
+ * These conditions are defined by [conf].
+ *
+ * @property parentStream The parent PrintStream to forward the output to.
+ * @property conf Configuration for the capturing and flushing behavior.
+ * @property captureOutput A flag indicating whether to capture output.
+ * @property onCaptured A callback function called with the captured content.
+ */
 class CapturingOutputStream(
-    private val stdout: PrintStream?,
+    private val parentStream: PrintStream?,
     private val conf: OutputConfig,
     private val captureOutput: Boolean,
     val onCaptured: (String) -> Unit,
@@ -52,7 +64,7 @@ class CapturingOutputStream(
     @Synchronized
     override fun write(b: Int) {
         ++overallOutputSize
-        stdout?.write(b)
+        parentStream?.write(b)
 
         if (captureOutput && overallOutputSize <= conf.cellOutputMaxSize) {
             capturedNewLine.write(b)

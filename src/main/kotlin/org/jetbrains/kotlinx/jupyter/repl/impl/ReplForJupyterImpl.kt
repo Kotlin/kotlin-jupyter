@@ -413,58 +413,62 @@ class ReplForJupyterImpl(
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
-            beforeCellExecutionsProcessor.process(executor)
+            evalExImpl(evalData)
+        }
+    }
 
-            val result = evaluateUserCode(evalData.code, evalData.executionCount)
+    private fun evalExImpl(evalData: EvalRequestData): EvalResultEx {
+        beforeCellExecutionsProcessor.process(executor)
 
-            fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
-            when (result) {
-                is InternalReplResult.Success -> {
-                    val rendered = renderResult(result, evalData)
-                    val displayValue =
+        val result = evaluateUserCode(evalData.code, evalData.executionCount)
+
+        fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
+        return when (result) {
+            is InternalReplResult.Success -> {
+                val rendered = renderResult(result, evalData)
+                val displayValue =
+                    logger.catchAll {
+                        notebook.postRender(rendered)
+                    }
+
+                EvalResultEx.Success(
+                    result.internalResult,
+                    rendered,
+                    displayValue,
+                    getMetadata(),
+                )
+            }
+            is InternalReplResult.Error -> {
+                val error = result.error
+
+                val isInterrupted = error.isInterruptedException()
+                if (isInterrupted) {
+                    EvalResultEx.Interrupted(getMetadata())
+                } else {
+                    val originalError = (error as? ReplEvalRuntimeException)?.cause
+                    val renderedError =
                         logger.catchAll {
-                            notebook.postRender(rendered)
-                        }
-
-                    EvalResultEx.Success(
-                        result.internalResult,
-                        rendered,
-                        displayValue,
-                        getMetadata(),
-                    )
-                }
-                is InternalReplResult.Error -> {
-                    val error = result.error
-
-                    val isInterrupted = error.isInterruptedException()
-                    if (isInterrupted) {
-                        EvalResultEx.Interrupted(getMetadata())
-                    } else {
-                        val originalError = (error as? ReplEvalRuntimeException)?.cause
-                        val renderedError =
-                            logger.catchAll {
-                                originalError?.let {
-                                    throwableRenderersProcessor.renderThrowable(originalError)
-                                }
+                            originalError?.let {
+                                throwableRenderersProcessor.renderThrowable(originalError)
                             }
-
-                        if (renderedError != null) {
-                            val displayError =
-                                logger.catchAll {
-                                    notebook.postRender(renderedError)
-                                }
-                            EvalResultEx.RenderedError(
-                                error,
-                                renderedError,
-                                displayError,
-                                getMetadata(),
-                            )
-                        } else {
-                            EvalResultEx.Error(
-                                error,
-                                getMetadata(),
-                            )
                         }
+
+                    if (renderedError != null) {
+                        val displayError =
+                            logger.catchAll {
+                                notebook.postRender(renderedError)
+                            }
+                        EvalResultEx.RenderedError(
+                            error,
+                            renderedError,
+                            displayError,
+                            getMetadata(),
+                        )
+                    } else {
+                        EvalResultEx.Error(
+                            error,
+                            getMetadata(),
+                        )
                     }
                 }
             }

@@ -48,9 +48,10 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
 ) {
     private val engine =
         run {
+            val initialStreams = getStreamsFromProperties()
             val dataFlowComponents =
                 DataFlowComponents(
-                    Streams(systemStreamProp.get(), kernelStreamProp?.get()),
+                    initialStreams,
                     ::substituteStreams,
                     ::finalizeStreams,
                 )
@@ -66,23 +67,34 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         initial: Streams<StreamT>?,
     ): Streams<StreamT> {
         val systemStream = createSystemStream(initial?.systemStream)
-        val userStream = createKernelStream(initial?.kernelStream) ?: systemStream
+        val kernelStream =
+            run {
+                when (val value = createKernelStream(initial?.kernelStream)) {
+                    null -> if (kernelStreamProp == null) null else systemStream
+                    else -> value
+                }
+            }
 
-        return Streams(systemStream, userStream)
+        return Streams(systemStream, kernelStream)
     }
 
     private fun substituteStreams(newStreams: Streams<StreamT>): Streams<StreamT> {
-        val originalSystemStream = systemStreamProp.get()
-        val originalKernelStream = kernelStreamProp?.get()
+        val originalStreams = getStreamsFromProperties()
 
         systemStreamProp.set(newStreams.systemStream)
 
-        val newKernelStream = kernelStreamProp?.get()
+        val newKernelStream = newStreams.kernelStream
         if (newKernelStream != null) {
             kernelStreamProp?.set(newKernelStream)
         }
 
-        return Streams(originalSystemStream, originalKernelStream)
+        return originalStreams
+    }
+
+    private fun getStreamsFromProperties(): Streams<StreamT> {
+        val systemStream = systemStreamProp.get()
+        val kernelStream = kernelStreamProp?.get()
+        return Streams(systemStream, kernelStream)
     }
 
     private fun finalizeStreams(
@@ -114,7 +126,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         )
     }
 
-    private class Streams<StreamT : Closeable>(
+    private data class Streams<StreamT : Closeable>(
         val systemStream: StreamT,
         val kernelStream: StreamT?,
     )

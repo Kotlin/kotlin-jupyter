@@ -82,30 +82,30 @@ class NonBlockingSubstitutionEngine<DataT : Any>(
     dataFlowComponents: DataFlowComponents<DataT>,
 ) : SubstitutionEngine<DataT>(dataFlowComponents) {
     private val lock = ReentrantLock()
-    private val dataSequence = ClosableDataSequence(initialData)
+    private val dataList = DataList(initialData)
 
     override fun <T> withDataSubstitution(
         dataFactory: DataFactory<DataT>,
         body: () -> T,
     ): T {
-        val myInitialData =
+        val newData =
             lock.withLock {
-                dataSequence.last()
+                val myInitialData = dataList.last()
+                val data = dataFactory(myInitialData)
+                substitutor(data).also { _ ->
+                    dataList.add(data)
+                }
+                data
             }
-        val newData = dataFactory(myInitialData)
-        lock.withLock {
-            substitutor(newData).also { oldData ->
-                dataSequence.add(newData, oldData)
-            }
-        }
 
         return try {
             body()
         } finally {
             lock.withLock {
-                val oldData = dataSequence.close(newData)
-                if (oldData.isLast) {
-                    finalizer(newData, oldData.data)
+                with(dataList.remove(newData)) {
+                    if (wasLast) {
+                        finalizer(newData, newLast)
+                    }
                 }
             }
         }
