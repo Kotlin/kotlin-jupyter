@@ -27,6 +27,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
+import org.jetbrains.kotlinx.jupyter.config.KernelStreams
+import org.jetbrains.kotlinx.jupyter.config.StandardStreams
 import org.jetbrains.kotlinx.jupyter.debug.DEBUG_THREAD_NAME
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
@@ -38,6 +40,8 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.util.JupyterClientDetector
 import java.io.Closeable
+import java.io.InputStream
+import java.io.PrintStream
 import kotlin.concurrent.thread
 
 class NotebookImpl(
@@ -57,6 +61,30 @@ class NotebookImpl(
                 Thread.sleep(1000)
             }
         } catch (_: InterruptedException) {
+        }
+    }
+
+    private var standardStreams: StandardStreams? = null
+
+    override val stdout: PrintStream
+        get() = standardStreams?.out ?: KernelStreams.out
+
+    override val stderr: PrintStream
+        get() = standardStreams?.err ?: KernelStreams.err
+
+    override val stdin: InputStream
+        get() = standardStreams?.`in` ?: System.`in`
+
+    override fun <T> withStandardStreams(
+        standardStreams: StandardStreams?,
+        action: () -> T,
+    ): T {
+        val oldStreams = this.standardStreams
+        return try {
+            this.standardStreams = standardStreams
+            action()
+        } finally {
+            this.standardStreams = oldStreams
         }
     }
 

@@ -116,14 +116,19 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     fun <T> withSubstitutedStreams(
         systemStreamFactory: (initial: StreamT?) -> StreamT,
         kernelStreamFactory: (initial: StreamT?) -> StreamT?,
-        body: () -> T,
+        userStreamFactory: () -> StreamT?,
+        body: (userStream: StreamT) -> T,
     ): T {
         return engine.withDataSubstitution(
             dataFactory = { initialStreams ->
                 createStreams(systemStreamFactory, kernelStreamFactory, initialStreams)
             },
-            body = body,
-        )
+        ) { streams ->
+            userStreamFactory().use { userStream ->
+                val myUserStream = userStream ?: streams.kernelStream ?: streams.systemStream
+                body(myUserStream)
+            }
+        }
     }
 
     private data class Streams<StreamT : Closeable>(

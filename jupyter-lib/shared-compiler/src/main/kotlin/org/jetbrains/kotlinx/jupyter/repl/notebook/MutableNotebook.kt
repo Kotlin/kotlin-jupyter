@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
+import org.jetbrains.kotlinx.jupyter.config.StandardStreams
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 
@@ -20,6 +21,11 @@ interface MutableNotebook : Notebook {
     fun popCell()
 
     fun beginEvalSession()
+
+    fun <T> withStandardStreams(
+        standardStreams: StandardStreams?,
+        action: () -> T,
+    ): T
 
     override val currentCell: MutableCodeCell?
 

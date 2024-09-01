@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.commands.runCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
+import org.jetbrains.kotlinx.jupyter.config.StandardStreams
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
@@ -165,7 +166,7 @@ open class IdeCompatibleMessageRequestProcessor(
                 if (looksLikeReplCommand(code)) {
                     runCommand(code, repl)
                 } else {
-                    evalWithIO(content.allowStdin) {
+                    evalWithIO(content.allowStdin) { standardStreams ->
                         runExecution("Execution of code '${code.presentableForThreadName()}'") {
                             repl.evalEx(
                                 EvalRequestData(
@@ -173,6 +174,7 @@ open class IdeCompatibleMessageRequestProcessor(
                                     count,
                                     content.storeHistory,
                                     content.silent,
+                                    standardStreams,
                                 ),
                             )
                         }
@@ -319,41 +321,46 @@ open class IdeCompatibleMessageRequestProcessor(
 
     private fun OutputStream.asPrintStream() = PrintStream(this, false, "UTF-8")
 
-    private fun <T> withForkedOut(body: () -> T): T {
+    private fun <T> withForkedOut(body: (userOut: PrintStream) -> T): T {
         return stdoutContext.withSubstitutedStreams(
             systemStreamFactory = { out: PrintStream? -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
             kernelStreamFactory = { null },
+            userStreamFactory = { getCapturingStream(null, JupyterOutType.STDOUT, true) },
             body = body,
         )
     }
 
-    private fun <T> withForkedErr(body: () -> T): T {
+    private fun <T> withForkedErr(body: (userErr: PrintStream) -> T): T {
         return stderrContext.withSubstitutedStreams(
             systemStreamFactory = { err: PrintStream? -> getCapturingStream(err, JupyterOutType.STDERR, false) },
             kernelStreamFactory = { getCapturingStream(null, JupyterOutType.STDERR, true) },
+            userStreamFactory = { null },
             body = body,
         )
     }
 
     private fun <T> withForkedIn(
         allowStdIn: Boolean,
-        body: () -> T,
+        body: (userIn: InputStream) -> T,
     ): T {
         return stdinContext.withSubstitutedStreams(
             systemStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
             kernelStreamFactory = { null },
+            userStreamFactory = { stdinIn },
             body = body,
         )
     }
 
     protected open fun <T> evalWithIO(
         allowStdIn: Boolean,
-        body: () -> T,
+        body: (StandardStreams) -> T,
     ): T {
         repl.notebook.beginEvalSession()
-        return withForkedOut {
-            withForkedErr {
-                withForkedIn(allowStdIn, body)
+        return withForkedOut { userOut ->
+            withForkedErr { userErr ->
+                withForkedIn(allowStdIn) { userIn ->
+                    body(StandardStreams(userOut, userErr, userIn))
+                }
             }
         }
     }

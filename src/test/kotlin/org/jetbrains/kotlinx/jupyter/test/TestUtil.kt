@@ -47,6 +47,7 @@ import org.jetbrains.kotlinx.jupyter.api.withId
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
@@ -70,6 +71,8 @@ import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
+import java.io.InputStream
+import java.io.PrintStream
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
@@ -286,6 +289,15 @@ object NotebookMock : Notebook {
             "There is no cell with number '$id'",
         )
     }
+
+    override val stdout: PrintStream
+        get() = KernelStreams.out
+
+    override val stderr: PrintStream
+        get() = KernelStreams.err
+
+    override val stdin: InputStream
+        get() = System.`in`
 
     override fun getResult(id: Int): Any? {
         return getCell(id).result

@@ -47,7 +47,7 @@ abstract class SubstitutionEngine<DataT>(
      */
     abstract fun <T> withDataSubstitution(
         dataFactory: DataFactory<DataT>,
-        body: () -> T,
+        body: (DataT) -> T,
     ): T
 }
 
@@ -61,13 +61,13 @@ class BlockingSubstitutionEngine<DataT>(
 
     override fun <T> withDataSubstitution(
         dataFactory: DataFactory<DataT>,
-        body: () -> T,
+        body: (DataT) -> T,
     ): T {
         val newData = dataFactory(initialData)
         return lock.withLock {
             val oldData = substitutor(newData)
             try {
-                body()
+                body(newData)
             } finally {
                 finalizer(newData, oldData)
             }
@@ -86,7 +86,7 @@ class NonBlockingSubstitutionEngine<DataT : Any>(
 
     override fun <T> withDataSubstitution(
         dataFactory: DataFactory<DataT>,
-        body: () -> T,
+        body: (DataT) -> T,
     ): T {
         val newData =
             lock.withLock {
@@ -99,7 +99,7 @@ class NonBlockingSubstitutionEngine<DataT : Any>(
             }
 
         return try {
-            body()
+            body(newData)
         } finally {
             lock.withLock {
                 with(dataList.remove(newData)) {

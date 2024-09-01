@@ -413,7 +413,9 @@ class ReplForJupyterImpl(
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
-            evalExImpl(evalData)
+            notebook.withStandardStreams(evalData.standardStreams) {
+                evalExImpl(evalData)
+            }
         }
     }
 

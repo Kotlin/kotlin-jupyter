@@ -6,6 +6,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
+import java.io.InputStream
+import java.io.PrintStream
 
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
@@ -181,4 +183,19 @@ interface Notebook {
         prompt: String = DefaultPromptOptions.PROMPT,
         isPassword: Boolean = DefaultPromptOptions.IS_PASSWORD,
     ): String
+
+    /**
+     * The standard output stream that is redirected to the current cell output
+     */
+    val stdout: PrintStream
+
+    /**
+     * The standard error stream that is redirected to the current cell output
+     */
+    val stderr: PrintStream
+
+    /**
+     * The standard input stream that requests data in the context of the current cell
+     */
+    val stdin: InputStream
 }
