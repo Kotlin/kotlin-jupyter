@@ -1,10 +1,9 @@
-package org.jetbrains.kotlinx.jupyter.util
+package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
-import org.jetbrains.kotlinx.jupyter.config.KernelStreams
-import org.jetbrains.kotlinx.jupyter.util.StreamSubstitutionManager.StdErr
-import org.jetbrains.kotlinx.jupyter.util.StreamSubstitutionManager.StdIn
-import org.jetbrains.kotlinx.jupyter.util.StreamSubstitutionManager.StdOut
+import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdErr
+import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdIn
+import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdOut
 import java.io.Closeable
 import java.io.InputStream
 import java.io.PrintStream
@@ -44,14 +43,16 @@ private var systemInStream: InputStream
 abstract class StreamSubstitutionManager<StreamT : Closeable>(
     private val systemStreamProp: KMutableProperty0<StreamT>,
     private val kernelStreamProp: KMutableProperty0<StreamT>?,
+    delegatingStreamFactory: (delegateFactory: () -> StreamT) -> StreamT,
     substitutionEngineType: StreamSubstitutionType,
 ) {
+    private val defaultStreams = getStreamsFromProperties()
+
     private val engine =
         run {
-            val initialStreams = getStreamsFromProperties()
             val dataFlowComponents =
                 DataFlowComponents(
-                    initialStreams,
+                    defaultStreams,
                     ::substituteStreams,
                     ::finalizeStreams,
                 )
@@ -61,15 +62,21 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
             }
         }
 
+    private val localStreamProp = ThreadLocal<StreamT>()
+    private val delegatingStream =
+        delegatingStreamFactory {
+            localStreamProp.get() ?: defaultStreams.systemStream
+        }
+
     private fun createStreams(
         createSystemStream: (initial: StreamT?) -> StreamT,
         createKernelStream: (initial: StreamT?) -> StreamT?,
-        initial: Streams<StreamT>?,
     ): Streams<StreamT> {
-        val systemStream = createSystemStream(initial?.systemStream)
+        val myInitStreams: Streams<StreamT> = defaultStreams
+        val systemStream = createSystemStream(myInitStreams.systemStream)
         val kernelStream =
             run {
-                when (val value = createKernelStream(initial?.kernelStream)) {
+                when (val value = createKernelStream(myInitStreams.kernelStream)) {
                     null -> if (kernelStreamProp == null) null else systemStream
                     else -> value
                 }
@@ -81,7 +88,8 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     private fun substituteStreams(newStreams: Streams<StreamT>): Streams<StreamT> {
         val originalStreams = getStreamsFromProperties()
 
-        systemStreamProp.set(newStreams.systemStream)
+        localStreamProp.set(newStreams.systemStream)
+        systemStreamProp.set(delegatingStream)
 
         val newKernelStream = newStreams.kernelStream
         if (newKernelStream != null) {
@@ -108,6 +116,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         if (oldKernelStream != null) {
             kernelStreamProp?.set(oldKernelStream)
         }
+        localStreamProp.remove()
 
         newStreams.systemStream.close()
         newStreams.kernelStream?.close()
@@ -119,8 +128,8 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         body: () -> T,
     ): T {
         return engine.withDataSubstitution(
-            dataFactory = { initialStreams ->
-                createStreams(systemStreamFactory, kernelStreamFactory, initialStreams)
+            dataFactory = { _ ->
+                createStreams(systemStreamFactory, kernelStreamFactory)
             },
             body = body,
         )
@@ -136,6 +145,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     ) : StreamSubstitutionManager<PrintStream>(
             ::systemOutStream,
             KernelStreams::out,
+            ::DelegatingPrintStream,
             substitutionEngineType,
         )
 
@@ -144,6 +154,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     ) : StreamSubstitutionManager<PrintStream>(
             ::systemErrStream,
             KernelStreams::err,
+            ::DelegatingPrintStream,
             substitutionEngineType,
         )
 
@@ -152,6 +163,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     ) : StreamSubstitutionManager<InputStream>(
             ::systemInStream,
             null,
+            ::DelegatingInputStream,
             substitutionEngineType,
         )
 }

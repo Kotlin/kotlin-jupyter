@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.util
+package org.jetbrains.kotlinx.jupyter.streams
 
 /**
  * Represents a list of data items.

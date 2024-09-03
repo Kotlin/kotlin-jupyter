@@ -4,6 +4,7 @@ import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 
 fun String.parseIniConfig() = lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
 

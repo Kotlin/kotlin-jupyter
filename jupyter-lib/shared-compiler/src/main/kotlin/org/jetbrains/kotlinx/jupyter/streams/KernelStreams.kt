@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.config
+package org.jetbrains.kotlinx.jupyter.streams
 
 import java.io.PrintStream
 

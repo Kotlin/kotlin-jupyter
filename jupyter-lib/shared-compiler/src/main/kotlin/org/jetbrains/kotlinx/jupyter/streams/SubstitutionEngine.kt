@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.util
+package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
 import java.util.concurrent.locks.ReentrantLock

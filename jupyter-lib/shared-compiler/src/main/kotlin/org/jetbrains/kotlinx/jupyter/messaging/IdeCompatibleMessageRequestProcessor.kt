@@ -20,15 +20,15 @@ import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdinCon
 import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdoutContext
 import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.substitutionEngineType
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
-import org.jetbrains.kotlinx.jupyter.protocol.CapturingOutputStream
-import org.jetbrains.kotlinx.jupyter.protocol.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
-import org.jetbrains.kotlinx.jupyter.protocol.StdinInputStream
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.streams.CapturingOutputStream
+import org.jetbrains.kotlinx.jupyter.streams.DisabledStdinInputStream
+import org.jetbrains.kotlinx.jupyter.streams.StdinInputStream
+import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import org.jetbrains.kotlinx.jupyter.util.StreamSubstitutionManager
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -165,8 +165,8 @@ open class IdeCompatibleMessageRequestProcessor(
                 if (looksLikeReplCommand(code)) {
                     runCommand(code, repl)
                 } else {
-                    evalWithIO(content.allowStdin) {
-                        runExecution("Execution of code '${code.presentableForThreadName()}'") {
+                    runExecution("Execution of code '${code.presentableForThreadName()}'") {
+                        evalWithIO(content.allowStdin) {
                             repl.evalEx(
                                 EvalRequestData(
                                     code,

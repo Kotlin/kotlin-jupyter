@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig

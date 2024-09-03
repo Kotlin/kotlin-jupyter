@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.getInput

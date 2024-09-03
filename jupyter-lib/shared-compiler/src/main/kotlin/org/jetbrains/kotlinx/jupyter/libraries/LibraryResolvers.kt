@@ -9,8 +9,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.getHttp
-import org.jetbrains.kotlinx.jupyter.config.KernelStreams
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
+import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 import java.io.File
 import java.io.IOException
 import kotlin.reflect.KClass

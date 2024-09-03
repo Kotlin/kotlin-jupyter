@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.streams
 
 import java.io.IOException
 import java.io.InputStream
