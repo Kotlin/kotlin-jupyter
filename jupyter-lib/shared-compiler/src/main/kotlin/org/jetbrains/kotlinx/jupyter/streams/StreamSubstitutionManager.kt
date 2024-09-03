@@ -41,11 +41,24 @@ private var systemInStream: InputStream
  * Classes [StdOut], [StdErr], and [StdIn] extend this class for specific stream handling.
  */
 abstract class StreamSubstitutionManager<StreamT : Closeable>(
-    private val systemStreamProp: KMutableProperty0<StreamT>,
-    private val kernelStreamProp: KMutableProperty0<StreamT>?,
-    delegatingStreamFactory: (delegateFactory: () -> StreamT) -> StreamT,
+    systemStreamProp: KMutableProperty0<StreamT>,
+    kernelStreamProp: KMutableProperty0<StreamT>?,
+    private val delegatingStreamFactory: (delegateFactory: () -> StreamT) -> StreamT,
     substitutionEngineType: StreamSubstitutionType,
 ) {
+    private val localSystemStream =
+        ThreadLocalStream(
+            systemStreamProp,
+            yieldStreamFallback = { streams -> streams.systemStream },
+        )
+
+    private val localKernelStream =
+        ThreadLocalStream(
+            kernelStreamProp,
+            yieldStream = { streams -> streams.kernelStream },
+            yieldStreamFallback = { streams -> streams.systemStream },
+        )
+
     private val defaultStreams = getStreamsFromProperties()
 
     private val engine =
@@ -62,25 +75,14 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
             }
         }
 
-    private val localStreamProp = ThreadLocal<StreamT>()
-    private val delegatingStream =
-        delegatingStreamFactory {
-            localStreamProp.get() ?: defaultStreams.systemStream
-        }
-
     private fun createStreams(
         createSystemStream: (initial: StreamT?) -> StreamT,
         createKernelStream: (initial: StreamT?) -> StreamT?,
     ): Streams<StreamT> {
         val myInitStreams: Streams<StreamT> = defaultStreams
-        val systemStream = createSystemStream(myInitStreams.systemStream)
-        val kernelStream =
-            run {
-                when (val value = createKernelStream(myInitStreams.kernelStream)) {
-                    null -> if (kernelStreamProp == null) null else systemStream
-                    else -> value
-                }
-            }
+
+        val systemStream = localSystemStream.create(myInitStreams, createSystemStream)!!
+        val kernelStream = localKernelStream.create(myInitStreams, createKernelStream)
 
         return Streams(systemStream, kernelStream)
     }
@@ -88,20 +90,15 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     private fun substituteStreams(newStreams: Streams<StreamT>): Streams<StreamT> {
         val originalStreams = getStreamsFromProperties()
 
-        localStreamProp.set(newStreams.systemStream)
-        systemStreamProp.set(delegatingStream)
-
-        val newKernelStream = newStreams.kernelStream
-        if (newKernelStream != null) {
-            kernelStreamProp?.set(newKernelStream)
-        }
+        localSystemStream.substitute(newStreams)
+        localKernelStream.substitute(newStreams)
 
         return originalStreams
     }
 
     private fun getStreamsFromProperties(): Streams<StreamT> {
-        val systemStream = systemStreamProp.get()
-        val kernelStream = kernelStreamProp?.get()
+        val systemStream = localSystemStream.get()!!
+        val kernelStream = localKernelStream.get()
         return Streams(systemStream, kernelStream)
     }
 
@@ -109,17 +106,8 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         newStreams: Streams<StreamT>,
         oldStreams: Streams<StreamT>,
     ) {
-        val oldSystemStream = oldStreams.systemStream
-        val oldKernelStream = oldStreams.kernelStream
-
-        systemStreamProp.set(oldSystemStream)
-        if (oldKernelStream != null) {
-            kernelStreamProp?.set(oldKernelStream)
-        }
-        localStreamProp.remove()
-
-        newStreams.systemStream.close()
-        newStreams.kernelStream?.close()
+        localSystemStream.finalize(newStreams, oldStreams)
+        localKernelStream.finalize(newStreams, oldStreams)
     }
 
     fun <T> withSubstitutedStreams(
@@ -139,6 +127,54 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         val systemStream: StreamT,
         val kernelStream: StreamT?,
     )
+
+    private inner class ThreadLocalStream(
+        private val streamProp: KMutableProperty0<StreamT>?,
+        private val yieldStreamFallback: (Streams<StreamT>) -> StreamT,
+        private val yieldStream: (Streams<StreamT>) -> StreamT? = yieldStreamFallback,
+    ) {
+        private val localStreamProp = ThreadLocal<StreamT>()
+        private val delegatingStream =
+            delegatingStreamFactory {
+                localStreamProp.get()
+                    ?: yieldStream(defaultStreams)
+                    ?: yieldStreamFallback(defaultStreams)
+            }
+
+        fun get() = streamProp?.get()
+
+        fun create(
+            defaultStreams: Streams<StreamT>,
+            factory: (initial: StreamT?) -> StreamT?,
+        ): StreamT? {
+            return when (val value = factory(yieldStream(defaultStreams))) {
+                null -> if (streamProp == null) null else yieldStreamFallback(defaultStreams)
+                else -> value
+            }
+        }
+
+        fun substitute(newStreams: Streams<StreamT>) {
+            val newStream = yieldStream(newStreams)
+            if (newStream != null) {
+                streamProp?.set(delegatingStream)
+            }
+            localStreamProp.set(newStream)
+        }
+
+        fun finalize(
+            newStreams: Streams<StreamT>,
+            oldStreams: Streams<StreamT>,
+        ) {
+            val oldStream = yieldStream(oldStreams)
+            if (oldStream != null) {
+                streamProp?.set(oldStream)
+            }
+
+            localStreamProp.remove()
+
+            yieldStream(newStreams)?.close()
+        }
+    }
 
     class StdOut(
         substitutionEngineType: StreamSubstitutionType,
