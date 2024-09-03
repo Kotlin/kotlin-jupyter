@@ -81,8 +81,8 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     ): Streams<StreamT> {
         val myInitStreams: Streams<StreamT> = defaultStreams
 
-        val systemStream = localSystemStream.create(myInitStreams, createSystemStream)!!
-        val kernelStream = localKernelStream.create(myInitStreams, createKernelStream)
+        val systemStream = localSystemStream.create(myInitStreams, null, createSystemStream)!!
+        val kernelStream = localKernelStream.create(myInitStreams, systemStream, createKernelStream)
 
         return Streams(systemStream, kernelStream)
     }
@@ -145,10 +145,11 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
 
         fun create(
             defaultStreams: Streams<StreamT>,
+            fallbackStream: StreamT?,
             factory: (initial: StreamT?) -> StreamT?,
         ): StreamT? {
             return when (val value = factory(yieldStream(defaultStreams))) {
-                null -> if (streamProp == null) null else yieldStreamFallback(defaultStreams)
+                null -> if (streamProp == null) null else fallbackStream
                 else -> value
             }
         }
