@@ -14,7 +14,8 @@ repositories {
 dependencies {
     compileOnly(libs.kotlin.gradle.stdlib)
     compileOnly(libs.kotlin.gradle.reflect)
-    compileOnly(libs.logging.slf4j.api)
+    // notebook.loggerFactory needs an API dependency on slf4j
+    api(libs.logging.slf4j.api)
 
     api(libs.serialization.json) {
         excludeKotlinDependencies(
