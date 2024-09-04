@@ -129,6 +129,8 @@ interface Notebook {
 
     val textRenderersProcessor: TextRenderersProcessor
 
+    val throwableRenderersProcessor: ThrowableRenderersProcessor
+
     val fieldsHandlersProcessor: FieldsProcessor
 
     val beforeCellExecutionsProcessor: ExtensionsProcessor<ExecutionCallback<*>>

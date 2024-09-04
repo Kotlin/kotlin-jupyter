@@ -30,6 +30,7 @@ import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.TextRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
@@ -326,6 +327,9 @@ object NotebookMock : Notebook {
         get() = notImplemented()
 
     override val textRenderersProcessor: TextRenderersProcessor
+        get() = notImplemented()
+
+    override val throwableRenderersProcessor: ThrowableRenderersProcessor
         get() = notImplemented()
 
     override val fieldsHandlersProcessor: FieldsProcessor

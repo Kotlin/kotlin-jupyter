@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
@@ -172,6 +173,9 @@ class NotebookImpl(
 
     override val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion
         get() = sharedReplContext?.textRenderersProcessor ?: throwItemNotInitialized("Text renderers processor")
+
+    override val throwableRenderersProcessor: ThrowableRenderersProcessor
+        get() = sharedReplContext?.throwableRenderersProcessor ?: throwItemNotInitialized("Throwable renderers processor")
 
     override val fieldsHandlersProcessor: FieldsProcessorInternal
         get() = sharedReplContext?.fieldsProcessor ?: throwItemNotInitialized("Fields handlers processor")

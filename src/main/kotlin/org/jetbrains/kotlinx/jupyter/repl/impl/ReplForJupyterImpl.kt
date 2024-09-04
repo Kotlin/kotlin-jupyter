@@ -27,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
@@ -41,7 +42,6 @@ import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
-import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.commands.doCommandCompletion
 import org.jetbrains.kotlinx.jupyter.commands.reportCommandErrors

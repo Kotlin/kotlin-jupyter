@@ -1,6 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.codegen
-
-import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
+package org.jetbrains.kotlinx.jupyter.api
 
 interface ThrowableRenderersProcessor {
     fun renderThrowable(throwable: Throwable): Any?

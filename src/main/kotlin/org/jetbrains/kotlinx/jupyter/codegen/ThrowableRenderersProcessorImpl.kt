@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.codegen
 
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException

@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter.repl
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.codegen.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
