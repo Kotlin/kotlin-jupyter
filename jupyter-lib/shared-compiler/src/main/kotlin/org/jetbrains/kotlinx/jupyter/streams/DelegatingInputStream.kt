@@ -12,10 +12,10 @@ class DelegatingInputStream(val getDelegate: () -> InputStream) : InputStream() 
         len: Int,
     ): Int = getDelegate().read(b, off, len)
 
-    override fun read(b: ByteArray?): Int = getDelegate().read(b)
+    override fun read(b: ByteArray): Int = getDelegate().read(b)
 
     override fun readNBytes(
-        b: ByteArray?,
+        b: ByteArray,
         off: Int,
         len: Int,
     ): Int = getDelegate().readNBytes(b, off, len)
@@ -34,7 +34,7 @@ class DelegatingInputStream(val getDelegate: () -> InputStream) : InputStream() 
 
     override fun markSupported() = getDelegate().markSupported()
 
-    override fun transferTo(out: OutputStream?) = getDelegate().transferTo(out)
+    override fun transferTo(out: OutputStream) = getDelegate().transferTo(out)
 
     override fun close(): Unit = getDelegate().close()
 
