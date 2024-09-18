@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -75,7 +76,7 @@ fun JsonObject.string(key: String): String {
 
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
-class ExecuteTests : KernelServerTestsBase() {
+class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private var _context: ZMQ.Context? = null
     override val context: ZMQ.Context
         get() = _context!!
@@ -434,7 +435,7 @@ class ExecuteTests : KernelServerTestsBase() {
         assertEquals("complete", doIsComplete("2 + 2"))
         assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
         val loggingManager = LoggingManager(testLoggerFactory)
-        assertEquals(if (runInSeparateProcess) DEBUG else OFF, loggingManager.mainLoggerLevel())
+        assertEquals(if (runServerInSeparateProcess) DEBUG else OFF, loggingManager.mainLoggerLevel())
     }
 
     @Test
@@ -672,6 +673,103 @@ class ExecuteTests : KernelServerTestsBase() {
                 content.traceback shouldContain "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
                 content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                 content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+            },
+        )
+    }
+
+    // In case of an exception happening in generated code. This code isn't visible to
+    // the user. In that case, these things happen:
+    // - Any stack trace line that reference outside the visible code range only show the request count.
+    // - We find the first "visible" error and promote that at the end of error output instead of the
+    //   first error. This means that the user can hopefully find the point in their code that triggers
+    //   the behavior
+    // - If no visible user code can be found, only the request count is displayed but no line number.
+    @Test
+    fun testExceptionInGeneratedCodeShouldNotReferenceLine() {
+        val code =
+            """
+            %use ktor-client
+
+            @Serializable
+            class User(val id: Int)
+            
+            // Body cannot be serialized, and will throw exception in generated code
+            http.get("https://github.com/Kotlin/kotlin-jupyter").body<User>()
+            """.trimIndent()
+
+        doExecute(
+            code,
+            hasResult = false,
+            ioPubChecker = { ioPubSocket: JupyterSocket ->
+                val message = ioPubSocket.receiveMessage()
+                message.type shouldBe MessageType.ERROR
+                val content = message.content
+                content.shouldBeTypeOf<ExecuteErrorReply>()
+                content.name shouldBe "io.ktor.serialization.JsonConvertException"
+                content.value shouldBe
+                    "Illegal input: Field 'id' is required for type with serial name 'Line_6_jupyter.User', but it was missing at path: \$"
+
+                // Stacktrace should only contain the cell reference if error is outside visible range
+                content.traceback shouldContain "\tat Line_6_jupyter.<init>(Line_6.jupyter.kts:12) at Cell In[1]"
+                content.traceback shouldContain "\tat Line_6_jupyter\$User.<init>(Line_6.jupyter.kts:3) at Cell In[1], line 3"
+                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1]"
+            },
+        )
+    }
+
+    @Test
+    fun testCompileErrorsAreEnhanced() {
+        val illegalCode =
+            """
+            val var
+            """.trimIndent()
+        doExecute(
+            illegalCode,
+            hasResult = false,
+            ioPubChecker = { ioPubSocket: JupyterSocket ->
+                // If execution throws an exception, we should send an ERROR
+                // message type with the appropriate metadata.
+                val message = ioPubSocket.receiveMessage()
+                message.type shouldBe MessageType.ERROR
+                val content = message.content
+                content.shouldBeTypeOf<ExecuteErrorReply>()
+                content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException"
+                content.value shouldBe
+                    """
+                    at Cell In[1], line 1, column 4: Expecting property name or receiver type
+                    at Cell In[1], line 1, column 5: Property getter or setter expected
+                    """.trimIndent()
+                // Error should also contain the stack trace
+                content.traceback.size shouldBeGreaterThan 0
+            },
+        )
+    }
+
+    @Test
+    fun testLibraryExceptionShouldContainFullStackTrace() {
+        val code =
+            """
+            USE {
+                dependencies {
+                    implementation("some:nonexistent:lib")
+                }
+            }
+            """.trimIndent()
+        doExecute(
+            code,
+            hasResult = false,
+            ioPubChecker = { ioPubSocket: JupyterSocket ->
+                // If execution throws an exception, we should send an ERROR
+                // message type with the appropriate metadata.
+                val message = ioPubSocket.receiveMessage()
+                message.type shouldBe MessageType.ERROR
+                val content = message.content
+                content.shouldBeTypeOf<ExecuteErrorReply>()
+                content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException"
+                content.value shouldBe
+                    "The problem is found in one of the loaded libraries: check library imports, dependencies and repositories"
+                // Error should also contain the stack trace
+                content.traceback.size shouldBeGreaterThan 0
             },
         )
     }

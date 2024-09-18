@@ -28,7 +28,14 @@ import org.zeromq.ZMQ
 import java.io.File
 import java.util.UUID
 
-abstract class KernelServerTestsBase {
+/**
+ * Base class for tests that need to have fine-tuned control over the kernel server execution.
+ *
+ * @param runServerInSeparateProcess The debugger only works if the kernel is running in the same process
+ * as the test. The default is to run in a separate one (similar to how it would work in
+ * production). To enable debugging, set this value to `false`
+ */
+abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean) {
     protected abstract val context: ZMQ.Context
 
     protected val kernelConfig =
@@ -42,9 +49,7 @@ abstract class KernelServerTestsBase {
     private val sessionId = UUID.randomUUID().toString()
     private val messageId = listOf(byteArrayOf(1))
 
-    // Set to false to debug kernel execution
-    protected val runInSeparateProcess = true
-    private val executor = if (runInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
+    private val executor = if (runServerInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
 
     open fun beforeEach() {}
 

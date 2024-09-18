@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
+import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
@@ -198,7 +199,14 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     ): JupyterCompiler.Result {
         val compilationConfigWithJupyterOptions = getCompilationConfiguration(options)
         when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfigWithJupyterOptions) }) {
-            is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, resultWithDiagnostics)
+            is ResultWithDiagnostics.Failure -> {
+                val metadata =
+                    CellErrorMetaData(
+                        options.cellId.toExecutionCount(),
+                        snippet.text.lines().size,
+                    )
+                throw ReplCompilerException(snippet.text, resultWithDiagnostics, metadata = metadata)
+            }
             is ResultWithDiagnostics.Success -> {
                 val result = resultWithDiagnostics.value
                 val compiledScript = result.get()

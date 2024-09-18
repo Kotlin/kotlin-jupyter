@@ -2,18 +2,43 @@ package org.jetbrains.kotlinx.jupyter.exceptions
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
+private fun enhanceReplCompilerError(
+    metadata: CellErrorMetaData?,
+    message: String,
+): String {
+    if (metadata == null || message.isEmpty()) return message
+    // Possible patterns we need to look out for:
+    // - Line_0.jupyter.kts (1:4 - 4) Some message
+    val pattern = "Line_\\d+\\.jupyter\\.kts \\((?<line>\\d+):(?<column>\\d+) - \\d+\\) (?<message>.*)".toRegex()
+    return message.lines().joinToString("\n") { line ->
+        pattern.find(line)?.let { match ->
+            val lineNumber: Int = match.groups["line"]!!.value.toInt()
+            val columnNumber: Int = match.groups["column"]!!.value.toInt()
+            val msg = match.groups["message"]!!.value
+            // In this case, we also show the line number even if it is outside the visible
+            // range, since hiding it would make debugging harder in case of bugs in compiler
+            // plugins that modify the code.
+            "at Cell In[${metadata.executionCount}], line $lineNumber, column $columnNumber: $msg"
+        } ?: line
+    }
+}
+
+/**
+ * Exception type for compile time errors happening in the user's code.
+ */
 class ReplCompilerException(
     val failedCode: String,
     val errorResult: ResultWithDiagnostics.Failure? = null,
     message: String? = null,
-) :
-    ReplException(
-            message ?: errorResult?.getErrors() ?: "",
-            errorResult?.reports?.map { it.exception }?.firstOrNull(),
-        ) {
+    metadata: CellErrorMetaData? = null,
+) : ReplException(
+        enhanceReplCompilerError(metadata, message ?: errorResult?.getErrors() ?: ""),
+        errorResult?.reports?.map { it.exception }?.firstOrNull(),
+    ) {
     val firstError: ScriptDiagnostic? =
         errorResult?.reports?.firstOrNull {
             it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL

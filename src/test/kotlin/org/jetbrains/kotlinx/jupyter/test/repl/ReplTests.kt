@@ -81,7 +81,7 @@ class ReplTests : AbstractSingleReplTest() {
         val message = ex.message
 
         val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
-        val expectedMessage = "Line_0.${repl.fileExtension} (3:11 - 14) Unresolved reference: ppp"
+        val expectedMessage = "at Cell In[-1], line 3, column 11: Unresolved reference: ppp"
 
         location shouldBe expectedLocation
         message shouldBe expectedMessage

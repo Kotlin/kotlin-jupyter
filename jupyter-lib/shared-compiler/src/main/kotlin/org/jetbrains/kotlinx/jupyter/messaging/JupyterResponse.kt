@@ -167,23 +167,22 @@ fun ReplEvalRuntimeException.toExecuteErrorReply(executionCount: ExecutionCount)
     val traceBack =
         buildString {
             // IntelliJ will check for the first occurrence of "\n<exceptionType>: <exceptionMessage>"`
-            // (note the newline) and hide every above it under a fold named "Stacktrace..."
+            // (note the newline) and hide everything above it under a fold named "Stacktrace..."
             //
             // So by printing the full stacktrace as the first thing, we ensure that it gets
             // hidden by default and only the top exception type/message + cell information
             // is shown to the user.
-            userException.stackTraceToString().lines().mapIndexed { index, el ->
+            userException.stackTraceToString().lines().mapIndexed { index, line ->
                 // Account for the first line being the exception type + message and last (empty) line
                 // being created by stackTraceToString()
-                val i = index - 1
-                val error = if (i >= 0 && i < cellErrorLocations.size) cellErrorLocations[i] else null
-                val newLine =
-                    if (error != null) {
-                        el + " at Cell In[${error.jupyterRequestCount}], line ${error.lineNumber}"
-                    } else {
-                        el
-                    }
-                newLine
+                val errorMetadata = if (index >= 0 && index < cellErrorLocations.size) cellErrorLocations[index] else null
+                errorMetadata?.let { metadata ->
+                    line +
+                        when (metadata.lineNumber <= metadata.visibleSourceLines) {
+                            true -> " at Cell In[${metadata.jupyterRequestCount}], line ${metadata.lineNumber}"
+                            false -> " at Cell In[${metadata.jupyterRequestCount}]"
+                        }
+                } ?: line
             }.forEach {
                 if (it.isNotEmpty()) appendLine(it)
             }
@@ -191,7 +190,11 @@ fun ReplEvalRuntimeException.toExecuteErrorReply(executionCount: ExecutionCount)
             appendLine("${userException.javaClass.canonicalName}: ${userException.message}")
             val topError = cellErrorLocations.firstOrNull { it != null }
             if (topError != null) {
-                appendLine("at Cell In[${topError.jupyterRequestCount}], line ${topError.lineNumber}")
+                if (topError.lineNumber > topError.visibleSourceLines) {
+                    appendLine("at Cell In[${topError.jupyterRequestCount}]")
+                } else {
+                    appendLine("at Cell In[${topError.jupyterRequestCount}], line ${topError.lineNumber}")
+                }
             }
         }
     return ExecuteErrorReply(
