@@ -19,11 +19,11 @@ import java.util.EnumMap
 typealias KernelPorts = Map<JupyterSocketType, Int>
 
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
-const val KERNEL_SIGNATURE_SCHEME = "hmac1-sha256"
+const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
 fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
     return EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
-        JupyterSocketType.values().forEach { socket ->
+        JupyterSocketType.entries.forEach { socket ->
             val port = action(socket)
             put(socket, port)
         }

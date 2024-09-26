@@ -41,6 +41,9 @@ xmlgraphicsBatikCodec = "1.17"
 xmlgraphicsCommons = "2.9"
 graphvizJava = "0.18.1"
 
+springBoot = "3.3.4"
+springDependencyManagement = "1.1.6"
+
 [libraries]
 
 # Dev Kotlin dependencies
@@ -115,6 +118,11 @@ test-kotlintest-assertions = { module = "io.kotest:kotest-assertions-core", vers
 # Jupyter notebooks parser
 jupyterNotebooksParser = { module = "org.jetbrains.kotlinx:jupyter-notebooks-parser", version.ref = "jupyterNotebooksParser" }
 
+# Spring
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "springBoot" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
+spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "springBoot" }
+
 # Different libraries
 ext-jlatex = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
 
@@ -161,6 +169,8 @@ jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-j
 [plugins]
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublishPlugin" }
 plugin-kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlinDsl" }
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

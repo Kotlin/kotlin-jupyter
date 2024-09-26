@@ -17,7 +17,7 @@ fun parseLibraryDescriptors(
     loggerFactory: KernelLoggerFactory,
     libJsons: Map<String, String>,
 ): Map<String, LibraryDescriptor> {
-    val logger = loggerFactory.getLogger("Parsing library descriptors")
+    val logger = loggerFactory.getLogger(LibraryDescriptor::class.java)
     return libJsons.mapValues {
         logger.info("Parsing '${it.key}' descriptor")
         parseLibraryDescriptor(it.value)

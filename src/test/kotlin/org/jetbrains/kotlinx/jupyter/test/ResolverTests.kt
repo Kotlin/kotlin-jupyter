@@ -10,7 +10,7 @@ import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.test.assertTrue
 
 class ResolverTests {
-    private val logger = testLoggerFactory.getLogger("resolver")
+    private val logger = testLoggerFactory.getLogger(ResolverTests::class.java)
 
     private fun ExternalDependenciesResolver.doResolve(artifact: String): List<File> {
         testRepositories.forEach {

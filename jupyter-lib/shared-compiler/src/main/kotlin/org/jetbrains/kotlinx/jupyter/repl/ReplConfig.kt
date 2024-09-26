@@ -21,13 +21,13 @@ data class ReplConfig(
 ) {
     companion object {
         fun create(
-            resolutionInfoProviderFactory: (LibraryHttpUtil, KernelLoggerFactory) -> ResolutionInfoProvider,
+            resolutionInfoProviderFactory: ResolutionInfoProviderFactory,
             loggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory,
             httpUtil: LibraryHttpUtil = createLibraryHttpUtil(loggerFactory),
             homeDir: File? = null,
             kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
         ): ReplConfig {
-            val resolutionInfoProvider = resolutionInfoProviderFactory(httpUtil, loggerFactory)
+            val resolutionInfoProvider = resolutionInfoProviderFactory.create(httpUtil, loggerFactory)
 
             return ReplConfig(
                 mavenRepositories = defaultRepositoriesCoordinates,

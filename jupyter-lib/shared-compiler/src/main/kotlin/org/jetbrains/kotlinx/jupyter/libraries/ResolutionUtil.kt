@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import java.io.File
 
 fun getStandardResolver(
@@ -20,15 +21,17 @@ fun getStandardResolver(
     return res
 }
 
-fun getDefaultClasspathResolutionInfoProvider(
-    httpUtil: LibraryHttpUtil,
-    loggerFactory: KernelLoggerFactory,
-): ResolutionInfoProvider {
-    return StandardResolutionInfoProvider(
-        loggerFactory,
-        AbstractLibraryResolutionInfo.ByClasspath,
-        httpUtil,
-    )
+object DefaultResolutionInfoProviderFactory : ResolutionInfoProviderFactory {
+    override fun create(
+        httpUtil: LibraryHttpUtil,
+        loggerFactory: KernelLoggerFactory,
+    ): ResolutionInfoProvider {
+        return StandardResolutionInfoProvider(
+            loggerFactory,
+            AbstractLibraryResolutionInfo.ByClasspath,
+            httpUtil,
+        )
+    }
 }
 
 fun getDefaultResolutionInfoSwitcher(

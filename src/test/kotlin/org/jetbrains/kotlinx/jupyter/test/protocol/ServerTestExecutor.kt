@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.kernelServer
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
@@ -79,7 +79,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
     ) {
         val replConfig =
             ReplConfig.create(
-                ::getDefaultClasspathResolutionInfoProvider,
+                DefaultResolutionInfoProviderFactory,
                 testLoggerFactory,
                 homeDir = kernelConfig.homeDir,
             )

@@ -362,6 +362,11 @@ class KernelInfoReply(
 ) : OkReply()
 
 @Serializable
+class KernelInfoReplyMetadata(
+    val classpath: List<String>,
+)
+
+@Serializable
 class ShutdownRequest(
     val restart: Boolean,
 ) : AbstractMessageContent()

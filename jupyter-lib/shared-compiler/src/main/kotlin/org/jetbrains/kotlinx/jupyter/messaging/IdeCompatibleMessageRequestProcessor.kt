@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
@@ -216,6 +217,10 @@ open class IdeCompatibleMessageRequestProcessor(
                         "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",
                         notebookLanguageInfo,
                         listOf(),
+                    ),
+                metadata =
+                    Json.encodeToJsonElement(
+                        KernelInfoReplyMetadata(repl.currentClasspath.toList()),
                     ),
             ),
         )

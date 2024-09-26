@@ -35,7 +35,7 @@ open class JupyterScriptDependenciesResolverImpl(
     resolveSourcesOption: KMutableProperty0<Boolean>,
     resolveMppOption: KMutableProperty0<Boolean>,
 ) : JupyterScriptDependenciesResolver {
-    private val logger = loggerFactory.getLogger("resolver")
+    private val logger = loggerFactory.getLogger(JupyterScriptDependenciesResolverImpl::class.java)
 
     private val resolver: ExternalDependenciesResolver
     private val resolverOptions =

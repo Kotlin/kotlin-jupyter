@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
@@ -8,9 +10,8 @@ import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.createRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterBaseSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
@@ -23,11 +24,13 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageHandlerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
+import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import org.slf4j.Logger
 import java.io.File
@@ -92,21 +95,11 @@ fun main(vararg args: String) {
         logger.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val kernelConfig = kernelArgs.getConfig()
-        val replConfig =
-            ReplConfig.create(
-                ::getDefaultClasspathResolutionInfoProvider,
-                loggerFactory,
-                homeDir = kernelArgs.homeDir,
-            )
-        val runtimeProperties = createRuntimeProperties(kernelConfig)
-        val replSettings =
-            DefaultReplSettings(
-                kernelConfig,
-                replConfig,
-                loggerFactory,
-                runtimeProperties,
-            )
-        kernelServer(replSettings)
+        startKernel(
+            loggerFactory,
+            EmbeddedKernelRunMode,
+            kernelConfig,
+        )
     } catch (e: Exception) {
         logger.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
@@ -123,23 +116,48 @@ fun main(vararg args: String) {
 @Suppress("unused")
 fun embedKernel(
     cfgFile: File,
-    resolutionInfoProvider: ResolutionInfoProvider?,
+    resolutionInfoProviderFactory: ResolutionInfoProviderFactory?,
     scriptReceivers: List<Any>? = null,
 ) {
-    val cp = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
+    val scriptClasspath = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
+    val kernelConfig = KernelArgs(cfgFile, scriptClasspath, null, null, null, null).getConfig()
+    startKernel(
+        DefaultKernelLoggerFactory,
+        EmbeddedKernelRunMode,
+        kernelConfig,
+        resolutionInfoProviderFactory,
+        scriptReceivers,
+    )
+}
 
-    val kernelConfig = KernelArgs(cfgFile, cp, null, null, null, null).getConfig()
+fun startKernel(
+    loggerFactory: KernelLoggerFactory,
+    kernelRunMode: KernelRunMode,
+    kernelConfig: KernelConfig,
+    resolutionInfoProviderFactory: ResolutionInfoProviderFactory? = DefaultResolutionInfoProviderFactory,
+    scriptReceivers: List<Any>? = null,
+) {
+    val myResolutionInfoProviderFactory =
+        resolutionInfoProviderFactory
+            ?: ResolutionInfoProviderFactory { httpUtil, _ ->
+                EmptyResolutionInfoProvider(httpUtil.libraryInfoCache)
+            }
+
     val replConfig =
         ReplConfig.create(
-            { httpUtil, _ -> resolutionInfoProvider ?: EmptyResolutionInfoProvider(httpUtil.libraryInfoCache) },
-            homeDir = null,
-            kernelRunMode = EmbeddedKernelRunMode,
+            myResolutionInfoProviderFactory,
+            loggerFactory,
+            homeDir = kernelConfig.homeDir,
+            kernelRunMode = kernelRunMode,
         )
+
+    val runtimeProperties = createRuntimeProperties(kernelConfig)
     val replSettings =
         DefaultReplSettings(
             kernelConfig,
             replConfig,
-            DefaultKernelLoggerFactory,
+            loggerFactory,
+            runtimeProperties,
             scriptReceivers = scriptReceivers.orEmpty(),
         )
     kernelServer(replSettings)

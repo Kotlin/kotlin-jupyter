@@ -1,13 +1,10 @@
 @file:Suppress("UnstableApiUsage")
 
+import build.CompilerRelocatedJarConfigurator
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
-import build.util.ContentModificationContext
-import build.util.ContentTransformer
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
-import build.util.relocatePackages
-import build.util.transformPluginXmlContent
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
@@ -203,26 +200,7 @@ val embeddableKernelJar =
     tasks.registerShadowJarTasksBy(
         embeddableKernel,
         withSources = false,
-        binaryTaskConfigurator = {
-            mergeServiceFiles()
-            transform(ComponentsXmlResourceTransformer())
-
-            transform(
-                ContentTransformer(
-                    "META-INF/extensions/compiler.xml",
-                    ContentModificationContext::transformPluginXmlContent,
-                ),
-            )
-            manifest {
-                attributes["Implementation-Version"] = project.version
-            }
-
-            relocatePackages {
-                +"kotlin.script.experimental.dependencies"
-                +"org.jetbrains.kotlin."
-                +"org.jetbrains.kotlinx.serialization."
-            }
-        },
+        binaryTaskConfigurator = CompilerRelocatedJarConfigurator,
     )
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
 val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)

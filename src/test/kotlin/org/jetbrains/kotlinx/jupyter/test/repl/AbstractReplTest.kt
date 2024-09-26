@@ -6,9 +6,9 @@ import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
-import org.jetbrains.kotlinx.jupyter.libraries.getDefaultClasspathResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
@@ -82,7 +82,7 @@ abstract class AbstractReplTest {
         displayHandlerProvider: (MutableNotebook) -> DisplayHandler = { NoOpDisplayHandler },
     ): ReplForJupyter {
         val standardResolutionInfoProvider =
-            getDefaultClasspathResolutionInfoProvider(
+            DefaultResolutionInfoProviderFactory.create(
                 httpUtil,
                 testLoggerFactory,
             )
