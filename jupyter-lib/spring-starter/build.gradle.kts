@@ -59,6 +59,14 @@ dependencies {
     springKernel(libs.serialization.json)
 }
 
+configurations.matching { it.name.startsWith("dokka") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group.startsWith("com.fasterxml.jackson")) {
+            useVersion("2.15.3")
+        }
+    }
+}
+
 val springKernelJar =
     tasks.registerShadowJarTasksBy(
         springKernel,
