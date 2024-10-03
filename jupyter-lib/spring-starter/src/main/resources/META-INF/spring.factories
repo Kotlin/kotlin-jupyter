@@ -1,0 +1,3 @@
+# For older versions of Spring
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.jetbrains.kotlinx.jupyter.spring.starter.KotlinJupyterAutoConfiguration
