@@ -7,11 +7,21 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import java.io.File
 
+/**
+ * Autoconfiguration class for the Kotlin Jupyter kernel in a Spring Boot application.
+ * This class sets up the necessary beans for starting Kotlin Jupyter Kernel inside the application.
+ */
 @AutoConfiguration
-@EnableConfigurationProperties(KotlinJupyterKernelServicePorts::class)
+@EnableConfigurationProperties(
+    SpringKotlinJupyterKernelPorts::class,
+    SpringKotlinJupyterClient::class,
+)
 open class KotlinJupyterAutoConfiguration {
     @Bean
-    open fun kernelService(servicePorts: KotlinJupyterKernelServicePorts): KotlinJupyterKernelService {
+    open fun kernelService(
+        servicePorts: SpringKotlinJupyterKernelPorts,
+        client: SpringKotlinJupyterClient,
+    ): KotlinJupyterKernelService {
         val scriptClasspath =
             System.getProperty("java.class.path")
                 .split(File.pathSeparator)
@@ -32,6 +42,7 @@ open class KotlinJupyterAutoConfiguration {
             kernelPorts = ports,
             scriptClasspath = scriptClasspath,
             homeDir = null,
+            clientType = client.type,
         )
     }
 

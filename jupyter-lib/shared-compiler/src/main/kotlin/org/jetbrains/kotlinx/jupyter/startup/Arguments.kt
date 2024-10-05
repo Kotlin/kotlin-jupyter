@@ -145,10 +145,11 @@ fun createKotlinKernelConfig(
     signatureKey: String,
     // All JARs that should be in initial script (not whole kernel) classpath
     scriptClasspath: List<File> = emptyList(),
-    // Home directory. In sub-folders of this directory libraries descriptors and their caches are stored
+    // Home directory. In subfolders of this directory, libraries, descriptors and their caches are stored
     homeDir: File? = null,
     // If not null, kernel should listen to the debugger on this port
     debugPort: Int? = null,
+    clientType: String? = null,
 ) = KernelConfig(
     ports,
     KERNEL_TRANSPORT_SCHEME,
@@ -157,14 +158,15 @@ fun createKotlinKernelConfig(
     scriptClasspath,
     homeDir,
     debugPort,
+    clientType,
 )
 
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
 
 fun KernelConfig.javaCmdLine(
-    // Path to java executable or just "java" in case it's on path
+    // Path to java executable or just "java" in case it's on the path
     javaExecutable: String,
-    // Prefix for temporary directory where connection file should be stored
+    // Prefix for temporary directory where the connection file should be stored
     tempDirPrefix: String,
     // Classpath for the whole kernel. Should include kernel artifact
     kernelClasspath: String,

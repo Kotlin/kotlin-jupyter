@@ -13,10 +13,10 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
 }
 
-val springJvmTarget = 17
+val springJvmTarget: String = libs.versions.springJvmTarget.get()
 
 buildSettings {
-    withJvmTarget(springJvmTarget.toString())
+    withJvmTarget(springJvmTarget)
 }
 
 java {

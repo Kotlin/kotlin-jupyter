@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConfigurationProperties(prefix = "kotlin.jupyter.kernel.ports")
-class KotlinJupyterKernelServicePorts {
+class SpringKotlinJupyterKernelPorts {
     var hb: Int = getDefaultPort(JupyterSocketType.HB)
     var shell: Int = getDefaultPort(JupyterSocketType.SHELL)
     var control: Int = getDefaultPort(JupyterSocketType.CONTROL)

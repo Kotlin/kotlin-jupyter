@@ -1,5 +1,6 @@
 [versions]
 jvmTarget = "11"
+springJvmTarget = "17"
 
 kotlin = "1.9.23"
 kotlinDependencies = "1.9.23"

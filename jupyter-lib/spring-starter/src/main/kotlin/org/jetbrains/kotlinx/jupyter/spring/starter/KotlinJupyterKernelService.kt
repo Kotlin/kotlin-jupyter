@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
 import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.startKernel
@@ -11,17 +12,31 @@ import java.io.Closeable
 import java.io.File
 import kotlin.concurrent.thread
 
+/**
+ * A service class responsible for managing and running a kernel server.
+ * The server starts in a dedicated thread once the class is instantiated.
+ * To interrupt server, call [close].
+ *
+ * This class has no Spring specifics but is placed here because it's unnecessary anywhere else
+ *
+ * @param kernelPorts The mapping of Jupyter socket types to the corresponding port numbers.
+ * @param scriptClasspath A list of files that represent the initial classpath for REPL snippets.
+ * @param homeDir The directory where libraries descriptors and caches are stored. It can be null.
+ * @param clientType Client type name, see [JupyterClientType]
+ */
 class KotlinJupyterKernelService(
     kernelPorts: KernelPorts,
     scriptClasspath: List<File> = emptyList(),
     homeDir: File? = null,
+    clientType: String? = null,
 ) : Closeable {
     private val kernelConfig =
         createKotlinKernelConfig(
-            kernelPorts,
-            DEFAULT_SPRING_SIGNATURE_KEY,
-            scriptClasspath,
-            homeDir,
+            ports = kernelPorts,
+            signatureKey = DEFAULT_SPRING_SIGNATURE_KEY,
+            scriptClasspath = scriptClasspath,
+            homeDir = homeDir,
+            clientType = clientType,
         )
 
     private val kernelThread =
