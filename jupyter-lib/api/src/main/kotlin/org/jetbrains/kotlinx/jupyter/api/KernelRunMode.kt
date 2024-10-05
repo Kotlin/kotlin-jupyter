@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import org.jetbrains.kotlinx.jupyter.util.FilteringClassLoader
+import org.jetbrains.kotlinx.jupyter.util.createDefaultDelegatingClassLoader
 
 /**
  * Represents settings that depend on the environment in which kernel is running
@@ -31,7 +31,7 @@ abstract class AbstractKernelRunMode(override val name: String) : KernelRunMode 
 }
 
 object StandaloneKernelRunMode : AbstractKernelRunMode("Standalone") {
-    override fun createIntermediaryClassLoader(parent: ClassLoader) = createDefaultFilteringClassLoader(parent)
+    override fun createIntermediaryClassLoader(parent: ClassLoader) = createDefaultDelegatingClassLoader(parent)
 
     override val shouldKillProcessOnShutdown: Boolean get() = true
     override val inMemoryOutputsSupported: Boolean get() = false
@@ -48,16 +48,4 @@ object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
     override val isRunInsideIntellijProcess: Boolean get() = false
     override val streamSubstitutionType: StreamSubstitutionType
         get() = StreamSubstitutionType.BLOCKING
-}
-
-fun createDefaultFilteringClassLoader(parent: ClassLoader): ClassLoader {
-    return FilteringClassLoader(parent) { fqn ->
-        listOf(
-            "jupyter.kotlin.",
-            "org.jetbrains.kotlinx.jupyter.api",
-            "kotlin.",
-            "kotlinx.serialization.",
-        ).any { fqn.startsWith(it) } ||
-            (fqn.startsWith("org.jetbrains.kotlin.") && !fqn.startsWith("org.jetbrains.kotlinx.jupyter."))
-    }
 }
