@@ -110,6 +110,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 }
 
 data class KernelConfig(
+    val host: String = "*",
     val ports: KernelPorts,
     val transport: String,
     val signatureScheme: String,
@@ -136,29 +137,57 @@ data class KernelConfig(
     }
 }
 
-fun createKotlinKernelConfig(
-    // Mapping of Jupyter sockets to the corresponding ports. Server is responsible for opening ports
+/**
+ * Creates a configuration for a Kotlin Kernel client.
+ *
+ * @param host the host to attach to
+ * @param ports the ports used by the kernel
+ * @param signatureKey the key used for signature
+ */
+@Suppress("unused") // Used in Kotlin Notebook in attached mode configuration
+fun createClientKotlinKernelConfig(
+    host: String,
     ports: KernelPorts,
-    // Signature key that should be used for signing messages. See:
-    // https://jupyter-client.readthedocs.io/en/stable/messaging.html#wire-protocol
-    // https://jupyter-client.readthedocs.io/en/stable/kernels.html#connection-files
     signatureKey: String,
-    // All JARs that should be in initial script (not whole kernel) classpath
+) = KernelConfig(
+    host = host,
+    ports = ports,
+    transport = KERNEL_TRANSPORT_SCHEME,
+    signatureScheme = KERNEL_SIGNATURE_SCHEME,
+    signatureKey = signatureKey,
+    homeDir = null,
+)
+
+/**
+ * Creates a configuration for the Kotlin Jupyter kernel.
+ *
+ * @param ports The mapping of Jupyter sockets to the corresponding ports, with the server opening the ports.
+ * @param signatureKey The signature key used for signing messages, adhering to Jupyter's wire protocol.
+ *  See:
+ *      https://jupyter-client.readthedocs.io/en/stable/messaging.html#wire-protocol
+ *      https://jupyter-client.readthedocs.io/en/stable/kernels.html#connection-files
+ * @param scriptClasspath The list of JARs to be included in the initial script classpath.
+ * @param homeDir The home directory where libraries, descriptors, and their caches are stored.
+ * @param debugPort The port the kernel should listen on for the debugger, if not null.
+ * @param clientType The type of client that will connect to the kernel, if specified.
+ * @return KernelConfig instance populated with the provided parameters and default kernel configuration values.
+ */
+fun createKotlinKernelConfig(
+    ports: KernelPorts,
+    signatureKey: String,
     scriptClasspath: List<File> = emptyList(),
-    // Home directory. In subfolders of this directory, libraries, descriptors and their caches are stored
     homeDir: File? = null,
-    // If not null, kernel should listen to the debugger on this port
     debugPort: Int? = null,
     clientType: String? = null,
 ) = KernelConfig(
-    ports,
-    KERNEL_TRANSPORT_SCHEME,
-    KERNEL_SIGNATURE_SCHEME,
-    signatureKey,
-    scriptClasspath,
-    homeDir,
-    debugPort,
-    clientType,
+    ports = ports,
+    transport = KERNEL_TRANSPORT_SCHEME,
+    signatureScheme = KERNEL_SIGNATURE_SCHEME,
+    signatureKey = signatureKey,
+    scriptClasspath = scriptClasspath,
+    homeDir = homeDir,
+    debugPort = debugPort,
+    clientType = clientType,
 )
 
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"

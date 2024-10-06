@@ -162,7 +162,7 @@ fun createSocket(
 
 fun KernelConfig.addressForSocket(socketInfo: JupyterSocketInfo): String {
     val port = ports[socketInfo.type]
-    return "$transport://*:$port"
+    return "$transport://$host:$port"
 }
 
 fun openServerSocket(
