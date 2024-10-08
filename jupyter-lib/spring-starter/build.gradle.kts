@@ -31,6 +31,7 @@ dependencies {
     kapt(libs.spring.boot.configuration.processor)
 
     implementation(projects.kotlinJupyterKernel)
+    implementation(libs.kotlin.dev.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)
 
@@ -54,6 +55,8 @@ dependencies {
 
     springKernel(libs.kotlin.dev.scriptingJvm) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCommon) { isTransitive = false }
+
+    springKernel(libs.clikt)
 
     springKernel(libs.zeromq)
     springKernel(libs.serialization.json)
