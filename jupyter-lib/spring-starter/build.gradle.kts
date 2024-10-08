@@ -71,7 +71,12 @@ val springKernelJar =
     tasks.registerShadowJarTasksBy(
         springKernel,
         withSources = true,
-        binaryTaskConfigurator = CompilerRelocatedJarConfigurator,
+        binaryTaskConfigurator = {
+            CompilerRelocatedJarConfigurator()
+            manifest {
+                attributes["Implementation-Version"] = libs.versions.kotlin.get()
+            }
+        },
     )
 
 kotlinPublications {
