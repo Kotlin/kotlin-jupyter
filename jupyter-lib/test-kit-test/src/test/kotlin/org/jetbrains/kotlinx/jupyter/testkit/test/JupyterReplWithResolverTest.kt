@@ -74,4 +74,9 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
         exception.shouldBeTypeOf<ReplCompilerException>()
         exception.message shouldContain "Unresolved reference: multik"
     }
+
+    @Test
+    fun `datetime is loaded and present`() {
+        execRendered("Clock.System.now()")
+    }
 }

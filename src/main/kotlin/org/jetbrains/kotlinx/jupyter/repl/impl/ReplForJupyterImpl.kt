@@ -391,6 +391,7 @@ class ReplForJupyterImpl(
 
     private fun <T> withEvalContext(action: () -> T): T {
         return synchronized(this) {
+            require(!evalContextEnabled) { "Recursive execution is not supported" }
             evalContextEnabled = true
             try {
                 action()
@@ -589,7 +590,7 @@ class ReplForJupyterImpl(
     }
 
     override fun <T> eval(execution: ExecutionCallback<T>): T {
-        return synchronized(this) {
+        return withEvalContext {
             executor.execute(execution)
         }
     }

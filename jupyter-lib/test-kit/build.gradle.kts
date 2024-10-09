@@ -20,9 +20,6 @@ val rootShadowJar = ':' + build.SHADOW_JAR_TASK
 
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
-    withTests {
-        mustRunAfter(rootShadowJar)
-    }
 }
 
 tasks.dokkaHtmlPartial {

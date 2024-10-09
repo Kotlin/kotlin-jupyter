@@ -26,6 +26,7 @@ libSubproject("shared-compiler")
 libSubproject("spring-starter")
 libSubproject("lib-ext")
 libSubproject("test-kit")
+libSubproject("test-kit-test")
 
 exampleSubproject("getting-started")
 
