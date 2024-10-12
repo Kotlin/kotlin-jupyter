@@ -64,6 +64,9 @@ class SocketWrapper(
                 try {
                     callback(message)
                 } catch (e: Throwable) {
+                    if (e is InterruptedException) {
+                        throw e
+                    }
                     logger.error("Exception thrown while processing a message", e)
                 }
             }

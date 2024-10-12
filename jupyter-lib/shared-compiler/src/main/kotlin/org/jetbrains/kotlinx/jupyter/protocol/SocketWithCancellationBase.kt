@@ -11,7 +11,18 @@ abstract class SocketWithCancellationBase(
 
     override fun recv(): ByteArray {
         assertNotCancelled()
-        return socket.recv(0, cancellationToken) ?: throw ZMQException(
+
+        val result =
+            try {
+                socket.recv(0, cancellationToken)
+            } catch (e: ZMQException) {
+                if (e.errorCode == ZMQ.Error.EINTR.code) {
+                    throw InterruptedException()
+                }
+                throw e
+            }
+
+        return result ?: throw ZMQException(
             "Unable to receive message",
             socket.errno(),
         )
@@ -45,11 +56,12 @@ abstract class SocketWithCancellationBase(
     protected fun bind(address: String): Boolean {
         val res = socket.bind(address)
         if (socket.socketType == SocketType.PUB) {
-            // Workaround to prevent losing few first messages on kernel startup
+            // Workaround to prevent losing a few first messages on kernel startup
             // For more information on losing messages see this scheme:
             // http://zguide.zeromq.org/page:all#Missing-Message-Problem-Solver
             // It seems we cannot do correct sync because messaging protocol
-            // doesn't support this. Value of 500 ms was chosen experimentally.
+            // doesn't support this.
+            // The value of 500 ms was chosen experimentally.
             Thread.sleep(500)
         }
         return res
