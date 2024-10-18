@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.spring.starter
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.USE
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
@@ -10,11 +11,18 @@ import kotlin.reflect.full.starProjectedType
 
 @Suppress("unused")
 fun ScriptTemplateWithDisplayHelpers.declareAllBeans() {
+    USE {
+        declareAllBeansInLibrary()
+    }
+}
+
+@Suppress("unused")
+fun JupyterIntegration.Builder.declareAllBeansInLibrary() {
     declareBeansByNames(springContext.beanDefinitionNames.toList())
 }
 
 @Suppress("unused")
-fun ScriptTemplateWithDisplayHelpers.declareBeansByClasses(beanClasses: Iterable<KClass<*>>) {
+fun JupyterIntegration.Builder.declareBeansByClasses(beanClasses: Iterable<KClass<*>>) {
     val beanInstances =
         buildMap {
             beanClasses.forEachSafe { beanClass ->
@@ -29,14 +37,14 @@ fun ScriptTemplateWithDisplayHelpers.declareBeansByClasses(beanClasses: Iterable
     declareBeanInstances(beanInstances)
 }
 
-fun ScriptTemplateWithDisplayHelpers.declareBeansByNames(beanNames: Iterable<String>) {
+fun JupyterIntegration.Builder.declareBeansByNames(beanNames: Iterable<String>) {
     val beanInstances =
         buildMap {
             beanNames.forEachSafe { beanName ->
                 val varName = beanName.substringAfterLast(".")
                 if (varName.contains("$")) return@forEachSafe
 
-                val beanClass = springContext.getType(beanName).kotlin
+                val beanClass = springContext.getType(beanName)?.kotlin ?: return@forEachSafe
 
                 val qualifiedName = beanClass.qualifiedName ?: return@forEachSafe
                 if (qualifiedName.contains("$") || qualifiedName.startsWith("com.sun.")) return@forEachSafe
@@ -51,11 +59,9 @@ fun ScriptTemplateWithDisplayHelpers.declareBeansByNames(beanNames: Iterable<Str
     declareBeanInstances(beanInstances)
 }
 
-private fun ScriptTemplateWithDisplayHelpers.declareBeanInstances(beanInstances: Map<String, VariableDeclaration>) {
-    USE {
-        onLoaded {
-            declare(beanInstances.values)
-        }
+private fun JupyterIntegration.Builder.declareBeanInstances(beanInstances: Map<String, VariableDeclaration>) {
+    onLoaded {
+        declare(beanInstances.values)
     }
 }
 

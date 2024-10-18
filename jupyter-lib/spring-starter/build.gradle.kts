@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
 
 plugins {
     kotlin("libs.publisher")
+    kotlin("jupyter.api")
     kotlin("jvm")
     kotlin("kapt")
     alias(libs.plugins.spring.boot)
@@ -81,6 +82,10 @@ val springKernelJar =
             }
         },
     )
+
+tasks.processJupyterApiResources {
+    libraryProducers = listOf("org.jetbrains.kotlinx.jupyter.spring.starter.SpringJupyterIntegration")
+}
 
 kotlinPublications {
     publication {

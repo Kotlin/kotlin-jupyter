@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
-import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
@@ -43,7 +42,7 @@ class KotlinJupyterKernelService(
         thread {
             startKernel(
                 DefaultKernelLoggerFactory,
-                EmbeddedKernelRunMode,
+                SpringProcessKernelRunMode,
                 kernelConfig,
                 DefaultResolutionInfoProviderFactory,
             )

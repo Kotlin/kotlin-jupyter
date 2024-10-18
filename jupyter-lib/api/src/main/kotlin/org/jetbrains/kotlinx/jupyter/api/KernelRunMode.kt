@@ -23,7 +23,10 @@ interface KernelRunMode {
 
     val streamSubstitutionType: StreamSubstitutionType
 
-    fun initializeSession(notebook: Notebook) = Unit
+    fun initializeSession(
+        notebook: Notebook,
+        evaluator: CodeEvaluator,
+    ) = Unit
 }
 
 abstract class AbstractKernelRunMode(override val name: String) : KernelRunMode {
@@ -50,8 +53,4 @@ object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
     override val isRunInsideIntellijProcess: Boolean get() = false
     override val streamSubstitutionType: StreamSubstitutionType
         get() = StreamSubstitutionType.BLOCKING
-
-    override fun initializeSession(notebook: Notebook) {
-        notebook.sessionOptions.serializeScriptData = true
-    }
 }
