@@ -38,17 +38,29 @@ class KotlinJupyterKernelService(
             clientType = clientType,
         )
 
+    private var shouldRestart = true
+
     private val kernelThread =
         thread {
-            startKernel(
-                DefaultKernelLoggerFactory,
-                SpringProcessKernelRunMode,
-                kernelConfig,
-                DefaultResolutionInfoProviderFactory,
-            )
+            runKernelService()
         }
 
+    private fun runKernelService() {
+        while (shouldRestart) {
+            try {
+                startKernel(
+                    DefaultKernelLoggerFactory,
+                    SpringProcessKernelRunMode,
+                    kernelConfig,
+                    DefaultResolutionInfoProviderFactory,
+                )
+            } catch (_: InterruptedException) {
+            }
+        }
+    }
+
     override fun close() {
+        shouldRestart = false
         kernelThread.interrupt()
     }
 }

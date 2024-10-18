@@ -254,7 +254,7 @@ fun kernelServer(replSettings: DefaultReplSettings) {
         } catch (_: InterruptedException) {
         }
 
-        logger.info("Shutdown server")
+        logger.info("Server is stopped")
     }
 }
 
@@ -264,10 +264,15 @@ private fun initializeKernelSession(
 ) {
     val codeEvaluator =
         CodeEvaluator { code ->
+            val executeRequest =
+                ExecuteRequest(
+                    code,
+                    storeHistory = false,
+                )
             val messageData =
                 MessageData(
                     header = makeHeader(MessageType.EXECUTE_REQUEST),
-                    content = ExecuteRequest(code),
+                    content = executeRequest,
                 )
             val message =
                 Message(
