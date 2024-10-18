@@ -434,22 +434,12 @@ class ReplForJupyterImpl(
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
-    init {
-        kernelRunMode.initializeSession(notebook, ::eval)
-    }
-
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) {
             fileAnnotationsProcessor.process(context, hostProvider.host!!)
         } else {
             context.compilationConfiguration.asSuccess()
         }
-    }
-
-    private fun eval(code: Code): Any? {
-        val requestData = EvalRequestData(code)
-        val result = evalEx(requestData)
-        return (result as? EvalResultEx.Success)?.renderedValue
     }
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {

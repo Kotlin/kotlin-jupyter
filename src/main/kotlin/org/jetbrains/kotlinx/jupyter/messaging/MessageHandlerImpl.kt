@@ -10,7 +10,7 @@ import java.io.Closeable
 
 class MessageHandlerImpl(
     private val loggerFactory: KernelLoggerFactory,
-    private val repl: ReplForJupyter,
+    val repl: ReplForJupyter,
     private val commManager: CommManagerInternal,
     private val messageFactoryProvider: MessageFactoryProvider,
     private val socketManager: JupyterBaseSockets,

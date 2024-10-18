@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
+import org.jetbrains.kotlinx.jupyter.api.CodeEvaluator
 import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
@@ -13,17 +14,22 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterBaseSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionImpl
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProviderImpl
-import org.jetbrains.kotlinx.jupyter.messaging.MessageHandler
 import org.jetbrains.kotlinx.jupyter.messaging.MessageHandlerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
+import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
+import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
@@ -167,7 +173,7 @@ fun startKernel(
 fun createMessageHandler(
     replSettings: DefaultReplSettings,
     socketManager: JupyterBaseSockets,
-): MessageHandler {
+): MessageHandlerImpl {
     val loggerFactory = replSettings.loggerFactory
     val messageFactoryProvider: MessageFactoryProvider = MessageFactoryProviderImpl()
     val communicationFacility: JupyterCommunicationFacility = JupyterCommunicationFacilityImpl(socketManager, messageFactoryProvider)
@@ -192,6 +198,7 @@ fun kernelServer(replSettings: DefaultReplSettings) {
 
         val socketManager = conn.socketManager
         val messageHandler = createMessageHandler(replSettings, socketManager)
+        initializeKernelSession(messageHandler, replSettings)
 
         val mainThread = Thread.currentThread()
 
@@ -249,4 +256,31 @@ fun kernelServer(replSettings: DefaultReplSettings) {
 
         logger.info("Shutdown server")
     }
+}
+
+private fun initializeKernelSession(
+    messageHandler: MessageHandlerImpl,
+    replSettings: DefaultReplSettings,
+) {
+    val codeEvaluator =
+        CodeEvaluator { code ->
+            val messageData =
+                MessageData(
+                    header = makeHeader(MessageType.EXECUTE_REQUEST),
+                    content = ExecuteRequest(code),
+                )
+            val message =
+                Message(
+                    data = messageData,
+                )
+            messageHandler.handleMessage(
+                JupyterSocketType.SHELL,
+                message.toRawMessage(),
+            )
+        }
+
+    replSettings.replConfig.kernelRunMode.initializeSession(
+        messageHandler.repl.notebook,
+        codeEvaluator,
+    )
 }

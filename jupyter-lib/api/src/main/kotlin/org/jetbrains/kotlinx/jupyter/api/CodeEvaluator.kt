@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.api
 
 /**
- * Evaluates code. Returns rendered result or null in case of the error.
+ * Evaluates code. Ignores the result
  */
 fun interface CodeEvaluator {
-    fun eval(code: Code): Any?
+    fun eval(code: Code)
 }

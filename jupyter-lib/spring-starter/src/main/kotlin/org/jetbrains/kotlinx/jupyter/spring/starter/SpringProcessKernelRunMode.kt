@@ -11,6 +11,6 @@ object SpringProcessKernelRunMode : KernelRunMode by EmbeddedKernelRunMode {
         evaluator: CodeEvaluator,
     ) {
         notebook.sessionOptions.serializeScriptData = true
-        // evaluator.eval("1")
+        evaluator.eval("1")
     }
 }

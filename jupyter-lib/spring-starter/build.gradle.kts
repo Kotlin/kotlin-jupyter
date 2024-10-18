@@ -84,7 +84,7 @@ val springKernelJar =
     )
 
 tasks.processJupyterApiResources {
-    // libraryProducers = listOf("org.jetbrains.kotlinx.jupyter.spring.starter.SpringJupyterIntegration")
+    libraryProducers = listOf("org.jetbrains.kotlinx.jupyter.spring.starter.SpringJupyterIntegration")
 }
 
 kotlinPublications {
