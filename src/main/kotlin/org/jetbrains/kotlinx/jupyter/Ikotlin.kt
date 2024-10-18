@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter
 import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.rawMessageCallback
@@ -97,7 +98,7 @@ fun main(vararg args: String) {
         val kernelConfig = kernelArgs.getConfig()
         startKernel(
             loggerFactory,
-            EmbeddedKernelRunMode,
+            StandaloneKernelRunMode,
             kernelConfig,
         )
     } catch (e: Exception) {

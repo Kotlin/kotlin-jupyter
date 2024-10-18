@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
@@ -43,4 +44,6 @@ data class SharedReplContext(
     val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor,
     val displayHandler: DisplayHandler,
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
+    val sessionOptions: SessionOptions,
+    val currentClasspathProvider: ClasspathProvider,
 )

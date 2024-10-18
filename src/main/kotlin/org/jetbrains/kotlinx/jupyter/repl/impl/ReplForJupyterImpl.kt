@@ -85,6 +85,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.requireUniqueTargets
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
+import org.jetbrains.kotlinx.jupyter.repl.ClasspathProvider
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
@@ -116,6 +117,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadata
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
 import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
@@ -261,6 +263,30 @@ class ReplForJupyterImpl(
 
     override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
     private val currentSources = mutableSetOf<String>()
+    private val evaluatedSnippetsMetadata = mutableListOf<InternalMetadata>()
+
+    private val allEvaluatedSnippetsMetadata: InternalMetadata get() {
+        val allCompiledData =
+            buildScriptsData {
+                for (metadata in evaluatedSnippetsMetadata) {
+                    addData(metadata.compiledData)
+                }
+            }
+        val allImports = evaluatedSnippetsMetadata.flatMap { it.newImports }
+
+        return InternalMetadataImpl(
+            allCompiledData,
+            allImports,
+        )
+    }
+
+    override val currentSessionState: EvaluatedSnippetMetadata get() {
+        return EvaluatedSnippetMetadata(
+            currentClasspath.toList(),
+            currentSources.toList(),
+            allEvaluatedSnippetsMetadata,
+        )
+    }
 
     private val evaluatorConfiguration =
         ScriptEvaluationConfiguration {
@@ -355,6 +381,8 @@ class ReplForJupyterImpl(
     private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor(loggerFactory)
     private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor(loggerFactory)
 
+    private val classpathProvider = ClasspathProvider { currentClasspath.toList() }
+
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
     internal val sharedContext =
@@ -381,8 +409,11 @@ class ReplForJupyterImpl(
             colorSchemeChangeCallbacksProcessor,
             displayHandler,
             inMemoryReplResultsHolder,
+            sessionOptions,
+            classpathProvider,
         ).also {
             notebook.sharedReplContext = it
+            kernelRunMode.initializeSession(notebook)
             commHandlers.requireUniqueTargets()
             commHandlers.forEach { handler -> installCommHandler(handler) }
         }
@@ -582,6 +613,7 @@ class ReplForJupyterImpl(
         }
 
         val metadata = InternalMetadataImpl(compiledData, newImports)
+        evaluatedSnippetsMetadata.add(metadata)
         return if (throwable != null) {
             InternalReplResult.Error(throwable, metadata)
         } else {

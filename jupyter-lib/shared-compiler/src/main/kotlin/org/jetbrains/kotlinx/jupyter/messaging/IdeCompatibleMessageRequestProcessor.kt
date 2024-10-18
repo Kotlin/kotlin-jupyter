@@ -220,7 +220,7 @@ open class IdeCompatibleMessageRequestProcessor(
                     ),
                 metadata =
                     Json.encodeToJsonElement(
-                        KernelInfoReplyMetadata(repl.currentClasspath.toList()),
+                        KernelInfoReplyMetadata(repl.currentSessionState),
                     ),
             ),
         )

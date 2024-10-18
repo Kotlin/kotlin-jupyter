@@ -39,6 +39,8 @@ interface ReplForJupyter {
 
     val options: ReplOptions
 
+    val currentSessionState: EvaluatedSnippetMetadata
+
     val currentClasspath: Collection<String>
 
     val currentClassLoader: ClassLoader

@@ -28,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.RenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.TextRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
@@ -279,6 +280,11 @@ object NotebookMock : Notebook {
     override val variablesState = mutableMapOf<String, VariableStateImpl>()
     override val cellVariables = mapOf<Int, Set<String>>()
     override val resultsAccessor = ResultsAccessor { getResult(it) }
+    override val currentClasspath: List<String>
+        get() = notImplemented()
+
+    override val sessionOptions: SessionOptions
+        get() = notImplemented()
 
     override val loggerFactory: KernelLoggerFactory get() = DefaultKernelLoggerFactory
 

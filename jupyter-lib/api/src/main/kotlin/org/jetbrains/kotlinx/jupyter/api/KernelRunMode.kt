@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.api
 import org.jetbrains.kotlinx.jupyter.util.createDefaultDelegatingClassLoader
 
 /**
- * Represents settings that depend on the environment in which kernel is running
+ * Represents settings that depend on the environment in which the kernel is running
  */
 interface KernelRunMode {
     val name: String
@@ -22,6 +22,8 @@ interface KernelRunMode {
     val isRunInsideIntellijProcess: Boolean
 
     val streamSubstitutionType: StreamSubstitutionType
+
+    fun initializeSession(notebook: Notebook) = Unit
 }
 
 abstract class AbstractKernelRunMode(override val name: String) : KernelRunMode {
@@ -48,4 +50,8 @@ object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
     override val isRunInsideIntellijProcess: Boolean get() = false
     override val streamSubstitutionType: StreamSubstitutionType
         get() = StreamSubstitutionType.BLOCKING
+
+    override fun initializeSession(notebook: Notebook) {
+        notebook.sessionOptions.serializeScriptData = true
+    }
 }

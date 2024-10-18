@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 import ch.qos.logback.classic.Level.DEBUG
 import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
@@ -34,6 +35,9 @@ import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
 import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
+import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReply
+import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReplyMetadata
+import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoRequest
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageStatus
@@ -86,6 +90,11 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private var ioPub: JupyterSocket? = null
     private var stdin: JupyterSocket? = null
 
+    private val shellSocket get() = shell!!
+    private val controlSocket get() = control!!
+    private val ioPubSocket get() = ioPub!!
+    private val stdinSocket get() = stdin!!
+
     override fun beforeEach() {
         try {
             _context = ZMQ.context(1)
@@ -128,41 +137,38 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         storeHistory: Boolean = true,
     ): Any? {
         try {
-            val shell = this.shell!!
-            val ioPub = this.ioPub!!
-            val stdin = this.stdin!!
-            shell.sendMessage(
+            shellSocket.sendMessage(
                 MessageType.EXECUTE_REQUEST,
                 content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory),
             )
             executeRequestSent()
             inputs.forEach {
-                val request = stdin.receiveMessage()
+                val request = stdinSocket.receiveMessage()
                 request.content.shouldBeTypeOf<InputRequest>()
-                stdin.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
+                stdinSocket.sendMessage(MessageType.INPUT_REPLY, InputReply(it))
             }
 
-            var msg = shell.receiveMessage()
+            var msg = shellSocket.receiveMessage()
             assertEquals(MessageType.EXECUTE_REPLY, msg.type)
             executeReplyChecker(msg)
 
-            msg = ioPub.receiveMessage()
+            msg = ioPubSocket.receiveMessage()
             assertEquals(MessageType.STATUS, msg.type)
             assertEquals(KernelStatus.BUSY, (msg.content as StatusReply).status)
-            msg = ioPub.receiveMessage()
+            msg = ioPubSocket.receiveMessage()
             assertEquals(MessageType.EXECUTE_INPUT, msg.type)
 
-            ioPubChecker(ioPub)
+            ioPubChecker(ioPubSocket)
 
             var response: Any? = null
             if (hasResult) {
-                msg = ioPub.receiveMessage()
+                msg = ioPubSocket.receiveMessage()
                 val content = msg.content as ExecutionResultMessage
                 assertEquals(MessageType.EXECUTE_RESULT, msg.type)
                 response = content.data
             }
 
-            msg = ioPub.receiveMessage()
+            msg = ioPubSocket.receiveMessage()
             assertEquals(MessageType.STATUS, msg.type)
             assertEquals(KernelStatus.IDLE, (msg.content as StatusReply).status)
             return response
@@ -187,10 +193,9 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
     private fun doIsComplete(code: String): String {
         try {
-            val shell = this.shell!!
-            shell.sendMessage(MessageType.IS_COMPLETE_REQUEST, content = IsCompleteRequest(code))
+            shellSocket.sendMessage(MessageType.IS_COMPLETE_REQUEST, content = IsCompleteRequest(code))
 
-            val responseMsg = shell.receiveMessage()
+            val responseMsg = shellSocket.receiveMessage()
             assertEquals(MessageType.IS_COMPLETE_REPLY, responseMsg.type)
 
             val content = responseMsg.content as IsCompleteReply
@@ -202,7 +207,16 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     private fun interruptExecution() {
-        control!!.sendMessage(MessageType.INTERRUPT_REQUEST, InterruptRequest())
+        controlSocket.sendMessage(MessageType.INTERRUPT_REQUEST, InterruptRequest())
+    }
+
+    private fun requestKernelInfo(): Message {
+        shellSocket.sendMessage(MessageType.KERNEL_INFO_REQUEST, KernelInfoRequest())
+        val responseMsg = shellSocket.receiveMessage()
+        responseMsg.type shouldBe MessageType.KERNEL_INFO_REPLY
+        val content = responseMsg.content
+        content.shouldBeTypeOf<KernelInfoReply>()
+        return responseMsg
     }
 
     private inline fun <reified T : Any> JupyterSocket.receiveMessageOfType(messageType: MessageType): T {
@@ -458,9 +472,6 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
     @Test
     fun testComms() {
-        val shell = shell!!
-        val iopub = ioPub!!
-
         val targetName = "my_comm"
         val commId = "xyz"
 
@@ -491,9 +502,9 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             """.trimIndent()
         doExecute(registerCode, false)
 
-        shell.sendMessage(MessageType.COMM_OPEN, CommOpen(commId, targetName))
+        shellSocket.sendMessage(MessageType.COMM_OPEN, CommOpen(commId, targetName))
 
-        iopub.receiveMessage().apply {
+        ioPubSocket.receiveMessage().apply {
             val c = content.shouldBeTypeOf<CommMsg>()
             c.commId shouldBe commId
             c.data["xo"]!!.jsonPrimitive.content shouldBe commId
@@ -501,7 +512,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         // Thread.sleep(5000)
 
-        shell.sendMessage(
+        shellSocket.sendMessage(
             MessageType.COMM_MSG,
             CommMsg(
                 commId,
@@ -513,8 +524,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             ),
         )
 
-        iopub.wrapActionInBusyIdleStatusChange {
-            iopub.receiveMessage().apply {
+        ioPubSocket.wrapActionInBusyIdleStatusChange {
+            ioPubSocket.receiveMessage().apply {
                 val c = content.shouldBeTypeOf<CommMsg>()
                 c.commId shouldBe commId
                 c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
@@ -524,14 +535,11 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
     @Test
     fun testDebugPortCommHandler() {
-        val shell = shell!!
-        val iopub = ioPub!!
-
         val targetName = ProvidedCommMessages.OPEN_DEBUG_PORT_TARGET
         val commId = "some"
         val actualDebugPort = kernelConfig.debugPort
 
-        shell.sendMessage(
+        shellSocket.sendMessage(
             MessageType.COMM_OPEN,
             CommOpen(
                 commId,
@@ -539,15 +547,16 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             ),
         )
 
-        shell.sendMessage(
+        shellSocket.sendMessage(
             MessageType.COMM_MSG,
             CommMsg(commId),
         )
 
-        iopub.wrapActionInBusyIdleStatusChange {
-            iopub.receiveMessage().apply {
+        ioPubSocket.wrapActionInBusyIdleStatusChange {
+            ioPubSocket.receiveMessage().apply {
                 val c = content.shouldBeTypeOf<CommMsg>()
-                val data = MessageFormat.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
+                val data =
+                    MessageFormat.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
                 c.commId shouldBe commId
                 data.port shouldBe actualDebugPort
                 data.status shouldBe MessageStatus.OK
@@ -679,7 +688,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
     // In case of an exception happening in generated code. This code isn't visible to
     // the user. In that case, these things happen:
-    // - Any stack trace line that reference outside the visible code range only show the request count.
+    // - Any stack trace line that references outside the visible code range only shows the request count.
     // - We find the first "visible" error and promote that at the end of error output instead of the
     //   first error. This means that the user can hopefully find the point in their code that triggers
     //   the behavior
@@ -772,5 +781,46 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 content.traceback.size shouldBeGreaterThan 0
             },
         )
+    }
+
+    @Test
+    fun `kernel_info_reply should contain info about session state`() {
+        doExecute(
+            """
+            SessionOptions.serializeScriptData = true
+            """.trimIndent(),
+            hasResult = false,
+        )
+
+        doExecute(
+            """
+            %use ktor-client
+            """.trimIndent(),
+            hasResult = false,
+        )
+
+        doExecute(
+            """
+            import java.util.concurrent.ConcurrentHashMap
+            
+            buildJsonObject {
+                put("a", JsonPrimitive(1))
+                put("b", JsonPrimitive(2))
+            }
+            """.trimIndent(),
+        )
+
+        val infoResponse = requestKernelInfo()
+        val metadataObject = infoResponse.data.metadata
+        metadataObject.shouldBeTypeOf<JsonObject>()
+        val metadata = MessageFormat.decodeFromJsonElement<KernelInfoReplyMetadata>(metadataObject)
+
+        with(metadata.state) {
+            assertTrue { newClasspath.any { "kotlin-jupyter-ktor-client" in it } }
+            newImports shouldContain "org.jetbrains.kotlinx.jupyter.serialization.UntypedAny"
+            newImports shouldContain "java.util.concurrent.ConcurrentHashMap"
+
+            compiledData.scripts.shouldNotBeEmpty()
+        }
     }
 }

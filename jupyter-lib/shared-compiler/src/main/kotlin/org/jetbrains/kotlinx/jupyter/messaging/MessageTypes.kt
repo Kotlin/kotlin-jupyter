@@ -28,6 +28,7 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.protocol.messageDataJson
+import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -363,7 +364,7 @@ class KernelInfoReply(
 
 @Serializable
 class KernelInfoReplyMetadata(
-    val classpath: List<String>,
+    val state: EvaluatedSnippetMetadata,
 )
 
 @Serializable

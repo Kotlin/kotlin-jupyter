@@ -28,6 +28,19 @@ interface Notebook {
     val variablesState: Map<String, VariableState>
 
     /**
+     * Current session classpath
+     */
+    val currentClasspath: List<String>
+
+    /**
+     * Configuration options for the current notebook session.
+     *
+     * Provides various settings that control the behavior of the session, such as
+     * resolving sources, handling multi-platform projects, and serializing script data.
+     */
+    val sessionOptions: SessionOptions
+
+    /**
      * Stores info about useful variables in a cell.
      * Key: cellId;
      * Value: set of variable names.
@@ -49,7 +62,7 @@ interface Notebook {
     fun getCell(id: Int): CodeCell
 
     /**
-     * Mapping allowing to get result by execution number
+     * Mapping allowing to get a result by execution number
      */
     @Throws(IndexOutOfBoundsException::class)
     fun getResult(id: Int): Any?
@@ -122,7 +135,7 @@ interface Notebook {
     val kernelRunMode: KernelRunMode
 
     /**
-     * Renderers processor gives an ability to render values and
+     * Renderers processor gives an ability to render values
      * and add new renderers
      */
     val renderersProcessor: RenderersProcessor

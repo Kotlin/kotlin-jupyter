@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
+import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
@@ -84,6 +85,14 @@ class NotebookImpl(
     override val cellVariables: Map<Int, Set<String>> get() {
         return sharedReplContext?.evaluator?.cellVariables
             ?: throw IllegalStateException("Evaluator is not initialized yet")
+    }
+
+    override val currentClasspath: List<String>
+        get() = sharedReplContext?.currentClasspathProvider?.provideClasspath() ?: emptyList()
+
+    override val sessionOptions: SessionOptions get() {
+        return sharedReplContext?.sessionOptions
+            ?: throw IllegalStateException("Session options are not initialized yet")
     }
 
     override val resultsAccessor = ResultsAccessor { getResult(it) }
