@@ -89,7 +89,7 @@ class SocketWrapper(
                     prop ->
                 prop.get(msg)?.let { MessageFormat.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes
             }
-        sendMore(hmac(signableMsg) ?: "")
+        sendMore(hmac(signableMsg))
         for (i in 0 until (signableMsg.size - 1)) {
             sendMore(signableMsg[i])
         }
@@ -121,7 +121,7 @@ class SocketWrapper(
         val content = recv()
         val calculatedSig = hmac(header, parentHeader, metadata, content)
 
-        if (calculatedSig != null && sig != calculatedSig) {
+        if (sig != calculatedSig) {
             throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
         }
 

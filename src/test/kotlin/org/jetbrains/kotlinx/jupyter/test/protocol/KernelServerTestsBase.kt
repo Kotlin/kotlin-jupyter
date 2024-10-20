@@ -41,7 +41,7 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
     protected val kernelConfig =
         createKotlinKernelConfig(
             ports = createRandomKernelPorts(),
-            signatureKey = "",
+            signatureKey = "abc",
             scriptClasspath = classpath,
             homeDir = File(""),
         )
