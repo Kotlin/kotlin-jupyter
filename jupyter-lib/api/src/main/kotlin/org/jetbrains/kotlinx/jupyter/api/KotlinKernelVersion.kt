@@ -31,13 +31,11 @@ class KotlinKernelVersion private constructor(
         return components.hashCode()
     }
 
-    override fun toString() =
+    override fun toString() = toPyPiVersion()
+
+    fun toPyPiVersion() =
         buildString {
-            append(major)
-            append(SEP)
-            append(minor)
-            append(SEP)
-            append(micro)
+            buildMainVersionPart()
             build?.also {
                 append(SEP)
                 append(build)
@@ -51,11 +49,7 @@ class KotlinKernelVersion private constructor(
 
     fun toMavenVersion() =
         buildString {
-            append(major)
-            append(SEP)
-            append(minor)
-            append(SEP)
-            append(micro)
+            buildMainVersionPart()
             build?.also {
                 append(DEV_SEP)
                 append(build)
@@ -65,6 +59,14 @@ class KotlinKernelVersion private constructor(
                 }
             }
         }
+
+    private fun StringBuilder.buildMainVersionPart() {
+        append(major)
+        append(SEP)
+        append(minor)
+        append(SEP)
+        append(micro)
+    }
 
     companion object {
         const val SEP = '.'

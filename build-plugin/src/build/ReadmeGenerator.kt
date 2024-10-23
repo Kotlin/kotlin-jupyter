@@ -8,6 +8,7 @@ import groovy.json.JsonSlurper
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.tooling.BuildException
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.common.ReplCommand
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import java.io.File
@@ -16,6 +17,10 @@ class ReadmeGenerator(
     private val project: Project,
     private val settings: RootSettingsExtension,
 ) {
+    private val kernelVersion = KotlinKernelVersion.fromMavenVersion(
+        project.defaultVersionCatalog.versions.exampleKernel
+    )!!
+
     fun registerTasks(configuration: Task.() -> Unit) {
         fun Task.defineInputs() {
             inputs.file(settings.readmeStubFile)
@@ -123,7 +128,7 @@ class ReadmeGenerator(
     }
 
     private fun processKernelVersion(): String {
-        return project.defaultVersionCatalog.versions.exampleKernel
+        return kernelVersion.toString()
     }
 
     private fun processRepoUrl(): String {

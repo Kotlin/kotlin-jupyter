@@ -215,12 +215,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `conda update -c jetbrains-dev kotlin-jupyter-kernel`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0.322`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`conda install -c jetbrains kotlin-jupyter-kernel={0.12.0-167}`
+`conda install -c jetbrains kotlin-jupyter-kernel={0.12.0.322}`
 
 ### Update with Pip
 
@@ -233,12 +233,12 @@ Alternatively, run this Conda command to update the package from the developers 
 `pip install -i https://test.pypi.org/simple/ kotlin-jupyter-kernel --upgrade`
 
 To change to a specific Kotlin Kernel version, add the `={VERSION}` parameter to the `kotlin-jupyter-kernel` command. In this command,
-replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
+replace the `{VERSION}` parameter with the desired PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0.322`).
 
 You can specify the version in both commands the one from the stable package and the one from the developers channel package. For example, for the
 stable package:
 
-`pip install kotlin-jupyter-kernel=={0.12.0-167} --ignore-installed`
+`pip install kotlin-jupyter-kernel=={0.12.0.322} --ignore-installed`
 
 ### Update in Datalore
 
@@ -253,10 +253,10 @@ To update the Kotlin Kernel for notebooks in Datalore:
    datalore-base-env: "default"
    dependencies:
    - pip:
-   - kotlin-jupyter-kernel=={VERSION}
+     - kotlin-jupyter-kernel=={VERSION}
    ```
 
-2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0-167`).
+2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `0.12.0.322`).
 
 3. Stop and restart the machine in Datalore.
 

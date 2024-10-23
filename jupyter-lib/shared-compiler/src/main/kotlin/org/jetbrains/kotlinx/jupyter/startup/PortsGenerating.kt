@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
+import java.io.Closeable
 import java.io.IOException
 import java.net.DatagramSocket
 import java.net.ServerSocket
@@ -9,24 +10,26 @@ import kotlin.random.Random
 object GeneratedPortsHolder {
     private val usedPorts: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
-    private fun isPortAvailable(port: Int): Boolean {
-        var tcpSocket: ServerSocket? = null
-        var udpSocket: DatagramSocket? = null
-        try {
-            tcpSocket = ServerSocket(port)
-            tcpSocket.reuseAddress = true
-            udpSocket = DatagramSocket(port)
-            udpSocket.reuseAddress = true
-            return true
-        } catch (_: IOException) {
-        } finally {
-            tcpSocket?.close()
-            udpSocket?.close()
-        }
-        return false
-    }
-
     fun addPort(port: Int): Boolean = (port !in usedPorts) && isPortAvailable(port) && usedPorts.add(port)
+}
+
+fun isPortAvailable(port: Int): Boolean {
+    return listOf(
+        { ServerSocket(port).apply { reuseAddress = true } },
+        { DatagramSocket(port).apply { reuseAddress = true } },
+    ).all { checkSocketIsFree(it) }
+}
+
+private fun checkSocketIsFree(socketFactory: () -> Closeable): Boolean {
+    var socket: Closeable? = null
+    return try {
+        socket = socketFactory()
+        true
+    } catch (_: IOException) {
+        false
+    } finally {
+        socket?.close()
+    }
 }
 
 fun randomIntsInRange(

@@ -253,7 +253,7 @@ To update the Kotlin Kernel for notebooks in Datalore:
    datalore-base-env: "default"
    dependencies:
    - pip:
-   - kotlin-jupyter-kernel=={VERSION}
+     - kotlin-jupyter-kernel=={VERSION}
    ```
 
 2. Replace the `{VERSION}` parameter for the latest PyPi version of the Kotlin Jupyter Kernel (for example, `[[kernel_version]]`).
