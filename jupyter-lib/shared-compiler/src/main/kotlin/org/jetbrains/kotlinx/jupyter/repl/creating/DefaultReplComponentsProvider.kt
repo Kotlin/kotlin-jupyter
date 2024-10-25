@@ -64,7 +64,7 @@ open class DefaultReplComponentsProvider(
     }
 
     override fun provideScriptReceivers(): List<Any> {
-        return _settings.scriptReceivers
+        return _settings.replConfig.scriptReceivers
     }
 
     override fun provideKernelRunMode(): KernelRunMode {

@@ -102,11 +102,13 @@ fun main(vararg args: String) {
         logger.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val kernelConfig = kernelArgs.getConfig()
-        startKernel(
-            loggerFactory,
-            StandaloneKernelRunMode,
-            kernelConfig,
-        )
+        val replSettings =
+            createReplSettings(
+                loggerFactory,
+                StandaloneKernelRunMode,
+                kernelConfig,
+            )
+        startZmqServer(replSettings)
     } catch (e: Exception) {
         logger.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
@@ -128,22 +130,24 @@ fun embedKernel(
 ) {
     val scriptClasspath = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
     val kernelConfig = KernelArgs(cfgFile, scriptClasspath, null, null, null, null).getConfig()
-    startKernel(
-        DefaultKernelLoggerFactory,
-        EmbeddedKernelRunMode,
-        kernelConfig,
-        resolutionInfoProviderFactory,
-        scriptReceivers,
-    )
+    val replSettings =
+        createReplSettings(
+            DefaultKernelLoggerFactory,
+            EmbeddedKernelRunMode,
+            kernelConfig,
+            resolutionInfoProviderFactory,
+            scriptReceivers,
+        )
+    startZmqServer(replSettings)
 }
 
-fun startKernel(
+fun createReplSettings(
     loggerFactory: KernelLoggerFactory,
     kernelRunMode: KernelRunMode,
     kernelConfig: KernelConfig,
     resolutionInfoProviderFactory: ResolutionInfoProviderFactory? = DefaultResolutionInfoProviderFactory,
     scriptReceivers: List<Any>? = null,
-) {
+): DefaultReplSettings {
     val myResolutionInfoProviderFactory =
         resolutionInfoProviderFactory
             ?: ResolutionInfoProviderFactory { httpUtil, _ ->
@@ -156,6 +160,7 @@ fun startKernel(
             loggerFactory,
             homeDir = kernelConfig.homeDir,
             kernelRunMode = kernelRunMode,
+            scriptReceivers = scriptReceivers,
         )
 
     val runtimeProperties = createRuntimeProperties(kernelConfig)
@@ -165,9 +170,8 @@ fun startKernel(
             replConfig,
             loggerFactory,
             runtimeProperties,
-            scriptReceivers = scriptReceivers.orEmpty(),
         )
-    kernelServer(replSettings)
+    return replSettings
 }
 
 fun createMessageHandler(
@@ -185,7 +189,7 @@ fun createMessageHandler(
     return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 
-fun kernelServer(replSettings: DefaultReplSettings) {
+fun startZmqServer(replSettings: DefaultReplSettings) {
     val kernelConfig = replSettings.kernelConfig
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
@@ -250,8 +254,9 @@ fun kernelServer(replSettings: DefaultReplSettings) {
         try {
             controlThread.join()
             hbThread.join()
-            messageHandler.closeIfPossible()
         } catch (_: InterruptedException) {
+        } finally {
+            messageHandler.closeIfPossible()
         }
 
         logger.info("Server is stopped")

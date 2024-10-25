@@ -18,6 +18,7 @@ data class ReplConfig(
     val httpUtil: LibraryHttpUtil,
     val resolutionInfoProvider: ResolutionInfoProvider,
     val kernelRunMode: KernelRunMode,
+    val scriptReceivers: List<Any> = emptyList(),
 ) {
     companion object {
         fun create(
@@ -26,6 +27,7 @@ data class ReplConfig(
             httpUtil: LibraryHttpUtil = createLibraryHttpUtil(loggerFactory),
             homeDir: File? = null,
             kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
+            scriptReceivers: List<Any>? = emptyList(),
         ): ReplConfig {
             val resolutionInfoProvider = resolutionInfoProviderFactory.create(httpUtil, loggerFactory)
 
@@ -42,6 +44,7 @@ data class ReplConfig(
                 httpUtil = httpUtil,
                 resolutionInfoProvider = resolutionInfoProvider,
                 kernelRunMode = kernelRunMode,
+                scriptReceivers = scriptReceivers.orEmpty(),
             )
         }
     }

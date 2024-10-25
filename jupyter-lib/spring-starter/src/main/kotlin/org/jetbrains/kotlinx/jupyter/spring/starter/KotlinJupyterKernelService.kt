@@ -2,8 +2,9 @@ package org.jetbrains.kotlinx.jupyter.spring.starter
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.createReplSettings
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
-import org.jetbrains.kotlinx.jupyter.startKernel
+import org.jetbrains.kotlinx.jupyter.startZmqServer
 import org.jetbrains.kotlinx.jupyter.startup.DEFAULT_SPRING_SIGNATURE_KEY
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
@@ -46,14 +47,16 @@ class KotlinJupyterKernelService(
         }
 
     private fun runKernelService() {
+        val replSettings =
+            createReplSettings(
+                DefaultKernelLoggerFactory,
+                SpringProcessKernelRunMode,
+                kernelConfig,
+                DefaultResolutionInfoProviderFactory,
+            )
         while (shouldRestart) {
             try {
-                startKernel(
-                    DefaultKernelLoggerFactory,
-                    SpringProcessKernelRunMode,
-                    kernelConfig,
-                    DefaultResolutionInfoProviderFactory,
-                )
+                startZmqServer(replSettings)
             } catch (_: InterruptedException) {
             }
         }

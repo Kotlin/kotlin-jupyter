@@ -47,6 +47,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
@@ -90,10 +91,10 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private var ioPub: JupyterSocket? = null
     private var stdin: JupyterSocket? = null
 
-    private val shellSocket get() = shell!!
-    private val controlSocket get() = control!!
-    private val ioPubSocket get() = ioPub!!
-    private val stdinSocket get() = stdin!!
+    private val shellSocket: JupyterSocketBase get() = shell!!
+    private val controlSocket: JupyterSocketBase get() = control!!
+    private val ioPubSocket: JupyterSocketBase get() = ioPub!!
+    private val stdinSocket: JupyterSocketBase get() = stdin!!
 
     override fun beforeEach() {
         try {
@@ -129,7 +130,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private fun doExecute(
         code: String,
         hasResult: Boolean = true,
-        ioPubChecker: (JupyterSocket) -> Unit = {},
+        ioPubChecker: (JupyterSocketBase) -> Unit = {},
         executeRequestSent: () -> Unit = {},
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
@@ -219,7 +220,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         return responseMsg
     }
 
-    private inline fun <reified T : Any> JupyterSocket.receiveMessageOfType(messageType: MessageType): T {
+    private inline fun <reified T : Any> JupyterSocketBase.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()
         assertEquals(messageType, msg.type)
         val content = msg.content
@@ -227,19 +228,19 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         return content
     }
 
-    private fun JupyterSocket.receiveStreamResponse(): String {
+    private fun JupyterSocketBase.receiveStreamResponse(): String {
         return receiveMessageOfType<StreamResponse>(MessageType.STREAM).text
     }
 
-    private fun JupyterSocket.receiveErrorResponse(): String {
+    private fun JupyterSocketBase.receiveErrorResponse(): String {
         return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
     }
 
-    private fun JupyterSocket.receiveDisplayDataResponse(): DisplayDataResponse {
+    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataResponse {
         return receiveMessageOfType(MessageType.DISPLAY_DATA)
     }
 
-    private fun JupyterSocket.receiveUpdateDisplayDataResponse(): DisplayDataResponse {
+    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataResponse {
         return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
     }
 
@@ -259,7 +260,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }
             """.trimIndent()
 
-        fun checker(ioPub: JupyterSocket) {
+        fun checker(ioPub: JupyterSocketBase) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
@@ -283,7 +284,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         val expected = arrayOf("12", "34", "5")
 
-        fun checker(ioPub: JupyterSocket) {
+        fun checker(ioPub: JupyterSocketBase) {
             for (el in expected) {
                 val msgText = ioPub.receiveStreamResponse()
                 assertEquals(el, msgText)
@@ -305,7 +306,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }
             """.trimIndent()
 
-        fun checker(ioPub: JupyterSocket) {
+        fun checker(ioPub: JupyterSocketBase) {
             val lineSeparator = System.lineSeparator()
             val actualText = (1..repetitions).joinToString("") { ioPub.receiveStreamResponse() }
             val expectedText = (1..repetitions).joinToString("") { i -> "text$i$lineSeparator" }
@@ -667,7 +668,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         doExecute(
             code,
             hasResult = false,
-            ioPubChecker = { ioPubSocket: JupyterSocket ->
+            ioPubChecker = { ioPubSocket: JupyterSocketBase ->
                 // If execution throws an exception, we should send an ERROR
                 // message type with the appropriate metadata.
                 val message = ioPubSocket.receiveMessage()
@@ -709,7 +710,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         doExecute(
             code,
             hasResult = false,
-            ioPubChecker = { ioPubSocket: JupyterSocket ->
+            ioPubChecker = { ioPubSocket ->
                 val message = ioPubSocket.receiveMessage()
                 message.type shouldBe MessageType.ERROR
                 val content = message.content
@@ -735,7 +736,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         doExecute(
             illegalCode,
             hasResult = false,
-            ioPubChecker = { ioPubSocket: JupyterSocket ->
+            ioPubChecker = { ioPubSocket ->
                 // If execution throws an exception, we should send an ERROR
                 // message type with the appropriate metadata.
                 val message = ioPubSocket.receiveMessage()
@@ -767,7 +768,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         doExecute(
             code,
             hasResult = false,
-            ioPubChecker = { ioPubSocket: JupyterSocket ->
+            ioPubChecker = { ioPubSocket ->
                 // If execution throws an exception, we should send an ERROR
                 // message type with the appropriate metadata.
                 val message = ioPubSocket.receiveMessage()

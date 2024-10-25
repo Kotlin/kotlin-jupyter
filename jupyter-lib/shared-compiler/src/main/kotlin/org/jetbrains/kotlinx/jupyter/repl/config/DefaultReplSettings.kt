@@ -12,5 +12,4 @@ data class DefaultReplSettings(
     val replConfig: ReplConfig,
     val loggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory,
     val runtimeProperties: ReplRuntimeProperties = defaultRuntimeProperties,
-    val scriptReceivers: List<Any> = emptyList(),
 )

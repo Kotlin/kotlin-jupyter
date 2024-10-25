@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
@@ -83,16 +82,16 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 
-    fun JupyterSocket.receiveMessage() = receiveRawMessage()!!.toMessage()
+    fun JupyterSocketBase.receiveMessage() = receiveRawMessage()!!.toMessage()
 
-    fun JupyterSocket.receiveStatusReply(): StatusReply {
+    fun JupyterSocketBase.receiveStatusReply(): StatusReply {
         (this as? SocketWrapper)?.name shouldBe JupyterSocketInfo.IOPUB.name
         receiveMessage().apply {
             return content.shouldBeTypeOf()
         }
     }
 
-    inline fun JupyterSocket.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
+    inline fun JupyterSocketBase.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
         receiveStatusReply().status shouldBe KernelStatus.BUSY
         action()
         receiveStatusReply().status shouldBe KernelStatus.IDLE
