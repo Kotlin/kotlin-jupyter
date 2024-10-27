@@ -951,7 +951,7 @@ to `false`. If you want to manually include this artifact in your build, see the
 [here](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlin-jupyter-test-kit?smo=true).
 
 For examples of integration testing, see [`JupyterReplTestingTest` in
-this repository](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/test-kit/src/test/kotlin/org/jetbrains/kotlinx/jupyter/testkit/test/JupyterReplTestingTest.kt) 
+this repository](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/test-kit-test/src/test/kotlin/org/jetbrains/kotlinx/jupyter/testkit/test/JupyterReplTestingTest.kt) 
 or [related tests in DataFrame](https://github.com/Kotlin/dataframe/tree/master/core/generated-sources/src/test/kotlin/org/jetbrains/kotlinx/dataframe/jupyter).
 
 ### Integration using other build systems
@@ -985,6 +985,6 @@ Classes derived from the `LibraryDefinitionProducer` interface should be added t
 For more information, see:
 
 * [Libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries)
-* [Jupyter REPL testkit](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/test-kit/src/test/kotlin/org/jetbrains/kotlinx/jupyter/testkit/test/JupyterReplTestingTest.kt)
+* [Jupyter REPL testkit](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/test-kit-test/src/test/kotlin/org/jetbrains/kotlinx/jupyter/testkit/test/JupyterReplTestingTest.kt)
 * [DataFrame integration tests](https://github.com/Kotlin/dataframe/tree/master/core/generated-sources/src/test/kotlin/org/jetbrains/kotlinx/dataframe/jupyter)
 * [Maven search testkit](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlin-jupyter-test-kit)
