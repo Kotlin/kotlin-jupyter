@@ -4,7 +4,7 @@ springJvmTarget = "17"
 
 kotlin = "1.9.23"
 kotlinDependencies = "1.9.23"
-kotlinMavenResolver = "2.0.0-Beta5"
+kotlinMavenResolver = "2.0.20"
 stableKotlin = "1.9.23"
 gradleKotlin = "1.9.23"
 kotlinDsl = "4.3.1"
