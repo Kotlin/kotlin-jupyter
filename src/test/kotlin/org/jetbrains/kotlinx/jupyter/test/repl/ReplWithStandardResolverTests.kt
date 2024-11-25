@@ -371,7 +371,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     fun testTwoLibrariesInUse() {
         val code = "%use lets-plot, krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b"
         eval(code)
-        assertEquals(1, displays.count())
+        assertEquals(2, displays.count())
     }
 
     @Test

@@ -38,16 +38,15 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """letsPlot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
 
         val res1 = eval(code1)
-        assertEquals(1, displays.count())
+        assertEquals(2, displays.count())
         displays.clear()
         assertUnit(res1.renderedValue)
-        val res2 = eval(code2)
-        assertEquals(0, displays.count())
-        val mime = res2.renderedValue as? MimeTypedResult
+        eval(code2)
+        assertEquals(1, displays.count())
+        val mime = displays[0] as? MimeTypedResult
         assertNotNull(mime)
         assertEquals(1, mime.size)
         assertEquals(MimeTypes.HTML, mime.entries.first().key)
-        assertNotNull(res2.renderedValue)
     }
 
     @Test
@@ -181,9 +180,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         }
         complete("%use kotlin-dl(a =|").matches() shouldHaveSize 0
 
-        complete("%use lets-plot(api = |").matches() shouldContain "3.1.0"
-        complete("%use lets-plot(api = |, js").matches() shouldContain "3.1.0"
-        complete("%use lets-plot(api = 3.1.0, lib = |").matches() shouldContain "2.2.0"
+        complete("%use lets-plot(v = |").matches() shouldContain "4.9.2"
+        complete("%use lets-plot(v = |, js").matches() shouldContain "4.9.2"
     }
 
     @Test
