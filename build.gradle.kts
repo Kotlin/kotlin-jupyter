@@ -7,6 +7,7 @@ import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
@@ -33,24 +34,9 @@ ktlint {
     }
 }
 
-// Dependencies shared between `implementation` and `embeddedKernel` configurations.
-// As we want strict control over dependencies for the embedded kernel, all of these
-// will be added with `transitive = false`, so all dependencies must be explicitly
-// listed here.
-val sharedEmbeddedDependencies = listOf(
-    libs.kotlin.dev.compilerEmbeddable,
-    libs.kotlin.dev.scriptingCompilerImplEmbeddable,
-    libs.kotlin.dev.scriptingCompilerEmbeddable,
-    libs.kotlin.dev.scriptingIdeServices,
-    libs.kotlin.dev.scriptingDependencies,
-    libs.kotlin.dev.scriptingDependenciesMavenAll,
-    // Dependency of `libs.kotlin.dev.compilerEmbeddable`
-    libs.jetbrains.trove4j,
-    // Embedded version of serialization plugin for notebook code
-    libs.serialization.dev.embeddedPlugin,
-)
-
 dependencies {
+    implementation(libs.kotlin.dev.stdlib)
+
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
 
@@ -60,11 +46,12 @@ dependencies {
     implementation(libs.coroutines.core)
 
     // Embedded compiler and scripting dependencies
-    sharedEmbeddedDependencies.forEach {
-        implementation(it) { isTransitive = false }
-    }
+    configurations.implementation.get().addSharedEmbeddedDependencies()
     implementation(libs.kotlin.dev.scriptingCommon)
     implementation(libs.kotlin.dev.scriptingJvm)
+    // Dependency of `libs.kotlin.dev.compilerEmbeddable`
+    implementation(libs.jetbrains.trove4j)
+
 
     // Logging
     implementation(libs.logging.slf4j.api)
@@ -93,7 +80,7 @@ dependencies {
 
     kernelShadowed(projects.kotlinJupyterKernel)
 
-    ideScriptClasspathShadowed(projects.lib) { isTransitive = false }
+    ideScriptClasspathShadowed (projects.lib) { isTransitive = false }
     ideScriptClasspathShadowed(projects.api) { isTransitive = false }
     ideScriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
@@ -109,9 +96,38 @@ dependencies {
 
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
-    sharedEmbeddedDependencies.forEach {
-        embeddableKernel(it) { isTransitive = false }
+    embeddableKernel (libs.kotlin.dev.scriptRuntime) { isTransitive = false }
+    embeddableKernel.addSharedEmbeddedDependencies()
+}
+
+/**
+ * Add shared dependencies between `implementation` and `embeddedKernel` configurations.
+ * As we want strict control over dependencies for the embedded kernel, all of these
+ * will be added with `transitive = false`, so all dependencies must be explicitly
+ * listed here.
+ */
+private fun Configuration.addSharedEmbeddedDependencies() {
+    val configurationName = this.name
+    dependencies {
+        listOf(
+            libs.kotlin.dev.compilerEmbeddable,
+            libs.kotlin.dev.scriptingCompilerImplEmbeddable,
+            libs.kotlin.dev.scriptingCompilerEmbeddable,
+            libs.kotlin.dev.scriptingIdeServices,
+            libs.kotlin.dev.scriptingDependencies,
+            libs.kotlin.dev.scriptingDependenciesMavenAll,
+            // Embedded version of serialization plugin for notebook code
+            libs.serialization.dev.embeddedPlugin,
+        ).forEach {
+            addProvider(
+                configurationName = configurationName,
+                dependencyNotation = it,
+                configuration = object: Action<Any> {
+                    override fun execute(t: Any) {
+                        isTransitive = false
+                    }
+                })
+        }
     }
 }
 

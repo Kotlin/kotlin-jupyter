@@ -157,7 +157,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
             %use serialization
             @Serializable class Test(val x: Int)
         """.trimIndent())
-        assertTrue(result is org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success, "Is ${result.javaClass}")
+        result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
     }
 }
 
