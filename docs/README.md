@@ -544,6 +544,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
 <summary>Click to see the list of supported libraries.</summary>
 
  - [2p-kt](https://github.com/tuProlog/2p-kt) - Kotlin Multi-Platform ecosystem for symbolic AI
+ - [adventOfCode](https://github.com/Toldoven/aoc-kotlin-notebook) - Interactive Advent of Code framework for Kotlin Notebook
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
