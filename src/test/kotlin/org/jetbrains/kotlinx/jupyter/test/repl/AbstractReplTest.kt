@@ -124,12 +124,25 @@ abstract class AbstractReplTest {
 
     protected fun makeEmbeddedRepl(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
         val embeddedClasspath: List<File> = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
+        val standardResolutionInfoProvider =
+            DefaultResolutionInfoProviderFactory.create(
+                httpUtil,
+                testLoggerFactory,
+            )
+        val libraryResolver = getStandardResolver(
+            testLoggerFactory,
+            ".",
+            standardResolutionInfoProvider,
+            httpUtil.httpClient,
+            httpUtil.libraryDescriptorsManager,
+        )
         return createRepl(
             httpUtil,
             scriptClasspath = embeddedClasspath,
             kernelRunMode = EmbeddedKernelRunMode,
             displayHandler = displayHandler,
             inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder(),
+            libraryResolver = libraryResolver
         )
     }
 

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
@@ -10,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceLocation
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
+import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -127,6 +129,35 @@ class EmbedReplTest : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         assertEquals("[12, 13, 14]", result2.renderedValue)
+    }
+
+    @Test
+    fun testManualDependencies() {
+        eval(
+            """
+            USE {
+                repositories {
+                    mavenCentral()
+                }
+                dependencies {
+                    implementation("io.github.config4k:config4k:0.4.2")
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val res = repl.completeBlocking("import io.github.", 17)
+        res.shouldBeInstanceOf<CompletionResult.Success>()
+        res.sortedMatches().contains("config4k")
+    }
+
+    @Test
+    fun testLibraryDescriptors() {
+        val result = eval("""
+            %use serialization
+            @Serializable class Test(val x: Int)
+        """.trimIndent())
+        assertTrue(result is org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success, "Is ${result.javaClass}")
     }
 }
 

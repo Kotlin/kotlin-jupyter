@@ -6,6 +6,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 
 /**
  * Interface for resolving libraries based on a given reference and arguments.
+ *
+ * Example:
+ * %use dataframe(0.10.0-dev-1373)
  */
 interface LibraryResolver {
     fun resolve(

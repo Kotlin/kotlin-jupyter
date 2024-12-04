@@ -33,6 +33,23 @@ ktlint {
     }
 }
 
+// Dependencies shared between `implementation` and `embeddedKernel` configurations.
+// As we want strict control over dependencies for the embedded kernel, all of these
+// will be added with `transitive = false`, so all dependencies must be explicitly
+// listed here.
+val sharedEmbeddedDependencies = listOf(
+    libs.kotlin.dev.compilerEmbeddable,
+    libs.kotlin.dev.scriptingCompilerImplEmbeddable,
+    libs.kotlin.dev.scriptingCompilerEmbeddable,
+    libs.kotlin.dev.scriptingIdeServices,
+    libs.kotlin.dev.scriptingDependencies,
+    libs.kotlin.dev.scriptingDependenciesMavenAll,
+    // Dependency of `libs.kotlin.dev.compilerEmbeddable`
+    libs.jetbrains.trove4j,
+    // Embedded version of serialization plugin for notebook code
+    libs.serialization.dev.embeddedPlugin,
+)
+
 dependencies {
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
@@ -43,16 +60,11 @@ dependencies {
     implementation(libs.coroutines.core)
 
     // Embedded compiler and scripting dependencies
-    implementation(libs.kotlin.dev.compilerEmbeddable)
-    implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
-    implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
-    implementation(libs.kotlin.dev.scriptingIdeServices)
-    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
+    sharedEmbeddedDependencies.forEach {
+        implementation(it) { isTransitive = false }
+    }
     implementation(libs.kotlin.dev.scriptingCommon)
     implementation(libs.kotlin.dev.scriptingJvm)
-
-    // Embedded version of serialization plugin for notebook code
-    implementation(libs.serialization.dev.embeddedPlugin)
 
     // Logging
     implementation(libs.logging.slf4j.api)
@@ -95,18 +107,12 @@ dependencies {
     }
     scriptClasspathShadowed(libs.kotlin.dev.stdlib)
 
+    // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptingDependenciesMavenAll) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptingIdeServices) { isTransitive = false }
-
-    embeddableKernel(libs.kotlin.dev.scriptingCompilerImplEmbeddable) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptingCompilerEmbeddable) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.compilerEmbeddable) { isTransitive = false }
-
     embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
-
-    embeddableKernel(libs.serialization.dev.embeddedPlugin) { isTransitive = false }
+    sharedEmbeddedDependencies.forEach {
+        embeddableKernel(it) { isTransitive = false }
+    }
 }
 
 buildSettings {
