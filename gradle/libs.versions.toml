@@ -3,8 +3,7 @@ jvmTarget = "11"
 springJvmTarget = "17"
 
 kotlin = "1.9.23"
-kotlinDependencies = "1.9.23"
-kotlinMavenResolver = "2.0.21"
+kotlinDependencies = "2.0.21"
 stableKotlin = "1.9.23"
 gradleKotlin = "1.9.23"
 kotlinDsl = "4.3.1"
@@ -29,6 +28,7 @@ logback = "1.5.3"
 http4k = "5.14.4.0"
 jupyterApi = "0.12.0-322"
 jetbrainsAnnotations = "24.1.0"
+trove4j = "1.0.20200330"
 
 junit = "5.10.2"
 kotlinTest = "5.8.1"
@@ -59,7 +59,7 @@ kotlin-dev-scriptingCompilerImplEmbeddable = { group = "org.jetbrains.kotlin", n
 kotlin-dev-scriptingCompilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingIdeServices = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-ide-services", version.ref = "kotlin" }
 kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies", version.ref = "kotlinDependencies" }
-kotlin-dev-scriptingDependenciesMavenAll = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven-all", version.ref = "kotlinMavenResolver" }
+kotlin-dev-scriptingDependenciesMavenAll = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven-all", version.ref = "kotlinDependencies" }
 kotlin-dev-scriptingCommon = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-common", version.ref = "kotlin" }
 kotlin-dev-scriptingJvm = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version.ref = "kotlin" }
 kotlin-dev-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
@@ -93,6 +93,7 @@ serialization-json5 = { group = "io.github.xn32", name = "json5k", version.ref =
 
 # JetBrains libraries
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations"}
+jetbrains-trove4j = { group = "org.jetbrains.intellij.deps", name="trove4j", version.ref = "trove4j" }
 
 # Coroutines
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -165,7 +166,7 @@ plugin-versionsUpdater = { module = "com.github.ben-manes:gradle-versions-plugin
 # Published artifacts of this project as binary dependencies
 jupyter-api = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api", version.ref = "jupyterApi" }
 jupyter-apiAnnotations = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-api-annotations", version.ref = "jupyterApi" }
-jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-common-dependencies", version.ref = "jupyterApi" }
+#jupyter-commonDependencies = { group = "org.jetbrains.kotlinx", name = "kotlin-jupyter-common-dependencies", version.ref = "jupyterApi" }
 
 [plugins]
 plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublishPlugin" }
