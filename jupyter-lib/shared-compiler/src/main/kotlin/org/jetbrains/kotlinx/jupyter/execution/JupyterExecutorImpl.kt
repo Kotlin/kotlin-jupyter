@@ -74,10 +74,11 @@ class JupyterExecutorImpl(
     private val tasksQueue = ArrayBlockingQueue<Task<*>>(MAX_QUEUED_TASKS)
 
     private val executionInProgress = AtomicBoolean(false)
+    private var executorIsShuttingDown = false
 
     private val executorThread =
         thread(name = IDLE_EXECUTOR_NAME) {
-            while (true) {
+            while (!executorIsShuttingDown) {
                 tasksQueue.take().execute()
             }
         }
@@ -142,7 +143,9 @@ class JupyterExecutorImpl(
 
     override fun close() {
         tasksQueue.clear()
+        executorIsShuttingDown = true
         interruptExecution()
+        executorThread.interrupt()
         coroutineScope.cancel("Jupyter executor was shut down")
     }
 
