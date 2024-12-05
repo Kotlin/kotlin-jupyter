@@ -78,8 +78,12 @@ class JupyterExecutorImpl(
 
     private val executorThread =
         thread(name = IDLE_EXECUTOR_NAME) {
-            while (!executorIsShuttingDown) {
-                tasksQueue.take().execute()
+            try {
+                while (!executorIsShuttingDown) {
+                    tasksQueue.take().execute()
+                }
+            } catch (_: InterruptedException) {
+                // Ignore
             }
         }
 
