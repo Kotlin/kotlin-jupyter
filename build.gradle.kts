@@ -7,6 +7,7 @@ import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
+import org.gradle.kotlin.dsl.accessors.runtime.addConfiguredDependencyTo
 import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.apache2
@@ -46,7 +47,7 @@ dependencies {
     implementation(libs.coroutines.core)
 
     // Embedded compiler and scripting dependencies
-    configurations.implementation.get().addSharedEmbeddedDependencies()
+    addSharedEmbeddedDependenciesTo(configurations.implementation.get())
     implementation(libs.kotlin.dev.scriptingCommon)
     implementation(libs.kotlin.dev.scriptingJvm)
     // Dependency of `libs.kotlin.dev.compilerEmbeddable`
@@ -97,7 +98,7 @@ dependencies {
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
     embeddableKernel (libs.kotlin.dev.scriptRuntime) { isTransitive = false }
-    embeddableKernel.addSharedEmbeddedDependencies()
+    addSharedEmbeddedDependenciesTo(embeddableKernel)
 }
 
 /**
@@ -106,27 +107,20 @@ dependencies {
  * will be added with `transitive = false`, so all dependencies must be explicitly
  * listed here.
  */
-private fun Configuration.addSharedEmbeddedDependencies() {
-    val configurationName = this.name
-    dependencies {
-        listOf(
-            libs.kotlin.dev.compilerEmbeddable,
-            libs.kotlin.dev.scriptingCompilerImplEmbeddable,
-            libs.kotlin.dev.scriptingCompilerEmbeddable,
-            libs.kotlin.dev.scriptingIdeServices,
-            libs.kotlin.dev.scriptingDependencies,
-            libs.kotlin.dev.scriptingDependenciesMavenAll,
-            // Embedded version of serialization plugin for notebook code
-            libs.serialization.dev.embeddedPlugin,
-        ).forEach {
-            addProvider(
-                configurationName = configurationName,
-                dependencyNotation = it,
-                configuration = object: Action<Any> {
-                    override fun execute(t: Any) {
-                        isTransitive = false
-                    }
-                })
+private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Configuration) {
+    val configurationName = configuration.name
+    listOf(
+        libs.kotlin.dev.compilerEmbeddable,
+        libs.kotlin.dev.scriptingCompilerImplEmbeddable,
+        libs.kotlin.dev.scriptingCompilerEmbeddable,
+        libs.kotlin.dev.scriptingIdeServices,
+        libs.kotlin.dev.scriptingDependencies,
+        libs.kotlin.dev.scriptingDependenciesMavenAll,
+        // Embedded version of serialization plugin for notebook code
+        libs.serialization.dev.embeddedPlugin,
+    ).forEach { dependency ->
+        addConfiguredDependencyTo(this, configurationName, dependency) {
+            isTransitive = false
         }
     }
 }
