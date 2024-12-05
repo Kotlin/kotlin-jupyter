@@ -129,20 +129,21 @@ abstract class AbstractReplTest {
                 httpUtil,
                 testLoggerFactory,
             )
-        val libraryResolver = getStandardResolver(
-            testLoggerFactory,
-            ".",
-            standardResolutionInfoProvider,
-            httpUtil.httpClient,
-            httpUtil.libraryDescriptorsManager,
-        )
+        val libraryResolver =
+            getStandardResolver(
+                testLoggerFactory,
+                ".",
+                standardResolutionInfoProvider,
+                httpUtil.httpClient,
+                httpUtil.libraryDescriptorsManager,
+            )
         return createRepl(
             httpUtil,
             scriptClasspath = embeddedClasspath,
             kernelRunMode = EmbeddedKernelRunMode,
             displayHandler = displayHandler,
             inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder(),
-            libraryResolver = libraryResolver
+            libraryResolver = libraryResolver,
         )
     }
 

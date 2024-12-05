@@ -53,7 +53,6 @@ dependencies {
     // Dependency of `libs.kotlin.dev.compilerEmbeddable`
     implementation(libs.jetbrains.trove4j)
 
-
     // Logging
     implementation(libs.logging.slf4j.api)
     implementation(libs.logging.logback.classic)
@@ -81,7 +80,7 @@ dependencies {
 
     kernelShadowed(projects.kotlinJupyterKernel)
 
-    ideScriptClasspathShadowed (projects.lib) { isTransitive = false }
+    ideScriptClasspathShadowed(projects.lib) { isTransitive = false }
     ideScriptClasspathShadowed(projects.api) { isTransitive = false }
     ideScriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
@@ -97,7 +96,7 @@ dependencies {
 
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
-    embeddableKernel (libs.kotlin.dev.scriptRuntime) { isTransitive = false }
+    embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
     addSharedEmbeddedDependenciesTo(embeddableKernel)
 }
 

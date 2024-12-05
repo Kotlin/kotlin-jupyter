@@ -153,10 +153,13 @@ class EmbedReplTest : AbstractSingleReplTest() {
 
     @Test
     fun testLibraryDescriptors() {
-        val result = eval("""
-            %use serialization
-            @Serializable class Test(val x: Int)
-        """.trimIndent())
+        val result =
+            eval(
+                """
+                %use serialization
+                @Serializable class Test(val x: Int)
+                """.trimIndent(),
+            )
         result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
     }
 }
