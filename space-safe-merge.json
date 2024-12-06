@@ -3,7 +3,7 @@
     "builds": [
         {
             "teamcity": {
-                "configuration": "KDS_KotlinJupyter_Conda",
+                "configuration": "Kotlin_DataScience_KotlinJupyter_BuildTestAndPublishArtifacts",
                 "url": "https://buildserver.labs.intellij.net",
                 "token": "${teamcity-safe-merge}",
                 "ssl-keystore": "BuildServer client"
