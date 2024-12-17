@@ -14,6 +14,7 @@ class DefaultCompilerArgsConfigurator(
             "-jvm-target",
             jvmTargetVersion,
             "-no-stdlib",
+            "-Xskip-metadata-version-check",
         )
 
     override fun getArgs(): List<String> {
