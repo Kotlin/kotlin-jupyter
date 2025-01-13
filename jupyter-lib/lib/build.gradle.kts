@@ -3,6 +3,11 @@ plugins {
     kotlin("jvm")
 }
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
     implementation(projects.api)
     implementation(libs.kotlin.stable.stdlib)

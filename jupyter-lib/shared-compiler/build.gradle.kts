@@ -15,6 +15,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 // When adding new dependencies, make sure that

@@ -28,6 +28,11 @@ java {
 
 val springKernel: Configuration by configurations.creating
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
     kapt(libs.spring.boot.configuration.processor)
 

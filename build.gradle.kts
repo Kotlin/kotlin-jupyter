@@ -35,6 +35,11 @@ ktlint {
     }
 }
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
     implementation(libs.kotlin.dev.stdlib)
 

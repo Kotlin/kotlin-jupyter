@@ -10,6 +10,11 @@ kotlinJupyter {
     addScannerDependency()
 }
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
     implementation(libs.kotlin.stable.stdlib)
     implementation(libs.kotlin.stable.reflect)

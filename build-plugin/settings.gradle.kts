@@ -4,6 +4,14 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "build"
 
+pluginManagement {
+    repositories {
+        maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+        gradlePluginPortal()
+        mavenLocal()
+    }
+}
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
 }

@@ -17,6 +17,11 @@ repositories {
     gradlePluginPortal()
 }
 
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
     // Temporary solution until Kotlin 1.4 will be supported in
     // .kts buildscripts, and it will be possible to use

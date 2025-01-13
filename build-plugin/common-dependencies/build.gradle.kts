@@ -5,6 +5,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
@@ -31,8 +32,8 @@ val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        apiVersion = "1.6"
+        languageVersion = "1.6"
 
         freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
 
