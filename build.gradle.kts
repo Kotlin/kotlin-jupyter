@@ -38,9 +38,18 @@ ktlint {
 repositories {
     mavenCentral()
     mavenLocal()
+    maven {
+        name = "intellij-deps"
+        url = uri("https://www.jetbrains.com/intellij-repository/releases/")
+    }
+
 }
 
 dependencies {
+    // Required by K2KJvmReplCompilerWithCompletion.
+    // Should be moved to Kotlin Compiler eventually once complete
+    compileOnly("com.jetbrains.intellij.platform:util:243.22562.220")
+
     implementation(libs.kotlin.dev.stdlib)
 
     // Dependency on module with compiler.

@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
+import org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
@@ -50,6 +51,7 @@ value class CellId(val value: Int) {
 data class JupyterCompilingOptions(
     val cellId: CellId,
     val isUserCode: Boolean,
+    val classpathFromAnnotations: List<File> = emptyList(),
 ) {
     companion object {
         val DEFAULT = JupyterCompilingOptions(CellId.NO_CELL, false)
@@ -73,6 +75,7 @@ fun getCompilationConfiguration(
         hostConfiguration.update {
             it.with {
                 getScriptingClass(scriptingClassGetter)
+                configureDefaultRepl("jupyter.kts")
             }
         }
         fileExtension.put("jupyter.kts")

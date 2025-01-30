@@ -28,12 +28,14 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutionStackFrame
 import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.util.accepts
+import java.io.File
 import java.util.LinkedList
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
 
-internal class CellExecutorImpl(
+class CellExecutorImpl(
+    private val classpathTracker: List<File>,
     private val replContext: SharedReplContext,
 ) : CellExecutor {
     private val logger = replContext.loggerFactory.getLogger(this::class)
@@ -79,7 +81,7 @@ internal class CellExecutorImpl(
                     try {
                         evaluator.eval(
                             preprocessedCode,
-                            JupyterCompilingOptions(currentCellId, isUserCode),
+                            JupyterCompilingOptions(currentCellId, isUserCode, classpathTracker),
                             executorWorkflowListener,
                         )
                     } catch (e: ReplException) {

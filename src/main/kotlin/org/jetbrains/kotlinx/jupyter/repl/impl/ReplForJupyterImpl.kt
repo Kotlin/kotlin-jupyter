@@ -10,7 +10,9 @@ import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
@@ -53,7 +55,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.config.CellId
-import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
@@ -133,10 +134,10 @@ import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 class ReplForJupyterImpl(
     private val loggerFactory: KernelLoggerFactory,
@@ -163,8 +164,8 @@ class ReplForJupyterImpl(
     customMagicsHandler: LibrariesAwareMagicsHandler?,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
+    val rootDisposable = Disposer.newDisposable("REPL Disposable")
     private val logger = loggerFactory.getLogger(this::class)
-
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
 
     private val resourcesProcessor =
@@ -233,18 +234,20 @@ class ReplForJupyterImpl(
         )
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
-
     private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
     private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
 
     // Used for various purposes, i.e. completion and listing errors
-    private val compilerConfiguration: ScriptCompilationConfiguration =
+    val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
             scriptReceivers,
             compilerArgsConfigurator,
             scriptDataCollectors = listOf(importsCollector, declarationsCollector),
-            body = { addBaseClass<ScriptTemplateWithDisplayHelpers>() },
+            body = {
+                // addBaseClass<ScriptTemplateWithDisplayHelpers>()
+                implicitReceivers(ScriptTemplateWithDisplayHelpers::class)
+            },
         ).with {
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
@@ -302,15 +305,21 @@ class ReplForJupyterImpl(
                     baseClassLoader(scriptClassloader)
                 }
             }
-            constructorArgs(this@ReplForJupyterImpl)
+            // constructorArgs(this@ReplForJupyterImpl)
+            implicitReceivers(ScriptTemplateWithDisplayHelpers(this@ReplForJupyterImpl))
         }
 
-    private val jupyterCompiler by lazy {
-        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration)
+    private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
+         JupyterCompilerWithCompletion.create(
+             rootDisposable,
+             compilerConfiguration,
+             evaluatorConfiguration
+         )
     }
 
-    private val evaluator: BasicJvmReplEvaluator by lazy {
-        BasicJvmReplEvaluator()
+    private val evaluator: K2ReplEvaluator by lazy {
+        K2ReplEvaluator()
+//        BasicJvmReplEvaluator()
     }
 
     private val hostProvider =
@@ -365,9 +374,14 @@ class ReplForJupyterImpl(
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
+    // Work-around for https://youtrack.jetbrains.com/issue/KT-74768/K2-Repl-refineConfiguration-does-not-update-the-classpath-correctly
+    // We can use this to update the classpath manually, but it does require that all @file:DependsOn() annotation
+    // are executed in their own cell. With this approach you cannot use annotations or %use in the same cell as
+    // using the code.
+    private val classpathFromAnnotations: MutableList<File> = mutableListOf()
     private val fileAnnotationsProcessor: FileAnnotationsProcessor =
         FileAnnotationsProcessorImpl(
-            ScriptDependencyAnnotationHandlerImpl(resolver),
+            ScriptDependencyAnnotationHandlerImpl(classpathFromAnnotations, resolver),
             compilerArgsConfigurator,
             jupyterCompiler,
             hostProvider,
@@ -383,7 +397,7 @@ class ReplForJupyterImpl(
 
     private val classpathProvider = ClasspathProvider { currentClasspath.toList() }
 
-    override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
+    override fun checkComplete(code: String) = TODO() // jupyterCompiler.checkComplete(code)
 
     internal val sharedContext =
         SharedReplContext(
@@ -432,7 +446,7 @@ class ReplForJupyterImpl(
         }
     }
 
-    private val executor: CellExecutor = CellExecutorImpl(sharedContext)
+    private val executor: CellExecutor = CellExecutorImpl(classpathFromAnnotations, sharedContext)
 
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         return if (evalContextEnabled) {
@@ -779,5 +793,6 @@ class ReplForJupyterImpl(
 
     override fun close() {
         notebook.closeIfPossible()
+        rootDisposable.dispose()
     }
 }

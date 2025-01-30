@@ -6,6 +6,9 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.asSuccess
 
+/**
+ * This class defines the Kotlin Co
+ */
 class DefaultCompilerArgsConfigurator(
     jvmTargetVersion: String = JavaRuntime.version,
 ) : CompilerArgsConfigurator {
@@ -13,8 +16,6 @@ class DefaultCompilerArgsConfigurator(
         mutableListOf(
             "-jvm-target",
             jvmTargetVersion,
-            "-no-stdlib",
-            "-Xskip-metadata-version-check",
         )
 
     override fun getArgs(): List<String> {

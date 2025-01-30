@@ -6,6 +6,7 @@ pluginManagement {
     repositories {
         maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
@@ -23,12 +24,12 @@ libSubproject("api")
 libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
-libSubproject("spring-starter")
-libSubproject("lib-ext")
+// libSubproject("spring-starter") // Could not find org.jetbrains.kotlin:kotlin-bom:2.2.255-SNAPSHOT.
+//libSubproject("lib-ext") // KSP doesn't support 2.1
 libSubproject("test-kit")
 libSubproject("test-kit-test")
 
-exampleSubproject("getting-started")
+// exampleSubproject("getting-started")  KSP doesn't support 2.1
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
 

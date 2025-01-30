@@ -3,12 +3,12 @@ package org.jetbrains.kotlinx.jupyter.repl
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import java.lang.reflect.Field
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -19,7 +19,7 @@ import kotlin.script.experimental.util.LinkedSnippet
 class ContextUpdater(
     loggerFactory: KernelLoggerFactory,
     val context: KotlinContext,
-    private val evaluator: BasicJvmReplEvaluator,
+    private val evaluator: K2ReplEvaluator,
 ) {
     private val logger = loggerFactory.getLogger(this::class)
     private var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
@@ -30,14 +31,13 @@ import kotlin.reflect.typeOf
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
     private val repl: ReplForJupyterImpl,
     private val loggerFactory: KernelLoggerFactory,
     val compiler: JupyterCompiler,
-    private val evaluator: BasicJvmReplEvaluator,
+    private val evaluator: K2ReplEvaluator,
     private val contextUpdater: ContextUpdater,
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     executionLoggingProperty: KMutableProperty0<ExecutedCodeLogging>,
@@ -113,15 +113,51 @@ internal class InternalEvaluatorImpl(
                 error("Recursive execution is not supported")
             }
 
+            // HACK Begin ---
+            // We attempt to wrap user code in a custom receiver to work around capturing
+            // not working in the compiler just yet. Right now we use the heuristic that
+            // we assume line magics and annotations are always first, and everything below
+            // that is kotlin code.
+            val mutCode = code.lines().toMutableList()
+            val metaCodeEndsAt = mutCode.indexOfLast {
+                it.startsWith("@file:") || it.startsWith("%") || it.startsWith("import ")
+            }
+            val modifiedCode = buildString {
+                mutCode.subList(0, metaCodeEndsAt + 1).forEach {
+                    appendLine(it)
+                }
+//                appendLine("with (notebookReceiver) {")
+                mutCode.subList(metaCodeEndsAt + 1, mutCode.size).forEach {
+                    appendLine(it)
+                }
+//                appendLine("}")
+            }
+            loggerFactory.getLogger(this::class.java).debug("Wrapped code:\n$modifiedCode")
+            // --- End HACK
+
+//            // HACK Begin ---
+//            // Work-around for https://youtrack.jetbrains.com/projects/KT/issues/KT-74593/K2-Repl-defaultImports-does-not-work-in-ScriptCompilationConfiguration
+//            val defaultImports = repl.compilerConfiguration.get<List<String>>(Key("defaultImports"))?.map {
+//                "import $it"
+//            } ?: emptyList()
+//            code.replace("@file:DependsOn", "@file:kotlin.jupyter.DependsOn")
+//            val mutCode = code.lines().toMutableList()
+//            val insertAt = mutCode.indexOfLast { it.startsWith("@file:") }
+//            defaultImports.forEachIndexed { i, el ->
+//                mutCode.add(insertAt + i + 1, el)
+//            }
+//            val codeWithDefaultImports = mutCode.joinToString("\n")
+//            // --- End HACK
+
             isExecuting = true
             if (executionLogging == ExecutedCodeLogging.ALL) {
-                println("Executing:\n$code")
+                println("Executing:\n$modifiedCode")
             }
             val id = compiler.nextCounter()
 
             evaluatorWorkflowListener?.internalIdGenerated(id)
 
-            val codeLine = SourceCodeImpl(id, code)
+            val codeLine = SourceCodeImpl(id, modifiedCode)
 
             val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
             evaluatorWorkflowListener?.compilationFinished()
@@ -129,7 +165,7 @@ internal class InternalEvaluatorImpl(
             scriptFqnToExecutionCountTracker[compiledScript.scriptClassFQName] =
                 CellErrorMetaData(
                     compilingOptions.cellId.toExecutionCount(),
-                    code.lines().size,
+                    modifiedCode.lines().size,
                 )
             withClassWriter {
                 writeClasses(codeLine, compiledScript)
@@ -187,9 +223,9 @@ internal class InternalEvaluatorImpl(
                     val metadata =
                         CellErrorMetaData(
                             compilingOptions.cellId.toExecutionCount(),
-                            code.lines().size,
+                            modifiedCode.lines().size,
                         )
-                    throw ReplCompilerException(code, resultWithDiagnostics, metadata = metadata)
+                    throw ReplCompilerException(modifiedCode, resultWithDiagnostics, metadata = metadata)
                 }
                 else -> throw IllegalStateException("Unknown result")
             }

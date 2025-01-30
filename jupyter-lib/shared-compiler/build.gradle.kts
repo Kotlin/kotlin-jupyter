@@ -34,6 +34,7 @@ dependencies {
     // Scripting and compilation-related dependencies
     compileOnly(libs.kotlin.dev.scriptingCommon)
     compileOnly(libs.kotlin.dev.scriptingJvm)
+    compileOnly(libs.kotlin.dev.scriptingCompiler)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
 
     // Serialization runtime

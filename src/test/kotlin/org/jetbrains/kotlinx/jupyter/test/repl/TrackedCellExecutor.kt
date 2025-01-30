@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
+import java.io.File
 import kotlin.reflect.KClass
 
 interface TrackedCellExecutor : CellExecutor {
@@ -28,7 +29,7 @@ interface TrackedCellExecutor : CellExecutor {
             val context = baseRepl.sharedContext
             val evaluator = if (mockEvaluator) MockedInternalEvaluator() else TrackedInternalEvaluatorImpl(context.evaluator)
             val hackedContext = context.copy(evaluator = evaluator)
-            return MockedCellExecutorImpl(CellExecutorImpl(hackedContext), evaluator.executedCodes, evaluator.results)
+            return MockedCellExecutorImpl(CellExecutorImpl(emptyList(), hackedContext), evaluator.executedCodes, evaluator.results)
         }
     }
 }

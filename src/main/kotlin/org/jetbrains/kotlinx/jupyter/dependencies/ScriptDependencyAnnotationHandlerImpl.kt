@@ -8,7 +8,10 @@ import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.onSuccess
 import kotlin.script.experimental.jvm.withUpdatedClasspath
 
-open class ScriptDependencyAnnotationHandlerImpl(private val resolver: JupyterScriptDependenciesResolver) :
+open class ScriptDependencyAnnotationHandlerImpl(
+    private val classpathTracker: MutableList<File>,
+    private val resolver: JupyterScriptDependenciesResolver
+) :
     ScriptDependencyAnnotationHandler {
     override fun configure(
         configuration: ScriptCompilationConfiguration,
@@ -23,6 +26,11 @@ open class ScriptDependencyAnnotationHandlerImpl(private val resolver: JupyterSc
             }
         return resolver.resolveFromAnnotations(scriptContents)
             .onSuccess { classpath ->
+                classpath.forEach { newFile ->
+                    if (!classpathTracker.any { it.absolutePath == newFile.absolutePath }) {
+                        classpathTracker.add(newFile)
+                    }
+                }
                 onResolvedClasspath(configuration, classpath).asSuccess()
             }
     }
