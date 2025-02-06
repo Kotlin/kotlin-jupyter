@@ -4,10 +4,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(projects.kotlinJupyterKernel)
     api(libs.jupyterNotebooksParser)

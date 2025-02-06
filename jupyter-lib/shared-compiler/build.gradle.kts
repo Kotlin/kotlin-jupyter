@@ -13,10 +13,6 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-repositories {
-    mavenCentral()
-}
-
 // When adding new dependencies, make sure that
 // kotlin-stdlib and kotlin-reflect dependencies do not get into POM file
 dependencies {

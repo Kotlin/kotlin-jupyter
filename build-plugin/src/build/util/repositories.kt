@@ -21,7 +21,6 @@ fun Project.addAllBuildRepositories() {
     val kotlinVersion = rootProject.defaultVersionCatalog.versions.devKotlin
 
     repositories {
-        // mavenLocal()
         mavenCentral()
         gradlePluginPortal()
 
@@ -38,5 +37,8 @@ fun Project.addAllBuildRepositories() {
         if (m2LocalPath.exists()) {
             maven(m2LocalPath.toURI())
         }
+
+        // Checking for local artifacts (should only be used during development)
+        mavenLocal()
     }
 }

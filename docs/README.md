@@ -556,7 +556,6 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin) - A library to use the Develocity API in Kotlin scripts or projects
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
- - [gradle-enterprise-api-kotlin](https://github.com/gabrielfeo/gradle-enterprise-api-kotlin) - [Deprecated: use develocity-api-kotlin] A library to use the Gradle Enterprise API in Kotlin scripts or projects
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [intellij-sdk](https://plugins.jetbrains.com/docs/intellij/welcome.html) - IntelliJ SDK that could be used in embedded mode of Kotlin Notebook
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing

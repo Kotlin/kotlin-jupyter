@@ -5,12 +5,6 @@ plugins {
     alias(libs.plugins.plugin.kotlin.dsl)
 }
 
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
-    maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
-}
-
 dependencies {
     implementation(projects.commonDependencies)
     implementation(libs.jupyter.api)

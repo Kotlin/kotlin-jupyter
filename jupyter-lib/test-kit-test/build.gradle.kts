@@ -5,10 +5,6 @@ plugins {
     kotlin("jupyter.api")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     testImplementation(projects.testKit)
     testImplementation(libs.test.kotlintest.assertions)

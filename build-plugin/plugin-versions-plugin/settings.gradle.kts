@@ -2,6 +2,14 @@
 
 rootProject.name = "plugin-versions"
 
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+}
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
 }
@@ -11,5 +19,10 @@ dependencyResolutionManagement {
         create("libs") {
             from(files("../../gradle/libs.versions.toml"))
         }
+    }
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
     }
 }

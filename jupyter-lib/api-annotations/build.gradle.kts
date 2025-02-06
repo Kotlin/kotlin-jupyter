@@ -3,10 +3,6 @@ plugins {
     kotlin("jvm")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compileOnly(libs.kotlin.gradle.stdlib)
     compileOnly(libs.kotlin.gradle.reflect)

@@ -1,8 +1,19 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.gradle.kotlin.dsl.mavenCentral
+import org.gradle.kotlin.dsl.repositories
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "build"
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+}
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
@@ -13,6 +24,12 @@ dependencyResolutionManagement {
         create("libs") {
             from(files("../gradle/libs.versions.toml"))
         }
+    }
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+        mavenLocal()
     }
 }
 

@@ -5,11 +5,6 @@ plugins {
     alias(libs.plugins.plugin.kotlin.dsl)
 }
 
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
-}
-
 dependencies {
     implementation(libs.plugin.ktlint)
     implementation(libs.plugin.publisher)
