@@ -11,7 +11,9 @@ pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        mavenLocal()
+        if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+            mavenLocal()
+        }
     }
 }
 
@@ -29,7 +31,9 @@ dependencyResolutionManagement {
         mavenCentral()
         gradlePluginPortal()
         maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
-        mavenLocal()
+        if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+            mavenLocal()
+        }
     }
 }
 

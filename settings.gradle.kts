@@ -6,7 +6,9 @@ pluginManagement {
     repositories {
         maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
         gradlePluginPortal()
-        mavenLocal()
+        if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+            mavenLocal()
+        }
     }
 }
 

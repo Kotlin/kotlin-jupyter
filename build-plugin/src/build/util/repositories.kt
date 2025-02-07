@@ -39,6 +39,8 @@ fun Project.addAllBuildRepositories() {
         }
 
         // Checking for local artifacts (should only be used during development)
-        mavenLocal()
+        if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+            mavenLocal()
+        }
     }
 }
