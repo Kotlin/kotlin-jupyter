@@ -254,11 +254,18 @@ private class LibraryDescriptorsManagerImpl(
     }
 
     private fun getGithubHttpWithAuth(url: String): ResponseWrapper {
-        return if (authToken == null || authUser == null) {
-            httpClient.getHttp(url)
-        } else {
-            httpClient.getHttpWithAuth(url, authUser, authToken)
+        val response =
+            if (authToken == null || authUser == null) {
+                httpClient.getHttp(url)
+            } else {
+                httpClient.getHttpWithAuth(url, authUser, authToken)
+            }
+
+        if (logger.isDebugEnabled && !response.status.successful) {
+            logger.debug("Request to GitHub API '$url' failed, response:\n${response.text}")
         }
+
+        return response
     }
 
     private fun downloadSingleFile(contentsApiUrl: String): String {
