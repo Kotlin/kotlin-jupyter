@@ -564,6 +564,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [kaliningraph](https://github.com/breandan/kaliningraph) - Graph library with a DSL for constructing graphs and visualizing the behavior of graph algorithms
  - [kandy](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Lets-Plot
  - [kandy-echarts](https://github.com/Kotlin/kandy) - Kotlin plotting DSL for Apache ECharts
+ - [kandy-geo](https://github.com/Kotlin/kandy) - Geo extensions for Kandy and Kotlin Dataframe
  - [khttp](https://github.com/jkcclemens/khttp) - HTTP networking library
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
