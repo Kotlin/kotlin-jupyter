@@ -639,7 +639,8 @@ We welcome contributions to further enhance our project! If you come across any 
 
 For issues specifically related to the Kotlin Notebook plugin, utilize [this tracker](https://youtrack.jetbrains.com/issues/KTNB).
 
-Pull requests are highly appreciated! When submitting a pull request, ensure it corresponds to an existing issue.
+Pull requests are highly appreciated! When submitting a pull request, ensure it corresponds to an existing issue. Read
+[`CONTRIBUTING.MD`](../CONTRIBUTING.md) for more information on how to work with the repository.
 
 If you are planning a substantial change, we recommend discussing it with a [project maintainer](https://github.com/ileasile).
 You can reach out to me through [email](mailto:ilya.muradyan@jetbrains.com), [Kotlin Slack](https://kotlinlang.slack.com/archives/C05333T208Y), or [Telegram](https://t.me/ileasile).
