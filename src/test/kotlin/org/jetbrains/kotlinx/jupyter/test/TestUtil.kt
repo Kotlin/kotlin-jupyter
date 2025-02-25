@@ -129,7 +129,7 @@ val KERNEL_LIBRARIES =
 fun assertUnit(value: Any?) = assertEquals(Unit, value)
 
 fun assertStartsWith(
-    expectedPrefix: String,
+    expectedPrefix: CharSequence,
     actual: String,
 ) {
     if (actual.startsWith(expectedPrefix)) return

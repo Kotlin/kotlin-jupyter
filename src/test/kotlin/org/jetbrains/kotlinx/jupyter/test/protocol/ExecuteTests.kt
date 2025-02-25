@@ -824,4 +824,33 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             compiledData.scripts.shouldNotBeEmpty()
         }
     }
+
+    @Test
+    fun testOutputFromMultipleThreads() {
+        val code =
+            """
+            import kotlin.concurrent.thread
+            
+            println("main thread")
+            thread(start = true) {
+                println("something should be printed")
+            }.join()
+            """.trimIndent()
+
+        fun checker(ioPub: JupyterSocketBase) {
+            val expectedText = "main thread\nsomething should be printed\n"
+            val actualText = StringBuilder()
+
+            while (true) {
+                val msg = ioPub.receiveMessage()
+                assertEquals(MessageType.STREAM, msg.type)
+                actualText.append((msg.content as StreamResponse).text)
+                assertStartsWith(actualText, expectedText)
+                if (actualText.contentEquals(expectedText)) break
+            }
+        }
+
+        val res = doExecute(code, false, ::checker)
+        assertNull(res)
+    }
 }

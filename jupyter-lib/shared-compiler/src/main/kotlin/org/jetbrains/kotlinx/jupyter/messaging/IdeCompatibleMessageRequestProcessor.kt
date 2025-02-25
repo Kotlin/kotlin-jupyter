@@ -16,10 +16,6 @@ import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
-import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stderrContext
-import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdinContext
-import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.stdoutContext
-import org.jetbrains.kotlinx.jupyter.messaging.StdIOSubstitutionManager.substitutionEngineType
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
@@ -33,34 +29,25 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import kotlin.reflect.KProperty
 import kotlin.system.exitProcess
 
 private object StdIOSubstitutionManager {
-    private var engineType: StreamSubstitutionType? = null
-
     // We assume that inside one environment there is only one correct value for this property
-    var substitutionEngineType: StreamSubstitutionType
-        get() = engineType ?: throw UninitializedPropertyAccessException("Substitution engine type is not initialized yet")
-        set(value) {
-            if (engineType == null) {
-                engineType = value
-            } else {
-                require(engineType == value) {
-                    "Attempt to set substitution engine type to $value which is different from already set value"
-                }
-            }
-        }
+    var substitutionEngineType: StreamSubstitutionType by InitOnce()
+
+    var useThreadLocal: Boolean by InitOnce()
 
     val stdoutContext by lazy {
-        StreamSubstitutionManager.StdOut(substitutionEngineType)
+        StreamSubstitutionManager.StdOut(substitutionEngineType, threadLocalStreamSubstitution = useThreadLocal)
     }
 
     val stdinContext by lazy {
-        StreamSubstitutionManager.StdIn(substitutionEngineType)
+        StreamSubstitutionManager.StdIn(substitutionEngineType, threadLocalStreamSubstitution = useThreadLocal)
     }
 
     val stderrContext by lazy {
-        StreamSubstitutionManager.StdErr(substitutionEngineType)
+        StreamSubstitutionManager.StdErr(substitutionEngineType, threadLocalStreamSubstitution = useThreadLocal)
     }
 }
 
@@ -79,7 +66,8 @@ open class IdeCompatibleMessageRequestProcessor(
     private val logger = loggerFactory.getLogger(this::class)
 
     init {
-        substitutionEngineType = repl.notebook.kernelRunMode.streamSubstitutionType
+        StdIOSubstitutionManager.substitutionEngineType = repl.notebook.kernelRunMode.streamSubstitutionType
+        StdIOSubstitutionManager.useThreadLocal = repl.notebook.kernelRunMode.threadLocalStreamSubstitution
     }
 
     final override val messageFactory =
@@ -325,7 +313,7 @@ open class IdeCompatibleMessageRequestProcessor(
     private fun OutputStream.asPrintStream() = PrintStream(this, false, "UTF-8")
 
     private fun <T> withForkedOut(body: () -> T): T {
-        return stdoutContext.withSubstitutedStreams(
+        return StdIOSubstitutionManager.stdoutContext.withSubstitutedStreams(
             systemStreamFactory = { out: PrintStream? -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
             kernelStreamFactory = { null },
             body = body,
@@ -333,7 +321,7 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 
     private fun <T> withForkedErr(body: () -> T): T {
-        return stderrContext.withSubstitutedStreams(
+        return StdIOSubstitutionManager.stderrContext.withSubstitutedStreams(
             systemStreamFactory = { err: PrintStream? -> getCapturingStream(err, JupyterOutType.STDERR, false) },
             kernelStreamFactory = { getCapturingStream(null, JupyterOutType.STDERR, true) },
             body = body,
@@ -344,7 +332,7 @@ open class IdeCompatibleMessageRequestProcessor(
         allowStdIn: Boolean,
         body: () -> T,
     ): T {
-        return stdinContext.withSubstitutedStreams(
+        return StdIOSubstitutionManager.stdinContext.withSubstitutedStreams(
             systemStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
             kernelStreamFactory = { null },
             body = body,
@@ -369,6 +357,31 @@ open class IdeCompatibleMessageRequestProcessor(
             "$newName..."
         } else {
             this
+        }
+    }
+}
+
+private class InitOnce<T : Any>() {
+    private var value: T? = null
+
+    operator fun getValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+    ): T {
+        return value ?: throw UninitializedPropertyAccessException("${property.name} is not initialized yet")
+    }
+
+    operator fun setValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+        value: T,
+    ) {
+        if (this.value == null) {
+            this.value = value
+        } else {
+            require(this.value == value) {
+                "Attempt to set ${property.name} to $value which is different from already set value"
+            }
         }
     }
 }

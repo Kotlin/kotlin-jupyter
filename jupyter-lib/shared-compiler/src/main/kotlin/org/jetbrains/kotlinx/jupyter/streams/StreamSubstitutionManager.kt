@@ -1,9 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
-import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdErr
-import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdIn
-import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager.StdOut
 import java.io.Closeable
 import java.io.InputStream
 import java.io.PrintStream
@@ -45,11 +42,13 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
     kernelStreamProp: KMutableProperty0<StreamT>?,
     private val delegatingStreamFactory: (delegateFactory: () -> StreamT) -> StreamT,
     substitutionEngineType: StreamSubstitutionType,
+    useThreadLocal: Boolean,
 ) {
     private val localSystemStream =
         ThreadLocalStream(
             systemStreamProp,
             yieldStreamFallback = { streams -> streams.systemStream },
+            useThreadLocal = useThreadLocal,
         )
 
     private val localKernelStream =
@@ -57,6 +56,7 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
             kernelStreamProp,
             yieldStream = { streams -> streams.kernelStream },
             yieldStreamFallback = { streams -> streams.systemStream },
+            useThreadLocal = useThreadLocal,
         )
 
     private val defaultStreams = getStreamsFromProperties()
@@ -128,12 +128,55 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         val kernelStream: StreamT?,
     )
 
+    private sealed class Box<T : Any> {
+        abstract fun get(): T?
+
+        abstract fun set(value: T?)
+
+        abstract fun remove()
+
+        class ThreadLocalBox<T : Any> : Box<T>() {
+            private val threadLocal = ThreadLocal<T>()
+
+            override fun get(): T? = threadLocal.get()
+
+            override fun set(value: T?) {
+                threadLocal.set(value)
+            }
+
+            override fun remove() {
+                threadLocal.remove()
+            }
+        }
+
+        class GlobalBox<T : Any> : Box<T>() {
+            private var property: T? = null
+
+            override fun get(): T? = property
+
+            override fun set(value: T?) {
+                property = value
+            }
+
+            override fun remove() {
+                property = null
+            }
+        }
+    }
+
     private inner class ThreadLocalStream(
         private val streamProp: KMutableProperty0<StreamT>?,
         private val yieldStreamFallback: (Streams<StreamT>) -> StreamT,
         private val yieldStream: (Streams<StreamT>) -> StreamT? = yieldStreamFallback,
+        useThreadLocal: Boolean,
     ) {
-        private val localStreamProp = ThreadLocal<StreamT>()
+        private val localStreamProp: Box<StreamT> =
+            if (useThreadLocal) {
+                Box.ThreadLocalBox()
+            } else {
+                Box.GlobalBox()
+            }
+
         private val delegatingStream =
             delegatingStreamFactory {
                 localStreamProp.get()
@@ -179,28 +222,34 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
 
     class StdOut(
         substitutionEngineType: StreamSubstitutionType,
+        threadLocalStreamSubstitution: Boolean,
     ) : StreamSubstitutionManager<PrintStream>(
             ::systemOutStream,
             KernelStreams::out,
             ::DelegatingPrintStream,
             substitutionEngineType,
+            useThreadLocal = threadLocalStreamSubstitution,
         )
 
     class StdErr(
         substitutionEngineType: StreamSubstitutionType,
+        threadLocalStreamSubstitution: Boolean,
     ) : StreamSubstitutionManager<PrintStream>(
             ::systemErrStream,
             KernelStreams::err,
             ::DelegatingPrintStream,
             substitutionEngineType,
+            useThreadLocal = threadLocalStreamSubstitution,
         )
 
     class StdIn(
         substitutionEngineType: StreamSubstitutionType,
+        threadLocalStreamSubstitution: Boolean,
     ) : StreamSubstitutionManager<InputStream>(
             ::systemInStream,
             null,
             ::DelegatingInputStream,
             substitutionEngineType,
+            useThreadLocal = threadLocalStreamSubstitution,
         )
 }

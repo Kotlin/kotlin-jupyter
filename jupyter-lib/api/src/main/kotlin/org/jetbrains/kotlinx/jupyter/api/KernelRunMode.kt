@@ -23,6 +23,14 @@ interface KernelRunMode {
 
     val streamSubstitutionType: StreamSubstitutionType
 
+    /**
+     * Substitution happens only for the main thread in all non-standalone modes,
+     * because there may be outputs not related to the cell being executed.
+     *
+     * In standalone mode, all outputs from threads should be printed.
+     */
+    val threadLocalStreamSubstitution: Boolean get() = true
+
     fun initializeSession(
         notebook: Notebook,
         evaluator: CodeEvaluator,
@@ -43,6 +51,7 @@ object StandaloneKernelRunMode : AbstractKernelRunMode("Standalone") {
     override val isRunInsideIntellijProcess: Boolean get() = false
     override val streamSubstitutionType: StreamSubstitutionType
         get() = StreamSubstitutionType.BLOCKING
+    override val threadLocalStreamSubstitution: Boolean get() = false
 }
 
 object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
@@ -53,4 +62,5 @@ object EmbeddedKernelRunMode : AbstractKernelRunMode("Embedded") {
     override val isRunInsideIntellijProcess: Boolean get() = false
     override val streamSubstitutionType: StreamSubstitutionType
         get() = StreamSubstitutionType.BLOCKING
+    override val threadLocalStreamSubstitution: Boolean get() = true
 }
