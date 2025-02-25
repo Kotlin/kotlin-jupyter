@@ -46,8 +46,8 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             eval(
                 """
                 @file:Repository("https://repo.osgeo.org/repository/release/")
-                @file:DependsOn("org.geotools:gt-shapefile:[23,)")
-                @file:DependsOn("org.geotools:gt-cql:[23,)")
+                @file:DependsOn("org.geotools:gt-shapefile:[30.0,30.2)")
+                @file:DependsOn("org.geotools:gt-cql:[30.0,30.2)")
                 
                 %use lets-plot@f2bb7075b316e7181ff8fddb1e045c4ed2c26442(api=2.0.1)
                 
