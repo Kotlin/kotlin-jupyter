@@ -1,4 +1,5 @@
 import build.CreateResourcesTask
+import build.UPDATE_LIBRARIES_TASK
 import build.util.buildProperties
 import build.util.compileOnly
 import build.util.defaultVersionCatalog
@@ -64,6 +65,8 @@ buildSettings {
 }
 
 CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
+    dependsOn(rootProject.tasks.named(UPDATE_LIBRARIES_TASK))
+
     addPropertiesFile(
         "kotlin-jupyter-compiler.properties",
         buildProperties {
