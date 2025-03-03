@@ -8,6 +8,7 @@ import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.superclasses
 
 @Suppress("unused")
 fun ScriptTemplateWithDisplayHelpers.declareAllBeans() {
@@ -18,7 +19,13 @@ fun ScriptTemplateWithDisplayHelpers.declareAllBeans() {
 
 @Suppress("unused")
 fun JupyterIntegration.Builder.declareAllBeansInLibrary() {
-    declareBeansByNames(springContext.beanDefinitionNames.toList())
+    val beanNames =
+        buildSet {
+            addAll(springContext.beanDefinitionNames)
+            addAll(springContext.getBeansOfType(Any::class.java).keys)
+        }
+
+    declareBeansByNames(beanNames)
 }
 
 @Suppress("unused")
@@ -43,14 +50,16 @@ fun JupyterIntegration.Builder.declareBeansByNames(beanNames: Iterable<String>) 
             beanNames.forEachSafe { beanName ->
                 val varName = beanName.substringAfterLast(".")
                 if (varName.contains("$")) return@forEachSafe
+                if (varName in forbiddenVariableNames) return@forEachSafe
 
-                val beanClass = springContext.getType(beanName)?.kotlin ?: return@forEachSafe
+                val beanClass =
+                    springContext.getType(beanName)?.kotlin
+                        ?.findSuitableBeanClass() ?: return@forEachSafe
 
-                val qualifiedName = beanClass.qualifiedName ?: return@forEachSafe
-                if (qualifiedName.contains("$") || qualifiedName.startsWith("com.sun.")) return@forEachSafe
-                if (beanClass.visibility != KVisibility.PUBLIC) return@forEachSafe
-
-                val bean = springContext.getBean(beanClass.java)
+                val bean =
+                    runCatching {
+                        springContext.getBean(beanClass.java)
+                    }.getOrNull() ?: return@forEachSafe
 
                 put(varName, VariableDeclaration(varName, bean, beanClass.starProjectedType, isMutable = false))
             }
@@ -58,6 +67,12 @@ fun JupyterIntegration.Builder.declareBeansByNames(beanNames: Iterable<String>) 
 
     declareBeanInstances(beanInstances)
 }
+
+private val forbiddenVariableNames =
+    setOf(
+        "springContext",
+        "notebook",
+    )
 
 private fun JupyterIntegration.Builder.declareBeanInstances(beanInstances: Map<String, VariableDeclaration>) {
     onLoaded {
@@ -71,5 +86,20 @@ private fun <T> Iterable<T>.forEachSafe(action: (T) -> Unit) {
             action(element)
         } catch (_: Throwable) {
         }
+    }
+}
+
+private fun KClass<*>.findSuitableBeanClass(): KClass<*>? {
+    val classesToCheck =
+        generateSequence(this) { clazz ->
+            clazz.superclasses.firstOrNull { superclass ->
+                !superclass.java.isInterface
+            }
+        }
+
+    return classesToCheck.firstOrNull { clazz ->
+        if (clazz.visibility != KVisibility.PUBLIC || clazz == Any::class) return@firstOrNull false
+        val name = clazz.qualifiedName ?: return@firstOrNull false
+        "$" !in name && !name.startsWith("com.sun.")
     }
 }
