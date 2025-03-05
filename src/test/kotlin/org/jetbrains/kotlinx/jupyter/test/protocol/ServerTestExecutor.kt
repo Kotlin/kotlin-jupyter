@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFact
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.startZmqServer
+import org.jetbrains.kotlinx.jupyter.startup.KERNEL_DEFAULT_REPL_MODE
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
@@ -32,7 +33,7 @@ class ProcessServerTestExecutor : ServerTestExecutor {
         kernelConfig: KernelConfig,
     ) {
         val testName = testInfo.displayName
-        val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg)
+        val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg, KERNEL_DEFAULT_REPL_MODE.name)
 
         testLogger = testLoggerFactory.getLogger("testKernel_$testName")
         fileOut = File.createTempFile("tmp-kernel-out-$testName", ".txt")

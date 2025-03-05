@@ -118,10 +118,13 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
+import org.jetbrains.kotlinx.jupyter.startup.ReplMode
 import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.script.experimental.api.CompiledSnippet
+import kotlin.script.experimental.api.ReplEvaluator
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
@@ -135,6 +138,7 @@ import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 
@@ -162,6 +166,7 @@ class ReplForJupyterImpl(
     override val sessionOptions: SessionOptions,
     customMagicsHandler: LibrariesAwareMagicsHandler?,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
+    private val replMode: ReplMode,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
     private val logger = loggerFactory.getLogger(this::class)
 
@@ -305,12 +310,25 @@ class ReplForJupyterImpl(
             constructorArgs(this@ReplForJupyterImpl)
         }
 
-    private val jupyterCompiler by lazy {
-        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration)
+    private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
+        when (replMode) {
+            ReplMode.K1 -> {
+                JupyterCompilerWithCompletion.create(
+                    compilerConfiguration,
+                    evaluatorConfiguration,
+                )
+            }
+            ReplMode.K2 -> {
+                throw IllegalStateException("K2 REPL is not supported yet")
+            }
+        }
     }
 
     private val evaluator: BasicJvmReplEvaluator by lazy {
-        BasicJvmReplEvaluator()
+        when (replMode) {
+            ReplMode.K1 -> BasicJvmReplEvaluator()
+            ReplMode.K2 -> throw IllegalStateException("K2 REPL is not supported yet")
+        }
     }
 
     private val hostProvider =

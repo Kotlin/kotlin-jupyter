@@ -16,6 +16,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.startup.KERNEL_DEFAULT_REPL_MODE
+import org.jetbrains.kotlinx.jupyter.startup.ReplMode
 import java.io.File
 
 fun createRepl(
@@ -32,6 +34,7 @@ fun createRepl(
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
     debugPort: Int? = null,
     inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,
+    replMode: ReplMode = KERNEL_DEFAULT_REPL_MODE,
 ): ReplForJupyter {
     val componentsProvider =
         object : ReplComponentsProviderBase() {
@@ -66,6 +69,8 @@ fun createRepl(
             override fun provideLibraryReferenceParser() = httpUtil.libraryReferenceParser
 
             override fun provideInMemoryReplResultsHolder() = inMemoryReplResultsHolder
+
+            override fun provideReplMode(): ReplMode = replMode
         }
     return componentsProvider.createRepl()
 }
