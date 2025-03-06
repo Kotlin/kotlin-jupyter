@@ -24,6 +24,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
 interface ReplComponentsProvider {
@@ -54,4 +55,5 @@ interface ReplComponentsProvider {
     val magicsHandler: LibrariesAwareMagicsHandler?
     val libraryReferenceParser: LibraryReferenceParser
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder
+    val replCompilerMode: ReplCompilerMode
 }

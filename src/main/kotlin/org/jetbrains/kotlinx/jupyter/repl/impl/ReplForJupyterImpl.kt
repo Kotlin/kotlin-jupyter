@@ -53,6 +53,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.config.CellId
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
@@ -118,6 +119,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
@@ -162,6 +164,7 @@ class ReplForJupyterImpl(
     override val sessionOptions: SessionOptions,
     customMagicsHandler: LibrariesAwareMagicsHandler?,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
+    private val replCompilerMode: ReplCompilerMode,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
     private val logger = loggerFactory.getLogger(this::class)
 
@@ -244,6 +247,7 @@ class ReplForJupyterImpl(
             scriptReceivers,
             compilerArgsConfigurator,
             scriptDataCollectors = listOf(importsCollector, declarationsCollector),
+            loggerFactory = DefaultKernelLoggerFactory,
             body = { addBaseClass<ScriptTemplateWithDisplayHelpers>() },
         ).with {
             refineConfiguration {
@@ -305,12 +309,25 @@ class ReplForJupyterImpl(
             constructorArgs(this@ReplForJupyterImpl)
         }
 
-    private val jupyterCompiler by lazy {
-        JupyterCompilerWithCompletion.create(compilerConfiguration, evaluatorConfiguration)
+    private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
+        when (replCompilerMode) {
+            ReplCompilerMode.K1 -> {
+                JupyterCompilerWithCompletion.create(
+                    compilerConfiguration,
+                    evaluatorConfiguration,
+                )
+            }
+            ReplCompilerMode.K2 -> {
+                k2Unsupported()
+            }
+        }
     }
 
     private val evaluator: BasicJvmReplEvaluator by lazy {
-        BasicJvmReplEvaluator()
+        when (replCompilerMode) {
+            ReplCompilerMode.K1 -> BasicJvmReplEvaluator()
+            ReplCompilerMode.K2 -> k2Unsupported()
+        }
     }
 
     private val hostProvider =
@@ -779,5 +796,9 @@ class ReplForJupyterImpl(
 
     override fun close() {
         notebook.closeIfPossible()
+    }
+
+    private fun k2Unsupported(): Nothing {
+        throw IllegalStateException("K2 REPL is not supported yet")
     }
 }

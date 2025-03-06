@@ -18,6 +18,18 @@ import java.util.EnumMap
 
 typealias KernelPorts = Map<JupyterSocketType, Int>
 
+/**
+ * This is used to represent whether the underlying REPL is running in either K1 or K2 mode.
+ */
+enum class ReplCompilerMode {
+    K1,
+    K2,
+    ;
+
+    companion object
+}
+
+val ReplCompilerMode.Companion.DEFAULT get() = ReplCompilerMode.K1
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
@@ -37,6 +49,7 @@ data class KernelArgs(
     val debugPort: Int?,
     val clientType: String?,
     val jvmTargetForSnippets: String?,
+    val replCompilerMode: ReplCompilerMode,
 ) {
     fun parseParams(): KernelJupyterParams {
         return KernelJupyterParams.fromFile(cfgFile)
@@ -53,6 +66,7 @@ data class KernelArgs(
             debugPort?.let { add("-debugPort=$it") }
             clientType?.let { add("-client=$it") }
             jvmTargetForSnippets?.let { add("-jvmTarget=$it") }
+            add("-replCompilerMode=${replCompilerMode.name}")
         }
     }
 }
@@ -120,6 +134,7 @@ data class KernelConfig(
     val debugPort: Int? = null,
     val clientType: String? = null,
     val jvmTargetForSnippets: String? = null,
+    val replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
 ) {
     val hmac by lazy {
         HMAC(signatureScheme.replace("-", ""), signatureKey)
@@ -133,7 +148,7 @@ data class KernelConfig(
         val format = Json { prettyPrint = true }
         cfgFile.writeText(format.encodeToString(params))
 
-        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort, clientType, jvmTargetForSnippets)
+        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
     }
 }
 
@@ -149,6 +164,7 @@ fun createClientKotlinKernelConfig(
     host: String,
     ports: KernelPorts,
     signatureKey: String,
+    replCompilerMode: ReplCompilerMode,
 ) = KernelConfig(
     host = host,
     ports = ports,
@@ -156,6 +172,7 @@ fun createClientKotlinKernelConfig(
     signatureScheme = KERNEL_SIGNATURE_SCHEME,
     signatureKey = signatureKey,
     homeDir = null,
+    replCompilerMode = replCompilerMode,
 )
 
 /**
@@ -179,6 +196,7 @@ fun createKotlinKernelConfig(
     homeDir: File? = null,
     debugPort: Int? = null,
     clientType: String? = null,
+    replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
 ) = KernelConfig(
     ports = ports,
     transport = KERNEL_TRANSPORT_SCHEME,
@@ -188,6 +206,7 @@ fun createKotlinKernelConfig(
     homeDir = homeDir,
     debugPort = debugPort,
     clientType = clientType,
+    replCompilerMode = replCompilerMode,
 )
 
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
@@ -230,5 +249,6 @@ fun KernelArgs.getConfig(): KernelConfig {
         debugPort = debugPort,
         clientType = clientType,
         jvmTargetForSnippets = jvmTargetForSnippets,
+        replCompilerMode = replCompilerMode,
     )
 }

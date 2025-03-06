@@ -32,6 +32,7 @@ class ReplFactoryBase(
                 sessionOptions,
                 magicsHandler,
                 inMemoryReplResultsHolder,
+                replCompilerMode,
             )
         }
     }

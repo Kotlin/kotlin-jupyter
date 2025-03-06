@@ -36,8 +36,10 @@ import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import org.slf4j.Logger
 import java.io.File
@@ -53,6 +55,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     var debugPort: Int? = null
     var clientType: String? = null
     var jvmTargetForSnippets: String? = null
+    var replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT
     args.forEach { arg ->
         when {
             arg.startsWith("-cp=") || arg.startsWith("-classpath=") -> {
@@ -73,6 +76,12 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
             arg.startsWith("-jvmTarget") -> {
                 jvmTargetForSnippets = arg.substringAfter('=')
             }
+            arg.startsWith("-replCompilerMode=") -> {
+                val userMode = arg.substringAfter('=')
+                replCompilerMode = ReplCompilerMode.entries.find {
+                    it.name == userMode
+                } ?: throw IllegalArgumentException("Invalid replCompilerMode: $userMode")
+            }
             else -> {
                 cfgFile?.let { throw IllegalArgumentException("config file already set to $it") }
                 cfgFile = File(arg)
@@ -82,7 +91,7 @@ private fun parseCommandLine(vararg args: String): KernelArgs {
     val cfgFileValue = cfgFile ?: throw IllegalArgumentException("config file is not provided")
     if (!cfgFileValue.exists() || !cfgFileValue.isFile) throw IllegalArgumentException("invalid config file $cfgFileValue")
 
-    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort, clientType, jvmTargetForSnippets)
+    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
 }
 
 fun printClassPath(logger: Logger) {
@@ -129,7 +138,16 @@ fun embedKernel(
     scriptReceivers: List<Any>? = null,
 ) {
     val scriptClasspath = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
-    val kernelConfig = KernelArgs(cfgFile, scriptClasspath, null, null, null, null).getConfig()
+    val kernelConfig =
+        KernelArgs(
+            cfgFile = cfgFile,
+            scriptClasspath = scriptClasspath,
+            homeDir = null,
+            debugPort = null,
+            clientType = null,
+            jvmTargetForSnippets = null,
+            replCompilerMode = ReplCompilerMode.DEFAULT,
+        ).getConfig()
     val replSettings =
         createReplSettings(
             DefaultKernelLoggerFactory,

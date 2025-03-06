@@ -41,6 +41,8 @@ import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
+import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 
@@ -130,4 +132,6 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 
     override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder
+
+    override fun provideReplCompilerMode(): ReplCompilerMode = ReplCompilerMode.DEFAULT
 }

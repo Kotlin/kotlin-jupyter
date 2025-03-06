@@ -24,6 +24,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
 interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
@@ -80,4 +81,6 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     fun provideLibraryReferenceParser(): LibraryReferenceParser
 
     fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder
+
+    fun provideReplCompilerMode(): ReplCompilerMode
 }

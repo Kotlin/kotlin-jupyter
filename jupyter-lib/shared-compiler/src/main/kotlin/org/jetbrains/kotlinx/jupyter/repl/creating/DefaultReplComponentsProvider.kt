@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.io.File
 
@@ -114,5 +115,9 @@ open class DefaultReplComponentsProvider(
 
     override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder {
         return _inMemoryResultsHolder
+    }
+
+    override fun provideReplCompilerMode(): ReplCompilerMode {
+        return _settings.kernelConfig.replCompilerMode
     }
 }

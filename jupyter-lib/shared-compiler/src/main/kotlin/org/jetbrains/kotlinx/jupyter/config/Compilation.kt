@@ -4,9 +4,12 @@ import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
+import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
@@ -61,14 +64,20 @@ val ScriptCompilationConfigurationKeys.jupyterOptions by PropertiesCollection.ke
     defaultValue = JupyterCompilingOptions.DEFAULT,
 )
 
+// Also called from IDEA
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
     scriptReceivers: List<Any> = emptyList(),
     compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
     scriptDataCollectors: List<ScriptDataCollector> = emptyList(),
+    replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
+    loggerFactory: KernelLoggerFactory,
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
+    if (replCompilerMode == ReplCompilerMode.K2) {
+        loggerFactory.getLogger("getCompilationConfiguration").warn("K2 Repl Mode is ignored for now. Falling back to K1")
+    }
     return ScriptCompilationConfiguration {
         hostConfiguration.update {
             it.with {

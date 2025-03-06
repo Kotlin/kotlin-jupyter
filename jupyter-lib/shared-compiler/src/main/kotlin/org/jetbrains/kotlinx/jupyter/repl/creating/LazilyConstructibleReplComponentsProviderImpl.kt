@@ -21,6 +21,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
 abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructibleReplComponentsProvider {
@@ -51,6 +52,7 @@ abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructib
     override val magicsHandler: LibrariesAwareMagicsHandler? by lazy { provideMagicsHandler() }
     override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
     override val inMemoryReplResultsHolder: InMemoryReplResultsHolder by lazy { provideInMemoryReplResultsHolder() }
+    override val replCompilerMode: ReplCompilerMode by lazy { provideReplCompilerMode() }
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)
