@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.protocol
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.zeromq.SocketType
 
-enum class JupyterSocketInfo(
+enum class JupyterZmqSocketInfo(
     val type: JupyterSocketType,
     val zmqKernelType: SocketType,
     val zmqClientType: SocketType,

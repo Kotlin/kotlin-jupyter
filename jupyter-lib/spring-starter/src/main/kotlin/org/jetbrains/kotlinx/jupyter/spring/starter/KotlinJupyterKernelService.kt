@@ -6,7 +6,9 @@ import org.jetbrains.kotlinx.jupyter.createReplSettings
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.startZmqServer
 import org.jetbrains.kotlinx.jupyter.startup.DEFAULT_SPRING_SIGNATURE_KEY
+import org.jetbrains.kotlinx.jupyter.startup.KernelAddress
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import java.io.Closeable
 import java.io.File
@@ -25,14 +27,14 @@ import kotlin.concurrent.thread
  * @param clientType Client type name, see [JupyterClientType]
  */
 class KotlinJupyterKernelService(
-    kernelPorts: KernelPorts,
+    kernelPort: Int,
     scriptClasspath: List<File> = emptyList(),
     homeDir: File? = null,
     clientType: String? = null,
 ) : Closeable {
     private val kernelConfig =
         createKotlinKernelConfig(
-            ports = kernelPorts,
+            address = WebsocketKernelAddress("localhost", kernelPort),
             signatureKey = DEFAULT_SPRING_SIGNATURE_KEY,
             scriptClasspath = scriptClasspath,
             homeDir = homeDir,
@@ -56,7 +58,7 @@ class KotlinJupyterKernelService(
             )
         while (shouldRestart) {
             try {
-                startZmqServer(replSettings)
+                startWebSocketServer(replSettings)
             } catch (_: InterruptedException) {
             }
         }
@@ -67,3 +69,8 @@ class KotlinJupyterKernelService(
         kernelThread.interrupt()
     }
 }
+
+data class WebsocketKernelAddress(
+    val host: String,
+    val port: Int,
+) : KernelAddress

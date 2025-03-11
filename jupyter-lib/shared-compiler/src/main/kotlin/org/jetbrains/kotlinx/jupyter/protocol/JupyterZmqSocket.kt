@@ -26,23 +26,37 @@ interface SocketWithCancellation : Closeable {
 interface JupyterSocketBase {
     fun sendRawMessage(msg: RawMessage)
 
+    /** Returns null when an error occurs during the receipt of the message. The error will be logged. */
     fun receiveRawMessage(): RawMessage?
 }
 
-interface JupyterSocket : SocketWithCancellation, JupyterSocketBase {
+interface CallbackEnabledJupyterSocket : JupyterSocketBase {
+    val callbackHandler: CallbackHandler
+}
+
+fun CallbackEnabledJupyterSocket.receiveMessageAndRunCallbacks() {
+    val message = receiveRawMessage()
+    if (message != null) {
+       callbackHandler.runCallbacksOnMessage(message)
+    }
+}
+
+interface CallbackHandler {
+    fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback
+
+    fun removeCallback(callback: SocketRawMessageCallback)
+
+    fun runCallbacksOnMessage(message: RawMessage)
+}
+
+interface JupyterZmqSocket : SocketWithCancellation, CallbackEnabledJupyterSocket {
     // Used on server side
     fun bind(): Boolean
 
     // Used on client side
     fun connect(): Boolean
 
-    fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback
-
-    fun removeCallback(callback: SocketRawMessageCallback)
-
-    fun onData(body: JupyterSocket.(ByteArray) -> Unit): Unit?
-
-    fun runCallbacksOnMessage(): Unit?
+    fun onData(body: JupyterZmqSocket.(ByteArray) -> Unit)
 }
 
 fun JupyterSocketBase.receiveMessage(): Message? {

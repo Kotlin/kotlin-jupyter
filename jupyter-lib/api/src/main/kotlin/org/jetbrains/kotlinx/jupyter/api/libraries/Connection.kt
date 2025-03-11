@@ -9,6 +9,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import java.io.Closeable
 import java.util.Locale
 
 /**
@@ -65,7 +66,7 @@ interface RawMessageCallback {
     val action: RawMessageAction
 }
 
-interface JupyterConnection {
+interface JupyterConnection : Closeable {
     /**
      * Add callback for incoming message and return it
      */

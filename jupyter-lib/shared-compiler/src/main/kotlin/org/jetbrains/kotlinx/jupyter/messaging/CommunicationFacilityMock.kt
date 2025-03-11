@@ -4,6 +4,6 @@ object CommunicationFacilityMock : JupyterCommunicationFacility {
     override val messageFactory: MessageFactory
         get() = throw NotImplementedError()
 
-    override val socketManager: JupyterSocketManager
+    override val socketManager: JupyterZmqSocketManager
         get() = throw NotImplementedError()
 }

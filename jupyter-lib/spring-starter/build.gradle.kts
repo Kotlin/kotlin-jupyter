@@ -35,6 +35,8 @@ dependencies {
     implementation(libs.kotlin.dev.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)
+    implementation(libs.serialization.json)
+    implementation("org.java-websocket:Java-WebSocket:1.5.7")
 
     springKernel(projects.kotlinJupyterKernel) { isTransitive = false }
     springKernel(projects.api) { isTransitive = false }

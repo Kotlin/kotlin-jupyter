@@ -18,8 +18,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterBaseSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqConnectionImpl
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
@@ -30,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.receiveMessageAndRunCallbacks
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
@@ -119,7 +119,7 @@ fun main(vararg args: String) {
  * so we don't have a big need in covering it with tests
  *
  * The expected use case for this function is embedded into a Java application that doesn't necessarily support extensions written in Kotlin
- * The signature of this function should thus be simple, and e.g. allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
+ * The signature of this function should thus be simple, and e.g., allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
  * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
@@ -189,38 +189,25 @@ fun createMessageHandler(
     return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 
-fun startZmqServer(replSettings: DefaultReplSettings) {
+inline fun <C : JupyterConnection> startServer(
+    replSettings: DefaultReplSettings,
+    createConnection: (KernelLoggerFactory, KernelConfig) -> C,
+    getSocketManager: C.() -> JupyterBaseSockets,
+    listen: (C, Logger) -> Unit,
+) {
     val kernelConfig = replSettings.kernelConfig
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
     logger.info("Starting server with config: $kernelConfig")
 
-    JupyterConnectionImpl(loggerFactory, kernelConfig).use { conn: JupyterConnectionInternal ->
+    createConnection(loggerFactory, kernelConfig).use { conn: C ->
         printClassPath(logger)
 
         logger.info("Begin listening for events")
 
-        val socketManager = conn.socketManager
+        val socketManager = conn.getSocketManager()
         val messageHandler = createMessageHandler(replSettings, socketManager)
         initializeKernelSession(messageHandler, replSettings)
-
-        val mainThread = Thread.currentThread()
-
-        fun socketLoop(
-            interruptedMessage: String,
-            vararg threadsToInterrupt: Thread,
-            loopBody: () -> Unit,
-        ) {
-            while (true) {
-                try {
-                    loopBody()
-                } catch (e: InterruptedException) {
-                    logger.debug(interruptedMessage)
-                    threadsToInterrupt.forEach { it.interrupt() }
-                    break
-                }
-            }
-        }
 
         fun JupyterConnection.addMessageCallbackForSocket(socketType: JupyterSocketType) {
             addMessageCallback(
@@ -233,37 +220,63 @@ fun startZmqServer(replSettings: DefaultReplSettings) {
         conn.addMessageCallbackForSocket(JupyterSocketType.CONTROL)
         conn.addMessageCallbackForSocket(JupyterSocketType.SHELL)
 
+        try {
+            listen(conn, logger)
+        } finally {
+            messageHandler.closeIfPossible()
+        }
+    }
+}
+
+fun startZmqServer(replSettings: DefaultReplSettings) {
+    startServer(replSettings, ::JupyterZmqConnectionImpl, JupyterZmqConnectionImpl::socketManager) { conn, logger ->
+        val mainThread = Thread.currentThread()
+
+        fun socketLoop(
+            interruptedMessage: String,
+            vararg threadsToInterrupt: Thread,
+            loopBody: () -> Unit,
+        ) {
+            while (true) {
+                try {
+                    loopBody()
+                } catch (_: InterruptedException) {
+                    logger.debug(interruptedMessage)
+                    threadsToInterrupt.forEach { it.interrupt() }
+                    break
+                }
+            }
+        }
+
         val controlThread =
             thread {
                 socketLoop("Control: Interrupted", mainThread) {
-                    socketManager.control.runCallbacksOnMessage()
+                    conn.socketManager.control.receiveMessageAndRunCallbacks()
                 }
             }
 
         val hbThread =
             thread {
                 socketLoop("Heartbeat: Interrupted", mainThread) {
-                    socketManager.heartbeat.onData { send(it) }
+                    conn.socketManager.heartbeat.onData { send(it) }
                 }
             }
 
         socketLoop("Main: Interrupted", controlThread, hbThread) {
-            socketManager.shell.runCallbacksOnMessage()
+            conn.socketManager.shell.receiveMessageAndRunCallbacks()
         }
 
         try {
             controlThread.join()
             hbThread.join()
         } catch (_: InterruptedException) {
-        } finally {
-            messageHandler.closeIfPossible()
         }
 
         logger.info("Server is stopped")
     }
 }
 
-private fun initializeKernelSession(
+fun initializeKernelSession(
     messageHandler: MessageHandlerImpl,
     replSettings: DefaultReplSettings,
 ) {

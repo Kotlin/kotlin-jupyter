@@ -9,13 +9,15 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelAddress
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import org.slf4j.Logger
 import org.zeromq.ZMQ
 import java.security.SignatureException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-typealias SocketRawMessageCallback = JupyterSocket.(RawMessage) -> Unit
+typealias SocketRawMessageCallback = (RawMessage) -> Unit
 
 private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 private val emptyJsonObjectString = Json.EMPTY.toString()
@@ -23,13 +25,43 @@ private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
-class SocketWrapper(
+class CallbackHandlerImpl(private val logger: Logger) : CallbackHandler {
+    private val callbacks = mutableSetOf<SocketRawMessageCallback>()
+
+    override fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback {
+        callbacks.add(callback)
+        return callback
+    }
+
+    override fun removeCallback(callback: SocketRawMessageCallback) {
+        callbacks.remove(callback)
+    }
+
+    override fun runCallbacksOnMessage(message: RawMessage) {
+        callbacks.forEach { callback ->
+            try {
+                callback(message)
+            } catch (e: Throwable) {
+                if (e is InterruptedException) {
+                    throw e
+                }
+                logger.error("Exception thrown while processing a message", e)
+            }
+        }
+    }
+
+    fun clear() {
+        callbacks.clear()
+    }
+}
+
+class ZmqSocketWrapper(
     loggerFactory: KernelLoggerFactory,
     val name: String,
     socket: ZMQ.Socket,
     private val address: String,
     private val hmac: HMAC,
-) : SocketWithCancellationBase(socket), JupyterSocket {
+) : SocketWithCancellationBase(socket), JupyterZmqSocket {
     private val logger = loggerFactory.getLogger(this::class)
     private val lock = ReentrantLock()
 
@@ -45,32 +77,9 @@ class SocketWrapper(
         return res
     }
 
-    private val callbacks = mutableSetOf<SocketRawMessageCallback>()
+    override val callbackHandler = CallbackHandlerImpl(logger)
 
-    override fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback {
-        callbacks.add(callback)
-        return callback
-    }
-
-    override fun removeCallback(callback: SocketRawMessageCallback) {
-        callbacks.remove(callback)
-    }
-
-    override fun onData(body: JupyterSocket.(ByteArray) -> Unit) = body(recv())
-
-    override fun runCallbacksOnMessage() =
-        receiveRawMessage()?.let { message ->
-            callbacks.forEach { callback ->
-                try {
-                    callback(message)
-                } catch (e: Throwable) {
-                    if (e is InterruptedException) {
-                        throw e
-                    }
-                    logger.error("Exception thrown while processing a message", e)
-                }
-            }
-        }
+    override fun onData(body: JupyterZmqSocket.(ByteArray) -> Unit) = body(recv())
 
     override fun sendRawMessage(msg: RawMessage) {
         logger.debug("[{}] snd>: {}", name, msg)
@@ -142,39 +151,40 @@ class SocketWrapper(
     }
 
     override fun close() {
-        callbacks.clear()
+        callbackHandler.clear()
         super.close()
     }
 }
 
-fun createSocket(
+fun createZmqSocket(
     loggerFactory: KernelLoggerFactory,
-    socketInfo: JupyterSocketInfo,
+    socketInfo: JupyterZmqSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
     side: JupyterSocketSide,
-): JupyterSocket {
-    return SocketWrapper(
+): JupyterZmqSocket {
+    return ZmqSocketWrapper(
         loggerFactory,
         socketInfo.name,
         context.socket(socketInfo.zmqType(side)),
-        kernelConfig.addressForSocket(socketInfo),
+        kernelConfig.addressForZmqSocket(socketInfo),
         kernelConfig.hmac,
     )
 }
 
-fun KernelConfig.addressForSocket(socketInfo: JupyterSocketInfo): String {
-    val port = ports[socketInfo.type]
-    return "$transport://$host:$port"
+fun KernelConfig.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): String {
+    val address = address as ZmqKernelAddress
+    val port = address.ports[socketInfo.type]
+    return "$transport://${address.host}:$port"
 }
 
-fun openServerSocket(
+fun openServerZmqSocket(
     loggerFactory: KernelLoggerFactory,
-    socketInfo: JupyterSocketInfo,
+    socketInfo: JupyterZmqSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
-): JupyterSocket {
-    return createSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
+): JupyterZmqSocket {
+    return createZmqSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
         bind()
     }
 }

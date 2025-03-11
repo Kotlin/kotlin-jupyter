@@ -109,9 +109,13 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
     }
 }
 
+interface KernelAddress
+
+class ZmqKernelAddress(val host: String = "*", val ports: KernelPorts) : KernelAddress
+
 data class KernelConfig(
-    val host: String = "*",
-    val ports: KernelPorts,
+    val ports: Nothing,
+    val address: KernelAddress,
     val transport: String,
     val signatureScheme: String,
     val signatureKey: String,
@@ -146,12 +150,10 @@ data class KernelConfig(
  */
 @Suppress("unused") // Used in Kotlin Notebook in attached mode configuration
 fun createClientKotlinKernelConfig(
-    host: String,
-    ports: KernelPorts,
+    address: KernelAddress,
     signatureKey: String,
 ) = KernelConfig(
-    host = host,
-    ports = ports,
+    address = address,
     transport = KERNEL_TRANSPORT_SCHEME,
     signatureScheme = KERNEL_SIGNATURE_SCHEME,
     signatureKey = signatureKey,
@@ -173,14 +175,14 @@ fun createClientKotlinKernelConfig(
  * @return KernelConfig instance populated with the provided parameters and default kernel configuration values.
  */
 fun createKotlinKernelConfig(
-    ports: KernelPorts,
+    address: KernelAddress,
     signatureKey: String,
     scriptClasspath: List<File> = emptyList(),
     homeDir: File? = null,
     debugPort: Int? = null,
     clientType: String? = null,
 ) = KernelConfig(
-    ports = ports,
+    address = address,
     transport = KERNEL_TRANSPORT_SCHEME,
     signatureScheme = KERNEL_SIGNATURE_SCHEME,
     signatureKey = signatureKey,
@@ -221,7 +223,7 @@ fun KernelArgs.getConfig(): KernelConfig {
     val cfg = parseParams()
 
     return KernelConfig(
-        ports = cfg.ports,
+        address = ZmqKernelAddress(ports = cfg.ports),
         transport = cfg.transport ?: KERNEL_TRANSPORT_SCHEME,
         signatureScheme = cfg.signatureScheme ?: KERNEL_SIGNATURE_SCHEME,
         signatureKey = if (cfg.signatureScheme == null || cfg.key == null) "" else cfg.key,

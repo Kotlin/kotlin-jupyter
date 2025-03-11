@@ -13,13 +13,13 @@ import java.io.File
  */
 @AutoConfiguration
 @EnableConfigurationProperties(
-    SpringKotlinJupyterKernelPorts::class,
+    SpringKotlinJupyterKernelPort::class,
     SpringKotlinJupyterClient::class,
 )
 open class KotlinJupyterAutoConfiguration {
     @Bean
     open fun kernelService(
-        servicePorts: SpringKotlinJupyterKernelPorts,
+        servicePort: SpringKotlinJupyterKernelPort,
         client: SpringKotlinJupyterClient,
     ): KotlinJupyterKernelService {
         val scriptClasspath =
@@ -27,19 +27,10 @@ open class KotlinJupyterAutoConfiguration {
                 .split(File.pathSeparator)
                 .map { File(it) }
 
-        val ports =
-            createKernelPorts { portType ->
-                when (portType) {
-                    JupyterSocketType.HB -> servicePorts.hb
-                    JupyterSocketType.SHELL -> servicePorts.shell
-                    JupyterSocketType.CONTROL -> servicePorts.control
-                    JupyterSocketType.STDIN -> servicePorts.stdin
-                    JupyterSocketType.IOPUB -> servicePorts.iopub
-                }
-            }
+        val port = servicePort.websocketPort
 
         return KotlinJupyterKernelService(
-            kernelPorts = ports,
+            kernelPorts = port,
             scriptClasspath = scriptClasspath,
             homeDir = null,
             clientType = client.type,
