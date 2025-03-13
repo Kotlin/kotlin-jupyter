@@ -1,26 +1,26 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.zeromq.ZMQ
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class JupyterSocketManagerImpl(
+class JupyterZmqSocketManagerImpl(
     private val terminationTimeout: Duration = 15.seconds,
-    private val openSocketAction: (JupyterSocketInfo, ZMQ.Context) -> JupyterSocket,
-) : JupyterSocketManager {
+    private val openSocketAction: (JupyterZmqSocketInfo, ZMQ.Context) -> JupyterZmqSocket,
+) : JupyterZmqSocketManager {
     private val zmqContext: ZMQ.Context = ZMQ.context(1)
 
-    private fun openSocket(socketInfo: JupyterSocketInfo) = openSocketAction(socketInfo, zmqContext)
+    private fun openSocket(socketInfo: JupyterZmqSocketInfo) = openSocketAction(socketInfo, zmqContext)
 
-    override val heartbeat = openSocket(JupyterSocketInfo.HB)
-    override val shell = openSocket(JupyterSocketInfo.SHELL)
-    override val control = openSocket(JupyterSocketInfo.CONTROL)
-    override val stdin = openSocket(JupyterSocketInfo.STDIN)
-    override val iopub = openSocket(JupyterSocketInfo.IOPUB)
+    override val heartbeat = openSocket(JupyterZmqSocketInfo.HB)
+    override val shell = openSocket(JupyterZmqSocketInfo.SHELL)
+    override val control = openSocket(JupyterZmqSocketInfo.CONTROL)
+    override val stdin = openSocket(JupyterZmqSocketInfo.STDIN)
+    override val iopub = openSocket(JupyterZmqSocketInfo.IOPUB)
 
     private val socketsMap =
         buildMap {
@@ -31,7 +31,7 @@ class JupyterSocketManagerImpl(
             put(JupyterSocketType.IOPUB, iopub)
         }
 
-    override fun fromSocketType(type: JupyterSocketType): JupyterSocket =
+    override fun fromSocketType(type: JupyterSocketType): JupyterZmqSocket =
         socketsMap[type] ?: throw RuntimeException("Unknown socket type: $type")
 
     override fun close() {

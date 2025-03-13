@@ -21,8 +21,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterBaseSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterConnectionInternal
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqConnectionImpl
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqConnectionInternal
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
@@ -33,6 +33,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.receiveMessageAndRunCallbacks
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
@@ -223,7 +224,7 @@ fun startZmqServer(replSettings: DefaultReplSettings) {
     val logger = loggerFactory.getLogger(iKotlinClass)
     logger.info("Starting server with config: $kernelConfig")
 
-    JupyterConnectionImpl(loggerFactory, kernelConfig).use { conn: JupyterConnectionInternal ->
+    JupyterZmqConnectionImpl(loggerFactory, kernelConfig).use { conn: JupyterZmqConnectionInternal ->
         printClassPath(logger)
 
         logger.info("Begin listening for events")
@@ -264,7 +265,7 @@ fun startZmqServer(replSettings: DefaultReplSettings) {
         val controlThread =
             thread {
                 socketLoop("Control: Interrupted", mainThread) {
-                    socketManager.control.runCallbacksOnMessage()
+                    socketManager.control.receiveMessageAndRunCallbacks()
                 }
             }
 
@@ -276,7 +277,7 @@ fun startZmqServer(replSettings: DefaultReplSettings) {
             }
 
         socketLoop("Main: Interrupted", controlThread, hbThread) {
-            socketManager.shell.runCallbacksOnMessage()
+            socketManager.shell.receiveMessageAndRunCallbacks()
         }
 
         try {
