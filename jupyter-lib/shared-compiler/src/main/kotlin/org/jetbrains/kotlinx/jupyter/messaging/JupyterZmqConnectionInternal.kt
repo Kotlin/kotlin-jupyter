@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterConnection
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketManagerBase
 import java.io.Closeable
@@ -25,16 +25,16 @@ interface JupyterBaseSockets {
 /**
  * Interface responsible for controlling the lifecycle of kernel sockets.
  */
-interface JupyterSocketManager : JupyterBaseSockets, JupyterSocketManagerBase, Closeable {
-    override val heartbeat: JupyterSocket
-    override val shell: JupyterSocket
-    override val control: JupyterSocket
-    override val stdin: JupyterSocket
-    override val iopub: JupyterSocket
+interface JupyterZmqSocketManager : JupyterBaseSockets, JupyterSocketManagerBase, Closeable {
+    override val heartbeat: JupyterZmqSocket
+    override val shell: JupyterZmqSocket
+    override val control: JupyterZmqSocket
+    override val stdin: JupyterZmqSocket
+    override val iopub: JupyterZmqSocket
 }
 
-interface JupyterConnectionInternal : JupyterConnection {
-    val socketManager: JupyterSocketManager
+interface JupyterZmqConnectionInternal : JupyterConnection {
+    val socketManager: JupyterZmqSocketManager
 }
 
 fun JupyterSocketBase.sendMessage(msg: Message) {

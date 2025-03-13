@@ -12,10 +12,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.SocketWrapper
-import org.jetbrains.kotlinx.jupyter.protocol.createSocket
+import org.jetbrains.kotlinx.jupyter.protocol.ZmqSocketWrapper
+import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
@@ -66,8 +66,8 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
         executor.tearDown()
     }
 
-    fun createClientSocket(socketInfo: JupyterSocketInfo) =
-        createSocket(
+    fun createClientSocket(socketInfo: JupyterZmqSocketInfo) =
+        createZmqSocket(
             testLoggerFactory,
             socketInfo,
             context,
@@ -85,7 +85,7 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
     fun JupyterSocketBase.receiveMessage() = receiveRawMessage()!!.toMessage()
 
     fun JupyterSocketBase.receiveStatusReply(): StatusMessage {
-        (this as? SocketWrapper)?.name shouldBe JupyterSocketInfo.IOPUB.name
+        (this as? ZmqSocketWrapper)?.name shouldBe JupyterZmqSocketInfo.IOPUB.name
         receiveMessage().apply {
             return content.shouldBeTypeOf()
         }
