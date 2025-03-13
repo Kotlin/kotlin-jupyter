@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -14,11 +14,11 @@ import org.zeromq.ZMQ
 class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true) {
     override val context: ZMQ.Context = ZMQ.context(1)
 
-    private fun connectClientSocket(socketInfo: JupyterSocketInfo) = createClientSocket(socketInfo).apply { connect() }
+    private fun connectClientSocket(socketInfo: JupyterZmqSocketInfo) = createClientSocket(socketInfo).apply { connect() }
 
     @Test
     fun testHeartbeat() {
-        with(connectClientSocket(JupyterSocketInfo.HB)) {
+        with(connectClientSocket(JupyterZmqSocketInfo.HB)) {
             try {
                 send("abc")
                 val msg = recvString()
@@ -32,7 +32,7 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
 
     @Test
     fun testShell() {
-        with(connectClientSocket(JupyterSocketInfo.CONTROL)) {
+        with(connectClientSocket(JupyterZmqSocketInfo.CONTROL)) {
             try {
                 sendMessage(MessageType.INTERRUPT_REQUEST, null)
                 val msg = receiveRawMessage()

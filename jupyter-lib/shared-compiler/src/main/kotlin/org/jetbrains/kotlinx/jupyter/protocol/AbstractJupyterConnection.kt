@@ -18,14 +18,14 @@ abstract class AbstractJupyterConnection : JupyterConnection {
                 callback.action(message)
             }
         }
-        callbacks[callback] = socket.onRawMessage(socketCallback)
+        callbacks[callback] = socket.callbackHandler.onRawMessage(socketCallback)
         return callback
     }
 
     override fun removeMessageCallback(callback: RawMessageCallback) {
         val socketCallback = callbacks[callback] ?: return
         val socket = socketManager.fromSocketType(callback.socket)
-        socket.removeCallback(socketCallback)
+        socket.callbackHandler.removeCallback(socketCallback)
     }
 
     override fun send(

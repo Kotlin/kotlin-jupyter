@@ -50,9 +50,9 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
@@ -93,10 +93,10 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     override val context: ZMQ.Context
         get() = _context!!
 
-    private var shell: JupyterSocket? = null
-    private var control: JupyterSocket? = null
-    private var ioPub: JupyterSocket? = null
-    private var stdin: JupyterSocket? = null
+    private var shell: JupyterZmqSocket? = null
+    private var control: JupyterZmqSocket? = null
+    private var ioPub: JupyterZmqSocket? = null
+    private var stdin: JupyterZmqSocket? = null
 
     private val shellSocket: JupyterSocketBase get() = shell!!
     private val controlSocket: JupyterSocketBase get() = control!!
@@ -107,12 +107,12 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         try {
             _context = ZMQ.context(1)
             shell =
-                createClientSocket(JupyterSocketInfo.SHELL).apply {
+                createClientSocket(JupyterZmqSocketInfo.SHELL).apply {
                     makeRelaxed()
                 }
-            ioPub = createClientSocket(JupyterSocketInfo.IOPUB)
-            stdin = createClientSocket(JupyterSocketInfo.STDIN)
-            control = createClientSocket(JupyterSocketInfo.CONTROL)
+            ioPub = createClientSocket(JupyterZmqSocketInfo.IOPUB)
+            stdin = createClientSocket(JupyterZmqSocketInfo.STDIN)
+            control = createClientSocket(JupyterZmqSocketInfo.CONTROL)
 
             ioPub?.subscribe(byteArrayOf())
             shell?.connect()
