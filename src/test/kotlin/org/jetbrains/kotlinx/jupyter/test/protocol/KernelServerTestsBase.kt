@@ -17,7 +17,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.ZmqSocketWrapper
 import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.createRandomKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.createRandomZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.AfterEach
@@ -39,7 +39,7 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
 
     protected val kernelConfig =
         createKotlinKernelConfig(
-            ports = createRandomKernelPorts(),
+            ports = createRandomZmqKernelPorts(),
             signatureKey = "abc",
             scriptClasspath = classpath,
             homeDir = File(""),
