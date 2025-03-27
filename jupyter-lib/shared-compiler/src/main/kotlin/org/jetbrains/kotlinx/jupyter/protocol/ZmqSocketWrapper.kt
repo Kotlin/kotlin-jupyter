@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.slf4j.Logger
 import org.zeromq.ZMQ
@@ -175,7 +176,8 @@ fun createZmqSocket(
 }
 
 fun KernelConfig.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): String {
-    val port = ports[socketInfo.type]
+    require(ports is ZmqKernelPorts) { "Wrong KernelAddress type" }
+    val port = ports.ports.getValue(socketInfo.type)
     return "$transport://$host:$port"
 }
 
