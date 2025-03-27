@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.startup.createKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -28,7 +28,7 @@ open class KotlinJupyterAutoConfiguration {
                 .map { File(it) }
 
         val ports =
-            createKernelPorts { portType ->
+            ZmqKernelPorts { portType ->
                 when (portType) {
                     JupyterSocketType.HB -> servicePorts.hb
                     JupyterSocketType.SHELL -> servicePorts.shell
