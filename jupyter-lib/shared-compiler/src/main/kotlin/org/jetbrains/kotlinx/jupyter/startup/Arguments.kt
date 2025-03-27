@@ -18,19 +18,23 @@ import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import java.io.File
 import java.util.EnumMap
 
-typealias KernelPorts = Map<JupyterSocketType, Int>
-
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
-fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
-    return EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
-        JupyterSocketType.entries.forEach { socket ->
-            val port = action(socket)
-            put(socket, port)
-        }
-    }
+interface KernelPorts
+
+class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
+    constructor(getSocketPort: (JupyterSocketType) -> Int) : this(
+        ports = EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
+            JupyterSocketType.entries.forEach { socket ->
+                val port = getSocketPort(socket)
+                put(socket, port)
+            }
+        },
+    )
 }
+
+class WsKernelPorts(val port: Int) : KernelPorts
 
 data class KernelArgs(
     val cfgFile: File,
@@ -84,15 +88,21 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 
     override fun deserialize(decoder: Decoder): KernelJupyterParams {
         val map = utilSerializer.deserialize(decoder)
+        val ports = if (map.containsKey("ws_port")) {
+            WsKernelPorts(port = Json.decodeFromJsonElement<Int>(map.getValue("ws_port")))
+        } else {
+            ZmqKernelPorts { socket ->
+                val fieldName = socket.portField
+                map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
+                    ?: error("Cannot find $fieldName in config")
+            }
+        }
 
         return KernelJupyterParams(
-            map["signature_scheme"]?.content,
-            map["key"]?.content,
-            createKernelPorts { socket ->
-                val fieldName = socket.portField
-                map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) } ?: throw RuntimeException("Cannot find $fieldName in config")
-            },
-            map["transport"]?.content ?: KERNEL_TRANSPORT_SCHEME,
+            signatureScheme = map["signature_scheme"]?.content,
+            key = map["key"]?.content,
+            ports = ports,
+            transport = map["transport"]?.content ?: KERNEL_TRANSPORT_SCHEME,
         )
     }
 
@@ -106,8 +116,14 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
                 "key" to JsonPrimitive(value.key),
                 "transport" to JsonPrimitive(value.transport),
             )
-        value.ports.forEach { (socket, port) ->
-            map[socket.portField] = JsonPrimitive(port)
+
+        when (value.ports) {
+            is WsKernelPorts -> {
+                map["ws_port"] = JsonPrimitive(value.ports.port)
+            }
+            is ZmqKernelPorts -> value.ports.ports.forEach { (socket, port) ->
+                map[socket.portField] = JsonPrimitive(port)
+            }
         }
         utilSerializer.serialize(encoder, map)
     }

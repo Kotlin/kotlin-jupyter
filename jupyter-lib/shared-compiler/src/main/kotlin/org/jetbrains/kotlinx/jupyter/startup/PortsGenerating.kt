@@ -58,6 +58,6 @@ fun PortsGenerator.Companion.create(
     randomIntsInRange(portRangeStart, portRangeEnd)
 }
 
-fun createRandomKernelPorts() =
+fun createRandomZmqKernelPorts() =
     PortsGenerator.create(32768, 65536)
-        .let { generator -> createKernelPorts { generator.randomPort() } }
+        .let { generator -> ZmqKernelPorts { generator.randomPort() } }
