@@ -78,7 +78,10 @@ abstract class SocketWithCancellationBase(
     private fun isCancelled() = cancellationToken.isCancellationRequested
 
     override fun close() {
-        cancellationToken.cancel()
-        socket.close()
+        try {
+            cancellationToken.cancel()
+        } finally {
+            socket.close()
+        }
     }
 }

@@ -154,10 +154,13 @@ fun createSocket(
     kernelConfig: KernelConfig,
     side: JupyterSocketSide,
 ): JupyterSocket {
+    val zmqSocket = context.socket(socketInfo.zmqType(side))
+    zmqSocket.linger = 0
+
     return SocketWrapper(
         loggerFactory,
         socketInfo.name,
-        context.socket(socketInfo.zmqType(side)),
+        zmqSocket,
         kernelConfig.addressForSocket(socketInfo),
         kernelConfig.hmac,
     )
