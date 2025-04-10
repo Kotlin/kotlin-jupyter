@@ -20,7 +20,12 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.execution.AfterCellExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
 
+/**
+ * Context data required for handling the entire compilation pipeline.
+ * It is shared between [ReplForJupyter] and [CellExecutor].
+ */
 data class SharedReplContext(
     val loggerFactory: KernelLoggerFactory,
     val classAnnotationsProcessor: ClassAnnotationsProcessor,

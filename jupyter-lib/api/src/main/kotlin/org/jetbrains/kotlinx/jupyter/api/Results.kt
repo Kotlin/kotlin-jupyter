@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.api
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -257,7 +256,8 @@ open class MimeTypedResultEx(
     }
 
     override fun toString(): String {
-        return jsonPrettyPrinter.encodeToString(toJson(Json.EMPTY, null))
+        val json: JsonElement = toJson(Json.EMPTY, null)
+        return jsonPrettyPrinter.encodeToString(JsonElement.serializer(), json)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -293,7 +293,7 @@ fun JSON(
     expanded: Boolean = true,
 ) = MimeTypedResultEx(
     buildJsonObject {
-        val encodedJson = jsonPrettyPrinter.encodeToString(json)
+        val encodedJson = jsonPrettyPrinter.encodeToString(JsonElement.serializer(), json)
         put(MimeTypes.JSON, json)
         put(MimeTypes.PLAIN_TEXT, JsonPrimitive(encodedJson))
         val backticks = "`".repeat(markdownCodeBlockBackticksCount(encodedJson))

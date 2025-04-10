@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.removeDuplicates
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
@@ -21,6 +22,7 @@ import org.jetbrains.kotlinx.jupyter.repl.InternalVariablesMarkersProcessor
 import org.jetbrains.kotlinx.jupyter.repl.execution.EvaluatorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -30,14 +32,13 @@ import kotlin.reflect.typeOf
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 
 internal class InternalEvaluatorImpl(
     private val repl: ReplForJupyterImpl,
     private val loggerFactory: KernelLoggerFactory,
     val compiler: JupyterCompiler,
-    private val evaluator: BasicJvmReplEvaluator,
+    private val evaluator: KernelReplEvaluator,
     private val contextUpdater: ContextUpdater,
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
     executionLoggingProperty: KMutableProperty0<ExecutedCodeLogging>,
@@ -189,7 +190,9 @@ internal class InternalEvaluatorImpl(
                             compilingOptions.cellId.toExecutionCount(),
                             code.lines().size,
                         )
-                    throw ReplCompilerException(code, resultWithDiagnostics, metadata = metadata)
+                    // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                    val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
+                    throw ReplCompilerException(code, updatedDiagnostics, metadata = metadata)
                 }
                 else -> throw IllegalStateException("Unknown result")
             }
@@ -224,7 +227,8 @@ internal class InternalEvaluatorImpl(
                 property as KProperty1<Any, *>
                 if (internalVariablesMarkersProcessor.isInternal(property)) continue
 
-                val state = VariableStateImpl(property, cellClassInstance)
+                val isK2Mode = (repl.compilerMode == ReplCompilerMode.K2)
+                val state = VariableStateImpl(property, cellClassInstance, isK2Mode)
                 variablesWatcher.addDeclaration(cellId, property.name)
 
                 // it was val, now it's var

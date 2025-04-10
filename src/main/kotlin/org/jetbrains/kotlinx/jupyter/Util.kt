@@ -26,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptorGlobalOptio
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.io.Closeable
 import java.io.File
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
@@ -227,4 +228,11 @@ data class MutablePair<T1, T2>(var first: T1, var second: T2)
 
 fun Any.closeIfPossible() {
     if (this is Closeable) close()
+}
+
+// Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+// We go through all reports and combine reports with the same text and location
+fun ResultWithDiagnostics.Failure.removeDuplicates(): ResultWithDiagnostics.Failure {
+    val noDuplicateList = LinkedHashSet<ScriptDiagnostic>(reports)
+    return ResultWithDiagnostics.Failure(noDuplicateList.toList())
 }

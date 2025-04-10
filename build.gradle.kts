@@ -34,7 +34,24 @@ ktlint {
     }
 }
 
+repositories {
+    mavenCentral()
+    maven("https://packages.jetbrains.team/maven/p/kt/dev")
+    maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+    maven {
+        name = "intellij-deps"
+        url = uri("https://www.jetbrains.com/intellij-repository/releases/")
+    }
+    if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+        mavenLocal()
+    }
+}
+
 dependencies {
+    // Required by K2KJvmReplCompilerWithCompletion.
+    // Should be moved to Kotlin Compiler eventually once complete
+    compileOnly("com.jetbrains.intellij.platform:util:243.22562.220")
+
     implementation(libs.kotlin.dev.stdlib)
 
     // Dependency on module with compiler.
@@ -71,6 +88,7 @@ dependencies {
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
+    testImplementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
 
     deploy(projects.lib)
     deploy(projects.api)
@@ -116,6 +134,9 @@ private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Con
         libs.kotlin.dev.scriptingDependenciesMavenAll,
         // Embedded version of serialization plugin for notebook code
         libs.serialization.dev.embeddedPlugin,
+        // Compose support
+        libs.compose.compiler,
+        libs.compose.runtime,
     ).forEach { dependency ->
         addConfiguredDependencyTo(this, configurationName, dependency) {
             isTransitive = false

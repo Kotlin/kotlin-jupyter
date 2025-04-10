@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 
 /**
- * Interface representing kernel engine, the core facility for compiling and executing code snippets
+ * Interface representing the kernel engine, the core facility for compiling and executing code snippets.
  */
 interface KotlinKernelHost : ExecutionHost {
     /**
@@ -35,7 +35,7 @@ interface KotlinKernelHost : ExecutionHost {
     )
 
     /**
-     * Schedules execution of the given [execution] after the completing of execution of the current cell
+     * Schedules execution of the given [execution] after execution of the current cell has completed.
      */
     fun scheduleExecution(execution: ExecutionCallback<*>)
 

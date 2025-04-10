@@ -5,6 +5,7 @@ import kotlin.reflect.KClass
 
 /**
  * Factory interface for creating slf4j-compatible loggers.
+ * All components inside the kernel should only create loggers through this factory.
  */
 interface KernelLoggerFactory {
     fun getLogger(category: String): Logger

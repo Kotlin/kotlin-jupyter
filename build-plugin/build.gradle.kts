@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -29,9 +30,9 @@ val myJvmTarget = libs.versions.jvmTarget.get()
 val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-opt-in=kotlin.RequiresOptIn")
-        jvmTarget = myJvmTarget
+    compilerOptions {
+        freeCompilerArgs.addAll(listOf("-opt-in=kotlin.RequiresOptIn"))
+        jvmTarget.set(JvmTarget.fromTarget(myJvmTarget))
     }
 }
 

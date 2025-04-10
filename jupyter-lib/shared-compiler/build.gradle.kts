@@ -31,6 +31,9 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingCommon)
     compileOnly(libs.kotlin.dev.scriptingJvm)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
+    // K2: Is here because we need to reference org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
+    // Is this a problem?
+    compileOnly(libs.kotlin.dev.scriptingCompiler)
 
     // Serialization runtime
     compileOnly(libs.serialization.json)
