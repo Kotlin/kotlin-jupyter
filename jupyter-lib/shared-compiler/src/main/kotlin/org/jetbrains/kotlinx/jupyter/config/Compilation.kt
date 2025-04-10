@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
+import org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
@@ -17,7 +18,6 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.fileExtension
@@ -25,6 +25,8 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.repl
+import kotlin.script.experimental.api.resultFieldPrefix
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.getScriptingClass
 import kotlin.script.experimental.host.with
@@ -72,17 +74,25 @@ fun getCompilationConfiguration(
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
     scriptDataCollectors: List<ScriptDataCollector> = emptyList(),
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
-    loggerFactory: KernelLoggerFactory,
+    @Suppress("unused") loggerFactory: KernelLoggerFactory,
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
-    if (replCompilerMode == ReplCompilerMode.K2) {
-        loggerFactory.getLogger("getCompilationConfiguration").warn("K2 Repl Mode is ignored for now. Falling back to K1")
-    }
     return ScriptCompilationConfiguration {
         hostConfiguration.update {
             it.with {
                 getScriptingClass(scriptingClassGetter)
+                if (replCompilerMode == ReplCompilerMode.K2) {
+                    configureDefaultRepl("jupyter.kts")
+                }
             }
+        }
+        repl {
+            resultFieldPrefix("\$res")
+            // In K2, we need this because snippetNo is not propagating correct to FirExtension
+            // Without it, we cannot read return values correctly which makes TypeConverts fails.
+            // In K1 it overrides, the $resX value which fails a lot of tests
+            // Hopefully this will be fixed by https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+            // currentLineId(LineId(0, 0, 0))
         }
         fileExtension.put("jupyter.kts")
 
@@ -122,10 +132,4 @@ fun getCompilationConfiguration(
 
         body()
     }
-}
-
-inline fun <reified T> ScriptCompilationConfiguration.Builder.addBaseClass() {
-    val kClass = T::class
-    defaultImports.append(kClass.java.name)
-    baseClass.put(KotlinType(kClass))
 }

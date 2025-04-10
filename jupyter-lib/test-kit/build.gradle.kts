@@ -1,3 +1,5 @@
+import build.util.implementation
+
 plugins {
     kotlin("libs.publisher")
     kotlin("jvm")
@@ -10,6 +12,7 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
+    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
 }
 
 val rootShadowJar = ':' + build.SHADOW_JAR_TASK

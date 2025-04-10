@@ -9,6 +9,10 @@ import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptorsProvider
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
+/**
+ * This class is responsible for finding autocomplete results when starting a "magics" statement inside a notebook,
+ * i.e., it triggers when the user starts a line with `%`.
+ */
 class CompletionMagicsProcessor(
     loggerFactory: KernelLoggerFactory,
     libraryDescriptorsProvider: LibraryDescriptorsProvider,

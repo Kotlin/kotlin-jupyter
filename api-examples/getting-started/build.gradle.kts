@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("com.google.devtools.ksp")
     kotlin("jvm")
@@ -8,6 +11,13 @@ plugins {
 kotlinJupyter {
     addApiDependency()
     addScannerDependency()
+}
+
+project.tasks.withType<KotlinCompile> {
+    val kotlinVersion = KotlinVersion.fromVersion(version)
+    compilerOptions {
+        languageVersion.set(kotlinVersion)
+    }
 }
 
 dependencies {

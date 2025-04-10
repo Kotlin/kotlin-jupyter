@@ -14,6 +14,9 @@ interface VariableState {
 data class VariableStateImpl(
     override val property: KProperty1<Any, *>,
     override val scriptInstance: Any,
+    // Just a Boolean rather than ReplCompilerMode as we cannot access the ReplCompilerMode
+    // enum from here, due to the way modules depend on each other.
+    val isK2Mode: Boolean,
 ) : VariableState {
     private val stringCache =
         VariableStateCache<String?> {
@@ -32,11 +35,26 @@ data class VariableStateImpl(
                 oldValue.getOrNull() !== newValue.getOrNull()
             },
             {
-                property.asAccessible { prop ->
-                    try {
-                        Result.success(prop.get(scriptInstance))
-                    } catch (ex: Throwable) {
-                        Result.failure(ex)
+                // Temporary work-around for K2 Mode reflection not working correctly
+                when (isK2Mode) {
+                    false -> {
+                        property.asAccessible { prop ->
+                            try {
+                                Result.success(prop.get(scriptInstance))
+                            } catch (ex: Throwable) {
+                                Result.failure(ex)
+                            }
+                        }
+                    }
+                    true -> {
+                        // Currently, the property will report accessible as `false` even if it can be accessed.
+                        // So rather than using `property.asAccessible` we just attempt to read the value
+                        // and fail if it throws and exception.
+                        try {
+                            Result.success(property.get(scriptInstance))
+                        } catch (ex: Throwable) {
+                            Result.failure(ex)
+                        }
                     }
                 }
             },
@@ -53,6 +71,8 @@ data class VariableStateImpl(
     override val value: Result<Any?> get() = valCache.get()
 
     companion object {
+        // We can currently not modify the accessible state in K2.
+        // See https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
         private fun <T : KProperty<*>, R> T.asAccessible(action: (T) -> R): R {
             val wasAccessible = isAccessible
             isAccessible = true

@@ -8,9 +8,21 @@ import ch.qos.logback.core.Appender
 import ch.qos.logback.core.OutputStreamAppender
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 
+/**
+ * This class controls the underlying behavior of how logging works while a notebook is running.
+ * It is controlled through magic commands.
+ *
+ * @see org.jetbrains.kotlinx.jupyter.common.ReplLineMagic.LOG_LEVEL
+ * @see org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler.handleLogLevel
+ * @see org.jetbrains.kotlinx.jupyter.common.ReplLineMagic.LOG_HANDLER
+ * @see org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler.handleLogHandler
+ */
 class LoggingManager(
     loggerFactory: KernelLoggerFactory,
 ) {
+    // Changes to the log level of the root logger will be applied to all child loggers, unless
+    // the log level has been set explicitly on them. This does normally not happen when users
+    // are interacting with a notebook, but it might happen during tests.
     private val rootLogger = loggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as? Logger
 
     private val loggerContext

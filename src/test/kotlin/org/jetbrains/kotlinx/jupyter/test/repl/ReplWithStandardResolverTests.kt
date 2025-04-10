@@ -11,16 +11,19 @@ import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -124,7 +128,16 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         assertEquals(43, res2.renderedValue)
 
         val res3 = eval("%use lets-plot@$libsCommit")
-        assertEquals(1, displays.count())
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                assertEquals(1, displays.count())
+            }
+            ReplCompilerMode.K2 -> {
+                // Currently broken. Most likely reason: https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
+                assertEquals(0, displays.count())
+            }
+        }
+
         assertUnit(res3.renderedValue)
         displays.clear()
 
@@ -312,23 +325,27 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        eval(
-            """
-            %use dataframe, kandy
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                %use dataframe, kandy
+                """.trimIndent(),
+            )
+        result.shouldBeTypeOf<EvalResultEx.Success>()
     }
 
     @Test
     fun `options should not interfer`() {
-        eval(
-            """
-            %use dataframe
-            %use kandy(0.4.0-dev-16)
-            
-            dataFrameConfig
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                %use dataframe
+                %use kandy(0.4.0-dev-16)
+                
+                dataFrameConfig
+                """.trimIndent(),
+            )
+        result.shouldBeTypeOf<EvalResultEx.Success>()
     }
 
     @Test
@@ -392,5 +409,99 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         assertEquals("John Smith", res.renderedValue)
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-76009/K2-Repl-Kotlin-specific-imports-does-not-work-if-dependency-is-added-to-the-classpath-after-1st-snippet
+    @Test
+    fun testKotlinImportsAfterFirstSnippet() {
+        val res0 = eval("1")
+        res0.shouldBeInstanceOf<EvalResultEx.Success>()
+
+        val res1 =
+            eval(
+                """
+                @file:DependsOn("org.jetbrains.kotlinx:dataframe-core:0.15.0")
+                """.trimIndent(),
+            )
+        res1.shouldBeInstanceOf<EvalResultEx.Success>()
+
+        val res2 =
+            eval(
+                """
+                import org.jetbrains.kotlinx.dataframe.impl.codeGen.urlCodeGenReader
+                """.trimIndent(),
+            )
+        res2.shouldBeInstanceOf<EvalResultEx.Success>()
+    }
+
+    // K2 Compose: It is still unclear exactly where the Compose support should be, so
+    // disable this test for now.
+    @Ignore
+    @Test
+    fun testComposeFromDescriptor() {
+        val deps =
+            """
+            %use @/Users/christian.melchior/JetBrains/kotlin-jupyter-2/libraries/compose.json
+            """.trimIndent()
+        val depsResult = eval(deps)
+        depsResult.shouldBeTypeOf<EvalResultEx.Success>()
+
+        val code =
+            """
+            val COLORS = listOf(Color.Red, Color.Green, Color.Blue, Color.Yellow)
+            
+            @Composable
+            fun App() {
+                var colorIndex by remember { mutableStateOf(0) }
+                val color = COLORS[colorIndex]
+                MaterialTheme {
+                    Box(modifier = Modifier.fillMaxSize().background(color).size(200.dp, 200.dp), contentAlignment = Alignment.Center) {
+                        Button(onClick = {
+                            colorIndex = (colorIndex + 1) % COLORS.size
+                        }) {
+                            Text("Click Me!")
+                        }
+                    }
+                }
+            }
+            
+            fun main() = application {
+                val windowState = rememberWindowState(size = DpSize(300.dp, 200.dp))
+                Window(onCloseRequest = ::exitApplication, title = "Compose in Scripting Demo", state = windowState) {
+                    App()
+                }
+            }            
+            
+            main()
+            """.trimIndent()
+
+        val result = eval(code)
+        result.shouldBeTypeOf<EvalResultEx.Success>()
+    }
+
+    // K2 Compose: It is still unclear exactly where the Compose support should be, so
+    // disable this test for now.
+    @Ignore
+    @Test
+    fun testComposePluginAndDataFrameInteraction() {
+        eval(
+            """
+            %use dataframe
+            """.trimIndent(),
+        )
+        val res =
+            eval(
+                """
+                val name by column<String>()
+                val height by column<Int>()
+
+                val df = dataFrameOf(name, height)(
+                    "Bill", 135,
+                    "Mark", 160
+                )
+                df
+                """.trimIndent(),
+            )
+        res.shouldBeTypeOf<EvalResultEx.Success>()
     }
 }

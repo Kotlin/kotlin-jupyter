@@ -2,20 +2,23 @@
 jvmTarget = "11"
 springJvmTarget = "17"
 
-kotlin = "1.9.23"
-kotlinDependencies = "2.0.21"
-stableKotlin = "1.9.23"
-gradleKotlin = "1.9.23"
+kotlin = "2.2.0-dev-15999"
+kotlinDependencies = "2.2.0-dev-15999"
+kotlinMavenResolver = "2.2.0-dev-15999"
+stableKotlin = "2.2.0-dev-15999"
+gradleKotlin = "2.2.0-dev-15999"
 kotlinDsl = "4.3.1"
-ksp = "1.9.23-1.0.19"
+ksp = "2.1.20-1.0.32"
 shadowJar = "8.1.1"
 ant = "1.10.13"
 shadowJarUtil = "0.2.0-5"
 changelogPlugin = "2.2.0"
-kotlinxSerialization = "1.6.3"
+# There are problems with 1.8.0. See https://jetbrains.slack.com/archives/C2WQKN6JV/p1741357773134349
+kotlinxSerialization = "1.7.3"
 json5k = "0.3.0"
-kotlinxCoroutines = "1.8.0"
+kotlinxCoroutines = "1.10.1"
 jupyterNotebooksParser = "0.1.0-dev-1"
+compose = "1.7.3"
 
 ktlintGradle = "12.1.0"
 ktlint = "1.2.1"
@@ -54,6 +57,7 @@ kotlin-dev-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-
 kotlin-dev-stdlibCommon = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-common", version.ref = "kotlin" }
 
 kotlin-dev-compilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-dev-scriptingCompiler = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerImplUnshaded = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerImplEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version.ref = "kotlin" }
@@ -142,6 +146,14 @@ plugin-kotlinJvm = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", versi
 # kotlin("plugin.serialization")
 plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "stableKotlin" }
 
+# Compose: Since notebooks only run on the desktop, we manually target these Multiplatform publications
+# TODO Figure out how to handle different platforms.
+compose-compiler = { group = "org.jetbrains.kotlin", name = "kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlin" }
+compose-runtime = { group = "org.jetbrains.compose", name = "compose-full", version.ref = "compose" }
+compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose" }
+compose-ui = { group = "org.jetbrains.compose.ui", name = "ui-desktop", version.ref = "compose" }
+compose-skiko-macos = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version = "0.8.18"}
+
 # kotlin("jupyter.api")
 plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
 
@@ -173,6 +185,8 @@ plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublis
 plugin-kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlinDsl" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]
