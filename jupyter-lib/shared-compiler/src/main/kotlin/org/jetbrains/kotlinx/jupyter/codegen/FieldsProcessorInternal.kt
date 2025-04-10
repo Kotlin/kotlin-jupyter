@@ -5,7 +5,8 @@ import org.jetbrains.kotlinx.jupyter.api.FieldsProcessor
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 
 /**
- * Processes REPL local variables (implemented as properties of script classes) and converts them into new types using code generation
+ * Processes REPL local variables (implemented as properties of script classes) and converts them into new
+ * types using code generation
  */
 interface FieldsProcessorInternal : FieldsProcessor {
     /**

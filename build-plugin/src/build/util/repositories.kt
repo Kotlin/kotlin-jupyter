@@ -9,7 +9,7 @@ const val PUBLIC_TEAMCITY_URL = "https://teamcity.jetbrains.com"
 
 class TeamcityProject(
     val url: String,
-    val projectId: String
+    val projectId: String,
 )
 
 val INTERNAL_KOTLIN_TEAMCITY = TeamcityProject(INTERNAL_TEAMCITY_URL, "Kotlin_KotlinDev_Artifacts")
@@ -25,12 +25,15 @@ fun Project.addAllBuildRepositories() {
         gradlePluginPortal()
 
         // Kotlin Dev releases are published here every night
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+        maven("https://packages.jetbrains.team/maven/p/kt/dev")
 
         for (teamcity in listOf(INTERNAL_KOTLIN_TEAMCITY, PUBLIC_KOTLIN_TEAMCITY)) {
             val locator = "buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven"
             maven("${teamcity.url}/$TEAMCITY_REQUEST_ENDPOINT/$locator")
         }
+
+        // Required by Compose dependencies
+        google()
 
         // Used for TeamCity build
         val m2LocalPath = file(".m2/repository")

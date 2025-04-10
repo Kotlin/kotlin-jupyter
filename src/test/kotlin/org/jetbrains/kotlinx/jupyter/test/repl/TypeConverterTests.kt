@@ -111,7 +111,7 @@ class TypeConverterTests : AbstractReplTest() {
                     addTypeConverter(
                         ResultFieldUpdateHandler(
                             updateCondition = { value, _ -> (value as? Int)?.let { value % 2 == 0 } ?: false },
-                            updateAction = { host, _, field -> host.execute("$wrapperClassName(${field.name})").name },
+                            updateAction = { host, _, field -> host.execute("$wrapperClassName(`${field.name}`)").name },
                         ),
                     )
 
@@ -120,7 +120,7 @@ class TypeConverterTests : AbstractReplTest() {
                         createRenderer(
                             renderCondition = { it.value?.let { v -> v::class.simpleName == wrapperClassName } ?: false },
                             renderAction = { host, fieldValue ->
-                                host.execute("(${fieldValue.name} as $wrapperClassName).x.let {v -> HTML(\"<b>\${v * 2}</b>\")}").value
+                                host.execute("(`${fieldValue.name}` as $wrapperClassName).x.let {v -> HTML(\"<b>\${v * 2}</b>\")}").value
                             },
                         ),
                     )

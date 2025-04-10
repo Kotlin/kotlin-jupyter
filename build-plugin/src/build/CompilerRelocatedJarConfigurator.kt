@@ -28,5 +28,6 @@ val CompilerRelocatedJarConfigurator: ShadowJarAction = {
         +"kotlin.script.experimental.dependencies"
         +"org.jetbrains.kotlin."
         +"org.jetbrains.kotlinx.serialization."
+        +"androidx.compose.compiler"
     }
 }

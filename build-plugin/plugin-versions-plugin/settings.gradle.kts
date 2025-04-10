@@ -6,6 +6,7 @@ pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven("https://packages.jetbrains.team/maven/p/kt/dev")
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
@@ -25,6 +26,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven("https://packages.jetbrains.team/maven/p/kt/dev")
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
