@@ -105,7 +105,7 @@ fun toAbortErrorReply(
     executionCount,
     ReplInterruptedException::class.java.canonicalName,
     message.orEmpty(),
-    emptyList(),
+    listOf(message ?: EXECUTION_INTERRUPTED_MESSAGE),
     Json.EMPTY,
 )
 
