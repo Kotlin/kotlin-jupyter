@@ -17,8 +17,11 @@ fun ScriptTemplateWithDisplayHelpers.declareAllBeans() {
     }
 }
 
-@Suppress("unused")
 fun JupyterIntegration.Builder.declareAllBeansInLibrary() {
+    if (SpringContext.getContext() == null) {
+        println("Spring context is not initialized, variables for beans won't be declared.")
+        return
+    }
     val beanNames =
         buildSet {
             addAll(springContext.beanDefinitionNames)

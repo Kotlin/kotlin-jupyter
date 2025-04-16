@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component
 @Component
 class SpringContext : ApplicationContextAware {
     companion object {
-        private lateinit var context: ApplicationContext
+        private var context: ApplicationContext? = null
 
-        fun getContext(): ApplicationContext = context
+        fun getContext(): ApplicationContext? = context
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {
@@ -18,4 +18,4 @@ class SpringContext : ApplicationContextAware {
 }
 
 @Suppress("unused")
-val springContext: ApplicationContext get() = SpringContext.getContext()
+val springContext: ApplicationContext get() = SpringContext.getContext() ?: error("Spring context is not initialized")
