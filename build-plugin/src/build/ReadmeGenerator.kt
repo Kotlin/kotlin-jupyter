@@ -8,6 +8,7 @@ import build.util.exampleKernel
 import build.util.getCurrentBranch
 import build.util.gitCommit
 import build.util.gitPush
+import build.util.isProtectedBranch
 import build.util.taskTempFile
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
@@ -52,6 +53,7 @@ class ReadmeGenerator(
             dependsOn(GENERATE_README_TASK)
 
             doLast {
+                if (!project.isProtectedBranch()) return@doLast
                 project.configureGitRobotCommitter()
                 val commitResult = project.gitCommit(
                     "Update README.md",
