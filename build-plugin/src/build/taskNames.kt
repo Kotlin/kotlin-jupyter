@@ -12,6 +12,7 @@ const val HELP_GROUP = "help"
 const val CHECK_TASK = "check"
 const val CHECK_README_TASK = "checkReadme"
 const val GENERATE_README_TASK = "generateReadme"
+const val PUSH_NEW_README_TASK = "pushNewReadme"
 const val GENERATE_COMPAT_TABLE = "generateCompatTable"
 
 const val BUILD_PROPERTIES_TASK = "buildProperties"

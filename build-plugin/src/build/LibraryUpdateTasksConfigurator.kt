@@ -1,7 +1,9 @@
 package build
 
 import build.util.BUILD_LIBRARIES
+import build.util.configureGitRobotCommitter
 import build.util.getPropertyByCommand
+import build.util.gitCommit
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -13,7 +15,6 @@ import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
 import org.jetbrains.kotlinx.jupyter.common.buildRequest
-import org.jetbrains.kotlinx.jupyter.common.Request
 import org.jetbrains.kotlinx.jupyter.common.Response
 import org.jetbrains.kotlinx.jupyter.common.ResponseWrapper
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
@@ -71,11 +72,8 @@ class LibraryUpdateTasksConfigurator(
             }
 
             doLast {
-                execGit("config", "user.email", "robot@jetbrains.com")
-                execGit("config", "user.name", "robot")
-
-                execGit("add", ".")
-                execGit("commit", "-m", "[AUTO] Update library version")
+                project.configureGitRobotCommitter()
+                project.gitCommit("[AUTO] Update library version", settings.librariesDir)
 
                 val currentBranch = project.getPropertyByCommand(
                     "build.libraries.branch",

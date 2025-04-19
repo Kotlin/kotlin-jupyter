@@ -1,8 +1,12 @@
 package build
 
+import build.util.GitCommitResult
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
 import build.util.exampleKernel
+import build.util.getCurrentBranch
+import build.util.gitCommit
+import build.util.gitPush
 import build.util.taskTempFile
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
@@ -40,6 +44,26 @@ class ReadmeGenerator(
             }
 
             configuration()
+        }
+
+        project.tasks.register(PUSH_NEW_README_TASK) {
+            group = BUILD_GROUP
+            dependsOn(GENERATE_README_TASK)
+
+            doLast {
+                val commitResult = project.gitCommit(
+                    "Update README.md",
+                    includedPaths = listOf(settings.readmeFile.toRelativeString(project.rootDir))
+                )
+                when (commitResult) {
+                    is GitCommitResult.NoChanges -> {}
+                    is GitCommitResult.Failure -> throw BuildException("Failed to commit changes to README", commitResult.throwable)
+                    is GitCommitResult.Success -> {
+                        project.gitPush(branch = project.getCurrentBranch())
+                        throw BuildException("Readme is not regenerated. Pushing new version and restarting the build...", null)
+                    }
+                }
+            }
         }
 
         project.tasks.register(CHECK_README_TASK) {
