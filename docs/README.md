@@ -573,6 +573,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [ksl](https://github.com/rossetti/KSL) - KSL - Kotlin Simulation Library for Monte Carlo and Discrete-Event Simulation
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
  - [ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util) - Asynchronous HTTP client
+ - [langchain4j](https://github.com/langchain4j/langchain4j) - LangChain is a framework for building applications powered by LLMs, enabling easy integration of models, data, and external tools
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
  - [lib-ext](https://github.com/Kotlin/kotlin-jupyter) - Extended functionality for Jupyter kernel
