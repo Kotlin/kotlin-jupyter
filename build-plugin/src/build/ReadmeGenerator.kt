@@ -60,10 +60,18 @@ class ReadmeGenerator(
                     includedPaths = listOf(settings.readmeFile.toRelativeString(project.rootDir))
                 )
                 when (commitResult) {
-                    is GitCommitResult.NoChanges -> {}
-                    is GitCommitResult.Failure -> throw BuildException("Failed to commit changes to README", commitResult.throwable)
+                    is GitCommitResult.NoChanges -> {
+                        // No changes => README wasn't updated, do nothing
+                    }
+                    is GitCommitResult.Failure -> {
+                        throw BuildException("Failed to commit changes to README", commitResult.throwable)
+                    }
                     is GitCommitResult.Success -> {
-                        project.gitPush(remoteUrl = settings.kernelRepoUrl, branch = project.getCurrentBranch())
+                        project.gitPush(
+                            remoteUrl = settings.kernelRepoUrl,
+                            branch = project.getCurrentBranch(),
+                        )
+                        // New build should be triggered because TeamCity triggers are set up this way
                         throw BuildException("Readme is not regenerated. Pushing new version and restarting the build...", null)
                     }
                 }
