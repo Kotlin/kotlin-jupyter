@@ -165,6 +165,6 @@ fun Project.gitPush(
             remote,
             branch,
         ),
-    )
+    ).checkSuccess()
 }
 
