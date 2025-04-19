@@ -1,6 +1,7 @@
 package build
 
 import build.util.GitCommitResult
+import build.util.configureGitRobotCommitter
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
 import build.util.exampleKernel
@@ -51,6 +52,7 @@ class ReadmeGenerator(
             dependsOn(GENERATE_README_TASK)
 
             doLast {
+                project.configureGitRobotCommitter()
                 val commitResult = project.gitCommit(
                     "Update README.md",
                     includedPaths = listOf(settings.readmeFile.toRelativeString(project.rootDir))
