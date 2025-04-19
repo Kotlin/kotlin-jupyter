@@ -7,7 +7,7 @@ import java.io.File
 
 private val NOTHING_TO_COMMIT_REGEX = Regex("((nothing)|(no changes added)) to commit")
 
-class ProcessExecuteResult(
+data class ProcessExecuteResult(
     val commandLine: List<String>,
     val exitCode: Int,
     val stdout: String,
@@ -118,13 +118,11 @@ fun Project.gitCommit(
     workingDir: File? = null,
     includedPaths: List<String>? = null,
 ): GitCommitResult {
-    val addResult = if (includedPaths != null) {
+    if (includedPaths != null) {
         gitAdd(includedPaths, workingDir)
     } else {
         gitAddAll(workingDir)
     }
-
-    println(addResult)
 
     return try {
         val result = executeGitCommand(
