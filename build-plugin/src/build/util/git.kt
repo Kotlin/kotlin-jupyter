@@ -155,9 +155,22 @@ fun Project.gitCommit(
 
 fun Project.gitPush(
     remote: String = "origin",
+    remoteUrl: String? = null,
     branch: String = "master",
     workingDir: File? = null,
 ) {
+    if (remoteUrl != null) {
+        executeGitCommand(
+            workingDir = workingDir,
+            args = listOf(
+                "remote",
+                "set-url",
+                remote,
+                remoteUrl,
+            )
+        ).checkSuccess()
+    }
+
     executeGitCommand(
         workingDir = workingDir,
         args = listOf(

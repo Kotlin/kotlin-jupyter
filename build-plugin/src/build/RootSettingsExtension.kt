@@ -39,6 +39,7 @@ class RootSettingsExtension(
     val projectRepoUrl by project.prop<String>()
     val docsRepo by project.prop<String>()
     val librariesRepoUrl by project.prop<String>()
+    val kernelRepoUrl by project.prop<String>()
     val librariesRepoUserAndName by project.prop<String>()
 
     val skipReadmeCheck by project.prop<Boolean>()

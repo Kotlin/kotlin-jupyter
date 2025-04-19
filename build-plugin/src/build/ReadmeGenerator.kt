@@ -63,7 +63,7 @@ class ReadmeGenerator(
                     is GitCommitResult.NoChanges -> {}
                     is GitCommitResult.Failure -> throw BuildException("Failed to commit changes to README", commitResult.throwable)
                     is GitCommitResult.Success -> {
-                        project.gitPush(branch = project.getCurrentBranch())
+                        project.gitPush(remoteUrl = settings.kernelRepoUrl, branch = project.getCurrentBranch())
                         throw BuildException("Readme is not regenerated. Pushing new version and restarting the build...", null)
                     }
                 }
