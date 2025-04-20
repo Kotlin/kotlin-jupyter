@@ -37,7 +37,11 @@ open class JupyterScriptDependenciesResolverImpl(
 ) : JupyterScriptDependenciesResolver {
     private val logger = loggerFactory.getLogger(JupyterScriptDependenciesResolverImpl::class.java)
 
-    private val resolver: ExternalDependenciesResolver
+    private val resolver: ExternalDependenciesResolver =
+        CompoundDependenciesResolver(
+            FileSystemDependenciesResolver(),
+            RemoteResolverWrapper(MavenDependenciesResolver(true)),
+        )
     private val resolverOptions =
         buildOptions(
             DependenciesResolverOptionsName.SCOPE to "compile,runtime",
@@ -66,11 +70,6 @@ open class JupyterScriptDependenciesResolverImpl(
     private val addedSourcesClasspath = arrayListOf<File>()
 
     init {
-        resolver =
-            CompoundDependenciesResolver(
-                FileSystemDependenciesResolver(),
-                RemoteResolverWrapper(MavenDependenciesResolver(true)),
-            )
         mavenRepositories.forEach { addRepository(Repo(it)) }
     }
 
@@ -112,9 +111,8 @@ open class JupyterScriptDependenciesResolverImpl(
             when (annotation) {
                 is Repository -> {
                     logger.info("Adding repository: ${annotation.value}")
-                    if (existingRepositories == null) {
-                        existingRepositories = ArrayList(repositories)
-                    }
+                    val newRepositories = existingRepositories ?: ArrayList(repositories)
+                    existingRepositories = newRepositories
 
                     val options =
                         if (annotation.username.isNotEmpty() || annotation.password.isNotEmpty()) {
@@ -131,7 +129,7 @@ open class JupyterScriptDependenciesResolverImpl(
                         throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
                     }
 
-                    existingRepositories?.forEach { addRepository(it) }
+                    newRepositories.forEach { addRepository(it) }
                 }
                 is DependsOn -> {
                     dependencies.add(annotation.toDependency())
@@ -252,7 +250,7 @@ open class JupyterScriptDependenciesResolverImpl(
             val json =
                 try {
                     Json.parseToJsonElement(moduleFile.readText())
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     continue
                 }
 
