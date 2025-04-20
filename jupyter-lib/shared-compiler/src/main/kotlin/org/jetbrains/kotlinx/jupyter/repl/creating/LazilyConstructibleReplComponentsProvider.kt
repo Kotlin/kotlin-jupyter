@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
@@ -76,7 +77,9 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
 
     fun provideSessionOptions(): SessionOptions
 
-    fun provideMagicsHandler(): LibrariesAwareMagicsHandler?
+    fun provideLoggingManager(): LoggingManager
+
+    fun provideMagicsHandler(): LibrariesAwareMagicsHandler
 
     fun provideLibraryReferenceParser(): LibraryReferenceParser
 

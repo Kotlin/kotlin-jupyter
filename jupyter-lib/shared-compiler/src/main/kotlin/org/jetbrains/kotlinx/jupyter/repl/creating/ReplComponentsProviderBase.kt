@@ -26,6 +26,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
+import org.jetbrains.kotlinx.jupyter.magics.LogLevelHandlingMagicsHandler
+import org.jetbrains.kotlinx.jupyter.magics.Slf4jLoggingManager
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
@@ -39,6 +41,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.SessionOptionsImpl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
@@ -125,8 +128,17 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
         return SessionOptionsImpl()
     }
 
-    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler? {
-        return null
+    override fun provideLoggingManager(): LoggingManager {
+        return Slf4jLoggingManager
+    }
+
+    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler {
+        return LogLevelHandlingMagicsHandler(
+            replOptions,
+            librariesProcessor,
+            libraryInfoSwitcher,
+            loggingManager,
+        )
     }
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)

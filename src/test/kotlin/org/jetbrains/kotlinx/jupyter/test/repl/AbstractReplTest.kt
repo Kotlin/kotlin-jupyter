@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFact
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
+import org.jetbrains.kotlinx.jupyter.logging.ReplComponentsProviderWithLogbackManager
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -119,7 +120,7 @@ abstract class AbstractReplTest {
 
                 override fun provideDebugPort(): Int? = null
             }
-        return factory.createRepl()
+        return ReplComponentsProviderWithLogbackManager(factory).createRepl()
     }
 
     protected fun makeEmbeddedRepl(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {

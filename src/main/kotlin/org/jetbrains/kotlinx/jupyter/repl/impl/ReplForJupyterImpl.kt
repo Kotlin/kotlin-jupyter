@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
-import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
@@ -65,18 +64,15 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
-import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryReferenceParser
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResourcesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.magics.CompletionMagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.CompoundCodePreprocessor
 import org.jetbrains.kotlinx.jupyter.magics.ErrorsMagicsProcessor
-import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
@@ -108,6 +104,7 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.BeforeCellExecutionsProcesso
 import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
 import org.jetbrains.kotlinx.jupyter.repl.execution.ExecutorWorkflowListener
 import org.jetbrains.kotlinx.jupyter.repl.execution.ShutdownExecutionsProcessor
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.postRender
@@ -158,11 +155,11 @@ class ReplForJupyterImpl(
     httpClient: HttpClient,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
     private val libraryReferenceParser: LibraryReferenceParser,
-    libraryInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
     librariesProcessor: LibrariesProcessor,
     override val options: ReplOptions,
     override val sessionOptions: SessionOptions,
-    customMagicsHandler: LibrariesAwareMagicsHandler?,
+    override val loggingManager: LoggingManager,
+    magicsHandler: LibrariesAwareMagicsHandler,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     private val replCompilerMode: ReplCompilerMode,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
@@ -191,16 +188,6 @@ class ReplForJupyterImpl(
     private val compilerArgsConfigurator: CompilerArgsConfigurator =
         DefaultCompilerArgsConfigurator(
             runtimeProperties.jvmTargetForSnippets,
-        )
-
-    val loggingManager = if (customMagicsHandler == null) LoggingManager(loggerFactory) else null
-
-    private val magicsHandler =
-        customMagicsHandler ?: FullMagicsHandler(
-            options,
-            librariesProcessor,
-            libraryInfoSwitcher,
-            loggingManager!!,
         )
 
     private val magics =

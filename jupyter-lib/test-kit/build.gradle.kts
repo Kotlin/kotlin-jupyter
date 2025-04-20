@@ -1,3 +1,5 @@
+import build.util.LOGBACK_GROUP
+
 plugins {
     kotlin("libs.publisher")
     kotlin("jvm")
@@ -5,7 +7,9 @@ plugins {
 }
 
 dependencies {
-    api(projects.kotlinJupyterKernel)
+    api(projects.kotlinJupyterKernel) {
+        exclude(group = LOGBACK_GROUP)
+    }
     api(libs.jupyterNotebooksParser)
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)

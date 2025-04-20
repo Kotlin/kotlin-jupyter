@@ -21,6 +21,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
@@ -49,7 +50,8 @@ abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructib
     override val librariesProcessor: LibrariesProcessor by lazy { provideLibrariesProcessor() }
     override val replOptions: ReplOptions by lazy { provideReplOptions() }
     override val sessionOptions: SessionOptions by lazy { provideSessionOptions() }
-    override val magicsHandler: LibrariesAwareMagicsHandler? by lazy { provideMagicsHandler() }
+    override val magicsHandler: LibrariesAwareMagicsHandler by lazy { provideMagicsHandler() }
+    override val loggingManager: LoggingManager by lazy { provideLoggingManager() }
     override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
     override val inMemoryReplResultsHolder: InMemoryReplResultsHolder by lazy { provideInMemoryReplResultsHolder() }
     override val replCompilerMode: ReplCompilerMode by lazy { provideReplCompilerMode() }

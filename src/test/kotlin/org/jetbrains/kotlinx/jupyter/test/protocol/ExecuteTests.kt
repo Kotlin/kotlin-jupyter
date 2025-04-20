@@ -16,11 +16,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
+import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataResponse
@@ -449,8 +449,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
         assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
-        val loggingManager = LoggingManager(testLoggerFactory)
-        assertEquals(if (runServerInSeparateProcess) DEBUG else OFF, loggingManager.mainLoggerLevel())
+        val loggingManager = LogbackLoggingManager(testLoggerFactory)
+        loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
     }
 
     @Test

@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
@@ -52,7 +53,8 @@ interface ReplComponentsProvider {
     val librariesProcessor: LibrariesProcessor
     val replOptions: ReplOptions
     val sessionOptions: SessionOptions
-    val magicsHandler: LibrariesAwareMagicsHandler?
+    val loggingManager: LoggingManager
+    val magicsHandler: LibrariesAwareMagicsHandler
     val libraryReferenceParser: LibraryReferenceParser
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder
     val replCompilerMode: ReplCompilerMode

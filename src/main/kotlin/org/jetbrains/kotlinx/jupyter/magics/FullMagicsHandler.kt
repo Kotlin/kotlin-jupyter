@@ -1,51 +1,30 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
-import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.types.choice
-import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 
 class FullMagicsHandler(
     replOptions: ReplOptions,
     librariesProcessor: LibrariesProcessor,
     switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
-    private val loggingManager: LoggingManager,
-) : IdeCompatibleMagicsHandler(replOptions, librariesProcessor, switcher) {
-    override fun handleLogLevel() {
-        object : CliktCommand() {
-            val level by argument().choice(
-                mapOf(
-                    "off" to Level.OFF,
-                    "error" to Level.ERROR,
-                    "warn" to Level.WARN,
-                    "info" to Level.INFO,
-                    "debug" to Level.DEBUG,
-                ),
-                ignoreCase = false,
-            )
-
-            override fun run() {
-                loggingManager.setRootLoggingLevel(level)
-            }
-        }.parse(argumentsList())
-    }
-
+    loggingManager: LoggingManager,
+) : LogLevelHandlingMagicsHandler(replOptions, librariesProcessor, switcher, loggingManager) {
     override fun handleLogHandler() {
+        val logbackLoggingManager = loggingManager as? LogbackLoggingManager ?: return
         val commandArgs = arg?.split(Regex("""\s+""")).orEmpty()
         val command = commandArgs.firstOrNull() ?: throw ReplException("Log handler command has not been passed")
         when (command) {
             "list" -> {
                 println("Log appenders:")
-                loggingManager.allLogAppenders().forEach {
+                logbackLoggingManager.allLogAppenders().forEach {
                     println(
                         buildString {
                             append(it.name)
@@ -76,14 +55,14 @@ class FullMagicsHandler(
                         }
                         else -> throw ReplException("Unknown appender type: $appenderType")
                     }
-                loggingManager.addAppender(appenderName, appender)
+                logbackLoggingManager.addAppender(appenderName, appender)
             }
             "remove" -> {
                 val appenderName =
                     commandArgs.getOrNull(
                         1,
                     ) ?: throw ReplException("Log handler remove command needs appender name argument")
-                loggingManager.removeAppender(appenderName)
+                logbackLoggingManager.removeAppender(appenderName)
             }
             else -> throw ReplException("")
         }

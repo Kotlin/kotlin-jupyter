@@ -88,7 +88,7 @@ open class DefaultReplComponentsProvider(
         return _settings.kernelConfig.clientType?.let { typeName ->
             try {
                 JupyterClientType.valueOf(typeName.toUpperCaseAsciiOnly())
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 logger.warn("Unknown client type: $typeName")
                 null
             }

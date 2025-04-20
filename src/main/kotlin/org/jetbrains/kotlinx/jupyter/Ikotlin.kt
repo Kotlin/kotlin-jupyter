@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
+import org.jetbrains.kotlinx.jupyter.logging.ReplComponentsProviderWithLogbackManager
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterBaseSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
@@ -203,7 +204,16 @@ fun createMessageHandler(
     val executor: JupyterExecutor = JupyterExecutorImpl(loggerFactory)
 
     val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
-    val repl = DefaultReplComponentsProvider(replSettings, communicationFacility, commManager, NoOpInMemoryReplResultsHolder).createRepl()
+    val replProvider =
+        DefaultReplComponentsProvider(
+            replSettings,
+            communicationFacility,
+            commManager,
+            NoOpInMemoryReplResultsHolder,
+        ).let { defaultProvider ->
+            ReplComponentsProviderWithLogbackManager(defaultProvider)
+        }
+    val repl = replProvider.createRepl()
     return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }
 
@@ -232,7 +242,7 @@ fun startZmqServer(replSettings: DefaultReplSettings) {
             while (true) {
                 try {
                     loopBody()
-                } catch (e: InterruptedException) {
+                } catch (_: InterruptedException) {
                     logger.debug(interruptedMessage)
                     threadsToInterrupt.forEach { it.interrupt() }
                     break

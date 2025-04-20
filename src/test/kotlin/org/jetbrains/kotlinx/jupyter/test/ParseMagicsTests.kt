@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import org.jetbrains.kotlinx.jupyter.LoggingManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
@@ -11,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
+import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
 import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.NoopMagicsHandler
@@ -157,7 +157,7 @@ class ParseMagicsTests {
                 options,
                 LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
                 switcher,
-                LoggingManager(testLoggerFactory),
+                LogbackLoggingManager(testLoggerFactory),
             )
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
