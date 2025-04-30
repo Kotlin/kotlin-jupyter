@@ -22,6 +22,9 @@ val rootShadowJar = ':' + build.SHADOW_JAR_TASK
 
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
 }
 
 tasks.dokkaHtmlPartial {

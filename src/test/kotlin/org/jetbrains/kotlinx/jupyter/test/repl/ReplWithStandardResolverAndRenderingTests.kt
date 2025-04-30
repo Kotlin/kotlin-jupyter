@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.createRenderer
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
-import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.rawValue
@@ -28,7 +27,6 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
     @Test
     fun testDataframeDisplay() {
         eval("SessionOptions.resolveSources = true", 1, false)
-
         eval(
             """
             %use dataframe(0.10.0-dev-1373)
@@ -49,16 +47,7 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
             repl.notebook.currentCell!!.declarations
                 .filter { it.kind == DeclarationKind.PROPERTY }
                 .mapNotNull { it.name }
-
-        when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> {
-                declaredProperties shouldBe listOf("name", "height")
-            }
-            ReplCompilerMode.K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
-                declaredProperties shouldBe listOf()
-            }
-        }
+        declaredProperties shouldBe listOf("name", "height")
 
         eval(
             """DISPLAY((Out[2] as DataFrame<*>).filter { it.index() >= 0 && it.index() <= 10 }, "")""",

@@ -930,4 +930,22 @@ class ReplTests : AbstractSingleReplTest() {
         // result.shouldBeInstanceOf<EvalResultEx.Success>()
         result.shouldBeInstanceOf<EvalResultEx.Error>()
     }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77202/K2-Repl-Local-Extension-Properties-are-not-supported
+    @Test
+    fun testExtensionProperties() {
+        val res =
+            eval(
+                """
+                class Foo() { }
+                val Foo.bar
+                    get() = "Hello"
+                Foo().bar
+                """.trimIndent(),
+            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> res.renderedValue shouldBe "Hello"
+            ReplCompilerMode.K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
+    }
 }
