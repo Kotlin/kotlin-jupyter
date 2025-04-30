@@ -63,6 +63,7 @@ buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
     withCompilerArgs {
         skipPrereleaseCheck()
+        jdkRelease(rootSettings.jvmTarget)
     }
     withTests()
 }

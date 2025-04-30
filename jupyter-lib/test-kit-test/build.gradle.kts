@@ -17,6 +17,9 @@ buildSettings {
     withTests {
         mustRunAfter(rootShadowJar)
     }
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
 }
 
 tasks.processJupyterApiResources {

@@ -34,7 +34,7 @@ libSubproject("shared-compiler")
 // libSubproject("lib-ext") //  Disabled due to missing KSP support.
 libSubproject("test-kit")
 libSubproject("test-kit-test")
-// exampleSubproject("getting-started")   Disabled due to missing KSP support.
+// exampleSubproject("getting-started") //  Disabled due to missing KSP support.
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
 

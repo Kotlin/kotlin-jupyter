@@ -44,6 +44,9 @@ java {
 buildSettings {
     withLanguageLevel(rootSettings.gradleCompatibleKotlinLanguageLevel)
     withTests()
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
 }
 
 val pluginName = "apiGradlePlugin"

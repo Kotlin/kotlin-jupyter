@@ -497,14 +497,14 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         when (kernelConfig.replCompilerMode) {
             ReplCompilerMode.K1 -> {
                 assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
-        		val loggingManager = LogbackLoggingManager(testLoggerFactory)
-        		loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+                val loggingManager = LogbackLoggingManager(testLoggerFactory)
+                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
             }
             ReplCompilerMode.K2 -> {
                 // Modify test until KTNB-916 is fixed
                 assertEquals("complete", doIsComplete("fun f() : Int { return 1"))
-        		val loggingManager = LogbackLoggingManager(testLoggerFactory)
-        		loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+                val loggingManager = LogbackLoggingManager(testLoggerFactory)
+                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
             }
         }
     }

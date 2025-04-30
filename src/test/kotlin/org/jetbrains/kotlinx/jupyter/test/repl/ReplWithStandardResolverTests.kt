@@ -128,16 +128,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         assertEquals(43, res2.renderedValue)
 
         val res3 = eval("%use lets-plot@$libsCommit")
-        when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> {
-                assertEquals(1, displays.count())
-            }
-            ReplCompilerMode.K2 -> {
-                // Currently broken. Most likely reason: https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
-                assertEquals(0, displays.count())
-            }
-        }
-
+        assertEquals(1, displays.count())
         assertUnit(res3.renderedValue)
         displays.clear()
 
@@ -357,8 +348,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
                 """.trimIndent(),
             )
-
-        res.metadata.newSources.shouldHaveSize(84)
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> res.metadata.newSources.shouldHaveSize(84)
+            ReplCompilerMode.K2 -> res.metadata.newSources.shouldHaveSize(168)
+        }
     }
 
     @Test
