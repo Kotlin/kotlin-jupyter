@@ -905,7 +905,7 @@ internal class Integration : JupyterIntegration() {
 }
 ```
 
-For more examples, see the [integration of the DataFrame library](https://github.com/Kotlin/dataframe/blob/master/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt).
+For more examples, see the [integration of the DataFrame library](https://github.com/Kotlin/dataframe/blob/master/dataframe-jupyter/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt).
 
 For further information, see the docs for:
 * [`org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration`](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/api/src/main/kotlin/org/jetbrains/kotlinx/jupyter/api/libraries/JupyterIntegration.kt)
