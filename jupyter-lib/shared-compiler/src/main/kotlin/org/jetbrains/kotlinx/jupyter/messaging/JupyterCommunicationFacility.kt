@@ -9,12 +9,12 @@ import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import org.jetbrains.kotlinx.jupyter.util.Provider
 
 interface JupyterCommunicationFacility {
-    val socketManager: JupyterBaseSockets
+    val socketManager: JupyterServerSockets
     val messageFactory: MessageFactory
 }
 
 class JupyterCommunicationFacilityImpl(
-    override val socketManager: JupyterBaseSockets,
+    override val socketManager: JupyterServerSockets,
     private val messageFactoryProvider: Provider<MessageFactory>,
 ) : JupyterCommunicationFacility {
     override val messageFactory: MessageFactory
