@@ -9,7 +9,6 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import java.io.Closeable
 import java.util.Locale
 
 /**
@@ -55,36 +54,6 @@ typealias CommOpenCallback = (Comm, JsonObject) -> Unit
 typealias CommMsgCallback = (JsonObject) -> Unit
 typealias CommCloseCallback = (JsonObject) -> Unit
 typealias RawMessageAction = (RawMessage) -> Unit
-
-/**
- * Callback for messages of type [messageType] coming to a certain [socket]
- * If [messageType] is null, callback is called for any message
- */
-interface RawMessageCallback {
-    val socket: JupyterSocketType
-    val messageType: String?
-    val action: RawMessageAction
-}
-
-interface JupyterConnection : Closeable {
-    /**
-     * Add callback for incoming message and return it
-     */
-    fun addMessageCallback(callback: RawMessageCallback): RawMessageCallback
-
-    /**
-     * Remove added message callback
-     */
-    fun removeMessageCallback(callback: RawMessageCallback)
-
-    /**
-     * Send raw [message] to a given [socketName]
-     */
-    fun send(
-        socketName: JupyterSocketType,
-        message: RawMessage,
-    )
-}
 
 /**
  * Manages custom messages in the notebook, for more info see
@@ -181,21 +150,6 @@ interface Comm {
      * Remove added [onClose] callback
      */
     fun removeCloseCallback(callback: CommCloseCallback)
-}
-
-/**
- * Construct raw message callback
- */
-fun rawMessageCallback(
-    socket: JupyterSocketType,
-    messageType: String?,
-    action: RawMessageAction,
-): RawMessageCallback {
-    return object : RawMessageCallback {
-        override val socket: JupyterSocketType get() = socket
-        override val messageType: String? get() = messageType
-        override val action: RawMessageAction get() = action
-    }
 }
 
 /**

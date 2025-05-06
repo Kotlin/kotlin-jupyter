@@ -13,7 +13,7 @@ class MessageHandlerImpl(
     val repl: ReplForJupyter,
     private val commManager: CommManagerInternal,
     private val messageFactoryProvider: MessageFactoryProvider,
-    private val socketManager: JupyterBaseSockets,
+    private val socketManager: JupyterServerSockets,
     private val executor: JupyterExecutor,
 ) : AbstractMessageHandler(), Closeable {
     private val executionCounter = ExecutionCounter(1)

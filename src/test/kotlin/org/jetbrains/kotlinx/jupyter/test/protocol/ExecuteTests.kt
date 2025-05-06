@@ -21,6 +21,7 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
@@ -50,11 +51,16 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
+import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
@@ -69,6 +75,7 @@ import org.junit.jupiter.api.condition.JRE
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
+import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -86,39 +93,88 @@ fun JsonObject.string(key: String): String {
     return (get(key) as JsonPrimitive).content
 }
 
+interface JupyterClientSockets : Closeable {
+    val shell: JupyterSendReceiveSocket
+    val control: JupyterSendSocket
+    val ioPub: JupyterReceiveSocket
+    val stdin: JupyterSendReceiveSocket
+}
+
+sealed class JupyterClientSocketManager {
+    abstract fun open(): JupyterClientSockets
+}
+
+class ZmqClientSocketManager(private val kernelConfig: KernelConfig) : JupyterClientSocketManager() {
+    private var sockets: ZmqClientSockets? = null
+
+    override fun open(): JupyterClientSockets {
+        return ZmqClientSockets(
+            context = ZMQ.context(/* ioThreads = */ 1),
+            kernelConfig = kernelConfig,
+        ).also { sockets = it }
+    }
+
+    private class ZmqClientSockets : JupyterClientSockets {
+        private val context: ZMQ.Context
+        override val shell: JupyterZmqSocket
+        override val control: JupyterZmqSocket
+        override val ioPub: JupyterZmqSocket
+        override val stdin: JupyterZmqSocket
+
+        override fun close() {
+            shell.close()
+            control.close()
+            ioPub.close()
+            stdin.close()
+            context.term()
+        }
+
+        constructor(context: ZMQ.Context, kernelConfig: KernelConfig) {
+            this.context = context
+            try {
+                this.shell = createClientSocket(JupyterZmqSocketInfo.SHELL, context, kernelConfig)
+                this.control = createClientSocket(JupyterZmqSocketInfo.CONTROL, context, kernelConfig)
+                this.ioPub = createClientSocket(JupyterZmqSocketInfo.IOPUB, context, kernelConfig)
+                this.stdin = createClientSocket(JupyterZmqSocketInfo.STDIN, context, kernelConfig)
+                ioPub.zmqSocket.subscribe(byteArrayOf())
+                shell.connect()
+                ioPub.connect()
+                stdin.connect()
+                control.connect()
+            } catch (e: Throwable) {
+                try {
+                    close()
+                } catch (_: NullPointerException) {
+                    // some sockets may not have been initialized at all
+                }
+                throw e
+            }
+        }
+
+        private companion object {
+            fun createClientSocket(socketInfo: JupyterZmqSocketInfo, context: ZMQ.Context, kernelConfig: KernelConfig) =
+                createZmqSocket(testLoggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
+        }
+    }
+}
+
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
-class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
-    private var _context: ZMQ.Context? = null
-    override val context: ZMQ.Context
-        get() = _context!!
+abstract class ExecuteTests(getSocketManager: (KernelConfig) -> JupyterClientSocketManager) :
+    KernelServerTestsBase(runServerInSeparateProcess = true) {
 
-    private var shell: JupyterZmqSocket? = null
-    private var control: JupyterZmqSocket? = null
-    private var ioPub: JupyterZmqSocket? = null
-    private var stdin: JupyterZmqSocket? = null
+    private val socketManager = getSocketManager(kernelConfig)
+    private var _sockets: JupyterClientSockets? = null
+    private val sockets: JupyterClientSockets get() = _sockets!!
 
-    private val shellSocket: JupyterSocketBase get() = shell!!
-    private val controlSocket: JupyterSocketBase get() = control!!
-    private val ioPubSocket: JupyterSocketBase get() = ioPub!!
-    private val stdinSocket: JupyterSocketBase get() = stdin!!
+    private val shellSocket: JupyterSendReceiveSocket get() = sockets.shell
+    private val controlSocket: JupyterSendSocket get() = sockets.control
+    private val ioPubSocket: JupyterReceiveSocket get() = sockets.ioPub
+    private val stdinSocket: JupyterSendReceiveSocket get() = sockets.stdin
 
     override fun beforeEach() {
         try {
-            _context = ZMQ.context(1)
-            shell =
-                createClientSocket(JupyterZmqSocketInfo.SHELL).apply {
-                    makeRelaxed()
-                }
-            ioPub = createClientSocket(JupyterZmqSocketInfo.IOPUB)
-            stdin = createClientSocket(JupyterZmqSocketInfo.STDIN)
-            control = createClientSocket(JupyterZmqSocketInfo.CONTROL)
-
-            ioPub?.subscribe(byteArrayOf())
-            shell?.connect()
-            ioPub?.connect()
-            stdin?.connect()
-            control?.connect()
+            _sockets = socketManager.open()
         } catch (e: Throwable) {
             afterEach()
             throw e
@@ -126,18 +182,16 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     override fun afterEach() {
-        listOf(::shell, ::ioPub, ::stdin, ::control).forEach { socketProp ->
-            socketProp.get()?.close()
-            socketProp.set(null)
+        _sockets?.let {
+            _sockets = null
+            it.close()
         }
-        context.term()
-        _context = null
     }
 
     private fun doExecute(
         code: String,
         hasResult: Boolean = true,
-        ioPubChecker: (JupyterSocketBase) -> Unit = {},
+        ioPubChecker: (JupyterReceiveSocket) -> Unit = {},
         executeRequestSent: () -> Unit = {},
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
@@ -145,7 +199,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         storeHistory: Boolean = true,
     ): Any? {
         try {
-            shellSocket.sendMessage(
+            sockets.shell.sendMessage(
                 MessageType.EXECUTE_REQUEST,
                 content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory),
             )
@@ -255,7 +309,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         }
     }
 
-    private inline fun <reified T : Any> JupyterSocketBase.receiveMessageOfType(messageType: MessageType): T {
+    private inline fun <reified T : Any> JupyterReceiveSocket.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()
         assertEquals(messageType, msg.type)
         val content = msg.content
@@ -263,19 +317,19 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         return content
     }
 
-    private fun JupyterSocketBase.receiveStreamResponse(): String {
+    private fun JupyterReceiveSocket.receiveStreamResponse(): String {
         return receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
     }
 
-    private fun JupyterSocketBase.receiveErrorResponse(): String {
+    private fun JupyterReceiveSocket.receiveErrorResponse(): String {
         return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
     }
 
-    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataMessage {
+    private fun JupyterReceiveSocket.receiveDisplayDataResponse(): DisplayDataMessage {
         return receiveMessageOfType(MessageType.DISPLAY_DATA)
     }
 
-    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataMessage {
+    private fun JupyterReceiveSocket.receiveUpdateDisplayDataResponse(): DisplayDataMessage {
         return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
     }
 
@@ -295,7 +349,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }
             """.trimIndent()
 
-        fun checker(ioPub: JupyterSocketBase) {
+        fun checker(ioPub: JupyterReceiveSocket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
@@ -319,7 +373,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         val expected = arrayOf("12", "34", "5")
 
-        fun checker(ioPub: JupyterSocketBase) {
+        fun checker(ioPub: JupyterReceiveSocket) {
             for (el in expected) {
                 val msgText = ioPub.receiveStreamResponse()
                 assertEquals(el, msgText)
@@ -341,7 +395,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }
             """.trimIndent()
 
-        fun checker(ioPub: JupyterSocketBase) {
+        fun checker(ioPub: JupyterReceiveSocket) {
             val lineSeparator = System.lineSeparator()
             val actualText = (1..repetitions).joinToString("") { ioPub.receiveStreamResponse() }
             val expectedText = (1..repetitions).joinToString("") { i -> "text$i$lineSeparator" }
@@ -391,7 +445,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                     val compiledData = snippetMetadata?.compiledData
                     assertNotNull(compiledData)
 
-                    val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
+                    val deserializer = CompiledScriptsSerializer()
                     val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
                     dir.toFile().deleteOnExit()
                     val classesDir = dir.resolve("classes")
@@ -731,7 +785,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         doExecute(
             code,
             hasResult = false,
-            ioPubChecker = { ioPubSocket: JupyterSocketBase ->
+            ioPubChecker = { ioPubSocket: JupyterReceiveSocket ->
                 // If execution throws an exception, we should send an ERROR
                 // message type with the appropriate metadata.
                 val message = ioPubSocket.receiveMessage()
@@ -938,7 +992,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }.join()
             """.trimIndent()
 
-        fun checker(ioPub: JupyterSocketBase) {
+        fun checker(ioPub: JupyterReceiveSocket) {
             val expectedText = "main thread\nsomething should be printed\n"
             val actualText = StringBuilder()
 

@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 open class MessageRequestProcessorImpl(
     rawIncomingMessage: RawMessage,
     messageFactoryProvider: MessageFactoryProvider,
-    socketManager: JupyterBaseSockets,
+    socketManager: JupyterServerSockets,
     commManager: CommManagerInternal,
     executor: JupyterExecutor,
     executionCounter: ExecutionCounter,

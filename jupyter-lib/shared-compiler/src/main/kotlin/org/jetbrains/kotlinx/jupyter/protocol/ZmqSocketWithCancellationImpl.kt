@@ -4,11 +4,12 @@ import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
 
-abstract class SocketWithCancellationBase(
+class ZmqSocketWithCancellationImpl(
     private val socket: ZMQ.Socket,
-) : SocketWithCancellation {
+) : ZmqSocketWithCancellation {
     private val cancellationToken: ZMQ.CancellationToken = socket.createCancellationToken()
 
+    @Throws(InterruptedException::class)
     override fun recv(): ByteArray {
         assertNotCancelled()
 
@@ -28,6 +29,7 @@ abstract class SocketWithCancellationBase(
         )
     }
 
+    @Throws(InterruptedException::class)
     override fun recvString() = String(recv(), ZMQ.CHARSET)
 
     override fun sendMore(data: String): Boolean {
@@ -53,7 +55,7 @@ abstract class SocketWithCancellationBase(
 
     override fun subscribe(topic: ByteArray) = socket.subscribe(topic)
 
-    protected fun bind(address: String): Boolean {
+    internal fun bind(address: String): Boolean {
         val res = socket.bind(address)
         if (socket.socketType == SocketType.PUB) {
             // Workaround to prevent losing a few first messages on kernel startup
@@ -67,11 +69,11 @@ abstract class SocketWithCancellationBase(
         return res
     }
 
-    protected fun connect(address: String): Boolean {
+    internal fun connect(address: String): Boolean {
         return socket.connect(address)
     }
 
-    protected fun assertNotCancelled() {
+    internal fun assertNotCancelled() {
         if (isCancelled()) throw InterruptedException()
     }
 
