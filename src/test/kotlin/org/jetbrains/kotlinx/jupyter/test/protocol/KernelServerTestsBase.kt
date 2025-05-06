@@ -11,21 +11,19 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketImpl
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.ZmqSocketWrapper
-import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
-import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.zeromq.ZMQ
 import java.io.File
-import java.util.UUID
+import java.util.*
 
 /**
  * Base class for tests that need to have fine-tuned control over the kernel server execution.
@@ -35,8 +33,6 @@ import java.util.UUID
  * production). To enable debugging, set this value to `false`
  */
 abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean) {
-    protected abstract val context: ZMQ.Context
-
     protected val kernelConfig =
         createKotlinKernelConfig(
             ports = createRandomZmqKernelPorts(),
@@ -66,32 +62,23 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
         executor.tearDown()
     }
 
-    fun createClientSocket(socketInfo: JupyterZmqSocketInfo) =
-        createZmqSocket(
-            testLoggerFactory,
-            socketInfo,
-            context,
-            kernelConfig,
-            JupyterSocketSide.CLIENT,
-        )
-
-    fun JupyterSocketBase.sendMessage(
+    fun JupyterSendSocket.sendMessage(
         msgType: MessageType,
         content: MessageContent?,
     ) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 
-    fun JupyterSocketBase.receiveMessage() = receiveRawMessage()!!.toMessage()
+    fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage()!!.toMessage()
 
-    fun JupyterSocketBase.receiveStatusReply(): StatusMessage {
-        (this as? ZmqSocketWrapper)?.name shouldBe JupyterZmqSocketInfo.IOPUB.name
+    fun JupyterReceiveSocket.receiveStatusReply(): StatusMessage {
+        (this as? JupyterZmqSocketImpl)?.name shouldBe JupyterZmqSocketInfo.IOPUB.name
         receiveMessage().apply {
             return content.shouldBeTypeOf()
         }
     }
 
-    inline fun JupyterSocketBase.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
+    inline fun JupyterReceiveSocket.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
         receiveStatusReply().status shouldBe KernelStatus.BUSY
         action()
         receiveStatusReply().status shouldBe KernelStatus.IDLE

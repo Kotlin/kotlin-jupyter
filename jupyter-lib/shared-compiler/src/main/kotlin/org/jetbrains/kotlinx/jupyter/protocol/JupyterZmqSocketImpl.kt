@@ -13,11 +13,10 @@ import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.slf4j.Logger
 import org.zeromq.ZMQ
+import java.io.Closeable
 import java.security.SignatureException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-
-typealias SocketRawMessageCallback = (RawMessage) -> Unit
 
 private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 private val emptyJsonObjectString = Json.EMPTY.toString()
@@ -25,22 +24,23 @@ private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
 
 fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
 
-class CallbackHandlerImpl(private val logger: Logger) : CallbackHandler {
-    private val callbacks = mutableSetOf<SocketRawMessageCallback>()
+fun interface RawMessageCallback {
+    @Throws(InterruptedException::class)
+    operator fun invoke(msg: RawMessage)
+}
 
-    override fun onRawMessage(callback: SocketRawMessageCallback): SocketRawMessageCallback {
+class CallbackHandler(private val logger: Logger) {
+    private val callbacks = mutableSetOf<RawMessageCallback>()
+
+    fun addCallback(callback: RawMessageCallback) {
         callbacks.add(callback)
-        return callback
     }
 
-    override fun removeCallback(callback: SocketRawMessageCallback) {
-        callbacks.remove(callback)
-    }
-
-    override fun runCallbacksOnMessage(message: RawMessage) {
+    @Throws(InterruptedException::class)
+    fun runCallbacks(payload: RawMessage) {
         callbacks.forEach { callback ->
             try {
-                callback(message)
+                callback(payload)
             } catch (e: Throwable) {
                 if (e is InterruptedException) {
                     throw e
@@ -55,31 +55,29 @@ class CallbackHandlerImpl(private val logger: Logger) : CallbackHandler {
     }
 }
 
-class ZmqSocketWrapper(
+class JupyterZmqSocketImpl(
     loggerFactory: KernelLoggerFactory,
     val name: String,
     socket: ZMQ.Socket,
     private val address: String,
     private val hmac: HMAC,
-) : SocketWithCancellationBase(socket), JupyterZmqSocket {
+) : Closeable, JupyterZmqSocket {
     private val logger = loggerFactory.getLogger(this::class)
     private val lock = ReentrantLock()
 
+    override val zmqSocket = ZmqSocketWithCancellationImpl(socket)
+
     override fun bind(): Boolean {
-        val res = bind(address)
+        val res = zmqSocket.bind(address)
         logger.debug("[$name] listen: $address")
         return res
     }
 
     override fun connect(): Boolean {
-        val res = connect(address)
+        val res = zmqSocket.connect(address)
         logger.debug("[$name] connected: $address")
         return res
     }
-
-    override val callbackHandler = CallbackHandlerImpl(logger)
-
-    override fun onData(body: JupyterZmqSocket.(ByteArray) -> Unit) = body(recv())
 
     override fun sendRawMessage(msg: RawMessage) {
         logger.debug("[{}] snd>: {}", name, msg)
@@ -87,10 +85,10 @@ class ZmqSocketWrapper(
     }
 
     private fun doSendRawMessage(msg: RawMessage) {
-        assertNotCancelled()
+        zmqSocket.assertNotCancelled()
 
-        msg.id.forEach { sendMore(it) }
-        sendMore(MESSAGE_DELIMITER)
+        msg.id.forEach { zmqSocket.sendMore(it) }
+        zmqSocket.sendMore(MESSAGE_DELIMITER)
 
         val properties = listOf(RawMessage::header, RawMessage::parentHeader, RawMessage::metadata, RawMessage::content)
         val signableMsg =
@@ -98,13 +96,14 @@ class ZmqSocketWrapper(
                     prop ->
                 prop.get(msg)?.let { MessageFormat.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes
             }
-        sendMore(hmac(signableMsg))
+        zmqSocket.sendMore(hmac(signableMsg))
         for (i in 0 until (signableMsg.size - 1)) {
-            sendMore(signableMsg[i])
+            zmqSocket.sendMore(signableMsg[i])
         }
-        send(signableMsg.last())
+        zmqSocket.send(signableMsg.last())
     }
 
+    @Throws(InterruptedException::class)
     override fun receiveRawMessage(): RawMessage? {
         return try {
             val msg =
@@ -119,15 +118,18 @@ class ZmqSocketWrapper(
         }
     }
 
+    @Throws(InterruptedException::class)
     private fun doReceiveRawMessage(): RawMessage {
-        assertNotCancelled()
+        zmqSocket.assertNotCancelled()
 
-        val ids = listOf(recv()) + generateSequence { recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
-        val sig = recvString().lowercase()
-        val header = recv()
-        val parentHeader = recv()
-        val metadata = recv()
-        val content = recv()
+        val ids =
+            listOf(zmqSocket.recv()) +
+                generateSequence { zmqSocket.recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
+        val sig = zmqSocket.recvString().lowercase()
+        val header = zmqSocket.recv()
+        val parentHeader = zmqSocket.recv()
+        val metadata = zmqSocket.recv()
+        val content = zmqSocket.recv()
         val calculatedSig = hmac(header, parentHeader, metadata, content)
 
         if (sig != calculatedSig) {
@@ -151,8 +153,7 @@ class ZmqSocketWrapper(
     }
 
     override fun close() {
-        callbackHandler.clear()
-        super.close()
+        zmqSocket.close()
     }
 }
 
@@ -166,7 +167,7 @@ fun createZmqSocket(
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
 
-    return ZmqSocketWrapper(
+    return JupyterZmqSocketImpl(
         loggerFactory,
         socketInfo.name,
         zmqSocket,
