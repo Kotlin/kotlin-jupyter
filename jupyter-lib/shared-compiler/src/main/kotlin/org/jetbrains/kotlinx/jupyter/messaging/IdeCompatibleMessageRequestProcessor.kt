@@ -56,7 +56,7 @@ private object StdIOSubstitutionManager {
 open class IdeCompatibleMessageRequestProcessor(
     rawIncomingMessage: RawMessage,
     messageFactoryProvider: MessageFactoryProvider,
-    final override val socketManager: JupyterBaseSockets,
+    final override val socketManager: JupyterServerSockets,
     protected val commManager: CommManagerInternal,
     protected val executor: JupyterExecutor,
     protected val executionCounter: ExecutionCounter,

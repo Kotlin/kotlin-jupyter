@@ -34,16 +34,18 @@ fun RawMessage.toMessage(): Message {
     return Message(id, MessageFormat.decodeFromJsonElement(data))
 }
 
-fun Message.toRawMessage(): RawMessage {
-    val dataJson = MessageFormat.encodeToJsonElement(data).jsonObject
-    return RawMessageImpl(
-        id,
-        dataJson["header"]!!.jsonObject,
-        dataJson["parent_header"] as? JsonObject,
-        dataJson["metadata"] as? JsonObject,
-        dataJson["content"]!!,
-    )
-}
+fun Message.toRawMessage(): RawMessage = makeRawMessage(
+    dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
+    id = id,
+)
+
+fun makeRawMessage(dataJson: JsonObject, id: List<ByteArray>): RawMessage = RawMessageImpl(
+    id = id,
+    header = dataJson["header"]!!.jsonObject,
+    parentHeader = dataJson["parent_header"] as? JsonObject,
+    metadata = dataJson["metadata"] as? JsonObject,
+    content = dataJson["content"]!!,
+)
 
 fun makeReplyMessage(
     msg: RawMessage,

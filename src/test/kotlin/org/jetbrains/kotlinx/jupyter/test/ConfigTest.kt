@@ -23,7 +23,7 @@ class ConfigTest {
             listOf(
                 "ileasile",
                 "nikolay-egorov",
-                "ark-1",
+                "ark",
                 "cm",
             )
 
