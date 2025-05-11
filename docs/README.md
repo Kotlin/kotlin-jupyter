@@ -590,6 +590,9 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
  - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
+ - [spring-ai-anthropic](https://github.com/spring-projects/spring-ai) - Spring AI is a application framework designed specifically for AI engineering, offering seamless integration with Anthropic models.
+ - [spring-ai-ollama](https://github.com/spring-projects/spring-ai) - Spring AI is a specialized application framework designed specifically for AI engineering, providing seamless integration with local models powered by Ollama.
+ - [spring-ai-openai](https://github.com/spring-projects/spring-ai) - Spring AI is a application framework designed specifically for AI engineering, offering seamless integration with OpenAI models.
  - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers
 
 </details>
