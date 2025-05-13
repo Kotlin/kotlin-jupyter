@@ -581,6 +581,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
+ - [openai-java](https://github.com/openai/openai-java) - OpenAI official Java API
  - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
  - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
