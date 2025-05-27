@@ -18,6 +18,7 @@ abstract class AbstractMessageRequestProcessor(
     override fun processShellMessage() {
         when (val content = incomingMessage.content) {
             is KernelInfoRequest -> processKernelInfoRequest(content)
+            is UpdateClientMetadataRequest -> processUpdateClientMetadata(content)
             is HistoryRequest -> processHistoryRequest(content)
 
             // TODO: This request is deprecated since messaging protocol v.5.1,
@@ -63,6 +64,8 @@ abstract class AbstractMessageRequestProcessor(
     protected abstract fun processHistoryRequest(content: HistoryRequest)
 
     protected abstract fun processKernelInfoRequest(content: KernelInfoRequest)
+
+    protected abstract fun processUpdateClientMetadata(content: UpdateClientMetadataRequest)
 
     protected abstract fun processUnknownShellMessage(content: MessageContent)
 

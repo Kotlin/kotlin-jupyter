@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
+import java.nio.file.Path
 
 interface MutableNotebook : Notebook {
     // Can be `null` before the REPL has completed initialization
@@ -20,6 +21,8 @@ interface MutableNotebook : Notebook {
     fun popCell()
 
     fun beginEvalSession()
+
+    fun updateFilePath(absoluteNotebookFilePath: Path)
 
     override val currentCell: MutableCodeCell?
 

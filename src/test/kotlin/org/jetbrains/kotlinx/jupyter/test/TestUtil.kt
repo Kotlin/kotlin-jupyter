@@ -72,6 +72,7 @@ import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
+import java.nio.file.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
@@ -270,6 +271,7 @@ open class TestDisplayHandlerWithRendering(
 }
 
 object NotebookMock : Notebook {
+    override val workingDir: Path = Path.of("")
     override val executionHost: KotlinKernelHost
         get() = notImplemented()
 

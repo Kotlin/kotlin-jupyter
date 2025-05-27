@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
+import java.nio.file.InvalidPathException
 import kotlin.reflect.KProperty
 import kotlin.system.exitProcess
 
@@ -210,6 +211,25 @@ open class IdeCompatibleMessageRequestProcessor(
                     Json.encodeToJsonElement(
                         KernelInfoReplyMetadata(repl.currentSessionState),
                     ),
+            ),
+        )
+    }
+
+    override fun processUpdateClientMetadata(content: UpdateClientMetadataRequest) {
+        val metadataUpdated =
+            try {
+                val path = content.absoluteNotebookFilePath
+                repl.notebook.updateFilePath(path)
+                true
+            } catch (ex: InvalidPathException) {
+                logger.error("Invalid notebook file path: ${content.absoluteNotebookFilePath}", ex)
+                false
+            }
+        val status = if (metadataUpdated) MessageStatus.OK else MessageStatus.ABORT
+        sendWrapped(
+            messageFactory.makeReplyMessage(
+                MessageType.UPDATE_CLIENT_METADATA_REPLY,
+                content = UpdateClientMetadataReply(status),
             ),
         )
     }

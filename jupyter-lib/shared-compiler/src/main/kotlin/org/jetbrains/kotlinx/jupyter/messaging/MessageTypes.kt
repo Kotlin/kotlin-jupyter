@@ -3,39 +3,34 @@
 
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.config.LanguageInfo
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
-import org.jetbrains.kotlinx.jupyter.protocol.messageDataJson
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.ConnectReplySerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.DetailsLevelSerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.ExecuteReplySerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.MessageDataSerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.MessageTypeSerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.PathSerializer
+import org.jetbrains.kotlinx.jupyter.messaging.serializers.ScriptDiagnosticSerializer
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
-import java.util.concurrent.ConcurrentHashMap
+import java.nio.file.Path
 import kotlin.reflect.KClass
-import kotlin.reflect.full.createType
 import kotlin.script.experimental.api.ScriptDiagnostic
 
+/**
+ * See https://jupyter-client.readthedocs.io/en/latest/messaging.html#messages-on-the-shell-router-dealer-channel
+ * for details on how these messages are defined and how they are used in the Jupyter protocol.
+ *
+ * As we control the server when running notebooks inside IntelliJ, some custom message types have been introduced
+ * to enhance the user experience. These are marked below
+ */
 @Serializable(MessageTypeSerializer::class)
 enum class MessageType(val contentClass: KClass<out MessageContent>) {
     NONE(ExecuteAbortReply::class),
@@ -100,6 +95,14 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
 
     LIST_ERRORS_REQUEST(ListErrorsRequest::class),
     LIST_ERRORS_REPLY(ListErrorsReply::class),
+
+    // Custom message sent by the server (IntelliJ) to the kernel with
+    // information about the location of the notebook file. This message should
+    // be sent before compiling the first cell, and if the notebook file is
+    // moved or renamed. Note, this only works correctly as long as there is only
+    // one notebook file pr. kernel instance.
+    UPDATE_CLIENT_METADATA_REQUEST(UpdateClientMetadataRequest::class),
+    UPDATE_CLIENT_METADATA_REPLY(UpdateClientMetadataReply::class),
     ;
 
     val type: String
@@ -147,96 +150,6 @@ enum class KernelStatus {
 
     @SerialName("starting")
     STARTING,
-}
-
-object MessageTypeSerializer : KSerializer<MessageType> {
-    private val cache: MutableMap<String, MessageType> = ConcurrentHashMap()
-
-    private fun getMessageType(type: String): MessageType {
-        return cache.computeIfAbsent(type) { newType ->
-            MessageType.entries.firstOrNull { it.type == newType }
-                ?: throw SerializationException("Unknown message type: $newType")
-        }
-    }
-
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(
-            MessageType::class.qualifiedName!!,
-            PrimitiveKind.STRING,
-        )
-
-    override fun deserialize(decoder: Decoder): MessageType {
-        return getMessageType(decoder.decodeString())
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: MessageType,
-    ) {
-        encoder.encodeString(value.type)
-    }
-}
-
-object DetailsLevelSerializer : KSerializer<DetailLevel> {
-    private val cache: MutableMap<Int, DetailLevel> = ConcurrentHashMap()
-
-    private fun getDetailsLevel(type: Int): DetailLevel {
-        return cache.computeIfAbsent(type) { newLevel ->
-            DetailLevel.entries.firstOrNull { it.level == newLevel }
-                ?: throw SerializationException("Unknown details level: $newLevel")
-        }
-    }
-
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(
-            DetailLevel::class.qualifiedName!!,
-            PrimitiveKind.INT,
-        )
-
-    override fun deserialize(decoder: Decoder): DetailLevel {
-        return getDetailsLevel(decoder.decodeInt())
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: DetailLevel,
-    ) {
-        encoder.encodeInt(value.level)
-    }
-}
-
-object ExecuteReplySerializer : KSerializer<ExecuteReply> {
-    private val utilSerializer = serializer<JsonObject>()
-
-    override val descriptor: SerialDescriptor
-        get() = utilSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ExecuteReply {
-        require(decoder is JsonDecoder)
-        val json = decoder.decodeJsonElement().jsonObject
-        val format = decoder.json
-
-        val statusJson = json["status"] ?: throw SerializationException("Status field not present")
-
-        val status = format.decodeFromJsonElement<MessageStatus>(statusJson)
-
-        return when (status) {
-            MessageStatus.OK -> format.decodeFromJsonElement<ExecuteSuccessReply>(json)
-            MessageStatus.ERROR -> format.decodeFromJsonElement<ExecuteErrorReply>(json)
-            MessageStatus.ABORT -> format.decodeFromJsonElement<ExecuteAbortReply>(json)
-        }
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: ExecuteReply,
-    ) {
-        when (value) {
-            is ExecuteAbortReply -> encoder.encodeSerializableValue(serializer(), value)
-            is ExecuteErrorReply -> encoder.encodeSerializableValue(serializer(), value)
-            is ExecuteSuccessReply -> encoder.encodeSerializableValue(serializer(), value)
-        }
-    }
 }
 
 @Serializable
@@ -341,6 +254,23 @@ class IsCompleteReply(
 
 @Serializable
 class KernelInfoRequest : AbstractMessageContent()
+
+@Serializable
+class UpdateClientMetadataRequest(
+    @Serializable(with = PathSerializer::class)
+    val absoluteNotebookFilePath: Path,
+) : AbstractMessageContent() {
+    init {
+        if (!absoluteNotebookFilePath.isAbsolute) {
+            throw IllegalArgumentException("Path arguments must be absolute: $absoluteNotebookFilePath")
+        }
+    }
+}
+
+@Serializable
+class UpdateClientMetadataReply(
+    val status: MessageStatus,
+) : AbstractMessageContent()
 
 @Serializable
 class HelpLink(
@@ -530,123 +460,3 @@ data class MessageData(
     val metadata: JsonElement? = null,
     val content: MessageContent? = null,
 )
-
-object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
-    override val descriptor: SerialDescriptor
-        get() = JsonObject.serializer().descriptor
-
-    override fun deserialize(decoder: Decoder): ScriptDiagnostic {
-        TODO("Not yet implemented")
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: ScriptDiagnostic,
-    ) {
-        require(encoder is JsonEncoder)
-
-        encoder.encodeJsonElement(
-            buildJsonObject {
-                put("message", JsonPrimitive(value.message))
-                put("severity", JsonPrimitive(value.severity.name))
-
-                val loc = value.location
-                if (loc != null) {
-                    val start = loc.start
-                    val end = loc.end
-                    put(
-                        "start",
-                        buildJsonObject {
-                            put("line", JsonPrimitive(start.line))
-                            put("col", JsonPrimitive(start.col))
-                        },
-                    )
-                    if (end != null) {
-                        put(
-                            "end",
-                            buildJsonObject {
-                                put("line", JsonPrimitive(end.line))
-                                put("col", JsonPrimitive(end.col))
-                            },
-                        )
-                    }
-                }
-            },
-        )
-    }
-}
-
-object MessageDataSerializer : KSerializer<MessageData> {
-    @InternalSerializationApi
-    private val contentSerializers = MessageType.entries.associate { it.type to it.contentClass.serializer() }
-
-    override val descriptor: SerialDescriptor = serializer<JsonObject>().descriptor
-
-    @OptIn(InternalSerializationApi::class)
-    override fun deserialize(decoder: Decoder): MessageData {
-        require(decoder is JsonDecoder)
-        val element = decoder.decodeJsonElement().jsonObject
-        val format = decoder.json
-
-        val header = element["header"]?.let { format.decodeFromJsonElement<MessageHeader?>(it) }
-        val parentHeader = element["parent_header"]?.let { format.decodeFromJsonElement<MessageHeader?>(it) }
-        val metadata = element["metadata"]?.let { format.decodeFromJsonElement<JsonElement?>(it) }
-
-        val content =
-            if (header != null) {
-                val contentSerializer = chooseSerializer(header.type)
-                element["content"]?.let {
-                    format.decodeFromJsonElement(contentSerializer, it)
-                }
-            } else {
-                null
-            }
-
-        return MessageData(header, parentHeader, metadata, content)
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: MessageData,
-    ) {
-        require(encoder is JsonEncoder)
-        val format = encoder.json
-
-        val content =
-            value.content?.let {
-                format.encodeToJsonElement(serializer(it::class.createType()), it)
-            } ?: Json.EMPTY
-
-        encoder.encodeJsonElement(
-            messageDataJson(
-                format.encodeToJsonElement(value.header).jsonObject,
-                value.parentHeader?.let { format.encodeToJsonElement(it) }?.jsonObject,
-                value.metadata?.let { format.encodeToJsonElement(it) }?.jsonObject,
-                content,
-            ),
-        )
-    }
-
-    @InternalSerializationApi
-    private fun chooseSerializer(messageType: MessageType): KSerializer<out MessageContent> {
-        return contentSerializers[messageType.type] ?: throw ReplException("Unknown message type: $messageType")
-    }
-}
-
-object ConnectReplySerializer : KSerializer<ConnectReply> {
-    private val jsonSerializer = JsonObject.serializer()
-
-    override val descriptor: SerialDescriptor = jsonSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ConnectReply {
-        val json = decoder.decodeSerializableValue(jsonSerializer)
-        return ConnectReply(json)
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: ConnectReply,
-    ) {
-        encoder.encodeSerializableValue(jsonSerializer, value.ports)
-    }
-}

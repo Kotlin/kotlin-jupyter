@@ -46,6 +46,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
 import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
 import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
 import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
+import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataReply
+import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
@@ -68,7 +70,10 @@ import org.zeromq.ZMQ
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
@@ -212,12 +217,44 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     private fun requestKernelInfo(): Message {
-        shellSocket.sendMessage(MessageType.KERNEL_INFO_REQUEST, KernelInfoRequest())
-        val responseMsg = shellSocket.receiveMessage()
-        responseMsg.type shouldBe MessageType.KERNEL_INFO_REPLY
-        val content = responseMsg.content
-        content.shouldBeTypeOf<KernelInfoReply>()
-        return responseMsg
+        return withReceivingStatusMessages {
+            shellSocket.sendMessage(MessageType.KERNEL_INFO_REQUEST, KernelInfoRequest())
+            val responseMsg = shellSocket.receiveMessage()
+            responseMsg.type shouldBe MessageType.KERNEL_INFO_REPLY
+            val content = responseMsg.content
+            content.shouldBeTypeOf<KernelInfoReply>()
+            responseMsg
+        }
+    }
+
+    private fun sendClientMetadata(notebookFile: Path) {
+        withReceivingStatusMessages {
+            shellSocket.sendMessage(
+                MessageType.UPDATE_CLIENT_METADATA_REQUEST,
+                UpdateClientMetadataRequest(notebookFile),
+            )
+            val responseMsg = shellSocket.receiveMessage()
+            responseMsg.type shouldBe MessageType.UPDATE_CLIENT_METADATA_REPLY
+            val content = responseMsg.content
+            content.shouldBeTypeOf<UpdateClientMetadataReply>()
+        }
+    }
+
+    private fun receiveStatusMessage(status: KernelStatus) {
+        val msg = ioPubSocket.receiveMessage()
+        msg.type shouldBe MessageType.STATUS
+        (msg.content as StatusReply).status shouldBe status
+    }
+
+    // Make sure we also drain the ioPubSocket when sending protocol messages
+    private fun <T> withReceivingStatusMessages(body: () -> T): T {
+        return try {
+            body().also {
+                receiveStatusMessage(KernelStatus.BUSY)
+            }
+        } finally {
+            receiveStatusMessage(KernelStatus.IDLE)
+        }
     }
 
     private inline fun <reified T : Any> JupyterSocketBase.receiveMessageOfType(messageType: MessageType): T {
@@ -823,6 +860,17 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
             compiledData.scripts.shouldNotBeEmpty()
         }
+    }
+
+    @Test
+    fun `update client metadata`() {
+        // Users should never see this state
+        doExecute("notebook.workingDir.toString()") shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "")
+
+        val tempFile = Paths.get("", "notebook.ipynb").toAbsolutePath()
+        sendClientMetadata(tempFile)
+
+        doExecute("notebook.workingDir.toString()".trimIndent()) shouldBe jsonObject(MimeTypes.PLAIN_TEXT to tempFile.parent.pathString)
     }
 
     @Test

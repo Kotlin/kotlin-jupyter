@@ -40,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.util.JupyterClientDetector
 import java.io.Closeable
+import java.nio.file.Path
 import kotlin.concurrent.thread
 
 class NotebookImpl(
@@ -170,6 +171,25 @@ class NotebookImpl(
     override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult {
         return data.toIFrame(_currentColorScheme)
     }
+
+    // This path is not set until a KernelRequestInfo message has been sent.
+    // For normal usage, this should always happen, but it is not always
+    // true inside the kernel (like in tests). If no path is set, the empty
+    // path is returned when calling `notebook.workingDir`. While this has
+    // different semantics (i.e., JVM home.dir), it should be good enough to
+    // avoid leaking nullable paths and filenames to the user API.
+    private var absoluteNotebookFilePath: Path? = null
+
+    override fun updateFilePath(absoluteNotebookFilePath: Path) {
+        this.absoluteNotebookFilePath = absoluteNotebookFilePath
+    }
+
+    override val workingDir: Path
+        get() {
+            return absoluteNotebookFilePath?.let {
+                it.parent ?: Path.of("")
+            } ?: Path.of("")
+        }
 
     override val currentCell: MutableCodeCell?
         get() = history(0)

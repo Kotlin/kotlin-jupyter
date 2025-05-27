@@ -6,11 +6,20 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
+import java.nio.file.Path
 
 /**
  * [Notebook] is a main entry point for Kotlin Jupyter API
  */
 interface Notebook {
+    /**
+     * The absolute path to the directory containing the notebook file.
+     *
+     * This property only contains data when notebooks are run through the
+     * Kotlin Notebook IntelliJ Plugin and not through a normal Jupyter server.
+     */
+    val workingDir: Path
+
     /**
      * Represents the execution host for the Kotlin kernel.
      * Could be `null` outside of the execution, so use it with care.
