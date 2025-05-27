@@ -95,7 +95,7 @@ fun JupyterCommunicationFacility.sendExecuteResult(
         messageFactory.makeReplyMessage(
             MessageType.EXECUTE_RESULT,
             content =
-                ExecutionResultMessage(
+                ExecuteResult(
                     executionCount = executionCount,
                     data = resultJson["data"]!!,
                     metadata = resultJson["metadata"]!!,
@@ -129,7 +129,7 @@ fun JupyterCommunicationFacility.sendExecuteReply(
     val reply =
         messageFactory.makeReplyMessage(
             MessageType.EXECUTE_REPLY,
-            content = replyContent as MessageReplyContent,
+            content = replyContent,
             metadata = MessageFormat.encodeToJsonElement(replyMetadata),
         )
 

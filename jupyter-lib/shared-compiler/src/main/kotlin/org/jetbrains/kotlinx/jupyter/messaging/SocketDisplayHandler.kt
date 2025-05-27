@@ -18,7 +18,7 @@ class SocketDisplayHandler(
 
     private fun sendMessage(
         type: MessageType,
-        content: DisplayDataResponse,
+        content: DisplayDataMessage,
     ) {
         val messageFactory = communicationFacility.messageFactory
         val message = messageFactory.makeReplyMessage(type, content = content)
@@ -35,7 +35,7 @@ class SocketDisplayHandler(
 
         notebook.currentCell?.addDisplay(display)
 
-        val response: DisplayDataResponse = createResponse(json)
+        val response: DisplayDataMessage = createResponse(json)
         sendMessage(MessageType.DISPLAY_DATA, response)
     }
 
@@ -60,9 +60,9 @@ class SocketDisplayHandler(
         sendMessage(MessageType.UPDATE_DISPLAY_DATA, response)
     }
 
-    private fun createResponse(json: JsonObject): DisplayDataResponse {
+    private fun createResponse(json: JsonObject): DisplayDataMessage {
         val content =
-            DisplayDataResponse(
+            DisplayDataMessage(
                 json["data"],
                 json["metadata"],
                 json["transient"],

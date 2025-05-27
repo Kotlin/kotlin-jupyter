@@ -114,19 +114,19 @@ open class IdeCompatibleMessageRequestProcessor(
         }
     }
 
-    override fun processCommMsg(content: CommMsg) {
+    override fun processCommMsg(content: CommMsgMessage) {
         executor.runExecution("Execution of comm_msg request for ${content.commId}") {
             commManager.processCommMessage(incomingMessage, content)
         }
     }
 
-    override fun processCommClose(content: CommClose) {
+    override fun processCommClose(content: CommCloseMessage) {
         executor.runExecution("Execution of comm_close request for ${content.commId}") {
             commManager.processCommClose(incomingMessage, content)
         }
     }
 
-    override fun processCommOpen(content: CommOpen) {
+    override fun processCommOpen(content: CommOpenMessage) {
         executor.runExecution("Execution of comm_open request for ${content.commId} of target ${content.targetName}") {
             commManager.processCommOpen(incomingMessage, content)
                 ?: throw ReplException("Cannot open comm for ${content.commId} of target ${content.targetName}")
@@ -148,7 +148,7 @@ open class IdeCompatibleMessageRequestProcessor(
             socketManager.iopub.sendMessage(
                 messageFactory.makeReplyMessage(
                     MessageType.EXECUTE_INPUT,
-                    content = ExecutionInputReply(code, count),
+                    content = ExecuteInput(code, count),
                 ),
             )
             val response: JupyterResponse =
@@ -216,20 +216,19 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 
     override fun processUpdateClientMetadata(content: UpdateClientMetadataRequest) {
-        val metadataUpdated =
+        val replyContent =
             try {
                 val path = content.absoluteNotebookFilePath
                 repl.notebook.updateFilePath(path)
-                true
+                UpdateClientMetadataSuccessReply()
             } catch (ex: InvalidPathException) {
                 logger.error("Invalid notebook file path: ${content.absoluteNotebookFilePath}", ex)
-                false
+                UpdateClientMetadataErrorReply(ex)
             }
-        val status = if (metadataUpdated) MessageStatus.OK else MessageStatus.ABORT
         sendWrapped(
             messageFactory.makeReplyMessage(
                 MessageType.UPDATE_CLIENT_METADATA_REPLY,
-                content = UpdateClientMetadataReply(status),
+                content = replyContent,
             ),
         )
     }

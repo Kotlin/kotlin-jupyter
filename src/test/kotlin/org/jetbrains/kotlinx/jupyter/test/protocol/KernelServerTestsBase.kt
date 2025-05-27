@@ -2,12 +2,12 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
-import org.jetbrains.kotlinx.jupyter.messaging.AbstractMessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
-import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
+import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
@@ -77,14 +77,14 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
 
     fun JupyterSocketBase.sendMessage(
         msgType: MessageType,
-        content: AbstractMessageContent?,
+        content: MessageContent?,
     ) {
         sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
     }
 
     fun JupyterSocketBase.receiveMessage() = receiveRawMessage()!!.toMessage()
 
-    fun JupyterSocketBase.receiveStatusReply(): StatusReply {
+    fun JupyterSocketBase.receiveStatusReply(): StatusMessage {
         (this as? SocketWrapper)?.name shouldBe JupyterSocketInfo.IOPUB.name
         receiveMessage().apply {
             return content.shouldBeTypeOf()

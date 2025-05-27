@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// See https://jupyter-client.readthedocs.io/en/latest/messaging.html#completion
 @Serializable
 class CompleteReply(
     val matches: List<String>,
@@ -12,7 +13,7 @@ class CompleteReply(
     val cursorEnd: Int,
     val paragraph: Paragraph,
     val metadata: Metadata,
-) : OkReply() {
+) : OkReplyContent() {
     @Serializable
     class Metadata(
         @SerialName("_jupyter_types_experimental")
