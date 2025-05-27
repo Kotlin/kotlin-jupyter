@@ -158,26 +158,21 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             assertEquals(MessageType.EXECUTE_REPLY, msg.type)
             executeReplyChecker(msg)
 
-            msg = ioPubSocket.receiveMessage()
-            assertEquals(MessageType.STATUS, msg.type)
-            assertEquals(KernelStatus.BUSY, (msg.content as StatusReply).status)
-            msg = ioPubSocket.receiveMessage()
-            assertEquals(MessageType.EXECUTE_INPUT, msg.type)
-
-            ioPubChecker(ioPubSocket)
-
-            var response: Any? = null
-            if (hasResult) {
+            return withReceivingStatusMessages {
                 msg = ioPubSocket.receiveMessage()
-                val content = msg.content as ExecutionResultMessage
-                assertEquals(MessageType.EXECUTE_RESULT, msg.type)
-                response = content.data
-            }
+                assertEquals(MessageType.EXECUTE_INPUT, msg.type)
 
-            msg = ioPubSocket.receiveMessage()
-            assertEquals(MessageType.STATUS, msg.type)
-            assertEquals(KernelStatus.IDLE, (msg.content as StatusReply).status)
-            return response
+                ioPubChecker(ioPubSocket)
+
+                if (hasResult) {
+                    msg = ioPubSocket.receiveMessage()
+                    val content = msg.content as ExecutionResultMessage
+                    assertEquals(MessageType.EXECUTE_RESULT, msg.type)
+                    content.data
+                } else {
+                    null
+                }
+            }
         } catch (e: Throwable) {
             afterEach()
             throw e
@@ -217,27 +212,29 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     private fun requestKernelInfo(): Message {
-        return withReceivingStatusMessages {
-            shellSocket.sendMessage(MessageType.KERNEL_INFO_REQUEST, KernelInfoRequest())
-            val responseMsg = shellSocket.receiveMessage()
-            responseMsg.type shouldBe MessageType.KERNEL_INFO_REPLY
-            val content = responseMsg.content
-            content.shouldBeTypeOf<KernelInfoReply>()
-            responseMsg
-        }
+        shellSocket.sendMessage(MessageType.KERNEL_INFO_REQUEST, KernelInfoRequest())
+        val responseMsg =
+            withReceivingStatusMessages {
+                shellSocket.receiveMessage()
+            }
+        responseMsg.type shouldBe MessageType.KERNEL_INFO_REPLY
+        val content = responseMsg.content
+        content.shouldBeTypeOf<KernelInfoReply>()
+        return responseMsg
     }
 
     private fun sendClientMetadata(notebookFile: Path) {
-        withReceivingStatusMessages {
-            shellSocket.sendMessage(
-                MessageType.UPDATE_CLIENT_METADATA_REQUEST,
-                UpdateClientMetadataRequest(notebookFile),
-            )
-            val responseMsg = shellSocket.receiveMessage()
-            responseMsg.type shouldBe MessageType.UPDATE_CLIENT_METADATA_REPLY
-            val content = responseMsg.content
-            content.shouldBeTypeOf<UpdateClientMetadataReply>()
-        }
+        shellSocket.sendMessage(
+            MessageType.UPDATE_CLIENT_METADATA_REQUEST,
+            UpdateClientMetadataRequest(notebookFile),
+        )
+        val responseMsg =
+            withReceivingStatusMessages {
+                shellSocket.receiveMessage()
+            }
+        responseMsg.type shouldBe MessageType.UPDATE_CLIENT_METADATA_REPLY
+        val content = responseMsg.content
+        content.shouldBeTypeOf<UpdateClientMetadataReply>()
     }
 
     private fun receiveStatusMessage(status: KernelStatus) {
@@ -249,9 +246,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     // Make sure we also drain the ioPubSocket when sending protocol messages
     private fun <T> withReceivingStatusMessages(body: () -> T): T {
         return try {
-            body().also {
-                receiveStatusMessage(KernelStatus.BUSY)
-            }
+            receiveStatusMessage(KernelStatus.BUSY)
+            body()
         } finally {
             receiveStatusMessage(KernelStatus.IDLE)
         }
@@ -716,8 +712,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                content.traceback shouldContain "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                content.traceback shouldContain "\tat Line_0_jupyter\$callback\$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
+                content.traceback shouldContain "\tat Line_0_jupyter\$callback$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                content.traceback shouldContain "\tat Line_0_jupyter\$callback$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
                 content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                 content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
             },
@@ -754,7 +750,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 content.shouldBeTypeOf<ExecuteErrorReply>()
                 content.name shouldBe "io.ktor.serialization.JsonConvertException"
                 content.value shouldBe
-                    "Illegal input: Field 'id' is required for type with serial name 'Line_6_jupyter.User', but it was missing at path: \$"
+                    "Illegal input: Field 'id' is required for type with serial name " +
+                    "'Line_6_jupyter.User', but it was missing at path: $"
 
                 // Stacktrace should only contain the cell reference if error is outside visible range
                 content.traceback shouldContain "\tat Line_6_jupyter.<init>(Line_6.jupyter.kts:12) at Cell In[1]"
