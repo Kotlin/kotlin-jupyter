@@ -43,18 +43,12 @@ fun getDefaultResolutionInfoSwitcher(
     val initialInfo = provider.fallback
 
     val dirInfo =
-        if (initialInfo is AbstractLibraryResolutionInfo.ByDir) {
-            initialInfo
-        } else {
-            AbstractLibraryResolutionInfo.ByDir(defaultDir)
-        }
+        initialInfo as? AbstractLibraryResolutionInfo.ByDir
+            ?: AbstractLibraryResolutionInfo.ByDir(defaultDir)
 
     val refInfo =
-        if (initialInfo is AbstractLibraryResolutionInfo.ByGitRef) {
-            initialInfo
-        } else {
-            libraryInfoCache.getLibraryInfoByRefWithFallback(defaultRef)
-        }
+        initialInfo as? AbstractLibraryResolutionInfo.ByGitRef
+            ?: libraryInfoCache.getLibraryInfoByRefWithFallback(defaultRef)
 
     val classpathInfo = AbstractLibraryResolutionInfo.ByClasspath
 

@@ -13,6 +13,7 @@ interface MutableNotebook : Notebook {
     // Can be `null` before the REPL has completed initialization
     var sharedReplContext: SharedReplContext?
     override var executionHost: KotlinKernelHost?
+    override var intermediateClassLoader: ClassLoader?
 
     override val displays: MutableDisplayContainer
 

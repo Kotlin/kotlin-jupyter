@@ -134,7 +134,7 @@ fun assertStartsWith(
     actual: String,
 ) {
     if (actual.startsWith(expectedPrefix)) return
-    val actualStart = actual.substring(0, minOf(expectedPrefix.length, actual.length))
+    val actualStart = actual.take(minOf(expectedPrefix.length, actual.length))
     throw AssertionError("Expected a string to start with '$expectedPrefix', but it starts with '$actualStart")
 }
 
@@ -272,6 +272,10 @@ open class TestDisplayHandlerWithRendering(
 
 object NotebookMock : Notebook {
     override val workingDir: Path = Path.of("")
+
+    override val intermediateClassLoader: ClassLoader
+        get() = notImplemented()
+
     override val executionHost: KotlinKernelHost
         get() = notImplemented()
 
@@ -311,7 +315,7 @@ object NotebookMock : Notebook {
         return displays.getById(id)
     }
 
-    override fun history(before: Int): CodeCell? {
+    override fun history(before: Int): CodeCell {
         notImplemented()
     }
 

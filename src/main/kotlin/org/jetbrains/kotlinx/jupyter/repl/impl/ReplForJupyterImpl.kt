@@ -227,7 +227,7 @@ class ReplForJupyterImpl(
     private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
     private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
 
-    // Used for various purposes, i.e. completion and listing errors
+    // Used for various purposes, i.e., completion and listing errors
     private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
@@ -282,14 +282,15 @@ class ReplForJupyterImpl(
     private val evaluatorConfiguration =
         ScriptEvaluationConfiguration {
             implicitReceivers.invoke(v = scriptReceivers)
-            val intermediaryClassLoader =
+            val intermediateClassLoader =
                 kernelRunMode.createIntermediaryClassLoader(
                     ReplForJupyterImpl::class.java.classLoader,
                 )
-            if (intermediaryClassLoader != null) {
+            if (intermediateClassLoader != null) {
+                notebook.intermediateClassLoader = intermediateClassLoader
                 jvm {
                     val scriptClassloader =
-                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), intermediaryClassLoader)
+                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), intermediateClassLoader)
                     baseClassLoader(scriptClassloader)
                 }
             }

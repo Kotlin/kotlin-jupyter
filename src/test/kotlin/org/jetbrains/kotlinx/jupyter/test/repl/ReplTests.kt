@@ -15,6 +15,7 @@ import jupyter.kotlin.JavaRuntime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
@@ -27,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -636,6 +638,14 @@ class ReplTests : AbstractSingleReplTest() {
             it shouldContainKey MimeTypes.PLAIN_TEXT
             it[MimeTypes.PLAIN_TEXT] shouldBe "{}"
         }
+    }
+
+    @Test
+    fun `intermediate classloader is available via notebook API`() {
+        val res = eval("notebook.intermediateClassLoader")
+        val intermediateClassLoader = res.renderedValue.shouldBeInstanceOf<DelegatingClassLoader>()
+        val cellClass = intermediateClassLoader.loadClass("org.jetbrains.kotlinx.jupyter.api.CodeCell")
+        cellClass shouldBe CodeCell::class.java
     }
 
     @Test

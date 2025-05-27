@@ -194,6 +194,8 @@ class NotebookImpl(
     override val currentCell: MutableCodeCell?
         get() = history(0)
 
+    override var intermediateClassLoader: ClassLoader? = null
+
     override val lastCell: MutableCodeCell?
         get() = history(1)
 

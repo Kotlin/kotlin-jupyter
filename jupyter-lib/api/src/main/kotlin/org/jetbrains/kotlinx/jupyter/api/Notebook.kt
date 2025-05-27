@@ -42,6 +42,14 @@ interface Notebook {
     val currentClasspath: List<String>
 
     /**
+     * Intermediate classloader between kernel-itself class loader and snippets' class loader chain.
+     * `null` means that snippets' chain is built directly on top of kernel's class loader.
+     * This classloader is the one returned by [KernelRunMode.createIntermediaryClassLoader],
+     * and it might be used for amending a class loading process.
+     */
+    val intermediateClassLoader: ClassLoader?
+
+    /**
      * Configuration options for the current notebook session.
      *
      * Provides various settings that control the behavior of the session, such as

@@ -8,7 +8,6 @@ import build.util.getFlag
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.kotlin.dsl.accessors.runtime.addConfiguredDependencyTo
-import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
