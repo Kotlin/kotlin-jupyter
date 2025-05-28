@@ -32,8 +32,8 @@ object UpdateClientMetadataReplySerializer : KSerializer<UpdateClientMetadataRep
 
         return when (status) {
             MessageStatus.OK -> format.decodeFromJsonElement<UpdateClientMetadataSuccessReply>(json)
-            MessageStatus.ABORT -> format.decodeFromJsonElement<UpdateClientMetadataReply>(json)
-            MessageStatus.ERROR -> error("Message status not supported: $status")
+            MessageStatus.ERROR -> format.decodeFromJsonElement<UpdateClientMetadataErrorReply>(json)
+            MessageStatus.ABORT -> error("Message status not supported: $status")
         }
     }
 
