@@ -21,15 +21,15 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
-import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
-import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
-import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataResponse
+import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
+import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
+import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataMessage
 import org.jetbrains.kotlinx.jupyter.messaging.EXECUTION_INTERRUPTED_MESSAGE
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteErrorReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
+import org.jetbrains.kotlinx.jupyter.messaging.ExecuteResult
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteSuccessReply
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
-import org.jetbrains.kotlinx.jupyter.messaging.ExecutionResultMessage
 import org.jetbrains.kotlinx.jupyter.messaging.InputReply
 import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
 import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
@@ -44,10 +44,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageStatus
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
 import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
-import org.jetbrains.kotlinx.jupyter.messaging.StatusReply
-import org.jetbrains.kotlinx.jupyter.messaging.StreamResponse
-import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataReply
+import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
+import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
+import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketBase
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketInfo
@@ -166,7 +166,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
                 if (hasResult) {
                     msg = ioPubSocket.receiveMessage()
-                    val content = msg.content as ExecutionResultMessage
+                    val content = msg.content as ExecuteResult
                     assertEquals(MessageType.EXECUTE_RESULT, msg.type)
                     content.data
                 } else {
@@ -234,13 +234,13 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             }
         responseMsg.type shouldBe MessageType.UPDATE_CLIENT_METADATA_REPLY
         val content = responseMsg.content
-        content.shouldBeTypeOf<UpdateClientMetadataReply>()
+        content.shouldBeTypeOf<UpdateClientMetadataSuccessReply>()
     }
 
     private fun receiveStatusMessage(status: KernelStatus) {
         val msg = ioPubSocket.receiveMessage()
         msg.type shouldBe MessageType.STATUS
-        (msg.content as StatusReply).status shouldBe status
+        (msg.content as StatusMessage).status shouldBe status
     }
 
     // Make sure we also drain the ioPubSocket when sending protocol messages
@@ -262,18 +262,18 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     private fun JupyterSocketBase.receiveStreamResponse(): String {
-        return receiveMessageOfType<StreamResponse>(MessageType.STREAM).text
+        return receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
     }
 
     private fun JupyterSocketBase.receiveErrorResponse(): String {
         return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
     }
 
-    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataResponse {
+    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataMessage {
         return receiveMessageOfType(MessageType.DISPLAY_DATA)
     }
 
-    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataResponse {
+    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataMessage {
         return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
     }
 
@@ -297,7 +297,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
-                assertEquals(i.toString(), (msg.content as StreamResponse).text)
+                assertEquals(i.toString(), (msg.content as StreamMessage).text)
             }
         }
 
@@ -536,10 +536,10 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             """.trimIndent()
         doExecute(registerCode, false)
 
-        shellSocket.sendMessage(MessageType.COMM_OPEN, CommOpen(commId, targetName))
+        shellSocket.sendMessage(MessageType.COMM_OPEN, CommOpenMessage(commId, targetName))
 
         ioPubSocket.receiveMessage().apply {
-            val c = content.shouldBeTypeOf<CommMsg>()
+            val c = content.shouldBeTypeOf<CommMsgMessage>()
             c.commId shouldBe commId
             c.data["xo"]!!.jsonPrimitive.content shouldBe commId
         }
@@ -548,7 +548,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         shellSocket.sendMessage(
             MessageType.COMM_MSG,
-            CommMsg(
+            CommMsgMessage(
                 commId,
                 JsonObject(
                     mapOf(
@@ -560,7 +560,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         ioPubSocket.wrapActionInBusyIdleStatusChange {
             ioPubSocket.receiveMessage().apply {
-                val c = content.shouldBeTypeOf<CommMsg>()
+                val c = content.shouldBeTypeOf<CommMsgMessage>()
                 c.commId shouldBe commId
                 c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
             }
@@ -575,7 +575,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         shellSocket.sendMessage(
             MessageType.COMM_OPEN,
-            CommOpen(
+            CommOpenMessage(
                 commId,
                 targetName,
             ),
@@ -583,12 +583,12 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         shellSocket.sendMessage(
             MessageType.COMM_MSG,
-            CommMsg(commId),
+            CommMsgMessage(commId),
         )
 
         ioPubSocket.wrapActionInBusyIdleStatusChange {
             ioPubSocket.receiveMessage().apply {
-                val c = content.shouldBeTypeOf<CommMsg>()
+                val c = content.shouldBeTypeOf<CommMsgMessage>()
                 val data =
                     MessageFormat.decodeFromJsonElement<OpenDebugPortReply>(c.data).shouldBeTypeOf<OpenDebugPortReply>()
                 c.commId shouldBe commId
@@ -889,7 +889,7 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             while (true) {
                 val msg = ioPub.receiveMessage()
                 assertEquals(MessageType.STREAM, msg.type)
-                actualText.append((msg.content as StreamResponse).text)
+                actualText.append((msg.content as StreamMessage).text)
                 assertStartsWith(actualText, expectedText)
                 if (actualText.contentEquals(expectedText)) break
             }

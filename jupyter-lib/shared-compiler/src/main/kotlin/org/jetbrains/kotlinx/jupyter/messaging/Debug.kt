@@ -9,4 +9,4 @@ object ProvidedCommMessages {
 @Serializable
 class OpenDebugPortReply(
     val port: Int?,
-) : OkReply()
+) : OkReplyContent()

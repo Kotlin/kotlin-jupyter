@@ -6,9 +6,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Comm
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommCloseCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommMsgCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommOpenCallback
-import org.jetbrains.kotlinx.jupyter.messaging.CommClose
-import org.jetbrains.kotlinx.jupyter.messaging.CommMsg
-import org.jetbrains.kotlinx.jupyter.messaging.CommOpen
+import org.jetbrains.kotlinx.jupyter.messaging.CommCloseMessage
+import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
+import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
@@ -33,7 +33,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         // send comm_open
         connection.sendSimpleMessageToIoPub(
             MessageType.COMM_OPEN,
-            CommOpen(newComm.id, newComm.target, data),
+            CommOpenMessage(newComm.id, newComm.target, data),
         )
 
         return newComm
@@ -41,7 +41,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
 
     override fun processCommOpen(
         message: Message,
-        content: CommOpen,
+        content: CommOpenMessage,
     ): Comm? {
         val target = content.targetName
         val id = content.commId
@@ -52,7 +52,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
             // If no callback is registered, we should send `comm_close` immediately in response.
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
-                CommClose(id, commFailureJson("Target $target was not registered")),
+                CommCloseMessage(id, commFailureJson("Target $target was not registered")),
             )
             return null
         }
@@ -63,7 +63,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         } catch (e: Throwable) {
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
-                CommClose(
+                CommCloseMessage(
                     id,
                     commFailureJson("Unable to crete comm $id (with target $target), exception was thrown: ${e.stackTraceToString()}"),
                 ),
@@ -95,7 +95,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
 
     override fun processCommClose(
         message: Message,
-        content: CommClose,
+        content: CommCloseMessage,
     ) {
         val comm = commIdToComm[content.commId] ?: return
         comm.close(content.data, notifyClient = false)
@@ -118,7 +118,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
 
     override fun processCommMessage(
         message: Message,
-        content: CommMsg,
+        content: CommMsgMessage,
     ) {
         commIdToComm[content.commId]?.messageReceived(content.data)
     }
@@ -152,7 +152,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
             assertOpen()
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_MSG,
-                CommMsg(id, data),
+                CommMsgMessage(id, data),
             )
         }
 
@@ -191,7 +191,7 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
             if (notifyClient) {
                 connection.sendSimpleMessageToIoPub(
                     MessageType.COMM_CLOSE,
-                    CommClose(id, data),
+                    CommCloseMessage(id, data),
                 )
             }
         }

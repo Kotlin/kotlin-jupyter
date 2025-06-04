@@ -26,9 +26,9 @@ abstract class AbstractMessageRequestProcessor(
             is ConnectRequest -> processConnectRequest(content)
             is ExecuteRequest -> processExecuteRequest(content)
             is CommInfoRequest -> processCommInfoRequest(content)
-            is CommOpen -> processCommOpen(content)
-            is CommClose -> processCommClose(content)
-            is CommMsg -> processCommMsg(content)
+            is CommOpenMessage -> processCommOpen(content)
+            is CommCloseMessage -> processCommClose(content)
+            is CommMsgMessage -> processCommMsg(content)
             is CompleteRequest -> processCompleteRequest(content)
             is ListErrorsRequest -> processListErrorsRequest(content)
             is IsCompleteRequest -> processIsCompleteRequest(content)
@@ -49,11 +49,11 @@ abstract class AbstractMessageRequestProcessor(
 
     protected abstract fun processCompleteRequest(content: CompleteRequest)
 
-    protected abstract fun processCommMsg(content: CommMsg)
+    protected abstract fun processCommMsg(content: CommMsgMessage)
 
-    protected abstract fun processCommClose(content: CommClose)
+    protected abstract fun processCommClose(content: CommCloseMessage)
 
-    protected abstract fun processCommOpen(content: CommOpen)
+    protected abstract fun processCommOpen(content: CommOpenMessage)
 
     protected abstract fun processCommInfoRequest(content: CommInfoRequest)
 

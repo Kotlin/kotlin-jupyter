@@ -7,6 +7,10 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.messaging.ConnectReply
 
+/**
+ * Serializer that moves the port information to the top-level of the message, so it matches
+ * the format defined in https://jupyter-client.readthedocs.io/en/latest/messaging.html#connect
+ */
 object ConnectReplySerializer : KSerializer<ConnectReply> {
     private val jsonSerializer = JsonObject.serializer()
 

@@ -29,7 +29,7 @@ fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader {
 
 fun MessageFactory.makeSimpleMessage(
     msgType: MessageType,
-    content: AbstractMessageContent,
+    content: MessageContent,
 ): Message {
     return Message(
         id = messageId,

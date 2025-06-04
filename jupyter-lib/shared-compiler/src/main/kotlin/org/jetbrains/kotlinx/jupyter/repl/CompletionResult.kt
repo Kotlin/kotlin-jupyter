@@ -2,14 +2,14 @@ package org.jetbrains.kotlinx.jupyter.repl
 
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
-import org.jetbrains.kotlinx.jupyter.messaging.AbstractMessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.CompleteErrorReply
 import org.jetbrains.kotlinx.jupyter.messaging.CompleteReply
+import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.Paragraph
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 abstract class CompletionResult {
-    abstract val message: AbstractMessageContent
+    abstract val message: MessageContent
 
     open class Success(
         private val matches: List<String>,
@@ -22,7 +22,7 @@ abstract class CompletionResult {
             assert(matches.size == metadata.size)
         }
 
-        override val message: AbstractMessageContent
+        override val message: MessageContent
             get() =
                 CompleteReply(
                     matches,
@@ -70,7 +70,7 @@ abstract class CompletionResult {
         private val errorValue: String,
         private val traceBack: List<String>,
     ) : CompletionResult() {
-        override val message: AbstractMessageContent
+        override val message: MessageContent
             get() = CompleteErrorReply(errorName, errorValue, traceBack)
     }
 }
