@@ -3,6 +3,7 @@ package build.util
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.maven
 import org.gradle.kotlin.dsl.repositories
+import java.io.File
 
 const val INTERNAL_TEAMCITY_URL = "https://buildserver.labs.intellij.net"
 const val PUBLIC_TEAMCITY_URL = "https://teamcity.jetbrains.com"
@@ -20,15 +21,14 @@ const val TEAMCITY_REQUEST_ENDPOINT = "guestAuth/app/rest/builds"
 fun Project.addAllBuildRepositories() {
     val kotlinVersion = rootProject.defaultVersionCatalog.versions.devKotlin
 
+    val sharedProps = java.util.Properties().apply {
+        load(File(rootDir, "shared.properties").inputStream())
+    }
+
     repositories {
         mavenCentral()
         gradlePluginPortal()
-
-        // Kotlin Dev releases are published here every night
-        // Warning: These are being cleaned up on a regular basis, so we should not depend on them
-        // for reproducible builds. In that case, we should use `https://redirector.kotlinlang.org/maven/bootstrap`
-        // instead, but this is lacking slightly behind the /dev repo.
-        maven("https://packages.jetbrains.team/maven/p/kt/dev")
+        maven(sharedProps.getProperty("kotlin.repository"))
 
         for (teamcity in listOf(INTERNAL_KOTLIN_TEAMCITY, PUBLIC_KOTLIN_TEAMCITY)) {
             val locator = "buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven"

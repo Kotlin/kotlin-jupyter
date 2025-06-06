@@ -146,14 +146,6 @@ plugin-kotlinJvm = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", versi
 # kotlin("plugin.serialization")
 plugin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "stableKotlin" }
 
-# Compose: Since notebooks only run on the desktop, we manually target these Multiplatform publications
-# TODO Figure out how to handle different platforms.
-compose-compiler = { group = "org.jetbrains.kotlin", name = "kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlin" }
-compose-runtime = { group = "org.jetbrains.compose", name = "compose-full", version.ref = "compose" }
-compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose" }
-compose-ui = { group = "org.jetbrains.compose.ui", name = "ui-desktop", version.ref = "compose" }
-compose-skiko-macos = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version = "0.8.18"}
-
 # kotlin("jupyter.api")
 plugin-kotlinJupyterApi = { module = "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin", version.ref = "jupyterApi" }
 
@@ -185,8 +177,6 @@ plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublis
 plugin-kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlinDsl" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
-jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

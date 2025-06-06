@@ -12,10 +12,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files.createTempDirectory
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
-@Ignore // Needs to have a KSP version that works
 class ResourcesTaskTests {
     private val projectDir = createTempDirectory("jupyter-gradle-test-project").toFile()
 

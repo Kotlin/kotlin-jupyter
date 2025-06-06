@@ -34,11 +34,11 @@ libSubproject("api")
 libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
-libSubproject("spring-starter") // Disabled due to missing KSP support.
-libSubproject("lib-ext") //  Disabled due to missing KSP support.
+libSubproject("spring-starter")
+libSubproject("lib-ext")
 libSubproject("test-kit")
 libSubproject("test-kit-test")
-exampleSubproject("getting-started") //  Disabled due to missing KSP support.
+exampleSubproject("getting-started")
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
 

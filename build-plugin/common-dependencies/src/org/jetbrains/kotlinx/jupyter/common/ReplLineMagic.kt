@@ -12,7 +12,7 @@ package org.jetbrains.kotlinx.jupyter.common
  * println("Hello world")
  * ```
  *
- * Adding new magic value also requires registering a handler in [org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler].
+ * Adding a new magic value also requires registering a handler in [org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler].
  */
 enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     USE(

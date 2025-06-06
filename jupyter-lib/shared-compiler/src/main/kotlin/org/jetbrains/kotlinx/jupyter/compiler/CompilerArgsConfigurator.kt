@@ -11,7 +11,7 @@ import kotlin.script.experimental.api.compilerOptions
  * any errors will be reported back through [ResultDiagnostics].
  *
  * Compiler arguments can be modified between each notebook cell evaluated, but this depends on
- * the [ScriptCompilationConfiguration] being updated, however, this is the default behavior.
+ * the [ScriptCompilationConfiguration] being updated. However, this is the default behavior.
  *
  * @see compilerOptions
  * @see org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration

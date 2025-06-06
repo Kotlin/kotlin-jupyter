@@ -12,6 +12,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
@@ -464,19 +465,7 @@ class ReplForJupyterImpl(
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
-            val result = evalExImpl(evalData)
-            // when (result) {
-            //    is EvalResultEx.Success -> {
-            //        val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
-            //        val dir = File("/Users/christian.melchior/k2-repl")
-            //        dir.mkdirs()
-            //        val classesDir = dir.resolve("classes")
-            //        val sourcesDir = dir.resolve("sources")
-            //        val names = deserializer.deserializeAndSave(result.metadata.compiledData, classesDir.toPath(), sourcesDir.toPath())
-            //    }
-            //    else -> { }
-            // }
-            result
+            evalExImpl(evalData)
         }
     }
 
