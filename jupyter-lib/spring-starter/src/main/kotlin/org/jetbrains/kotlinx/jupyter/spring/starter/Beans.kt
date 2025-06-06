@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
-import jupyter.kotlin.USE
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import java.util.Locale

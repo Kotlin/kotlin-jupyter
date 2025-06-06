@@ -37,7 +37,8 @@ class JupyterSymbolProcessor(
             .getAllFiles()
             .flatMap { it.declarations }
             .filterIsInstance<KSClassDeclaration>()
-            .asParallelStream()
+            // This breaks latest version of KSP (2.2.0-RC2-2.0.1), so disable for now.
+            //.asParallelStream()
             .forEach(::processClass)
 
         return emptyList()
