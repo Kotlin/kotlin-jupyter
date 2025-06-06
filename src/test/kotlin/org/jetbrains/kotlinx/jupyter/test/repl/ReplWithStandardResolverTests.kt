@@ -11,7 +11,6 @@ import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
@@ -23,7 +22,6 @@ import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
-import org.jetbrains.kotlinx.jupyter.test.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled

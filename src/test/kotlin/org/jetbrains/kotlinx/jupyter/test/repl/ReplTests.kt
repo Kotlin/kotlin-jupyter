@@ -30,6 +30,7 @@ import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
 import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Disabled
@@ -957,5 +958,18 @@ class ReplTests : AbstractSingleReplTest() {
             ReplCompilerMode.K1 -> res.renderedValue shouldBe "Hello"
             ReplCompilerMode.K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
         }
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77470/K2-Repl-Lazy-Properties-crash-code-generation
+    @Test
+    fun testLazyProperties() {
+        val res =
+            eval(
+                """
+                val foo by lazy { 42 }
+                foo
+                """.trimIndent(),
+            )
+        res.renderedValue shouldBe 42
     }
 }

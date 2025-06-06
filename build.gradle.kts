@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
 import org.jetbrains.kotlinx.publisher.developer
 import org.jetbrains.kotlinx.publisher.githubRepo
+import java.util.Properties
 
 plugins {
     id("build.plugins.main")
@@ -34,10 +35,15 @@ ktlint {
     }
 }
 
+val sharedProps =
+    Properties().apply {
+        load(File(rootDir, "shared.properties").inputStream())
+    }
+
 repositories {
     mavenCentral()
-    maven("https://packages.jetbrains.team/maven/p/kt/dev")
-    maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+    maven(sharedProps.getProperty("kotlin.repository"))
+    maven(sharedProps.getProperty("kotlin.ds.repository"))
     maven {
         name = "intellij-deps"
         url = uri("https://www.jetbrains.com/intellij-repository/releases/")

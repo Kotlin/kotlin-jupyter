@@ -17,6 +17,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
@@ -779,7 +780,6 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             // Body cannot be serialized, and will throw exception in generated code
             http.get("https://github.com/Kotlin/kotlin-jupyter").body<User>()
             """.trimIndent()
-
         doExecute(
             code,
             hasResult = false,
@@ -788,35 +788,20 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 message.type shouldBe MessageType.ERROR
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
-                content.name shouldBe "io.ktor.serialization.JsonConvertException"
-                content.value shouldBe
-                    "Illegal input: Field 'id' is required for type with serial name 'Line_6_jupyter.User', but it was missing at path: \$"
-        doExecute(
-            code,
-            hasResult = false,
-            ioPubChecker = { ioPubSocket ->
-                val message = ioPubSocket.receiveMessage()
-                message.type shouldBe MessageType.ERROR
-                val content = message.content
-                content.shouldBeTypeOf<ExecuteErrorReply>()
-                content.name shouldBe "io.ktor.serialization.JsonConvertException"
-                content.value shouldBe
-                    "Illegal input: Field 'id' is required for type with serial name " +
-                    "'Line_6_jupyter.User', but it was missing at path: $"
-        when (kernelConfig.replCompilerMode) {
-            ReplCompilerMode.K1 -> {
-                doExecute(
-                    code,
-                    hasResult = false,
-                    ioPubChecker = { ioPubSocket ->
-                        val message = ioPubSocket.receiveMessage()
-                        message.type shouldBe MessageType.ERROR
-                        val content = message.content
-                        content.shouldBeTypeOf<ExecuteErrorReply>()
+                when (kernelConfig.replCompilerMode) {
+                    ReplCompilerMode.K1 -> {
                         content.name shouldBe "io.ktor.serialization.JsonConvertException"
                         content.value shouldBe
-                            "Illegal input: Field 'id' is required for type with serial name 'Line_6_jupyter.User', but it was missing at path: \$"
-
+                            "Illegal input: Field 'id' is required for type with serial name " +
+                            "'Line_6_jupyter.User', but it was missing at path: $"
+                    }
+                    ReplCompilerMode.K2 -> {
+                        // See https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
+                        content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException"
+                    }
+                }
+            },
+        )
     }
 
     @Test
@@ -980,9 +965,19 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
             val test
                 @JvmName("customGetter")
                 get() = "Hello"
+            test
             """.trimIndent()
-        val result = doExecute(code, hasResult = false)
-        assertNull(result)
+        when (kernelConfig.replCompilerMode) {
+            ReplCompilerMode.K1 -> {
+                val res = doExecute(code) as JsonObject
+                assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
+            }
+            ReplCompilerMode.K2 -> {
+                // This should be fixed by KT-76508
+                val res = doExecute(code) as JsonObject
+                res["text/plain"]?.jsonPrimitive?.content shouldBe "null"
+            }
+        }
     }
 
     // K2 Compose: It still isn't 100% we want Compose directly in the kernel

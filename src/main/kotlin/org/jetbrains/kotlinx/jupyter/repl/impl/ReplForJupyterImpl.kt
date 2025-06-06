@@ -54,6 +54,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.config.CellId
+import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
@@ -231,7 +232,7 @@ class ReplForJupyterImpl(
     private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
 
     // Used for various purposes, i.e., completion and listing errors
-    val compilerConfiguration: ScriptCompilationConfiguration =
+    private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
             scriptReceivers,
@@ -240,6 +241,7 @@ class ReplForJupyterImpl(
             replCompilerMode = compilerMode,
             loggerFactory = loggerFactory,
             body = {
+                addBaseClass<ScriptTemplateWithDisplayHelpers>()
                 implicitReceivers(ScriptTemplateWithDisplayHelpers::class)
             },
         ).with {
@@ -296,7 +298,10 @@ class ReplForJupyterImpl(
                 notebook.intermediateClassLoader = intermediateClassLoader
                 jvm {
                     val scriptClassloader =
-                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), intermediateClassLoader)
+                        URLClassLoader(
+                            scriptClasspath.map { it.toURI().toURL() }.toTypedArray(),
+                            intermediateClassLoader,
+                        )
                     baseClassLoader(scriptClassloader)
                 }
             }
@@ -459,7 +464,19 @@ class ReplForJupyterImpl(
 
     override fun evalEx(evalData: EvalRequestData): EvalResultEx {
         return withEvalContext {
-            evalExImpl(evalData)
+            val result = evalExImpl(evalData)
+            // when (result) {
+            //    is EvalResultEx.Success -> {
+            //        val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
+            //        val dir = File("/Users/christian.melchior/k2-repl")
+            //        dir.mkdirs()
+            //        val classesDir = dir.resolve("classes")
+            //        val sourcesDir = dir.resolve("sources")
+            //        val names = deserializer.deserializeAndSave(result.metadata.compiledData, classesDir.toPath(), sourcesDir.toPath())
+            //    }
+            //    else -> { }
+            // }
+            result
         }
     }
 

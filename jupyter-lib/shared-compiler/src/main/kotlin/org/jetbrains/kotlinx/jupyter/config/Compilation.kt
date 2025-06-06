@@ -32,6 +32,7 @@ import kotlin.script.experimental.host.getScriptingClass
 import kotlin.script.experimental.host.with
 import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
 import kotlin.script.experimental.jvm.JvmGetScriptingClass
+import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.PropertiesCollection
@@ -131,5 +132,27 @@ fun getCompilationConfiguration(
         }
 
         body()
+    }
+}
+
+// Do not rename this method for backwards compatibility with IDEA.
+inline fun <reified T> ScriptCompilationConfiguration.Builder.addBaseClass() {
+    val kClass = T::class
+    defaultImports.append(kClass.java.name)
+    // In Kotlin 1.9, the classloader used was chosen by `ScriptDefinition.contextClassLoader`,
+    // which used the one from `baseClass`, but in the K2 Repl, base classes are no longer
+    // supported. Instead, APIs are injected through an implicit receiver. But this also broke
+    // using the correct class loader.
+    //
+    // `ScriptDefinition` falls back to `ScriptingHostConfiguration[jvm.baseClassLoader]`, so
+    // for now, we just override the setting here. But it is unclear if this is safe in all
+    // use cases.
+    //
+    // This seems to mostly impact Embedded Mode inside IDEA. Unit tests did not catch the
+    // problem.
+    hostConfiguration.update {
+        it.with {
+            this[jvm.baseClassLoader] = kClass.java.classLoader
+        }
     }
 }
