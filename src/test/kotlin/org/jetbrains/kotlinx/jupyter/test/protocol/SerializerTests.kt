@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataErrorReply
@@ -16,6 +17,10 @@ class SerializerTests {
         val exception = Exception("BOOM")
         val originalMessage = UpdateClientMetadataErrorReply(exception)
         val json = Json.encodeToString(UpdateClientMetadataReplySerializer, originalMessage)
+
+        json shouldContain "\"ename\":\"Exception\""
+        json shouldContain "\"evalue\":\"BOOM\""
+
         val deserializedMessage = Json.decodeFromString(UpdateClientMetadataReplySerializer, json)
         deserializedMessage.shouldBeTypeOf<UpdateClientMetadataErrorReply>()
         originalMessage.status shouldBe deserializedMessage.status

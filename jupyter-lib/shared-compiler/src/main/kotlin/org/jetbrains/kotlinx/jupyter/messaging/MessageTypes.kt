@@ -195,7 +195,9 @@ class ExecuteAbortReply : AbortReplyContent(), ExecuteReply
 class ExecuteErrorReply(
     @SerialName("execution_count")
     val executionCount: ExecutionCount,
+    @SerialName("ename")
     override val name: String,
+    @SerialName("evalue")
     override val value: String,
     /**
      * The full error, line by line, that will be displayed to the user.
@@ -248,7 +250,9 @@ class CompleteRequest(
 
 @Serializable
 class CompleteErrorReply(
+    @SerialName("ename")
     override val name: String,
+    @SerialName("evalue")
     override val value: String,
     override val traceback: List<String>,
 ) : ErrorReplyContent()
@@ -323,7 +327,9 @@ class UpdateClientMetadataSuccessReply : OkReplyContent(), UpdateClientMetadataR
 
 @Serializable
 class UpdateClientMetadataErrorReply(
+    @SerialName("ename")
     override val name: String,
+    @SerialName("evalue")
     override val value: String,
     override val traceback: List<String>,
 ) : ErrorReplyContent(), UpdateClientMetadataReply {

@@ -42,6 +42,8 @@ sealed class MessageReplyContent(
 @Serializable
 abstract class OkReplyContent : MessageReplyContent(MessageStatus.OK)
 
+// @SerialName annotations are not inherited by subclasses, they must be manually added on every subclass
+// They are just here for documentation purposes. See https://github.com/Kotlin/kotlinx.serialization/issues/2054
 @Serializable
 abstract class ErrorReplyContent : MessageReplyContent(MessageStatus.ERROR) {
     @SerialName("ename")
