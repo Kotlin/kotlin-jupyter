@@ -99,6 +99,9 @@ dependencies {
     testImplementation(libs.test.kotlintest.assertions)
 
 
+    testImplementation(projects.cliLauncher)
+    testImplementation("org.java-websocket:Java-WebSocket:1.5.7")
+
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)

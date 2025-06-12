@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -13,13 +12,13 @@ import java.io.File
  */
 @AutoConfiguration
 @EnableConfigurationProperties(
-    SpringKotlinJupyterKernelPorts::class,
+    SpringKotlinJupyterKernelPort::class,
     SpringKotlinJupyterClient::class,
 )
 open class KotlinJupyterAutoConfiguration {
     @Bean
     open fun kernelService(
-        servicePorts: SpringKotlinJupyterKernelPorts,
+        servicePort: SpringKotlinJupyterKernelPort,
         client: SpringKotlinJupyterClient,
     ): KotlinJupyterKernelService {
         val scriptClasspath =
@@ -27,19 +26,10 @@ open class KotlinJupyterAutoConfiguration {
                 .split(File.pathSeparator)
                 .map { File(it) }
 
-        val ports =
-            ZmqKernelPorts { portType ->
-                when (portType) {
-                    JupyterSocketType.HB -> servicePorts.hb
-                    JupyterSocketType.SHELL -> servicePorts.shell
-                    JupyterSocketType.CONTROL -> servicePorts.control
-                    JupyterSocketType.STDIN -> servicePorts.stdin
-                    JupyterSocketType.IOPUB -> servicePorts.iopub
-                }
-            }
+        val port = servicePort.websocketPort
 
         return KotlinJupyterKernelService(
-            kernelPorts = ports,
+            kernelPorts = WsKernelPorts(port),
             scriptClasspath = scriptClasspath,
             homeDir = null,
             clientType = client.type,

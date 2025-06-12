@@ -56,7 +56,7 @@ class KotlinJupyterKernelService(
             )
         while (shouldRestart) {
             try {
-                runZmqServer(replSettings)
+                runWebSocketServer(replSettings)
             } catch (_: InterruptedException) {
             }
         }
