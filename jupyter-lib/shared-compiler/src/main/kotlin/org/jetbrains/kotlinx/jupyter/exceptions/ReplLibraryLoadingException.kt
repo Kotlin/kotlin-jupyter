@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.exceptions
 
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+
 class ReplLibraryLoadingException(
     libraryName: String? = null,
     message: String? = null,

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.exceptions
 
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplUnwrappedException
 import java.io.PrintWriter
 
 class CompositeReplException(
@@ -46,10 +48,17 @@ fun Throwable.getCauses(): List<Throwable> {
     return generateSequence(cause) { it.cause }.toList()
 }
 
+fun Throwable.throwAsLibraryException(part: LibraryProblemPart): Nothing {
+    throw when (this) {
+        is ReplUnwrappedException -> this
+        else -> ReplLibraryException(part = part, cause = this)
+    }
+}
+
 fun Collection<Throwable>.throwLibraryException(part: LibraryProblemPart) {
     when (size) {
         0 -> return
-        1 -> throw ReplLibraryException(part = part, cause = first())
+        1 -> first().throwAsLibraryException(part)
         else -> throw CompositeReplException(this, part)
     }
 }

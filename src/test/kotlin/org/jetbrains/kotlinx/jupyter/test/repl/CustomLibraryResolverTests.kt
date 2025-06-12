@@ -11,12 +11,12 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declare
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.textResult
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptor
@@ -307,8 +307,8 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             "lib" to
                 library {
                     import<TestAnnotation>()
-                    onClassAnnotation<TestAnnotation> {
-                        val annotatedClassNames = it.map { it.simpleName }.joinToString { "\"$it\"" }
+                    onClassAnnotation<TestAnnotation> { classes ->
+                        val annotatedClassNames = classes.map { it.simpleName }.joinToString { "\"$it\"" }
                         scheduleExecution("val annotatedClasses = listOf($annotatedClassNames)")
                     }
                 }

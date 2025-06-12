@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
+import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.sequences.shouldBeEmpty
@@ -16,14 +17,18 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
-import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplUnwrappedExceptionImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
 import org.jetbrains.kotlinx.jupyter.generateDiagnosticFromAbsolute
+import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
+import org.jetbrains.kotlinx.jupyter.messaging.toExecuteErrorReply
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
@@ -754,6 +759,63 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     @Test
+    fun `unwrapped exceptions thrown in the wild or in library code shouldn't be wrapped, others should be wrapped`() {
+        val wrappedExceptionClassName = ReplException::class.qualifiedName!!
+        val unwrappedExceptionClassName = ReplUnwrappedExceptionImpl::class.qualifiedName!!
+        val message = "sorry I was thrown"
+
+        eval(
+            """
+            throw $unwrappedExceptionClassName("$message")
+            """.trimIndent(),
+        ).let { result ->
+            val exception =
+                result.shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error.shouldBeInstanceOf<ReplEvalRuntimeException>()
+            val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
+            errorReply.name shouldBe unwrappedExceptionClassName
+            errorReply.value shouldBe message
+            errorReply.traceback.shouldHaveSingleElement(message)
+        }
+
+        eval(
+            """
+            USE {
+                onLoaded {
+                    throw $unwrappedExceptionClassName("$message")
+                }
+            }
+            """.trimIndent(),
+        ).let { result ->
+            val exception =
+                result.shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error.shouldBeInstanceOf<ReplUnwrappedExceptionImpl>()
+            val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
+            errorReply.name shouldBe unwrappedExceptionClassName
+            errorReply.value shouldBe message
+            errorReply.traceback.shouldHaveSingleElement(message)
+        }
+
+        eval(
+            """
+            USE {
+                onLoaded {
+                    throw $wrappedExceptionClassName("$message")
+                }
+            }
+            """.trimIndent(),
+        ).let { result ->
+            val exception =
+                result.shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error.shouldBeInstanceOf<ReplLibraryException>()
+            val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
+            errorReply.name shouldBe ReplLibraryException::class.qualifiedName
+            errorReply.value shouldBe "The problem is found in one of the loaded libraries: check library init codes"
+            errorReply.traceback.shouldHaveAtLeastSize(5)
+        }
+    }
+
+    @Test
     fun `intermediate classloader is available via notebook API`() {
         val res = eval("notebook.intermediateClassLoader")
         val intermediateClassLoader = res.renderedValue.shouldBeInstanceOf<DelegatingClassLoader>()
@@ -826,13 +888,12 @@ class ReplTests : AbstractSingleReplTest() {
             class TestObject() { fun checkReceiver(block: ReceiverObject.() -> Unit) { block(ReceiverObject()) } }
             """.trimIndent(),
         )
-        val res =
-            eval(
-                """
-                val obj = TestObject()
-                obj.checkReceiver { helloFromReceiver() }
-                """.trimIndent(),
-            )
+        eval(
+            """
+            val obj = TestObject()
+            obj.checkReceiver { helloFromReceiver() }
+            """.trimIndent(),
+        )
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-75946/K2-Repl-Using-a-type-alias-as-property-type-crashes-the-compiler

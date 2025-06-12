@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.libraries
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 
 fun parseLibraryDescriptor(json: String): LibraryDescriptor {
     return try {

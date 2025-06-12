@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.exceptions
 
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+
 class ReplLibraryException(
     libraryName: String? = null,
     val part: LibraryProblemPart,
@@ -35,6 +37,6 @@ fun <T> rethrowAsLibraryException(
     return try {
         action()
     } catch (e: Throwable) {
-        throw ReplLibraryException(part = part, cause = e)
+        e.throwAsLibraryException(part)
     }
 }

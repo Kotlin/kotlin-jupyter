@@ -185,7 +185,6 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                         classes.add(kClass)
                         return JupyterCompiler.Result(result, newEvaluationConfiguration)
                     }
-                    else -> throw IllegalStateException("Impossible value: $kClassWithDiagnostics")
                 }
             }
         }

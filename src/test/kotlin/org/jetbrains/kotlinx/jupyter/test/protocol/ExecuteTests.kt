@@ -17,7 +17,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -80,7 +79,6 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.test.Ignore
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -704,11 +702,11 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 when (kernelConfig.replCompilerMode) {
                     ReplCompilerMode.K1 -> {
                         content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                        content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                     ReplCompilerMode.K2 -> {
                         content.traceback shouldContain "\tat Line_0_jupyter.\$\$eval(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                        content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                 }
             },
@@ -748,12 +746,12 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                     ReplCompilerMode.K1 -> {
                         content.traceback shouldContain $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
-                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                        content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                     ReplCompilerMode.K2 -> {
                         content.traceback shouldContain $$"\tat Line_0_jupyter.__eval$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain $$$"\tat Line_1_jupyter.$$eval(Line_1.jupyter.kts:1) at Cell In[2], line 1"
-                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                        content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                 }
             },

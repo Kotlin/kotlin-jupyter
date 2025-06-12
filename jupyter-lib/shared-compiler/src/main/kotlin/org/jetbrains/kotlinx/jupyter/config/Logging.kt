@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.config
 
-import org.jetbrains.kotlinx.jupyter.exceptions.renderException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.renderException
 import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 import org.slf4j.Logger
 import java.io.PrintStream

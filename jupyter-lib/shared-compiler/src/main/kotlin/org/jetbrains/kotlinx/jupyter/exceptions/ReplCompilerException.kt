@@ -2,6 +2,8 @@ package org.jetbrains.kotlinx.jupyter.exceptions
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplExceptionCause
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -35,7 +37,7 @@ class ReplCompilerException(
     val errorResult: ResultWithDiagnostics.Failure? = null,
     message: String? = null,
     metadata: CellErrorMetaData? = null,
-) : ReplException(
+) : ReplExceptionCause, ReplException(
         enhanceReplCompilerError(metadata, message ?: errorResult?.getErrors() ?: ""),
         errorResult?.reports?.map { it.exception }?.firstOrNull(),
     ) {
@@ -61,6 +63,16 @@ class ReplCompilerException(
     }
 
     override fun render() = message
+
+    override fun StringBuilder.appendCause() {
+        appendLine("Error compiling code:")
+        appendLine(failedCode)
+        errorResult?.let { errors ->
+            appendLine("\nErrors:")
+            appendLine(errors.getErrors())
+            appendLine()
+        }
+    }
 }
 
 fun <T> ResultWithDiagnostics<T>.getErrors(): String {

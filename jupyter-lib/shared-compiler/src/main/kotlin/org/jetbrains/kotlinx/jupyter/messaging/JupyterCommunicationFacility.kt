@@ -1,14 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.receiveMessage
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.Provider
 
 interface JupyterCommunicationFacility {
@@ -73,12 +70,8 @@ fun JupyterCommunicationFacility.sendError(
     executionCount: ExecutionCount,
     startedTime: String,
 ) {
-    val replyContent: MessageReplyContent =
-        when (val ex = response.exception) {
-            null -> toAbortErrorReply(executionCount, response.stdErr)
-            is ReplEvalRuntimeException -> ex.toExecuteErrorReply(executionCount)
-            else -> ex.toExecuteErrorReply(executionCount)
-        }
+    val exception = response.exception ?: ReplInterruptedException(response.stdErr)
+    val replyContent: MessageReplyContent = exception.toExecuteErrorReply(executionCount)
     val replyMetadata =
         ExecuteReplyMetadata(
             true,
@@ -97,17 +90,6 @@ fun JupyterCommunicationFacility.sendError(
 
     socketManager.iopub.sendMessage(reply)
 }
-
-fun toAbortErrorReply(
-    executionCount: ExecutionCount,
-    message: String?,
-) = ExecuteErrorReply(
-    executionCount,
-    ReplInterruptedException::class.java.canonicalName,
-    message.orEmpty(),
-    listOf(message ?: EXECUTION_INTERRUPTED_MESSAGE),
-    Json.EMPTY,
-)
 
 fun JupyterCommunicationFacility.getInput(
     prompt: String = DefaultPromptOptions.PROMPT,

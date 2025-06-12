@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.repl.impl.k2
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerImpl
