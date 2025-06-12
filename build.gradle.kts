@@ -55,6 +55,7 @@ repositories {
     }
 }
 
+@Suppress("ktlint:standard:chain-method-continuation")
 dependencies {
     // Required by K2KJvmReplCompilerWithCompletion.
     // Should be moved to Kotlin Compiler eventually once complete
@@ -101,10 +102,7 @@ dependencies {
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)
-    deploy(
-        libs.kotlin.dev.scriptRuntime
-            .get(),
-    )
+    deploy(libs.kotlin.dev.scriptRuntime.get())
 
     kernelShadowed(projects.kotlinJupyterKernel)
 
