@@ -13,15 +13,13 @@ import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketImpl
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
-import org.zeromq.ZMQ
 import java.io.File
 import java.util.*
 
@@ -32,10 +30,10 @@ import java.util.*
  * as the test. The default is to run in a separate one (similar to how it would work in
  * production). To enable debugging, set this value to `false`
  */
-abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean) {
+abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean, generatePorts: () -> KernelPorts = ::createRandomZmqKernelPorts) {
     protected val kernelConfig =
         createKotlinKernelConfig(
-            ports = createRandomZmqKernelPorts(),
+            ports = generatePorts(),
             signatureKey = "abc",
             scriptClasspath = classpath,
             homeDir = File(""),
@@ -71,16 +69,15 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
 
     fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage()!!.toMessage()
 
-    fun JupyterReceiveSocket.receiveStatusReply(): StatusMessage {
-        (this as? JupyterZmqSocketImpl)?.name shouldBe JupyterZmqSocketInfo.IOPUB.name
-        receiveMessage().apply {
+    fun receiveStatusReply(iopubSocket: JupyterReceiveSocket): StatusMessage {
+        iopubSocket.receiveMessage().apply {
             return content.shouldBeTypeOf()
         }
     }
 
-    inline fun JupyterReceiveSocket.wrapActionInBusyIdleStatusChange(action: () -> Unit) {
-        receiveStatusReply().status shouldBe KernelStatus.BUSY
+    inline fun wrapActionInBusyIdleStatusChange(iopubSocket: JupyterReceiveSocket, action: () -> Unit) {
+        receiveStatusReply(iopubSocket).status shouldBe KernelStatus.BUSY
         action()
-        receiveStatusReply().status shouldBe KernelStatus.IDLE
+        receiveStatusReply(iopubSocket).status shouldBe KernelStatus.IDLE
     }
 }

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
@@ -81,12 +83,17 @@ fun JupyterCallbackBasedSocket.sendReceive(messageBufferCapacity: Int = 256): Ju
     object : JupyterSendReceiveSocket, JupyterSendSocket by this {
         val receivableMessages = ArrayBlockingQueue<RawMessage>(messageBufferCapacity)
 
+        private val prettyJson = Json { this.prettyPrint = true }
+
         init {
-            onRawMessage { receivableMessages.put(it) }
+            onRawMessage {
+                System.err.println(prettyJson.encodeToString(it.data))
+                receivableMessages.put(it)
+            }
         }
 
         override fun receiveRawMessage(): RawMessage? {
-            return receivableMessages.poll()
+            return receivableMessages.take()
         }
     }
 
