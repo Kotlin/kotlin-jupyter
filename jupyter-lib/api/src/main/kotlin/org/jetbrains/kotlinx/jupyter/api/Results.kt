@@ -46,7 +46,10 @@ interface Renderable {
 /**
  * Wrapper for in-memory results that also tracks its corresponding mime-type.
  */
-data class InMemoryResult(val mimeType: String, val result: Any?)
+data class InMemoryResult(
+    val mimeType: String,
+    val result: Any?,
+)
 
 /**
  * Display result that may be converted to JSON for `display_data`
@@ -168,9 +171,7 @@ class InMemoryMimeTypedResult(
     override fun toJson(
         additionalMetadata: JsonObject,
         overrideId: String?,
-    ): JsonObject {
-        throw UnsupportedOperationException("This method is not supported for in-memory values")
-    }
+    ): JsonObject = throw UnsupportedOperationException("This method is not supported for in-memory values")
 }
 
 /**
@@ -181,8 +182,12 @@ class MimeTypedResult(
     private val mimeData: Map<String, String>,
     isolatedHtml: Boolean = false,
     id: String? = null,
-) : Map<String, String> by mimeData,
-    MimeTypedResultEx(Json.encodeToJsonElement(mimeData), id, standardMetadataModifiers(isolatedHtml = isolatedHtml))
+) : MimeTypedResultEx(
+        Json.encodeToJsonElement(mimeData),
+        id,
+        standardMetadataModifiers(isolatedHtml = isolatedHtml),
+    ),
+    Map<String, String> by mimeData
 
 open class MimeTypedResultEx(
     private val mimeData: JsonElement,
@@ -309,9 +314,8 @@ fun JSON(
 private val markdownBackticksRegex = Regex("`{3,}")
 
 /** Return minimum number of backticks that are required to wrap [code] in Markdown code block without escaping it. */
-private fun markdownCodeBlockBackticksCount(code: String): Int {
-    return markdownBackticksRegex.findAll(code).maxOfOrNull { it.value.length + 1 } ?: 3
-}
+private fun markdownCodeBlockBackticksCount(code: String): Int =
+    markdownBackticksRegex.findAll(code).maxOfOrNull { it.value.length + 1 } ?: 3
 
 @Suppress("unused", "FunctionName")
 fun JSON(
@@ -329,10 +333,12 @@ fun htmlResult(
     isolated: Boolean = false,
 ) = MimeTypedResult(mapOf(MimeTypes.HTML to text), isolated)
 
-data class HtmlData(val style: String, val body: String, val script: String) {
-    override fun toString(): String {
-        return toString(null)
-    }
+data class HtmlData(
+    val style: String,
+    val body: String,
+    val script: String,
+) {
+    override fun toString(): String = toString(null)
 
     @Language("html")
     fun toString(colorScheme: ColorScheme?): String =
@@ -438,13 +444,12 @@ data class HtmlData(val style: String, val body: String, val script: String) {
  *
  * @param data
  */
-fun Notebook.renderHtmlAsIFrameIfNeeded(data: HtmlData): MimeTypedResult {
-    return if (jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK) {
+fun Notebook.renderHtmlAsIFrameIfNeeded(data: HtmlData): MimeTypedResult =
+    if (jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK) {
         data.toIFrame(currentColorScheme)
     } else {
         data.toSimpleHtml(currentColorScheme)
     }
-}
 
 object MimeTypes {
     const val HTML = "text/html"

@@ -29,7 +29,12 @@ fun Collection<CommHandler>.requireUniqueTargets() {
     val commHandlers = this
     val uniqueTargets = commHandlers.distinctBy { it.targetId }.size
     require(uniqueTargets == commHandlers.size) {
-        val duplicates = commHandlers.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+        val duplicates =
+            commHandlers
+                .groupingBy { it }
+                .eachCount()
+                .filter { it.value > 1 }
+                .keys
         "Duplicated bundled comm targets found! $duplicates"
     }
 }

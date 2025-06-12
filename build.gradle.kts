@@ -29,10 +29,9 @@ val ideScriptClasspathShadowed: Configuration by configurations.creating
 val spaceUsername: String by properties
 val spaceToken: String by properties
 
+// Changes here should also be reflected in `KernelBuildConfigurator.setupKtLintForAllProjects()`
 ktlint {
     version.set(libs.versions.ktlint.get())
-    // TEMPORARY CHANGE: Until K2 REPL has been merged to master to avoid too many changes at once.
-    ignoreFailures.set(true)
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
     }
@@ -99,11 +98,13 @@ dependencies {
     testImplementation(libs.test.kotlintest.assertions)
     testImplementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
 
-
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)
-    deploy(libs.kotlin.dev.scriptRuntime.get())
+    deploy(
+        libs.kotlin.dev.scriptRuntime
+            .get(),
+    )
 
     kernelShadowed(projects.kotlinJupyterKernel)
 

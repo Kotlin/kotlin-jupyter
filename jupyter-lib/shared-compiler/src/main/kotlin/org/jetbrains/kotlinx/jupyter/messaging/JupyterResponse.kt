@@ -148,15 +148,14 @@ fun Throwable.toErrorJupyterResponse(metadata: EvaluatedSnippetMetadata? = null)
     return ErrorJupyterResponse(exception.render(), exception, metadata)
 }
 
-fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply {
-    return ExecuteErrorReply(
+fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply =
+    ExecuteErrorReply(
         executionCount,
         javaClass.canonicalName,
         message ?: "",
         messageAndStackTrace(false).lines(),
         getAdditionalInfoJson() ?: Json.EMPTY,
     )
-}
 
 /**
  * For errors in the user's REPL code, return a reply that includes the
@@ -172,20 +171,23 @@ fun ReplEvalRuntimeException.toExecuteErrorReply(executionCount: ExecutionCount)
             // So by printing the full stacktrace as the first thing, we ensure that it gets
             // hidden by default and only the top exception type/message + cell information
             // is shown to the user.
-            userException.stackTraceToString().lines().mapIndexed { index, line ->
-                // Account for the first line being the exception type + message and last (empty) line
-                // being created by stackTraceToString()
-                val errorMetadata = if (index >= 0 && index < cellErrorLocations.size) cellErrorLocations[index] else null
-                errorMetadata?.let { metadata ->
-                    line +
-                        when (metadata.lineNumber <= metadata.visibleSourceLines) {
-                            true -> " at Cell In[${metadata.jupyterRequestCount}], line ${metadata.lineNumber}"
-                            false -> " at Cell In[${metadata.jupyterRequestCount}]"
-                        }
-                } ?: line
-            }.forEach {
-                if (it.isNotEmpty()) appendLine(it)
-            }
+            userException
+                .stackTraceToString()
+                .lines()
+                .mapIndexed { index, line ->
+                    // Account for the first line being the exception type + message and last (empty) line
+                    // being created by stackTraceToString()
+                    val errorMetadata = if (index >= 0 && index < cellErrorLocations.size) cellErrorLocations[index] else null
+                    errorMetadata?.let { metadata ->
+                        line +
+                            when (metadata.lineNumber <= metadata.visibleSourceLines) {
+                                true -> " at Cell In[${metadata.jupyterRequestCount}], line ${metadata.lineNumber}"
+                                false -> " at Cell In[${metadata.jupyterRequestCount}]"
+                            }
+                    } ?: line
+                }.forEach {
+                    if (it.isNotEmpty()) appendLine(it)
+                }
             appendLine()
             appendLine("${userException.javaClass.canonicalName}: ${userException.message}")
             val topError = cellErrorLocations.firstOrNull { it != null }

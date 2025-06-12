@@ -22,9 +22,7 @@ object NoOpInMemoryReplResultsHolder : InMemoryReplResultsHolder {
         // Do nothing
     }
 
-    override fun removeReplResult(id: String): Boolean {
-        return false
-    }
+    override fun removeReplResult(id: String): Boolean = false
 
     override val size: Int = 0
 }

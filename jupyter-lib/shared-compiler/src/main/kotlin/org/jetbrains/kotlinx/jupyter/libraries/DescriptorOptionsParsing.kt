@@ -14,15 +14,12 @@ class LibraryDescriptorGlobalOptionsImpl(
     @Transient
     private val ignoredPropertyRegExps = ignoredPropertyPatterns.orEmpty().map { Regex(it) }
 
-    override fun isPropertyIgnored(propertyName: String): Boolean {
-        return ignoredPropertyRegExps.any { it.matches(propertyName) }
-    }
+    override fun isPropertyIgnored(propertyName: String): Boolean = ignoredPropertyRegExps.any { it.matches(propertyName) }
 }
 
-fun parseLibraryDescriptorGlobalOptions(json: String): LibraryDescriptorGlobalOptions {
-    return try {
+fun parseLibraryDescriptorGlobalOptions(json: String): LibraryDescriptorGlobalOptions =
+    try {
         Json.decodeFromString<LibraryDescriptorGlobalOptionsImpl>(json)
     } catch (e: SerializationException) {
         throw ReplException("Error during descriptor global options deserialization. Options text:\n$json", e)
     }
-}

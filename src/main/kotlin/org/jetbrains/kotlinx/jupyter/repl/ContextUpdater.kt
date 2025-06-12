@@ -59,7 +59,9 @@ class ContextUpdater(
             for (method in methods) {
                 if (
                     objectMethods.contains(method) ||
-                    method.name == "main" && Modifier.isStatic(method.modifiers) || // K1 Repl entry point for running a snippet.
+                    method.name == "main" &&
+                    Modifier.isStatic(method.modifiers) ||
+                    // K1 Repl entry point for running a snippet.
                     method.name == "$\$eval" // K2 Repl method containing the snippet code.
                 ) {
                     continue
@@ -92,8 +94,10 @@ class ContextUpdater(
         for (field in javaFields) {
             val fieldName = field.name
             if (
-                fieldName.contains("$\$implicitReceiver") || // ImplicitReceivers injected through ScriptCompilationConfiguration
-                fieldName.contains("script$") || // TODO What is this?
+                fieldName.contains("$\$implicitReceiver") ||
+                // ImplicitReceivers injected through ScriptCompilationConfiguration
+                fieldName.contains("script$") ||
+                // TODO What is this?
                 fieldName.contains("INSTANCE") // K2 REPL reference to the script instance
             ) {
                 continue

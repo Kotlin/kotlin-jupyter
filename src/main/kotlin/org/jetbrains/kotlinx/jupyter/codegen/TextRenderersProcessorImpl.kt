@@ -13,9 +13,10 @@ class TextRenderersProcessorImpl :
     TextRenderersProcessorWithPreventingRecursion {
     private val cache = mutableListOf<CacheEntry>()
 
-    override fun registeredRenderers(): List<TextRendererWithPriority> {
-        return extensions.elementsWithPriority().map { TextRendererWithPriority(it.first, it.second) }
-    }
+    override fun registeredRenderers(): List<TextRendererWithPriority> =
+        extensions.elementsWithPriority().map {
+            TextRendererWithPriority(it.first, it.second)
+        }
 
     override fun render(value: Any?): String {
         val cacheIndex = cache.indexOfFirst { it.k === value }

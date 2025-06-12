@@ -123,9 +123,7 @@ fun Notebook.animate(
         object : Iterator<Frame<*>> {
             private var isFirst = true
 
-            override fun hasNext(): Boolean {
-                return iterator.hasNext()
-            }
+            override fun hasNext(): Boolean = iterator.hasNext()
 
             override fun next(): Frame<*> {
                 val content = iterator.next()

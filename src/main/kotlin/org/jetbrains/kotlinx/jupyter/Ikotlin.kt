@@ -138,7 +138,12 @@ fun embedKernel(
     resolutionInfoProviderFactory: ResolutionInfoProviderFactory?,
     scriptReceivers: List<Any>? = null,
 ) {
-    val scriptClasspath = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map { File(it) }
+    val scriptClasspath =
+        System
+            .getProperty("java.class.path")
+            .split(File.pathSeparator)
+            .toTypedArray()
+            .map { File(it) }
     val kernelConfig =
         KernelArgs(
             cfgFile = cfgFile,

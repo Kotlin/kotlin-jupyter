@@ -9,7 +9,9 @@ import java.io.Closeable
 class JupyterConnectionImpl(
     private val loggerFactory: KernelLoggerFactory,
     private val config: KernelConfig,
-) : AbstractJupyterConnection(), JupyterConnectionInternal, Closeable {
+) : AbstractJupyterConnection(),
+    JupyterConnectionInternal,
+    Closeable {
     override val socketManager: JupyterSocketManager =
         JupyterSocketManagerImpl { socketInfo, context ->
             openServerSocket(

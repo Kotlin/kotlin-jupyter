@@ -30,9 +30,7 @@ data class Message(
             MessageFormat.encodeToString(data)
 }
 
-fun RawMessage.toMessage(): Message {
-    return Message(id, MessageFormat.decodeFromJsonElement(data))
-}
+fun RawMessage.toMessage(): Message = Message(id, MessageFormat.decodeFromJsonElement(data))
 
 fun Message.toRawMessage(): RawMessage {
     val dataJson = MessageFormat.encodeToJsonElement(data).jsonObject
@@ -83,8 +81,8 @@ fun makeHeader(
     type: MessageType,
     sessionId: String?,
     username: String?,
-): MessageHeader {
-    return MessageHeader(
+): MessageHeader =
+    MessageHeader(
         UUID.randomUUID().toString(),
         type,
         sessionId,
@@ -92,4 +90,3 @@ fun makeHeader(
         PROTOCOL_VERSION,
         ISO8601DateNow,
     )
-}

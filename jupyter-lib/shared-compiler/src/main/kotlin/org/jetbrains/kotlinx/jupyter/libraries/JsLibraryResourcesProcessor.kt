@@ -61,9 +61,7 @@ class JsLibraryResourcesProcessor(
     private fun loadResourceAsText(
         resource: LibraryResource,
         classLoader: ClassLoader,
-    ): List<ScriptModifierFunctionGenerator> {
-        return resource.bundles.map { loadBunch(it, classLoader) }
-    }
+    ): List<ScriptModifierFunctionGenerator> = resource.bundles.map { loadBunch(it, classLoader) }
 
     override fun wrapLibrary(
         resource: LibraryResource,

@@ -48,8 +48,6 @@ fun renderDotText(text: String): Image {
     return Image(stream.toByteArray(), "svg")
 }
 
-fun <T> MultiGraph<T>.render(): Image {
-    return renderDotText(dotText())
-}
+fun <T> MultiGraph<T>.render(): Image = renderDotText(dotText())
 
 fun <T> MultiGraph<T>.toHTML() = render().toHTML()

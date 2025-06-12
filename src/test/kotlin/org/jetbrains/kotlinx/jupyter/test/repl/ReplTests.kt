@@ -16,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
-import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -310,9 +309,12 @@ class ReplTests : AbstractSingleReplTest() {
             val result = repl.completeBlocking("val t = id_d", 12)
             when (repl.compilerMode) {
                 ReplCompilerMode.K1 -> {
-                    result.getOrFail().sortedRaw().any {
-                        it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
-                    }.shouldBeTrue()
+                    result
+                        .getOrFail()
+                        .sortedRaw()
+                        .any {
+                            it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+                        }.shouldBeTrue()
                 }
                 ReplCompilerMode.K2 -> {
                     // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
@@ -382,13 +384,15 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe Unit
 
         val actualErrors =
-            repl.listErrorsBlocking(
-                """
-                import kotlin.time.*
-                @OptIn(ExperimentalTime::class)
-                val mark = TimeSource.Monotonic.markNow()
-                """.trimIndent(),
-            ).errors.toList()
+            repl
+                .listErrorsBlocking(
+                    """
+                    import kotlin.time.*
+                    @OptIn(ExperimentalTime::class)
+                    val mark = TimeSource.Monotonic.markNow()
+                    """.trimIndent(),
+                ).errors
+                .toList()
 
         actualErrors.shouldBeEmpty()
     }

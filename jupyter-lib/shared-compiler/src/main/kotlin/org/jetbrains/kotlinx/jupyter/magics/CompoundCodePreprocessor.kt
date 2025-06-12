@@ -12,7 +12,10 @@ import org.jetbrains.kotlinx.jupyter.util.PriorityList
  * Containing [preprocessors]' [process] are run in reversed order: last added processors
  * are run first
  */
-class CompoundCodePreprocessor(vararg preprocessors: CodePreprocessor) : CodePreprocessor, ExtensionsProcessor<CodePreprocessor> {
+class CompoundCodePreprocessor(
+    vararg preprocessors: CodePreprocessor,
+) : CodePreprocessor,
+    ExtensionsProcessor<CodePreprocessor> {
     private val preprocessors = PriorityList<CodePreprocessor>()
 
     init {
@@ -61,11 +64,7 @@ class CompoundCodePreprocessor(vararg preprocessors: CodePreprocessor) : CodePre
         preprocessors.clear()
     }
 
-    override fun registeredExtensions(): Collection<CodePreprocessor> {
-        return preprocessors.elements()
-    }
+    override fun registeredExtensions(): Collection<CodePreprocessor> = preprocessors.elements()
 
-    override fun registeredExtensionsWithPriority(): List<Pair<CodePreprocessor, Int>> {
-        return preprocessors.elementsWithPriority()
-    }
+    override fun registeredExtensionsWithPriority(): List<Pair<CodePreprocessor, Int>> = preprocessors.elementsWithPriority()
 }

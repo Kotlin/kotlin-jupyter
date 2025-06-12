@@ -7,7 +7,8 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.AbstractExtensionsProcessor
 
 class InterruptionCallbacksProcessorImpl(
     private val hostProvider: KotlinKernelHostProvider,
-) : AbstractExtensionsProcessor<InterruptionCallback>(), InterruptionCallbacksProcessor {
+) : AbstractExtensionsProcessor<InterruptionCallback>(),
+    InterruptionCallbacksProcessor {
     override fun runCallbacks() {
         extensions.forEach { it.invoke(hostProvider.host!!) }
     }

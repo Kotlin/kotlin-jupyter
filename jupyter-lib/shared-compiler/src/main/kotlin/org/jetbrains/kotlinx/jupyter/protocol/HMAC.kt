@@ -3,7 +3,10 @@ package org.jetbrains.kotlinx.jupyter.protocol
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-class HMAC(algorithm: String, key: String) {
+class HMAC(
+    algorithm: String,
+    key: String,
+) {
     private val mac: Mac =
         Mac.getInstance(algorithm).apply {
             init(SecretKeySpec(key.toByteArray(), algorithm))

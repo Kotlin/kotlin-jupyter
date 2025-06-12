@@ -24,13 +24,10 @@ fun encodeBufferedImage(image: BufferedImage): JsonPrimitive {
     return JsonPrimitive(encodedData)
 }
 
-fun RendererFieldHandler.named(name: String): RendererFieldHandler {
-    return object : RendererFieldHandler by this {
-        override fun toString(): String {
-            return name
-        }
+fun RendererFieldHandler.named(name: String): RendererFieldHandler =
+    object : RendererFieldHandler by this {
+        override fun toString(): String = name
     }
-}
 
 val bufferedImageRenderer: RendererFieldHandler =
     createRenderer<BufferedImage> {
@@ -49,9 +46,7 @@ val bufferedImageRenderer: RendererFieldHandler =
  */
 val arrayRenderer =
     object : RendererHandler {
-        override fun accepts(value: Any?): Boolean {
-            return value != null && value::class.java.isArray
-        }
+        override fun accepts(value: Any?): Boolean = value != null && value::class.java.isArray
 
         private fun toListRuntime(a: Any): List<Any?> {
             val len = Array.getLength(a)
@@ -66,9 +61,7 @@ val arrayRenderer =
 
         override fun replaceVariables(mapping: Map<String, String>) = this
 
-        override fun toString(): String {
-            return "Default renderer of arrays: renders them to lists"
-        }
+        override fun toString(): String = "Default renderer of arrays: renders them to lists"
     }
 
 private fun createSwingInMemoryMimeTypedResult(

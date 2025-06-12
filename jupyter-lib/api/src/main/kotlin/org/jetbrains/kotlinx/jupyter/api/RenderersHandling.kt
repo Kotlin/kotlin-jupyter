@@ -26,7 +26,11 @@ fun interface KTypeProvider {
     fun provideType(): KType
 }
 
-data class FieldValue(val value: Any?, val name: String?, private val typeProvider: KTypeProvider?) {
+data class FieldValue(
+    val value: Any?,
+    val name: String?,
+    private val typeProvider: KTypeProvider?,
+) {
     constructor(value: Any?, name: String?) : this(value, name, null)
 
     val type by lazy { typeProvider?.provideType() ?: typeOf<Any?>() }
@@ -42,7 +46,9 @@ data class RendererHandlerWithPriority(
  * This snippet should return the value.
  */
 @Serializable(TypeHandlerCodeExecutionSerializer::class)
-class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
+class ResultHandlerCodeExecution(
+    val code: Code,
+) : ResultHandlerExecution {
     override fun execute(
         host: ExecutionHost,
         result: FieldValue,
@@ -68,9 +74,11 @@ class ResultHandlerCodeExecution(val code: Code) : ResultHandlerExecution {
         }
     }
 
-    override fun replaceVariables(mapping: Map<String, String>): ResultHandlerCodeExecution {
-        return ResultHandlerCodeExecution(org.jetbrains.kotlinx.jupyter.util.replaceVariables(code, mapping))
-    }
+    override fun replaceVariables(mapping: Map<String, String>): ResultHandlerCodeExecution =
+        ResultHandlerCodeExecution(
+            org.jetbrains.kotlinx.jupyter.util
+                .replaceVariables(code, mapping),
+        )
 }
 
 /**
@@ -98,9 +106,7 @@ interface RendererHandler : RendererFieldHandler {
      */
     fun accepts(value: Any?): Boolean
 
-    override fun acceptsField(result: FieldValue): Boolean {
-        return accepts(result.value)
-    }
+    override fun acceptsField(result: FieldValue): Boolean = accepts(result.value)
 }
 
 /**
@@ -109,9 +115,7 @@ interface RendererHandler : RendererFieldHandler {
 interface RendererTypeHandler : RendererHandler {
     fun acceptsType(type: KClass<*>): Boolean
 
-    override fun accepts(value: Any?): Boolean {
-        return if (value == null) false else acceptsType(value::class)
-    }
+    override fun accepts(value: Any?): Boolean = if (value == null) false else acceptsType(value::class)
 }
 
 /**
@@ -141,14 +145,14 @@ interface PrecompiledRendererTypeHandler : RendererTypeHandler {
  * Simple implementation for [RendererTypeHandler].
  * Renders any type by default
  */
-open class AlwaysRendererTypeHandler(override val execution: ResultHandlerExecution) : RendererTypeHandler {
+open class AlwaysRendererTypeHandler(
+    override val execution: ResultHandlerExecution,
+) : RendererTypeHandler {
     override fun acceptsType(type: KClass<*>): Boolean = true
 
     override fun replaceVariables(mapping: Map<String, String>) = this
 
-    override fun toString(): String {
-        return "Renderer of any type${execution.asTextSuffix()}"
-    }
+    override fun toString(): String = "Renderer of any type${execution.asTextSuffix()}"
 }
 
 /**
@@ -158,18 +162,16 @@ open class AlwaysRendererTypeHandler(override val execution: ResultHandlerExecut
  * may be correctly serialized.
  */
 @Serializable
-class ExactRendererTypeHandler(val className: TypeName, override val execution: ResultHandlerCodeExecution) : RendererTypeHandler {
-    override fun acceptsType(type: KClass<*>): Boolean {
-        return className == type.java.canonicalName
-    }
+class ExactRendererTypeHandler(
+    val className: TypeName,
+    override val execution: ResultHandlerCodeExecution,
+) : RendererTypeHandler {
+    override fun acceptsType(type: KClass<*>): Boolean = className == type.java.canonicalName
 
-    override fun replaceVariables(mapping: Map<String, String>): RendererTypeHandler {
-        return ExactRendererTypeHandler(className, execution.replaceVariables(mapping))
-    }
+    override fun replaceVariables(mapping: Map<String, String>): RendererTypeHandler =
+        ExactRendererTypeHandler(className, execution.replaceVariables(mapping))
 
-    override fun toString(): String {
-        return "Exact renderer of $className${execution.asTextSuffix()}"
-    }
+    override fun toString(): String = "Exact renderer of $className${execution.asTextSuffix()}"
 }
 
 /**
@@ -199,14 +201,14 @@ class SubtypeRendererTypeHandler(
                 }
             }
         val typeDef = superType.qualifiedName!! + typeParamsString
-        val methodBody = org.jetbrains.kotlinx.jupyter.util.replaceVariables(execution.code, mapOf("it" to paramName))
+        val methodBody =
+            org.jetbrains.kotlinx.jupyter.util
+                .replaceVariables(execution.code, mapOf("it" to paramName))
 
         return "fun $methodName($paramName: $typeDef): Any? = $methodBody"
     }
 
-    override fun acceptsType(type: KClass<*>): Boolean {
-        return type.isSubclassOfCatching(superType)
-    }
+    override fun acceptsType(type: KClass<*>): Boolean = type.isSubclassOfCatching(superType)
 
     override fun replaceVariables(mapping: Map<String, String>): SubtypeRendererTypeHandler {
         val executionCopy = execution.replaceVariables(mapping)
@@ -214,69 +216,54 @@ class SubtypeRendererTypeHandler(
         return SubtypeRendererTypeHandler(superType, executionCopy)
     }
 
-    override fun toString(): String {
-        return "Renderer of subtypes of $superType${execution.asTextSuffix()}"
-    }
+    override fun toString(): String = "Renderer of subtypes of $superType${execution.asTextSuffix()}"
 }
 
 inline fun <T : Any> createRenderer(
     kClass: KClass<T>,
     crossinline renderAction: (T) -> Any?,
-): RendererFieldHandler {
-    return createRenderer({ it.isOfRuntimeType(kClass) }, { field ->
+): RendererFieldHandler =
+    createRenderer({ it.isOfRuntimeType(kClass) }, { field ->
         @Suppress("UNCHECKED_CAST")
         renderAction(field.value as T)
     })
-}
 
-inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererFieldHandler {
-    return createRenderer(T::class, renderAction)
-}
+inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererFieldHandler =
+    createRenderer(T::class, renderAction)
 
-inline fun <reified T : Any> createRendererByCompileTimeType(crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler {
-    return createRendererByCompileTimeType(typeOf<T>(), renderAction)
-}
+inline fun <reified T : Any> createRendererByCompileTimeType(crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler =
+    createRendererByCompileTimeType(typeOf<T>(), renderAction)
 
 inline fun createRendererByCompileTimeType(
     kType: KType,
     crossinline renderAction: (FieldValue) -> Any?,
-): RendererFieldHandler {
-    return createRenderer({ it.isOfCompileTimeType(kType) }, renderAction)
-}
+): RendererFieldHandler = createRenderer({ it.isOfCompileTimeType(kType) }, renderAction)
 
 inline fun createRenderer(
     crossinline renderCondition: (FieldValue) -> Boolean,
     crossinline renderAction: (FieldValue) -> Any?,
-): RendererFieldHandler {
-    return createRenderer(renderCondition) { _, field -> renderAction(field) }
-}
+): RendererFieldHandler = createRenderer(renderCondition) { _, field -> renderAction(field) }
 
 inline fun createRenderer(
     crossinline renderCondition: (FieldValue) -> Boolean,
     crossinline renderAction: (KotlinKernelHost, FieldValue) -> Any?,
-): RendererFieldHandler {
-    return object : RendererFieldHandler {
-        override fun acceptsField(result: FieldValue): Boolean {
-            return renderCondition(result)
-        }
+): RendererFieldHandler =
+    object : RendererFieldHandler {
+        override fun acceptsField(result: FieldValue): Boolean = renderCondition(result)
 
         override val execution: ResultHandlerExecution =
             ResultHandlerExecution { executionHost, result ->
                 FieldValue(executionHost.execute { renderAction(this, result) }, null)
             }
 
-        override fun replaceVariables(mapping: Map<String, String>): RendererFieldHandler {
-            return this
-        }
+        override fun replaceVariables(mapping: Map<String, String>): RendererFieldHandler = this
     }
-}
 
 fun FieldValue.isOfRuntimeType(kClass: KClass<*>) = this.value?.let { v -> v::class.isSubclassOfCatching(kClass) } ?: false
 
 fun FieldValue.isOfCompileTimeType(kType: KType) = this.type.isSubtypeOf(kType)
 
-private fun ResultHandlerExecution.asTextSuffix(): String {
-    return (this as? ResultHandlerCodeExecution)
+private fun ResultHandlerExecution.asTextSuffix(): String =
+    (this as? ResultHandlerCodeExecution)
         ?.let { " with execution=[$code]" }
         .orEmpty()
-}

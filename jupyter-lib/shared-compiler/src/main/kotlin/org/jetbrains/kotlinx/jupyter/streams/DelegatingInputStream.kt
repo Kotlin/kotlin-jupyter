@@ -3,7 +3,9 @@ package org.jetbrains.kotlinx.jupyter.streams
 import java.io.InputStream
 import java.io.OutputStream
 
-class DelegatingInputStream(val getDelegate: () -> InputStream) : InputStream() {
+class DelegatingInputStream(
+    val getDelegate: () -> InputStream,
+) : InputStream() {
     override fun read(): Int = getDelegate().read()
 
     override fun read(

@@ -125,8 +125,8 @@ data class LibraryDescriptor(
         return result
     }
 
-    private fun processDescriptor(mapping: Map<String, String>): LibraryDefinition {
-        return libraryDefinition {
+    private fun processDescriptor(mapping: Map<String, String>): LibraryDefinition =
+        libraryDefinition {
             it.options = mapping
             it.description = description
             it.website = link
@@ -142,7 +142,6 @@ data class LibraryDescriptor(
             it.integrationTypeNameRules = integrationTypeNameRules.replaceVariables(mapping)
             it.originalDescriptorText = Json.encodeToString(this)
         }
-    }
 
     companion object {
         private val kernelVariables =
@@ -151,8 +150,6 @@ data class LibraryDescriptor(
                 "kernelMavenVersion" to currentKernelVersion.toMavenVersion(),
             )
 
-        fun substituteKernelVars(value: String): String {
-            return replaceVariables(value, kernelVariables)
-        }
+        fun substituteKernelVars(value: String): String = replaceVariables(value, kernelVariables)
     }
 }

@@ -6,12 +6,14 @@ val <T> GraphNode<T>.allParents: Iterable<GraphNode<T>> get() {
     return IterablesView(listOf(inNodes, outNodes, biNodes))
 }
 
-private class IterablesView<T>(private val iterables: Iterable<Iterable<T>>) : Iterable<T> {
-    override fun iterator(): Iterator<T> {
-        return MyIterator(iterables)
-    }
+private class IterablesView<T>(
+    private val iterables: Iterable<Iterable<T>>,
+) : Iterable<T> {
+    override fun iterator(): Iterator<T> = MyIterator(iterables)
 
-    class MyIterator<T>(iterables: Iterable<Iterable<T>>) : Iterator<T> {
+    class MyIterator<T>(
+        iterables: Iterable<Iterable<T>>,
+    ) : Iterator<T> {
         private val outerIterator = iterables.iterator()
         private var innerIterator: Iterator<T>? = null
 

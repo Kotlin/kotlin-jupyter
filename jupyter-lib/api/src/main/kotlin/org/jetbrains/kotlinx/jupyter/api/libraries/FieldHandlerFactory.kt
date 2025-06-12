@@ -17,35 +17,28 @@ object FieldHandlerFactory {
         kType: KType,
         execution: FieldHandlerExecution<*>,
         typeDetection: TypeDetection,
-    ): FieldHandler {
-        return when (typeDetection) {
+    ): FieldHandler =
+        when (typeDetection) {
             TypeDetection.COMPILE_TIME -> FieldHandlerByClass(kType, execution)
             TypeDetection.RUNTIME -> FieldHandlerByRuntimeClass(kType.classifier as KClass<*>, execution)
         }
-    }
 
     @Deprecated("Please use KType API", replaceWith = ReplaceWith("createHandler(kClass.starProjectedType, execution, typeDetection)"))
     fun createHandler(
         kClass: KClass<*>,
         execution: FieldHandlerExecution<*>,
         typeDetection: TypeDetection,
-    ): FieldHandler {
-        return createHandler(kClass.starProjectedType, execution, typeDetection)
-    }
+    ): FieldHandler = createHandler(kClass.starProjectedType, execution, typeDetection)
 
     inline fun <reified T : Any> createHandler(
         execution: FieldHandlerExecution<*>,
         typeDetection: TypeDetection,
-    ): FieldHandler {
-        return createHandler(typeOf<T>(), execution, typeDetection)
-    }
+    ): FieldHandler = createHandler(typeOf<T>(), execution, typeDetection)
 
-    fun <T> createDeclareExecution(callback: VariableDeclarationCallback<T>): FieldHandlerExecution<T> {
-        return FieldHandlerExecution(callback)
-    }
+    fun <T> createDeclareExecution(callback: VariableDeclarationCallback<T>): FieldHandlerExecution<T> = FieldHandlerExecution(callback)
 
-    fun <T> createUpdateExecution(callback: VariableUpdateCallback<T>): FieldHandlerExecution<T> {
-        return FieldHandlerExecution { host, value, property ->
+    fun <T> createUpdateExecution(callback: VariableUpdateCallback<T>): FieldHandlerExecution<T> =
+        FieldHandlerExecution { host, value, property ->
             val tempField = callback(host, value, property)
             if (tempField != null) {
                 val valOrVar = if (property is KMutableProperty) "var" else "val"
@@ -53,19 +46,14 @@ object FieldHandlerFactory {
                 host.execute(redeclaration)
             }
         }
-    }
 
     inline fun <reified T : Any> createDeclareHandler(
         typeDetection: TypeDetection,
         noinline callback: VariableDeclarationCallback<T>,
-    ): FieldHandler {
-        return createHandler<T>(createDeclareExecution(callback), typeDetection)
-    }
+    ): FieldHandler = createHandler<T>(createDeclareExecution(callback), typeDetection)
 
     inline fun <reified T : Any> createUpdateHandler(
         typeDetection: TypeDetection,
         noinline callback: VariableUpdateCallback<T>,
-    ): FieldHandler {
-        return createHandler<T>(createUpdateExecution(callback), typeDetection)
-    }
+    ): FieldHandler = createHandler<T>(createUpdateExecution(callback), typeDetection)
 }

@@ -29,7 +29,8 @@ class SocketWrapper(
     socket: ZMQ.Socket,
     private val address: String,
     private val hmac: HMAC,
-) : SocketWithCancellationBase(socket), JupyterSocket {
+) : SocketWithCancellationBase(socket),
+    JupyterSocket {
     private val logger = loggerFactory.getLogger(this::class)
     private val lock = ReentrantLock()
 
@@ -85,8 +86,7 @@ class SocketWrapper(
 
         val properties = listOf(RawMessage::header, RawMessage::parentHeader, RawMessage::metadata, RawMessage::content)
         val signableMsg =
-            properties.map {
-                    prop ->
+            properties.map { prop ->
                 prop.get(msg)?.let { MessageFormat.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes
             }
         sendMore(hmac(signableMsg))
@@ -96,8 +96,8 @@ class SocketWrapper(
         send(signableMsg.last())
     }
 
-    override fun receiveRawMessage(): RawMessage? {
-        return try {
+    override fun receiveRawMessage(): RawMessage? =
+        try {
             val msg =
                 lock.withLock {
                     doReceiveRawMessage()
@@ -108,7 +108,6 @@ class SocketWrapper(
             logger.error("[$name] ${e.message}")
             null
         }
-    }
 
     private fun doReceiveRawMessage(): RawMessage {
         assertNotCancelled()
@@ -176,8 +175,7 @@ fun openServerSocket(
     socketInfo: JupyterSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
-): JupyterSocket {
-    return createSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
+): JupyterSocket =
+    createSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
         bind()
     }
-}

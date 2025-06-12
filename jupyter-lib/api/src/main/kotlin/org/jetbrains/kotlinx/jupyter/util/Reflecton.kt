@@ -4,8 +4,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.internal.KotlinReflectionInternalError
 
-fun KClass<*>.isSubclassOfCatching(superType: KClass<*>): Boolean {
-    return try {
+fun KClass<*>.isSubclassOfCatching(superType: KClass<*>): Boolean =
+    try {
         isSubclassOf(superType)
     } catch (e: UnsupportedOperationException) {
         false
@@ -15,4 +15,3 @@ fun KClass<*>.isSubclassOfCatching(superType: KClass<*>): Boolean {
         // Workaround for #341
         false
     }
-}

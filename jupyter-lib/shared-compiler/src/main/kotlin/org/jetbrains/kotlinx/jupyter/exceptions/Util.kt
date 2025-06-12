@@ -8,8 +8,7 @@ fun Throwable.causesSequence(): Sequence<Throwable> {
     }
 }
 
-fun Throwable.isInterruptedException(): Boolean {
-    return causesSequence().any {
+fun Throwable.isInterruptedException(): Boolean =
+    causesSequence().any {
         it is InterruptedException || it is ThreadDeath
     }
-}

@@ -73,13 +73,12 @@ open class JupyterScriptDependenciesResolverImpl(
         mavenRepositories.forEach { addRepository(Repo(it)) }
     }
 
-    private fun buildOptions(vararg options: Pair<DependenciesResolverOptionsName, String>): Options {
-        return makeExternalDependenciesResolverOptions(
+    private fun buildOptions(vararg options: Pair<DependenciesResolverOptionsName, String>): Options =
+        makeExternalDependenciesResolverOptions(
             mutableMapOf<String, String>().apply {
                 for (option in options) this[option.first] = option.second
             },
         )
-    }
 
     private fun addRepository(repo: Repo): Boolean {
         val repoIndex = repositories.indexOfFirst { it.repo == repo.repo }
@@ -158,9 +157,7 @@ open class JupyterScriptDependenciesResolverImpl(
     private suspend fun resolveWithOptions(
         dependencies: List<Dependency>,
         options: Options,
-    ): ResultWithDiagnostics<List<File>> {
-        return resolver.resolve(dependencies.map { ArtifactWithLocation(it.value, null) }, options)
-    }
+    ): ResultWithDiagnostics<List<File>> = resolver.resolve(dependencies.map { ArtifactWithLocation(it.value, null) }, options)
 
     private fun tryResolve(
         dependencies: List<Dependency>,
@@ -275,13 +272,12 @@ open class JupyterScriptDependenciesResolverImpl(
     private fun makeResolutionResult(
         classpath: List<File>,
         scriptDiagnostics: List<ScriptDiagnostic>,
-    ): ResultWithDiagnostics<List<File>> {
-        return if (scriptDiagnostics.isEmpty()) {
+    ): ResultWithDiagnostics<List<File>> =
+        if (scriptDiagnostics.isEmpty()) {
             classpath.asSuccess()
         } else {
             makeFailureResult(scriptDiagnostics)
         }
-    }
 
     private class Repo(
         val repo: MavenRepositoryCoordinates,

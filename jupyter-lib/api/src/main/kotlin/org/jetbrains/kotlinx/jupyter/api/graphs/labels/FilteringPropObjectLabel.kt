@@ -11,7 +11,5 @@ class FilteringPropObjectLabel<T : Any>(
     override val mainText: String = value.toString(),
     private val propertiesToRender: Collection<String> = emptyList(),
 ) : PropObjectLabel<T>(value) {
-    override fun shouldRenderProperty(prop: KProperty1<out T, *>): Boolean {
-        return prop.name in propertiesToRender
-    }
+    override fun shouldRenderProperty(prop: KProperty1<out T, *>): Boolean = prop.name in propertiesToRender
 }

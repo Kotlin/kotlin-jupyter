@@ -20,9 +20,8 @@ class StandardResolutionInfoProvider(
         return tryGetAsRef(string) ?: tryGetAsDir(string) ?: tryGetAsFile(string) ?: tryGetAsURL(string) ?: fallback
     }
 
-    private fun tryGetAsRef(ref: String): LibraryResolutionInfo? {
-        return if (httpUtil.libraryDescriptorsManager.checkRefExistence(ref)) httpUtil.libraryInfoCache.getLibraryInfoByRef(ref) else null
-    }
+    private fun tryGetAsRef(ref: String): LibraryResolutionInfo? =
+        if (httpUtil.libraryDescriptorsManager.checkRefExistence(ref)) httpUtil.libraryInfoCache.getLibraryInfoByRef(ref) else null
 
     private fun tryGetAsDir(dirName: String): LibraryResolutionInfo? {
         val file = File(dirName)

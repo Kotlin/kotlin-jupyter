@@ -39,7 +39,9 @@ import kotlin.reflect.KProperty
 abstract class JupyterIntegration : LibraryDefinitionProducer {
     abstract fun Builder.onLoaded()
 
-    class Builder(val notebook: Notebook) {
+    class Builder(
+        val notebook: Notebook,
+    ) {
         private val renderers = mutableListOf<RendererFieldHandler>()
 
         private val textRenderers = mutableListOf<TextRendererWithPriority>()
@@ -127,9 +129,8 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             internalVariablesMarkers.add(marker)
         }
 
-        inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) {
-            return renderWithHost { _, value: T -> renderer(this, value) }
-        }
+        inline fun <reified T : Any> render(noinline renderer: CodeCell.(T) -> Any) =
+            renderWithHost { _, value: T -> renderer(this, value) }
 
         inline fun <reified T : Any> renderWithHost(noinline renderer: CodeCell.(ExecutionHost, T) -> Any) {
             val execution =
@@ -273,9 +274,7 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                     override fun process(
                         code: String,
                         host: KotlinKernelHost,
-                    ): CodePreprocessor.Result {
-                        return host.callback(code)
-                    }
+                    ): CodePreprocessor.Result = host.callback(code)
                 },
             )
         }

@@ -23,14 +23,13 @@ typealias KernelPorts = Map<JupyterSocketType, Int>
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
-fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
-    return EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
+fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts =
+    EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
         JupyterSocketType.entries.forEach { socket ->
             val port = action(socket)
             put(socket, port)
         }
     }
-}
 
 data class KernelArgs(
     val cfgFile: File,
@@ -41,12 +40,10 @@ data class KernelArgs(
     val jvmTargetForSnippets: String?,
     val replCompilerMode: ReplCompilerMode,
 ) {
-    fun parseParams(): KernelJupyterParams {
-        return KernelJupyterParams.fromFile(cfgFile)
-    }
+    fun parseParams(): KernelJupyterParams = KernelJupyterParams.fromFile(cfgFile)
 
-    fun argsList(): List<String> {
-        return mutableListOf<String>().apply {
+    fun argsList(): List<String> =
+        mutableListOf<String>().apply {
             add(cfgFile.absolutePath)
             homeDir?.let { add("-home=${it.absolutePath}") }
             if (scriptClasspath.isNotEmpty()) {
@@ -58,7 +55,6 @@ data class KernelArgs(
             jvmTargetForSnippets?.let { add("-jvmTarget=$it") }
             add("-replCompilerMode=${replCompilerMode.name}")
         }
-    }
 }
 
 @Serializable(KernelJupyterParamsSerializer::class)

@@ -41,7 +41,8 @@ internal class MockedCellExecutorImpl(
     private val executor: CellExecutor,
     override val executedCodes: List<Code>,
     override val results: List<Any?>,
-) : TrackedCellExecutor, CellExecutor by executor
+) : TrackedCellExecutor,
+    CellExecutor by executor
 
 interface TrackedInternalEvaluator : InternalEvaluator {
     val executedCodes: List<Code>
@@ -74,7 +75,8 @@ internal class MockedInternalEvaluator : TrackedInternalEvaluator {
 
 internal class TrackedInternalEvaluatorImpl(
     private val baseEvaluator: InternalEvaluator,
-) : TrackedInternalEvaluator, InternalEvaluator by baseEvaluator {
+) : TrackedInternalEvaluator,
+    InternalEvaluator by baseEvaluator {
     override val executedCodes = mutableListOf<Code>()
 
     override val results = mutableListOf<Any?>()

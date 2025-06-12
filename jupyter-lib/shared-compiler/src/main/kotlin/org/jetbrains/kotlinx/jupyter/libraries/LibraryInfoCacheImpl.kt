@@ -6,13 +6,10 @@ import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 class LibraryInfoCacheImpl(
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
 ) : LibraryInfoCache {
-    override fun getLibraryInfoByRef(reference: String): AbstractLibraryResolutionInfo.ByGitRef {
-        return infoByRef(reference)
-    }
+    override fun getLibraryInfoByRef(reference: String): AbstractLibraryResolutionInfo.ByGitRef = infoByRef(reference)
 
-    override fun getLibraryInfoByRefWithFallback(reference: String): AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback {
-        return infoByRefWithFallback(reference)
-    }
+    override fun getLibraryInfoByRefWithFallback(reference: String): AbstractLibraryResolutionInfo.ByGitRefWithClasspathFallback =
+        infoByRefWithFallback(reference)
 
     private val infoByRef =
         createCachedFun { ref: String ->

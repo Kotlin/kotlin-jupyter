@@ -10,7 +10,10 @@ typealias ClassDeclarationsCallback = KotlinKernelHost.(List<KClass<*>>) -> Unit
 /**
  * Annotation handler used to hook class declarations with specific annotations
  */
-class ClassAnnotationHandler(val annotation: KClass<out Annotation>, val callback: ClassDeclarationsCallback)
+class ClassAnnotationHandler(
+    val annotation: KClass<out Annotation>,
+    val callback: ClassDeclarationsCallback,
+)
 
 typealias ExecutionCallback<T> = KotlinKernelHost.() -> T
 
@@ -20,4 +23,7 @@ typealias InterruptionCallback = KotlinKernelHost.() -> Unit
 
 typealias FileAnnotationCallback = KotlinKernelHost.(List<Annotation>) -> Unit
 
-class FileAnnotationHandler(val annotation: KClass<out Annotation>, val callback: FileAnnotationCallback)
+class FileAnnotationHandler(
+    val annotation: KClass<out Annotation>,
+    val callback: FileAnnotationCallback,
+)

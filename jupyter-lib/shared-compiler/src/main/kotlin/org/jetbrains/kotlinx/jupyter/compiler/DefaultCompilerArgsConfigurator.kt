@@ -23,9 +23,7 @@ class DefaultCompilerArgsConfigurator(
             "plugin:androidx.compose.compiler.plugins.kotlin:skipIrLoweringIfRuntimeNotFound=true",
         )
 
-    override fun getArgs(): List<String> {
-        return argsList.toList()
-    }
+    override fun getArgs(): List<String> = argsList.toList()
 
     override fun configure(
         configuration: ScriptCompilationConfiguration,

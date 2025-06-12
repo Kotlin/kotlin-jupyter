@@ -77,8 +77,8 @@ interface LibraryDescriptorsManager {
             httpClient: HttpClient,
             loggerFactory: CommonLoggerFactory,
             exceptionsHandler: ExceptionsHandler = ExceptionsHandler.DEFAULT,
-        ): LibraryDescriptorsManager {
-            return LibraryDescriptorsManagerImpl(
+        ): LibraryDescriptorsManager =
+            LibraryDescriptorsManagerImpl(
                 "Kotlin",
                 "kotlin-jupyter-libraries",
                 "",
@@ -91,7 +91,6 @@ interface LibraryDescriptorsManager {
                 httpClient,
                 loggerFactory,
             )
-        }
     }
 }
 
@@ -137,9 +136,7 @@ private class LibraryDescriptorsManagerImpl(
 
     override fun resourceOptionsPath() = "$resourcesPath/${optionsFileName()}"
 
-    override fun isLibraryDescriptor(file: File): Boolean {
-        return file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
-    }
+    override fun isLibraryDescriptor(file: File): Boolean = file.isFile && file.name.endsWith(".$DESCRIPTOR_EXTENSION")
 
     override fun getLatestCommitToLibraries(
         ref: String,
@@ -200,8 +197,8 @@ private class LibraryDescriptorsManagerImpl(
     private fun resolveAgainstRemotePath(
         filePath: String,
         ref: String,
-    ): String {
-        return buildString {
+    ): String =
+        buildString {
             append(apiPrefix)
             append("/contents")
             if (remotePath.isNotEmpty()) {
@@ -215,7 +212,6 @@ private class LibraryDescriptorsManagerImpl(
             append("?ref=")
             append(ref)
         }
-    }
 
     override fun checkIfRefUpToDate(remoteRef: String?): Boolean {
         if (!commitHashFile.exists()) return false

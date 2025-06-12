@@ -49,9 +49,7 @@ interface FieldHandlerEx : FieldHandler {
     override fun accepts(
         value: Any?,
         property: KProperty<*>,
-    ): Boolean {
-        return accepts(value, property.toFieldInfo())
-    }
+    ): Boolean = accepts(value, property.toFieldInfo())
 
     /**
      * Execution to handle conversion.

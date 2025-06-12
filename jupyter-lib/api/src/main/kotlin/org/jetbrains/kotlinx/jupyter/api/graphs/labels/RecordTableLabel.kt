@@ -67,9 +67,7 @@ abstract class RecordTableLabel : Label {
         var valign by attr<String>()
         var width by attr<Int>()
 
-        override fun copy(): TableAttributes {
-            return TableAttributes(properties)
-        }
+        override fun copy(): TableAttributes = TableAttributes(properties)
 
         companion object : HtmlAttributesCompanion<TableAttributes>() {
             override val default = TableAttributes()

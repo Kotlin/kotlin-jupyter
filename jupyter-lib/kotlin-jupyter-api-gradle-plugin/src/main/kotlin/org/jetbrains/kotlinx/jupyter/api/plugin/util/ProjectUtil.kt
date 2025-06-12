@@ -61,30 +61,23 @@ internal fun Project.configureDependency(
     }
 }
 
-private fun Project.allConfigurationsNamesMessage(): String {
-    return "All available configurations: ${configurations.names.joinToString(", ")}."
-}
+private fun Project.allConfigurationsNamesMessage(): String = "All available configurations: ${configurations.names.joinToString(", ")}."
 
 internal fun Project.getFlag(
     propertyName: String,
     default: Boolean = false,
-): Boolean {
-    return findProperty(propertyName)?.let {
+): Boolean =
+    findProperty(propertyName)?.let {
         when (it) {
             "true", true -> true
             "false", false -> false
             else -> null
         }
     } ?: default
-}
 
 internal fun Project.propertyByFlag(
     flagName: String,
     default: Boolean = false,
-): Property<Boolean> {
-    return objects.property<Boolean>().apply { set(provider { getFlag(flagName, default) }) }
-}
+): Property<Boolean> = objects.property<Boolean>().apply { set(provider { getFlag(flagName, default) }) }
 
-fun Project.getBuildDirectory(): File {
-    return layout.buildDirectory.get().asFile
-}
+fun Project.getBuildDirectory(): File = layout.buildDirectory.get().asFile

@@ -37,7 +37,8 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                     .getElementsByTagName("versions")
                     .singleOrNull() ?: return@createCachedFun emptyList()
 
-            (versionsTag as? Element)?.getElementsByTagName("version")
+            (versionsTag as? Element)
+                ?.getElementsByTagName("version")
                 ?.toList()
                 ?.map { it.textContent }
                 .orEmpty()
@@ -140,13 +141,14 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
                     if (dependencyParamName != paramName) continue
 
                     val versions =
-                        (libraryDescriptor.repositories + defaultRepositories).firstNotNullOfOrNull { repo ->
-                            if (repo.username == null && repo.password == null) {
-                                getVersions(ArtifactLocation(repo.path, group, artifact))
-                            } else {
-                                null
-                            }
-                        }.orEmpty()
+                        (libraryDescriptor.repositories + defaultRepositories)
+                            .firstNotNullOfOrNull { repo ->
+                                if (repo.username == null && repo.password == null) {
+                                    getVersions(ArtifactLocation(repo.path, group, artifact))
+                                } else {
+                                    null
+                                }
+                            }.orEmpty()
                     val matchingVersions = versions.filter { it.startsWith(argValuePrefix) }.reversed()
                     matchingVersions.mapTo(_completions) {
                         variant(it, "version")
@@ -159,7 +161,11 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
     companion object {
         private val MAVEN_DEP_REGEX = "^([^:]+):([^:]+):([^:]+)$".toRegex()
 
-        private data class ArtifactLocation(val repository: String, val group: String, val artifact: String)
+        private data class ArtifactLocation(
+            val repository: String,
+            val group: String,
+            val artifact: String,
+        )
 
         private fun metadataUrl(artifactLocation: ArtifactLocation): String {
             val repo = with(artifactLocation.repository) { if (endsWith('/')) this else "$this/" }
@@ -173,13 +179,12 @@ abstract class AbstractCompletionMagicsProcessor<V : Any>(
             return builder.parse(inputSource)
         }
 
-        private fun NodeList.toList(): List<Node> {
-            return object : AbstractList<Node>() {
+        private fun NodeList.toList(): List<Node> =
+            object : AbstractList<Node>() {
                 override val size: Int get() = length
 
                 override fun get(index: Int) = item(index)
             }
-        }
 
         private fun NodeList.singleOrNull() = toList().singleOrNull()
     }

@@ -114,14 +114,13 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
         systemStreamFactory: (initial: StreamT?) -> StreamT,
         kernelStreamFactory: (initial: StreamT?) -> StreamT?,
         body: () -> T,
-    ): T {
-        return engine.withDataSubstitution(
+    ): T =
+        engine.withDataSubstitution(
             dataFactory = { _ ->
                 createStreams(systemStreamFactory, kernelStreamFactory)
             },
             body = body,
         )
-    }
 
     private data class Streams<StreamT : Closeable>(
         val systemStream: StreamT,
@@ -190,12 +189,11 @@ abstract class StreamSubstitutionManager<StreamT : Closeable>(
             defaultStreams: Streams<StreamT>,
             fallbackStream: StreamT?,
             factory: (initial: StreamT?) -> StreamT?,
-        ): StreamT? {
-            return when (val value = factory(yieldStream(defaultStreams))) {
+        ): StreamT? =
+            when (val value = factory(yieldStream(defaultStreams))) {
                 null -> if (streamProp == null) null else fallbackStream
                 else -> value
             }
-        }
 
         fun substitute(newStreams: Streams<StreamT>) {
             val newStream = yieldStream(newStreams)

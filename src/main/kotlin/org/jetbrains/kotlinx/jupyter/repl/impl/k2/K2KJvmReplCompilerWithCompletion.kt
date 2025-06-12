@@ -43,7 +43,10 @@ import kotlin.script.experimental.util.LinkedSnippet
 class K2KJvmReplCompilerWithCompletion(
     private val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
     private val compilerConfiguration: ScriptCompilationConfiguration = ScriptCompilationConfiguration(),
-) : ReplCompiler<KJvmCompiledScript>, ScriptCompiler, ReplCompleter, ReplCodeAnalyzer {
+) : ReplCompiler<KJvmCompiledScript>,
+    ScriptCompiler,
+    ReplCompleter,
+    ReplCodeAnalyzer {
     private val state: K2ReplCompilationState
     private val compiler: K2ReplCompiler
 
@@ -75,12 +78,11 @@ class K2KJvmReplCompilerWithCompletion(
     override suspend fun invoke(
         script: SourceCode,
         scriptCompilationConfiguration: ScriptCompilationConfiguration,
-    ): ResultWithDiagnostics<CompiledScript> {
-        return when (val res = compile(script, scriptCompilationConfiguration)) {
+    ): ResultWithDiagnostics<CompiledScript> =
+        when (val res = compile(script, scriptCompilationConfiguration)) {
             is ResultWithDiagnostics.Success -> res.value.get().asSuccess(res.reports)
             is ResultWithDiagnostics.Failure -> res
         }
-    }
 
     override suspend fun complete(
         snippet: SourceCode,
@@ -108,7 +110,7 @@ class K2KJvmReplCompilerWithCompletion(
  * Currently, it will forward them to the kernel logs.
  * TODO Unclear if we need this. Keep it around for now.
  */
-private class ReplMessageCollector() : MessageCollector {
+private class ReplMessageCollector : MessageCollector {
     val replWriter = ConsoleReplWriter()
     private val logger: Logger = DefaultKernelLoggerFactory.getLogger(this::class.java)
     private var hasErrors = false

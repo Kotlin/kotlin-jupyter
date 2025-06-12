@@ -51,20 +51,14 @@ class RenderersProcessorImpl(
     override fun renderValue(
         host: ExecutionHost,
         value: Any?,
-    ): Any? {
-        return renderResult(host, FieldValue(value, null))
-    }
+    ): Any? = renderResult(host, FieldValue(value, null))
 
-    override fun register(renderer: RendererFieldHandler): Code? {
-        return register(renderer, ProcessingPriority.DEFAULT)
-    }
+    override fun register(renderer: RendererFieldHandler): Code? = register(renderer, ProcessingPriority.DEFAULT)
 
     override fun register(
         renderer: RendererFieldHandler,
         priority: Int,
-    ): Code? {
-        return register(renderer, true, priority)
-    }
+    ): Code? = register(renderer, true, priority)
 
     override fun registerWithoutOptimizing(renderer: RendererFieldHandler) {
         registerWithoutOptimizing(renderer, ProcessingPriority.DEFAULT)
@@ -93,11 +87,10 @@ class RenderersProcessorImpl(
         return renderer.precompile(methodName, "___value")
     }
 
-    override fun registeredRenderers(): List<RendererHandlerWithPriority> {
-        return renderers.elementsWithPriority().map {
+    override fun registeredRenderers(): List<RendererHandlerWithPriority> =
+        renderers.elementsWithPriority().map {
             RendererHandlerWithPriority(it.first.handler, it.second)
         }
-    }
 
     override fun unregister(renderer: RendererFieldHandler) {
         val rendererInfosToRemove =

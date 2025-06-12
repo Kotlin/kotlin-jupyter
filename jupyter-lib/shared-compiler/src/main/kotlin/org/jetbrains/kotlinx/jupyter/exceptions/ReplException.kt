@@ -5,7 +5,10 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
 
-open class ReplException(message: String, cause: Throwable? = null) : Exception(message, cause) {
+open class ReplException(
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause) {
     open fun getAdditionalInfoJson(): JsonObject? = null
 
     open fun render(): String? =
@@ -40,9 +43,8 @@ fun Throwable.messageAndStackTrace(withMessage: Boolean = true): String {
     return writer.toString()
 }
 
-fun Throwable.renderException(): String {
-    return when (this) {
+fun Throwable.renderException(): String =
+    when (this) {
         is ReplException -> render().orEmpty()
         else -> messageAndStackTrace()
     }
-}

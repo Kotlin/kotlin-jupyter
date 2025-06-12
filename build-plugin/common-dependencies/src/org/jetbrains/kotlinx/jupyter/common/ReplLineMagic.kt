@@ -14,7 +14,11 @@ package org.jetbrains.kotlinx.jupyter.common
  *
  * Adding a new magic value also requires registering a handler in [org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler].
  */
-enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
+enum class ReplLineMagic(
+    val desc: String,
+    val argumentsUsage: String? = null,
+    val visibleInHelp: Boolean = true,
+) {
     USE(
         "Imports supported libraries and injects code from these libraries" +
             "(artifact resolution, default imports, initialization code, and type renderers).",

@@ -17,7 +17,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -80,13 +79,10 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.test.Ignore
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-fun JsonObject.string(key: String): String {
-    return (get(key) as JsonPrimitive).content
-}
+fun JsonObject.string(key: String): String = (get(key) as JsonPrimitive).content
 
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
@@ -248,14 +244,13 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     }
 
     // Make sure we also drain the ioPubSocket when sending protocol messages
-    private fun <T> withReceivingStatusMessages(body: () -> T): T {
-        return try {
+    private fun <T> withReceivingStatusMessages(body: () -> T): T =
+        try {
             receiveStatusMessage(KernelStatus.BUSY)
             body()
         } finally {
             receiveStatusMessage(KernelStatus.IDLE)
         }
-    }
 
     private inline fun <reified T : Any> JupyterSocketBase.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()
@@ -265,21 +260,14 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
         return content
     }
 
-    private fun JupyterSocketBase.receiveStreamResponse(): String {
-        return receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
-    }
+    private fun JupyterSocketBase.receiveStreamResponse(): String = receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
 
-    private fun JupyterSocketBase.receiveErrorResponse(): String {
-        return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
-    }
+    private fun JupyterSocketBase.receiveErrorResponse(): String = receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
 
-    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataMessage {
-        return receiveMessageOfType(MessageType.DISPLAY_DATA)
-    }
+    private fun JupyterSocketBase.receiveDisplayDataResponse(): DisplayDataMessage = receiveMessageOfType(MessageType.DISPLAY_DATA)
 
-    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataMessage {
-        return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
-    }
+    private fun JupyterSocketBase.receiveUpdateDisplayDataResponse(): DisplayDataMessage =
+        receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
 
     @Test
     fun testExecute() {
@@ -393,7 +381,9 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                     val compiledData = snippetMetadata?.compiledData
                     assertNotNull(compiledData)
 
-                    val deserializer = org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer()
+                    val deserializer =
+                        org.jetbrains.kotlinx.jupyter.compiler
+                            .CompiledScriptsSerializer()
                     val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
                     dir.toFile().deleteOnExit()
                     val classesDir = dir.resolve("classes")
@@ -746,7 +736,8 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 // Stacktrace should be enhanced with cell information
                 when (kernelConfig.replCompilerMode) {
                     ReplCompilerMode.K1 -> {
-                        content.traceback shouldContain $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback shouldContain
+                            $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                         content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
                     }

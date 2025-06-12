@@ -119,8 +119,8 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(ResourceFallbacksBundle::class.qualifiedName!!, PrimitiveKind.STRING)
 
-    override fun deserialize(decoder: Decoder): ResourceFallbacksBundle {
-        return when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
+    override fun deserialize(decoder: Decoder): ResourceFallbacksBundle =
+        when (val obj = decoder.decodeSerializableValue(serializer<JsonElement>())) {
             is JsonArray -> {
                 ResourceFallbacksBundle(
                     obj.map {
@@ -137,7 +137,6 @@ object ResourceBunchSerializer : KSerializer<ResourceFallbacksBundle> {
             }
             else -> throw SerializationException("Wrong representation for resource location")
         }
-    }
 
     override fun serialize(
         encoder: Encoder,

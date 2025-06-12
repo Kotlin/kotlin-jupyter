@@ -13,9 +13,7 @@ class SubtypeThrowableRenderer<E : Throwable>(
     private val superType: KClass<E>,
     private val renderer: (E) -> Any,
 ) : ThrowableRenderer {
-    override fun accepts(throwable: Throwable): Boolean {
-        return throwable::class.isSubclassOfCatching(superType)
-    }
+    override fun accepts(throwable: Throwable): Boolean = throwable::class.isSubclassOfCatching(superType)
 
     override fun render(throwable: Throwable): Any {
         @Suppress("UNCHECKED_CAST")

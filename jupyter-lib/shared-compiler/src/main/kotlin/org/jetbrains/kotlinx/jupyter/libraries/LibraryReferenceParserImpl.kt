@@ -6,7 +6,9 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import java.io.File
 import java.net.URL
 
-class LibraryReferenceParserImpl(private val libraryInfoCache: LibraryInfoCache) : LibraryReferenceParser {
+class LibraryReferenceParserImpl(
+    private val libraryInfoCache: LibraryInfoCache,
+) : LibraryReferenceParser {
     override fun parseReferenceWithArgs(string: String): Pair<LibraryReference, List<Variable>> {
         val (fullName, vars) = parseLibraryName(string)
         val reference = parseLibraryReference(fullName)

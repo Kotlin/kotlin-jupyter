@@ -13,10 +13,6 @@ interface KernelLoggerFactory {
     fun getLogger(clazz: Class<*>): Logger
 }
 
-fun KernelLoggerFactory.getLogger(kClass: KClass<*>): Logger {
-    return getLogger(kClass.java)
-}
+fun KernelLoggerFactory.getLogger(kClass: KClass<*>): Logger = getLogger(kClass.java)
 
-inline fun <reified T> KernelLoggerFactory.logger(): Logger {
-    return getLogger(T::class)
-}
+inline fun <reified T> KernelLoggerFactory.logger(): Logger = getLogger(T::class)

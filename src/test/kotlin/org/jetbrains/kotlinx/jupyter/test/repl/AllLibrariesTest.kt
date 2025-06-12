@@ -52,11 +52,11 @@ class AllLibrariesTest : AbstractSingleReplTest() {
         private val additionalTests: Map<String, AllLibrariesTest.() -> Unit> = mapOf()
 
         @JvmStatic
-        fun libraryNames(): Stream<String> {
-            return Files.walk(KERNEL_LIBRARIES.localLibrariesDir.toPath(), 1)
+        fun libraryNames(): Stream<String> =
+            Files
+                .walk(KERNEL_LIBRARIES.localLibrariesDir.toPath(), 1)
                 .filter { KERNEL_LIBRARIES.isLibraryDescriptor(it.toFile()) }
                 .map { it.nameWithoutExtension }
-        }
 
         @Suppress("SameParameterValue")
         private fun getResourceText(name: String): String {

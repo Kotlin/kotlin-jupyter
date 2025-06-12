@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
-import org.jetbrains.kotlin.scripting.compiler.plugin.impl.currentLineId
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
@@ -39,15 +38,15 @@ import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.PropertiesCollection
 
 @JvmInline
-value class CellId(val value: Int) {
+value class CellId(
+    val value: Int,
+) {
     fun toExecutionCount(): ExecutionCount = ExecutionCount(value + 1)
 
     override fun toString(): String = value.toString()
 
     companion object {
-        fun fromExecutionCount(count: ExecutionCount): CellId {
-            return CellId(count.value - 1)
-        }
+        fun fromExecutionCount(count: ExecutionCount): CellId = CellId(count.value - 1)
 
         // Marker CellId for code executed outside the context of a cell.
         val NO_CELL: CellId = CellId(-1)
@@ -78,8 +77,8 @@ fun getCompilationConfiguration(
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
     @Suppress("unused") loggerFactory: KernelLoggerFactory,
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
-): ScriptCompilationConfiguration {
-    return ScriptCompilationConfiguration {
+): ScriptCompilationConfiguration =
+    ScriptCompilationConfiguration {
         hostConfiguration.update {
             it.with {
                 getScriptingClass(scriptingClassGetter)
@@ -123,9 +122,10 @@ fun getCompilationConfiguration(
                 for (collector in scriptDataCollectors) {
                     collector.collect(scriptInfo)
                 }
-                config.with {
-                    compilerOptions(compilerArgsConfigurator.getArgs())
-                }.asSuccess()
+                config
+                    .with {
+                        compilerOptions(compilerArgsConfigurator.getArgs())
+                    }.asSuccess()
             }
         }
 
@@ -135,7 +135,6 @@ fun getCompilationConfiguration(
 
         body()
     }
-}
 
 // Do not rename this method for backwards compatibility with IDEA.
 inline fun <reified T> ScriptCompilationConfiguration.Builder.addBaseClass() {

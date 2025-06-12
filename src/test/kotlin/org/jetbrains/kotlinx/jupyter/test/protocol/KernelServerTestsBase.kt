@@ -34,7 +34,9 @@ import java.util.UUID
  * as the test. The default is to run in a separate one (similar to how it would work in
  * production). To enable debugging, set this value to `false`
  */
-abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean) {
+abstract class KernelServerTestsBase(
+    protected val runServerInSeparateProcess: Boolean,
+) {
     protected abstract val context: ZMQ.Context
 
     protected val kernelConfig =

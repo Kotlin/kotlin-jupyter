@@ -35,10 +35,11 @@ buildSettings {
 }
 
 tasks.processJupyterApiResources {
-    libraryProducers = listOf(
-        "org.jetbrains.kotlinx.jupyter.ext.integration.Integration",
-        "org.jetbrains.kotlinx.jupyter.ext.integration.ElapsedTimeIntegration"
-    )
+    libraryProducers =
+        listOf(
+            "org.jetbrains.kotlinx.jupyter.ext.integration.Integration",
+            "org.jetbrains.kotlinx.jupyter.ext.integration.ElapsedTimeIntegration",
+        )
 }
 
 kotlinPublications {

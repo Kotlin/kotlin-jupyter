@@ -23,13 +23,9 @@ class KotlinKernelVersion private constructor(
         return 0
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KotlinKernelVersion && components == other.components
-    }
+    override fun equals(other: Any?): Boolean = other is KotlinKernelVersion && components == other.components
 
-    override fun hashCode(): Int {
-        return components.hashCode()
-    }
+    override fun hashCode(): Int = components.hashCode()
 
     override fun toString() = toPyPiVersion()
 
@@ -156,15 +152,11 @@ class KotlinKernelVersion private constructor(
             return KotlinKernelVersion(components)
         }
 
-        private fun validateComponents(components: List<Int>): Boolean {
-            return components.size in 3..5 && components.all { it >= 0 }
-        }
+        private fun validateComponents(components: List<Int>): Boolean = components.size in 3..5 && components.all { it >= 0 }
 
         private fun maxSize(
             a: Collection<*>,
             b: Collection<*>,
-        ): Int {
-            return if (a.size > b.size) a.size else b.size
-        }
+        ): Int = if (a.size > b.size) a.size else b.size
     }
 }

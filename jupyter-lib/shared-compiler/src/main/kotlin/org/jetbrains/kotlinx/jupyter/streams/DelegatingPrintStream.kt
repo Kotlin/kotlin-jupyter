@@ -3,7 +3,9 @@ package org.jetbrains.kotlinx.jupyter.streams
 import java.io.PrintStream
 import java.util.Locale
 
-class DelegatingPrintStream(private val getDelegate: () -> PrintStream) : PrintStream(nullOutputStream()) {
+class DelegatingPrintStream(
+    private val getDelegate: () -> PrintStream,
+) : PrintStream(nullOutputStream()) {
     override fun equals(other: Any?): Boolean = getDelegate() == other
 
     override fun hashCode(): Int = getDelegate().hashCode()

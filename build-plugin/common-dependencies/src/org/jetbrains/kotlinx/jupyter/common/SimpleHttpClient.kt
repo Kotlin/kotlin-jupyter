@@ -48,4 +48,7 @@ object SimpleHttpClient : HttpClient {
     }
 }
 
-data class ResponseImpl(override val status: Status, override val text: String) : Response
+data class ResponseImpl(
+    override val status: Status,
+    override val text: String,
+) : Response

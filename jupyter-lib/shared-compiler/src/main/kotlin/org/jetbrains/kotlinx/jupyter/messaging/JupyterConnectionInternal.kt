@@ -25,7 +25,10 @@ interface JupyterBaseSockets {
 /**
  * Interface responsible for controlling the lifecycle of kernel sockets.
  */
-interface JupyterSocketManager : JupyterBaseSockets, JupyterSocketManagerBase, Closeable {
+interface JupyterSocketManager :
+    JupyterBaseSockets,
+    JupyterSocketManagerBase,
+    Closeable {
     override val heartbeat: JupyterSocket
     override val shell: JupyterSocket
     override val control: JupyterSocket

@@ -6,12 +6,14 @@ data class UndirectedEdge<out T>(
     val fromNode: GraphNode<T>,
     val toNode: GraphNode<T>,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is UndirectedEdge<*> && (
-            (fromNode == other.fromNode) && (toNode == other.toNode) ||
-                (fromNode == other.toNode) && (toNode == other.fromNode)
-        )
-    }
+    override fun equals(other: Any?): Boolean =
+        other is UndirectedEdge<*> &&
+            (
+                (fromNode == other.fromNode) &&
+                    (toNode == other.toNode) ||
+                    (fromNode == other.toNode) &&
+                    (toNode == other.fromNode)
+            )
 
     override fun hashCode(): Int {
         var h1 = fromNode.hashCode()

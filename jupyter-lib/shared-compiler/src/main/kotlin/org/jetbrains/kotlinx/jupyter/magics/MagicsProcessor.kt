@@ -14,7 +14,9 @@ import org.jetbrains.kotlinx.jupyter.exceptions.KernelInternalObject
 class MagicsProcessor(
     private val handler: LibrariesAwareMagicsHandler,
     parseOutCellMarker: Boolean = false,
-) : CodePreprocessor, AbstractMagicsProcessor(parseOutCellMarker), KernelInternalObject {
+) : AbstractMagicsProcessor(parseOutCellMarker),
+    CodePreprocessor,
+    KernelInternalObject {
     fun processMagics(
         code: String,
         parseOnly: Boolean = false,
@@ -31,7 +33,5 @@ class MagicsProcessor(
     override fun process(
         code: String,
         host: KotlinKernelHost,
-    ): CodePreprocessor.Result {
-        return processMagics(code)
-    }
+    ): CodePreprocessor.Result = processMagics(code)
 }

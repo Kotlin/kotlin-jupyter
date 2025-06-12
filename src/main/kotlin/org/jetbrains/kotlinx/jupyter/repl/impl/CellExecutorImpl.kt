@@ -132,9 +132,7 @@ internal class CellExecutorImpl(
         }
     }
 
-    override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
-        return callback(ExecutionContext(replContext, this, null.push()))
-    }
+    override fun <T> execute(callback: KotlinKernelHost.() -> T): T = callback(ExecutionContext(replContext, this, null.push()))
 
     private class ExecutionContext(
         private val sharedContext: SharedReplContext,
@@ -162,7 +160,10 @@ internal class CellExecutorImpl(
                 rethrowAsLibraryException(LibraryProblemPart.INIT) {
                     library.init.forEach(::runChild)
                 }
-                library.renderers.mapNotNull(sharedContext.renderersProcessor::register).joinToLines().let(::runChild)
+                library.renderers
+                    .mapNotNull(sharedContext.renderersProcessor::register)
+                    .joinToLines()
+                    .let(::runChild)
                 library.textRenderers.forEach { sharedContext.textRenderersProcessor.register(it.renderer, it.priority) }
                 library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
                 library.converters.forEach(sharedContext.fieldsProcessor::register)
@@ -228,21 +229,23 @@ internal class CellExecutorImpl(
             loadKotlinArtifacts(listOf("stdlib-jdk$versionToLoad"), version)
         }
 
-        override fun acceptsIntegrationTypeName(typeName: String): Boolean? {
-            return stackFrame.traverseStack().mapNotNull { frame ->
-                frame.libraries
-                    .mapNotNull { library -> library.integrationTypeNameRules.accepts(typeName) }
-                    .lastOrNull()
-            }.firstOrNull()
-        }
+        override fun acceptsIntegrationTypeName(typeName: String): Boolean? =
+            stackFrame
+                .traverseStack()
+                .mapNotNull { frame ->
+                    frame.libraries
+                        .mapNotNull { library -> library.integrationTypeNameRules.accepts(typeName) }
+                        .lastOrNull()
+                }.firstOrNull()
 
         override fun execute(code: Code) =
-            executor.execute(
-                code,
-                processVariables = false,
-                invokeAfterCallbacks = false,
-                stackFrame = stackFrame,
-            ).result
+            executor
+                .execute(
+                    code,
+                    processVariables = false,
+                    invokeAfterCallbacks = false,
+                    stackFrame = stackFrame,
+                ).result
 
         override fun display(
             value: Any,
@@ -269,9 +272,8 @@ internal class CellExecutorImpl(
             }
         }
 
-        override fun <T> execute(callback: KotlinKernelHost.() -> T): T {
-            return callback(ExecutionContext(sharedContext, executor, stackFrame.push()))
-        }
+        override fun <T> execute(callback: KotlinKernelHost.() -> T): T =
+            callback(ExecutionContext(sharedContext, executor, stackFrame.push()))
 
         override fun declare(variables: Iterable<VariableDeclaration>) {
             val tempDeclarations =

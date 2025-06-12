@@ -263,8 +263,8 @@ open class IdeCompatibleMessageRequestProcessor(
     protected open fun runExecution(
         executionName: String,
         execution: () -> EvalResultEx,
-    ): JupyterResponse {
-        return when (
+    ): JupyterResponse =
+        when (
             val res =
                 executor.runExecution(
                     executionName,
@@ -299,7 +299,6 @@ open class IdeCompatibleMessageRequestProcessor(
                 ErrorJupyterResponse(EXECUTION_INTERRUPTED_MESSAGE)
             }
         }
-    }
 
     private val replOutputConfig get() = repl.options.outputConfig
 
@@ -318,8 +317,8 @@ open class IdeCompatibleMessageRequestProcessor(
         parentStream: PrintStream?,
         outType: JupyterOutType,
         captureOutput: Boolean,
-    ): PrintStream {
-        return CapturingOutputStream(
+    ): PrintStream =
+        CapturingOutputStream(
             parentStream,
             replOutputConfig,
             captureOutput,
@@ -327,36 +326,32 @@ open class IdeCompatibleMessageRequestProcessor(
             repl.notebook.currentCell?.appendStreamOutput(text)
             this.sendOut(outType, text)
         }.asPrintStream()
-    }
 
     private fun OutputStream.asPrintStream() = PrintStream(this, false, "UTF-8")
 
-    private fun <T> withForkedOut(body: () -> T): T {
-        return StdIOSubstitutionManager.stdoutContext.withSubstitutedStreams(
+    private fun <T> withForkedOut(body: () -> T): T =
+        StdIOSubstitutionManager.stdoutContext.withSubstitutedStreams(
             systemStreamFactory = { out: PrintStream? -> getCapturingStream(out, JupyterOutType.STDOUT, replOutputConfig.captureOutput) },
             kernelStreamFactory = { null },
             body = body,
         )
-    }
 
-    private fun <T> withForkedErr(body: () -> T): T {
-        return StdIOSubstitutionManager.stderrContext.withSubstitutedStreams(
+    private fun <T> withForkedErr(body: () -> T): T =
+        StdIOSubstitutionManager.stderrContext.withSubstitutedStreams(
             systemStreamFactory = { err: PrintStream? -> getCapturingStream(err, JupyterOutType.STDERR, false) },
             kernelStreamFactory = { getCapturingStream(null, JupyterOutType.STDERR, true) },
             body = body,
         )
-    }
 
     private fun <T> withForkedIn(
         allowStdIn: Boolean,
         body: () -> T,
-    ): T {
-        return StdIOSubstitutionManager.stdinContext.withSubstitutedStreams(
+    ): T =
+        StdIOSubstitutionManager.stdinContext.withSubstitutedStreams(
             systemStreamFactory = { if (allowStdIn) stdinIn else DisabledStdinInputStream },
             kernelStreamFactory = { null },
             body = body,
         )
-    }
 
     protected open fun <T> evalWithIO(
         allowStdIn: Boolean,
@@ -380,15 +375,13 @@ open class IdeCompatibleMessageRequestProcessor(
     }
 }
 
-private class InitOnce<T : Any>() {
+private class InitOnce<T : Any> {
     private var value: T? = null
 
     operator fun getValue(
         thisRef: Any?,
         property: KProperty<*>,
-    ): T {
-        return value ?: throw UninitializedPropertyAccessException("${property.name} is not initialized yet")
-    }
+    ): T = value ?: throw UninitializedPropertyAccessException("${property.name} is not initialized yet")
 
     operator fun setValue(
         thisRef: Any?,

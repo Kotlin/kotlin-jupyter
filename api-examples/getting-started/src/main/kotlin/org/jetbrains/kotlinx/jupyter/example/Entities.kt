@@ -18,9 +18,7 @@ data class Car(
 )
 
 class MyClass : Renderable {
-    private fun toHTML(): String {
-        return "<p>Instance of MyClass</p>"
-    }
+    private fun toHTML(): String = "<p>Instance of MyClass</p>"
 
     override fun render(notebook: Notebook) = HTML(toHTML())
 }

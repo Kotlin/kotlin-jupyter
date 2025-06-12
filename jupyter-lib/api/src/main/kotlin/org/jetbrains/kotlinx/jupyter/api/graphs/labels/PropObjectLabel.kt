@@ -8,7 +8,9 @@ import kotlin.reflect.jvm.isAccessible
  * Renders [value] object with its properties for
  * those [shouldRenderProperty] returns `true`
  */
-open class PropObjectLabel<T : Any>(val value: T) : RecordTableLabel() {
+open class PropObjectLabel<T : Any>(
+    val value: T,
+) : RecordTableLabel() {
     override val mainText get() = value.toString()
 
     override val properties: Collection<Iterable<String>> get() {

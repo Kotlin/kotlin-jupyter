@@ -12,7 +12,11 @@ import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
  * the visible limit. Note, a compiler plugin might inject code in the middle of a users code.
  * If this happens, there is no way to detect it, so for now, we ignore the possibility.
  */
-class ErrorLocation(val jupyterRequestCount: Int, val lineNumber: Int, val visibleSourceLines: Int)
+class ErrorLocation(
+    val jupyterRequestCount: Int,
+    val lineNumber: Int,
+    val visibleSourceLines: Int,
+)
 
 /**
  * Thrown if the user's REPL code threw an exception at runtime.
@@ -55,7 +59,5 @@ class ReplEvalRuntimeException(
             emptyList()
         }
 
-    override fun render(): String {
-        return cause?.messageAndStackTrace() ?: messageAndStackTrace()
-    }
+    override fun render(): String = cause?.messageAndStackTrace() ?: messageAndStackTrace()
 }

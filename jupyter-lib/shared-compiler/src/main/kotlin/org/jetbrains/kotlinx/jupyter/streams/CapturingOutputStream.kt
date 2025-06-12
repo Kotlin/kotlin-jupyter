@@ -76,11 +76,12 @@ class CapturingOutputStream(
     private fun flushBuffers(vararg buffers: ByteArrayOutputStream) {
         newlineFound = false
         val str =
-            buffers.map { stream ->
-                val str = stream.toString("UTF-8")
-                stream.reset()
-                str
-            }.reduce { acc, s -> acc + s }
+            buffers
+                .map { stream ->
+                    val str = stream.toString("UTF-8")
+                    stream.reset()
+                    str
+                }.reduce { acc, s -> acc + s }
         if (str.isNotEmpty()) {
             onCaptured(str)
         }

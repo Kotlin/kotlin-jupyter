@@ -9,17 +9,23 @@ import java.net.URL
 abstract class AbstractLibraryResolutionInfo(
     private val typeKey: String,
 ) : LibraryResolutionInfo {
-    class ByURL(val url: URL) : AbstractLibraryResolutionInfo("url") {
+    class ByURL(
+        val url: URL,
+    ) : AbstractLibraryResolutionInfo("url") {
         override val args = listOf(Variable("url", url.toString()))
         override val shouldBeCachedLocally get() = false
     }
 
-    class ByFile(val file: File) : AbstractLibraryResolutionInfo("file") {
+    class ByFile(
+        val file: File,
+    ) : AbstractLibraryResolutionInfo("file") {
         override val args = listOf(Variable("file", file.path))
         override val shouldBeCachedLocally get() = false
     }
 
-    class ByDir(val librariesDir: File) : AbstractLibraryResolutionInfo("bundled") {
+    class ByDir(
+        val librariesDir: File,
+    ) : AbstractLibraryResolutionInfo("bundled") {
         override val args = listOf(Variable("dir", librariesDir.path))
         override val shouldBeCachedLocally get() = false
     }
@@ -51,7 +57,9 @@ abstract class AbstractLibraryResolutionInfo(
             get() = "fallback_" + super.valueKey
     }
 
-    class Default(val string: String = "") : AbstractLibraryResolutionInfo("default") {
+    class Default(
+        val string: String = "",
+    ) : AbstractLibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
         override val shouldBeCachedLocally get() = false
     }
@@ -62,9 +70,7 @@ abstract class AbstractLibraryResolutionInfo(
 
     override val key: String by lazy { "${typeKey}_${replaceForbiddenChars(valueKey)}" }
 
-    override fun hashCode(): Int {
-        return key.hashCode()
-    }
+    override fun hashCode(): Int = key.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -75,18 +81,15 @@ abstract class AbstractLibraryResolutionInfo(
         return valueKey == other.valueKey
     }
 
-    override fun toString(): String {
-        return typeKey +
+    override fun toString(): String =
+        typeKey +
             when {
                 args.isEmpty() -> ""
                 args.size == 1 -> "[${args[0].value}]"
                 else -> args.joinToString(", ", "[", "]") { "${it.name}=${it.value}" }
             }
-    }
 
     companion object {
-        fun replaceForbiddenChars(string: String): String {
-            return string.replace("""[<>/\\:"|?*]""".toRegex(), "_")
-        }
+        fun replaceForbiddenChars(string: String): String = string.replace("""[<>/\\:"|?*]""".toRegex(), "_")
     }
 }

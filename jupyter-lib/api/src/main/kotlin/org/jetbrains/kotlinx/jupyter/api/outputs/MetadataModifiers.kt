@@ -14,12 +14,11 @@ fun interface MetadataModifier {
 fun standardMetadataModifiers(
     isolatedHtml: Boolean = false,
     expandedJson: Boolean = false,
-): List<MetadataModifier> {
-    return buildList {
+): List<MetadataModifier> =
+    buildList {
         if (isolatedHtml) add(IsolatedHtmlMarker)
         if (expandedJson) add(ExpandedJsonMarker)
     }
-}
 
 object IsolatedHtmlMarker : MetadataModifier {
     private val marker =
@@ -49,13 +48,13 @@ var MimeTypedResultEx.isExpandedJson by hasModifier(ExpandedJsonMarker)
 
 fun hasModifier(modifier: MetadataModifier) = MetadataModifierIsSet(modifier)
 
-class MetadataModifierIsSet(private val modifier: MetadataModifier) {
+class MetadataModifierIsSet(
+    private val modifier: MetadataModifier,
+) {
     operator fun getValue(
         result: MimeTypedResultEx,
         property: KProperty<*>,
-    ): Boolean {
-        return result.hasMetadataModifiers { it === modifier }
-    }
+    ): Boolean = result.hasMetadataModifiers { it === modifier }
 
     operator fun setValue(
         result: MimeTypedResultEx,

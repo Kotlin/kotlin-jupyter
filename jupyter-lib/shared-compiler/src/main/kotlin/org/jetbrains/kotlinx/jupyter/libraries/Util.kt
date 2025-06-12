@@ -9,10 +9,18 @@ import java.util.TreeSet
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
-sealed class Parameter(val name: String, open val default: String?) {
-    class Required(name: String) : Parameter(name, null)
+sealed class Parameter(
+    val name: String,
+    open val default: String?,
+) {
+    class Required(
+        name: String,
+    ) : Parameter(name, null)
 
-    class Optional(name: String, override val default: String) : Parameter(name, default)
+    class Optional(
+        name: String,
+        override val default: String,
+    ) : Parameter(name, default)
 }
 
 class Brackets(
@@ -42,9 +50,8 @@ enum class DefaultInfoSwitch {
     CLASSPATH,
 }
 
-fun diagFailure(message: String): ResultWithDiagnostics.Failure {
-    return ResultWithDiagnostics.Failure(ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, message))
-}
+fun diagFailure(message: String): ResultWithDiagnostics.Failure =
+    ResultWithDiagnostics.Failure(ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, message))
 
 data class ArgParseResult(
     val variable: Variable,
@@ -97,22 +104,18 @@ fun parseLibraryArguments(
     }
 }
 
-fun parseLibraryName(str: String): Pair<String, List<Variable>> {
-    return parseCall(str, Brackets.ROUND)
+fun parseLibraryName(str: String): Pair<String, List<Variable>> = parseCall(str, Brackets.ROUND)
+
+class TrivialLibraryDefinitionProducer(
+    private val library: LibraryDefinition,
+) : LibraryDefinitionProducer {
+    override fun getDefinitions(notebook: Notebook): List<LibraryDefinition> = listOf(library)
 }
 
-class TrivialLibraryDefinitionProducer(private val library: LibraryDefinition) : LibraryDefinitionProducer {
-    override fun getDefinitions(notebook: Notebook): List<LibraryDefinition> {
-        return listOf(library)
-    }
-}
+fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<LibraryDefinition> = flatMap { it.getDefinitions(notebook) }
 
-fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<LibraryDefinition> {
-    return flatMap { it.getDefinitions(notebook) }
-}
-
-fun String.escapeSpecialChars(): String {
-    return buildString {
+fun String.escapeSpecialChars(): String =
+    buildString {
         for (char in this@escapeSpecialChars) {
             when (char) {
                 '\\' -> append("\\\\")
@@ -125,7 +128,6 @@ fun String.escapeSpecialChars(): String {
             }
         }
     }
-}
 
 fun buildDependenciesInitCode(libraries: Collection<LibraryDefinition>): Code? {
     val builder = StringBuilder()

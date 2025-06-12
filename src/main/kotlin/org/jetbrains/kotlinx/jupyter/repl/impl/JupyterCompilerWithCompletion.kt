@@ -26,8 +26,8 @@ internal interface JupyterCompilerWithCompletion : JupyterCompiler {
             disposable: Disposable,
             compilationConfiguration: ScriptCompilationConfiguration,
             evaluationConfiguration: ScriptEvaluationConfiguration,
-        ): JupyterCompilerWithCompletion {
-            return K2JupyterCompilerWithCompletionImpl(
+        ): JupyterCompilerWithCompletion =
+            K2JupyterCompilerWithCompletionImpl(
                 K2KJvmReplCompilerWithCompletion(
                     hostConfiguration =
                         compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
@@ -38,13 +38,12 @@ internal interface JupyterCompilerWithCompletion : JupyterCompiler {
                 compilationConfiguration,
                 evaluationConfiguration,
             )
-        }
 
         fun createK1Compiler(
             compilationConfiguration: ScriptCompilationConfiguration,
             evaluationConfiguration: ScriptEvaluationConfiguration,
-        ): JupyterCompilerWithCompletion {
-            return K1JupyterCompilerWithCompletionImpl(
+        ): JupyterCompilerWithCompletion =
+            K1JupyterCompilerWithCompletionImpl(
                 KJvmReplCompilerWithIdeServices(
                     compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
                         ?: defaultJvmScriptingHostConfiguration,
@@ -52,6 +51,5 @@ internal interface JupyterCompilerWithCompletion : JupyterCompiler {
                 compilationConfiguration,
                 evaluationConfiguration,
             )
-        }
     }
 }

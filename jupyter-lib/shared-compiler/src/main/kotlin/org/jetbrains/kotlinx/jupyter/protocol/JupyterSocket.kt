@@ -29,7 +29,9 @@ interface JupyterSocketBase {
     fun receiveRawMessage(): RawMessage?
 }
 
-interface JupyterSocket : SocketWithCancellation, JupyterSocketBase {
+interface JupyterSocket :
+    SocketWithCancellation,
+    JupyterSocketBase {
     // Used on server side
     fun bind(): Boolean
 

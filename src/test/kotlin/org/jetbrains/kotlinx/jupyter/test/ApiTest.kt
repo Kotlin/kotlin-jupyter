@@ -27,9 +27,7 @@ class ApiTest : AbstractSingleReplTest() {
     private fun jEval(
         jupyterId: Int,
         code: String,
-    ): EvalResultEx {
-        return eval(code, jupyterId)
-    }
+    ): EvalResultEx = eval(code, jupyterId)
 
     @Test
     fun testRepl() {

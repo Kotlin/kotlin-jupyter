@@ -27,24 +27,18 @@ class CompositeReplException(
     /**
      * Returns true if any of the exceptions in the composite exception match the specified predicate.
      */
-    fun contains(predicate: (Throwable) -> Boolean): Boolean {
-        return exceptions.any(predicate)
-    }
+    fun contains(predicate: (Throwable) -> Boolean): Boolean = exceptions.any(predicate)
 
     /**
      * Returns a list of the causes of the exceptions in the composite exception.
      */
-    fun getCauses(): List<Throwable> {
-        return exceptions.flatMap { it.getCauses() }.distinct()
-    }
+    fun getCauses(): List<Throwable> = exceptions.flatMap { it.getCauses() }.distinct()
 }
 
 /**
  * Returns a list of all the causes of a throwable.
  */
-fun Throwable.getCauses(): List<Throwable> {
-    return generateSequence(cause) { it.cause }.toList()
-}
+fun Throwable.getCauses(): List<Throwable> = generateSequence(cause) { it.cause }.toList()
 
 fun Collection<Throwable>.throwLibraryException(part: LibraryProblemPart) {
     when (size) {

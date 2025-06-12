@@ -25,9 +25,7 @@ class PriorityList<T>(
      * Collection iterator
      * Amortized next()/hasNext() complexity: O(1)
      */
-    override fun iterator(): Iterator<T> {
-        return MyIterator()
-    }
+    override fun iterator(): Iterator<T> = MyIterator()
 
     /**
      * Adds [value] to the list with specified [priority]
@@ -64,9 +62,7 @@ class PriorityList<T>(
      * All collection elements
      * Complexity: O(n)
      */
-    fun elements(): Collection<T> {
-        return c.map { it.value }
-    }
+    fun elements(): Collection<T> = c.map { it.value }
 
     /**
      * If a [value] wasn't previously added to the list, simply adds it with a given [priority].
@@ -94,9 +90,7 @@ class PriorityList<T>(
      * (elements added earlier go first)
      * Complexity: O(n log(n))
      */
-    fun elementsWithPriority(): List<Pair<T, Int>> {
-        return c.sortedBy { it.order }.map { it.value to it.priority }
-    }
+    fun elementsWithPriority(): List<Pair<T, Int>> = c.sortedBy { it.order }.map { it.value to it.priority }
 
     private class Entry<T>(
         val value: T,
@@ -113,12 +107,8 @@ class PriorityList<T>(
     private inner class MyIterator : Iterator<T> {
         private val mapIter = c.iterator()
 
-        override fun hasNext(): Boolean {
-            return mapIter.hasNext()
-        }
+        override fun hasNext(): Boolean = mapIter.hasNext()
 
-        override fun next(): T {
-            return mapIter.next().value
-        }
+        override fun next(): T = mapIter.next().value
     }
 }
