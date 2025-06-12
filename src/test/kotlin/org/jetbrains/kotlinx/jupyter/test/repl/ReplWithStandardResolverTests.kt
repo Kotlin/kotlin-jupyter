@@ -12,6 +12,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -312,23 +314,27 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        eval(
-            """
-            %use dataframe, kandy
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                %use dataframe, kandy
+                """.trimIndent(),
+            )
+        result.shouldBeTypeOf<EvalResultEx.Success>()
     }
 
     @Test
     fun `options should not interfer`() {
-        eval(
-            """
-            %use dataframe
-            %use kandy(0.4.0-dev-16)
-            
-            dataFrameConfig
-            """.trimIndent(),
-        )
+        val result =
+            eval(
+                """
+                %use dataframe
+                %use kandy(0.4.0-dev-16)
+                
+                dataFrameConfig
+                """.trimIndent(),
+            )
+        result.shouldBeTypeOf<EvalResultEx.Success>()
     }
 
     @Test
@@ -340,8 +346,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
                 """.trimIndent(),
             )
-
-        res.metadata.newSources.shouldHaveSize(84)
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> res.metadata.newSources.shouldHaveSize(84)
+            ReplCompilerMode.K2 -> res.metadata.newSources.shouldHaveSize(168)
+        }
     }
 
     @Test
@@ -392,5 +400,28 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         assertEquals("John Smith", res.renderedValue)
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-76009/K2-Repl-Kotlin-specific-imports-does-not-work-if-dependency-is-added-to-the-classpath-after-1st-snippet
+    @Test
+    fun testKotlinImportsAfterFirstSnippet() {
+        val res0 = eval("1")
+        res0.shouldBeInstanceOf<EvalResultEx.Success>()
+
+        val res1 =
+            eval(
+                """
+                @file:DependsOn("org.jetbrains.kotlinx:dataframe-core:0.15.0")
+                """.trimIndent(),
+            )
+        res1.shouldBeInstanceOf<EvalResultEx.Success>()
+
+        val res2 =
+            eval(
+                """
+                import org.jetbrains.kotlinx.dataframe.impl.codeGen.urlCodeGenReader
+                """.trimIndent(),
+            )
+        res2.shouldBeInstanceOf<EvalResultEx.Success>()
     }
 }

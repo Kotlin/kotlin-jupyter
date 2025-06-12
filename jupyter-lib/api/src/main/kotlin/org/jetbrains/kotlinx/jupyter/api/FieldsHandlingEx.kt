@@ -10,7 +10,7 @@ class FieldInfo(
 )
 
 val FieldInfo.name: VariableName get() = kotlinProperty?.name ?: javaField.name
-val FieldInfo.isCellResult: Boolean get() = kotlinProperty == null && name.startsWith("res")
+val FieldInfo.isCellResult: Boolean get() = kotlinProperty == null && name.startsWith("\$res")
 
 private fun KProperty<*>.toFieldInfo() =
     FieldInfo(this, javaField ?: throw IllegalArgumentException("Property $this should have backing field"))
@@ -71,7 +71,7 @@ class ResultFieldUpdateHandler(
             val tempField = updateAction(host, value, field)
             if (tempField != null) {
                 val fieldName = field.name
-                host.execute("val $fieldName = $tempField; $fieldName")
+                host.execute("val `$fieldName` = `$tempField`; `$fieldName`")
             } else {
                 null
             }

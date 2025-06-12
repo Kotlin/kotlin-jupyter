@@ -1,25 +1,32 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
+import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation.IgnoredLocation.line
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
+import org.jetbrains.kotlinx.jupyter.repl.impl.KernelReplEvaluator
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
 
 /**
  * ContextUpdater updates current user-defined functions and variables
  * to use in completion and KotlinContext.
+ *
+ * It does this by using reflection on the scriptInstance in order to detect new properties and functions.
  */
 class ContextUpdater(
     loggerFactory: KernelLoggerFactory,
     val context: KotlinContext,
-    private val evaluator: BasicJvmReplEvaluator,
+    private val evaluator: KernelReplEvaluator,
 ) {
     private val logger = loggerFactory.getLogger(this::class)
     private var lastProcessedSnippet: LinkedSnippet<KJvmEvaluatedSnippet>? = null
@@ -50,7 +57,11 @@ class ContextUpdater(
         for (line in lines) {
             val methods = line.javaClass.methods
             for (method in methods) {
-                if (objectMethods.contains(method) || method.name == "main") {
+                if (
+                    objectMethods.contains(method) ||
+                    method.name == "main" && Modifier.isStatic(method.modifiers) || // K1 Repl entry point for running a snippet.
+                    method.name == "$\$eval" // K2 Repl method containing the snippet code.
+                ) {
                     continue
                 }
                 val function = method.kotlinFunction ?: continue
@@ -62,25 +73,42 @@ class ContextUpdater(
     @Throws(ReflectiveOperationException::class)
     private fun refreshVariables(lines: List<Any>) {
         for (line in lines) {
-            val fields = line.javaClass.declaredFields
-            findVariables(fields, line)
+            // `.kotlinProperty doesn't work correctly due to the metadata in snippets
+            // not working correctly in K2.
+            // See https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
+            // So we attempt to find both of them at this point.
+            val kotlinProperties = line::class.declaredMemberProperties.toList()
+            val javaFields = line.javaClass.declaredFields
+            findVariables(javaFields, kotlinProperties, line)
         }
     }
 
     @Throws(IllegalAccessException::class)
     private fun findVariables(
-        fields: Array<Field>,
-        o: Any,
+        javaFields: Array<Field>,
+        kotlinProperties: List<KProperty1<out Any, *>>,
+        scriptInstance: Any,
     ) {
-        for (field in fields) {
+        for (field in javaFields) {
             val fieldName = field.name
-            if (fieldName.contains("$\$implicitReceiver") || fieldName.contains("script$")) {
+            if (
+                fieldName.contains("$\$implicitReceiver") || // ImplicitReceivers injected through ScriptCompilationConfiguration
+                fieldName.contains("script$") || // TODO What is this?
+                fieldName.contains("INSTANCE") // K2 REPL reference to the script instance
+            ) {
                 continue
             }
 
-            field.isAccessible = true
-            val value = field.get(o)
-            context.addVariable(fieldName, KotlinVariableInfo(value, field.kotlinProperty, field, o))
+            // `field.isAccessible` doesn't work correctly.
+            // So instead we look up the value through the Java Property for now
+            try {
+                val kotlinProperty = kotlinProperties.firstOrNull { it.name == fieldName } as KProperty1<Any, *>?
+                field.isAccessible = true
+                val value = field.get(scriptInstance)
+                context.addVariable(fieldName, KotlinVariableInfo(value, kotlinProperty, field, scriptInstance))
+            } catch (ex: Exception) {
+                thisLogger().error("Exception accessing variable: $fieldName")
+            }
         }
     }
 

@@ -25,7 +25,6 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
     @Test
     fun testDataframeDisplay() {
         eval("SessionOptions.resolveSources = true", 1, false)
-
         eval(
             """
             %use dataframe(0.10.0-dev-1373)
@@ -46,7 +45,6 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
             repl.notebook.currentCell!!.declarations
                 .filter { it.kind == DeclarationKind.PROPERTY }
                 .mapNotNull { it.name }
-
         declaredProperties shouldBe listOf("name", "height")
 
         eval(

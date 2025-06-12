@@ -1,4 +1,5 @@
 import build.util.LOGBACK_GROUP
+import build.util.implementation
 
 plugins {
     kotlin("libs.publisher")
@@ -14,12 +15,16 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
+    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
 }
 
 val rootShadowJar = ':' + build.SHADOW_JAR_TASK
 
 buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
 }
 
 tasks.dokkaHtmlPartial {

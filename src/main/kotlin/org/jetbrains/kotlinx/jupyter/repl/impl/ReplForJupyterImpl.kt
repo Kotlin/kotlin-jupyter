@@ -10,7 +10,9 @@ import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
@@ -25,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.getLogger
@@ -52,7 +55,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.config.CellId
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
@@ -116,17 +118,17 @@ import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadataImpl
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalReplResult
 import org.jetbrains.kotlinx.jupyter.repl.result.SerializedCompiledScriptsData
 import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
-import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.script.experimental.api.CompiledSnippet
+import kotlin.script.experimental.api.ReplEvaluator
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.constructorArgs
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.implicitReceivers
@@ -134,8 +136,11 @@ import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
+
+typealias KernelReplEvaluator = ReplEvaluator<CompiledSnippet, KJvmEvaluatedSnippet>
 
 class ReplForJupyterImpl(
     private val loggerFactory: KernelLoggerFactory,
@@ -161,10 +166,10 @@ class ReplForJupyterImpl(
     override val loggingManager: LoggingManager,
     magicsHandler: LibrariesAwareMagicsHandler,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
-    private val replCompilerMode: ReplCompilerMode,
+    override val compilerMode: ReplCompilerMode,
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
+    val rootDisposable = Disposer.newDisposable("REPL Disposable")
     private val logger = loggerFactory.getLogger(this::class)
-
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
 
     private val resourcesProcessor =
@@ -223,7 +228,6 @@ class ReplForJupyterImpl(
         )
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
-
     private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
     private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
 
@@ -234,8 +238,12 @@ class ReplForJupyterImpl(
             scriptReceivers,
             compilerArgsConfigurator,
             scriptDataCollectors = listOf(importsCollector, declarationsCollector),
-            loggerFactory = DefaultKernelLoggerFactory,
-            body = { addBaseClass<ScriptTemplateWithDisplayHelpers>() },
+            replCompilerMode = compilerMode,
+            loggerFactory = loggerFactory,
+            body = {
+                addBaseClass<ScriptTemplateWithDisplayHelpers>()
+                implicitReceivers(ScriptTemplateWithDisplayHelpers::class)
+            },
         ).with {
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
@@ -290,31 +298,38 @@ class ReplForJupyterImpl(
                 notebook.intermediateClassLoader = intermediateClassLoader
                 jvm {
                     val scriptClassloader =
-                        URLClassLoader(scriptClasspath.map { it.toURI().toURL() }.toTypedArray(), intermediateClassLoader)
+                        URLClassLoader(
+                            scriptClasspath.map { it.toURI().toURL() }.toTypedArray(),
+                            intermediateClassLoader,
+                        )
                     baseClassLoader(scriptClassloader)
                 }
             }
-            constructorArgs(this@ReplForJupyterImpl)
+            implicitReceivers(ScriptTemplateWithDisplayHelpers(this@ReplForJupyterImpl))
         }
 
     private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
-        when (replCompilerMode) {
+        when (compilerMode) {
             ReplCompilerMode.K1 -> {
-                JupyterCompilerWithCompletion.create(
+                JupyterCompilerWithCompletion.createK1Compiler(
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
             }
             ReplCompilerMode.K2 -> {
-                k2Unsupported()
+                JupyterCompilerWithCompletion.createK2Compiler(
+                    rootDisposable,
+                    compilerConfiguration,
+                    evaluatorConfiguration,
+                )
             }
         }
     }
 
-    private val evaluator: BasicJvmReplEvaluator by lazy {
-        when (replCompilerMode) {
+    private val evaluator: KernelReplEvaluator by lazy {
+        when (compilerMode) {
             ReplCompilerMode.K1 -> BasicJvmReplEvaluator()
-            ReplCompilerMode.K2 -> k2Unsupported()
+            ReplCompilerMode.K2 -> K2ReplEvaluator()
         }
     }
 
@@ -765,7 +780,7 @@ class ReplForJupyterImpl(
     }
 
     init {
-        logger.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION}")
+        logger.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION} (${compilerMode.name})")
         logger.info("Kernel version: ${runtimeProperties.version}")
         logger.info("Classpath used in script: $scriptClasspath")
     }
@@ -784,9 +799,6 @@ class ReplForJupyterImpl(
 
     override fun close() {
         notebook.closeIfPossible()
-    }
-
-    private fun k2Unsupported(): Nothing {
-        throw IllegalStateException("K2 REPL is not supported yet")
+        rootDisposable.dispose()
     }
 }

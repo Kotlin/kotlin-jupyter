@@ -15,7 +15,10 @@ import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderer
 import org.jetbrains.kotlinx.jupyter.util.AcceptanceRule
 
 /**
- * Library definition represents "library" concept in Kotlin kernel.
+ * This interface represents the "library" concept in the Kotlin kernel.
+ *
+ * See https://github.com/Kotlin/kotlin-jupyter/blob/master/docs/libraries.md#integrate-new-libraries
+ * for more information.
  */
 interface LibraryDefinition {
     /**
@@ -101,7 +104,7 @@ interface LibraryDefinition {
         get() = emptyList()
 
     /**
-     * List of type annotations used by annotations processor
+     * List of type annotations used by the annotation processor
      */
     val classAnnotations: List<ClassAnnotationHandler>
         get() = emptyList()

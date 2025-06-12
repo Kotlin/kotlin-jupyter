@@ -11,14 +11,10 @@ class KotlinJupyterPluginExtension(
     private val project: Project,
 ) {
     private val enableApiDependency = project.propertyByFlag("kotlin.jupyter.add.api", true)
-    private val enableScannerDependency = project.propertyByFlag("kotlin.jupyter.add.scanner", false)
     private val enableTestKitDependency = project.propertyByFlag("kotlin.jupyter.add.testkit", true)
-
-    val scannerDependencyEnabled get() = enableScannerDependency.get()
 
     internal fun addDependenciesIfNeeded() {
         if (enableApiDependency.get()) addApiDependency()
-        if (enableScannerDependency.get()) addScannerDependency()
         if (enableTestKitDependency.get()) addTestKitDependency()
     }
 
@@ -26,18 +22,6 @@ class KotlinJupyterPluginExtension(
     fun addApiDependency(version: String? = null) =
         with(project) {
             configureDependency("compileOnly", kernelDependency("api", version))
-        }
-
-    @JvmOverloads
-    fun addScannerDependency(version: String? = null) =
-        with(project) {
-            configurations.whenAdded({ it.name == "ksp" }) { kspConf ->
-                val annotationsDependency = kernelDependency("api-annotations", version)
-                dependencies {
-                    kspConf(annotationsDependency)
-                }
-                configureDependency("compileOnly", annotationsDependency)
-            }
         }
 
     @JvmOverloads

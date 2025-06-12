@@ -1,11 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.ext.integration
 
-import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-@JupyterLibrary
 object ElapsedTimeIntegration : JupyterIntegration() {
     private var lastTime: Long = -1L
 

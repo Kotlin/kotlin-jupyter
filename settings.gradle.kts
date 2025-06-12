@@ -4,8 +4,13 @@ rootProject.name = "kotlin-jupyter-kernel"
 
 pluginManagement {
     repositories {
-        maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+        val sharedProps =
+            java.util.Properties().apply {
+                load(File(rootDir, "shared.properties").inputStream())
+            }
         gradlePluginPortal()
+        maven(sharedProps.getProperty("kotlin.repository"))
+        maven(sharedProps.getProperty("kotlin.ds.repository"))
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
@@ -23,14 +28,12 @@ includeBuild("build-plugin")
 subproject("common-dependencies", "build-plugin/")
 libSubproject("lib")
 libSubproject("api")
-libSubproject("api-annotations")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
 libSubproject("spring-starter")
 libSubproject("lib-ext")
 libSubproject("test-kit")
 libSubproject("test-kit-test")
-
 exampleSubproject("getting-started")
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")

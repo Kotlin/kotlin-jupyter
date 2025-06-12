@@ -18,10 +18,8 @@ dependencies {
     // kotlinx.serialization in plugin code
     implementation(libs.kotlin.gradle.gradle)
     implementation(libs.gson)
-    implementation(libs.plugin.ksp)
 
     testImplementation(projects.api)
-    testImplementation(projects.apiAnnotations)
 }
 
 tasks.whenTaskAdded {
@@ -44,6 +42,9 @@ java {
 buildSettings {
     withLanguageLevel(rootSettings.gradleCompatibleKotlinLanguageLevel)
     withTests()
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
 }
 
 val pluginName = "apiGradlePlugin"

@@ -31,6 +31,8 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingCommon)
     compileOnly(libs.kotlin.dev.scriptingJvm)
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded)
+    // K2: Is here because we need to reference org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
+    compileOnly(libs.kotlin.dev.scriptingCompiler)
 
     // Serialization runtime
     compileOnly(libs.serialization.json)
@@ -60,6 +62,7 @@ buildSettings {
     withLanguageLevel(rootSettings.kotlinLanguageLevel)
     withCompilerArgs {
         skipPrereleaseCheck()
+        jdkRelease(rootSettings.jvmTarget)
     }
     withTests()
 }

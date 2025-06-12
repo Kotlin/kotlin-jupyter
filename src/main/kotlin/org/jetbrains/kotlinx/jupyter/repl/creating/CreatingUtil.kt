@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.repl.creating
 
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
@@ -16,8 +18,6 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
-import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
-import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
 fun createRepl(

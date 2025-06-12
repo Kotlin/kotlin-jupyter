@@ -1,110 +1,42 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
-import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
-import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
-import org.jetbrains.kotlinx.jupyter.exceptions.ReplException
-import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
+import org.jetbrains.kotlinx.jupyter.removeDuplicates
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
-import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.KotlinType
-import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.ReplCompiler
-import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
-import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.defaultImports
-import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.refineOnAnnotations
-import kotlin.script.experimental.api.valueOr
+import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.valueOrNull
-import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.api.with
-import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
-import kotlin.script.experimental.jvm.util.toSourceCodePosition
-import kotlin.script.experimental.util.LinkedSnippet
 
-interface JupyterCompiler {
-    val version: KotlinKernelVersion
-    val numberOfSnippets: Int
-    val previousScriptsClasses: List<KClass<*>>
-    val lastKClass: KClass<*>
-    val lastClassLoader: ClassLoader
-
-    fun nextCounter(): Int
-
-    fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit)
-
-    fun updateCompilationConfigOnAnnotation(
-        handler: FileAnnotationHandler,
-        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
-    )
-
-    fun compileSync(
-        snippet: SourceCode,
-        options: JupyterCompilingOptions,
-    ): Result
-
-    data class Result(
-        val snippet: LinkedSnippet<KJvmCompiledScript>,
-        val newEvaluationConfiguration: ScriptEvaluationConfiguration,
-    )
-}
-
-interface JupyterCompilerWithCompletion : JupyterCompiler {
-    val completer: ReplCompleter
-
-    fun checkComplete(code: Code): CheckCompletenessResult
-
-    fun listErrors(code: Code): Sequence<ScriptDiagnostic>
-
-    companion object {
-        fun create(
-            compilationConfiguration: ScriptCompilationConfiguration,
-            evaluationConfiguration: ScriptEvaluationConfiguration,
-        ): JupyterCompilerWithCompletion {
-            return JupyterCompilerWithCompletionImpl(
-                KJvmReplCompilerWithIdeServices(
-                    compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                        ?: defaultJvmScriptingHostConfiguration,
-                ),
-                compilationConfiguration,
-                evaluationConfiguration,
-            )
-        }
-    }
-}
-
-open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
+internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     protected val compiler: CompilerT,
     initialCompilationConfig: ScriptCompilationConfiguration,
     private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
@@ -190,7 +122,17 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
 
     private val getCompilationConfiguration =
         createCachedFun { options: JupyterCompilingOptions ->
-            compilationConfig.with { jupyterOptions(options) }
+            compilationConfig.with {
+                jupyterOptions(options)
+                repl {
+                    // This is also setting the $resX value
+                    // It might be required for the new result value handling,
+                    // if so, we need to track an always incrementing number
+                    // on our end, which will be quite annoying.
+                    // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+                    // currentLineId(LineId(options.cellId.value, 0, 0))
+                }
+            }
         }
 
     override fun compileSync(
@@ -205,9 +147,15 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                         options.cellId.toExecutionCount(),
                         snippet.text.lines().size,
                     )
-                throw ReplCompilerException(snippet.text, resultWithDiagnostics, metadata = metadata)
+                // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
+                throw ReplCompilerException(snippet.text, updatedDiagnostics, metadata = metadata)
             }
             is ResultWithDiagnostics.Success -> {
+                // TODO "resultField" is null because in K2 the return value is no longer stored
+                //  in a variable. This is breaking FieldHandler integration. We need to find a way
+                //  to reference previous cells outputs using code so we cal do something like `val x = notebook.outputs
+                //  See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                 val result = resultWithDiagnostics.value
                 val compiledScript = result.get()
 
@@ -227,7 +175,11 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
                     }
 
                 when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
-                    is ResultWithDiagnostics.Failure -> throw ReplCompilerException(snippet.text, kClassWithDiagnostics)
+                    is ResultWithDiagnostics.Failure -> {
+                        // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                        val updatedDiagnostics = kClassWithDiagnostics.removeDuplicates()
+                        throw ReplCompilerException(snippet.text, updatedDiagnostics)
+                    }
                     is ResultWithDiagnostics.Success -> {
                         val kClass = kClassWithDiagnostics.value
                         classes.add(kClass)
@@ -238,57 +190,4 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
             }
         }
     }
-}
-
-class JupyterCompilerWithCompletionImpl(
-    compiler: KJvmReplCompilerWithIdeServices,
-    compilationConfig: ScriptCompilationConfiguration,
-    evaluationConfig: ScriptEvaluationConfiguration,
-) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
-    JupyterCompilerWithCompletion {
-    override val completer: ReplCompleter
-        get() = compiler
-
-    override fun checkComplete(code: Code): CheckCompletenessResult {
-        val result = analyze(code)
-        val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
-        val diagnostics = analysisResult[ReplAnalyzerResult.analysisDiagnostics]!!
-        val isComplete = diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
-        return CheckCompletenessResult(isComplete)
-    }
-
-    private fun analyze(code: Code): ResultWithDiagnostics<ReplAnalyzerResult> {
-        val snippet = SourceCodeImpl(nextCounter(), code)
-
-        return runBlocking {
-            compiler.analyze(
-                snippet,
-                0.toSourceCodePosition(snippet),
-                compilationConfig,
-            )
-        }
-    }
-
-    override fun listErrors(code: Code): Sequence<ScriptDiagnostic> {
-        val result = analyze(code).valueOrThrow()
-
-        return result[ReplAnalyzerResult.analysisDiagnostics]!!
-    }
-}
-
-fun getSimpleCompiler(
-    compilationConfiguration: ScriptCompilationConfiguration,
-    evaluationConfiguration: ScriptEvaluationConfiguration,
-): JupyterCompiler {
-    class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) :
-        KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)
-
-    return JupyterCompilerImpl(
-        SimpleReplCompiler(
-            compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                ?: defaultJvmScriptingHostConfiguration,
-        ),
-        compilationConfiguration,
-        evaluationConfiguration,
-    )
 }

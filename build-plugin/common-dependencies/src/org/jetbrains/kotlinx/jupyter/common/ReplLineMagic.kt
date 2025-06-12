@@ -1,5 +1,19 @@
 package org.jetbrains.kotlinx.jupyter.common
 
+/**
+ * This class defines the magic commands available to users of a notebook. They are accessed
+ * by using the `%<enumNameInCamelCase>` syntax inside a notebook.
+ *
+ * Example:
+ *
+ * ```
+ * // Snippet 1
+ * %useLatestDescriptors
+ * println("Hello world")
+ * ```
+ *
+ * Adding a new magic value also requires registering a handler in [org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler].
+ */
 enum class ReplLineMagic(val desc: String, val argumentsUsage: String? = null, val visibleInHelp: Boolean = true) {
     USE(
         "Imports supported libraries and injects code from these libraries" +

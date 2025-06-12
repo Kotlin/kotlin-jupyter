@@ -1,16 +1,18 @@
 @file:Suppress("UnstableApiUsage")
 
-import org.gradle.kotlin.dsl.mavenCentral
-import org.gradle.kotlin.dsl.repositories
-
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "build"
 
 pluginManagement {
     repositories {
+        val sharedProps = java.util.Properties().apply {
+            load(File(rootDir.parent, "shared.properties").inputStream())
+        }
         mavenCentral()
         gradlePluginPortal()
+        maven(sharedProps.getProperty("kotlin.repository"))
+        maven(sharedProps.getProperty("kotlin.ds.repository"))
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
@@ -22,6 +24,9 @@ plugins {
 }
 
 dependencyResolutionManagement {
+    val sharedProps = java.util.Properties().apply {
+        load(File(rootDir.parent, "shared.properties").inputStream())
+    }
     versionCatalogs {
         create("libs") {
             from(files("../gradle/libs.versions.toml"))
@@ -30,7 +35,8 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven("https://packages.jetbrains.team/maven/p/kds/kotlin-ds-maven")
+        maven(sharedProps.getProperty("kotlin.repository"))
+        maven(sharedProps.getProperty("kotlin.ds.repository"))
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }

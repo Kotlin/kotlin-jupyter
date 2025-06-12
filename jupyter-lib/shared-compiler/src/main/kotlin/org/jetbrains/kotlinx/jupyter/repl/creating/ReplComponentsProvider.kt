@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl.creating
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
@@ -25,7 +26,6 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 
 interface ReplComponentsProvider {

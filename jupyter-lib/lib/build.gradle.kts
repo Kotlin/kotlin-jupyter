@@ -9,6 +9,12 @@ dependencies {
     implementation(libs.kotlin.stable.reflect)
 }
 
+buildSettings {
+    withCompilerArgs {
+        jdkRelease(rootSettings.jvmTarget)
+    }
+}
+
 kotlinPublications {
     publication {
         publicationName.set("lib")

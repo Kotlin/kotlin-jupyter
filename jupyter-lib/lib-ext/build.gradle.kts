@@ -1,7 +1,6 @@
 import build.util.excludeKotlinDependencies
 
 plugins {
-    id("com.google.devtools.ksp")
     kotlin("jvm")
     kotlin("jupyter.api")
     kotlin("libs.publisher")
@@ -12,8 +11,6 @@ dependencies {
     implementation(libs.kotlin.stable.reflect)
 
     compileOnly(projects.api)
-    implementation(projects.apiAnnotations)
-    ksp(projects.apiAnnotations)
 
     testImplementation(projects.api)
 
@@ -35,6 +32,13 @@ buildSettings {
         requiresOptIn()
         jdkRelease(libs.versions.jvmTarget.get())
     }
+}
+
+tasks.processJupyterApiResources {
+    libraryProducers = listOf(
+        "org.jetbrains.kotlinx.jupyter.ext.integration.Integration",
+        "org.jetbrains.kotlinx.jupyter.ext.integration.ElapsedTimeIntegration"
+    )
 }
 
 kotlinPublications {

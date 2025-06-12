@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -29,9 +30,14 @@ val myJvmTarget = libs.versions.jvmTarget.get()
 val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-opt-in=kotlin.RequiresOptIn")
-        jvmTarget = myJvmTarget
+    compilerOptions {
+        freeCompilerArgs.addAll(listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            // Fix for https://jakewharton.com/kotlins-jdk-release-compatibility-flag/
+            // See https://youtrack.jetbrains.com/issue/KT-49746/Support-Xjdk-release-in-gradle-toolchain#focus=Comments-27-9473530.0-0
+            "-Xjdk-release=$myJvmTarget"
+        ))
+        jvmTarget.set(JvmTarget.fromTarget(myJvmTarget))
     }
 }
 

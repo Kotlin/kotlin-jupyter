@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.testkit.test
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeTypeOf
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -72,7 +73,10 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
 
         val exception = execError("import org.jetbrains.kotlinx.multik.api.*")
         exception.shouldBeTypeOf<ReplCompilerException>()
-        exception.message shouldContain "Unresolved reference: multik"
+        exception.message shouldContain when(compilerMode) {
+            ReplCompilerMode.K1 -> "Unresolved reference: multik"
+            ReplCompilerMode.K2 -> "Unresolved reference 'multik'"
+        }
     }
 
     @Test

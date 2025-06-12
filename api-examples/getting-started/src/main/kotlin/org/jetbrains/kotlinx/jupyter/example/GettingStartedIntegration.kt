@@ -1,10 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.example
 
 import org.jetbrains.kotlinx.jupyter.api.FieldHandlerByRuntimeClass
-import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 
-@JupyterLibrary
 class GettingStartedIntegration : JupyterIntegration() {
     override fun Builder.onLoaded() {
         /**

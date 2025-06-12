@@ -15,6 +15,7 @@ abstract class JupyterReplTestCase(
     replProvider: ReplProvider = ReplProvider.withoutLibraryResolution,
 ) {
     private val repl = replProvider(scriptClasspath)
+    val compilerMode = repl.compilerMode
 
     fun execEx(code: Code): EvalResultEx {
         return repl.evalEx(EvalRequestData(code))

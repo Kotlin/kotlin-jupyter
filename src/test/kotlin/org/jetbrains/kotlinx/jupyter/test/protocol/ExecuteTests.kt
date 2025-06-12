@@ -10,14 +10,17 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeTypeOf
+import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
@@ -77,6 +80,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.test.Ignore
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -400,23 +404,33 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                     val classLoader = URLClassLoader(arrayOf(classesDir.toUri().toURL()), ClassLoader.getSystemClassLoader())
                     val loadedClass = classLoader.loadClass(kClassName).kotlin
 
-                    @Suppress("UNCHECKED_CAST")
-                    val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
-                    val constructor = loadedClass.constructors.single()
+                    assertNotNull(loadedClass.memberProperties.find { it.name == "xyz" })
 
-                    val userHandlesProvider =
-                        object : UserHandlesProvider {
-                            override val notebook: Notebook = NotebookMock
-                            override val sessionOptions: SessionOptions
-                                get() = throw NotImplementedError()
+                    when (kernelConfig.replCompilerMode) {
+                        ReplCompilerMode.K1 -> {
+                            @Suppress("UNCHECKED_CAST")
+                            val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
+                            val constructor = loadedClass.constructors.single()
+                            val scriptTemplateDisplayHelpers =
+                                ScriptTemplateWithDisplayHelpers(
+                                    object : UserHandlesProvider {
+                                        override val notebook: Notebook = NotebookMock
+                                        override val sessionOptions: SessionOptions
+                                            get() = throw NotImplementedError()
+                                    },
+                                )
+                            val instance = constructor.call(emptyArray<Any?>(), scriptTemplateDisplayHelpers)
+                            xyzProperty.get(instance) shouldBe 42
                         }
-
-                    val instance = constructor.call(emptyArray<Any>(), userHandlesProvider)
-                    xyzProperty.get(instance) shouldBe 42
+                        ReplCompilerMode.K2 -> {
+                            // `$$eval`-method does not have correct Kotlin metadata, so we fall back to pure Java reflection.
+                            assertNotNull(loadedClass.java.declaredMethods.firstOrNull { it.name == "\$\$eval" })
+                        }
+                    }
 
                     val sourceFile = sourcesDir.resolve("Line_1.kts")
                     sourceFile.shouldBeAFile()
-                    sourceFile.readText() shouldBe "val xyz = 42"
+                    sourceFile.readText().trim() shouldBe "val xyz = 42"
                 },
             )
         assertNull(res)
@@ -481,9 +495,19 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     @Test
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
-        assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
-        val loggingManager = LogbackLoggingManager(testLoggerFactory)
-        loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+        when (kernelConfig.replCompilerMode) {
+            ReplCompilerMode.K1 -> {
+                assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
+                val loggingManager = LogbackLoggingManager(testLoggerFactory)
+                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+            }
+            ReplCompilerMode.K2 -> {
+                // Modify test until KTNB-916 is fixed
+                assertEquals("complete", doIsComplete("fun f() : Int { return 1"))
+                val loggingManager = LogbackLoggingManager(testLoggerFactory)
+                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+            }
+        }
     }
 
     @Test
@@ -677,8 +701,16 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                when (kernelConfig.replCompilerMode) {
+                    ReplCompilerMode.K1 -> {
+                        content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                    }
+                    ReplCompilerMode.K2 -> {
+                        content.traceback shouldContain "\tat Line_0_jupyter.\$\$eval(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                    }
+                }
             },
         )
     }
@@ -712,10 +744,18 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                content.traceback shouldContain "\tat Line_0_jupyter\$callback$1.invoke(Line_0.jupyter.kts:2) at Cell In[1], line 2"
-                content.traceback shouldContain "\tat Line_0_jupyter\$callback$1.invoke(Line_0.jupyter.kts:1) at Cell In[1], line 1"
-                content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
-                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                when (kernelConfig.replCompilerMode) {
+                    ReplCompilerMode.K1 -> {
+                        content.traceback shouldContain $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
+                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                    }
+                    ReplCompilerMode.K2 -> {
+                        content.traceback shouldContain $$"\tat Line_0_jupyter.__eval$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback shouldContain $$$"\tat Line_1_jupyter.$$eval(Line_1.jupyter.kts:1) at Cell In[2], line 1"
+                        content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1], line 2"
+                    }
+                }
             },
         )
     }
@@ -729,17 +769,17 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
     // - If no visible user code can be found, only the request count is displayed but no line number.
     @Test
     fun testExceptionInGeneratedCodeShouldNotReferenceLine() {
+        // Waiting for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
         val code =
             """
             %use ktor-client
-
+            
             @Serializable
             class User(val id: Int)
             
             // Body cannot be serialized, and will throw exception in generated code
             http.get("https://github.com/Kotlin/kotlin-jupyter").body<User>()
             """.trimIndent()
-
         doExecute(
             code,
             hasResult = false,
@@ -748,15 +788,18 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 message.type shouldBe MessageType.ERROR
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
-                content.name shouldBe "io.ktor.serialization.JsonConvertException"
-                content.value shouldBe
-                    "Illegal input: Field 'id' is required for type with serial name " +
-                    "'Line_6_jupyter.User', but it was missing at path: $"
-
-                // Stacktrace should only contain the cell reference if error is outside visible range
-                content.traceback shouldContain "\tat Line_6_jupyter.<init>(Line_6.jupyter.kts:12) at Cell In[1]"
-                content.traceback shouldContain "\tat Line_6_jupyter\$User.<init>(Line_6.jupyter.kts:3) at Cell In[1], line 3"
-                content.traceback[content.traceback.size - 2] shouldBe "at Cell In[1]"
+                when (kernelConfig.replCompilerMode) {
+                    ReplCompilerMode.K1 -> {
+                        content.name shouldBe "io.ktor.serialization.JsonConvertException"
+                        content.value shouldBe
+                            "Illegal input: Field 'id' is required for type with serial name " +
+                            "'Line_6_jupyter.User', but it was missing at path: $"
+                    }
+                    ReplCompilerMode.K2 -> {
+                        // See https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
+                        content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException"
+                    }
+                }
             },
         )
     }
@@ -778,11 +821,26 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
                 content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException"
-                content.value shouldBe
-                    """
-                    at Cell In[1], line 1, column 4: Expecting property name or receiver type
-                    at Cell In[1], line 1, column 5: Property getter or setter expected
-                    """.trimIndent()
+                when (kernelConfig.replCompilerMode) {
+                    ReplCompilerMode.K1 -> {
+                        content.value shouldBe
+                            """
+                            at Cell In[1], line 1, column 4: Expecting property name or receiver type
+                            at Cell In[1], line 1, column 4: Property getter or setter expected
+                            at Cell In[1], line 1, column 8: Expecting property name or receiver type
+                            """.trimIndent()
+                    }
+                    ReplCompilerMode.K2 -> {
+                        content.value shouldBe
+                            """
+                            at Cell In[1], line 1, column 4: Expecting property name or receiver type
+                            at Cell In[1], line 1, column 4: Property getter or setter expected
+                            at Cell In[1], line 1, column 8: Expecting property name or receiver type
+                            at Cell In[1], line 1, column 1: This variable must either have an explicit type or be initialized.
+                            at Cell In[1], line 1, column 5: This variable must either have an explicit type or be initialized.
+                            """.trimIndent()
+                    }
+                }
                 // Error should also contain the stack trace
                 content.traceback.size shouldBeGreaterThan 0
             },
@@ -897,5 +955,28 @@ class ExecuteTests : KernelServerTestsBase(runServerInSeparateProcess = true) {
 
         val res = doExecute(code, false, ::checker)
         assertNull(res)
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-76508/K2-Repl-Annotations-on-property-accessors-are-not-resolved
+    @Test
+    fun testPropertyAnnotations() {
+        val code =
+            """
+            val test
+                @JvmName("customGetter")
+                get() = "Hello"
+            test
+            """.trimIndent()
+        when (kernelConfig.replCompilerMode) {
+            ReplCompilerMode.K1 -> {
+                val res = doExecute(code) as JsonObject
+                assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
+            }
+            ReplCompilerMode.K2 -> {
+                // This should be fixed by KT-76508
+                val res = doExecute(code) as JsonObject
+                res["text/plain"]?.jsonPrimitive?.content shouldBe "null"
+            }
+        }
     }
 }

@@ -49,7 +49,7 @@ object FieldHandlerFactory {
             val tempField = callback(host, value, property)
             if (tempField != null) {
                 val valOrVar = if (property is KMutableProperty) "var" else "val"
-                val redeclaration = "$valOrVar ${property.name} = $tempField"
+                val redeclaration = "$valOrVar `${property.name}` = `$tempField`"
                 host.execute(redeclaration)
             }
         }

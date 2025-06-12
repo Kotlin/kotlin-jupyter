@@ -1,5 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2
 plugins {
-    id("com.google.devtools.ksp")
     kotlin("jvm")
     kotlin("jupyter.api")
     kotlin("libs.publisher")
@@ -7,7 +7,18 @@ plugins {
 
 kotlinJupyter {
     addApiDependency()
-    addScannerDependency()
+}
+
+// Creates the metadata needed for the library integration to be detected automatically.
+tasks.processJupyterApiResources {
+    libraryProducers = listOf("org.jetbrains.kotlinx.jupyter.example.GettingStartedIntegration")
+}
+
+kotlin {
+    compilerOptions {
+        apiVersion.set(KOTLIN_2_2)
+        languageVersion.set(KOTLIN_2_2)
+    }
 }
 
 dependencies {

@@ -855,7 +855,6 @@ This Gradle plugin adds the following dependencies to your project:
 | Artifact                         | Gradle option to exclude/include | Enabled by default | Dependency scope     | Method for adding dependency manually    |
 |:---------------------------------|:---------------------------------|:-------------------|:---------------------|:-----------------------------------------|
 | `kotlin-jupyter-api`             | `kotlin.jupyter.add.api`         | yes                | `compileOnly`        | `addApiDependency(version: String?)`     |
-| `kotlin-jupyter-api-annotations` | `kotlin.jupyter.add.scanner`     | no                 | `compileOnly`        | `addScannerDependency(version: String?)` |
 | `kotlin-jupyter-test-kit`        | `kotlin.jupyter.add.testkit`     | yes                | `testImplementation` | `addTestKitDependency(version: String?)` |
 
 You can turn on and off the dependency with its default version (version of the plugin)
@@ -873,53 +872,13 @@ kotlinJupyter {
 }
 ```
 
-### Adding library integration using the KSP plugin
+### Adding library integration using Gradle
 
-If you use the KSP plugin, you can utilize annotations to mark integration classes:
+In this scenario, you have to reference your implementations directly in your build script. Be aware 
+that this approach does not include any existence checks, so you need to ensure that all referenced 
+implementations are correctly defined.
 
-1. Enable `kotlin-jupyter-api-annotations` dependency by adding the following line to your `gradle.properties`:
-
-   ```
-   kotlin.jupyter.add.scanner = true
-   ```
-
-2. Add one of these implementations: `org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer` or
-`org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`. 
-
-3. Mark the implementation with the `JupyterLibrary` annotation:
-
-```kotlin
-package org.my.lib
-
-import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
-import org.jetbrains.kotlinx.jupyter.api.*
-import org.jetbrains.kotlinx.jupyter.api.libraries.*
-
-@JupyterLibrary
-internal class Integration : JupyterIntegration() { 
-    override fun Builder.onLoaded() { 
-        render<MyClass> { HTML(it.toHTML()) }
-        import("org.my.lib.*")
-        import("org.my.lib.io.*")
-    }
-}
-```
-
-For more examples, see the [integration of the DataFrame library](https://github.com/Kotlin/dataframe/blob/master/dataframe-jupyter/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt).
-
-For further information, see the docs for:
-* [`org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration`](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/api/src/main/kotlin/org/jetbrains/kotlinx/jupyter/api/libraries/JupyterIntegration.kt)
-* [`org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer`](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/api/src/main/kotlin/org/jetbrains/kotlinx/jupyter/api/libraries/LibraryDefinitionProducer.kt)
-* [`org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition`](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/api/src/main/kotlin/org/jetbrains/kotlinx/jupyter/api/libraries/LibraryDefinition.kt)
-
-### Adding library integration without annotation processor
-
-You can also choose not to use the KSP plugin to detect implementations. In this scenario, you have to reference 
-your implementations directly in your build script. Be aware that this approach does not include any existence checks, 
-so you need to ensure that all referenced implementations are correctly defined.
-
-The following example shows how to refer the `Integration` class in your buildscript (in this case, 
-you shouldn't mark it with the `JupyterLibrary` annotation).
+The following example shows how to refer the `Integration` class in your buildscript.
 
 For `build.gradle`:
 

@@ -6,8 +6,9 @@ import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 
 /**
- * Executes notebook cell code.
- * Performs code preprocessing (magics parsing) and snippet class postprocessing (variable converters and annotation handlers)
+ * This interface is responsible for executing the code found inside a single notebook cell.
+ * It also performs code preprocessing (magics parsing) and snippet class postprocessing (variable converters and
+ * annotation handlers).
  */
 interface CellExecutor : ExecutionHost {
     fun execute(

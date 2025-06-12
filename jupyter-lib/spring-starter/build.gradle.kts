@@ -18,6 +18,9 @@ val springJvmTarget: String = libs.versions.springJvmTarget.get()
 
 buildSettings {
     withJvmTarget(springJvmTarget)
+    withCompilerArgs {
+        jdkRelease(springJvmTarget)
+    }
 }
 
 java {

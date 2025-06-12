@@ -14,6 +14,9 @@ interface VariableState {
 data class VariableStateImpl(
     override val property: KProperty1<Any, *>,
     override val scriptInstance: Any,
+    // Just a Boolean rather than ReplCompilerMode as we cannot access the ReplCompilerMode
+    // enum from here, due to the way modules depend on each other.
+    val compilerMode: ReplCompilerMode,
 ) : VariableState {
     private val stringCache =
         VariableStateCache<String?> {
@@ -53,6 +56,8 @@ data class VariableStateImpl(
     override val value: Result<Any?> get() = valCache.get()
 
     companion object {
+        // We can currently not modify the accessible state in K2.
+        // See https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
         private fun <T : KProperty<*>, R> T.asAccessible(action: (T) -> R): R {
             val wasAccessible = isAccessible
             isAccessible = true

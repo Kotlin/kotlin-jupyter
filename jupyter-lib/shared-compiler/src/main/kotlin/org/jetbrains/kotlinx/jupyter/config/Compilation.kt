@@ -3,13 +3,15 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.currentLineId
+import org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
-import org.jetbrains.kotlinx.jupyter.startup.DEFAULT
-import org.jetbrains.kotlinx.jupyter.startup.ReplCompilerMode
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptAcceptedLocation
@@ -17,7 +19,6 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.fileExtension
@@ -25,11 +26,14 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.repl
+import kotlin.script.experimental.api.resultFieldPrefix
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.getScriptingClass
 import kotlin.script.experimental.host.with
 import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
 import kotlin.script.experimental.jvm.JvmGetScriptingClass
+import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.PropertiesCollection
@@ -72,17 +76,26 @@ fun getCompilationConfiguration(
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
     scriptDataCollectors: List<ScriptDataCollector> = emptyList(),
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
-    loggerFactory: KernelLoggerFactory,
+    @Suppress("unused") loggerFactory: KernelLoggerFactory,
     body: ScriptCompilationConfiguration.Builder.() -> Unit = {},
 ): ScriptCompilationConfiguration {
-    if (replCompilerMode == ReplCompilerMode.K2) {
-        loggerFactory.getLogger("getCompilationConfiguration").warn("K2 Repl Mode is ignored for now. Falling back to K1")
-    }
     return ScriptCompilationConfiguration {
         hostConfiguration.update {
             it.with {
                 getScriptingClass(scriptingClassGetter)
+                if (replCompilerMode.isK2()) {
+                    configureDefaultRepl("jupyter.kts")
+                }
             }
+        }
+        repl {
+            resultFieldPrefix("\$res")
+            // In K2, we need this because the snippet number tracked internally
+            // in the compiler is not propagating correct to FirExtension
+            // Without it, we cannot read return values correctly which makes TypeConverts fails.
+            // In K1 it overrides, the $resX value which fails a lot of tests
+            // Hopefully this will be fixed by https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+            // currentLineId(LineId(0, 0, 0))
         }
         fileExtension.put("jupyter.kts")
 
@@ -124,8 +137,24 @@ fun getCompilationConfiguration(
     }
 }
 
+// Do not rename this method for backwards compatibility with IDEA.
 inline fun <reified T> ScriptCompilationConfiguration.Builder.addBaseClass() {
     val kClass = T::class
     defaultImports.append(kClass.java.name)
-    baseClass.put(KotlinType(kClass))
+    // In Kotlin 1.9, the classloader used was chosen by `ScriptDefinition.contextClassLoader`,
+    // which used the one from `baseClass`, but in the K2 Repl, base classes are no longer
+    // supported. Instead, APIs are injected through an implicit receiver. But this also broke
+    // using the correct class loader.
+    //
+    // `ScriptDefinition` falls back to `ScriptingHostConfiguration[jvm.baseClassLoader]`, so
+    // for now, we just override the setting here. But it is unclear if this is safe in all
+    // use cases.
+    //
+    // This seems to mostly impact Embedded Mode inside IDEA. Unit tests did not catch the
+    // problem.
+    hostConfiguration.update {
+        it.with {
+            this[jvm.baseClassLoader] = kClass.java.classLoader
+        }
+    }
 }

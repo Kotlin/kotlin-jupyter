@@ -82,9 +82,6 @@ class RootSettingsExtension(
             CompatibilityAttribute("kotlinLanguageLevel", "Kotlin language level") {
                 kotlinLanguageLevel
             },
-            CompatibilityAttribute("kspVersion", "KSP") {
-                projectVersions.ksp
-            },
         )
     }
 

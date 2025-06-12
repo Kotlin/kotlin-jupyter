@@ -9,7 +9,10 @@ import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import java.nio.file.Path
 
 /**
- * [Notebook] is a main entry point for Kotlin Jupyter API
+ * [Notebook] is the main entry-point for accessing the Kotlin Notebook API responsible
+ * for controlling the behavior of cells and their dependencies.
+ *
+ * It is available inside a notebook cell through the global `notebook` variable.
  */
 interface Notebook {
     /**

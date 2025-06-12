@@ -120,8 +120,8 @@ object NullabilityEraser : FieldHandler {
             val propName = property.name
             val tempVarName = TEMP_PROPERTY_PREFIX + propName
             val valOrVar = if (property is KMutableProperty) "var" else "val"
-            initCodes.add("val $tempVarName = $propName")
-            conversionCodes.add("$valOrVar $propName = $tempVarName!!")
+            initCodes.add("val `$tempVarName` = `$propName`")
+            conversionCodes.add("$valOrVar `$propName` = `$tempVarName`!!")
         }
 
     override fun accepts(

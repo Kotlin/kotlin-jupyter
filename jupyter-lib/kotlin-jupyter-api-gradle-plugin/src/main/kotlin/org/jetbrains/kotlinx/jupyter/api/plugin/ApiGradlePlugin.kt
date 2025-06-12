@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin
 
-import com.google.devtools.ksp.gradle.KspExtension
-import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
@@ -25,16 +23,6 @@ class ApiGradlePlugin : Plugin<Project> {
 
             val jupyterBuildPath = getBuildDirectory().resolve(FQNS_PATH)
             jupyterBuildPath.mkdirs()
-            if (pluginExtension.scannerDependencyEnabled) {
-                pluginManager.run {
-                    apply(KspGradleSubplugin::class.java)
-                }
-            }
-            configurations.whenAdded({ it.name == "ksp" }) {
-                extensions.configure<KspExtension>("ksp") {
-                    arg("kotlin.jupyter.fqn.path", jupyterBuildPath.absolutePath)
-                }
-            }
             pluginExtension.addDependenciesIfNeeded()
 
             repositories {
@@ -57,24 +45,9 @@ class ApiGradlePlugin : Plugin<Project> {
                     }
                 }
 
-                fun dependOnKsp(kspTaskName: String) {
-                    val jupyterTask = registerResourceTask()
-                    tasks.whenAdded(
-                        { it.name == kspTaskName },
-                        { kspTask ->
-                            jupyterTask.dependsOn(kspTask)
-                            tasks.named(resourcesTaskName) {
-                                dependsOn(kspTask)
-                                kspTask.outputs.dir(jupyterBuildPath)
-                            }
-                        },
-                    )
-                }
-
                 // apply configuration to JVM-only project
                 plugins.withId("org.jetbrains.kotlin.jvm") {
                     dependOnProcessingTask("processResources")
-                    dependOnKsp("kspKotlin")
                 }
 
                 // apply only to multiplatform plugin
@@ -87,7 +60,6 @@ class ApiGradlePlugin : Plugin<Project> {
                             },
                         )
                     }
-                    dependOnKsp("kspKotlinJvm")
                 }
             }
         }

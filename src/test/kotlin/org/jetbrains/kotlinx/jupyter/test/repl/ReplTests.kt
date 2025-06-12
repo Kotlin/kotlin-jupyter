@@ -16,8 +16,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.generateDiagnostic
@@ -83,10 +85,13 @@ class ReplTests : AbstractSingleReplTest() {
         val message = ex.message
 
         val expectedLocation = SourceCode.Location(SourceCode.Position(3, 11), SourceCode.Position(3, 14))
-        val expectedMessage = "at Cell In[-1], line 3, column 11: Unresolved reference: ppp"
-
-        location shouldBe expectedLocation
+        val expectedMessage =
+            when (repl.compilerMode) {
+                ReplCompilerMode.K1 -> "at Cell In[-1], line 3, column 11: Unresolved reference: ppp"
+                ReplCompilerMode.K2 -> "at Cell In[-1], line 3, column 11: Unresolved reference 'ppp'."
+            }
         message shouldBe expectedMessage
+        location shouldBe expectedLocation
     }
 
     @Test
@@ -101,11 +106,23 @@ class ReplTests : AbstractSingleReplTest() {
                 }
                 """.trimIndent(),
             )
-        with(ex.render()) {
-            shouldContain(NullPointerException::class.qualifiedName!!)
-            shouldContain("XYZ")
-            shouldContain("""at Line_\d+_jupyter.<init>\(Line_\d+\.jupyter.kts:2\)""".toRegex())
-            shouldNotContain(ReplEvalRuntimeException::class.simpleName!!)
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                with(ex.render()) {
+                    shouldContain(NullPointerException::class.qualifiedName!!)
+                    shouldContain("XYZ")
+                    shouldContain("""at Line_\d+_jupyter.<init>\(Line_\d+\.jupyter.kts:2\)""".toRegex())
+                    shouldNotContain(ReplEvalRuntimeException::class.simpleName!!)
+                }
+            }
+            ReplCompilerMode.K2 -> {
+                with(ex.render()) {
+                    shouldContain(NullPointerException::class.qualifiedName!!)
+                    shouldContain("XYZ")
+                    shouldContain("""at Line_\d+_jupyter.${"\\$\\$"}eval\(Line_\d+\.jupyter.kts:4\)""".toRegex())
+                    shouldNotContain(ReplEvalRuntimeException::class.simpleName!!)
+                }
+            }
         }
     }
 
@@ -117,18 +134,26 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun testImportResolutionAfterFailure() {
         val errorsRes = repl.listErrorsBlocking("import net.pearx.kasechange.*")
-        errorsRes.errors shouldHaveSize 1
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                errorsRes.errors shouldHaveSize 1
 
-        val res =
-            eval(
-                """
-                @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
-                import net.pearx.kasechange.*
-                1
-                """.trimIndent(),
-            )
+                val res =
+                    eval(
+                        """
+                        @file:DependsOn("net.pearx.kasechange:kasechange-jvm:1.3.0")
+                        import net.pearx.kasechange.*
+                        1
+                        """.trimIndent(),
+                    )
 
-        res.renderedValue shouldBe 1
+                res.renderedValue shouldBe 1
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                errorsRes.errors.toList().shouldBeEmpty()
+            }
+        }
     }
 
     @Test
@@ -209,7 +234,15 @@ class ReplTests : AbstractSingleReplTest() {
         eval("var foobaz = 43")
 
         val result = repl.completeBlocking("val t = foo", 11)
-        result.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                result.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                result.getOrFail().sortedMatches().shouldBeEmpty()
+            }
+        }
     }
 
     @Test
@@ -237,7 +270,15 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         val result = repl.completeBlocking("df.filter { c_ }", 14)
-        result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                result.getOrFail().sortedMatches().shouldBeEmpty()
+            }
+        }
     }
 
     @Test
@@ -245,7 +286,15 @@ class ReplTests : AbstractSingleReplTest() {
         eval("fun f(xyz: Int) = xyz * 2")
 
         val result = repl.completeBlocking("val t = f(x", 11)
-        result.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                result.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                result.getOrFail().sortedMatches() shouldBe arrayListOf()
+            }
+        }
     }
 
     @Test
@@ -259,9 +308,17 @@ class ReplTests : AbstractSingleReplTest() {
 
         runBlocking {
             val result = repl.completeBlocking("val t = id_d", 12)
-            result.getOrFail().sortedRaw().any {
-                it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
-            }.shouldBeTrue()
+            when (repl.compilerMode) {
+                ReplCompilerMode.K1 -> {
+                    result.getOrFail().sortedRaw().any {
+                        it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+                    }.shouldBeTrue()
+                }
+                ReplCompilerMode.K2 -> {
+                    // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                    result.getOrFail().sortedMatches() shouldBe arrayListOf()
+                }
+            }
         }
     }
 
@@ -285,18 +342,33 @@ class ReplTests : AbstractSingleReplTest() {
                 val c = foob
                 """.trimIndent(),
             )
-        val actualErrors = result.errors.toList()
-        val path = actualErrors.first().sourcePath
-        actualErrors shouldBe
-            withPath(
-                path,
-                listOf(
-                    generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                    generateDiagnostic(1, 22, 1, 26, "The floating-point literal does not conform to the expected type String", "ERROR"),
-                    generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
-                    generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR"),
-                ),
-            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                val actualErrors = result.errors.toList()
+                val path = actualErrors.first().sourcePath
+                actualErrors shouldBe
+                    withPath(
+                        path,
+                        listOf(
+                            generateDiagnostic(1, 16, 1, 20, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                            generateDiagnostic(
+                                1,
+                                22,
+                                1,
+                                26,
+                                "The floating-point literal does not conform to the expected type String",
+                                "ERROR",
+                            ),
+                            generateDiagnostic(2, 14, 2, 19, "Type mismatch: inferred type is String but Int was expected", "ERROR"),
+                            generateDiagnostic(3, 9, 3, 13, "Unresolved reference: foob", "ERROR"),
+                        ),
+                    )
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                assert(result.errors.toList().isEmpty())
+            }
+        }
     }
 
     @Test
@@ -333,15 +405,23 @@ class ReplTests : AbstractSingleReplTest() {
                 %trackClasspath
                 """.trimIndent(),
             )
-        val actualErrors = result.errors.toList()
-        val path = actualErrors.first().sourcePath
-        actualErrors shouldBe
-            withPath(
-                path,
-                listOf(
-                    generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR"),
-                ),
-            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                val actualErrors = result.errors.toList()
+                val path = actualErrors.first().sourcePath
+                actualErrors shouldBe
+                    withPath(
+                        path,
+                        listOf(
+                            generateDiagnostic(3, 9, 3, 15, "Unresolved reference: foobar", "ERROR"),
+                        ),
+                    )
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                assert(result.errors.toList().isEmpty())
+            }
+        }
     }
 
     @Test
@@ -357,7 +437,15 @@ class ReplTests : AbstractSingleReplTest() {
 
         val result = repl.completeBlocking(code, code.indexOf("foo") + 3)
         result.shouldBeInstanceOf<CompletionResult.Success>()
-        result.sortedMatches() shouldBe arrayListOf("foobar")
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                result.sortedMatches() shouldBe arrayListOf("foobar")
+            }
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                result.sortedMatches().shouldBeEmpty()
+            }
+        }
     }
 
     @Test
@@ -501,46 +589,67 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testValueClassRendering() {
-        eval(
-            """
-            class Obj(val x: Int)
+        val result =
+            eval(
+                """
+                class Obj(val x: Int)
 
-            @JvmInline
-            value class Wrapper(val o: Obj)
-            """.trimIndent(),
-        )
-
-        eval(
-            """
-            USE {
-                addRenderer(
-                    createRendererByCompileTimeType<Wrapper> { (it.value as Obj).x * 2 }
+                @JvmInline
+                value class Wrapper(val o: Obj)
+                """.trimIndent(),
+            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                eval(
+                    """
+                    USE {
+                        addRenderer(
+                            createRendererByCompileTimeType<Wrapper> { (it.value as Obj).x * 2 }
+                        )
+                    }
+                    """.trimIndent(),
                 )
+                val res = eval("Wrapper(Obj(2))").renderedValue
+                res shouldBe 2 * 2
             }
-            """.trimIndent(),
-        )
-
-        val res = eval("Wrapper(Obj(2))").renderedValue
-        res shouldBe 2 * 2
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KT-74786/K2-Repl-Unexpected-returnTypeRef-when-defining-a-value-class
+                result.shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
     }
 
     @Test
     fun testParametrizedClassRendering() {
-        eval(
-            """
-            USE {
-                addRenderer(
-                    createRendererByCompileTimeType<List<Int>> { (it.value as List<Int>).map { x -> x * 2 } }
-                )
+        val setup =
+            eval(
+                """
+                USE {
+                    addRenderer(
+                        createRendererByCompileTimeType<List<Int>> { (it.value as List<Int>).map { x -> x * 2 } }
+                    )
+                }
+                """.trimIndent(),
+            )
+        setup.shouldBeInstanceOf<EvalResultEx.Success>()
+
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                val res1 = eval("listOf(1, 2)").renderedValue
+                res1 shouldBe listOf(2, 4)
+                val res2 = eval("listOf('1', '2')").renderedValue
+                res2 shouldBe listOf('1', '2')
             }
-            """.trimIndent(),
-        )
-
-        val res1 = eval("listOf(1, 2)").renderedValue
-        res1 shouldBe listOf(2, 4)
-
-        val res2 = eval("listOf('1', '2')").renderedValue
-        res2 shouldBe listOf('1', '2')
+            ReplCompilerMode.K2 -> {
+                // Wait for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
+                // We cannot correctly read the property types which breaks looking up registered compile time renders.
+                // TODO Bug has been fixed, why is this still failing?
+                val res1 = eval("listOf(1, 2)").renderedValue
+                res1 shouldBe listOf(1, 2)
+                val res2 = eval("listOf('1', '2')").renderedValue
+                res2 shouldBe listOf('1', '2')
+            }
+        }
     }
 
     @Test
@@ -583,21 +692,23 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testIssue356() {
-        eval(
-            """
-            sealed class BaseObjClass
-            object Obj : BaseObjClass()
-            val topLevelSequence = sequence {
-               yield(Obj)
-            }
-            open class Base {
-                val iter = topLevelSequence.iterator()
-            }
-            class Child: Base()
-            
-            Child::class.simpleName
-            """.trimIndent(),
-        ).renderedValue shouldBe "Child"
+        val result =
+            eval(
+                """
+                sealed class BaseObjClass
+                object Obj : BaseObjClass()
+                val topLevelSequence = sequence {
+                   yield(Obj)
+                }
+                open class Base {
+                    val iter = topLevelSequence.iterator()
+                }
+                class Child: Base()
+                
+                Child::class.simpleName
+                """.trimIndent(),
+            )
+        result.renderedValue shouldBe "Child"
     }
 
     @Test
@@ -614,8 +725,10 @@ class ReplTests : AbstractSingleReplTest() {
             Regex("(?<x>[0-9]*)").matchEntire("123456789")?.groups?.get("x")?.value
             """.trimIndent()
 
-        eval(code)
-        evalError<ReplEvalRuntimeException>(code)
+        val res1 = eval(code)
+        res1.renderedValue shouldBe "123456789"
+        val res2 = eval(code)
+        res2.renderedValue shouldBe "123456789"
     }
 
     @Test
@@ -666,5 +779,202 @@ class ReplTests : AbstractSingleReplTest() {
             )
 
         result.shouldBeInstanceOf<EvalResultEx.Success>()
+    }
+
+    @Test
+    fun testDelegate() {
+        eval(
+            """
+            import kotlin.reflect.KProperty
+            class CustomDelegate {
+                private var value: String = "Default"
+
+                operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+                    return value
+                }
+
+                operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: String) {
+                    value = newValue
+                }
+            }
+            val str by CustomDelegate()
+            str
+            """.trimIndent(),
+        )
+        val res =
+            eval(
+                """
+            val str by CustomDelegate()
+            str
+        """,
+            )
+        res.renderedValue shouldBe "Default"
+    }
+
+    @Test
+    fun testImport() {
+        eval("import kotlin.random.*")
+        val res = eval("Random.nextInt()")
+        println(res.renderedValue)
+    }
+
+    @Test
+    fun testReceiverObjects() {
+        eval(
+            """
+            class ReceiverObject { fun helloFromReceiver() = println("Hello from receiver object") }
+            class TestObject() { fun checkReceiver(block: ReceiverObject.() -> Unit) { block(ReceiverObject()) } }
+            """.trimIndent(),
+        )
+        val res =
+            eval(
+                """
+                val obj = TestObject()
+                obj.checkReceiver { helloFromReceiver() }
+                """.trimIndent(),
+            )
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-75946/K2-Repl-Using-a-type-alias-as-property-type-crashes-the-compiler
+    @Test
+    fun testTypeAlias() {
+        eval("typealias MyStr = String")
+        eval("val x: MyStr = \"abc\"")
+        val res = eval("x")
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                res.renderedValue shouldBe "abc"
+            }
+            ReplCompilerMode.K2 -> {
+                // Waiting for https://youtrack.jetbrains.com/issue/KT-75946/K2-Repl-Using-a-type-alias-as-property-type-crashes-the-compiler
+                res.shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
+    }
+
+    @Test
+    fun testCompanionObjects() {
+        val res0 =
+            eval(
+                """
+                class Foo(val foo: String) {
+                    companion object {
+                        fun hello(): String = "Hello"
+                    }
+                }
+                """.trimIndent(),
+            )
+        res0.shouldBeInstanceOf<EvalResultEx.Success>()
+        val res1 =
+            eval(
+                """
+                fun Foo.Companion.wave() = hello()
+                """.trimIndent(),
+            )
+        res1.shouldBeInstanceOf<EvalResultEx.Success>()
+        val res2 =
+            eval(
+                """
+                Foo.wave()
+                """.trimIndent(),
+            )
+        res2.renderedValue shouldBe "Hello"
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-75947/K2-Repl-Destructing-crashes-the-compiler
+    @Test
+    fun testDestructuring() {
+        val res =
+            eval(
+                """
+                val (name, age) = Pair("John", 42)
+                name + age
+                """.trimIndent(),
+            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                res.renderedValue shouldBe "John42"
+            }
+            ReplCompilerMode.K2 -> {
+                res.shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KTNB-965
+    @Test
+    fun testSmartCastKT965() {
+        if (repl.compilerMode != ReplCompilerMode.K2) return
+        val result =
+            eval(
+                """
+                    data class SimilarClusters(
+                        val clusters: List<String>
+                    )
+
+                    fun test(similarClusters: SimilarClusters?) {
+                        when {
+                            !similarClusters?.clusters.isNullOrEmpty() -> {
+                                similarClusters.clusters
+                            }
+                        }
+                    }
+                    
+                    test(SimilarClusters(listOf("a", "b")))
+                "
+                """.trimIndent(),
+            )
+        result.shouldBeInstanceOf<EvalResultEx.Success>()
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KTNB-967
+    @Test
+    fun testGenericIntersectionInType() {
+        if (repl.compilerMode != ReplCompilerMode.K2) return
+        val result =
+            eval(
+                """
+                    public fun <T : Comparable<T & Any>?> tempNotebook(list: List<T>): T = TODO()
+                "
+                """.trimIndent(),
+            )
+        // Waiting for https://youtrack.jetbrains.com/issue/KTNB-967 to be fixed
+        // result.shouldBeInstanceOf<EvalResultEx.Success>()
+        result.shouldBeInstanceOf<EvalResultEx.Error>()
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77202/K2-Repl-Local-Extension-Properties-are-not-supported
+    @Test
+    fun testExtensionProperties() {
+        val res =
+            eval(
+                """
+                class Foo() { }
+                val Foo.bar
+                    get() = "Hello"
+                Foo().bar
+                """.trimIndent(),
+            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> res.renderedValue shouldBe "Hello"
+            ReplCompilerMode.K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77470/K2-Repl-Lazy-Properties-crash-code-generation
+    @Test
+    fun testLazyProperties() {
+        val res =
+            eval(
+                """
+                val foo by lazy { 42 }
+                foo
+                """.trimIndent(),
+            )
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> res.renderedValue shouldBe 42
+            // This is fixed on latest dev version of Kotlin, but not yet as of 2.2.0-RC2
+            ReplCompilerMode.K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
     }
 }

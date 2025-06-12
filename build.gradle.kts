@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.publisher.apache2
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
 import org.jetbrains.kotlinx.publisher.developer
 import org.jetbrains.kotlinx.publisher.githubRepo
+import java.util.Properties
 
 plugins {
     id("build.plugins.main")
@@ -29,12 +30,37 @@ val spaceUsername: String by properties
 val spaceToken: String by properties
 
 ktlint {
+    version.set(libs.versions.ktlint.get())
+    // TEMPORARY CHANGE: Until K2 REPL has been merged to master to avoid too many changes at once.
+    ignoreFailures.set(true)
     filter {
         exclude("**/org/jetbrains/kotlinx/jupyter/repl.kt")
     }
 }
 
+val sharedProps =
+    Properties().apply {
+        load(File(rootDir, "shared.properties").inputStream())
+    }
+
+repositories {
+    mavenCentral()
+    maven(sharedProps.getProperty("kotlin.repository"))
+    maven(sharedProps.getProperty("kotlin.ds.repository"))
+    maven {
+        name = "intellij-deps"
+        url = uri("https://www.jetbrains.com/intellij-repository/releases/")
+    }
+    if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
+        mavenLocal()
+    }
+}
+
 dependencies {
+    // Required by K2KJvmReplCompilerWithCompletion.
+    // Should be moved to Kotlin Compiler eventually once complete
+    compileOnly("com.jetbrains.intellij.platform:util:243.22562.220")
+
     implementation(libs.kotlin.dev.stdlib)
 
     // Dependency on module with compiler.
@@ -71,6 +97,8 @@ dependencies {
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
+    testImplementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
+
 
     deploy(projects.lib)
     deploy(projects.api)

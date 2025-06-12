@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
@@ -12,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -105,11 +108,11 @@ class EmbedReplTest : AbstractSingleReplTest() {
         assertEquals(true, res.renderedValue)
     }
 
+    // Test for https://youtrack.jetbrains.com/issue/KTNB-978/K2-Repl-Some-custom-class-names-crash-the-compiler
     @Test
     fun testCustomClasses() {
         eval("class Point(val x: Int, val y: Int)")
         eval("val p = Point(1,1)")
-
         val res = eval("p.x")
         assertEquals(1, res.renderedValue)
     }
@@ -120,15 +123,24 @@ class EmbedReplTest : AbstractSingleReplTest() {
             addLibrary(testLibraryDefinition1)
         }
         val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
-        assertEquals(13, result1.renderedValue)
-        val result2 =
-            eval(
-                """
-                import org.jetbrains.kotlinx.jupyter.test.TestFunList
-                TestFunList(12, TestFunList(13, TestFunList(14, null)))
-                """.trimIndent(),
-            )
-        assertEquals("[12, 13, 14]", result2.renderedValue)
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                assertEquals(13, result1.renderedValue)
+                val result2 =
+                    eval(
+                        """
+                        import org.jetbrains.kotlinx.jupyter.test.TestFunList
+                        TestFunList(12, TestFunList(13, TestFunList(14, null)))
+                        """.trimIndent(),
+                    )
+                assertEquals("[12, 13, 14]", result2.renderedValue)
+            }
+            ReplCompilerMode.K2 -> {
+                // Type renderes do not work yet due to:
+                // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+                assertEquals(null, result1.renderedValue)
+            }
+        }
     }
 
     @Test
@@ -160,7 +172,15 @@ class EmbedReplTest : AbstractSingleReplTest() {
                 @Serializable class Test(val x: Int)
                 """.trimIndent(),
             )
-        result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> {
+                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
+            }
+            ReplCompilerMode.K2 -> {
+                // Fails because of https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
+                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Error>()
+            }
+        }
     }
 }
 

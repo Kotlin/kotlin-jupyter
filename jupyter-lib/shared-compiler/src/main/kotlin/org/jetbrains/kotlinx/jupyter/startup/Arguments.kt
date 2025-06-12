@@ -10,6 +10,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
@@ -18,18 +20,6 @@ import java.util.EnumMap
 
 typealias KernelPorts = Map<JupyterSocketType, Int>
 
-/**
- * This is used to represent whether the underlying REPL is running in either K1 or K2 mode.
- */
-enum class ReplCompilerMode {
-    K1,
-    K2,
-    ;
-
-    companion object
-}
-
-val ReplCompilerMode.Companion.DEFAULT get() = ReplCompilerMode.K1
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 

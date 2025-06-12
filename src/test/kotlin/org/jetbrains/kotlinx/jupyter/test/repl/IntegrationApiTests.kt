@@ -10,6 +10,8 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
@@ -21,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.evalError
@@ -97,34 +100,42 @@ class IntegrationApiTests {
             val l = listOf(1,2,3)
             """.trimIndent()
         repl.evalRaw(code1)
-        assertEquals(3, repl.evalRaw("l.value2"))
+        when (repl.compilerMode) {
+            K1 -> {
+                assertEquals(3, repl.evalRaw("l.value2"))
 
-        // create list 'q' of the same size 3
-        repl.evalRaw("val q = l.asReversed()")
-        assertEquals(1, repl.evalRaw("q.value2"))
+                // create list 'q' of the same size 3
+                repl.evalRaw("val q = l.asReversed()")
+                assertEquals(1, repl.evalRaw("q.value2"))
 
-        // check that 'l' and 'q' have the same types
-        assertEquals(
-            3,
-            repl.evalRaw(
-                """var a = l
-            a = q
-            a.value0
-                """.trimMargin(),
-            ),
-        )
+                // check that 'l' and 'q' have the same types
+                assertEquals(
+                    3,
+                    repl.evalRaw(
+                        """var a = l
+                        a = q
+                        a.value0
+                        """.trimMargin(),
+                    ),
+                )
 
-        // create a list of size 6
-        repl.evalRaw("val w = l + a")
-        assertEquals(3, repl.evalRendered("w.value3"))
+                // create a list of size 6
+                repl.evalRaw("val w = l + a")
+                assertEquals(3, repl.evalRendered("w.value3"))
 
-        // check that 'value3' is not available for list 'l'
-        repl.evalError<ReplCompilerException>("l.value3")
+                // check that 'value3' is not available for list 'l'
+                repl.evalError<ReplCompilerException>("l.value3")
 
-        repl.evalRaw("val e: List<Int>? = w.take(5)")
-        val res = repl.evalRendered("e")
+                repl.evalRaw("val e: List<Int>? = w.take(5)")
+                val res = repl.evalRendered("e")
 
-        assertEquals("TypedIntList5", res!!.javaClass.simpleName)
+                assertEquals("TypedIntList5", res!!.javaClass.simpleName)
+            }
+            K2 -> {
+                // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+                repl.evalEx("l.value2").shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
     }
 
     @Test
