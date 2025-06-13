@@ -26,6 +26,7 @@ out/
 
 # Gradle caches and internal files
 .gradle/
+.kotlin/
 
 # Project Python virtual environments
 /venv/
