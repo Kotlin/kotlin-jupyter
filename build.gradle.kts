@@ -97,7 +97,6 @@ dependencies {
     // Test dependencies: kotlin-test and Junit 5
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
-    testImplementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
 
 
     deploy(projects.lib)
