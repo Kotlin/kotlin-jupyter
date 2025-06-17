@@ -567,6 +567,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [kandy-geo](https://github.com/Kotlin/kandy) - Geo extensions for Kandy and Kotlin Dataframe
  - [klaxon](https://github.com/cbeust/klaxon) - JSON parser for Kotlin
  - [kmath](https://github.com/mipt-npm/kmath) - Experimental Kotlin algebra-based mathematical library
+ - [koog](https://github.com/JetBrains/koog) - Koog is a Kotlin-based framework designed to build and run AI agents entirely in idiomatic Kotlin.
  - [kotlin-dl](https://github.com/Kotlin/kotlindl) - KotlinDL library which provides Keras-like API for deep learning
  - [kraphviz](https://github.com/nidi3/graphviz-java) - Graphviz wrapper for JVM
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
