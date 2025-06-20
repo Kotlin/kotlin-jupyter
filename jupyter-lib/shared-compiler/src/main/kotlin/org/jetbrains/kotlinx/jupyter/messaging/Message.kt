@@ -7,6 +7,8 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
@@ -94,4 +96,14 @@ fun makeHeader(
         PROTOCOL_VERSION,
         ISO8601DateNow,
     )
+}
+
+fun JupyterSendSocket.sendMessage(msg: Message) {
+    sendRawMessage(msg.toRawMessage())
+}
+
+@Throws(InterruptedException::class)
+fun JupyterReceiveSocket.receiveMessage(): Message? {
+    val rawMessage = receiveRawMessage()
+    return rawMessage?.toMessage()
 }
