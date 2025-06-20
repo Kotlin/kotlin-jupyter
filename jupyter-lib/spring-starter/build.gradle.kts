@@ -40,6 +40,8 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
 
     springKernel(projects.kotlinJupyterKernel) { isTransitive = false }
+    springKernel(projects.cliLauncher) { isTransitive = false }
+    springKernel(projects.wsServer) { isTransitive = false }
     springKernel(projects.api) { isTransitive = false }
     springKernel(projects.lib) { isTransitive = false }
     springKernel(projects.commonDependencies) { isTransitive = false }
@@ -62,7 +64,7 @@ dependencies {
 
     springKernel(libs.clikt)
 
-    springKernel(libs.zeromq)
+    springKernel(libs.java.websocket)
     springKernel(libs.serialization.json)
 }
 
