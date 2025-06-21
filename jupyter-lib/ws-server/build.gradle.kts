@@ -9,7 +9,10 @@ plugins {
 
 
 dependencies {
-    implementation(projects.kotlinJupyterKernel)
+    api(projects.api) { isTransitive = false }
+    api(projects.lib) { isTransitive = false }
+    api(projects.commonDependencies) { isTransitive = false }
+    api(projects.sharedCompiler) { isTransitive = false }
     // implementation(libs.kotlin.dev.reflect)
     implementation(libs.serialization.json)
     implementation(libs.java.websocket)

@@ -14,12 +14,12 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqSocketManagerImpl
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
-import org.jetbrains.kotlinx.jupyter.ws.runWebSocketServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
+import org.jetbrains.kotlinx.jupyter.ws.WsServerSocketManager
 import java.io.File
 
 val cliLauncherClass: Class<*> = object {}::class.java.enclosingClass
@@ -166,4 +166,8 @@ fun createReplSettings(
 
 fun runZmqServer(replSettings: DefaultReplSettings) {
     runServer(replSettings, ::JupyterZmqSocketManagerImpl)
+}
+
+fun runWebSocketServer(replSettings: DefaultReplSettings) {
+    runServer(replSettings, ::WsServerSocketManager)
 }
