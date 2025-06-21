@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
+import org.jetbrains.kotlinx.jupyter.runWebSocketServer
 import org.jetbrains.kotlinx.jupyter.runZmqServer
-import org.jetbrains.kotlinx.jupyter.ws.runWebSocketServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
