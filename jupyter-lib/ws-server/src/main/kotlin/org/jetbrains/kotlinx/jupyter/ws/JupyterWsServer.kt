@@ -12,8 +12,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
-import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
-import org.jetbrains.kotlinx.jupyter.runServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import java.io.Closeable
@@ -24,11 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import kotlin.collections.set
 import kotlin.concurrent.thread
 
-fun runWebSocketServer(replSettings: DefaultReplSettings) {
-    runServer(replSettings, ::WsServerSocketManager)
-}
-
-private class WsServerSocketManager(
+class WsServerSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     config: KernelConfig,
 ) : JupyterSocketManager, Closeable {
