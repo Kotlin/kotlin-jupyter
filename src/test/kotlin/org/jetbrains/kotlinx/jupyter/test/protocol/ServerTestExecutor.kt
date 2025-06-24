@@ -4,7 +4,10 @@ import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFact
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.runZmqServer
+import org.jetbrains.kotlinx.jupyter.spring.starter.runWebSocketServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.TestInfo
@@ -84,7 +87,13 @@ class ThreadServerTestExecutor : ServerTestExecutor {
                 homeDir = kernelConfig.homeDir,
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
-        serverThread = thread { runZmqServer(replSettings) }
+        serverThread = thread {
+            when (kernelConfig.ports) {
+                is ZmqKernelPorts -> runZmqServer(replSettings)
+                is WsKernelPorts -> runWebSocketServer(replSettings)
+                else -> error("Unknown kernel ports type: ${kernelConfig.ports}")
+            }
+        }
     }
 
     override fun tearDown() {
