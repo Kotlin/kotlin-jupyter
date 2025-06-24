@@ -5,28 +5,26 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.zeromq.SocketType
 import org.zeromq.ZMQ
 
 class JupyterZmqClientReceiveSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     private val side: JupyterSocketSide = JupyterSocketSide.CLIENT,
 ) : JupyterClientReceiveSocketManager {
-    override fun open(config: KernelConfig): JupyterClientReceiveSockets {
-        return ZmqClientReceiveSockets(
-            context = ZMQ.context(/* ioThreads = */ 1),
-            kernelConfig = config,
-            loggerFactory = loggerFactory,
-            side = side,
-        )
-    }
+    override fun open(config: KernelConfig): JupyterZmqClientReceiveSockets = JupyterZmqClientReceiveSockets(
+        kernelConfig = config,
+        loggerFactory = loggerFactory,
+        side = side,
+    )
 }
 
-private class ZmqClientReceiveSockets(
-    private val context: ZMQ.Context,
+class JupyterZmqClientReceiveSockets internal constructor(
     kernelConfig: KernelConfig,
     loggerFactory: KernelLoggerFactory,
     side: JupyterSocketSide,
 ) : JupyterClientReceiveSockets {
+    val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
 
     override val shell = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.SHELL, context, kernelConfig, side).apply {
         if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
