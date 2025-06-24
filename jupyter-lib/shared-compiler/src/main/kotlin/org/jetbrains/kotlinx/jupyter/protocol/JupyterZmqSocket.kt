@@ -86,7 +86,7 @@ fun JupyterCallbackBasedSocket.sendReceive(messageBufferCapacity: Int = 256): Ju
         }
 
         override fun receiveRawMessage(): RawMessage? {
-            return receivableMessages.poll()
+            return receivableMessages.take()
         }
     }
 
