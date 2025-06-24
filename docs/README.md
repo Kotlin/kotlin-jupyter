@@ -557,7 +557,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
  - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
- - [intellij-sdk](https://plugins.jetbrains.com/docs/intellij/welcome.html) - IntelliJ SDK that could be used in embedded mode of Kotlin Notebook
+ - [intellij-platform](https://plugins.jetbrains.com/docs/intellij/welcome.html) - The IntelliJ Platform integration to bridge Kotlin Notebook with the IntelliJ Platform SDK and the IntelliJ IDEA runtime for seamless code execution and interactive development
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`/`%typescript`/`%jsx` line magic support
  - [kalasim](https://www.kalasim.org) - Discrete event simulator
