@@ -108,6 +108,7 @@ dependencies {
     deploy(libs.kotlin.dev.scriptRuntime.get())
 
     kernelShadowed(projects.kotlinJupyterKernel)
+    kernelShadowed(projects.cliLauncher)
 
     ideScriptClasspathShadowed(projects.lib) { isTransitive = false }
     ideScriptClasspathShadowed(projects.api) { isTransitive = false }
