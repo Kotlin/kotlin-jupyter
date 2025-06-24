@@ -34,7 +34,7 @@ val springKernel: Configuration by configurations.creating
 dependencies {
     kapt(libs.spring.boot.configuration.processor)
 
-    implementation(projects.kotlinJupyterKernel)
+    implementation(projects.cliLauncher)
     implementation(libs.kotlin.dev.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)
