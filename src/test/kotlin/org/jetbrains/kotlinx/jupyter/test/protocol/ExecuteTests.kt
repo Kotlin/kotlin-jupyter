@@ -17,9 +17,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.java_websocket.client.WebSocketClient
-import org.java_websocket.exceptions.WebsocketNotConnectedException
-import org.java_websocket.handshake.ServerHandshake
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -41,6 +38,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.InputRequest
 import org.jetbrains.kotlinx.jupyter.messaging.InterruptRequest
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSocketManager
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSockets
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReply
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReplyMetadata
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoRequest
@@ -54,18 +53,13 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
-import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.spring.starter.JupyterClientSockets
-import org.jetbrains.kotlinx.jupyter.spring.starter.JupyterWsClientSocketManagerImpl
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
@@ -84,12 +78,9 @@ import org.junit.jupiter.api.condition.EnabledForJreRange
 import org.junit.jupiter.api.condition.JRE
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
-import org.zeromq.ZMQ
 import java.io.File
 import java.net.ConnectException
-import java.net.URI
 import java.net.URLClassLoader
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -105,74 +96,13 @@ fun JsonObject.string(key: String): String {
     return (get(key) as JsonPrimitive).content
 }
 
-sealed class JupyterClientSocketManager {
-    abstract fun generatePorts(): KernelPorts
-    abstract fun open(config: KernelConfig): JupyterClientSockets
-}
-
-object ZmqClientSocketManager : JupyterClientSocketManager() {
-    override fun generatePorts(): KernelPorts = createRandomZmqKernelPorts()
-
-    override fun open(config: KernelConfig): JupyterClientSockets {
-        return ZmqClientSockets(
-            context = ZMQ.context(/* ioThreads = */ 1),
-            kernelConfig = config,
-        )
-    }
-
-    private class ZmqClientSockets : JupyterClientSockets {
-        private val context: ZMQ.Context
-        override val shell: JupyterZmqSocket
-        override val control: JupyterZmqSocket
-        override val ioPub: JupyterZmqSocket
-        override val stdin: JupyterZmqSocket
-
-        override fun close() {
-            shell.close()
-            control.close()
-            ioPub.close()
-            stdin.close()
-            context.term()
-        }
-
-        constructor(context: ZMQ.Context, kernelConfig: KernelConfig) {
-            this.context = context
-            try {
-                this.shell = createClientSocket(JupyterZmqSocketInfo.SHELL, context, kernelConfig).apply {
-                    zmqSocket.makeRelaxed()
-                }
-                this.control = createClientSocket(JupyterZmqSocketInfo.CONTROL, context, kernelConfig)
-                this.ioPub = createClientSocket(JupyterZmqSocketInfo.IOPUB, context, kernelConfig)
-                this.stdin = createClientSocket(JupyterZmqSocketInfo.STDIN, context, kernelConfig)
-                ioPub.zmqSocket.subscribe(byteArrayOf())
-                shell.connect()
-                ioPub.connect()
-                stdin.connect()
-                control.connect()
-            } catch (e: Throwable) {
-                try {
-                    close()
-                } catch (_: NullPointerException) {
-                    // some sockets may not have been initialized at all
-                }
-                throw e
-            }
-        }
-
-        private companion object {
-            fun createClientSocket(socketInfo: JupyterZmqSocketInfo, context: ZMQ.Context, kernelConfig: KernelConfig) =
-                createZmqSocket(testLoggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.CLIENT)
-        }
-    }
-}
-
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
-abstract class ExecuteTests(private val socketManager: JupyterClientSocketManager) :
-    KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = socketManager::generatePorts) {
+abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocketManager, generatePorts: () -> KernelPorts) :
+    KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
 
-    private var _sockets: JupyterClientSockets? = null
-    private val sockets: JupyterClientSockets get() = _sockets!!
+    private var _sockets: JupyterClientReceiveSockets? = null
+    private val sockets: JupyterClientReceiveSockets get() = _sockets!!
 
     private val shellSocket: JupyterSendReceiveSocket get() = sockets.shell
     private val controlSocket: JupyterSendSocket get() = sockets.control
@@ -1047,44 +977,14 @@ abstract class ExecuteTests(private val socketManager: JupyterClientSocketManage
     }
 }
 
-object WsClientSocketManager : JupyterClientSocketManager() {
-    override fun generatePorts(): KernelPorts =
-        WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort())
+class ExecuteZmqTests : ExecuteTests(
+    socketManager = JupyterZmqClientReceiveSocketManager(testLoggerFactory),
+    generatePorts = ::createRandomZmqKernelPorts,
+)
 
-    override fun open(config: KernelConfig): JupyterClientSockets {
-        val errors = mutableListOf<Exception>()
-        return JupyterWsClientSocketManagerImpl(
-            loggerFactory = testLoggerFactory,
-            createWsClient = { messageHandler ->
-                object : WebSocketClient(
-                    URI(
-                        /* scheme = */ "ws",
-                        /* userInfo = */ null,
-                        /* host = */ config.host.takeUnless { it == "*" } ?: "0.0.0.0",
-                        /* port = */ (config.ports as WsKernelPorts).port,
-                        /* path = */ null,
-                        /* query = */ null,
-                        /* fragment = */ null,
-                    ),
-                ) {
-                    override fun onMessage(message: String) = messageHandler.onMessage(message)
-                    override fun onMessage(bytes: ByteBuffer) = messageHandler.onMessage(bytes)
-
-                    override fun onOpen(handshakedata: ServerHandshake) {}
-                    override fun onClose(code: Int, reason: String, remote: Boolean) {}
-
-                    override fun onError(ex: Exception) {
-                        errors.add(ex)
-                    }
-                }
-            },
-            checkErrors = { errors },
-        )
-    }
-}
-
-class ExecuteZmqTests : ExecuteTests(socketManager = ZmqClientSocketManager)
-
-class ExecuteWsTests : ExecuteTests(socketManager = WsClientSocketManager)
+class ExecuteWsTests : ExecuteTests(
+    socketManager = JupyterWsClientReceiveSocketManager(testLoggerFactory),
+    generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
+)
 
 private const val MAX_RETRIES = 100

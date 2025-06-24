@@ -36,7 +36,3 @@ interface JupyterSocketManager : Closeable {
 
     fun listen()
 }
-
-fun JupyterSendSocket.sendMessage(msg: Message) {
-    sendRawMessage(msg.toRawMessage())
-}
