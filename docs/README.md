@@ -9,7 +9,7 @@
 
 # Kotlin Kernel for Jupyter notebooks
 
-The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to write and run [Kotlin](https://kotlinlang.org/) 2.2.20-dev-4982 code within the
+The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to write and run [Kotlin](https://kotlinlang.org/) 2.2.0 code within the
 [Jupyter Notebook](https://jupyter.org) environment. This [Kernel](https://docs.jupyter.org/en/latest/projects/kernels.html) essentially acts as a bridge between Jupyter Notebook and the Kotlin compiler.
 
 <img src="images/kotlin_notebook.gif" width="900" height="700" alt="Alt text for the GIF">
@@ -90,7 +90,7 @@ Start using the Kotlin Kernel for Jupyter notebooks:
 
 ### Kotlin version support
 
-The latest version of the Kotlin Kernel for notebooks uses the Kotlin compiler of version 2.2.20-dev-4982.
+The latest version of the Kotlin Kernel for notebooks uses the Kotlin compiler of version 2.2.0.
 
 ### Jupyter environments
 
