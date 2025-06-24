@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFact
 import org.jetbrains.kotlinx.jupyter.startup.DEFAULT_SPRING_SIGNATURE_KEY
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
+import org.jetbrains.kotlinx.jupyter.ws.runWebSocketServer
 import java.io.Closeable
 import java.io.File
 import kotlin.concurrent.thread

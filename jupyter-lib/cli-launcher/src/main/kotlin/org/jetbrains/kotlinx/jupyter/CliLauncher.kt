@@ -14,7 +14,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqSocketManagerImpl
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
-import org.jetbrains.kotlinx.jupyter.spring.starter.runWebSocketServer
+import org.jetbrains.kotlinx.jupyter.ws.runWebSocketServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
