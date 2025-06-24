@@ -36,6 +36,7 @@ kotlinTest = "5.8.1"
 clikt = "2.8.0"
 zeromq = "0.6.0"
 gson = "2.10.1"
+javaWebSocket = "1.5.7"
 
 jlatexmath = "1.0.7"
 xmlgraphicsFop = "2.9"
@@ -105,6 +106,7 @@ zeromq = { module = "org.zeromq:jeromq", version.ref = "zeromq" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
 http4k-clientApache = { module = "org.http4k:http4k-client-apache", version.ref = "http4k" }
+java-websocket = { module = "org.java-websocket:Java-WebSocket", version.ref = "javaWebSocket" }
 
 # Parsing console arguments
 clikt = { module = "com.github.ajalt:clikt", version.ref = "clikt" }

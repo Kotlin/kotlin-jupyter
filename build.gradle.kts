@@ -99,6 +99,8 @@ dependencies {
     testImplementation(libs.test.kotlintest.assertions)
 
 
+    testImplementation(projects.cliLauncher)
+
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)
