@@ -29,7 +29,9 @@ private class ZmqClientReceiveSockets(
 ) : JupyterClientReceiveSockets {
 
     override val shell = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.SHELL, context, kernelConfig, side).apply {
-        zmqSocket.makeRelaxed()
+        if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
+            zmqSocket.makeRelaxed()
+        }
     }
     override val control = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.CONTROL, context, kernelConfig, side)
     override val ioPub = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.IOPUB, context, kernelConfig, side)
