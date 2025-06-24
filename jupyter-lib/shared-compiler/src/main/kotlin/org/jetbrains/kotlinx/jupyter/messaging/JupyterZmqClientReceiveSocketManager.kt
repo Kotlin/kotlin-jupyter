@@ -47,8 +47,9 @@ private class ZmqClientReceiveSockets(
         } catch (e: Throwable) {
             try {
                 close()
-            } catch (_: NullPointerException) {
-                // some sockets may not have been initialized at all
+            } catch (e2: Throwable) {
+                e.addSuppressed(e2)
+                throw e
             }
             throw e
         }
