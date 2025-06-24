@@ -22,7 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import kotlin.collections.set
 import kotlin.concurrent.thread
 
-class WsServerSocketManager(
+class JupyterWsServerSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     config: KernelConfig,
 ) : JupyterSocketManager, Closeable {
@@ -136,7 +136,6 @@ private class JupyterWsServer(
     private val _currentWebSockets = mutableSetOf<WebSocket>()
 
     val currentWebSockets: Iterable<WebSocket> get() = _currentWebSockets
-
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         _currentWebSockets.add(conn)

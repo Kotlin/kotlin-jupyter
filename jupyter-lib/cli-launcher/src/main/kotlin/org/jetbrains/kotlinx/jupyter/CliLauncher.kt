@@ -19,7 +19,7 @@ import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
-import org.jetbrains.kotlinx.jupyter.ws.WsServerSocketManager
+import org.jetbrains.kotlinx.jupyter.ws.JupyterWsServerSocketManager
 import java.io.File
 
 val cliLauncherClass: Class<*> = object {}::class.java.enclosingClass
@@ -169,5 +169,5 @@ fun runZmqServer(replSettings: DefaultReplSettings) {
 }
 
 fun runWebSocketServer(replSettings: DefaultReplSettings) {
-    runServer(replSettings, ::WsServerSocketManager)
+    runServer(replSettings, ::JupyterWsServerSocketManager)
 }
