@@ -26,8 +26,8 @@ enum class JupyterSocketType {
     IOPUB,
 }
 
-val JupyterSocketType.nameForUser get() = name.lowercase(Locale.getDefault())
-val JupyterSocketType.portField get() = "${nameForUser}_port"
+val JupyterSocketType.jupyterName get() = name.lowercase(Locale.getDefault())
+val JupyterSocketType.portField get() = "${jupyterName}_port"
 
 /**
  * Raw Jupyter message.
