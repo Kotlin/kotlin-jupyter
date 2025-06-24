@@ -31,6 +31,8 @@ java {
 
 val springKernel: Configuration by configurations.creating
 
+extra["kotlin-serialization.version"] = libs.serialization.json.get().version
+
 dependencies {
     kapt(libs.spring.boot.configuration.processor)
 
