@@ -100,6 +100,7 @@ dependencies {
 
 
     testImplementation(projects.cliLauncher)
+    testImplementation(libs.java.websocket)
 
     deploy(projects.lib)
     deploy(projects.api)
