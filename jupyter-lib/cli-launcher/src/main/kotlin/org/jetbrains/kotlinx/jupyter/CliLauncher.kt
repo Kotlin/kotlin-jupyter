@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.createRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqSocketManagerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqSocketManager
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
@@ -165,7 +165,7 @@ fun createReplSettings(
 }
 
 fun runZmqServer(replSettings: DefaultReplSettings) {
-    runServer(replSettings, ::JupyterZmqSocketManagerImpl)
+    runServer(replSettings, ::JupyterZmqSocketManager)
 }
 
 fun runWebSocketServer(replSettings: DefaultReplSettings) {

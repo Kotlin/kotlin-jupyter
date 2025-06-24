@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class JupyterZmqSocketManagerImpl(
+class JupyterZmqSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     private val config: KernelConfig,
     private val terminationTimeout: Duration = 15.seconds,
