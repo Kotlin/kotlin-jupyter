@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
@@ -26,38 +28,44 @@ class JupyterZmqClientReceiveSockets internal constructor(
 ) : JupyterClientReceiveSockets {
     val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
 
-    override val shell = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.SHELL, context, kernelConfig, side).apply {
-        if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
-            zmqSocket.makeRelaxed()
-        }
-    }
-    override val control = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.CONTROL, context, kernelConfig, side)
-    override val ioPub = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.IOPUB, context, kernelConfig, side)
-    override val stdin = createZmqSocket(loggerFactory, JupyterZmqSocketInfo.STDIN, context, kernelConfig, side)
+    override val shell: JupyterZmqSocket
+    override val control: JupyterZmqSocket
+    override val ioPub: JupyterZmqSocket
+    override val stdin: JupyterZmqSocket
 
     init {
-        try {
-            ioPub.zmqSocket.subscribe(byteArrayOf())
-            shell.connect()
-            ioPub.connect()
-            stdin.connect()
-            control.connect()
-        } catch (e: Throwable) {
-            try {
-                close()
-            } catch (e2: Throwable) {
-                e.addSuppressed(e2)
-                throw e
+        fun createSocket(info: JupyterZmqSocketInfo) =
+            createZmqSocket(loggerFactory, info, context, kernelConfig, side)
+
+        shell = createSocket(JupyterZmqSocketInfo.SHELL).apply {
+            if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
+                zmqSocket.makeRelaxed()
             }
-            throw e
+        }
+        control = createSocket(JupyterZmqSocketInfo.CONTROL)
+        ioPub = createSocket(JupyterZmqSocketInfo.IOPUB)
+        stdin = createSocket(JupyterZmqSocketInfo.STDIN)
+
+        mergeExceptions {
+            catchIndependently {
+                ioPub.zmqSocket.subscribe(byteArrayOf())
+                shell.connect()
+                ioPub.connect()
+                stdin.connect()
+                control.connect()
+            }
+            if (failing) {
+                catchIndependently { close() }
+            }
         }
     }
 
     override fun close() {
-        shell.close()
-        control.close()
-        ioPub.close()
-        stdin.close()
-        context.term()
+        mergeExceptions {
+            for (socket in listOf(shell, control, ioPub, stdin)) {
+                catchIndependently { socket.close() }
+            }
+            catchIndependently { context.term() }
+        }
     }
 }
