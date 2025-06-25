@@ -34,5 +34,9 @@ interface JupyterServerImplSockets : JupyterServerSockets {
 interface JupyterSocketManager : Closeable {
     val sockets: JupyterServerImplSockets
 
+    /**
+     * This function starts listening for incoming messages and blocks the thread. It stops listening
+     * when one of the callbacks (see [JupyterServerImplSockets]) throws [InterruptedException].
+     */
     fun listen()
 }
