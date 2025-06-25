@@ -104,6 +104,7 @@ private class WsCallbackBasedSocketQueued(
     getWebSockets: () -> Iterable<WebSocket>,
     channel: JupyterSocketType,
 ) : WsCallbackBasedSocket(loggerFactory, getWebSockets, channel) {
+    private val logger = loggerFactory.getLogger(this::class)
     private val messages: ArrayBlockingQueue<RawMessage> = ArrayBlockingQueue(256)
 
     override fun messageReceived(msg: RawMessage) {
@@ -121,6 +122,8 @@ private class WsCallbackBasedSocketQueued(
             } catch (_: InterruptedException) {
                 callbacks.clear()
                 mainListenerThread.interrupt()
+            } catch (e: Throwable) {
+                logger.error("Error during message processing", e)
             }
         }
     }
