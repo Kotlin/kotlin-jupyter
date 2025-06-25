@@ -62,6 +62,8 @@ class JupyterZmqSocketManager(
                     logger.debug(interruptedMessage)
                     threadsToInterrupt.forEach { it.interrupt() }
                     break
+                } catch (e: Throwable) {
+                    logger.error("Error during message processing", e)
                 }
             }
         }
