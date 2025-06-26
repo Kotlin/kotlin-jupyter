@@ -99,7 +99,7 @@ fun JsonObject.string(key: String): String {
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
 abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocketManager, generatePorts: () -> KernelPorts) :
-    KernelServerTestsBase(runServerInSeparateProcess = false, generatePorts = generatePorts) {
+    KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
 
     private var _sockets: JupyterClientReceiveSockets? = null
     private val sockets: JupyterClientReceiveSockets get() = _sockets!!
