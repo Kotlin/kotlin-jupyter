@@ -1,9 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
-import java.io.Closeable
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 
 /**
  * Interface describing the server side of sockets available in a Jupyter Kernel.
@@ -29,14 +28,4 @@ interface JupyterServerSockets {
 interface JupyterServerImplSockets : JupyterServerSockets {
     override val shell: JupyterCallbackBasedSocket
     override val control: JupyterCallbackBasedSocket
-}
-
-interface JupyterSocketManager : Closeable {
-    val sockets: JupyterServerImplSockets
-
-    /**
-     * This function starts listening for incoming messages and blocks the thread. It stops listening
-     * when one of the callbacks (see [JupyterServerImplSockets]) throws [InterruptedException].
-     */
-    fun listen()
 }

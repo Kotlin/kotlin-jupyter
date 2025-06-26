@@ -6,7 +6,6 @@ plugins {
 
 dependencies {
     api(projects.kotlinJupyterKernel)
-    api(projects.wsServer)
     api(libs.logging.slf4j.api)
     implementation(libs.kotlin.dev.scriptingJvm)
     runtimeOnly(libs.logging.logback.classic)

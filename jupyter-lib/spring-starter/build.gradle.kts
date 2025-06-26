@@ -37,6 +37,7 @@ dependencies {
     kapt(libs.spring.boot.configuration.processor)
 
     implementation(projects.cliLauncher)
+    implementation(projects.wsServer)
     implementation(libs.kotlin.dev.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)

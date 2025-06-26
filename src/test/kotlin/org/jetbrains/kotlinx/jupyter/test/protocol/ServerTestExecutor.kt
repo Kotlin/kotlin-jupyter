@@ -3,11 +3,8 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
-import org.jetbrains.kotlinx.jupyter.runWebSocketServer
-import org.jetbrains.kotlinx.jupyter.runZmqServer
+import org.jetbrains.kotlinx.jupyter.runServer
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
-import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.TestInfo
@@ -88,11 +85,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
         serverThread = thread {
-            when (kernelConfig.ports) {
-                is ZmqKernelPorts -> runZmqServer(replSettings)
-                is WsKernelPorts -> runWebSocketServer(replSettings)
-                else -> error("Unknown kernel ports type: ${kernelConfig.ports}")
-            }
+            runServer(replSettings)
         }
     }
 

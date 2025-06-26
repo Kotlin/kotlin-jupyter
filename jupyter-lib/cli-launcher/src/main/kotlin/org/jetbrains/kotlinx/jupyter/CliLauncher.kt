@@ -10,16 +10,12 @@ import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.createRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqSocketManager
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
-import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
-import org.jetbrains.kotlinx.jupyter.ws.JupyterWsServerSocketManager
 import java.io.File
 
 val cliLauncherClass: Class<*> = object {}::class.java.enclosingClass
@@ -83,11 +79,7 @@ fun main(vararg args: String) {
                 StandaloneKernelRunMode,
                 kernelConfig,
             )
-        when (kernelConfig.ports) {
-            is ZmqKernelPorts -> runZmqServer(replSettings)
-            is WsKernelPorts -> runWebSocketServer(replSettings)
-            else -> error("Unknown kernel ports type: ${kernelConfig.ports}")
-        }
+        runServer(replSettings)
     } catch (e: Exception) {
         logger.error("exception running kernel with args: \"${args.joinToString()}\"", e)
     }
@@ -128,7 +120,7 @@ fun embedKernel(
             resolutionInfoProviderFactory,
             scriptReceivers,
         )
-    runZmqServer(replSettings)
+    runServer(replSettings)
 }
 
 fun createReplSettings(
@@ -162,12 +154,4 @@ fun createReplSettings(
             runtimeProperties,
         )
     return replSettings
-}
-
-fun runZmqServer(replSettings: DefaultReplSettings) {
-    runServer(replSettings, ::JupyterZmqSocketManager)
-}
-
-fun runWebSocketServer(replSettings: DefaultReplSettings) {
-    runServer(replSettings, ::JupyterWsServerSocketManager)
 }

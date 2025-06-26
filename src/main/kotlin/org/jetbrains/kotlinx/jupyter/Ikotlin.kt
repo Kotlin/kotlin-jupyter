@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter
 
 import org.jetbrains.kotlinx.jupyter.api.CodeEvaluator
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
@@ -9,8 +8,8 @@ import org.jetbrains.kotlinx.jupyter.logging.ReplComponentsProviderWithLogbackMa
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
+import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSockets
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
@@ -25,7 +24,6 @@ import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.slf4j.Logger
 import kotlin.collections.joinToString
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
@@ -102,36 +100,35 @@ internal fun initializeKernelSession(
     )
 }
 
-inline fun runServer(
-    replSettings: DefaultReplSettings,
-    createSocketManager: (KernelLoggerFactory, KernelConfig) -> JupyterSocketManager,
-) {
+fun runServer(replSettings: DefaultReplSettings) {
     val kernelConfig = replSettings.kernelConfig
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
-    logger.info("Starting server with config: $kernelConfig")
+    val serverRunner = JupyterServerRunner.serverRunners
+        .find { it.canRun(kernelConfig.ports) }
+        ?: error("No server runner found for ports ${kernelConfig.ports}")
+    logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
 
-    createSocketManager(loggerFactory, kernelConfig).use { socketManager ->
-        printClassPath(logger)
+    serverRunner.run(
+        config = kernelConfig,
+        loggerFactory = loggerFactory,
+        setup = { sockets ->
+            printClassPath(logger)
 
-        logger.info("Begin listening for events")
+            logger.info("Begin listening for events")
 
-        val messageHandler = createMessageHandler(replSettings, socketManager.sockets)
-        initializeKernelSession(messageHandler, replSettings)
+            val messageHandler = createMessageHandler(replSettings, sockets)
+            initializeKernelSession(messageHandler, replSettings)
 
-        socketManager.sockets.control.onRawMessage {
-            messageHandler.handleMessage(JupyterSocketType.CONTROL, it)
-        }
+            sockets.control.onRawMessage {
+                messageHandler.handleMessage(JupyterSocketType.CONTROL, it)
+            }
 
-        socketManager.sockets.shell.onRawMessage {
-            messageHandler.handleMessage(JupyterSocketType.SHELL, it)
-        }
+            sockets.shell.onRawMessage {
+                messageHandler.handleMessage(JupyterSocketType.SHELL, it)
+            }
 
-        try {
-            socketManager.listen()
-        } finally {
-            logger.info("Server is stopped")
-            messageHandler.close()
-        }
-    }
+            listOf(messageHandler)
+        },
+    )
 }

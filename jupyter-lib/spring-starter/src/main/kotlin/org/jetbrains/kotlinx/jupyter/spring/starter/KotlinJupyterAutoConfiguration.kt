@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.spring.starter
 
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
+import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean

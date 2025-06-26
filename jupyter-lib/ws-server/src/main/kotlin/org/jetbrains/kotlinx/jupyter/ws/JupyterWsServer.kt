@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.ws
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -7,13 +10,14 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterSocketManager
+import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
+import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
@@ -22,81 +26,97 @@ import java.util.concurrent.ArrayBlockingQueue
 import kotlin.collections.set
 import kotlin.concurrent.thread
 
-class JupyterWsServerSocketManager(
-    private val loggerFactory: KernelLoggerFactory,
-    config: KernelConfig,
-) : JupyterSocketManager, Closeable {
-    private class JupyterWsSocketHolder(val socket: WsCallbackBasedSocketQueued, val processIncomingMessages: Boolean)
+class WsKernelPorts(val port: Int) : KernelPorts {
+    override fun serialize(): Map<String, JsonPrimitive> = mapOf("ws_port" to JsonPrimitive(port))
+}
 
-    private val socketsMap = EnumMap<JupyterSocketType, JupyterWsSocketHolder>(JupyterSocketType::class.java)
-
-    private val wsServer: JupyterWsServer = run {
-        val ports = config.ports
-        require(ports is WsKernelPorts) { "Wrong KernelAddress type" }
-        val address = if (config.host == "*") {
-            InetSocketAddress(/* port = */ ports.port) // InetSocketAddress does not support "*" as a hostname
-        } else {
-            InetSocketAddress(/* hostname = */ config.host, /* port = */ ports.port)
-        }
-
-        JupyterWsServer(
-            address = address,
-            loggerFactory = loggerFactory,
-            onMessageReceive = { type: JupyterSocketType, message: RawMessage ->
-                socketsMap[type]?.socket?.messageReceived(message)
-                    ?: throw RuntimeException("Unknown socket type: $type")
-            },
-        )
+class JupyterWsServerRunner : JupyterServerRunner {
+    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? {
+        return WsKernelPorts(port = Json.decodeFromJsonElement<Int>(jsonFields["ws_port"] ?: return null))
     }
 
-    private fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket {
-        return WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
-            socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = true)
+    override fun canRun(ports: KernelPorts): Boolean = ports is WsKernelPorts
+
+    override fun run(
+        config: KernelConfig,
+        loggerFactory: KernelLoggerFactory,
+        setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
+    ) {
+        val socketsMap = EnumMap<JupyterSocketType, JupyterWsSocketHolder>(JupyterSocketType::class.java)
+
+        val wsServer: JupyterWsServer = run {
+            val ports = config.ports
+            require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
+            val address = if (config.host == "*") {
+                InetSocketAddress(/* port = */ ports.port) // InetSocketAddress does not support "*" as a hostname
+            } else {
+                InetSocketAddress(/* hostname = */ config.host, /* port = */ ports.port)
+            }
+
+            JupyterWsServer(
+                address = address,
+                loggerFactory = loggerFactory,
+                onMessageReceive = { type: JupyterSocketType, message: RawMessage ->
+                    socketsMap[type]?.socket?.messageReceived(message)
+                        ?: throw RuntimeException("Unknown socket type: $type")
+                },
+            )
         }
-    }
 
-    private fun createSendSocketWrapper(
-        @Suppress("SameParameterValue") // I know it's always IOPUB, but let's keep it for consistency
-        type: JupyterSocketType,
-    ): JupyterSendSocket = WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
-        socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = false)
-    }
-
-    override val sockets = object : JupyterServerImplSockets {
-        override val shell = createCallbackBasedSocketWrapper(JupyterSocketType.SHELL)
-        override val control = createCallbackBasedSocketWrapper(JupyterSocketType.CONTROL)
-        override val iopub = createSendSocketWrapper(JupyterSocketType.IOPUB)
-        override val stdin = createCallbackBasedSocketWrapper(JupyterSocketType.STDIN).sendReceive()
-
-        init {
-            // creating and registering heartbeat
-            createCallbackBasedSocketWrapper(JupyterSocketType.HB)
-                .also { socket -> socket.onRawMessage(socket::sendRawMessage) }
+        fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket {
+            return WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+                socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = true)
+            }
         }
-    }
 
-
-    override fun listen() {
-        val mainThread = Thread.currentThread()
-        val socketListenerThreads = socketsMap.values.mapNotNull {
-            it.takeIf(JupyterWsSocketHolder::processIncomingMessages)
-                ?.socket?.startListening(mainListenerThread = mainThread)
+        fun createSendSocketWrapper(type: JupyterSocketType): JupyterSendSocket {
+            return WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+                socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = false)
+            }
         }
-        wsServer.run()
+
+        val sockets = object : JupyterServerImplSockets {
+            override val shell = createCallbackBasedSocketWrapper(JupyterSocketType.SHELL)
+            override val control = createCallbackBasedSocketWrapper(JupyterSocketType.CONTROL)
+            override val iopub = createSendSocketWrapper(JupyterSocketType.IOPUB)
+            override val stdin = createCallbackBasedSocketWrapper(JupyterSocketType.STDIN).sendReceive()
+
+            init {
+                // creating and registering heartbeat
+                createCallbackBasedSocketWrapper(JupyterSocketType.HB)
+                    .also { socket -> socket.onRawMessage(socket::sendRawMessage) }
+            }
+        }
+
+        val closeables = setup(sockets)
+
         try {
-            socketListenerThreads.forEach {
-                it.join()
+            val mainThread = Thread.currentThread()
+            val socketListenerThreads = socketsMap.values.mapNotNull {
+                it.takeIf(JupyterWsSocketHolder::processIncomingMessages)
+                    ?.socket?.startListening(mainListenerThread = mainThread)
             }
-        } catch (_: InterruptedException) {
-            socketListenerThreads.forEach {
-                it.interrupt()
+            wsServer.run()
+            try {
+                socketListenerThreads.forEach {
+                    it.join()
+                }
+            } catch (_: InterruptedException) {
+                socketListenerThreads.forEach {
+                    it.interrupt()
+                }
+            }
+        } finally {
+            mergeExceptions {
+                for (closeable in closeables) {
+                    catchIndependently { closeable.close() }
+                }
+                catchIndependently { wsServer.stop() }
             }
         }
     }
 
-    override fun close() {
-        wsServer.stop() // stopping closes all WebSocket connections, which in turn removes them from currentWebSockets
-    }
+    private class JupyterWsSocketHolder(val socket: WsCallbackBasedSocketQueued, val processIncomingMessages: Boolean)
 }
 
 private class WsCallbackBasedSocketQueued(
