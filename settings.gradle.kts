@@ -35,7 +35,6 @@ libSubproject("lib-ext")
 libSubproject("test-kit")
 libSubproject("test-kit-test")
 libSubproject("ws-server")
-libSubproject("cli-launcher")
 exampleSubproject("getting-started")
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")

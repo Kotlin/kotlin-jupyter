@@ -211,7 +211,7 @@ fun createKotlinKernelConfig(
     replCompilerMode = replCompilerMode,
 )
 
-const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.CliLauncherKt"
+const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
 
 fun KernelConfig.javaCmdLine(
     // Path to java executable or just "java" in case it's on the path

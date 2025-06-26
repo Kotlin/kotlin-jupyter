@@ -36,14 +36,13 @@ extra["kotlin-serialization.version"] = libs.serialization.json.get().version
 dependencies {
     kapt(libs.spring.boot.configuration.processor)
 
-    implementation(projects.cliLauncher)
+    implementation(projects.kotlinJupyterKernel)
     implementation(projects.wsServer)
     implementation(libs.kotlin.dev.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)
 
     springKernel(projects.kotlinJupyterKernel) { isTransitive = false }
-    springKernel(projects.cliLauncher) { isTransitive = false }
     springKernel(projects.wsServer) { isTransitive = false }
     springKernel(projects.api) { isTransitive = false }
     springKernel(projects.lib) { isTransitive = false }

@@ -4,8 +4,8 @@ import io.kotest.matchers.shouldBe
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.api.logger
-import org.jetbrains.kotlinx.jupyter.cliLauncherClass
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.startup.MAIN_CLASS_NAME
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -148,7 +148,7 @@ class ConfigTest {
 
     @Test
     fun `kernel main class name should be consistent`() {
-        MAIN_CLASS_NAME shouldBe cliLauncherClass.name
+        MAIN_CLASS_NAME shouldBe iKotlinClass.name
     }
 
     companion object {
