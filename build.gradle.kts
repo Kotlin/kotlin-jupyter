@@ -98,8 +98,7 @@ dependencies {
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
 
-
-    testImplementation(projects.cliLauncher)
+    testImplementation(projects.wsServer)
 
     deploy(projects.lib)
     deploy(projects.api)
@@ -107,7 +106,6 @@ dependencies {
     deploy(libs.kotlin.dev.scriptRuntime.get())
 
     kernelShadowed(projects.kotlinJupyterKernel)
-    kernelShadowed(projects.cliLauncher)
 
     ideScriptClasspathShadowed(projects.lib) { isTransitive = false }
     ideScriptClasspathShadowed(projects.api) { isTransitive = false }

@@ -179,6 +179,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     private fun configureJarTasks() {
         val jarTask = project.tasks.named(JAR_TASK, Jar::class.java) {
             manifest {
+                attributes["Main-Class"] = settings.mainClassFQN
                 attributes["Implementation-Version"] = project.version
             }
         }
@@ -191,7 +192,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
 
             manifest {
                 attributes(jarTask.get().manifest.attributes)
-                attributes["Main-Class"] = settings.mainClassFQN
             }
         }
     }
