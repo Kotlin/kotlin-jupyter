@@ -62,13 +62,13 @@ import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.PortsGenerator
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.create
 import org.jetbrains.kotlinx.jupyter.startup.createRandomZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
+import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Disabled
@@ -119,6 +119,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                     Thread.sleep(500)
                 }
             }
+            if (_sockets == null) error("Could not connect to kernel server")
         } catch (e: Throwable) {
             afterEach()
             throw e

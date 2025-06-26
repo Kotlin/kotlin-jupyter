@@ -1,0 +1,36 @@
+package org.jetbrains.kotlinx.jupyter.startup
+
+import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
+import java.io.Closeable
+import java.util.ServiceLoader
+
+interface JupyterServerRunner {
+    /**
+     * Tries to deserialize appropriate for this runner [KernelPorts]
+     * from the JSON fields from the config file (see [KernelJupyterParams]).
+     * Needs to be symmetric with [KernelPorts.serialize] implementation of the result.
+     */
+    fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts?
+
+    /** Checks whether this runner can run the server on the given [ports]. */
+    fun canRun(ports: KernelPorts): Boolean
+
+    /**
+     * Opens sockets, runs [setup] and then runs the server, blocking the thread.
+     * The server is stopped when one of the callbacks (see [JupyterServerImplSockets]) throws [InterruptedException].
+     * Closable resources returned from [setup] are closed on shutdown.
+     */
+    fun run(
+        config: KernelConfig,
+        loggerFactory: KernelLoggerFactory,
+        setup: (JupyterServerImplSockets) -> Iterable<Closeable>
+    )
+
+    companion object {
+        val serverRunners: Iterable<JupyterServerRunner> by lazy {
+            ServiceLoader.load(JupyterServerRunner::class.java)
+        }
+    }
+}

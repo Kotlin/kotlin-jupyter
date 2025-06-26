@@ -3,12 +3,10 @@ package org.jetbrains.kotlinx.jupyter.startup
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -21,20 +19,32 @@ import java.util.EnumMap
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
-interface KernelPorts
-
-class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
-    constructor(getSocketPort: (JupyterSocketType) -> Int) : this(
-        ports = EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
-            JupyterSocketType.entries.forEach { socket ->
-                val port = getSocketPort(socket)
-                put(socket, port)
-            }
-        },
-    )
+interface KernelPorts {
+    /**
+     * Returns JSON fields to be serialized into the config file (see [KernelJupyterParams]).
+     * Needs to be symmetric with [JupyterServerRunner.tryDeserializePorts] implementation.
+     */
+    fun serialize(): Map<String, JsonPrimitive>
 }
 
-class WsKernelPorts(val port: Int) : KernelPorts
+class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
+    companion object {
+        inline operator fun invoke(getSocketPort: (JupyterSocketType) -> Int) = ZmqKernelPorts(
+            ports = EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
+                JupyterSocketType.entries.forEach { socket ->
+                    val port = getSocketPort(socket)
+                    put(socket, port)
+                }
+            },
+        )
+    }
+
+    override fun serialize(): Map<String, JsonPrimitive> {
+        return ports.entries.associate { (socket, port) ->
+            socket.portField to JsonPrimitive(port)
+        }
+    }
+}
 
 data class KernelArgs(
     val cfgFile: File,
@@ -88,15 +98,9 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 
     override fun deserialize(decoder: Decoder): KernelJupyterParams {
         val map = utilSerializer.deserialize(decoder)
-        val ports = if (map.containsKey("ws_port")) {
-            WsKernelPorts(port = Json.decodeFromJsonElement<Int>(map.getValue("ws_port")))
-        } else {
-            ZmqKernelPorts { socket ->
-                val fieldName = socket.portField
-                map[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
-                    ?: error("Cannot find $fieldName in config")
-            }
-        }
+        val ports = JupyterServerRunner.serverRunners.firstNotNullOfOrNull {
+            it.tryDeserializePorts(map)
+        } ?: error("Unknown ports scheme")
 
         return KernelJupyterParams(
             signatureScheme = map["signature_scheme"]?.content,
@@ -116,15 +120,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
                 "key" to JsonPrimitive(value.key),
                 "transport" to JsonPrimitive(value.transport),
             )
-
-        when (value.ports) {
-            is WsKernelPorts -> {
-                map["ws_port"] = JsonPrimitive(value.ports.port)
-            }
-            is ZmqKernelPorts -> value.ports.ports.forEach { (socket, port) ->
-                map[socket.portField] = JsonPrimitive(port)
-            }
-        }
+        map.putAll(value.ports.serialize())
         utilSerializer.serialize(encoder, map)
     }
 }

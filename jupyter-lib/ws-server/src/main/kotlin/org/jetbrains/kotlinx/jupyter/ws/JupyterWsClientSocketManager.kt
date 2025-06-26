@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.WsKernelPorts
 import java.io.Closeable
 import java.net.URI
 import java.nio.ByteBuffer
