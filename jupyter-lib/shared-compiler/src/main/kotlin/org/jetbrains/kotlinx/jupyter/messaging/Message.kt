@@ -36,11 +36,11 @@ fun RawMessage.toMessage(): Message {
 }
 
 fun Message.toRawMessage(): RawMessage = makeRawMessage(
-    dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
     id = id,
+    dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
 )
 
-fun makeRawMessage(dataJson: JsonObject, id: List<ByteArray>): RawMessage = RawMessageImpl(
+fun makeRawMessage(id: List<ByteArray>, dataJson: JsonObject): RawMessage = RawMessageImpl(
     id = id,
     header = dataJson["header"]!!.jsonObject,
     parentHeader = dataJson["parent_header"] as? JsonObject,
