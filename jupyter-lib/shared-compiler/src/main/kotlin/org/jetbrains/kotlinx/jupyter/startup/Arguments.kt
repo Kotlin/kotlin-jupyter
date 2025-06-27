@@ -7,11 +7,12 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.api.libraries.portField
+import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import java.io.File
 import java.util.EnumMap
@@ -37,11 +38,21 @@ class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
                 }
             },
         )
+
+        fun tryDeserialize(jsonFields: Map<String, JsonPrimitive>): ZmqKernelPorts? {
+            return ZmqKernelPorts { socket ->
+                val fieldName = socket.zmqPortField
+                jsonFields[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
+                    ?: return null
+            }
+        }
+
+        private val JupyterSocketType.zmqPortField get() = "${jupyterName}_port"
     }
 
     override fun serialize(): Map<String, JsonPrimitive> {
         return ports.entries.associate { (socket, port) ->
-            socket.portField to JsonPrimitive(port)
+            socket.zmqPortField to JsonPrimitive(port)
         }
     }
 }
