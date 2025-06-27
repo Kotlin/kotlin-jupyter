@@ -60,7 +60,7 @@ class JupyterWsServerRunner : JupyterServerRunner {
                     socketsMap[type]?.socket?.messageReceived(message)
                         ?: throw RuntimeException("Unknown socket type: $type")
                 },
-            )
+            ).apply { isReuseAddr = true }
         }
 
         fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket {
