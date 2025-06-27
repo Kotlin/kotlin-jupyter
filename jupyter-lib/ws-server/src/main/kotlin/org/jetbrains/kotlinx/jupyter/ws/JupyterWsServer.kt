@@ -22,8 +22,10 @@ import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.util.Collections
 import java.util.EnumMap
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 import kotlin.concurrent.thread
 
@@ -157,7 +159,7 @@ private class JupyterWsServer(
 ) : WebSocketServer(address) {
     private val logger = loggerFactory.getLogger(this::class)
     private val messageHandler = WsMessageHandler(logger, onMessageReceive)
-    private val _currentWebSockets = mutableSetOf<WebSocket>()
+    private val _currentWebSockets = Collections.newSetFromMap<WebSocket>(ConcurrentHashMap())
 
     val currentWebSockets: Iterable<WebSocket> get() = _currentWebSockets
 
