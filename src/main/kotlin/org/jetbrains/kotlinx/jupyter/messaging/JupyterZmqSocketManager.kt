@@ -1,18 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
-import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
-import org.jetbrains.kotlinx.jupyter.api.libraries.portField
 import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
 import org.jetbrains.kotlinx.jupyter.protocol.openServerZmqSocket
+import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
@@ -24,13 +21,8 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
 class JupyterZmqServerRunner : JupyterServerRunner {
-    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? {
-        return ZmqKernelPorts { socket ->
-            val fieldName = socket.portField
-            jsonFields[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
-                ?: return null
-        }
-    }
+    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? =
+        ZmqKernelPorts.tryDeserialize(jsonFields)
 
     override fun canRun(ports: KernelPorts): Boolean = ports is ZmqKernelPorts
 
