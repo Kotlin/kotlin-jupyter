@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
+import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import java.io.Closeable
@@ -47,7 +48,7 @@ class JupyterWsServerRunner : JupyterServerRunner {
         val wsServer: JupyterWsServer = run {
             val ports = config.ports
             require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
-            val address = if (config.host == "*") {
+            val address = if (config.host == ANY_HOST_NAME) {
                 InetSocketAddress(/* port = */ ports.port) // InetSocketAddress does not support "*" as a hostname
             } else {
                 InetSocketAddress(/* hostname = */ config.host, /* port = */ ports.port)

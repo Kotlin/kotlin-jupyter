@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
+import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.Closeable
 import java.net.URI
@@ -28,7 +29,7 @@ class JupyterWsClientSocketManager(
                     URI(
                         /* scheme = */ "ws",
                         /* userInfo = */ null,
-                        /* host = */ config.host.takeUnless { it == "*" } ?: "0.0.0.0",
+                        /* host = */ config.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
                         /* port = */ (config.ports as WsKernelPorts).port,
                         /* path = */ null,
                         /* query = */ null,
