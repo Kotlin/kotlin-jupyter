@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.startup
 import java.io.Closeable
 import java.io.IOException
 import java.net.DatagramSocket
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
@@ -15,8 +17,18 @@ object GeneratedPortsHolder {
 
 fun isPortAvailable(port: Int): Boolean {
     return listOf(
-        { ServerSocket(port).apply { reuseAddress = true } },
-        { DatagramSocket(port).apply { reuseAddress = true } },
+        {
+            ServerSocket().apply {
+                reuseAddress = true
+                bind(InetSocketAddress(null as InetAddress?, port))
+            }
+        },
+        {
+            DatagramSocket(null).apply {
+                reuseAddress = true
+                bind(InetSocketAddress(null as InetAddress?, port))
+            }
+        },
     ).all { checkSocketIsFree(it) }
 }
 
