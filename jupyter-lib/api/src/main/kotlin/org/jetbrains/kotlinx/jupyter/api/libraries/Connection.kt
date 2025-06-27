@@ -26,6 +26,7 @@ enum class JupyterSocketType {
     IOPUB,
 }
 
+/** This name is used in Jupyter messaging protocol (as channel identifier) */
 val JupyterSocketType.jupyterName get() = name.lowercase(Locale.getDefault())
 val JupyterSocketType.portField get() = "${jupyterName}_port"
 
