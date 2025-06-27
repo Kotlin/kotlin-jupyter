@@ -91,6 +91,8 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 fun JsonObject.string(key: String): String {
     return (get(key) as JsonPrimitive).content
@@ -111,7 +113,8 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
 
     override fun beforeEach() {
         try {
-            for (@Suppress("unused") i in 1..MAX_RETRIES) {
+            val now = TimeSource.Monotonic.markNow()
+            while (now.elapsedNow() < CONNECT_RETRY_TIMEOUT_SECONDS.seconds) {
                 try {
                     _sockets = socketManager.open(kernelConfig)
                     break
@@ -988,4 +991,4 @@ class ExecuteWsTests : ExecuteTests(
     generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
 )
 
-private const val MAX_RETRIES = 100
+private const val CONNECT_RETRY_TIMEOUT_SECONDS = 10
