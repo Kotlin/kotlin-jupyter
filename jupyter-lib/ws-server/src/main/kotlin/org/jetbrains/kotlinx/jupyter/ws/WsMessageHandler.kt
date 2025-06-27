@@ -23,14 +23,14 @@ internal class WsMessageHandler(
     fun onMessage(message: ByteBuffer) {
         val intBuffer = message.asIntBuffer()
         val buffersAmount = intBuffer.get() - 1
-        val offsets = IntArray(buffersAmount + 2)
-        for (i in 0 until offsets.size - 1) {
-            offsets[i] = intBuffer.get()
-        }
 
-        // Additionally, appending the offset of the contents' end, to be able to use `zipWithNext`.
-        offsets[offsets.size - 1] = message.limit()
-        val buffers = offsets.asSequence()
+        // offsets are:
+        // * the first is for the main content start
+        // * `buffersAmount` more offsets for the actual buffers
+        val offsets = IntArray(buffersAmount + 1) { intBuffer.get() }
+
+        // using the total message length as the final offset for the last offset pair in the `zipWithNext` call.
+        val buffers = (offsets.asSequence() + message.limit())
             .zipWithNext { start, end ->
                 message.position(start)
                 ByteArray(end - start)
@@ -44,9 +44,6 @@ internal class WsMessageHandler(
 
         // the remaining buffers in the sequence are real byteBuffers
         handleMessage(message = message, byteBuffers = buffers.asSequence().toList())
-
-        // TODO support interrupt exception, should close gracefully
-        //  Add error handling in general
     }
 
     private fun handleMessage(message: String, byteBuffers: List<ByteArray>) {
