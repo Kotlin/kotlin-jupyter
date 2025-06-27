@@ -63,7 +63,7 @@ internal class WsMessageHandler(
             return
         }
 
-        val rawMessage = makeRawMessage(json, byteBuffers)
+        val rawMessage = makeRawMessage(byteBuffers, json)
         onMessageReceive(socketType, rawMessage)
     }
 }
