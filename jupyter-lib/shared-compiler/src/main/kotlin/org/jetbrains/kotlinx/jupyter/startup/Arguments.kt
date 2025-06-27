@@ -125,8 +125,10 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
     }
 }
 
+const val ANY_HOST_NAME = "*"
+
 data class KernelConfig(
-    val host: String = "*",
+    val host: String = ANY_HOST_NAME,
     val ports: KernelPorts,
     val transport: String,
     val signatureScheme: String,
