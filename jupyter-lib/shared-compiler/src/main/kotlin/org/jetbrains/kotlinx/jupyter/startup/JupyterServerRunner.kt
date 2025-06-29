@@ -11,6 +11,7 @@ interface JupyterServerRunner {
      * Tries to deserialize appropriate for this runner [KernelPorts]
      * from the JSON fields from the config file (see [KernelJupyterParams]).
      * Needs to be symmetric with [KernelPorts.serialize] implementation of the result.
+     * Returns null if the ports supported by this runner cannot be deserialized from the given JSON fields.
      */
     fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts?
 
