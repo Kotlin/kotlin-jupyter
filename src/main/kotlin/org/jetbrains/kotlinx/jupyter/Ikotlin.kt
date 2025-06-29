@@ -256,7 +256,7 @@ fun runServer(replSettings: DefaultReplSettings) {
     val kernelConfig = replSettings.kernelConfig
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
-    val serverRunner = JupyterServerRunner.serverRunners
+    val serverRunner = JupyterServerRunner.instances
         .find { it.canRun(kernelConfig.ports) }
         ?: error("No server runner found for ports ${kernelConfig.ports}")
     logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")

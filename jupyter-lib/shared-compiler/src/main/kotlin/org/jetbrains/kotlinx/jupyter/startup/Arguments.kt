@@ -109,7 +109,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 
     override fun deserialize(decoder: Decoder): KernelJupyterParams {
         val map = utilSerializer.deserialize(decoder)
-        val ports = JupyterServerRunner.serverRunners.firstNotNullOfOrNull {
+        val ports = JupyterServerRunner.instances.firstNotNullOfOrNull {
             it.tryDeserializePorts(map)
         } ?: error("Unknown ports scheme")
 

@@ -30,7 +30,7 @@ interface JupyterServerRunner {
     )
 
     companion object {
-        val serverRunners: Iterable<JupyterServerRunner> get() =
+        val instances: Iterable<JupyterServerRunner> get() =
             ServiceLoader.load(JupyterServerRunner::class.java)
     }
 }
