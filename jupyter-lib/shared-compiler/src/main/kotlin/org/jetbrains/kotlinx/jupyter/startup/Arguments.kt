@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.startup
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
@@ -32,6 +31,16 @@ fun createKernelPorts(action: (JupyterSocketType) -> Int): KernelPorts {
     }
 }
 
+/**
+ * To add a new kernel argument:
+ * 1. Add it to this constructor
+ * 2. Define how it's serialized in `KernelArgumentsParsing.kt`
+ * 3. Add it to both constructors of [KernelArgumentsBuilder]
+ * 4. Add one more bound parameter in [KernelArgumentsBuilder]
+ * 5. Update [KernelConfig] implementation accordingly
+ * 6. Check all the usages (especially new instance creation) of [KernelConfig]
+ * and [KernelArgs] and update them
+ */
 data class KernelArgs(
     val cfgFile: File,
     val scriptClasspath: List<File>,
@@ -40,24 +49,14 @@ data class KernelArgs(
     val clientType: String?,
     val jvmTargetForSnippets: String?,
     val replCompilerMode: ReplCompilerMode,
+    val extraCompilerArguments: List<String>,
 ) {
     fun parseParams(): KernelJupyterParams {
         return KernelJupyterParams.fromFile(cfgFile)
     }
 
     fun argsList(): List<String> {
-        return mutableListOf<String>().apply {
-            add(cfgFile.absolutePath)
-            homeDir?.let { add("-home=${it.absolutePath}") }
-            if (scriptClasspath.isNotEmpty()) {
-                val classPathString = scriptClasspath.joinToString(File.pathSeparator) { it.absolutePath }
-                add("-cp=$classPathString")
-            }
-            debugPort?.let { add("-debugPort=$it") }
-            clientType?.let { add("-client=$it") }
-            jvmTargetForSnippets?.let { add("-jvmTarget=$it") }
-            add("-replCompilerMode=${replCompilerMode.name}")
-        }
+        return KernelArgumentsBuilder(this).argsList()
     }
 }
 
@@ -125,6 +124,7 @@ data class KernelConfig(
     val clientType: String? = null,
     val jvmTargetForSnippets: String? = null,
     val replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
+    val extraCompilerArguments: List<String> = emptyList(),
 ) {
     val hmac by lazy {
         HMAC(signatureScheme.replace("-", ""), signatureKey)
@@ -138,7 +138,16 @@ data class KernelConfig(
         val format = Json { prettyPrint = true }
         cfgFile.writeText(format.encodeToString(params))
 
-        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
+        return KernelArgs(
+            cfgFile,
+            scriptClasspath,
+            homeDir,
+            debugPort,
+            clientType,
+            jvmTargetForSnippets,
+            replCompilerMode,
+            extraCompilerArguments,
+        )
     }
 }
 
@@ -155,6 +164,7 @@ fun createClientKotlinKernelConfig(
     ports: KernelPorts,
     signatureKey: String,
     replCompilerMode: ReplCompilerMode,
+    extraCompilerArgs: List<String>,
 ) = KernelConfig(
     host = host,
     ports = ports,
@@ -163,6 +173,7 @@ fun createClientKotlinKernelConfig(
     signatureKey = signatureKey,
     homeDir = null,
     replCompilerMode = replCompilerMode,
+    extraCompilerArguments = extraCompilerArgs,
 )
 
 /**
@@ -204,7 +215,7 @@ const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
 fun KernelConfig.javaCmdLine(
     // Path to java executable or just "java" in case it's on the path
     javaExecutable: String,
-    // Prefix for temporary directory where the connection file should be stored
+    // Prefix for the temporary directory where the connection file should be stored
     tempDirPrefix: String,
     // Classpath for the whole kernel. Should include kernel artifact
     kernelClasspath: String,

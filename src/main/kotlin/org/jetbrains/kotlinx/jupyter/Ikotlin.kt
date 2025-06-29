@@ -40,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
+import org.jetbrains.kotlinx.jupyter.startup.KernelArgumentsBuilder
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
 import org.slf4j.Logger
@@ -50,49 +51,7 @@ import kotlin.script.experimental.jvm.util.classpathFromClassloader
 val iKotlinClass: Class<*> = object {}::class.java.enclosingClass
 
 private fun parseCommandLine(vararg args: String): KernelArgs {
-    var cfgFile: File? = null
-    var classpath: List<File>? = null
-    var homeDir: File? = null
-    var debugPort: Int? = null
-    var clientType: String? = null
-    var jvmTargetForSnippets: String? = null
-    var replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT
-    args.forEach { arg ->
-        when {
-            arg.startsWith("-cp=") || arg.startsWith("-classpath=") -> {
-                classpath?.let {
-                    throw IllegalArgumentException("classpath already set to ${it.joinToString(File.pathSeparator)}")
-                }
-                classpath = arg.substringAfter('=').split(File.pathSeparator).map { File(it) }
-            }
-            arg.startsWith("-home=") -> {
-                homeDir = File(arg.substringAfter('='))
-            }
-            arg.startsWith("-debugPort=") -> {
-                debugPort = arg.substringAfter('=').toInt()
-            }
-            arg.startsWith("-client=") -> {
-                clientType = arg.substringAfter('=')
-            }
-            arg.startsWith("-jvmTarget") -> {
-                jvmTargetForSnippets = arg.substringAfter('=')
-            }
-            arg.startsWith("-replCompilerMode=") -> {
-                val userMode = arg.substringAfter('=')
-                replCompilerMode = ReplCompilerMode.entries.find {
-                    it.name == userMode
-                } ?: throw IllegalArgumentException("Invalid replCompilerMode: $userMode")
-            }
-            else -> {
-                cfgFile?.let { throw IllegalArgumentException("config file already set to $it") }
-                cfgFile = File(arg)
-            }
-        }
-    }
-    val cfgFileValue = cfgFile ?: throw IllegalArgumentException("config file is not provided")
-    if (!cfgFileValue.exists() || !cfgFileValue.isFile) throw IllegalArgumentException("invalid config file $cfgFileValue")
-
-    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
+    return KernelArgumentsBuilder().parseArgs(args)
 }
 
 fun printClassPath(logger: Logger) {
@@ -128,9 +87,12 @@ fun main(vararg args: String) {
  * This function is to be run in projects which use kernel as a library,
  * so we don't have a big need in covering it with tests
  *
- * The expected use case for this function is embedded into a Java application that doesn't necessarily support extensions written in Kotlin
- * The signature of this function should thus be simple, and e.g. allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
- * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
+ * The expected use case for this function is embedded into a Java application
+ * that doesn't necessarily support extensions written in Kotlin.
+ * The signature of this function should thus be simple,
+ * and e.g., allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider.
+ * That's because EmptyResolutionInfoProvider is a Kotlin singleton object,
+ * and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
 fun embedKernel(
@@ -148,6 +110,7 @@ fun embedKernel(
             clientType = null,
             jvmTargetForSnippets = null,
             replCompilerMode = ReplCompilerMode.DEFAULT,
+            extraCompilerArguments = emptyList(),
         ).getConfig()
     val replSettings =
         createReplSettings(

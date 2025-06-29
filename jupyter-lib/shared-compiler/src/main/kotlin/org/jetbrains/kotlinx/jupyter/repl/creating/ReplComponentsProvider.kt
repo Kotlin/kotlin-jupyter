@@ -58,4 +58,5 @@ interface ReplComponentsProvider {
     val libraryReferenceParser: LibraryReferenceParser
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder
     val replCompilerMode: ReplCompilerMode
+    val extraCompilerArguments: List<String>
 }

@@ -35,6 +35,7 @@ fun createRepl(
     debugPort: Int? = null,
     inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
+    extraCompilerArguments: List<String> = emptyList(),
 ): ReplForJupyter {
     val componentsProvider =
         object : ReplComponentsProviderBase() {
@@ -71,6 +72,8 @@ fun createRepl(
             override fun provideInMemoryReplResultsHolder() = inMemoryReplResultsHolder
 
             override fun provideReplCompilerMode(): ReplCompilerMode = replCompilerMode
+
+            override fun provideExtraCompilerArguments(): List<String> = extraCompilerArguments
         }
     return componentsProvider.createRepl()
 }

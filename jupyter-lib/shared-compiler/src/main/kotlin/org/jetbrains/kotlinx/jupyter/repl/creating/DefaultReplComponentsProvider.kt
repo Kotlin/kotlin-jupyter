@@ -120,4 +120,8 @@ open class DefaultReplComponentsProvider(
     override fun provideReplCompilerMode(): ReplCompilerMode {
         return _settings.kernelConfig.replCompilerMode
     }
+
+    override fun provideExtraCompilerArguments(): List<String> {
+        return _settings.kernelConfig.extraCompilerArguments
+    }
 }
