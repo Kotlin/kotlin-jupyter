@@ -146,4 +146,6 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder
 
     override fun provideReplCompilerMode(): ReplCompilerMode = ReplCompilerMode.DEFAULT
+
+    override fun provideExtraCompilerArguments(): List<String> = emptyList()
 }

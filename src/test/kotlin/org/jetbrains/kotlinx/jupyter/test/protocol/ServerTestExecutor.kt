@@ -81,7 +81,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
             ReplConfig.create(
                 DefaultResolutionInfoProviderFactory,
                 testLoggerFactory,
-                homeDir = kernelConfig.homeDir,
+                homeDir = kernelConfig.ownParams.homeDir,
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
         serverThread = thread {

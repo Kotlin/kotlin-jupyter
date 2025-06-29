@@ -55,6 +55,7 @@ abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructib
     override val libraryReferenceParser: LibraryReferenceParser by lazy { provideLibraryReferenceParser() }
     override val inMemoryReplResultsHolder: InMemoryReplResultsHolder by lazy { provideInMemoryReplResultsHolder() }
     override val replCompilerMode: ReplCompilerMode by lazy { provideReplCompilerMode() }
+    override val extraCompilerArguments: List<String> by lazy { provideExtraCompilerArguments() }
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)

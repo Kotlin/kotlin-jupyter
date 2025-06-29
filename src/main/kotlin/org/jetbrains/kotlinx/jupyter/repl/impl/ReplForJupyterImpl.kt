@@ -167,6 +167,7 @@ class ReplForJupyterImpl(
     magicsHandler: LibrariesAwareMagicsHandler,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     override val compilerMode: ReplCompilerMode,
+    extraCompilerArguments: List<String> = emptyList(),
 ) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
     val rootDisposable = Disposer.newDisposable("REPL Disposable")
     private val logger = loggerFactory.getLogger(this::class)
@@ -193,6 +194,7 @@ class ReplForJupyterImpl(
     private val compilerArgsConfigurator: CompilerArgsConfigurator =
         DefaultCompilerArgsConfigurator(
             runtimeProperties.jvmTargetForSnippets,
+            extraCompilerArguments,
         )
 
     private val magics =

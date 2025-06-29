@@ -86,4 +86,6 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder
 
     fun provideReplCompilerMode(): ReplCompilerMode
+
+    fun provideExtraCompilerArguments(): List<String>
 }

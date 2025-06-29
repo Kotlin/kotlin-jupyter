@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -9,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.slf4j.Logger
@@ -167,16 +167,17 @@ fun createZmqSocket(
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
 
+    val jupyterParams = kernelConfig.jupyterParams
     return JupyterZmqSocketImpl(
-        loggerFactory,
-        socketInfo.name,
-        zmqSocket,
-        kernelConfig.addressForZmqSocket(socketInfo),
-        kernelConfig.hmac,
+        loggerFactory = loggerFactory,
+        name = socketInfo.name,
+        socket = zmqSocket,
+        address = jupyterParams.addressForZmqSocket(socketInfo),
+        hmac = jupyterParams.hmac,
     )
 }
 
-fun KernelConfig.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): String {
+fun KernelJupyterParams.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): String {
     require(ports is ZmqKernelPorts) { "Wrong KernelAddress type" }
     val port = ports.ports.getValue(socketInfo.type)
     return "$transport://$host:$port"

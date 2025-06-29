@@ -7,8 +7,8 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSocketManager
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
@@ -22,6 +22,7 @@ class JupyterWsClientSocketManager(
 ) : JupyterClientSocketManager {
     override fun open(config: KernelConfig): JupyterClientSockets {
         val errors = mutableListOf<Exception>()
+        val jupyterParams = config.jupyterParams
         return WsClientSockets(
             loggerFactory = loggerFactory,
             createWsClient = { messageHandler ->
@@ -29,8 +30,8 @@ class JupyterWsClientSocketManager(
                     URI(
                         /* scheme = */ "ws",
                         /* userInfo = */ null,
-                        /* host = */ config.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
-                        /* port = */ (config.ports as WsKernelPorts).port,
+                        /* host = */ jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
+                        /* port = */ (jupyterParams.ports as WsKernelPorts).port,
                         /* path = */ null,
                         /* query = */ null,
                         /* fragment = */ null,

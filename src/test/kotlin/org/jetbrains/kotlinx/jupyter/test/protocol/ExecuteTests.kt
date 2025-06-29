@@ -111,6 +111,8 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
     private val ioPubSocket: JupyterReceiveSocket get() = sockets.ioPub
     private val stdinSocket: JupyterSendReceiveSocket get() = sockets.stdin
 
+    private val replCompilerMode get() = kernelConfig.ownParams.replCompilerMode
+
     override fun beforeEach() {
         try {
             val now = TimeSource.Monotonic.markNow()
@@ -406,7 +408,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
 
                     assertNotNull(loadedClass.memberProperties.find { it.name == "xyz" })
 
-                    when (kernelConfig.replCompilerMode) {
+                    when (replCompilerMode) {
                         ReplCompilerMode.K1 -> {
                             @Suppress("UNCHECKED_CAST")
                             val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
@@ -495,7 +497,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
     @Test
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
-        when (kernelConfig.replCompilerMode) {
+        when (replCompilerMode) {
             ReplCompilerMode.K1 -> {
                 assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
                 val loggingManager = LogbackLoggingManager(testLoggerFactory)
@@ -537,7 +539,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
             """
             import kotlinx.serialization.*
             import kotlinx.serialization.json.*
-            
+
             notebook.commManager.registerCommTarget("$targetName") { comm, openData ->
                 comm.send(
                     JsonObject(
@@ -546,7 +548,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                         )
                     )
                 )
-                
+
                 comm.onMessage { d ->
                     comm.send(
                         JsonObject(
@@ -595,7 +597,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
     fun testDebugPortCommHandler() {
         val targetName = ProvidedCommMessages.OPEN_DEBUG_PORT_TARGET
         val commId = "some"
-        val actualDebugPort = kernelConfig.debugPort
+        val actualDebugPort = kernelConfig.ownParams.debugPort
 
         shellSocket.sendMessage(
             MessageType.COMM_OPEN,
@@ -701,7 +703,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                when (kernelConfig.replCompilerMode) {
+                when (replCompilerMode) {
                     ReplCompilerMode.K1 -> {
                         content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
@@ -744,7 +746,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 content.value shouldBe "An operation is not implemented."
 
                 // Stacktrace should be enhanced with cell information
-                when (kernelConfig.replCompilerMode) {
+                when (replCompilerMode) {
                     ReplCompilerMode.K1 -> {
                         content.traceback shouldContain $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
@@ -773,10 +775,10 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
         val code =
             """
             %use ktor-client
-            
+
             @Serializable
             class User(val id: Int)
-            
+
             // Body cannot be serialized, and will throw exception in generated code
             http.get("https://github.com/Kotlin/kotlin-jupyter").body<User>()
             """.trimIndent()
@@ -788,7 +790,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 message.type shouldBe MessageType.ERROR
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
-                when (kernelConfig.replCompilerMode) {
+                when (replCompilerMode) {
                     ReplCompilerMode.K1 -> {
                         content.name shouldBe "io.ktor.serialization.JsonConvertException"
                         content.value shouldBe
@@ -821,7 +823,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
                 content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException"
-                when (kernelConfig.replCompilerMode) {
+                when (replCompilerMode) {
                     ReplCompilerMode.K1 -> {
                         content.value shouldBe
                             """
@@ -895,7 +897,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
         doExecute(
             """
             import java.util.concurrent.ConcurrentHashMap
-            
+
             buildJsonObject {
                 put("a", JsonPrimitive(1))
                 put("b", JsonPrimitive(2))
@@ -933,7 +935,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
         val code =
             """
             import kotlin.concurrent.thread
-            
+
             println("main thread")
             thread(start = true) {
                 println("something should be printed")
@@ -967,7 +969,7 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 get() = "Hello"
             test
             """.trimIndent()
-        when (kernelConfig.replCompilerMode) {
+        when (replCompilerMode) {
             ReplCompilerMode.K1 -> {
                 val res = doExecute(code) as JsonObject
                 assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))

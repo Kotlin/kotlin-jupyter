@@ -45,11 +45,11 @@ open class DefaultReplComponentsProvider(
     }
 
     override fun provideScriptClasspath(): List<File> {
-        return _settings.kernelConfig.scriptClasspath
+        return _settings.kernelConfig.ownParams.scriptClasspath
     }
 
     override fun provideHomeDir(): File? {
-        return _settings.kernelConfig.homeDir
+        return _settings.kernelConfig.ownParams.homeDir
     }
 
     override fun provideMavenRepositories(): List<MavenRepositoryCoordinates> {
@@ -81,11 +81,11 @@ open class DefaultReplComponentsProvider(
     }
 
     override fun provideDebugPort(): Int? {
-        return _settings.kernelConfig.debugPort
+        return _settings.kernelConfig.ownParams.debugPort
     }
 
     override fun provideExplicitClientType(): JupyterClientType? {
-        return _settings.kernelConfig.clientType?.let { typeName ->
+        return _settings.kernelConfig.ownParams.clientType?.let { typeName ->
             try {
                 JupyterClientType.valueOf(typeName.toUpperCaseAsciiOnly())
             } catch (_: IllegalArgumentException) {
@@ -118,6 +118,10 @@ open class DefaultReplComponentsProvider(
     }
 
     override fun provideReplCompilerMode(): ReplCompilerMode {
-        return _settings.kernelConfig.replCompilerMode
+        return _settings.kernelConfig.ownParams.replCompilerMode
+    }
+
+    override fun provideExtraCompilerArguments(): List<String> {
+        return _settings.kernelConfig.ownParams.extraCompilerArguments
     }
 }

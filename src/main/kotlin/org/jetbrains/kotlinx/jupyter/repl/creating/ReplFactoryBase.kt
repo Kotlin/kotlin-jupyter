@@ -33,6 +33,7 @@ class ReplFactoryBase(
                 magicsHandler,
                 inMemoryReplResultsHolder,
                 replCompilerMode,
+                extraCompilerArguments,
             )
         }
     }

@@ -14,6 +14,8 @@ import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
 import org.jetbrains.kotlinx.jupyter.protocol.HMAC
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
 import java.io.File
 import java.util.EnumMap
 
@@ -59,40 +61,28 @@ class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
 
 data class KernelArgs(
     val cfgFile: File,
-    val scriptClasspath: List<File>,
-    val homeDir: File?,
-    val debugPort: Int?,
-    val clientType: String?,
-    val jvmTargetForSnippets: String?,
-    val replCompilerMode: ReplCompilerMode,
+    val ownParams: KernelOwnParams,
 ) {
-    fun parseParams(): KernelJupyterParams {
-        return KernelJupyterParams.fromFile(cfgFile)
-    }
-
     fun argsList(): List<String> {
-        return mutableListOf<String>().apply {
-            add(cfgFile.absolutePath)
-            homeDir?.let { add("-home=${it.absolutePath}") }
-            if (scriptClasspath.isNotEmpty()) {
-                val classPathString = scriptClasspath.joinToString(File.pathSeparator) { it.absolutePath }
-                add("-cp=$classPathString")
-            }
-            debugPort?.let { add("-debugPort=$it") }
-            clientType?.let { add("-client=$it") }
-            jvmTargetForSnippets?.let { add("-jvmTarget=$it") }
-            add("-replCompilerMode=${replCompilerMode.name}")
-        }
+        return KernelArgumentsBuilder(this).argsList()
     }
 }
 
 @Serializable(KernelJupyterParamsSerializer::class)
 data class KernelJupyterParams(
-    val signatureScheme: String?,
-    val key: String?,
+    val signatureScheme: String,
+    val signatureKey: String,
+    val host: String,
     val ports: KernelPorts,
     val transport: String?,
 ) {
+    val hmac by lazy {
+        HMAC(
+            algorithm = signatureScheme.replace("-", ""),
+            key = signatureKey,
+        )
+    }
+
     companion object {
         fun fromFile(cfgFile: File): KernelJupyterParams {
             val jsonString = cfgFile.canonicalFile.readText()
@@ -114,8 +104,9 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
         } ?: error("Unknown ports scheme")
 
         return KernelJupyterParams(
-            signatureScheme = map["signature_scheme"]?.content,
-            key = map["key"]?.content,
+            signatureScheme = map["signature_scheme"]?.content ?: KERNEL_SIGNATURE_SCHEME,
+            signatureKey = map["key"]?.content.orEmpty(),
+            host = map["host"]?.content ?: ANY_HOST_NAME,
             ports = ports,
             transport = map["transport"]?.content ?: KERNEL_TRANSPORT_SCHEME,
         )
@@ -128,8 +119,9 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
         val map =
             mutableMapOf(
                 "signature_scheme" to JsonPrimitive(value.signatureScheme),
-                "key" to JsonPrimitive(value.key),
+                "key" to JsonPrimitive(value.signatureKey),
                 "transport" to JsonPrimitive(value.transport),
+                "host" to JsonPrimitive(value.host),
             )
         map.putAll(value.ports.serialize())
         utilSerializer.serialize(encoder, map)
@@ -139,31 +131,19 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 const val ANY_HOST_NAME = "*"
 
 data class KernelConfig(
-    val host: String = ANY_HOST_NAME,
-    val ports: KernelPorts,
-    val transport: String,
-    val signatureScheme: String,
-    val signatureKey: String,
-    val scriptClasspath: List<File> = emptyList(),
-    val homeDir: File?,
-    val debugPort: Int? = null,
-    val clientType: String? = null,
-    val jvmTargetForSnippets: String? = null,
-    val replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
+    val jupyterParams: KernelJupyterParams,
+    val ownParams: KernelOwnParams,
 ) {
-    val hmac by lazy {
-        HMAC(signatureScheme.replace("-", ""), signatureKey)
-    }
-
     fun toArgs(prefix: String = ""): KernelArgs {
-        val params = KernelJupyterParams(signatureScheme, signatureKey, ports, transport)
-
         val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
         cfgFile.deleteOnExit()
         val format = Json { prettyPrint = true }
-        cfgFile.writeText(format.encodeToString(params))
+        cfgFile.writeText(format.encodeToString(jupyterParams))
 
-        return KernelArgs(cfgFile, scriptClasspath, homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
+        return KernelArgs(
+            cfgFile = cfgFile,
+            ownParams = ownParams,
+        )
     }
 }
 
@@ -180,14 +160,20 @@ fun createClientKotlinKernelConfig(
     ports: KernelPorts,
     signatureKey: String,
     replCompilerMode: ReplCompilerMode,
+    extraCompilerArgs: List<String>,
 ) = KernelConfig(
-    host = host,
-    ports = ports,
-    transport = KERNEL_TRANSPORT_SCHEME,
-    signatureScheme = KERNEL_SIGNATURE_SCHEME,
-    signatureKey = signatureKey,
-    homeDir = null,
-    replCompilerMode = replCompilerMode,
+    jupyterParams = KernelJupyterParams(
+        signatureScheme = KERNEL_SIGNATURE_SCHEME,
+        signatureKey = signatureKey,
+        host = host,
+        ports = ports,
+        transport = KERNEL_TRANSPORT_SCHEME,
+    ),
+    ownParams = KernelOwnParams(
+        homeDir = null,
+        replCompilerMode = replCompilerMode,
+        extraCompilerArguments = extraCompilerArgs,
+    )
 )
 
 /**
@@ -213,15 +199,20 @@ fun createKotlinKernelConfig(
     clientType: String? = null,
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
 ) = KernelConfig(
-    ports = ports,
-    transport = KERNEL_TRANSPORT_SCHEME,
-    signatureScheme = KERNEL_SIGNATURE_SCHEME,
-    signatureKey = signatureKey,
-    scriptClasspath = scriptClasspath,
-    homeDir = homeDir,
-    debugPort = debugPort,
-    clientType = clientType,
-    replCompilerMode = replCompilerMode,
+    jupyterParams = KernelJupyterParams(
+        signatureScheme = KERNEL_SIGNATURE_SCHEME,
+        signatureKey = signatureKey,
+        host = ANY_HOST_NAME,
+        ports = ports,
+        transport = KERNEL_TRANSPORT_SCHEME,
+    ),
+    ownParams = KernelOwnParams(
+        scriptClasspath = scriptClasspath,
+        homeDir = homeDir,
+        debugPort = debugPort,
+        clientType = clientType,
+        replCompilerMode = replCompilerMode,
+    )
 )
 
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
@@ -229,7 +220,7 @@ const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
 fun KernelConfig.javaCmdLine(
     // Path to java executable or just "java" in case it's on the path
     javaExecutable: String,
-    // Prefix for temporary directory where the connection file should be stored
+    // Prefix for the temporary directory where the connection file should be stored
     tempDirPrefix: String,
     // Classpath for the whole kernel. Should include kernel artifact
     kernelClasspath: String,
@@ -237,6 +228,7 @@ fun KernelConfig.javaCmdLine(
     extraJavaArguments: Collection<String> = emptyList(),
 ): List<String> {
     val args = toArgs(tempDirPrefix).argsList().toTypedArray()
+    val debugPort = ownParams.debugPort
 
     return ArrayList<String>().apply {
         add(javaExecutable)
@@ -252,18 +244,8 @@ fun KernelConfig.javaCmdLine(
 }
 
 fun KernelArgs.getConfig(): KernelConfig {
-    val cfg = parseParams()
-
     return KernelConfig(
-        ports = cfg.ports,
-        transport = cfg.transport ?: KERNEL_TRANSPORT_SCHEME,
-        signatureScheme = cfg.signatureScheme ?: KERNEL_SIGNATURE_SCHEME,
-        signatureKey = if (cfg.signatureScheme == null || cfg.key == null) "" else cfg.key,
-        scriptClasspath = scriptClasspath,
-        homeDir = homeDir,
-        debugPort = debugPort,
-        clientType = clientType,
-        jvmTargetForSnippets = jvmTargetForSnippets,
-        replCompilerMode = replCompilerMode,
+        jupyterParams = KernelJupyterParams.fromFile(cfgFile),
+        ownParams = ownParams,
     )
 }

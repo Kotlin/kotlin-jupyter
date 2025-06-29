@@ -12,11 +12,11 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
-import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import java.io.Closeable
@@ -26,7 +26,6 @@ import java.util.Collections
 import java.util.EnumMap
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 import kotlin.concurrent.thread
 
 class WsKernelPorts(val port: Int) : KernelPorts {
@@ -48,12 +47,13 @@ class JupyterWsServerRunner : JupyterServerRunner {
         val socketsMap = EnumMap<JupyterSocketType, JupyterWsSocketHolder>(JupyterSocketType::class.java)
 
         val wsServer: JupyterWsServer = run {
-            val ports = config.ports
+            val jupyterParams = config.jupyterParams
+            val ports = jupyterParams.ports
             require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
-            val address = if (config.host == ANY_HOST_NAME) {
+            val address = if (jupyterParams.host == ANY_HOST_NAME) {
                 InetSocketAddress(/* port = */ ports.port) // InetSocketAddress does not support "*" as a hostname
             } else {
-                InetSocketAddress(/* hostname = */ config.host, /* port = */ ports.port)
+                InetSocketAddress(/* hostname = */ jupyterParams.host, /* port = */ ports.port)
             }
 
             JupyterWsServer(

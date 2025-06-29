@@ -13,15 +13,18 @@ import kotlin.script.experimental.api.asSuccess
  */
 class DefaultCompilerArgsConfigurator(
     jvmTargetVersion: String = JavaRuntime.version,
+    extraArgs: List<String> = emptyList(),
 ) : CompilerArgsConfigurator {
     private val argsList =
         mutableListOf(
             "-jvm-target",
             jvmTargetVersion,
-            // Ignore compose plugin if the Compose runtime isn't on the classpath
+            // Ignore the Compose plugin if the Compose runtime isn't on the classpath
             "-P",
             "plugin:androidx.compose.compiler.plugins.kotlin:skipIrLoweringIfRuntimeNotFound=true",
-        )
+        ).apply {
+            addAll(extraArgs)
+        }
 
     override fun getArgs(): List<String> {
         return argsList.toList()

@@ -40,7 +40,7 @@ fun createRuntimeProperties(
 ): ReplRuntimeProperties {
     return object : ReplRuntimeProperties by defaultProperties {
         override val jvmTargetForSnippets: String
-            get() = kernelConfig.jvmTargetForSnippets ?: defaultProperties.jvmTargetForSnippets
+            get() = kernelConfig.ownParams.jvmTargetForSnippets ?: defaultProperties.jvmTargetForSnippets
     }
 }
 

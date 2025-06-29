@@ -18,7 +18,6 @@ import org.jetbrains.kotlinx.jupyter.logging.ReplComponentsProviderWithLogbackMa
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
-import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
@@ -36,61 +35,21 @@ import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.getConfig
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
 import org.slf4j.Logger
 import java.io.File
-import kotlin.collections.joinToString
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
 
 @PublishedApi
 internal val iKotlinClass = object : Any() {}.javaClass.enclosingClass
 
-private fun parseCommandLine(vararg args: String): KernelArgs {
-    var cfgFile: File? = null
-    var classpath: List<File>? = null
-    var homeDir: File? = null
-    var debugPort: Int? = null
-    var clientType: String? = null
-    var jvmTargetForSnippets: String? = null
-    var replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT
-    args.forEach { arg ->
-        when {
-            arg.startsWith("-cp=") || arg.startsWith("-classpath=") -> {
-                classpath?.let {
-                    throw IllegalArgumentException("classpath already set to ${it.joinToString(File.pathSeparator)}")
-                }
-                classpath = arg.substringAfter('=').split(File.pathSeparator).map { File(it) }
-            }
-            arg.startsWith("-home=") -> {
-                homeDir = File(arg.substringAfter('='))
-            }
-            arg.startsWith("-debugPort=") -> {
-                debugPort = arg.substringAfter('=').toInt()
-            }
-            arg.startsWith("-client=") -> {
-                clientType = arg.substringAfter('=')
-            }
-            arg.startsWith("-jvmTarget") -> {
-                jvmTargetForSnippets = arg.substringAfter('=')
-            }
-            arg.startsWith("-replCompilerMode=") -> {
-                val userMode = arg.substringAfter('=')
-                replCompilerMode = ReplCompilerMode.entries.find {
-                    it.name == userMode
-                } ?: throw IllegalArgumentException("Invalid replCompilerMode: $userMode")
-            }
-            else -> {
-                cfgFile?.let { throw IllegalArgumentException("config file already set to $it") }
-                cfgFile = File(arg)
-            }
-        }
-    }
-    val cfgFileValue = cfgFile ?: throw IllegalArgumentException("config file is not provided")
-    if (!cfgFileValue.exists() || !cfgFileValue.isFile) throw IllegalArgumentException("invalid config file $cfgFileValue")
-
-    return KernelArgs(cfgFileValue, classpath ?: emptyList(), homeDir, debugPort, clientType, jvmTargetForSnippets, replCompilerMode)
+fun parseCommandLine(vararg args: String): KernelArgs {
+    return KernelArgumentsBuilder().parseArgs(args)
 }
 
 @PublishedApi
@@ -127,9 +86,12 @@ fun main(vararg args: String) {
  * This function is to be run in projects which use kernel as a library,
  * so we don't have a big need in covering it with tests
  *
- * The expected use case for this function is embedded into a Java application that doesn't necessarily support extensions written in Kotlin
- * The signature of this function should thus be simple, and e.g., allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider
- * because EmptyResolutionInfoProvider is a Kotlin singleton object, and it takes a while to understand how to use it from Java code.
+ * The expected use case for this function is embedded into a Java application
+ * that doesn't necessarily support extensions written in Kotlin.
+ * The signature of this function should thus be simple,
+ * and e.g., allow resolutionInfoProvider to be null instead of having to pass EmptyResolutionInfoProvider.
+ * That's because EmptyResolutionInfoProvider is a Kotlin singleton object,
+ * and it takes a while to understand how to use it from Java code.
  */
 @Suppress("unused")
 fun embedKernel(
@@ -137,19 +99,23 @@ fun embedKernel(
     resolutionInfoProviderFactory: ResolutionInfoProviderFactory?,
     scriptReceivers: List<Any>? = null,
 ) {
-    val scriptClasspath = System.getProperty("java.class.path").split(File.pathSeparator).toTypedArray().map {
-        File(it)
-    }
-    val kernelConfig =
-        KernelArgs(
-            cfgFile = cfgFile,
-            scriptClasspath = scriptClasspath,
-            homeDir = null,
-            debugPort = null,
-            clientType = null,
-            jvmTargetForSnippets = null,
-            replCompilerMode = ReplCompilerMode.DEFAULT,
-        ).getConfig()
+    val scriptClasspath = System.getProperty("java.class.path")
+        .split(File.pathSeparator)
+        .toTypedArray()
+        .map(::File)
+    val kernelOwnParams = KernelOwnParams(
+        scriptClasspath = scriptClasspath,
+        homeDir = null,
+        debugPort = null,
+        clientType = null,
+        jvmTargetForSnippets = null,
+        replCompilerMode = ReplCompilerMode.DEFAULT,
+        extraCompilerArguments = emptyList(),
+    )
+    val kernelConfig = KernelArgs(
+        cfgFile = cfgFile,
+        ownParams = kernelOwnParams,
+    ).getConfig()
     val replSettings =
         createReplSettings(
             DefaultKernelLoggerFactory,
@@ -178,7 +144,7 @@ fun createReplSettings(
         ReplConfig.create(
             myResolutionInfoProviderFactory,
             loggerFactory,
-            homeDir = kernelConfig.homeDir,
+            homeDir = kernelConfig.ownParams.homeDir,
             kernelRunMode = kernelRunMode,
             scriptReceivers = scriptReceivers,
         )
@@ -256,9 +222,10 @@ fun runServer(replSettings: DefaultReplSettings) {
     val kernelConfig = replSettings.kernelConfig
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
+    val ports = kernelConfig.jupyterParams.ports
     val serverRunner = JupyterServerRunner.instances
-        .find { it.canRun(kernelConfig.ports) }
-        ?: error("No server runner found for ports ${kernelConfig.ports}")
+        .find { it.canRun(ports) }
+        ?: error("No server runner found for ports $ports")
     logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
 
     serverRunner.run(
