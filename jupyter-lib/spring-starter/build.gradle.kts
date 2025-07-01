@@ -31,6 +31,9 @@ java {
 
 val springKernel: Configuration by configurations.creating
 
+// io.spring.dependency-management plugin overrides our version of serialization to an older one,
+// so we ask it to override it back.
+// https://docs.spring.io/spring-boot/gradle-plugin/managing-dependencies.html#managing-dependencies.dependency-management-plugin
 extra["kotlin-serialization.version"] = libs.serialization.json.get().version
 
 dependencies {
