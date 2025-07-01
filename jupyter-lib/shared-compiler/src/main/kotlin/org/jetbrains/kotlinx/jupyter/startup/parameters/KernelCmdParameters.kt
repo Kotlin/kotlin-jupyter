@@ -10,11 +10,13 @@ import java.io.File
  */
 val configFileParameter = object : KernelParameter<File> {
     override fun tryParse(arg: String, previousValue: File?): File? {
+        // Config file is a positional parameter, not a named one.
+        // Moreover, now it might be in ANY position.
+        // Consider converting it into a named one when another parameter with similar semantics is introduced
+        if (arg.startsWith("-")) return null
         if (previousValue != null){
             throw IllegalArgumentException("config file already set to $previousValue")
         }
-        // Config file is a positional parameter, not a named one
-        if (arg.startsWith("-")) return null
         return File(arg)
     }
 
