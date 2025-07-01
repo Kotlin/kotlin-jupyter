@@ -10,7 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
@@ -97,7 +97,7 @@ class IntegrationApiTests {
             """.trimIndent()
         repl.evalRaw(code1)
         when (repl.compilerMode) {
-            K1 -> {
+            ReplCompilerMode.K1 -> {
                 assertEquals(3, repl.evalRaw("l.value2"))
 
                 // create list 'q' of the same size 3
@@ -127,7 +127,7 @@ class IntegrationApiTests {
 
                 assertEquals("TypedIntList5", res!!.javaClass.simpleName)
             }
-            K2 -> {
+            ReplCompilerMode.K2 -> {
                 // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                 repl.evalEx("l.value2").shouldBeInstanceOf<EvalResultEx.Error>()
             }

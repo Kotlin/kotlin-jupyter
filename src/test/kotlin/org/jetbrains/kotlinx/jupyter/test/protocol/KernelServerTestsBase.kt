@@ -21,7 +21,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
-import java.util.*
+import java.util.UUID
 
 /**
  * Base class for tests that need to have fine-tuned control over the kernel server execution.

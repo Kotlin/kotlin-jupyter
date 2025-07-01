@@ -102,8 +102,8 @@ abstract class ExecuteTests(
     private val socketManager: JupyterClientReceiveSocketManager,
     generatePorts: () -> KernelPorts,
 ) : KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
-    private var _sockets: JupyterClientReceiveSockets? = null
-    private val sockets: JupyterClientReceiveSockets get() = _sockets!!
+    private var mutableSockets: JupyterClientReceiveSockets? = null
+    private val sockets: JupyterClientReceiveSockets get() = mutableSockets!!
 
     private val shellSocket: JupyterSendReceiveSocket get() = sockets.shell
     private val controlSocket: JupyterSendSocket get() = sockets.control
@@ -117,13 +117,13 @@ abstract class ExecuteTests(
             val now = TimeSource.Monotonic.markNow()
             while (now.elapsedNow() < CONNECT_RETRY_TIMEOUT_SECONDS.seconds) {
                 try {
-                    _sockets = socketManager.open(kernelConfig)
+                    mutableSockets = socketManager.open(kernelConfig)
                     break
                 } catch (_: ConnectException) {
                     Thread.sleep(500)
                 }
             }
-            if (_sockets == null) error("Could not connect to kernel server")
+            if (mutableSockets == null) error("Could not connect to kernel server")
         } catch (e: Throwable) {
             afterEach()
             throw e
@@ -131,8 +131,8 @@ abstract class ExecuteTests(
     }
 
     override fun afterEach() {
-        _sockets?.let {
-            _sockets = null
+        mutableSockets?.let {
+            mutableSockets = null
             it.close()
         }
     }

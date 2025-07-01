@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ResultFieldUpdateHandler
 import org.jetbrains.kotlinx.jupyter.api.createRenderer
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -27,7 +27,7 @@ class TypeConverterTests : AbstractReplTest() {
             ),
         ) {
             when (compilerMode) {
-                K1 -> {
+                ReplCompilerMode.K1 -> {
                     evalRaw(
                         """
                         val (a, b) = 1 to 's'
@@ -41,7 +41,7 @@ class TypeConverterTests : AbstractReplTest() {
                         """.trimIndent(),
                     ) shouldBe 3
                 }
-                K2 -> {
+                ReplCompilerMode.K2 -> {
                     // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                     val result =
                         evalEx(
@@ -85,10 +85,10 @@ class TypeConverterTests : AbstractReplTest() {
             )
 
             when (compilerMode) {
-                K1 -> {
+                ReplCompilerMode.K1 -> {
                     resultInvocationCounter shouldBe 1
                 }
-                K2 -> {
+                ReplCompilerMode.K2 -> {
                     // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                     resultInvocationCounter shouldBe 0
                 }
@@ -160,11 +160,11 @@ class TypeConverterTests : AbstractReplTest() {
                 """.trimIndent(),
             ).let { renderedResult ->
                 when (compilerMode) {
-                    K1 -> {
+                    ReplCompilerMode.K1 -> {
                         renderedResult.shouldBeTypeOf<MimeTypedResult>()
                         renderedResult[MimeTypes.HTML] shouldBe "<b>64</b>"
                     }
-                    K2 -> {
+                    ReplCompilerMode.K2 -> {
                         // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                         renderedResult.shouldBeTypeOf<Integer>()
                         renderedResult shouldBe 32

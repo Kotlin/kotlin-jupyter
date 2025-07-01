@@ -92,6 +92,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
         val ktlintVersion = project.defaultVersionCatalog.versions.ktlint
         project.allprojects {
             plugins.apply("org.jlleitschuh.gradle.ktlint")
+            // Changes here should also be reflected in the root `build.gradle.kts`
             extensions.configure<KtlintExtension> {
                 version.set(ktlintVersion)
                 enableExperimentalRules.set(true)
