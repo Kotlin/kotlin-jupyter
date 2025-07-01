@@ -37,10 +37,10 @@ interface KernelRunMode {
     ) = Unit
 }
 
-abstract class AbstractKernelRunMode(override val name: String) : KernelRunMode {
-    override fun toString(): String {
-        return name
-    }
+abstract class AbstractKernelRunMode(
+    override val name: String,
+) : KernelRunMode {
+    override fun toString(): String = name
 }
 
 object StandaloneKernelRunMode : AbstractKernelRunMode("Standalone") {

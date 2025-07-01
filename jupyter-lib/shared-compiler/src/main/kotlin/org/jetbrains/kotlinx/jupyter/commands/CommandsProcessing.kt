@@ -84,11 +84,12 @@ fun runCommand(
                 }
             val libraryDescriptors = repl.libraryDescriptorsProvider.getDescriptors()
             val libraries =
-                libraryDescriptors.map { (libraryName, descriptor) ->
-                    val link = if (descriptor.link != null) " (${descriptor.link})" else ""
-                    val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
-                    "$libraryName$link$description"
-                }.joinToStringIndented()
+                libraryDescriptors
+                    .map { (libraryName, descriptor) ->
+                        val link = if (descriptor.link != null) " (${descriptor.link})" else ""
+                        val description = if (descriptor.description != null) " - ${descriptor.description}" else ""
+                        "$libraryName$link$description"
+                    }.joinToStringIndented()
             OkJupyterResponse(
                 textResult(
                     """ |Kotlin Jupyter kernel.

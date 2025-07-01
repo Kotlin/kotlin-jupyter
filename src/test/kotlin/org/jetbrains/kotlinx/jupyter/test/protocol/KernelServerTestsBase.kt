@@ -30,7 +30,10 @@ import java.util.*
  * as the test. The default is to run in a separate one (similar to how it would work in
  * production). To enable debugging, set this value to `false`
  */
-abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: Boolean, generatePorts: () -> KernelPorts = ::createRandomZmqKernelPorts) {
+abstract class KernelServerTestsBase(
+    protected val runServerInSeparateProcess: Boolean,
+    generatePorts: () -> KernelPorts = ::createRandomZmqKernelPorts,
+) {
     protected val kernelConfig =
         createKotlinKernelConfig(
             ports = generatePorts(),
@@ -75,7 +78,10 @@ abstract class KernelServerTestsBase(protected val runServerInSeparateProcess: B
         }
     }
 
-    inline fun wrapActionInBusyIdleStatusChange(iopubSocket: JupyterReceiveSocket, action: () -> Unit) {
+    inline fun wrapActionInBusyIdleStatusChange(
+        iopubSocket: JupyterReceiveSocket,
+        action: () -> Unit,
+    ) {
         receiveStatusReply(iopubSocket).status shouldBe KernelStatus.BUSY
         action()
         receiveStatusReply(iopubSocket).status shouldBe KernelStatus.IDLE

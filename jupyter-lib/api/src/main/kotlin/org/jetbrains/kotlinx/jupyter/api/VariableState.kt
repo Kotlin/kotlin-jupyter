@@ -45,11 +45,10 @@ data class VariableStateImpl(
             },
         )
 
-    fun update(): Boolean {
-        return (valCache.forceUpdate()).also { isChanged ->
+    fun update(): Boolean =
+        (valCache.forceUpdate()).also { isChanged ->
             if (isChanged) stringCache.update()
         }
-    }
 
     override val stringValue: String? get() = stringCache.get()
 
@@ -75,8 +74,8 @@ private class VariableStateCache<T>(
     private var cachedVal: T? = null
     private var shouldRenew: Boolean = true
 
-    fun getOrNull(): T? {
-        return if (shouldRenew) {
+    fun getOrNull(): T? =
+        if (shouldRenew) {
             calculate(cachedVal).also {
                 cachedVal = it
                 shouldRenew = false
@@ -84,7 +83,6 @@ private class VariableStateCache<T>(
         } else {
             cachedVal
         }
-    }
 
     fun get(): T = getOrNull()!!
 

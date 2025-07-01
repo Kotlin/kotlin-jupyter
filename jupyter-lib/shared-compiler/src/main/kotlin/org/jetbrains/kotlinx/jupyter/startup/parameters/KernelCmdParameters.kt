@@ -3,60 +3,63 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import java.io.File
 
-
 /**
  * Parameter handler for the configuration file path.
  * This is a positional parameter (not prefixed with a name) that specifies the path to the configuration file.
  */
-val configFileParameter = object : KernelParameter<File> {
-    override fun tryParse(arg: String, previousValue: File?): File? {
-        // Config file is a positional parameter, not a named one.
-        // Moreover, now it might be in ANY position.
-        // Consider converting it into a named one when another parameter with similar semantics is introduced
-        if (arg.startsWith("-")) return null
-        if (previousValue != null){
-            throw IllegalArgumentException("config file already set to $previousValue")
+val configFileParameter =
+    object : KernelParameter<File> {
+        override fun tryParse(
+            arg: String,
+            previousValue: File?,
+        ): File? {
+            // Config file is a positional parameter, not a named one.
+            // Moreover, now it might be in ANY position.
+            // Consider converting it into a named one when another parameter with similar semantics is introduced
+            if (arg.startsWith("-")) return null
+            if (previousValue != null) {
+                throw IllegalArgumentException("config file already set to $previousValue")
+            }
+            return File(arg)
         }
-        return File(arg)
-    }
 
-    override fun serialize(value: File): String {
-        return value.absolutePath
+        override fun serialize(value: File): String = value.absolutePath
     }
-}
 
 /**
  * Parameter handler for the classpath entries.
  * Accepts multiple path entries separated by the platform-specific path separator.
  */
-val scriptClasspathParameter = object : NamedKernelParameter<List<File>>(
-    aliases = listOf("cp", "classpath")
-) {
-    override fun parseValue(argValue: String, previousValue: List<File>?): List<File> {
-        return argValue.split(File.pathSeparator).map { File(it) }
-    }
+val scriptClasspathParameter =
+    object : NamedKernelParameter<List<File>>(
+        aliases = listOf("cp", "classpath"),
+    ) {
+        override fun parseValue(
+            argValue: String,
+            previousValue: List<File>?,
+        ): List<File> = argValue.split(File.pathSeparator).map { File(it) }
 
-    override fun serializeValue(value: List<File>): String? {
-        if (value.isEmpty()) return null
-        return value.joinToString(File.pathSeparator) { it.absolutePath }
+        override fun serializeValue(value: List<File>): String? {
+            if (value.isEmpty()) return null
+            return value.joinToString(File.pathSeparator) { it.absolutePath }
+        }
     }
-}
 
 /**
  * Parameter handler for the kernel home directory.
  * Specifies the base directory where the kernel will look for resources and configurations.
  */
-val homeDirParameter = object : NamedKernelParameter<File>(
-    aliases = listOf("home")
-) {
-    override fun parseValue(argValue: String, previousValue: File?): File {
-        return File(argValue)
-    }
+val homeDirParameter =
+    object : NamedKernelParameter<File>(
+        aliases = listOf("home"),
+    ) {
+        override fun parseValue(
+            argValue: String,
+            previousValue: File?,
+        ): File = File(argValue)
 
-    override fun serializeValue(value: File): String {
-        return value.absolutePath
+        override fun serializeValue(value: File): String = value.absolutePath
     }
-}
 
 /**
  * Parameter handler for the debug port.
@@ -80,41 +83,46 @@ val jvmTargetParameter = SimpleNamedKernelStringParameter("jvmTarget")
  * Parameter handler for the REPL compiler mode.
  * Specifies the compilation mode to use for the REPL.
  */
-val replCompilerModeParameter = object : NamedKernelParameter<ReplCompilerMode>(
-    aliases = listOf("replCompilerMode")
-) {
-    override fun parseValue(argValue: String, previousValue: ReplCompilerMode?): ReplCompilerMode {
-        return ReplCompilerMode.entries.find {
-            it.name == argValue
-        } ?: throw IllegalArgumentException("Invalid replCompilerMode: $argValue")
-    }
+val replCompilerModeParameter =
+    object : NamedKernelParameter<ReplCompilerMode>(
+        aliases = listOf("replCompilerMode"),
+    ) {
+        override fun parseValue(
+            argValue: String,
+            previousValue: ReplCompilerMode?,
+        ): ReplCompilerMode =
+            ReplCompilerMode.entries.find {
+                it.name == argValue
+            } ?: throw IllegalArgumentException("Invalid replCompilerMode: $argValue")
 
-    override fun serializeValue(value: ReplCompilerMode): String {
-        return value.name
+        override fun serializeValue(value: ReplCompilerMode): String = value.name
     }
-}
 
 /**
  * Parameter handler for additional compiler arguments.
  * Specifies extra arguments to pass to the Kotlin compiler when compiling snippets.
  * Can't be specified twice in the command line.
  */
-val extraCompilerArgumentsParameter = object : NamedKernelParameter<List<String>>(
-    aliases = listOf("extraCompilerArgs")
-) {
-    private val separator = ","
+val extraCompilerArgumentsParameter =
+    object : NamedKernelParameter<List<String>>(
+        aliases = listOf("extraCompilerArgs"),
+    ) {
+        private val separator = ","
 
-    override fun parseValue(argValue: String, previousValue: List<String>?): List<String> {
-        if (previousValue != null){
-            throw IllegalArgumentException("Extra compiler args were already set to $previousValue")
+        override fun parseValue(
+            argValue: String,
+            previousValue: List<String>?,
+        ): List<String> {
+            if (previousValue != null) {
+                throw IllegalArgumentException("Extra compiler args were already set to $previousValue")
+            }
+            return argValue
+                .split(separator)
+                .filter { it.isNotBlank() }
         }
-        return argValue
-            .split(separator)
-            .filter { it.isNotBlank() }
-    }
 
-    override fun serializeValue(value: List<String>): String? {
-        if (value.isEmpty()) return null
-        return value.joinToString(separator)
+        override fun serializeValue(value: List<String>): String? {
+            if (value.isEmpty()) return null
+            return value.joinToString(separator)
+        }
     }
-}

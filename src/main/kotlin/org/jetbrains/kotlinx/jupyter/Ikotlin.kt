@@ -48,9 +48,7 @@ import kotlin.script.experimental.jvm.util.classpathFromClassloader
 @PublishedApi
 internal val iKotlinClass = object : Any() {}.javaClass.enclosingClass
 
-fun parseCommandLine(vararg args: String): KernelArgs {
-    return KernelArgumentsBuilder().parseArgs(args)
-}
+fun parseCommandLine(vararg args: String): KernelArgs = KernelArgumentsBuilder().parseArgs(args)
 
 @PublishedApi
 internal fun printClassPath(logger: Logger) {
@@ -99,23 +97,27 @@ fun embedKernel(
     resolutionInfoProviderFactory: ResolutionInfoProviderFactory?,
     scriptReceivers: List<Any>? = null,
 ) {
-    val scriptClasspath = System.getProperty("java.class.path")
-        .split(File.pathSeparator)
-        .toTypedArray()
-        .map(::File)
-    val kernelOwnParams = KernelOwnParams(
-        scriptClasspath = scriptClasspath,
-        homeDir = null,
-        debugPort = null,
-        clientType = null,
-        jvmTargetForSnippets = null,
-        replCompilerMode = ReplCompilerMode.DEFAULT,
-        extraCompilerArguments = emptyList(),
-    )
-    val kernelConfig = KernelArgs(
-        cfgFile = cfgFile,
-        ownParams = kernelOwnParams,
-    ).getConfig()
+    val scriptClasspath =
+        System
+            .getProperty("java.class.path")
+            .split(File.pathSeparator)
+            .toTypedArray()
+            .map(::File)
+    val kernelOwnParams =
+        KernelOwnParams(
+            scriptClasspath = scriptClasspath,
+            homeDir = null,
+            debugPort = null,
+            clientType = null,
+            jvmTargetForSnippets = null,
+            replCompilerMode = ReplCompilerMode.DEFAULT,
+            extraCompilerArguments = emptyList(),
+        )
+    val kernelConfig =
+        KernelArgs(
+            cfgFile = cfgFile,
+            ownParams = kernelOwnParams,
+        ).getConfig()
     val replSettings =
         createReplSettings(
             DefaultKernelLoggerFactory,
@@ -223,9 +225,10 @@ fun runServer(replSettings: DefaultReplSettings) {
     val loggerFactory = replSettings.loggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
     val ports = kernelConfig.jupyterParams.ports
-    val serverRunner = JupyterServerRunner.instances
-        .find { it.canRun(ports) }
-        ?: error("No server runner found for ports $ports")
+    val serverRunner =
+        JupyterServerRunner.instances
+            .find { it.canRun(ports) }
+            ?: error("No server runner found for ports $ports")
     logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
 
     serverRunner.run(

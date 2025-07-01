@@ -32,60 +32,34 @@ open class DefaultReplComponentsProvider(
         loggerFactory.getLogger(this::class)
     }
 
-    override fun provideLoggerFactory(): KernelLoggerFactory {
-        return _settings.loggerFactory
-    }
+    override fun provideLoggerFactory(): KernelLoggerFactory = _settings.loggerFactory
 
-    override fun provideResolutionInfoProvider(): ResolutionInfoProvider {
-        return _settings.replConfig.resolutionInfoProvider
-    }
+    override fun provideResolutionInfoProvider(): ResolutionInfoProvider = _settings.replConfig.resolutionInfoProvider
 
-    override fun provideDisplayHandler(): DisplayHandler {
-        return SocketDisplayHandler(_communicationFacility, notebook)
-    }
+    override fun provideDisplayHandler(): DisplayHandler = SocketDisplayHandler(_communicationFacility, notebook)
 
-    override fun provideScriptClasspath(): List<File> {
-        return _settings.kernelConfig.ownParams.scriptClasspath
-    }
+    override fun provideScriptClasspath(): List<File> = _settings.kernelConfig.ownParams.scriptClasspath
 
-    override fun provideHomeDir(): File? {
-        return _settings.kernelConfig.ownParams.homeDir
-    }
+    override fun provideHomeDir(): File? = _settings.kernelConfig.ownParams.homeDir
 
-    override fun provideMavenRepositories(): List<MavenRepositoryCoordinates> {
-        return _settings.replConfig.mavenRepositories
-    }
+    override fun provideMavenRepositories(): List<MavenRepositoryCoordinates> = _settings.replConfig.mavenRepositories
 
-    override fun provideLibraryResolver(): LibraryResolver? {
-        return _settings.replConfig.libraryResolver
-    }
+    override fun provideLibraryResolver(): LibraryResolver? = _settings.replConfig.libraryResolver
 
-    override fun provideRuntimeProperties(): ReplRuntimeProperties {
-        return _settings.runtimeProperties
-    }
+    override fun provideRuntimeProperties(): ReplRuntimeProperties = _settings.runtimeProperties
 
-    override fun provideScriptReceivers(): List<Any> {
-        return _settings.replConfig.scriptReceivers
-    }
+    override fun provideScriptReceivers(): List<Any> = _settings.replConfig.scriptReceivers
 
-    override fun provideKernelRunMode(): KernelRunMode {
-        return _settings.replConfig.kernelRunMode
-    }
+    override fun provideKernelRunMode(): KernelRunMode = _settings.replConfig.kernelRunMode
 
-    override fun provideCommunicationFacility(): JupyterCommunicationFacility {
-        return _communicationFacility
-    }
+    override fun provideCommunicationFacility(): JupyterCommunicationFacility = _communicationFacility
 
-    override fun provideCommManager(): CommManager {
-        return _commManager
-    }
+    override fun provideCommManager(): CommManager = _commManager
 
-    override fun provideDebugPort(): Int? {
-        return _settings.kernelConfig.ownParams.debugPort
-    }
+    override fun provideDebugPort(): Int? = _settings.kernelConfig.ownParams.debugPort
 
-    override fun provideExplicitClientType(): JupyterClientType? {
-        return _settings.kernelConfig.ownParams.clientType?.let { typeName ->
+    override fun provideExplicitClientType(): JupyterClientType? =
+        _settings.kernelConfig.ownParams.clientType?.let { typeName ->
             try {
                 JupyterClientType.valueOf(typeName.toUpperCaseAsciiOnly())
             } catch (_: IllegalArgumentException) {
@@ -93,35 +67,20 @@ open class DefaultReplComponentsProvider(
                 null
             }
         }
-    }
 
     private val httpUtil get() = _settings.replConfig.httpUtil
 
-    override fun provideHttpClient(): HttpClient {
-        return httpUtil.httpClient
-    }
+    override fun provideHttpClient(): HttpClient = httpUtil.httpClient
 
-    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager {
-        return httpUtil.libraryDescriptorsManager
-    }
+    override fun provideLibraryDescriptorsManager(): LibraryDescriptorsManager = httpUtil.libraryDescriptorsManager
 
-    override fun provideLibraryInfoCache(): LibraryInfoCache {
-        return httpUtil.libraryInfoCache
-    }
+    override fun provideLibraryInfoCache(): LibraryInfoCache = httpUtil.libraryInfoCache
 
-    override fun provideLibraryReferenceParser(): LibraryReferenceParser {
-        return httpUtil.libraryReferenceParser
-    }
+    override fun provideLibraryReferenceParser(): LibraryReferenceParser = httpUtil.libraryReferenceParser
 
-    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder {
-        return _inMemoryResultsHolder
-    }
+    override fun provideInMemoryReplResultsHolder(): InMemoryReplResultsHolder = _inMemoryResultsHolder
 
-    override fun provideReplCompilerMode(): ReplCompilerMode {
-        return _settings.kernelConfig.ownParams.replCompilerMode
-    }
+    override fun provideReplCompilerMode(): ReplCompilerMode = _settings.kernelConfig.ownParams.replCompilerMode
 
-    override fun provideExtraCompilerArguments(): List<String> {
-        return _settings.kernelConfig.ownParams.extraCompilerArguments
-    }
+    override fun provideExtraCompilerArguments(): List<String> = _settings.kernelConfig.ownParams.extraCompilerArguments
 }

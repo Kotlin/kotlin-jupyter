@@ -9,11 +9,11 @@ import kotlin.reflect.KMutableProperty0
  * @param T The type of value that this parameter represents
  * @property valueUpdater Function that updates the stored value of the parameter
  */
-class MutableBoundKernelParameter<T: Any>(
+class MutableBoundKernelParameter<T : Any>(
     parameter: KernelParameter<T>,
     val valueUpdater: (T?) -> Unit,
     override val valueProvider: () -> T?,
-): BoundKernelParameter<T>(parameter, valueProvider) {
+) : BoundKernelParameter<T>(parameter, valueProvider) {
     /**
      * Convenience constructor that uses a mutable property for both value updating and providing.
      *

@@ -5,7 +5,9 @@ import kotlin.reflect.KClass
 /**
  * Label representing [kClass] with all members in HTML table
  */
-class KClassLabel(private val kClass: KClass<*>) : RecordTableLabel() {
+class KClassLabel(
+    private val kClass: KClass<*>,
+) : RecordTableLabel() {
     override val mainText get() = kClass.simpleName.toString()
 
     override val properties: Collection<Iterable<String>>

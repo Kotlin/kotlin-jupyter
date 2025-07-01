@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
@@ -14,7 +13,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
-import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -30,20 +28,25 @@ class SomeSingleton {
  * Used for [EmbedReplTest.testSubtypeRenderer]
  */
 @Suppress("unused")
-class TestSum(val a: Int, val b: Int)
+class TestSum(
+    val a: Int,
+    val b: Int,
+)
 
 /**
  * Used for [EmbedReplTest.testSubtypeRenderer]
  */
-class TestFunList<T>(private val head: T, private val tail: TestFunList<T>?) {
+class TestFunList<T>(
+    private val head: T,
+    private val tail: TestFunList<T>?,
+) {
     @Suppress("unused")
-    fun render(): String {
-        return generateSequence(this) {
+    fun render(): String =
+        generateSequence(this) {
             it.tail
         }.joinToString(", ", "[", "]") {
             it.head.toString()
         }
-    }
 }
 
 /**

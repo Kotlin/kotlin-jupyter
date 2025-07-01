@@ -84,9 +84,10 @@ class ThreadServerTestExecutor : ServerTestExecutor {
                 homeDir = kernelConfig.ownParams.homeDir,
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
-        serverThread = thread {
-            runServer(replSettings)
-        }
+        serverThread =
+            thread {
+                runServer(replSettings)
+            }
     }
 
     override fun tearDown() {

@@ -8,9 +8,11 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
  *
  * @param name The name of the parameter, used for identifying it in command-line arguments.
  */
-class SimpleNamedKernelIntParameter(name: String): SimpleNamedKernelParameter<Int>(
-    name,
-    { arg, _ ->
-        arg.toIntOrNull() ?: throw IllegalArgumentException("Argument should be integer: $arg")
-    }
-)
+class SimpleNamedKernelIntParameter(
+    name: String,
+) : SimpleNamedKernelParameter<Int>(
+        name,
+        { arg, _ ->
+            arg.toIntOrNull() ?: throw IllegalArgumentException("Argument should be integer: $arg")
+        },
+    )

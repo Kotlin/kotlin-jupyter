@@ -154,12 +154,11 @@ fun Throwable.toErrorJupyterResponse(metadata: EvaluatedSnippetMetadata? = null)
     return ErrorJupyterResponse(exception.render(), exception, metadata)
 }
 
-fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply {
-    return ExecuteErrorReply(
+fun ReplException.toExecuteErrorReply(executionCount: ExecutionCount): ExecuteErrorReply =
+    ExecuteErrorReply(
         executionCount,
         jupyterException.javaClass.canonicalName,
         jupyterException.message ?: "",
         traceback,
         getAdditionalInfoJson() ?: Json.EMPTY,
     )
-}

@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
-import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation.IgnoredLocation.line
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.repl.impl.KernelReplEvaluator
@@ -13,7 +12,6 @@ import java.lang.reflect.Modifier
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.kotlinFunction
-import kotlin.reflect.jvm.kotlinProperty
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -59,7 +57,9 @@ class ContextUpdater(
             for (method in methods) {
                 if (
                     objectMethods.contains(method) ||
-                    method.name == "main" && Modifier.isStatic(method.modifiers) || // K1 Repl entry point for running a snippet.
+                    method.name == "main" &&
+                    Modifier.isStatic(method.modifiers) ||
+                    // K1 Repl entry point for running a snippet.
                     method.name == "$\$eval" // K2 Repl method containing the snippet code.
                 ) {
                     continue
@@ -92,9 +92,12 @@ class ContextUpdater(
         for (field in javaFields) {
             val fieldName = field.name
             if (
-                fieldName.contains("$\$implicitReceiver") || // ImplicitReceivers injected through ScriptCompilationConfiguration
-                fieldName.contains("script$") || // TODO What is this?
-                fieldName.contains("INSTANCE") // K2 REPL reference to the script instance
+                // ImplicitReceivers injected through ScriptCompilationConfiguration
+                fieldName.contains($$$"$$implicitReceiver") ||
+                // TODO What is this?
+                fieldName.contains("script$") ||
+                // K2 REPL reference to the script instance
+                fieldName.contains("INSTANCE")
             ) {
                 continue
             }
@@ -107,7 +110,7 @@ class ContextUpdater(
                 val value = field.get(scriptInstance)
                 context.addVariable(fieldName, KotlinVariableInfo(value, kotlinProperty, field, scriptInstance))
             } catch (ex: Exception) {
-                thisLogger().error("Exception accessing variable: $fieldName")
+                thisLogger().error("Exception accessing variable: $fieldName", ex)
             }
         }
     }

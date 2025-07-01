@@ -22,7 +22,9 @@ interface ZmqSocketWithCancellation : Closeable {
     fun subscribe(topic: ByteArray): Boolean
 }
 
-interface JupyterZmqSocket : JupyterSendReceiveSocket, Closeable {
+interface JupyterZmqSocket :
+    JupyterSendReceiveSocket,
+    Closeable {
     val zmqSocket: ZmqSocketWithCancellation
 
     // Used on server side

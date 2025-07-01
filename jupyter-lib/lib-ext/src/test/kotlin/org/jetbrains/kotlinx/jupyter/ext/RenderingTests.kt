@@ -92,7 +92,9 @@ class RenderingTests {
         }
     }
 
-    private class AlmostEqualsMultilineComparator(val mayDiverge: Int) {
+    private class AlmostEqualsMultilineComparator(
+        val mayDiverge: Int,
+    ) {
         fun compare(
             expected: String,
             actual: String,

@@ -17,9 +17,7 @@ abstract class JupyterReplTestCase(
     private val repl = replProvider(scriptClasspath)
     val compilerMode = repl.compilerMode
 
-    fun execEx(code: Code): EvalResultEx {
-        return repl.evalEx(EvalRequestData(code))
-    }
+    fun execEx(code: Code): EvalResultEx = repl.evalEx(EvalRequestData(code))
 
     fun execSuccess(code: Code): EvalResultEx.Success {
         val result = execEx(code)
@@ -27,9 +25,7 @@ abstract class JupyterReplTestCase(
         return result
     }
 
-    fun execRendered(code: Code): Any? {
-        return execSuccess(code).renderedValue
-    }
+    fun execRendered(code: Code): Any? = execSuccess(code).renderedValue
 
     fun execError(code: Code): Throwable {
         val result = execEx(code)
@@ -37,9 +33,7 @@ abstract class JupyterReplTestCase(
         return result.error
     }
 
-    fun execRaw(code: Code): Any? {
-        return execSuccess(code).internalResult.result.value
-    }
+    fun execRaw(code: Code): Any? = execSuccess(code).internalResult.result.value
 
     @JvmName("execTyped")
     inline fun <reified T : Any> execRendered(code: Code): T {

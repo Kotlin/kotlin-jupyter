@@ -15,11 +15,12 @@ class MessageHandlerImpl(
     private val messageFactoryProvider: MessageFactoryProvider,
     private val socketManager: JupyterServerSockets,
     private val executor: JupyterExecutor,
-) : AbstractMessageHandler(), Closeable {
+) : AbstractMessageHandler(),
+    Closeable {
     private val executionCounter = ExecutionCounter(1)
 
-    override fun createProcessor(message: RawMessage): MessageRequestProcessor {
-        return MessageRequestProcessorImpl(
+    override fun createProcessor(message: RawMessage): MessageRequestProcessor =
+        MessageRequestProcessorImpl(
             message,
             messageFactoryProvider,
             socketManager,
@@ -29,7 +30,6 @@ class MessageHandlerImpl(
             loggerFactory,
             repl,
         )
-    }
 
     override fun close() {
         repl.closeIfPossible()

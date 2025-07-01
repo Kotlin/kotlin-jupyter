@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -61,9 +60,7 @@ class JsLibraryResourcesProcessor(
     private fun loadResourceAsText(
         resource: LibraryResource,
         classLoader: ClassLoader,
-    ): List<ScriptModifierFunctionGenerator> {
-        return resource.bundles.map { loadBunch(it, classLoader) }
-    }
+    ): List<ScriptModifierFunctionGenerator> = resource.bundles.map { loadBunch(it, classLoader) }
 
     override fun wrapLibrary(
         resource: LibraryResource,

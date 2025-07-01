@@ -18,7 +18,9 @@ interface JupyterReceiveSocket {
     fun receiveRawMessage(): RawMessage?
 }
 
-interface JupyterSendReceiveSocket : JupyterSendSocket, JupyterReceiveSocket
+interface JupyterSendReceiveSocket :
+    JupyterSendSocket,
+    JupyterReceiveSocket
 
 interface JupyterCallbackBasedSocket : JupyterSendSocket {
     fun onRawMessage(callback: RawMessageCallback)
@@ -50,21 +52,17 @@ fun JupyterSendReceiveSocket.callbackBased(logger: Logger): JupyterCallbackBased
     }
 }
 
-
 /**
  * Receiving messages when the buffer is full will block the incoming message processor thread
  * (the thread which runs [JupyterCallbackBasedSocketImpl.receiveMessageAndRunCallbacks]).
  */
-fun JupyterCallbackBasedSocket.sendReceive(messageBufferCapacity: Int = 256): JupyterSendReceiveSocket {
-    return object : JupyterSendReceiveSocket, JupyterSendSocket by this {
+fun JupyterCallbackBasedSocket.sendReceive(messageBufferCapacity: Int = 256): JupyterSendReceiveSocket =
+    object : JupyterSendReceiveSocket, JupyterSendSocket by this {
         val receivableMessages = ArrayBlockingQueue<RawMessage>(messageBufferCapacity)
 
         init {
             onRawMessage { receivableMessages.put(it) }
         }
 
-        override fun receiveRawMessage(): RawMessage? {
-            return receivableMessages.take()
-        }
+        override fun receiveRawMessage(): RawMessage? = receivableMessages.take()
     }
-}

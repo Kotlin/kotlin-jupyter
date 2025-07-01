@@ -1,6 +1,8 @@
 package jupyter.kotlin.receivers
 
-class ConstReceiver(val value: Int)
+class ConstReceiver(
+    val value: Int,
+)
 
 @Target(AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)

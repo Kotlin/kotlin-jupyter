@@ -12,8 +12,9 @@ internal fun getSimpleCompiler(
     compilationConfiguration: ScriptCompilationConfiguration,
     evaluationConfiguration: ScriptEvaluationConfiguration,
 ): JupyterCompiler {
-    class SimpleReplCompiler(hostConfiguration: ScriptingHostConfiguration) :
-        KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)
+    class SimpleReplCompiler(
+        hostConfiguration: ScriptingHostConfiguration,
+    ) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)
 
     return JupyterCompilerImpl(
         SimpleReplCompiler(

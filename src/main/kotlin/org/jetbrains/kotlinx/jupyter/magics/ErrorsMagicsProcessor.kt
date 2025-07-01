@@ -35,7 +35,9 @@ class ErrorsMagicsProcessor(
         val diagnostics: Sequence<ScriptDiagnostic>,
     )
 
-    private inner class Handler(val code: String) {
+    private inner class Handler(
+        val code: String,
+    ) {
         private val _diagnostics = mutableListOf<ScriptDiagnostic>()
         val diagnostics: List<ScriptDiagnostic> get() = _diagnostics
 

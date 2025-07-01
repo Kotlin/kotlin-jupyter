@@ -14,11 +14,12 @@ class JupyterZmqClientReceiveSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     private val side: JupyterSocketSide = JupyterSocketSide.CLIENT,
 ) : JupyterClientReceiveSocketManager {
-    override fun open(config: KernelConfig): JupyterZmqClientReceiveSockets = JupyterZmqClientReceiveSockets(
-        kernelConfig = config,
-        loggerFactory = loggerFactory,
-        side = side,
-    )
+    override fun open(config: KernelConfig): JupyterZmqClientReceiveSockets =
+        JupyterZmqClientReceiveSockets(
+            kernelConfig = config,
+            loggerFactory = loggerFactory,
+            side = side,
+        )
 }
 
 class JupyterZmqClientReceiveSockets internal constructor(
@@ -26,7 +27,11 @@ class JupyterZmqClientReceiveSockets internal constructor(
     loggerFactory: KernelLoggerFactory,
     side: JupyterSocketSide,
 ) : JupyterClientReceiveSockets {
-    val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
+    val context: ZMQ.Context =
+        ZMQ.context(
+            // ioThreads =
+            1,
+        )
 
     override val shell: JupyterZmqSocket
     override val control: JupyterZmqSocket
@@ -34,14 +39,14 @@ class JupyterZmqClientReceiveSockets internal constructor(
     override val stdin: JupyterZmqSocket
 
     init {
-        fun createSocket(info: JupyterZmqSocketInfo) =
-            createZmqSocket(loggerFactory, info, context, kernelConfig, side)
+        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, kernelConfig, side)
 
-        shell = createSocket(JupyterZmqSocketInfo.SHELL).apply {
-            if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
-                zmqSocket.makeRelaxed()
+        shell =
+            createSocket(JupyterZmqSocketInfo.SHELL).apply {
+                if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
+                    zmqSocket.makeRelaxed()
+                }
             }
-        }
         control = createSocket(JupyterZmqSocketInfo.CONTROL)
         ioPub = createSocket(JupyterZmqSocketInfo.IOPUB)
         stdin = createSocket(JupyterZmqSocketInfo.STDIN)

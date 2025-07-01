@@ -11,7 +11,9 @@ package jupyter.kotlin
 @Target(AnnotationTarget.FILE)
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
-annotation class DependsOn(val value: String = "")
+annotation class DependsOn(
+    val value: String = "",
+)
 
 /**
  * Describes the repository which is used for dependency resolution
@@ -39,4 +41,6 @@ annotation class Repository(
 @Target(AnnotationTarget.FILE)
 @Repeatable
 @Retention(AnnotationRetention.SOURCE)
-annotation class CompilerArgs(vararg val values: String)
+annotation class CompilerArgs(
+    vararg val values: String,
+)

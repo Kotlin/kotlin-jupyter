@@ -30,7 +30,8 @@ class ClassAnnotationsProcessorImpl : ClassAnnotationsProcessor {
         executedSnippet: KClass<*>,
         host: KotlinKernelHost,
     ) {
-        executedSnippet.allNestedClasses()
+        executedSnippet
+            .allNestedClasses()
             .flatMap { clazz -> clazz.annotations.map { it.annotationClass to clazz } }
             .groupBy { it.first }
             .forEach { (annotationClass, classesList) ->

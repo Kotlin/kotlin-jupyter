@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.api;
+package org.jetbrains.kotlinx.jupyter.api
 
 /**
  * This is used to represent whether the underlying REPL is running in either K1 or K2 mode.

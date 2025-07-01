@@ -13,7 +13,7 @@ class KernelOwnParamsBuilder(
     var replCompilerMode: ReplCompilerMode? = null,
     var extraCompilerArguments: List<String>? = null,
 ) {
-    constructor(kernelOwnParams: KernelOwnParams): this(
+    constructor(kernelOwnParams: KernelOwnParams) : this(
         scriptClasspath = kernelOwnParams.scriptClasspath,
         homeDir = kernelOwnParams.homeDir,
         debugPort = kernelOwnParams.debugPort,
@@ -23,18 +23,19 @@ class KernelOwnParamsBuilder(
         extraCompilerArguments = kernelOwnParams.extraCompilerArguments,
     )
 
-    val boundParameters = listOf(
-        MutableBoundKernelParameter(scriptClasspathParameter, ::scriptClasspath),
-        MutableBoundKernelParameter(homeDirParameter, ::homeDir),
-        MutableBoundKernelParameter(debugPortParameter, ::debugPort),
-        MutableBoundKernelParameter(clientTypeParameter, ::clientType),
-        MutableBoundKernelParameter(jvmTargetParameter, ::jvmTargetForSnippets),
-        MutableBoundKernelParameter(replCompilerModeParameter, ::replCompilerMode),
-        MutableBoundKernelParameter(extraCompilerArgumentsParameter, ::extraCompilerArguments),
-    )
+    val boundParameters =
+        listOf(
+            MutableBoundKernelParameter(scriptClasspathParameter, ::scriptClasspath),
+            MutableBoundKernelParameter(homeDirParameter, ::homeDir),
+            MutableBoundKernelParameter(debugPortParameter, ::debugPort),
+            MutableBoundKernelParameter(clientTypeParameter, ::clientType),
+            MutableBoundKernelParameter(jvmTargetParameter, ::jvmTargetForSnippets),
+            MutableBoundKernelParameter(replCompilerModeParameter, ::replCompilerMode),
+            MutableBoundKernelParameter(extraCompilerArgumentsParameter, ::extraCompilerArguments),
+        )
 
-    fun build(): KernelOwnParams {
-        return KernelOwnParams(
+    fun build(): KernelOwnParams =
+        KernelOwnParams(
             scriptClasspath = scriptClasspath ?: emptyList(),
             homeDir = homeDir,
             debugPort = debugPort,
@@ -43,5 +44,4 @@ class KernelOwnParamsBuilder(
             replCompilerMode = replCompilerMode ?: ReplCompilerMode.Companion.DEFAULT,
             extraCompilerArguments = extraCompilerArguments ?: emptyList(),
         )
-    }
 }

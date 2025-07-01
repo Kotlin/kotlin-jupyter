@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
@@ -32,8 +31,8 @@ class LibrariesScanner(
     private fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNamesToLoad(
         host: KotlinKernelHost,
         integrationTypeNameRules: Iterable<AcceptanceRule<TypeName>>,
-    ): List<I> {
-        return filter {
+    ): List<I> =
+        filter {
             val typeName = it.fqn
             val acceptance =
                 unionAcceptance(
@@ -50,7 +49,6 @@ class LibrariesScanner(
                 null -> typeName !in discardedFQNs && processedFQNs.add(typeName)
             }
         }
-    }
 
     fun addLibrariesFromClassLoader(
         classLoader: ClassLoader,
@@ -118,15 +116,14 @@ class LibrariesScanner(
         fun <T> withErrorsHandling(
             declaration: LibrariesInstantiable<*>,
             action: () -> T,
-        ): T {
-            return try {
+        ): T =
+            try {
                 action()
             } catch (e: Throwable) {
                 val errorMessage = "Failed to load library integration class '${declaration.fqn}'"
                 logger.errorForUser(message = errorMessage, throwable = e)
                 throw ReplException(errorMessage, e)
             }
-        }
 
         scanResult.definitions.mapNotNullTo(definitions) { declaration ->
             withErrorsHandling(declaration) {

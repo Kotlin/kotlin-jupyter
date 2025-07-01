@@ -13,12 +13,11 @@ import java.util.concurrent.ConcurrentHashMap
 object MessageTypeSerializer : KSerializer<MessageType> {
     private val cache: MutableMap<String, MessageType> = ConcurrentHashMap()
 
-    private fun getMessageType(type: String): MessageType {
-        return cache.computeIfAbsent(type) { newType ->
+    private fun getMessageType(type: String): MessageType =
+        cache.computeIfAbsent(type) { newType ->
             MessageType.entries.firstOrNull { it.type == newType }
                 ?: throw SerializationException("Unknown message type: $newType")
         }
-    }
 
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
@@ -26,9 +25,7 @@ object MessageTypeSerializer : KSerializer<MessageType> {
             PrimitiveKind.STRING,
         )
 
-    override fun deserialize(decoder: Decoder): MessageType {
-        return getMessageType(decoder.decodeString())
-    }
+    override fun deserialize(decoder: Decoder): MessageType = getMessageType(decoder.decodeString())
 
     override fun serialize(
         encoder: Encoder,

@@ -7,9 +7,9 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
  * @param T The type of value that this parameter represents
  * @property aliases List of alternative names for this parameter
  */
-abstract class NamedKernelParameter<T: Any>(
+abstract class NamedKernelParameter<T : Any>(
     val aliases: List<String>,
-): KernelParameter<T> {
+) : KernelParameter<T> {
     /**
      * Parses a string value into a value of type T.
      * This method is called after the parameter name has been matched and the value extracted.
@@ -19,7 +19,10 @@ abstract class NamedKernelParameter<T: Any>(
      * @return The parsed value
      * @throws Exception if the value is invalid
      */
-    abstract fun parseValue(argValue: String, previousValue: T?): T
+    abstract fun parseValue(
+        argValue: String,
+        previousValue: T?,
+    ): T
 
     /**
      * Serializes a value of type T to a string representation (without the parameter name prefix).
@@ -37,7 +40,10 @@ abstract class NamedKernelParameter<T: Any>(
      * @param previousValue The previously parsed value, if any
      * @return The parsed value, or null if the argument doesn't match any of this parameter's aliases
      */
-    override fun tryParse(arg: String, previousValue: T?): T? {
+    override fun tryParse(
+        arg: String,
+        previousValue: T?,
+    ): T? {
         for (alias in aliases) {
             val prefix = "-$alias="
             if (arg.startsWith(prefix)) {

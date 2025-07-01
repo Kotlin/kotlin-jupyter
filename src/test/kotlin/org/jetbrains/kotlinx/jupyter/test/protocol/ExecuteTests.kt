@@ -40,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteReply
 import org.jetbrains.kotlinx.jupyter.messaging.IsCompleteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSockets
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReply
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReplyMetadata
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoRequest
@@ -53,13 +54,11 @@ import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterZmqClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.startup.create
@@ -68,6 +67,7 @@ import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
+import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -94,15 +94,14 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-fun JsonObject.string(key: String): String {
-    return (get(key) as JsonPrimitive).content
-}
+fun JsonObject.string(key: String): String = (get(key) as JsonPrimitive).content
 
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
-abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocketManager, generatePorts: () -> KernelPorts) :
-    KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
-
+abstract class ExecuteTests(
+    private val socketManager: JupyterClientReceiveSocketManager,
+    generatePorts: () -> KernelPorts,
+) : KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
     private var _sockets: JupyterClientReceiveSockets? = null
     private val sockets: JupyterClientReceiveSockets get() = _sockets!!
 
@@ -250,14 +249,13 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
     }
 
     // Make sure we also drain the ioPubSocket when sending protocol messages
-    private fun <T> withReceivingStatusMessages(body: () -> T): T {
-        return try {
+    private fun <T> withReceivingStatusMessages(body: () -> T): T =
+        try {
             receiveStatusMessage(KernelStatus.BUSY)
             body()
         } finally {
             receiveStatusMessage(KernelStatus.IDLE)
         }
-    }
 
     private inline fun <reified T : Any> JupyterReceiveSocket.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()
@@ -267,21 +265,14 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
         return content
     }
 
-    private fun JupyterReceiveSocket.receiveStreamResponse(): String {
-        return receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
-    }
+    private fun JupyterReceiveSocket.receiveStreamResponse(): String = receiveMessageOfType<StreamMessage>(MessageType.STREAM).text
 
-    private fun JupyterReceiveSocket.receiveErrorResponse(): String {
-        return receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
-    }
+    private fun JupyterReceiveSocket.receiveErrorResponse(): String = receiveMessageOfType<ExecuteErrorReply>(MessageType.ERROR).value
 
-    private fun JupyterReceiveSocket.receiveDisplayDataResponse(): DisplayDataMessage {
-        return receiveMessageOfType(MessageType.DISPLAY_DATA)
-    }
+    private fun JupyterReceiveSocket.receiveDisplayDataResponse(): DisplayDataMessage = receiveMessageOfType(MessageType.DISPLAY_DATA)
 
-    private fun JupyterReceiveSocket.receiveUpdateDisplayDataResponse(): DisplayDataMessage {
-        return receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
-    }
+    private fun JupyterReceiveSocket.receiveUpdateDisplayDataResponse(): DisplayDataMessage =
+        receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
 
     @Test
     fun testExecute() {
@@ -748,7 +739,8 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
                 // Stacktrace should be enhanced with cell information
                 when (replCompilerMode) {
                     ReplCompilerMode.K1 -> {
-                        content.traceback shouldContain $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback shouldContain
+                            $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
@@ -983,14 +975,16 @@ abstract class ExecuteTests(private val socketManager: JupyterClientReceiveSocke
     }
 }
 
-class ExecuteZmqTests : ExecuteTests(
-    socketManager = JupyterZmqClientReceiveSocketManager(testLoggerFactory),
-    generatePorts = ::createRandomZmqKernelPorts,
-)
+class ExecuteZmqTests :
+    ExecuteTests(
+        socketManager = JupyterZmqClientReceiveSocketManager(testLoggerFactory),
+        generatePorts = ::createRandomZmqKernelPorts,
+    )
 
-class ExecuteWsTests : ExecuteTests(
-    socketManager = JupyterWsClientReceiveSocketManager(testLoggerFactory),
-    generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
-)
+class ExecuteWsTests :
+    ExecuteTests(
+        socketManager = JupyterWsClientReceiveSocketManager(testLoggerFactory),
+        generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
+    )
 
 private const val CONNECT_RETRY_TIMEOUT_SECONDS = 10

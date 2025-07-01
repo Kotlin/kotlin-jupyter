@@ -26,9 +26,7 @@ class DefaultCompilerArgsConfigurator(
             addAll(extraArgs)
         }
 
-    override fun getArgs(): List<String> {
-        return argsList.toList()
-    }
+    override fun getArgs(): List<String> = argsList.toList()
 
     override fun configure(
         configuration: ScriptCompilationConfiguration,

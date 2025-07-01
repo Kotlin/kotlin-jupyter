@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.VARIABLES_TABLE_STYLE_CLASS
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -27,9 +26,7 @@ class ApiTest : AbstractSingleReplTest() {
     private fun jEval(
         jupyterId: Int,
         code: String,
-    ): EvalResultEx {
-        return eval(code, jupyterId)
-    }
+    ): EvalResultEx = eval(code, jupyterId)
 
     @Test
     fun testRepl() {

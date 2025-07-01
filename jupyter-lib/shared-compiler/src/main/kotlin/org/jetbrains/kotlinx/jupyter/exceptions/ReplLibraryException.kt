@@ -11,7 +11,9 @@ class ReplLibraryException(
         cause,
     )
 
-enum class LibraryProblemPart(val message: String) {
+enum class LibraryProblemPart(
+    val message: String,
+) {
     PREBUILT("imports, dependencies and repositories"),
     INIT("init codes"),
     RESOURCES("resources definitions"),
@@ -33,10 +35,9 @@ enum class LibraryProblemPart(val message: String) {
 fun <T> rethrowAsLibraryException(
     part: LibraryProblemPart,
     action: () -> T,
-): T {
-    return try {
+): T =
+    try {
         action()
     } catch (e: Throwable) {
         e.throwAsLibraryException(part)
     }
-}

@@ -5,8 +5,8 @@ import kotlin.reflect.KProperty1
 fun <T : Comparable<T>> compareNullable(
     s1: T?,
     s2: T?,
-): Int {
-    return if (s1 == null) {
+): Int =
+    if (s1 == null) {
         if (s2 == null) {
             0
         } else {
@@ -19,7 +19,6 @@ fun <T : Comparable<T>> compareNullable(
             s1.compareTo(s2)
         }
     }
-}
 
 fun <T : Comparable<T>, P : Comparable<P>> T.compareProperty(
     other: T,

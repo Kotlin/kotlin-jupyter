@@ -23,15 +23,13 @@ interface MessageFactory {
     ): Message?
 }
 
-fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader {
-    return makeHeader(msgType, sessionId = sessionId, username = username)
-}
+fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader = makeHeader(msgType, sessionId = sessionId, username = username)
 
 fun MessageFactory.makeSimpleMessage(
     msgType: MessageType,
     content: MessageContent,
-): Message {
-    return Message(
+): Message =
+    Message(
         id = messageId,
         data =
             MessageData(
@@ -39,7 +37,6 @@ fun MessageFactory.makeSimpleMessage(
                 content = content,
             ),
     )
-}
 
 fun MessageFactory.makeReplyMessage(
     msgType: MessageType? = null,
@@ -48,8 +45,8 @@ fun MessageFactory.makeReplyMessage(
     parentHeader: MessageHeader? = null,
     metadata: JsonElement? = null,
     content: MessageContent? = null,
-): Message {
-    return makeReplyMessageOrNull(
+): Message =
+    makeReplyMessageOrNull(
         msgType,
         sessionId,
         header,
@@ -57,4 +54,3 @@ fun MessageFactory.makeReplyMessage(
         metadata,
         content,
     ) ?: error("Context message is needed for reply")
-}

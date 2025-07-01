@@ -6,4 +6,6 @@ interface ScriptDeclarationsProvider {
     fun getLastSnippetDeclarations(): List<DeclarationInfo>
 }
 
-interface ScriptDeclarationsCollectorInternal : ScriptDeclarationsProvider, ScriptDataCollector
+interface ScriptDeclarationsCollectorInternal :
+    ScriptDeclarationsProvider,
+    ScriptDataCollector

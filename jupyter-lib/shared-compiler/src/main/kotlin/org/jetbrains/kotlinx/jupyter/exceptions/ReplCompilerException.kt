@@ -37,17 +37,18 @@ class ReplCompilerException(
     val errorResult: ResultWithDiagnostics.Failure? = null,
     message: String? = null,
     metadata: CellErrorMetaData? = null,
-) : ReplExceptionCause, ReplException(
+) : ReplException(
         enhanceReplCompilerError(metadata, message ?: errorResult?.getErrors() ?: ""),
         errorResult?.reports?.map { it.exception }?.firstOrNull(),
-    ) {
+    ),
+    ReplExceptionCause {
     val firstError: ScriptDiagnostic? =
         errorResult?.reports?.firstOrNull {
             it.severity == ScriptDiagnostic.Severity.ERROR || it.severity == ScriptDiagnostic.Severity.FATAL
         }
 
-    override fun getAdditionalInfoJson(): JsonObject? {
-        return firstError?.location?.let {
+    override fun getAdditionalInfoJson(): JsonObject? =
+        firstError?.location?.let {
             val errorMessage = firstError.message
             JsonObject(
                 mapOf(
@@ -60,7 +61,6 @@ class ReplCompilerException(
                 ),
             )
         }
-    }
 
     override fun render() = message
 
@@ -82,19 +82,21 @@ fun <T> ResultWithDiagnostics<T>.getErrors(): String {
         }
 
     return filteredReports.joinToString("\n") { report ->
-        report.location?.let { loc ->
-            report.sourcePath?.let { sourcePath ->
-                compilerDiagnosticToString(
-                    sourcePath,
-                    loc.start.line,
-                    loc.start.col,
-                    loc.end?.line ?: -1,
-                    loc.end?.col ?: -1,
-                )
-            }?.let {
-                "$it "
-            }
-        }.orEmpty() + report.message
+        report.location
+            ?.let { loc ->
+                report.sourcePath
+                    ?.let { sourcePath ->
+                        compilerDiagnosticToString(
+                            sourcePath,
+                            loc.start.line,
+                            loc.start.col,
+                            loc.end?.line ?: -1,
+                            loc.end?.col ?: -1,
+                        )
+                    }?.let {
+                        "$it "
+                    }
+            }.orEmpty() + report.message
     }
 }
 

@@ -18,7 +18,9 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-class CommManagerImpl(private val connection: JupyterCommunicationFacility) : CommManagerInternal {
+class CommManagerImpl(
+    private val connection: JupyterCommunicationFacility,
+) : CommManagerInternal {
     private val commOpenCallbacks = ConcurrentHashMap<String, CommOpenCallback>()
     private val commTargetToIds = ConcurrentHashMap<String, CopyOnWriteArrayList<String>>()
     private val commIdToComm = ConcurrentHashMap<String, CommImpl>()
@@ -108,13 +110,12 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
         commIdToComm.remove(id)
     }
 
-    override fun getComms(target: String?): Collection<Comm> {
-        return if (target == null) {
+    override fun getComms(target: String?): Collection<Comm> =
+        if (target == null) {
             commIdToComm.values.toList()
         } else {
             commTargetToIds[target].orEmpty().mapNotNull { commIdToComm[it] }
         }
-    }
 
     override fun processCommMessage(
         message: Message,
@@ -208,12 +209,11 @@ class CommManagerImpl(private val connection: JupyterCommunicationFacility) : Co
     }
 
     companion object {
-        private fun commFailureJson(errorMessage: String): JsonObject {
-            return JsonObject(
+        private fun commFailureJson(errorMessage: String): JsonObject =
+            JsonObject(
                 mapOf(
                     "error" to JsonPrimitive(errorMessage),
                 ),
             )
-        }
     }
 }

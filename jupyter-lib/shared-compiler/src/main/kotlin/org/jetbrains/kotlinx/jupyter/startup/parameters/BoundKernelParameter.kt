@@ -8,7 +8,7 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
  * @property parameter The parameter handler to use for serialization
  * @property valueProvider Function that provides the current value of the parameter
  */
-open class BoundKernelParameter<T: Any>(
+open class BoundKernelParameter<T : Any>(
     val parameter: KernelParameter<T>,
     open val valueProvider: () -> T?,
 ) {

@@ -42,7 +42,8 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
         )
 
         val declaredProperties =
-            repl.notebook.currentCell!!.declarations
+            repl.notebook.currentCell!!
+                .declarations
                 .filter { it.kind == DeclarationKind.PROPERTY }
                 .mapNotNull { it.name }
         declaredProperties shouldBe listOf("name", "height")

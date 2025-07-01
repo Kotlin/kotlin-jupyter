@@ -21,8 +21,7 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
 class JupyterZmqServerRunner : JupyterServerRunner {
-    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? =
-        ZmqKernelPorts.tryDeserialize(jsonFields)
+    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? = ZmqKernelPorts.tryDeserialize(jsonFields)
 
     override fun canRun(ports: KernelPorts): Boolean = ports is ZmqKernelPorts
 
@@ -35,37 +34,39 @@ class JupyterZmqServerRunner : JupyterServerRunner {
         val zmqContext: ZMQ.Context = ZMQ.context(1)
         val socketList = mutableListOf<Closeable>()
 
-        fun openSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket {
-            return openServerZmqSocket(loggerFactory, socketInfo, zmqContext, config)
+        fun openSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
+            openServerZmqSocket(loggerFactory, socketInfo, zmqContext, config)
                 .also { socketList.add(it) }
-        }
 
         val heartbeat = openSocket(JupyterZmqSocketInfo.HB)
         val shellSocket = openSocket(JupyterZmqSocketInfo.SHELL).callbackBased(logger)
         val controlSocket = openSocket(JupyterZmqSocketInfo.CONTROL).callbackBased(logger)
 
-        val sockets = object : JupyterServerImplSockets {
-            override val shell: JupyterCallbackBasedSocket = shellSocket
-            override val control: JupyterCallbackBasedSocket = controlSocket
-            override val stdin = openSocket(JupyterZmqSocketInfo.STDIN)
-            override val iopub = openSocket(JupyterZmqSocketInfo.IOPUB)
-        }
+        val sockets =
+            object : JupyterServerImplSockets {
+                override val shell: JupyterCallbackBasedSocket = shellSocket
+                override val control: JupyterCallbackBasedSocket = controlSocket
+                override val stdin = openSocket(JupyterZmqSocketInfo.STDIN)
+                override val iopub = openSocket(JupyterZmqSocketInfo.IOPUB)
+            }
 
         val closeables = setup(sockets)
         try {
             val mainThread = Thread.currentThread()
 
-            val controlThread = thread {
-                socketLoop(logger, "Control: Interrupted", mainThread) {
-                    controlSocket.receiveMessageAndRunCallbacks()
+            val controlThread =
+                thread {
+                    socketLoop(logger, "Control: Interrupted", mainThread) {
+                        controlSocket.receiveMessageAndRunCallbacks()
+                    }
                 }
-            }
 
-            val hbThread = thread {
-                socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
-                    heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
+            val hbThread =
+                thread {
+                    socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
+                        heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
+                    }
                 }
-            }
 
             socketLoop(logger, "Main: Interrupted", controlThread, hbThread) {
                 shellSocket.receiveMessageAndRunCallbacks()

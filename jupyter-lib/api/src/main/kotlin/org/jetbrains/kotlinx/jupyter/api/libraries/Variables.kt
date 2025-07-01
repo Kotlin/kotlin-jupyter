@@ -15,7 +15,11 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.util.ListToMapSerializer
 
 @Serializable
-data class Variable(val name: String, val value: String, val ignored: Boolean = false)
+data class Variable(
+    val name: String,
+    val value: String,
+    val ignored: Boolean = false,
+)
 
 object VariablesMapSerializer : ListToMapSerializer<Variable, String, String>(
     serializer(),
@@ -28,9 +32,8 @@ data class DescriptorVariables(
     val hasOrder: Boolean = false,
 )
 
-fun DescriptorVariables.filter(predicate: (Variable) -> Boolean): DescriptorVariables {
-    return DescriptorVariables(properties.filter(predicate), hasOrder)
-}
+fun DescriptorVariables.filter(predicate: (Variable) -> Boolean): DescriptorVariables =
+    DescriptorVariables(properties.filter(predicate), hasOrder)
 
 object DescriptorVariablesSerializer : KSerializer<DescriptorVariables> {
     override val descriptor: SerialDescriptor

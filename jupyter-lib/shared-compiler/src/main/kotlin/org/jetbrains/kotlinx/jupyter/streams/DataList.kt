@@ -32,9 +32,7 @@ class DataList<DataT>(
      * Returns the last data item in the list.
      * If the list is empty, it returns the [initialData].
      */
-    fun last(): DataT {
-        return storage.lastOrNull() ?: initialData
-    }
+    fun last(): DataT = storage.lastOrNull() ?: initialData
 
     /**
      * Removes [item] and returns [last] item along with the indication

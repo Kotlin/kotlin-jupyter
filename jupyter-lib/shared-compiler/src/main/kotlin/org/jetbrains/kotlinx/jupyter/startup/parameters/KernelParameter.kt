@@ -14,7 +14,10 @@ interface KernelParameter<T> {
      * @return The parsed value, or null if the argument couldn't be parsed by this handler
      * @throws Exception if the argument is recognized but invalid
      */
-    fun tryParse(arg: String, previousValue: T?): T?
+    fun tryParse(
+        arg: String,
+        previousValue: T?,
+    ): T?
 
     /**
      * Serializes a value of type T to a string representation for command-line usage.

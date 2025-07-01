@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.common
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -13,12 +12,11 @@ class ResponseWrapper(
     val url: String,
 ) : Response by response
 
-fun HttpClient.httpRequest(request: Request): ResponseWrapper {
-    return ResponseWrapper(
+fun HttpClient.httpRequest(request: Request): ResponseWrapper =
+    ResponseWrapper(
         makeRequest(request),
         request.url,
     )
-}
 
 fun HttpClient.getHttp(url: String) = httpRequest(buildRequest("GET", url))
 
@@ -42,11 +40,10 @@ fun RequestBuilder.withBasicAuth(
     return header("Authorization", "Basic $b64")
 }
 
-fun RequestBuilder.withJson(json: JsonElement): RequestBuilder {
-    return this
+fun RequestBuilder.withJson(json: JsonElement): RequestBuilder =
+    this
         .body(Json.encodeToString(json))
         .header("Content-Type", "application/json")
-}
 
 fun ResponseWrapper.assertSuccessful() {
     if (!status.successful) {
@@ -63,13 +60,12 @@ val ResponseWrapper.json: JsonElement get() = decodeJson()
 val ResponseWrapper.jsonObject: JsonObject get() = decodeJson()
 val ResponseWrapper.jsonArray: JsonArray get() = decodeJson()
 
-inline fun <reified T> ResponseWrapper.decodeJsonIfSuccessfulOrNull(): T? {
-    return if (!status.successful) {
+inline fun <reified T> ResponseWrapper.decodeJsonIfSuccessfulOrNull(): T? =
+    if (!status.successful) {
         null
     } else {
         Json.decodeFromString(text)
     }
-}
 
 val ResponseWrapper.jsonOrNull: JsonElement? get() = decodeJsonIfSuccessfulOrNull()
 val ResponseWrapper.jsonObjectOrNull: JsonObject? get() = decodeJsonIfSuccessfulOrNull()

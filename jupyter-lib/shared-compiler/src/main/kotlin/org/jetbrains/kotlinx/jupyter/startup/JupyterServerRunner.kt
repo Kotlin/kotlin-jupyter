@@ -26,7 +26,7 @@ interface JupyterServerRunner {
     fun run(
         config: KernelConfig,
         loggerFactory: KernelLoggerFactory,
-        setup: (JupyterServerImplSockets) -> Iterable<Closeable>
+        setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
     )
 
     companion object {

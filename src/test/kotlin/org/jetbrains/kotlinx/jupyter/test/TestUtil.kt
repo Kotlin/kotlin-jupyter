@@ -106,12 +106,14 @@ val classpath =
     )
 
 val KClass<*>.classPathEntry: File get() {
-    return File(this.java.protectionDomain.codeSource.location.toURI().path)
+    return File(
+        this.java.protectionDomain.codeSource.location
+            .toURI()
+            .path,
+    )
 }
 
-inline fun <reified T> classPathEntry(): File {
-    return (typeOf<T>().classifier as KClass<*>).classPathEntry
-}
+inline fun <reified T> classPathEntry(): File = (typeOf<T>().classifier as KClass<*>).classPathEntry
 
 val testLibraryResolver: LibraryResolver
     get() =
@@ -151,24 +153,24 @@ fun Collection<Pair<String, LibraryDefinition>>.toLibraries() = getResolverFromN
 fun getResolverFromNamesMap(
     descriptors: Map<String, LibraryDescriptor>? = null,
     definitions: Map<String, LibraryDefinition>? = null,
-): LibraryResolver {
-    return InMemoryLibraryResolver(
+): LibraryResolver =
+    InMemoryLibraryResolver(
         null,
         descriptors?.mapKeys { entry -> LibraryReference(AbstractLibraryResolutionInfo.Default(), entry.key) },
         definitions?.mapKeys { entry -> LibraryReference(AbstractLibraryResolutionInfo.Default(), entry.key) },
     )
-}
 
 fun readLibraries(basePath: String? = null): Map<String, String> {
     val logger = testLoggerFactory.getLogger("test")
 
-    return KERNEL_LIBRARIES.homeLibrariesDir(basePath?.let(::File))
-        .listFiles()?.filter(KERNEL_LIBRARIES::isLibraryDescriptor)
+    return KERNEL_LIBRARIES
+        .homeLibrariesDir(basePath?.let(::File))
+        .listFiles()
+        ?.filter(KERNEL_LIBRARIES::isLibraryDescriptor)
         ?.map {
             logger.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
             it.nameWithoutExtension to it.readText()
-        }
-        .orEmpty()
+        }.orEmpty()
         .toMap()
 }
 
@@ -178,17 +180,11 @@ fun CompletionResult.getOrFail(): CompletionResult.Success =
         else -> fail("Result should be success")
     }
 
-fun Map<String, VariableState>.mapToStringValues(): Map<String, String?> {
-    return mapValues { it.value.stringValue }
-}
+fun Map<String, VariableState>.mapToStringValues(): Map<String, String?> = mapValues { it.value.stringValue }
 
-fun Map<String, VariableState>.getStringValue(variableName: String): String? {
-    return get(variableName)?.stringValue
-}
+fun Map<String, VariableState>.getStringValue(variableName: String): String? = get(variableName)?.stringValue
 
-fun Map<String, VariableState>.getValue(variableName: String): Any? {
-    return get(variableName)?.value?.getOrNull()
-}
+fun Map<String, VariableState>.getValue(variableName: String): Any? = get(variableName)?.value?.getOrNull()
 
 class InMemoryLibraryResolver(
     parent: LibraryResolver?,
@@ -207,16 +203,12 @@ class InMemoryLibraryResolver(
         }
     }
 
-    override fun shouldResolve(reference: LibraryReference): Boolean {
-        return reference.shouldBeCachedInMemory
-    }
+    override fun shouldResolve(reference: LibraryReference): Boolean = reference.shouldBeCachedInMemory
 
     override fun tryResolve(
         reference: LibraryReference,
         arguments: List<Variable>,
-    ): LibraryDefinition? {
-        return definitionsCache[reference] ?: descriptorsCache[reference]?.convertToDefinition(arguments)
-    }
+    ): LibraryDefinition? = definitionsCache[reference] ?: descriptorsCache[reference]?.convertToDefinition(arguments)
 
     override fun save(
         reference: LibraryReference,
@@ -226,7 +218,9 @@ class InMemoryLibraryResolver(
     }
 }
 
-open class TestDisplayHandler(val list: MutableList<Any> = mutableListOf()) : DisplayHandler {
+open class TestDisplayHandler(
+    val list: MutableList<Any> = mutableListOf(),
+) : DisplayHandler {
     override fun handleDisplay(
         value: Any,
         host: ExecutionHost,
@@ -294,26 +288,19 @@ object NotebookMock : Notebook {
 
     override val loggerFactory: KernelLoggerFactory get() = DefaultKernelLoggerFactory
 
-    override fun getCell(id: Int): MutableCodeCell {
-        return cells[id] ?: throw ArrayIndexOutOfBoundsException(
+    override fun getCell(id: Int): MutableCodeCell =
+        cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'",
         )
-    }
 
-    override fun getResult(id: Int): Any? {
-        return getCell(id).result
-    }
+    override fun getResult(id: Int): Any? = getCell(id).result
 
     override val displays: DisplayContainer
         get() = notImplemented()
 
-    override fun getAllDisplays(): List<DisplayResultWithCell> {
-        return displays.getAll()
-    }
+    override fun getAllDisplays(): List<DisplayResultWithCell> = displays.getAll()
 
-    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> {
-        return displays.getById(id)
-    }
+    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> = displays.getById(id)
 
     override fun history(before: Int): CodeCell {
         notImplemented()
@@ -428,13 +415,9 @@ fun ReplForJupyter.evalExSuccess(code: Code): EvalResultEx.Success {
     return result
 }
 
-fun ReplForJupyter.evalRaw(code: Code): Any? {
-    return evalExSuccess(code).internalResult.result.value
-}
+fun ReplForJupyter.evalRaw(code: Code): Any? = evalExSuccess(code).internalResult.result.value
 
-fun ReplForJupyter.evalRendered(code: Code): Any? {
-    return evalExSuccess(code).renderedValue
-}
+fun ReplForJupyter.evalRendered(code: Code): Any? = evalExSuccess(code).renderedValue
 
 val EvalResultEx.rawValue get(): Any? {
     this.shouldBeTypeOf<EvalResultEx.Success>()

@@ -6,7 +6,10 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryLoadingException
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.asSuccess
 
-abstract class LibraryResolutionInfoParser(val name: String, private val parameters: List<Parameter>) {
+abstract class LibraryResolutionInfoParser(
+    val name: String,
+    private val parameters: List<Parameter>,
+) {
     fun getInfo(args: List<Variable>): LibraryResolutionInfo {
         val map =
             when (val mapResult = substituteArguments(parameters, args)) {
@@ -24,11 +27,10 @@ abstract class LibraryResolutionInfoParser(val name: String, private val paramet
             name: String,
             parameters: List<Parameter>,
             getInfo: (Map<String, String>) -> LibraryResolutionInfo,
-        ): LibraryResolutionInfoParser {
-            return object : LibraryResolutionInfoParser(name, parameters) {
+        ): LibraryResolutionInfoParser =
+            object : LibraryResolutionInfoParser(name, parameters) {
                 override fun getInfo(args: Map<String, String>): LibraryResolutionInfo = getInfo(args)
             }
-        }
 
         private fun substituteArguments(
             parameters: List<Parameter>,

@@ -18,9 +18,6 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 internal class KernelBuildConfigurator(private val project: Project) {
     private val settings = project.getOrCreateExtension(RootSettingsExtension)
@@ -97,8 +94,6 @@ internal class KernelBuildConfigurator(private val project: Project) {
             plugins.apply("org.jlleitschuh.gradle.ktlint")
             extensions.configure<KtlintExtension> {
                 version.set(ktlintVersion)
-                // TEMPORARY CHANGE: Until K2 REPL has been merged to master to avoid too many changes at once.
-                ignoreFailures.set(true)
                 enableExperimentalRules.set(true)
             }
         }

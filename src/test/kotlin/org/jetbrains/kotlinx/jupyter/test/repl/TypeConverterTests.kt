@@ -4,7 +4,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
 import org.jetbrains.kotlinx.jupyter.api.ResultFieldUpdateHandler
 import org.jetbrains.kotlinx.jupyter.api.createRenderer

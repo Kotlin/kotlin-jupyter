@@ -112,34 +112,26 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
             runtimeProperties.currentBranch,
         )
 
-    override fun provideLibrariesProcessor(): LibrariesProcessor {
-        return LibrariesProcessorImpl(
+    override fun provideLibrariesProcessor(): LibrariesProcessor =
+        LibrariesProcessorImpl(
             libraryResolver,
             libraryReferenceParser,
             runtimeProperties.version,
         )
-    }
 
-    override fun provideReplOptions(): ReplOptions {
-        return ReplOptionsImpl()
-    }
+    override fun provideReplOptions(): ReplOptions = ReplOptionsImpl()
 
-    override fun provideSessionOptions(): SessionOptions {
-        return SessionOptionsImpl()
-    }
+    override fun provideSessionOptions(): SessionOptions = SessionOptionsImpl()
 
-    override fun provideLoggingManager(): LoggingManager {
-        return Slf4jLoggingManager
-    }
+    override fun provideLoggingManager(): LoggingManager = Slf4jLoggingManager
 
-    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler {
-        return LogLevelHandlingMagicsHandler(
+    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler =
+        LogLevelHandlingMagicsHandler(
             replOptions,
             librariesProcessor,
             libraryInfoSwitcher,
             loggingManager,
         )
-    }
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 

@@ -48,11 +48,8 @@ class ColorSchemeChangeCallbacksProcessorImpl : ColorSchemeChangeCallbacksProces
         callbacks.clear()
     }
 
-    override fun registeredExtensions(): Collection<ColorSchemeChangedCallback> {
-        return callbacks.elements().map { it.first }
-    }
+    override fun registeredExtensions(): Collection<ColorSchemeChangedCallback> = callbacks.elements().map { it.first }
 
-    override fun registeredExtensionsWithPriority(): List<Pair<ColorSchemeChangedCallback, Int>> {
-        return callbacks.elementsWithPriority().map { (p, priority) -> p.first to priority }
-    }
+    override fun registeredExtensionsWithPriority(): List<Pair<ColorSchemeChangedCallback, Int>> =
+        callbacks.elementsWithPriority().map { (p, priority) -> p.first to priority }
 }

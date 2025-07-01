@@ -18,10 +18,12 @@ import kotlin.reflect.jvm.isAccessible
 
 class FieldsProcessorImpl(
     private val contextUpdater: ContextUpdater,
-) : AbstractExtensionsProcessor<FieldHandler>(latterFirst = true), FieldsProcessorInternal {
-    override fun registeredHandlers(): List<FieldHandlerWithPriority> {
-        return extensions.elementsWithPriority().map { FieldHandlerWithPriority(it.first, it.second) }
-    }
+) : AbstractExtensionsProcessor<FieldHandler>(latterFirst = true),
+    FieldsProcessorInternal {
+    override fun registeredHandlers(): List<FieldHandlerWithPriority> =
+        extensions.elementsWithPriority().map {
+            FieldHandlerWithPriority(it.first, it.second)
+        }
 
     override fun process(host: KotlinKernelHost): FieldValue? {
         val fieldHandlers = mutableSetOf<FieldHandler>()

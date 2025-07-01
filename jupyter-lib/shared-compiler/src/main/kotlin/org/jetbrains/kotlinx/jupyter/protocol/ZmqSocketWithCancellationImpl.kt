@@ -69,9 +69,7 @@ class ZmqSocketWithCancellationImpl(
         return res
     }
 
-    internal fun connect(address: String): Boolean {
-        return socket.connect(address)
-    }
+    internal fun connect(address: String): Boolean = socket.connect(address)
 
     internal fun assertNotCancelled() {
         if (isCancelled()) throw InterruptedException()

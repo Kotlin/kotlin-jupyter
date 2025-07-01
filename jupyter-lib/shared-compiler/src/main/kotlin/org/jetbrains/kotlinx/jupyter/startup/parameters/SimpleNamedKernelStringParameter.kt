@@ -9,7 +9,7 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
  */
 class SimpleNamedKernelStringParameter(
     name: String,
-): SimpleNamedKernelParameter<String>(
-    name,
-    { argValue, _ -> argValue },
-)
+) : SimpleNamedKernelParameter<String>(
+        name,
+        { argValue, _ -> argValue },
+    )

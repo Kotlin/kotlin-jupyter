@@ -160,9 +160,8 @@ inline fun <reified T> Comm.sendData(data: T) {
     send(Json.encodeToJsonElement(data).jsonObject)
 }
 
-inline fun <reified T> Comm.onData(crossinline action: (T) -> Unit): CommMsgCallback {
-    return onMessage { json ->
+inline fun <reified T> Comm.onData(crossinline action: (T) -> Unit): CommMsgCallback =
+    onMessage { json ->
         val data = Json.decodeFromJsonElement<T>(json)
         action(data)
     }
-}

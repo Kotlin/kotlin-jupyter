@@ -50,7 +50,8 @@ open class JupyterApiResourcesTask : DefaultTask() {
         fun fqns(name: String): Array<FQNAware> {
             val file = path.resolve(name)
             if (!file.exists()) return emptyArray()
-            return file.readLines()
+            return file
+                .readLines()
                 .filter { it.isNotBlank() }
                 .map { FQNAware(it) }
                 .toTypedArray()
@@ -71,12 +72,11 @@ open class JupyterApiResourcesTask : DefaultTask() {
         val producers: Array<FQNAware>,
     )
 
-    operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult {
-        return LibrariesScanResult(
+    operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult =
+        LibrariesScanResult(
             union(definitions, other.definitions),
             union(producers, other.producers),
         )
-    }
 
     companion object {
         private inline fun <reified T> union(

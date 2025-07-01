@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.ws
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -30,9 +29,10 @@ internal abstract class WsCallbackBasedSocket(
     abstract fun messageReceived(msg: RawMessage)
 
     override fun sendRawMessage(msg: RawMessage) {
-        val msgDataJsonString = Json.encodeToString(
-            JsonObject(msg.data + (CHANNEL_FIELD_NAME to JsonPrimitive(channel.jupyterName)))
-        )
+        val msgDataJsonString =
+            Json.encodeToString(
+                JsonObject(msg.data + (CHANNEL_FIELD_NAME to JsonPrimitive(channel.jupyterName))),
+            )
         for (webSocket in getWebSockets()) {
             if (msg.id.isEmpty()) {
                 webSocket.send(msgDataJsonString)
@@ -59,9 +59,11 @@ internal abstract class WsCallbackBasedSocket(
     ): ByteBuffer? {
         val msgDataStartIndex = 4 * (2 + buffers.size)
         val msgDataJsonBytes = msgDataJsonString.toByteArray(Charsets.UTF_8)
-        val resultBuffer = ByteBuffer.allocate(
-            /* capacity = */ msgDataStartIndex + msgDataJsonBytes.size + buffers.sumOf { it.size },
-        )
+        val resultBuffer =
+            ByteBuffer.allocate(
+                // capacity =
+                msgDataStartIndex + msgDataJsonBytes.size + buffers.sumOf { it.size },
+            )
         resultBuffer.order(ByteOrder.BIG_ENDIAN)
         resultBuffer.putInt(buffers.size + 1)
         run {

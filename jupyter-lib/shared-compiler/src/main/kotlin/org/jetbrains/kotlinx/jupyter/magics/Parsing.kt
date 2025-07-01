@@ -3,8 +3,8 @@ package org.jetbrains.kotlinx.jupyter.magics
 /**
  * Split a command argument into a list of library calls
  */
-fun splitLibraryCalls(text: String): List<String> {
-    return libraryCommaRanges(text)
+fun splitLibraryCalls(text: String): List<String> =
+    libraryCommaRanges(text)
         .mapNotNull { (from, to) ->
             if (from >= to) {
                 null
@@ -12,11 +12,8 @@ fun splitLibraryCalls(text: String): List<String> {
                 text.substring(from + 1, to).trim().takeIf { it.isNotEmpty() }
             }
         }
-}
 
-fun libraryCommaRanges(text: String): List<Pair<Int, Int>> {
-    return libraryCommaIndices(text, withFirst = true, withLast = true).zipWithNext()
-}
+fun libraryCommaRanges(text: String): List<Pair<Int, Int>> = libraryCommaIndices(text, withFirst = true, withLast = true).zipWithNext()
 
 /**
  * Need special processing of ',' to skip call argument delimiters in brackets
@@ -26,8 +23,8 @@ fun libraryCommaIndices(
     text: String,
     withFirst: Boolean = false,
     withLast: Boolean = false,
-): List<Int> {
-    return buildList {
+): List<Int> =
+    buildList {
         var i = 0
         var commaDepth = 0
         val delimiters = charArrayOf(',', '(', ')')
@@ -50,4 +47,3 @@ fun libraryCommaIndices(
             i++
         }
     }
-}

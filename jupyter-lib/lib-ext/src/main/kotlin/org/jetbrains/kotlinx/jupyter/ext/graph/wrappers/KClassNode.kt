@@ -7,7 +7,9 @@ import org.jetbrains.kotlinx.jupyter.api.graphs.labels.KClassLabel
 import kotlin.reflect.KClass
 import kotlin.reflect.full.superclasses
 
-class KClassNode(node: KClass<*>) : NodeWrapper<KClass<*>>(node) {
+class KClassNode(
+    node: KClass<*>,
+) : NodeWrapper<KClass<*>>(node) {
     override val label: Label get() = KClassLabel(value)
 
     override val inNodes by lazy {

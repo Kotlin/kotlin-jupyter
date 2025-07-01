@@ -11,12 +11,13 @@ import org.jetbrains.kotlinx.jupyter.testkit.JupyterReplTestCase
 import org.jetbrains.kotlinx.jupyter.testkit.ReplProvider
 import org.junit.jupiter.api.Test
 
-class JupyterReplWithResolverTest : JupyterReplTestCase(
-    ReplProvider.withDefaultClasspathResolution(
-        shouldResolve = { it != "lets-plot" },
-        shouldResolveToEmpty = { it == "multik" },
-    ),
-) {
+class JupyterReplWithResolverTest :
+    JupyterReplTestCase(
+        ReplProvider.withDefaultClasspathResolution(
+            shouldResolve = { it != "lets-plot" },
+            shouldResolveToEmpty = { it == "multik" },
+        ),
+    ) {
     @Test
     fun dataframe() {
         val dfHtml =
@@ -73,10 +74,11 @@ class JupyterReplWithResolverTest : JupyterReplTestCase(
 
         val exception = execError("import org.jetbrains.kotlinx.multik.api.*")
         exception.shouldBeTypeOf<ReplCompilerException>()
-        exception.message shouldContain when(compilerMode) {
-            ReplCompilerMode.K1 -> "Unresolved reference: multik"
-            ReplCompilerMode.K2 -> "Unresolved reference 'multik'"
-        }
+        exception.message shouldContain
+            when (compilerMode) {
+                ReplCompilerMode.K1 -> "Unresolved reference: multik"
+                ReplCompilerMode.K2 -> "Unresolved reference 'multik'"
+            }
     }
 
     @Test

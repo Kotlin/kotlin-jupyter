@@ -20,11 +20,10 @@ class RequestBuilder {
     fun build(): Request = RequestImpl(method, url, headers, body)
 }
 
-fun buildRequest(buildAction: RequestBuilder.() -> Unit): Request {
-    return RequestBuilder()
+fun buildRequest(buildAction: RequestBuilder.() -> Unit): Request =
+    RequestBuilder()
         .apply(buildAction)
         .build()
-}
 
 fun buildRequest(
     method: String,
@@ -32,8 +31,8 @@ fun buildRequest(
     headers: Map<String, String> = mapOf(),
     body: String? = null,
     buildAction: RequestBuilder.() -> Unit = {},
-): Request {
-    return buildRequest {
+): Request =
+    buildRequest {
         method(method)
         url(url)
         for ((key, value) in headers) {
@@ -43,20 +42,18 @@ fun buildRequest(
 
         buildAction()
     }
-}
 
 fun buildRequest(
     request: Request,
     buildAction: RequestBuilder.() -> Unit,
-): Request {
-    return buildRequest(
+): Request =
+    buildRequest(
         request.method,
         request.url,
         request.headers,
         request.body,
         buildAction,
     )
-}
 
 private class RequestImpl(
     override val method: String,

@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.common
 
-enum class ReplCommand(val desc: String) {
+enum class ReplCommand(
+    val desc: String,
+) {
     HELP("Displays help information with details of the notebook version, line magics, and supported libraries."),
     CLASSPATH(
         "Displays the current classpath of your notebook environment, " +
@@ -18,7 +20,7 @@ enum class ReplCommand(val desc: String) {
             }
 
         private val enumValues =
-            values().associate {
+            entries.associate {
                 it.nameForUser to ReplEnum.CodeInsightValue(it, it.nameForUser, it.desc, type)
             }
 

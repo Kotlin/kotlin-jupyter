@@ -30,16 +30,20 @@ interface KernelPorts {
     fun serialize(): Map<String, JsonPrimitive>
 }
 
-class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
+class ZmqKernelPorts(
+    val ports: Map<JupyterSocketType, Int>,
+) : KernelPorts {
     companion object {
-        inline operator fun invoke(getSocketPort: (JupyterSocketType) -> Int) = ZmqKernelPorts(
-            ports = EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
-                JupyterSocketType.entries.forEach { socket ->
-                    val port = getSocketPort(socket)
-                    put(socket, port)
-                }
-            },
-        )
+        inline operator fun invoke(getSocketPort: (JupyterSocketType) -> Int) =
+            ZmqKernelPorts(
+                ports =
+                    EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
+                        JupyterSocketType.entries.forEach { socket ->
+                            val port = getSocketPort(socket)
+                            put(socket, port)
+                        }
+                    },
+            )
 
         fun tryDeserialize(jsonFields: Map<String, JsonPrimitive>): ZmqKernelPorts? {
             return ZmqKernelPorts { socket ->
@@ -52,20 +56,17 @@ class ZmqKernelPorts(val ports: Map<JupyterSocketType, Int>) : KernelPorts {
         private val JupyterSocketType.zmqPortField get() = "${jupyterName}_port"
     }
 
-    override fun serialize(): Map<String, JsonPrimitive> {
-        return ports.entries.associate { (socket, port) ->
+    override fun serialize(): Map<String, JsonPrimitive> =
+        ports.entries.associate { (socket, port) ->
             socket.zmqPortField to JsonPrimitive(port)
         }
-    }
 }
 
 data class KernelArgs(
     val cfgFile: File,
     val ownParams: KernelOwnParams,
 ) {
-    fun argsList(): List<String> {
-        return KernelArgumentsBuilder(this).argsList()
-    }
+    fun argsList(): List<String> = KernelArgumentsBuilder(this).argsList()
 }
 
 @Serializable(KernelJupyterParamsSerializer::class)
@@ -99,9 +100,10 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 
     override fun deserialize(decoder: Decoder): KernelJupyterParams {
         val map = utilSerializer.deserialize(decoder)
-        val ports = JupyterServerRunner.instances.firstNotNullOfOrNull {
-            it.tryDeserializePorts(map)
-        } ?: error("Unknown ports scheme")
+        val ports =
+            JupyterServerRunner.instances.firstNotNullOfOrNull {
+                it.tryDeserializePorts(map)
+            } ?: error("Unknown ports scheme")
 
         return KernelJupyterParams(
             signatureScheme = map["signature_scheme"]?.content ?: KERNEL_SIGNATURE_SCHEME,
@@ -162,18 +164,20 @@ fun createClientKotlinKernelConfig(
     replCompilerMode: ReplCompilerMode,
     extraCompilerArgs: List<String>,
 ) = KernelConfig(
-    jupyterParams = KernelJupyterParams(
-        signatureScheme = KERNEL_SIGNATURE_SCHEME,
-        signatureKey = signatureKey,
-        host = host,
-        ports = ports,
-        transport = KERNEL_TRANSPORT_SCHEME,
-    ),
-    ownParams = KernelOwnParams(
-        homeDir = null,
-        replCompilerMode = replCompilerMode,
-        extraCompilerArguments = extraCompilerArgs,
-    )
+    jupyterParams =
+        KernelJupyterParams(
+            signatureScheme = KERNEL_SIGNATURE_SCHEME,
+            signatureKey = signatureKey,
+            host = host,
+            ports = ports,
+            transport = KERNEL_TRANSPORT_SCHEME,
+        ),
+    ownParams =
+        KernelOwnParams(
+            homeDir = null,
+            replCompilerMode = replCompilerMode,
+            extraCompilerArguments = extraCompilerArgs,
+        ),
 )
 
 /**
@@ -199,20 +203,22 @@ fun createKotlinKernelConfig(
     clientType: String? = null,
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
 ) = KernelConfig(
-    jupyterParams = KernelJupyterParams(
-        signatureScheme = KERNEL_SIGNATURE_SCHEME,
-        signatureKey = signatureKey,
-        host = ANY_HOST_NAME,
-        ports = ports,
-        transport = KERNEL_TRANSPORT_SCHEME,
-    ),
-    ownParams = KernelOwnParams(
-        scriptClasspath = scriptClasspath,
-        homeDir = homeDir,
-        debugPort = debugPort,
-        clientType = clientType,
-        replCompilerMode = replCompilerMode,
-    )
+    jupyterParams =
+        KernelJupyterParams(
+            signatureScheme = KERNEL_SIGNATURE_SCHEME,
+            signatureKey = signatureKey,
+            host = ANY_HOST_NAME,
+            ports = ports,
+            transport = KERNEL_TRANSPORT_SCHEME,
+        ),
+    ownParams =
+        KernelOwnParams(
+            scriptClasspath = scriptClasspath,
+            homeDir = homeDir,
+            debugPort = debugPort,
+            clientType = clientType,
+            replCompilerMode = replCompilerMode,
+        ),
 )
 
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
@@ -243,9 +249,8 @@ fun KernelConfig.javaCmdLine(
     }
 }
 
-fun KernelArgs.getConfig(): KernelConfig {
-    return KernelConfig(
+fun KernelArgs.getConfig(): KernelConfig =
+    KernelConfig(
         jupyterParams = KernelJupyterParams.fromFile(cfgFile),
         ownParams = ownParams,
     )
-}

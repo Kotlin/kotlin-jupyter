@@ -17,13 +17,14 @@ import org.zeromq.ZMQ
 class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private val context: ZMQ.Context = ZMQ.context(1)
 
-    private fun connectClientSocket(socketInfo: JupyterZmqSocketInfo) = createZmqSocket(
-        testLoggerFactory,
-        socketInfo,
-        context,
-        kernelConfig,
-        JupyterSocketSide.CLIENT,
-    ).apply { connect() }
+    private fun connectClientSocket(socketInfo: JupyterZmqSocketInfo) =
+        createZmqSocket(
+            testLoggerFactory,
+            socketInfo,
+            context,
+            kernelConfig,
+            JupyterSocketSide.CLIENT,
+        ).apply { connect() }
 
     @Test
     fun testHeartbeat() {

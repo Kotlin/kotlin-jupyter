@@ -315,9 +315,12 @@ class ReplTests : AbstractSingleReplTest() {
             val result = repl.completeBlocking("val t = id_d", 12)
             when (repl.compilerMode) {
                 ReplCompilerMode.K1 -> {
-                    result.getOrFail().sortedRaw().any {
-                        it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
-                    }.shouldBeTrue()
+                    result
+                        .getOrFail()
+                        .sortedRaw()
+                        .any {
+                            it.text == "id_deprecated(" && it.deprecationLevel == DeprecationLevel.WARNING
+                        }.shouldBeTrue()
                 }
                 ReplCompilerMode.K2 -> {
                     // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
@@ -387,13 +390,15 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe Unit
 
         val actualErrors =
-            repl.listErrorsBlocking(
-                """
-                import kotlin.time.*
-                @OptIn(ExperimentalTime::class)
-                val mark = TimeSource.Monotonic.markNow()
-                """.trimIndent(),
-            ).errors.toList()
+            repl
+                .listErrorsBlocking(
+                    """
+                    import kotlin.time.*
+                    @OptIn(ExperimentalTime::class)
+                    val mark = TimeSource.Monotonic.markNow()
+                    """.trimIndent(),
+                ).errors
+                .toList()
 
         actualErrors.shouldBeEmpty()
     }
@@ -770,8 +775,10 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         ).let { result ->
             val exception =
-                result.shouldBeInstanceOf<EvalResultEx.Error>()
-                    .error.shouldBeInstanceOf<ReplEvalRuntimeException>()
+                result
+                    .shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error
+                    .shouldBeInstanceOf<ReplEvalRuntimeException>()
             val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
             errorReply.name shouldBe unwrappedExceptionClassName
             errorReply.value shouldBe message
@@ -788,8 +795,10 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         ).let { result ->
             val exception =
-                result.shouldBeInstanceOf<EvalResultEx.Error>()
-                    .error.shouldBeInstanceOf<ReplUnwrappedExceptionImpl>()
+                result
+                    .shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error
+                    .shouldBeInstanceOf<ReplUnwrappedExceptionImpl>()
             val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
             errorReply.name shouldBe unwrappedExceptionClassName
             errorReply.value shouldBe message
@@ -806,8 +815,10 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         ).let { result ->
             val exception =
-                result.shouldBeInstanceOf<EvalResultEx.Error>()
-                    .error.shouldBeInstanceOf<ReplLibraryException>()
+                result
+                    .shouldBeInstanceOf<EvalResultEx.Error>()
+                    .error
+                    .shouldBeInstanceOf<ReplLibraryException>()
             val errorReply = exception.toExecuteErrorReply(ExecutionCount(1))
             errorReply.name shouldBe ReplLibraryException::class.qualifiedName
             errorReply.value shouldBe "The problem is found in one of the loaded libraries: check library init codes"

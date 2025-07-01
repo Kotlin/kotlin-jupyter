@@ -25,13 +25,12 @@ object DefaultResolutionInfoProviderFactory : ResolutionInfoProviderFactory {
     override fun create(
         httpUtil: LibraryHttpUtil,
         loggerFactory: KernelLoggerFactory,
-    ): ResolutionInfoProvider {
-        return StandardResolutionInfoProvider(
+    ): ResolutionInfoProvider =
+        StandardResolutionInfoProvider(
             loggerFactory,
             AbstractLibraryResolutionInfo.ByClasspath,
             httpUtil,
         )
-    }
 }
 
 fun getDefaultResolutionInfoSwitcher(

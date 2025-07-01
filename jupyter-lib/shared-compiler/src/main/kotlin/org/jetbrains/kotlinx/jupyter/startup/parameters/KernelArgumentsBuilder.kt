@@ -7,7 +7,7 @@ class KernelArgumentsBuilder(
     private val ownParamsBuilder: KernelOwnParamsBuilder = KernelOwnParamsBuilder(),
     private var cfgFile: File? = null,
 ) {
-    constructor(kernelArgs: KernelArgs): this(
+    constructor(kernelArgs: KernelArgs) : this(
         KernelOwnParamsBuilder(kernelArgs.ownParams),
         kernelArgs.cfgFile,
     )
@@ -16,10 +16,11 @@ class KernelArgumentsBuilder(
      * List of bound parameters that connect parameter definitions with their property references.
      * This allows for automatic parsing and serialization of command-line arguments.
      */
-    private val boundParameters = buildList {
-        addAll(ownParamsBuilder.boundParameters)
-        add(MutableBoundKernelParameter(configFileParameter, ::cfgFile))
-    }
+    private val boundParameters =
+        buildList {
+            addAll(ownParamsBuilder.boundParameters)
+            add(MutableBoundKernelParameter(configFileParameter, ::cfgFile))
+        }
 
     /**
      * Parses command-line arguments and updates the builder's properties accordingly.
@@ -48,8 +49,5 @@ class KernelArgumentsBuilder(
      *
      * @return List of command-line arguments representing the current state
      */
-    fun argsList(): List<String> {
-        return serializeKernelParameters(boundParameters)
-    }
+    fun argsList(): List<String> = serializeKernelParameters(boundParameters)
 }
-

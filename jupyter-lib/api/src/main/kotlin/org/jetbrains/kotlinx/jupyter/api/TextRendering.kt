@@ -14,10 +14,11 @@ fun interface TextRenderer {
     ): String?
 }
 
-class TextRendererWithDescription(private val description: String, action: TextRenderer) : TextRenderer by action {
-    override fun toString(): String {
-        return "Text renderer: $description"
-    }
+class TextRendererWithDescription(
+    private val description: String,
+    action: TextRenderer,
+) : TextRenderer by action {
+    override fun toString(): String = "Text renderer: $description"
 }
 
 data class TextRendererWithPriority(
@@ -143,15 +144,16 @@ object TextRenderers {
         multiline: Boolean = false,
         openBracket: String = "[",
         closeBracket: String = "]",
-    ): String {
-        return buildString {
+    ): String =
+        buildString {
             append("$title$openBracket")
             if (multiline) {
                 append('\n')
             }
             val collection = iterable as? Collection<*>
             for ((i, el) in iterable.withIndex()) {
-                processor.render(el)
+                processor
+                    .render(el)
                     .let { rel -> if (multiline) rel.indent() else rel }
                     .let { append(it) }
                 if (collection == null || i < collection.size - 1) {
@@ -162,7 +164,6 @@ object TextRenderers {
             }
             append(closeBracket)
         }
-    }
 
     private fun renderMap(
         processor: TextRenderersProcessor,
@@ -173,19 +174,21 @@ object TextRenderers {
         multiline: Boolean = false,
         openBracket: String = "{",
         closeBracket: String = "}",
-    ): String {
-        return buildString {
+    ): String =
+        buildString {
             append("$title$openBracket")
             if (multiline) {
                 append('\n')
             }
             var i = 0
             for ((k, v) in map) {
-                processor.render(k)
+                processor
+                    .render(k)
                     .let { rk -> if (multiline) rk.indent() else rk }
                     .let { append(it) }
                 append(arrowString)
-                processor.render(v)
+                processor
+                    .render(v)
                     .let { rv -> if (multiline) rv.indent(exceptFirst = true) else rv }
                     .let { append(it) }
                 if (i < map.size - 1) {
@@ -197,7 +200,6 @@ object TextRenderers {
             }
             append(closeBracket)
         }
-    }
 
     private fun buildObjectMapByJavaFields(obj: Any): Map<String, Any?> {
         val clazz: Class<*> = obj::class.java
@@ -207,39 +209,35 @@ object TextRenderers {
     private fun buildObjectMapByJavaFields(
         obj: Any,
         fields: Array<Field>,
-    ): Map<String, Any?> {
-        return buildAbstractObjectMap(obj, fields.toList(), { it.name }) { f, o ->
+    ): Map<String, Any?> =
+        buildAbstractObjectMap(obj, fields.toList(), { it.name }) { f, o ->
             f.isAccessible = true
             f.get(o)
         }
-    }
 
     private fun buildObjectMapByKotlinProperties(
         obj: Any,
         clazz: KClass<*>,
-    ): Map<String, Any?> {
-        return buildObjectMapByKotlinProperties(obj, clazz.memberProperties)
-    }
+    ): Map<String, Any?> = buildObjectMapByKotlinProperties(obj, clazz.memberProperties)
 
     private fun buildObjectMapByKotlinProperties(
         obj: Any,
         properties: Collection<KProperty1<out Any, *>>,
-    ): Map<String, Any?> {
-        return buildAbstractObjectMap(obj, properties, { it.name }) { p, o ->
+    ): Map<String, Any?> =
+        buildAbstractObjectMap(obj, properties, { it.name }) { p, o ->
             @Suppress("UNCHECKED_CAST")
             (p as KProperty1<Any, Any?>)
             p.isAccessible = true
             p.get(o)
         }
-    }
 
     private fun <P> buildAbstractObjectMap(
         obj: Any,
         abstractProps: Iterable<P>,
         nameGetter: (P) -> String,
         valueGetter: (P, Any) -> Any?,
-    ): Map<String, Any?> {
-        return hashMapOf<String, Any?>().apply {
+    ): Map<String, Any?> =
+        hashMapOf<String, Any?>().apply {
             for (prop in abstractProps) {
                 val name: String = nameGetter(prop)
                 val value: Any? =
@@ -253,7 +251,6 @@ object TextRenderers {
                 put(name, value)
             }
         }
-    }
 }
 
 fun TextRenderersProcessor.registerDefaultRenderers() {

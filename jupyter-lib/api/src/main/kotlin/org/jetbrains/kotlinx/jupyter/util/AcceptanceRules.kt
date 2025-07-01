@@ -19,9 +19,7 @@ interface FlagAcceptanceRule<T> : AcceptanceRule<T> {
 
     fun appliesTo(obj: T): Boolean
 
-    override fun accepts(obj: T): Boolean? {
-        return if (appliesTo(obj)) acceptsFlag else null
-    }
+    override fun accepts(obj: T): Boolean? = if (appliesTo(obj)) acceptsFlag else null
 }
 
 /**
@@ -31,9 +29,7 @@ class NameAcceptanceRule(
     override val acceptsFlag: Boolean,
     private val appliesPredicate: (TypeName) -> Boolean,
 ) : FlagAcceptanceRule<TypeName> {
-    override fun appliesTo(obj: TypeName): Boolean {
-        return appliesPredicate(obj)
-    }
+    override fun appliesTo(obj: TypeName): Boolean = appliesPredicate(obj)
 }
 
 /**
@@ -53,7 +49,8 @@ class NameAcceptanceRule(
 class PatternNameAcceptanceRule(
     override val acceptsFlag: Boolean,
     val pattern: String,
-) : FlagAcceptanceRule<TypeName>, VariablesSubstitutionAware<PatternNameAcceptanceRule> {
+) : FlagAcceptanceRule<TypeName>,
+    VariablesSubstitutionAware<PatternNameAcceptanceRule> {
     private val regex by lazy {
         buildString {
             var i = 0
@@ -83,9 +80,7 @@ class PatternNameAcceptanceRule(
         }.toRegex()
     }
 
-    override fun appliesTo(obj: TypeName): Boolean {
-        return regex.matches(obj)
-    }
+    override fun appliesTo(obj: TypeName): Boolean = regex.matches(obj)
 
     override fun replaceVariables(mapping: Map<String, String>): PatternNameAcceptanceRule {
         val newPattern = replaceVariables(pattern, mapping)
@@ -100,14 +95,8 @@ class PatternNameAcceptanceRule(
  * 2) doesn't accept [obj] if latest not-null acceptance result is `false`
  * 3) returns `null` if all acceptance results are `null` or the iterable is empty
  */
-fun <T> Iterable<AcceptanceRule<T>>.accepts(obj: T): Boolean? {
-    return unionAcceptance(map { it.accepts(obj) })
-}
+fun <T> Iterable<AcceptanceRule<T>>.accepts(obj: T): Boolean? = unionAcceptance(map { it.accepts(obj) })
 
-fun unionAcceptance(results: Iterable<Boolean?>): Boolean? {
-    return results.filterNotNull().lastOrNull()
-}
+fun unionAcceptance(results: Iterable<Boolean?>): Boolean? = results.filterNotNull().lastOrNull()
 
-fun unionAcceptance(vararg result: Boolean?): Boolean? {
-    return unionAcceptance(result.toList())
-}
+fun unionAcceptance(vararg result: Boolean?): Boolean? = unionAcceptance(result.toList())

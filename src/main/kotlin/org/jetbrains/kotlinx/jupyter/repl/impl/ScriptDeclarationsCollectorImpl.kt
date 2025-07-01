@@ -38,9 +38,7 @@ class ScriptDeclarationsCollectorImpl : ScriptDeclarationsCollectorInternal {
             }
     }
 
-    override fun getLastSnippetDeclarations(): List<DeclarationInfo> {
-        return lastDeclarations
-    }
+    override fun getLastSnippetDeclarations(): List<DeclarationInfo> = lastDeclarations
 
     class DeclarationInfoImpl(
         override val name: String?,

@@ -7,7 +7,10 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.libraries.ChainedLibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 
-class ToEmptyLibraryResolver(parent: LibraryResolver?, private val resolveToEmpty: LibraryNameFilter) : ChainedLibraryResolver(parent) {
+class ToEmptyLibraryResolver(
+    parent: LibraryResolver?,
+    private val resolveToEmpty: LibraryNameFilter,
+) : ChainedLibraryResolver(parent) {
     override fun tryResolve(
         reference: LibraryReference,
         arguments: List<Variable>,

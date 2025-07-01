@@ -18,10 +18,9 @@ class ResolutionInfoSwitcher<T>(
     companion object {
         // Used in Kotlin Jupyter plugin for IDEA
         @Suppress("unused")
-        fun noop(provider: ResolutionInfoProvider): ResolutionInfoSwitcher<DefaultInfoSwitch> {
-            return ResolutionInfoSwitcher(provider, DefaultInfoSwitch.GIT_REFERENCE) {
+        fun noop(provider: ResolutionInfoProvider): ResolutionInfoSwitcher<DefaultInfoSwitch> =
+            ResolutionInfoSwitcher(provider, DefaultInfoSwitch.GIT_REFERENCE) {
                 provider.fallback
             }
-        }
     }
 }

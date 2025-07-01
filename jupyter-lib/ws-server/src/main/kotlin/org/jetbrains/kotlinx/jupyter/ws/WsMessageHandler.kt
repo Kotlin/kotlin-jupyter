@@ -30,14 +30,15 @@ internal class WsMessageHandler(
         val offsets = IntArray(buffersAmount + 1) { intBuffer.get() }
 
         // using the total message length as the final offset for the last offset pair in the `zipWithNext` call.
-        val buffers = (offsets.asSequence() + message.limit())
-            .zipWithNext { start, end ->
-                message.position(start)
-                ByteArray(end - start)
-                    .also {
-                        message.get(it)
-                    }
-            }.iterator()
+        val buffers =
+            (offsets.asSequence() + message.limit())
+                .zipWithNext { start, end ->
+                    message.position(start)
+                    ByteArray(end - start)
+                        .also {
+                            message.get(it)
+                        }
+                }.iterator()
 
         // the first buffer is actually the main message content
         val message = buffers.next().decodeToString()
@@ -46,19 +47,24 @@ internal class WsMessageHandler(
         handleMessage(message = message, byteBuffers = buffers.asSequence().toList())
     }
 
-    private fun handleMessage(message: String, byteBuffers: List<ByteArray>) {
+    private fun handleMessage(
+        message: String,
+        byteBuffers: List<ByteArray>,
+    ) {
         val json = Json.decodeFromString<JsonElement>(message).jsonObject
-        val channel = json[CHANNEL_FIELD_NAME]?.jsonPrimitive?.content ?: run {
-            logger.warn("No channel specified.")
-            return
-        }
+        val channel =
+            json[CHANNEL_FIELD_NAME]?.jsonPrimitive?.content ?: run {
+                logger.warn("No channel specified.")
+                return
+            }
 
-        val socketType = JupyterSocketType.entries.firstOrNull {
-            it.jupyterName == channel
-        } ?: run {
-            logger.warn("Unknown channel: $channel")
-            return
-        }
+        val socketType =
+            JupyterSocketType.entries.firstOrNull {
+                it.jupyterName == channel
+            } ?: run {
+                logger.warn("Unknown channel: $channel")
+                return
+            }
 
         val rawMessage = makeRawMessage(byteBuffers, json)
         onMessageReceive(socketType, rawMessage)

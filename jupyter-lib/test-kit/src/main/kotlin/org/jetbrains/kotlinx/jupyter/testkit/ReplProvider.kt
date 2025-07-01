@@ -48,11 +48,10 @@ fun interface ReplProvider {
         }
 
         @Suppress("unused")
-        fun forLibrariesTesting(libraries: Collection<String>): ReplProvider {
-            return withDefaultClasspathResolution(
+        fun forLibrariesTesting(libraries: Collection<String>): ReplProvider =
+            withDefaultClasspathResolution(
                 shouldResolveToEmpty = { it in libraries },
             )
-        }
 
         private fun ReplForJupyter.initializeWithCurrentClasspath() {
             eval { librariesScanner.addLibrariesFromClassLoader(currentClassLoader, this, notebook) }

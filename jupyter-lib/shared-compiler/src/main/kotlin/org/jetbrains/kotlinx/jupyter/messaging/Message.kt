@@ -31,22 +31,25 @@ data class Message(
             MessageFormat.encodeToString(data)
 }
 
-fun RawMessage.toMessage(): Message {
-    return Message(id, MessageFormat.decodeFromJsonElement(data))
-}
+fun RawMessage.toMessage(): Message = Message(id, MessageFormat.decodeFromJsonElement(data))
 
-fun Message.toRawMessage(): RawMessage = makeRawMessage(
-    id = id,
-    dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
-)
+fun Message.toRawMessage(): RawMessage =
+    makeRawMessage(
+        id = id,
+        dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
+    )
 
-fun makeRawMessage(id: List<ByteArray>, dataJson: JsonObject): RawMessage = RawMessageImpl(
-    id = id,
-    header = dataJson["header"]!!.jsonObject,
-    parentHeader = dataJson["parent_header"] as? JsonObject,
-    metadata = dataJson["metadata"] as? JsonObject,
-    content = dataJson["content"]!!,
-)
+fun makeRawMessage(
+    id: List<ByteArray>,
+    dataJson: JsonObject,
+): RawMessage =
+    RawMessageImpl(
+        id = id,
+        header = dataJson["header"]!!.jsonObject,
+        parentHeader = dataJson["parent_header"] as? JsonObject,
+        metadata = dataJson["metadata"] as? JsonObject,
+        content = dataJson["content"]!!,
+    )
 
 fun makeReplyMessage(
     msg: RawMessage,
@@ -86,8 +89,8 @@ fun makeHeader(
     type: MessageType,
     sessionId: String?,
     username: String?,
-): MessageHeader {
-    return MessageHeader(
+): MessageHeader =
+    MessageHeader(
         UUID.randomUUID().toString(),
         type,
         sessionId,
@@ -95,7 +98,6 @@ fun makeHeader(
         PROTOCOL_VERSION,
         ISO8601DateNow,
     )
-}
 
 fun JupyterSendSocket.sendMessage(msg: Message) {
     sendRawMessage(msg.toRawMessage())

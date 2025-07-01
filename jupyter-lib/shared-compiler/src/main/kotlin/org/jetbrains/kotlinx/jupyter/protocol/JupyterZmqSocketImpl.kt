@@ -29,7 +29,9 @@ fun interface RawMessageCallback {
     operator fun invoke(msg: RawMessage)
 }
 
-class CallbackHandler(private val logger: Logger) {
+class CallbackHandler(
+    private val logger: Logger,
+) {
     private val callbacks = mutableSetOf<RawMessageCallback>()
 
     fun addCallback(callback: RawMessageCallback) {
@@ -61,7 +63,8 @@ class JupyterZmqSocketImpl(
     socket: ZMQ.Socket,
     private val address: String,
     private val hmac: HMAC,
-) : Closeable, JupyterZmqSocket {
+) : Closeable,
+    JupyterZmqSocket {
     private val logger = loggerFactory.getLogger(this::class)
     private val lock = ReentrantLock()
 
@@ -92,8 +95,7 @@ class JupyterZmqSocketImpl(
 
         val properties = listOf(RawMessage::header, RawMessage::parentHeader, RawMessage::metadata, RawMessage::content)
         val signableMsg =
-            properties.map {
-                    prop ->
+            properties.map { prop ->
                 prop.get(msg)?.let { MessageFormat.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes
             }
         zmqSocket.sendMore(hmac(signableMsg))
@@ -104,8 +106,8 @@ class JupyterZmqSocketImpl(
     }
 
     @Throws(InterruptedException::class)
-    override fun receiveRawMessage(): RawMessage? {
-        return try {
+    override fun receiveRawMessage(): RawMessage? =
+        try {
             val msg =
                 lock.withLock {
                     doReceiveRawMessage()
@@ -116,7 +118,6 @@ class JupyterZmqSocketImpl(
             logger.error("[$name] ${e.message}")
             null
         }
-    }
 
     @Throws(InterruptedException::class)
     private fun doReceiveRawMessage(): RawMessage {
@@ -188,8 +189,7 @@ fun openServerZmqSocket(
     socketInfo: JupyterZmqSocketInfo,
     context: ZMQ.Context,
     kernelConfig: KernelConfig,
-): JupyterZmqSocket {
-    return createZmqSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
+): JupyterZmqSocket =
+    createZmqSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
         bind()
     }
-}

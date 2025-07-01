@@ -48,7 +48,5 @@ class CssLibraryResourcesProcessor(
     override fun wrapLibrary(
         resource: LibraryResource,
         classLoader: ClassLoader,
-    ): String {
-        return resource.bundles.joinToString("\n") { loadCssAsText(it, classLoader) }
-    }
+    ): String = resource.bundles.joinToString("\n") { loadCssAsText(it, classLoader) }
 }

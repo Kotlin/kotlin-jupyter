@@ -44,13 +44,12 @@ class CompiledScriptsSerializer {
         }
     }
 
-    private fun deserializeCompiledScripts(data: SerializedCompiledScriptsData): Sequence<Pair<SerializedCompiledScript, ByteArray>> {
-        return sequence {
+    private fun deserializeCompiledScripts(data: SerializedCompiledScriptsData): Sequence<Pair<SerializedCompiledScript, ByteArray>> =
+        sequence {
             for (script in data.scripts) {
                 yield(script to decoder.decode(script.data))
             }
         }
-    }
 
     /**
      * Deserializes [data] containing information about compiled scripts, saves

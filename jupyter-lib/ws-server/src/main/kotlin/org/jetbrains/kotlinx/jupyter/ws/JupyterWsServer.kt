@@ -28,7 +28,9 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
-class WsKernelPorts(val port: Int) : KernelPorts {
+class WsKernelPorts(
+    val port: Int,
+) : KernelPorts {
     override fun serialize(): Map<String, JsonPrimitive> = mapOf("ws_port" to JsonPrimitive(port))
 }
 
@@ -46,59 +48,72 @@ class JupyterWsServerRunner : JupyterServerRunner {
     ) {
         val socketsMap = EnumMap<JupyterSocketType, JupyterWsSocketHolder>(JupyterSocketType::class.java)
 
-        val wsServer: JupyterWsServer = run {
-            val jupyterParams = config.jupyterParams
-            val ports = jupyterParams.ports
-            require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
-            val address = if (jupyterParams.host == ANY_HOST_NAME) {
-                InetSocketAddress(/* port = */ ports.port) // InetSocketAddress does not support "*" as a hostname
-            } else {
-                InetSocketAddress(/* hostname = */ jupyterParams.host, /* port = */ ports.port)
+        val wsServer: JupyterWsServer =
+            run {
+                val jupyterParams = config.jupyterParams
+                val ports = jupyterParams.ports
+                require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
+                val address =
+                    if (jupyterParams.host == ANY_HOST_NAME) {
+                        // InetSocketAddress does not support "*" as a hostname
+                        InetSocketAddress(
+                            // port =
+                            ports.port,
+                        )
+                    } else {
+                        InetSocketAddress(
+                            // hostname =
+                            jupyterParams.host,
+                            // port =
+                            ports.port,
+                        )
+                    }
+
+                JupyterWsServer(
+                    address = address,
+                    loggerFactory = loggerFactory,
+                    onMessageReceive = { type: JupyterSocketType, message: RawMessage ->
+                        socketsMap[type]?.socket?.messageReceived(message)
+                            ?: throw RuntimeException("Unknown socket type: $type")
+                    },
+                ).apply { isReuseAddr = true }
             }
 
-            JupyterWsServer(
-                address = address,
-                loggerFactory = loggerFactory,
-                onMessageReceive = { type: JupyterSocketType, message: RawMessage ->
-                    socketsMap[type]?.socket?.messageReceived(message)
-                        ?: throw RuntimeException("Unknown socket type: $type")
-                },
-            ).apply { isReuseAddr = true }
-        }
-
-        fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket {
-            return WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+        fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket =
+            WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
                 socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = true)
             }
-        }
 
-        fun createSendSocketWrapper(type: JupyterSocketType): JupyterSendSocket {
-            return WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+        fun createSendSocketWrapper(type: JupyterSocketType): JupyterSendSocket =
+            WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
                 socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = false)
             }
-        }
 
-        val sockets = object : JupyterServerImplSockets {
-            override val shell = createCallbackBasedSocketWrapper(JupyterSocketType.SHELL)
-            override val control = createCallbackBasedSocketWrapper(JupyterSocketType.CONTROL)
-            override val iopub = createSendSocketWrapper(JupyterSocketType.IOPUB)
-            override val stdin = createCallbackBasedSocketWrapper(JupyterSocketType.STDIN).sendReceive()
+        val sockets =
+            object : JupyterServerImplSockets {
+                override val shell = createCallbackBasedSocketWrapper(JupyterSocketType.SHELL)
+                override val control = createCallbackBasedSocketWrapper(JupyterSocketType.CONTROL)
+                override val iopub = createSendSocketWrapper(JupyterSocketType.IOPUB)
+                override val stdin = createCallbackBasedSocketWrapper(JupyterSocketType.STDIN).sendReceive()
 
-            init {
-                // creating and registering heartbeat
-                createCallbackBasedSocketWrapper(JupyterSocketType.HB)
-                    .also { socket -> socket.onRawMessage(socket::sendRawMessage) }
+                init {
+                    // creating and registering heartbeat
+                    createCallbackBasedSocketWrapper(JupyterSocketType.HB)
+                        .also { socket -> socket.onRawMessage(socket::sendRawMessage) }
+                }
             }
-        }
 
         val closeables = setup(sockets)
 
         try {
             val mainThread = Thread.currentThread()
-            val socketListenerThreads = socketsMap.values.mapNotNull {
-                it.takeIf(JupyterWsSocketHolder::processIncomingMessages)
-                    ?.socket?.startListening(mainListenerThread = mainThread)
-            }
+            val socketListenerThreads =
+                socketsMap.values.mapNotNull {
+                    it
+                        .takeIf(JupyterWsSocketHolder::processIncomingMessages)
+                        ?.socket
+                        ?.startListening(mainListenerThread = mainThread)
+                }
             wsServer.run()
             try {
                 socketListenerThreads.forEach {
@@ -119,7 +134,10 @@ class JupyterWsServerRunner : JupyterServerRunner {
         }
     }
 
-    private class JupyterWsSocketHolder(val socket: WsCallbackBasedSocketQueued, val processIncomingMessages: Boolean)
+    private class JupyterWsSocketHolder(
+        val socket: WsCallbackBasedSocketQueued,
+        val processIncomingMessages: Boolean,
+    )
 }
 
 private class WsCallbackBasedSocketQueued(
@@ -135,8 +153,8 @@ private class WsCallbackBasedSocketQueued(
     }
 
     /** Starts a new thread listening for incoming messages. Returns this new thread. */
-    fun startListening(mainListenerThread: Thread): Thread {
-        return thread {
+    fun startListening(mainListenerThread: Thread): Thread =
+        thread {
             try {
                 while (true) {
                     val message = messages.take()
@@ -149,7 +167,6 @@ private class WsCallbackBasedSocketQueued(
                 logger.error("Error during message processing", e)
             }
         }
-    }
 }
 
 private class JupyterWsServer(
@@ -163,11 +180,19 @@ private class JupyterWsServer(
 
     val currentWebSockets: Iterable<WebSocket> get() = _currentWebSockets
 
-    override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
+    override fun onOpen(
+        conn: WebSocket,
+        handshake: ClientHandshake,
+    ) {
         _currentWebSockets.add(conn)
     }
 
-    override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
+    override fun onClose(
+        conn: WebSocket,
+        code: Int,
+        reason: String?,
+        remote: Boolean,
+    ) {
         _currentWebSockets.remove(conn)
     }
 
@@ -181,7 +206,10 @@ private class JupyterWsServer(
         message: ByteBuffer,
     ): Unit = messageHandler.onMessage(message)
 
-    override fun onError(conn: WebSocket?, ex: Exception?) {
+    override fun onError(
+        conn: WebSocket?,
+        ex: Exception?,
+    ) {
         logger.error("Error in WebSocket connection", ex)
     }
 

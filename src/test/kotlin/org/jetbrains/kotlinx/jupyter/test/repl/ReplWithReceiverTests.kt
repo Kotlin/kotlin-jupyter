@@ -12,7 +12,13 @@ class ReplWithReceiverTests : AbstractReplTest() {
     @Test
     fun testReplWithReceiver() {
         val value = 5
-        val cp = classpath + File(ConstReceiver::class.java.protectionDomain.codeSource.location.toURI().path)
+        val cp =
+            classpath +
+                File(
+                    ConstReceiver::class.java.protectionDomain.codeSource.location
+                        .toURI()
+                        .path,
+                )
         val repl =
             createRepl(
                 httpUtil,

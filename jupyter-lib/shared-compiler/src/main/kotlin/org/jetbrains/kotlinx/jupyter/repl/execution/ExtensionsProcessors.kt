@@ -33,13 +33,9 @@ abstract class AbstractExtensionsProcessor<T : Any>(
         extensions.clear()
     }
 
-    override fun registeredExtensions(): Collection<T> {
-        return extensions.elements()
-    }
+    override fun registeredExtensions(): Collection<T> = extensions.elements()
 
-    override fun registeredExtensionsWithPriority(): List<Pair<T, Int>> {
-        return extensions.elementsWithPriority()
-    }
+    override fun registeredExtensionsWithPriority(): List<Pair<T, Int>> = extensions.elementsWithPriority()
 }
 
 class BeforeCellExecutionsProcessor : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
@@ -77,8 +73,8 @@ class ShutdownExecutionsProcessor(
 ) : AbstractExtensionsProcessor<ExecutionCallback<*>>() {
     private val logger = loggerFactory.getLogger(this::class)
 
-    fun process(executor: CellExecutor): List<ShutdownEvalResult> {
-        return extensions.map {
+    fun process(executor: CellExecutor): List<ShutdownEvalResult> =
+        extensions.map {
             val res =
                 logger.catchAll {
                     rethrowAsLibraryException(LibraryProblemPart.SHUTDOWN) {
@@ -87,5 +83,4 @@ class ShutdownExecutionsProcessor(
                 }
             ShutdownEvalResult(res)
         }
-    }
 }
