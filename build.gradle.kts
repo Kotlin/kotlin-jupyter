@@ -270,8 +270,8 @@ kotlinPublications {
     fairDokkaJars.set(false)
 
     sonatypeSettings(
-        typedProperty("kds.sonatype.user"),
-        typedProperty("kds.sonatype.password"),
+        typedProperty("kds.sonatype.central.username"),
+        typedProperty("kds.sonatype.central.password"),
         "kotlin-jupyter project, v. ${project.version}",
     )
 
