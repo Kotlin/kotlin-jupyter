@@ -315,13 +315,13 @@ class ReplForJupyterImpl(
 
     private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
         when (compilerMode) {
-            K1 -> {
+            ReplCompilerMode.K1 -> {
                 JupyterCompilerWithCompletion.createK1Compiler(
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
             }
-            K2 -> {
+            ReplCompilerMode.K2 -> {
                 JupyterCompilerWithCompletion.createK2Compiler(
                     rootDisposable,
                     compilerConfiguration,
@@ -333,8 +333,8 @@ class ReplForJupyterImpl(
 
     private val evaluator: KernelReplEvaluator by lazy {
         when (compilerMode) {
-            K1 -> BasicJvmReplEvaluator()
-            K2 -> K2ReplEvaluator()
+            ReplCompilerMode.K1 -> BasicJvmReplEvaluator()
+            ReplCompilerMode.K2 -> K2ReplEvaluator()
         }
     }
 

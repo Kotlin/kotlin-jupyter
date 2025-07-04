@@ -17,7 +17,6 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
@@ -28,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings

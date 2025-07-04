@@ -1,9 +1,9 @@
-package org.jetbrains.kotlinx.jupyter.messaging
+package org.jetbrains.kotlinx.jupyter.protocol.messaging
 
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
 import java.io.Closeable
 
 /**

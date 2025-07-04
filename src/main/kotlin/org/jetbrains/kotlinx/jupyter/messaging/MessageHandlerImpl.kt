@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import java.io.Closeable
 
