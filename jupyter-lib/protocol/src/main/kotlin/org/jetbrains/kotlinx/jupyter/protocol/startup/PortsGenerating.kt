@@ -1,6 +1,6 @@
-package org.jetbrains.kotlinx.jupyter.startup
+package org.jetbrains.kotlinx.jupyter.protocol.startup
 
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import java.io.Closeable
 import java.io.IOException
 import java.net.DatagramSocket
@@ -70,8 +70,3 @@ fun PortsGenerator.Companion.create(
 ) = PortsGenerator {
     randomIntsInRange(portRangeStart, portRangeEnd)
 }
-
-fun createRandomZmqKernelPorts() =
-    PortsGenerator
-        .create(32768, 65536)
-        .let { generator -> ZmqKernelPorts { generator.randomPort() } }

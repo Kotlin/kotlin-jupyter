@@ -1,15 +1,17 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.getLogger
-import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocketImpl
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
-import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.zeromq.ZMQ
 import java.io.Closeable
 
@@ -20,20 +22,10 @@ internal class JupyterZmqServerImplSockets(
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)
     private val zmqContext: ZMQ.Context = ZMQ.context(1)
+    private val hmac by lazy { config.jupyterParams.createHmac() }
 
     private val socketsToClose = mutableListOf<Closeable>()
     private val socketsToBind = mutableListOf<JupyterZmqSocket>()
-
-    private fun createSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, config, JupyterSocketSide.SERVER)
-            .also { socketsToBind.add(it) }
-            .also { socketsToClose.add(it) }
-
-    private fun createCallbackBasedSocket(socketInfo: JupyterZmqSocketInfo): JupyterCallbackBasedSocketImpl =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, config, JupyterSocketSide.SERVER)
-            .also { socketsToBind.add(it) }
-            .callbackBased(logger)
-            .also { socketsToClose.add(it) }
 
     val heartbeat = createSocket(JupyterZmqSocketInfo.HB)
     override val shell: JupyterCallbackBasedSocketImpl = createCallbackBasedSocket(JupyterZmqSocketInfo.SHELL)
@@ -58,4 +50,17 @@ internal class JupyterZmqServerImplSockets(
             catchIndependently { zmqContext.close() }
         }
     }
+
+    private fun createSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
+        createAndBindSocket(socketInfo)
+            .also { socketsToClose.add(it) }
+
+    private fun createCallbackBasedSocket(socketInfo: JupyterZmqSocketInfo): JupyterCallbackBasedSocketImpl =
+        createAndBindSocket(socketInfo)
+            .callbackBased(logger)
+            .also { socketsToClose.add(it) }
+
+    private fun createAndBindSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
+        createZmqSocket(loggerFactory, socketInfo, zmqContext, config.jupyterParams, JupyterSocketSide.SERVER, hmac)
+            .also { socketsToBind.add(it) }
 }

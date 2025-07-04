@@ -1,16 +1,17 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import java.io.Closeable
 import java.util.ServiceLoader
 
 interface JupyterServerRunner {
     /**
-     * Tries to deserialize appropriate for this runner [KernelPorts]
-     * from the JSON fields from the config file (see [KernelJupyterParams]).
-     * Needs to be symmetric with [KernelPorts.serialize] implementation of the result.
+     * Tries to deserialize appropriate for this runner [org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts]
+     * from the JSON fields from the config file (see [org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams]).
+     * Needs to be symmetric with [org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts.serialize] implementation of the result.
      * Returns null if the ports supported by this runner cannot be deserialized from the given JSON fields.
      */
     fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts?

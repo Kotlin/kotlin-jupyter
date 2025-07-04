@@ -1,20 +1,20 @@
 package org.jetbrains.kotlinx.jupyter.ws
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSocketManager
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSockets
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSocketManager
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSockets
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 
 class JupyterWsClientReceiveSocketManager(
     loggerFactory: KernelLoggerFactory,
 ) : JupyterClientReceiveSocketManager {
     private val delegate = JupyterWsClientSocketManager(loggerFactory)
 
-    override fun open(config: KernelConfig): JupyterClientReceiveSockets = WsClientReceiveSockets(delegate.open(config))
+    override fun open(configParams: KernelJupyterParams): JupyterClientReceiveSockets = WsClientReceiveSockets(delegate.open(configParams))
 
     private class WsClientReceiveSockets(
         private val delegate: JupyterClientSockets,

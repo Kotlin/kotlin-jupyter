@@ -3,8 +3,9 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import org.jetbrains.kotlinx.jupyter.util.Provider
 

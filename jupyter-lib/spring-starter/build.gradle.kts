@@ -52,6 +52,7 @@ dependencies {
     springKernel(projects.wsServer) { isTransitive = false }
     springKernel(projects.api) { isTransitive = false }
     springKernel(projects.lib) { isTransitive = false }
+    springKernel(projects.protocolApi) { isTransitive = false }
     springKernel(projects.commonDependencies) { isTransitive = false }
     springKernel(projects.sharedCompiler) { isTransitive = false }
     springKernel(projects.springStarter) { isTransitive = false }

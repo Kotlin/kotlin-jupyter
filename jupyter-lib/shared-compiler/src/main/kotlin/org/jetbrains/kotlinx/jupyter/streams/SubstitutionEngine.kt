@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

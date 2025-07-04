@@ -67,6 +67,7 @@ dependencies {
 
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
+    api(projects.zmqProtocol)
 
     // Standard dependencies
     implementation(libs.kotlin.dev.reflect)
@@ -115,6 +116,7 @@ dependencies {
     ideScriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
     }
+    ideScriptClasspathShadowed(projects.protocolApi) { isTransitive = false }
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
 

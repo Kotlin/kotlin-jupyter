@@ -1,9 +1,9 @@
-package org.jetbrains.kotlinx.jupyter.messaging
+package org.jetbrains.kotlinx.jupyter.protocol.messaging
 
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import java.io.Closeable
 
 /**
@@ -19,7 +19,7 @@ interface JupyterClientSockets : Closeable {
 }
 
 interface JupyterClientSocketManager {
-    fun open(config: KernelConfig): JupyterClientSockets
+    fun open(configParams: KernelJupyterParams): JupyterClientSockets
 }
 
 /**
@@ -35,5 +35,5 @@ interface JupyterClientReceiveSockets : Closeable {
 }
 
 interface JupyterClientReceiveSocketManager {
-    fun open(config: KernelConfig): JupyterClientReceiveSockets
+    fun open(configParams: KernelJupyterParams): JupyterClientReceiveSockets
 }

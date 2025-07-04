@@ -13,6 +13,7 @@ dependencies {
     // notebook.loggerFactory needs an API dependency on slf4j
     api(libs.logging.slf4j.api)
 
+    api(projects.protocolApi)
     api(libs.serialization.json) {
         excludeKotlinDependencies(
             "stdlib",

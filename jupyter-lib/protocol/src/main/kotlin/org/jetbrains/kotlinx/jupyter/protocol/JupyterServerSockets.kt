@@ -1,8 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.messaging
-
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+package org.jetbrains.kotlinx.jupyter.protocol
 
 /**
  * Interface describing the server side of sockets available in a Jupyter Kernel.
@@ -10,8 +6,8 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
  * See https://jupyter-client.readthedocs.io/en/stable/messaging.html#introduction
  * for a description of them.
  *
- * Each of these will match a corresponding type in [org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType]
- * (but [org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType.HB] is not included,
+ * Each of these will match a corresponding type in [org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType]
+ * (but [org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType.HB] is not included,
  * as it is handled automatically)
  */
 interface JupyterServerSockets {

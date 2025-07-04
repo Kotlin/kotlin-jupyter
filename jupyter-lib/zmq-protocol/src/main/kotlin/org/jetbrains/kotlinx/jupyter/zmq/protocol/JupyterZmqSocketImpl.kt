@@ -1,19 +1,19 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.getLogger
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParams
-import org.jetbrains.kotlinx.jupyter.startup.LOCALHOST
-import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import org.slf4j.Logger
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
+import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
+import org.jetbrains.kotlinx.jupyter.protocol.startup.LOCALHOST
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.security.SignatureException
@@ -23,41 +23,6 @@ import kotlin.concurrent.withLock
 private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 private val emptyJsonObjectString = Json.EMPTY.toString()
 private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
-
-fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
-
-fun interface RawMessageCallback {
-    @Throws(InterruptedException::class)
-    operator fun invoke(msg: RawMessage)
-}
-
-class CallbackHandler(
-    private val logger: Logger,
-) : Closeable {
-    private val callbacks = mutableSetOf<RawMessageCallback>()
-
-    fun addCallback(callback: RawMessageCallback) {
-        callbacks.add(callback)
-    }
-
-    @Throws(InterruptedException::class)
-    fun runCallbacks(payload: RawMessage) {
-        callbacks.forEach { callback ->
-            try {
-                callback(payload)
-            } catch (e: Throwable) {
-                if (e is InterruptedException) {
-                    throw e
-                }
-                logger.error("Exception thrown while processing a message", e)
-            }
-        }
-    }
-
-    override fun close() {
-        callbacks.clear()
-    }
-}
 
 class JupyterZmqSocketImpl(
     loggerFactory: KernelLoggerFactory,
@@ -164,19 +129,19 @@ fun createZmqSocket(
     loggerFactory: KernelLoggerFactory,
     socketInfo: JupyterZmqSocketInfo,
     context: ZMQ.Context,
-    kernelConfig: KernelConfig,
+    configParams: KernelJupyterParams,
     side: JupyterSocketSide,
+    hmac: HMAC,
 ): JupyterZmqSocket {
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
 
-    val jupyterParams = kernelConfig.jupyterParams
     return JupyterZmqSocketImpl(
         loggerFactory = loggerFactory,
         name = socketInfo.name,
         socket = zmqSocket,
-        address = jupyterParams.addressForZmqSocket(socketInfo, side),
-        hmac = jupyterParams.hmac,
+        address = configParams.addressForZmqSocket(socketInfo, side),
+        hmac = hmac,
     )
 }
 
@@ -185,7 +150,7 @@ fun KernelJupyterParams.addressForZmqSocket(
     side: JupyterSocketSide,
 ): String {
     require(ports is ZmqKernelPorts) { "Wrong KernelAddress type" }
-    val port = ports.ports.getValue(socketInfo.type)
+    val port = (ports as ZmqKernelPorts).ports.getValue(socketInfo.type)
     val host = host.takeUnless { it == ANY_HOST_NAME && side != JupyterSocketSide.SERVER } ?: LOCALHOST
     return "$transport://$host:$port"
 }

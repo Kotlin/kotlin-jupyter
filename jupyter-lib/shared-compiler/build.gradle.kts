@@ -19,8 +19,10 @@ plugins {
 dependencies {
     // Internal dependencies
     api(projects.api) { isTransitive = false }
+    api(projects.protocolApi) { isTransitive = false }
     api(projects.lib) { isTransitive = false }
     api(projects.commonDependencies) { isTransitive = false }
+    api(projects.protocol) { isTransitive = false }
 
     // Standard dependencies
     compileOnly(libs.kotlin.stable.stdlib)
@@ -53,9 +55,6 @@ dependencies {
             "stdlib-common",
         )
     }
-
-    // ZeroMQ library for Jupyter messaging protocol implementation
-    api(libs.zeromq)
 }
 
 buildSettings {
