@@ -27,6 +27,7 @@ includeBuild("build-plugin")
 
 subproject("common-dependencies", "build-plugin/")
 libSubproject("lib")
+libSubproject("protocol")
 libSubproject("api")
 libSubproject("kotlin-jupyter-api-gradle-plugin")
 libSubproject("shared-compiler")
