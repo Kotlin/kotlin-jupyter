@@ -2,11 +2,11 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

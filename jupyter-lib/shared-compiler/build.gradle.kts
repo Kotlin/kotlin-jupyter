@@ -21,6 +21,7 @@ dependencies {
     api(projects.api) { isTransitive = false }
     api(projects.lib) { isTransitive = false }
     api(projects.commonDependencies) { isTransitive = false }
+    api(projects.protocol) { isTransitive = false }
 
     // Standard dependencies
     compileOnly(libs.kotlin.stable.stdlib)

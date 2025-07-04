@@ -13,7 +13,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
-import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.createRandomZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.test.classpath

@@ -1,97 +1,33 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
-import org.jetbrains.kotlinx.jupyter.protocol.HMAC
+import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_SIGNATURE_SCHEME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_TRANSPORT_SCHEME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
 import java.io.File
-import java.util.EnumMap
 
-const val KERNEL_TRANSPORT_SCHEME = "tcp"
-const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
-
-interface KernelPorts {
-    /**
-     * Returns JSON fields to be serialized into the config file (see [KernelJupyterParams]).
-     * Needs to be symmetric with [JupyterServerRunner.tryDeserializePorts] implementation.
-     */
-    fun serialize(): Map<String, JsonPrimitive>
-}
-
-class ZmqKernelPorts(
-    val ports: Map<JupyterSocketType, Int>,
-) : KernelPorts {
-    companion object {
-        inline operator fun invoke(getSocketPort: (JupyterSocketType) -> Int) =
-            ZmqKernelPorts(
-                ports =
-                    EnumMap<JupyterSocketType, Int>(JupyterSocketType::class.java).apply {
-                        JupyterSocketType.entries.forEach { socket ->
-                            val port = getSocketPort(socket)
-                            put(socket, port)
-                        }
-                    },
-            )
-
-        fun tryDeserialize(jsonFields: Map<String, JsonPrimitive>): ZmqKernelPorts? {
-            return ZmqKernelPorts { socket ->
-                val fieldName = socket.zmqPortField
-                jsonFields[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
-                    ?: return null
-            }
-        }
-
-        private val JupyterSocketType.zmqPortField get() = "${jupyterName}_port"
-    }
-
-    override fun serialize(): Map<String, JsonPrimitive> =
-        ports.entries.associate { (socket, port) ->
-            socket.zmqPortField to JsonPrimitive(port)
-        }
-
-    override fun toString(): String = "ZmqKernelPorts(${serialize()})"
-}
+data class KernelConfig(
+    val jupyterParams: KernelJupyterParams,
+    val ownParams: KernelOwnParams,
+)
 
 data class KernelArgs(
     val cfgFile: File,
     val ownParams: KernelOwnParams,
 ) {
     fun argsList(): List<String> = KernelArgumentsBuilder(this).argsList()
-}
-
-@Serializable(KernelJupyterParamsSerializer::class)
-data class KernelJupyterParams(
-    val signatureScheme: String,
-    val signatureKey: String,
-    val host: String,
-    val ports: KernelPorts,
-    val transport: String?,
-) {
-    val hmac by lazy {
-        HMAC(
-            algorithm = signatureScheme.replace("-", ""),
-            key = signatureKey,
-        )
-    }
-
-    companion object {
-        fun fromFile(cfgFile: File): KernelJupyterParams {
-            val jsonString = cfgFile.canonicalFile.readText()
-            return Json.decodeFromString(jsonString)
-        }
-    }
 }
 
 object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
@@ -132,25 +68,56 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
     }
 }
 
-const val ANY_HOST_NAME = "*"
-const val LOCALHOST = "localhost"
+fun KernelConfig.toArgs(prefix: String = ""): KernelArgs {
+    val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
+    cfgFile.deleteOnExit()
+    val format = Json { prettyPrint = true }
+    cfgFile.writeText(format.encodeToString(KernelJupyterParamsSerializer, jupyterParams))
 
-data class KernelConfig(
-    val jupyterParams: KernelJupyterParams,
-    val ownParams: KernelOwnParams,
-) {
-    fun toArgs(prefix: String = ""): KernelArgs {
-        val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
-        cfgFile.deleteOnExit()
-        val format = Json { prettyPrint = true }
-        cfgFile.writeText(format.encodeToString(jupyterParams))
+    return KernelArgs(
+        cfgFile = cfgFile,
+        ownParams = ownParams,
+    )
+}
 
-        return KernelArgs(
-            cfgFile = cfgFile,
-            ownParams = ownParams,
-        )
+const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
+
+fun KernelConfig.javaCmdLine(
+    // Path to java executable or just "java" in case it's on the path
+    javaExecutable: String,
+    // Prefix for the temporary directory where the connection file should be stored
+    tempDirPrefix: String,
+    // Classpath for the whole kernel. Should include kernel artifact
+    kernelClasspath: String,
+    // Any JVM arguments such as -XmX
+    extraJavaArguments: Collection<String> = emptyList(),
+): List<String> {
+    val args = toArgs(tempDirPrefix).argsList().toTypedArray()
+    val debugPort = ownParams.debugPort
+
+    return ArrayList<String>().apply {
+        add(javaExecutable)
+        addAll(extraJavaArguments)
+        if (debugPort != null) {
+            add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debugPort")
+        }
+        add("-cp")
+        add(kernelClasspath)
+        add(MAIN_CLASS_NAME)
+        addAll(args)
     }
 }
+
+fun File.toKernelJupyterParams(): KernelJupyterParams {
+    val jsonString = canonicalFile.readText()
+    return Json.decodeFromString(KernelJupyterParamsSerializer, jsonString)
+}
+
+fun KernelArgs.getConfig(): KernelConfig =
+    KernelConfig(
+        jupyterParams = cfgFile.toKernelJupyterParams(),
+        ownParams = ownParams,
+    )
 
 /**
  * Creates a configuration for a Kotlin Kernel client.
@@ -223,37 +190,3 @@ fun createKotlinKernelConfig(
             replCompilerMode = replCompilerMode,
         ),
 )
-
-const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
-
-fun KernelConfig.javaCmdLine(
-    // Path to java executable or just "java" in case it's on the path
-    javaExecutable: String,
-    // Prefix for the temporary directory where the connection file should be stored
-    tempDirPrefix: String,
-    // Classpath for the whole kernel. Should include kernel artifact
-    kernelClasspath: String,
-    // Any JVM arguments such as -XmX
-    extraJavaArguments: Collection<String> = emptyList(),
-): List<String> {
-    val args = toArgs(tempDirPrefix).argsList().toTypedArray()
-    val debugPort = ownParams.debugPort
-
-    return ArrayList<String>().apply {
-        add(javaExecutable)
-        addAll(extraJavaArguments)
-        if (debugPort != null) {
-            add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debugPort")
-        }
-        add("-cp")
-        add(kernelClasspath)
-        add(MAIN_CLASS_NAME)
-        addAll(args)
-    }
-}
-
-fun KernelArgs.getConfig(): KernelConfig =
-    KernelConfig(
-        jupyterParams = KernelJupyterParams.fromFile(cfgFile),
-        ownParams = ownParams,
-    )

@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
@@ -64,7 +64,7 @@ class ZmqSocketWithCancellationImpl(
         val res = socket.bind(address)
         if (socket.socketType == SocketType.PUB) {
             // Workaround to prevent losing a few first messages on kernel startup
-            // For more information on losing messages see this scheme:
+            // For more information on losing messages, see this scheme:
             // http://zguide.zeromq.org/page:all#Missing-Message-Problem-Solver
             // It seems we cannot do correct sync because messaging protocol
             // doesn't support this.
