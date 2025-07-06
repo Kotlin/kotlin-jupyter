@@ -32,6 +32,7 @@ class BuildSettingsExtension(private val project: Project) {
             testLogging {
                 events("passed", "skipped", "failed")
             }
+            maxHeapSize = "4000m"
             configure()
         }
     }

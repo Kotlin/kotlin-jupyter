@@ -41,7 +41,7 @@ class KernelOwnParamsBuilder(
             debugPort = debugPort,
             clientType = clientType,
             jvmTargetForSnippets = jvmTargetForSnippets,
-            replCompilerMode = replCompilerMode ?: ReplCompilerMode.Companion.DEFAULT,
+            replCompilerMode = replCompilerMode ?: ReplCompilerMode.DEFAULT,
             extraCompilerArguments = extraCompilerArguments ?: emptyList(),
         )
 }

@@ -11,4 +11,9 @@ enum class ReplCompilerMode {
     companion object
 }
 
-val ReplCompilerMode.Companion.DEFAULT get() = ReplCompilerMode.K1
+val ReplCompilerMode.Companion.DEFAULT get() = replCompilerModeFromEnvironment ?: ReplCompilerMode.K1
+
+private val replCompilerModeFromEnvironment by lazy {
+    val envValue = System.getenv("KOTLIN_JUPYTER_REPL_COMPILER_MODE") ?: return@lazy null
+    ReplCompilerMode.values().find { it.name.equals(envValue, ignoreCase = true) }
+}

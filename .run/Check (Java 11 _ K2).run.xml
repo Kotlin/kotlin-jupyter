@@ -1,6 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Check for Java 11 (set Gradle JVM to v.11)" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Check (Java 11 / K2)" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
+      <option name="env">
+        <map>
+          <entry key="KOTLIN_JUPYTER_REPL_COMPILER_MODE" value="K2" />
+        </map>
+      </option>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
@@ -17,8 +22,11 @@
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
     <DebugAllEnabled>false</DebugAllEnabled>
-    <ForceTestExec>true</ForceTestExec>
+    <RunAsTest>true</RunAsTest>
+    <GradleProfilingDisabled>false</GradleProfilingDisabled>
+    <GradleCoverageDisabled>false</GradleCoverageDisabled>
     <method v="2" />
   </configuration>
 </component>

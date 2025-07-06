@@ -162,7 +162,27 @@ buildSettings {
         samConversionsClass()
         jdkRelease(rootSettings.jvmTarget)
     }
-    withTests()
+    withTests {
+        val doParallelTesting = getFlag("test.parallel", true)
+
+        /**
+         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
+         */
+        val useShadowedJar = getFlag("test.useShadowed", false)
+
+        if (useShadowedJar) {
+            dependsOn(tasks.shadowJar.get())
+            classpath = files(tasks.shadowJar.get()) + classpath
+        }
+
+        systemProperties =
+            mutableMapOf(
+                "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
+                "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
+                "junit.jupiter.execution.parallel.mode.default" to "concurrent",
+                "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
+            )
+    }
 }
 
 // Workaround for https://github.com/johnrengelman/shadow/issues/651
@@ -177,29 +197,6 @@ tasks {
         group = PUBLISHING_GROUP
 
         dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
-    }
-
-    test {
-        val doParallelTesting = getFlag("test.parallel", true)
-        maxHeapSize = "3072m"
-
-        /**
-         *  Set to true to debug classpath/shadowing issues, see testKlaxonClasspathDoesntLeak test
-         */
-        val useShadowedJar = getFlag("test.useShadowed", false)
-
-        if (useShadowedJar) {
-            dependsOn(shadowJar.get())
-            classpath = files(shadowJar.get()) + classpath
-        }
-
-        systemProperties =
-            mutableMapOf(
-                "junit.jupiter.displayname.generator.default" to "org.junit.jupiter.api.DisplayNameGenerator\$ReplaceUnderscores",
-                "junit.jupiter.execution.parallel.enabled" to doParallelTesting.toString() as Any,
-                "junit.jupiter.execution.parallel.mode.default" to "concurrent",
-                "junit.jupiter.execution.parallel.mode.classes.default" to "concurrent",
-            )
     }
 
     CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {

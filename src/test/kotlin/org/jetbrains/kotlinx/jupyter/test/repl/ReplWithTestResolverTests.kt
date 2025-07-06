@@ -8,9 +8,11 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.JSON
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.displayValue
@@ -92,8 +94,15 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             )
 
         val expectedJson = """{"x":42}"""
-        serialized.rawValue shouldBe expectedJson
-        serialized.renderedValue shouldBe JSON(expectedJson)
+        when (repl.compilerMode) {
+            K1 -> {
+                serialized.rawValue shouldBe expectedJson
+                serialized.renderedValue shouldBe JSON(expectedJson)
+            }
+            K2 -> {
+                serialized.shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
     }
 
     @Test
@@ -105,8 +114,11 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         val code2 = "a + 2 + b.toInt()"
-        val res = eval(code2).renderedValue
-        assertEquals(8, res)
+        val res = eval(code2)
+        when (repl.compilerMode) {
+            K1 -> res.renderedValue shouldBe 8
+            K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
     }
 
     @Test
@@ -164,7 +176,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
 
         // Value should be cached, and all these requests should not take much time
         assertTimeout(Duration.ofSeconds(20)) {
-            for (i in 1..10000) {
+            repeat(10000) {
                 complete("%use kmath(|").matches() shouldHaveAtLeastSize 5
             }
         }
