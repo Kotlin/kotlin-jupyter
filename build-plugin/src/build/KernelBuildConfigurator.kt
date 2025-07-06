@@ -25,7 +25,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     fun configure() {
         with(project.plugins) {
             apply("org.jetbrains.kotlin.jvm")
-            apply("com.github.johnrengelman.shadow")
+            apply("com.gradleup.shadow")
             apply("org.jetbrains.kotlin.plugin.serialization")
             apply("org.jetbrains.kotlin.libs.publisher")
             apply("org.jetbrains.kotlin.libs.doc")

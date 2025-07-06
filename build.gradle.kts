@@ -6,6 +6,8 @@ import build.PUBLISHING_GROUP
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.typedProperty
+import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.shadowJar
+import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.shadowRuntimeElements
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.kotlin.dsl.accessors.runtime.addConfiguredDependencyTo
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy

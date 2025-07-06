@@ -29,4 +29,7 @@ val CompilerRelocatedJarConfigurator: ShadowJarAction = {
         +"org.jetbrains.kotlin."
         +"org.jetbrains.kotlinx.serialization."
     }
+
+    // http://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip:zip64
+    isZip64 = true
 }

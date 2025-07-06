@@ -1,10 +1,9 @@
 package build.util
 
-import com.github.jengelman.gradle.plugins.shadow.ShadowStats
 import com.github.jengelman.gradle.plugins.shadow.relocation.RelocateClassContext
 import com.github.jengelman.gradle.plugins.shadow.relocation.Relocator
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import com.github.jengelman.gradle.plugins.shadow.transformers.Transformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.ResourceTransformer
 import com.github.jengelman.gradle.plugins.shadow.transformers.TransformerContext
 import org.apache.tools.zip.ZipEntry
 import org.apache.tools.zip.ZipOutputStream
@@ -46,22 +45,20 @@ fun ShadowJar.relocatePackages(configure: RelocateDsl.() -> Unit) {
 class ContentModificationContext(
     val content: String,
     val relocators: List<Relocator>,
-    val shadowStats: ShadowStats,
 )
 
 class ContentTransformer(
     private val path: String,
     private val contentModifier: ContentModificationContext.() -> String = { content },
-) : Transformer {
+) : ResourceTransformer {
     private var modifiedContent: String? = null
 
-    override fun transform(context: TransformerContext?) {
-        if (context == null) return
+    override fun transform(context: TransformerContext) {
         val path = context.path
 
         if (path == this.path) {
-            val content = context.`is`.reader().use { it.readText() }
-            val modificationContext = ContentModificationContext(content, context.relocators, context.stats)
+            val content = context.inputStream.reader().use { it.readText() }
+            val modificationContext = ContentModificationContext(content, context.relocators.toList())
             modifiedContent = modificationContext.contentModifier()
         }
     }
@@ -74,12 +71,10 @@ class ContentTransformer(
         return element.relativePath.pathString == path
     }
 
-    override fun modifyOutputStream(zipOutputStream: ZipOutputStream?, preserveFileTimestamps: Boolean) {
+    override fun modifyOutputStream(os: ZipOutputStream, preserveFileTimestamps: Boolean) {
         val content = modifiedContent ?: return
-        val os = zipOutputStream ?: return
 
         val entry = ZipEntry(path)
-        entry.time = TransformerContext.getEntryTimestamp(preserveFileTimestamps, entry.time)
         os.putNextEntry(entry)
         os.write(content.toByteArray())
     }
@@ -96,7 +91,7 @@ fun ContentModificationContext.transformPluginXmlContent(): String {
 
     fun relocateClass(fqn: String): String {
         val relocator = relocators.firstOrNull { it.canRelocateClass(fqn) } ?: return fqn
-        return relocator.relocateClass(RelocateClassContext(fqn, shadowStats))
+        return relocator.relocateClass(RelocateClassContext(fqn))
     }
 
     val extensionPointLists = ideaPlugin.getElementsByTagName("extensionPoints")
