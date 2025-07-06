@@ -1046,4 +1046,30 @@ class ReplTests : AbstractSingleReplTest() {
             )
         res.renderedValue shouldBe 42
     }
+
+    // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work
+    @Test
+    fun `properties redeclaration should work`() {
+        eval("val a = 1")
+        eval("a").renderedValue shouldBe 1
+        eval("val a = 2")
+        eval("a").renderedValue shouldBe
+            when (repl.compilerMode) {
+                K1 -> 2
+                K2 -> 1
+            }
+    }
+
+    // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work
+    @Test
+    fun `functions redeclaration should work`() {
+        eval("fun f() = 1")
+        eval("f()").renderedValue shouldBe 1
+        eval("fun f() = 'c'")
+        eval("f()").renderedValue shouldBe
+            when (repl.compilerMode) {
+                K1 -> 'c'
+                K2 -> 1
+            }
+    }
 }
