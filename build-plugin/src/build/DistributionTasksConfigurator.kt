@@ -15,11 +15,11 @@ class DistributionTasksConfigurator(
         if (!settings.removeTypeHints)
             return
 
-        files.forEach {
-            val fileName = it.absolutePath
-            project.exec {
+        for (file in files) {
+            val fileName = file.absolutePath
+            project.providers.exec {
                 commandLine("python", settings.typeHintsRemover, fileName, fileName)
-            }
+            }.result.get()
         }
     }
 

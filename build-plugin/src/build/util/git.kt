@@ -2,7 +2,6 @@ package build.util
 
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 private val NOTHING_TO_COMMIT_REGEX = Regex("((nothing)|(no changes added)) to commit")
@@ -42,26 +41,23 @@ fun Project.executeProcess(
     commandLine: List<String>,
     configure: ExecSpec.() -> Unit = {},
 ): ProcessExecuteResult {
-    val stdout = ByteArrayOutputStream()
-    val stderr = ByteArrayOutputStream()
-
-    val result = exec {
+    val execTask = providers.exec {
         this.workingDir = workingDir
         this.commandLine = commandLine
 
         // Makes `exec` not to throw exceptions
         this.isIgnoreExitValue = true
-        this.standardOutput = stdout
-        this.errorOutput = stderr
 
         configure()
     }
 
+    val result = execTask.result.get()
+
     return ProcessExecuteResult(
         commandLine,
         result.exitValue,
-        stdout.toString(),
-        stderr.toString(),
+        execTask.standardOutput.asText.get(),
+        execTask.standardError.asText.get(),
     )
 }
 

@@ -45,7 +45,7 @@ class PythonPackageTasksConfigurator(
                 }
 
                 doLast {
-                    project.exec {
+                    project.providers.exec {
                         commandLine(
                             "anaconda",
                             "login",
@@ -56,11 +56,11 @@ class PythonPackageTasksConfigurator(
                         )
 
                         standardInput = ByteArrayInputStream("yes".toByteArray())
-                    }
+                    }.result.get()
 
-                    project.exec {
+                    project.providers.exec {
                         commandLine("anaconda", "upload", "-u", taskSpec.username, artifactPath.toString())
-                    }
+                    }.result.get()
                 }
             }
         }

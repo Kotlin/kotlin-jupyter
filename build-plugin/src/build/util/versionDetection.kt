@@ -1,7 +1,6 @@
 package build.util
 
 import org.gradle.api.Project
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 fun Project.getPropertyByCommand(
@@ -15,14 +14,14 @@ fun Project.getPropertyByCommand(
         return prop
     }
 
-    val outputStream = ByteArrayOutputStream()
-    val result = exec {
+    val execTask = providers.exec {
         commandLine(*cmdArgs)
-        standardOutput = outputStream
         workingDir?.let { this.workingDir = it }
     }
 
-    val output = outputStream.toString()
+    val result = execTask.result.get()
+
+    val output = execTask.standardOutput.asText.get()
     if (result.exitValue != 0) {
         throw RuntimeException("Unable to get property '$propName'!")
     }

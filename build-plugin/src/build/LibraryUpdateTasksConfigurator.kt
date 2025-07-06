@@ -14,9 +14,9 @@ import org.gradle.api.Project
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.gradle.tooling.BuildException
-import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.Response
 import org.jetbrains.kotlinx.jupyter.common.ResponseWrapper
+import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.successful
@@ -62,13 +62,13 @@ class LibraryUpdateTasksConfigurator(
             dependsOn(UPDATE_LIBRARY_PARAM_TASK)
 
             fun execGit(vararg args: String, configure: ExecSpec.() -> Unit = {}): ExecResult {
-                return project.exec {
+                return project.providers.exec {
                     this.executable = "git"
                     this.args = args.asList()
                     this.workingDir = settings.librariesDir
 
                     configure()
-                }
+                }.result.get()
             }
 
             doLast {
@@ -80,11 +80,7 @@ class LibraryUpdateTasksConfigurator(
                     arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
                     settings.librariesDir,
                 )
-                execGit("push", "--force", "-u", settings.librariesRepoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!) {
-                    this.standardOutput = object : OutputStream() {
-                        override fun write(b: Int) { }
-                    }
-                }
+                execGit("push", "--force", "-u", settings.librariesRepoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!)
 
                 execGit("reset", "--hard", "HEAD~")
             }

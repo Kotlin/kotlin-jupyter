@@ -11,7 +11,7 @@ import java.io.File
 
 abstract class UpdateLibrariesTask : DefaultTask() {
     @get:Input
-    val latestCommitHash: Property<String?> = project.objects.property<String?>().apply {
+    val latestCommitHash: Property<String> = project.objects.property<String>().apply {
         set(project.provider { BUILD_LIBRARIES.latestCommitOnDefaultBranch })
     }
 
