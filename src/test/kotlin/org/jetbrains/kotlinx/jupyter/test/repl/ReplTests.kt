@@ -19,8 +19,6 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K1
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K2
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplUnwrappedExceptionImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException

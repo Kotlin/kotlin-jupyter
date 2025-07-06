@@ -5,7 +5,6 @@ import io.kotest.matchers.collections.shouldBeSameSizeAs
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.parseCommandLine
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParamsBuilder
@@ -103,7 +102,7 @@ class ArgumentsParsingTest {
     ) {
         val configFile = createConfigFile(tempDir)
         val args = parseCommandLine("-replCompilerMode=K2", configFile.absolutePath)
-        args.ownParams.replCompilerMode shouldBe ReplCompilerMode.K2
+        args.ownParams.replCompilerMode shouldBe K2
     }
 
     @Test
@@ -274,7 +273,7 @@ class ArgumentsParsingTest {
         parsedArgs.ownParams.debugPort shouldBe debugPort
         parsedArgs.ownParams.clientType shouldBe clientType
         parsedArgs.ownParams.jvmTargetForSnippets shouldBe jvmTarget
-        parsedArgs.ownParams.replCompilerMode shouldBe ReplCompilerMode.K1
+        parsedArgs.ownParams.replCompilerMode shouldBe K1
         parsedArgs.ownParams.extraCompilerArguments shouldContainExactly listOf("arg1", "arg2")
         parsedArgs.ownParams.scriptClasspath.map { it.path } shouldContainExactly listOf(path1, path2)
         parsedArgs.ownParams.homeDir?.path shouldBe homeDir

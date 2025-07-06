@@ -19,7 +19,6 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
@@ -400,7 +399,7 @@ abstract class ExecuteTests(
                     assertNotNull(loadedClass.memberProperties.find { it.name == "xyz" })
 
                     when (replCompilerMode) {
-                        ReplCompilerMode.K1 -> {
+                        K1 -> {
                             @Suppress("UNCHECKED_CAST")
                             val xyzProperty = loadedClass.memberProperties.single { it.name == "xyz" } as KProperty1<Any, Int>
                             val constructor = loadedClass.constructors.single()
@@ -415,7 +414,7 @@ abstract class ExecuteTests(
                             val instance = constructor.call(emptyArray<Any?>(), scriptTemplateDisplayHelpers)
                             xyzProperty.get(instance) shouldBe 42
                         }
-                        ReplCompilerMode.K2 -> {
+                        K2 -> {
                             // `$$eval`-method does not have correct Kotlin metadata, so we fall back to pure Java reflection.
                             assertNotNull(loadedClass.java.declaredMethods.firstOrNull { it.name == "\$\$eval" })
                         }
@@ -489,12 +488,12 @@ abstract class ExecuteTests(
     fun testIsComplete() {
         assertEquals("complete", doIsComplete("2 + 2"))
         when (replCompilerMode) {
-            ReplCompilerMode.K1 -> {
+            K1 -> {
                 assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
                 val loggingManager = LogbackLoggingManager(testLoggerFactory)
                 loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
             }
-            ReplCompilerMode.K2 -> {
+            K2 -> {
                 // Modify test until KTNB-916 is fixed
                 assertEquals("complete", doIsComplete("fun f() : Int { return 1"))
                 val loggingManager = LogbackLoggingManager(testLoggerFactory)
@@ -695,11 +694,11 @@ abstract class ExecuteTests(
 
                 // Stacktrace should be enhanced with cell information
                 when (replCompilerMode) {
-                    ReplCompilerMode.K1 -> {
+                    K1 -> {
                         content.traceback shouldContain "\tat Line_0_jupyter.<init>(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
-                    ReplCompilerMode.K2 -> {
+                    K2 -> {
                         content.traceback shouldContain "\tat Line_0_jupyter.\$\$eval(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
@@ -738,13 +737,13 @@ abstract class ExecuteTests(
 
                 // Stacktrace should be enhanced with cell information
                 when (replCompilerMode) {
-                    ReplCompilerMode.K1 -> {
+                    K1 -> {
                         content.traceback shouldContain
                             $$"\tat Line_0_jupyter.callback$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain "\tat Line_1_jupyter.<init>(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
-                    ReplCompilerMode.K2 -> {
+                    K2 -> {
                         content.traceback shouldContain $$"\tat Line_0_jupyter.__eval$lambda$0(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback shouldContain $$$"\tat Line_1_jupyter.$$eval(Line_1.jupyter.kts:1) at Cell In[2], line 1"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
@@ -783,13 +782,13 @@ abstract class ExecuteTests(
                 val content = message.content
                 content.shouldBeTypeOf<ExecuteErrorReply>()
                 when (replCompilerMode) {
-                    ReplCompilerMode.K1 -> {
+                    K1 -> {
                         content.name shouldBe "io.ktor.serialization.JsonConvertException"
                         content.value shouldBe
                             "Illegal input: Field 'id' is required for type with serial name " +
                             "'Line_6_jupyter.User', but it was missing at path: $"
                     }
-                    ReplCompilerMode.K2 -> {
+                    K2 -> {
                         // See https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
                         content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException"
                     }
@@ -816,7 +815,7 @@ abstract class ExecuteTests(
                 content.shouldBeTypeOf<ExecuteErrorReply>()
                 content.name shouldBe "org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException"
                 when (replCompilerMode) {
-                    ReplCompilerMode.K1 -> {
+                    K1 -> {
                         content.value shouldBe
                             """
                             at Cell In[1], line 1, column 4: Expecting property name or receiver type
@@ -824,7 +823,7 @@ abstract class ExecuteTests(
                             at Cell In[1], line 1, column 8: Expecting property name or receiver type
                             """.trimIndent()
                     }
-                    ReplCompilerMode.K2 -> {
+                    K2 -> {
                         content.value shouldBe
                             """
                             at Cell In[1], line 1, column 4: Expecting property name or receiver type
@@ -962,11 +961,11 @@ abstract class ExecuteTests(
             test
             """.trimIndent()
         when (replCompilerMode) {
-            ReplCompilerMode.K1 -> {
+            K1 -> {
                 val res = doExecute(code) as JsonObject
                 assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
             }
-            ReplCompilerMode.K2 -> {
+            K2 -> {
                 // This should be fixed by KT-76508
                 val res = doExecute(code) as JsonObject
                 res["text/plain"]?.jsonPrimitive?.content shouldBe "null"

@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ResultHandlerCodeExecution
 import org.jetbrains.kotlinx.jupyter.api.SubtypeRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
@@ -127,7 +126,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
         }
         val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
         when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> {
+            K1 -> {
                 assertEquals(13, result1.renderedValue)
                 val result2 =
                     eval(
@@ -138,7 +137,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
                     )
                 assertEquals("[12, 13, 14]", result2.renderedValue)
             }
-            ReplCompilerMode.K2 -> {
+            K2 -> {
                 // Type renderes do not work yet due to:
                 // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
                 assertEquals(null, result1.renderedValue)
@@ -176,10 +175,10 @@ class EmbedReplTest : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> {
+            K1 -> {
                 result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
             }
-            ReplCompilerMode.K2 -> {
+            K2 -> {
                 // Fails because of https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
                 result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Error>()
             }

@@ -49,6 +49,9 @@ internal class KernelBuildConfigurator(private val project: Project) {
             getOrCreateExtension(BuildSettingsExtension).apply {
                 withJvmTarget(settings.jvmTarget)
                 withLanguageLevel(settings.stableKotlinLanguageLevel)
+                withCompilerArgs {
+                    contextSensitiveResolution()
+                }
             }
         }
 

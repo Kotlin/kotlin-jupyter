@@ -12,7 +12,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
@@ -346,8 +345,8 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> res.metadata.newSources.shouldHaveSize(84)
-            ReplCompilerMode.K2 -> res.metadata.newSources.shouldHaveSize(168)
+            K1 -> res.metadata.newSources.shouldHaveSize(84)
+            K2 -> res.metadata.newSources.shouldHaveSize(168)
         }
     }
 
