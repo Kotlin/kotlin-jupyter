@@ -59,7 +59,7 @@ repositories {
 dependencies {
     // Required by K2KJvmReplCompilerWithCompletion.
     // Should be moved to Kotlin Compiler eventually once complete
-    compileOnly("com.jetbrains.intellij.platform:util:243.22562.220")
+    compileOnly(libs.intellij.platform.util)
 
     implementation(libs.kotlin.dev.stdlib)
 
