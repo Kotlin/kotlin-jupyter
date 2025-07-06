@@ -8,8 +8,6 @@ enum class ReplCompilerMode {
     K2,
     ;
 
-    fun isK2() = (this == K2)
-
     companion object
 }
 

@@ -82,7 +82,7 @@ fun getCompilationConfiguration(
         hostConfiguration.update {
             it.with {
                 getScriptingClass(scriptingClassGetter)
-                if (replCompilerMode.isK2()) {
+                if (replCompilerMode == K2) {
                     configureDefaultRepl("jupyter.kts")
                 }
             }
