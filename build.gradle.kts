@@ -159,6 +159,7 @@ buildSettings {
         skipPrereleaseCheck()
         samConversionsClass()
         jdkRelease(rootSettings.jvmTarget)
+        contextSensitiveResolution()
     }
     withTests()
 }
