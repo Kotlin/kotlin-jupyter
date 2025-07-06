@@ -20,7 +20,7 @@ class CompatibilityTableGenerator(
     private val settings: RootSettingsExtension,
 ) {
     private val kernelTeamcity = TeamcityProject(INTERNAL_TEAMCITY_URL, "KDS_KotlinJupyter_Conda")
-    private val unknownInfo = "?"
+    private val unknownInfo = "—"
 
     private val mdHeaderToTcProp = HashMap<String, String>().apply {
         for (attr in settings.compatibilityAttributes) {
