@@ -43,27 +43,17 @@ class PythonPackageTasksConfigurator(
                     dependsOn(makeTaskName(settings.cleanInstallDirTaskPrefix, false), CONDA_PACKAGE_TASK)
                 }
 
-                /* Gradle doesn't allow to specify standard input with this API
-                   // https://github.com/gradle/gradle/issues/33858
                 doLast {
                     project.providers.exec {
                         commandLine(
-                            "anaconda",
-                            "login",
-                            "--username",
+                            settings.anacondaUploadScript.absolutePath,
                             taskSpec.credentials.username,
-                            "--password",
-                            taskSpec.credentials.password
+                            taskSpec.credentials.password,
+                            artifactPath.absolutePath.toString(),
+                            taskSpec.username,
                         )
-
-                        standardInput = ByteArrayInputStream("yes".toByteArray())
-                    }.result.get()
-
-                    project.providers.exec {
-                        commandLine("anaconda", "upload", "-u", taskSpec.username, artifactPath.toString())
                     }.result.get()
                 }
-                */
             }
         }
     }

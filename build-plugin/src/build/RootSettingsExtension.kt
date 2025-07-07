@@ -140,6 +140,7 @@ class RootSettingsExtension(
     val distribUtilRequirementsHintsRemoverFile: File = distribUtilsDir.resolve("requirements-hints-remover.txt")
     val removeTypeHints: Boolean = true
     val typeHintsRemover: File = distribUtilsDir.resolve("remove_type_hints.py")
+    val anacondaUploadScript: File = distribUtilsDir.resolve("anaconda_upload.sh")
 
     val condaTaskSpecs by lazy {
         val condaUserStable = project.stringPropOrEmpty("condaUserStable")
