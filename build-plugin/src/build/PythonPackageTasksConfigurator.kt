@@ -4,7 +4,6 @@ import build.util.makeTaskName
 import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
 import org.gradle.kotlin.dsl.register
-import java.io.ByteArrayInputStream
 
 class PythonPackageTasksConfigurator(
     private val project: Project,
@@ -44,6 +43,8 @@ class PythonPackageTasksConfigurator(
                     dependsOn(makeTaskName(settings.cleanInstallDirTaskPrefix, false), CONDA_PACKAGE_TASK)
                 }
 
+                /* Gradle doesn't allow to specify standard input with this API
+                   // https://github.com/gradle/gradle/issues/33858
                 doLast {
                     project.providers.exec {
                         commandLine(
@@ -62,6 +63,7 @@ class PythonPackageTasksConfigurator(
                         commandLine("anaconda", "upload", "-u", taskSpec.username, artifactPath.toString())
                     }.result.get()
                 }
+                */
             }
         }
     }
