@@ -4,7 +4,6 @@ import build.util.makeTaskName
 import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
 import org.gradle.kotlin.dsl.register
-import java.io.ByteArrayInputStream
 
 class PythonPackageTasksConfigurator(
     private val project: Project,
@@ -45,22 +44,15 @@ class PythonPackageTasksConfigurator(
                 }
 
                 doLast {
-                    project.exec {
+                    project.providers.exec {
                         commandLine(
-                            "anaconda",
-                            "login",
-                            "--username",
+                            settings.anacondaUploadScript.absolutePath,
                             taskSpec.credentials.username,
-                            "--password",
-                            taskSpec.credentials.password
+                            taskSpec.credentials.password,
+                            artifactPath.absolutePath.toString(),
+                            taskSpec.username,
                         )
-
-                        standardInput = ByteArrayInputStream("yes".toByteArray())
-                    }
-
-                    project.exec {
-                        commandLine("anaconda", "upload", "-u", taskSpec.username, artifactPath.toString())
-                    }
+                    }.result.get()
                 }
             }
         }
