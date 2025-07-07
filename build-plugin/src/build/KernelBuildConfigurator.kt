@@ -147,7 +147,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
             if (infix == "Dev") {
                 tasksList.add("publishToPluginPortal")
                 tasksList.add("publishToSonatypeAndRelease")
-                tasksList.add("publishDocs")
+                // tasksList.add("publishDocs")
             }
 
             project.tasks.register("aggregate${infix}Upload") {
