@@ -20,7 +20,7 @@ compose = "1.7.3"
 
 ktlintGradle = "12.3.0"
 ktlint = "1.6.0"
-publishPlugin = "2.2.0-dev-61"
+publishPlugin = "2.2.0-dev-65"
 pluginPublishPlugin = "1.3.1"
 versionsPlugin = "0.52.0"
 
