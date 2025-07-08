@@ -121,6 +121,9 @@ class JupyterWsServerRunner : JupyterServerRunner {
             },
             finally = {
                 mergeExceptions {
+                    for (socket in socketsMap.values) {
+                        catchIndependently { socket.socket.close() }
+                    }
                     for (closeable in closeables) {
                         catchIndependently { closeable.close() }
                     }
@@ -148,7 +151,10 @@ private class WsCallbackBasedSocketQueued(
         messages.offer(msg)
     }
 
-    /** Starts a new thread listening for incoming messages. Returns this new thread. */
+    /**
+     * Starts a new thread listening for incoming messages. Returns this new thread.
+     * Does not [close] this instance when the message processing is over.
+     */
     fun startListening(mainListenerThread: Thread): Thread =
         thread {
             try {
@@ -157,7 +163,6 @@ private class WsCallbackBasedSocketQueued(
                     callbacks.runCallbacks(message)
                 }
             } catch (_: InterruptedException) {
-                close()
                 mainListenerThread.interrupt()
             } catch (e: Throwable) {
                 logger.error("Error during message processing", e)
