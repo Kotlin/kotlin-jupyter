@@ -31,7 +31,7 @@ fun interface RawMessageCallback {
 
 class CallbackHandler(
     private val logger: Logger,
-) {
+) : Closeable {
     private val callbacks = mutableSetOf<RawMessageCallback>()
 
     fun addCallback(callback: RawMessageCallback) {
@@ -52,7 +52,7 @@ class CallbackHandler(
         }
     }
 
-    fun clear() {
+    override fun close() {
         callbacks.clear()
     }
 }

@@ -121,6 +121,6 @@ private class WsCallbackBasedSocketImmediate(
     }
 
     override fun close() {
-        callbacks.clear()
+        callbacks.close()
     }
 }
