@@ -1,6 +1,9 @@
 [*.{kt,kts}]
 ij_kotlin_allow_trailing_comma_on_call_site=true
 ij_kotlin_allow_trailing_comma=true
+# noinspection EditorConfigKeyCorrectness
+ktlint_standard_comment-wrapping = disabled
 
 [compilers.kt]
+# noinspection EditorConfigKeyCorrectness
 ktlint_standard_filename = disabled

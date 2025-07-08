@@ -28,20 +28,13 @@ class JupyterWsClientSocketManager(
             createWsClient = { messageHandler ->
                 object : WebSocketClient(
                     URI(
-                        // scheme =
-                        "ws",
-                        // userInfo =
-                        null,
-                        // host =
-                        jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
-                        // port =
-                        (jupyterParams.ports as WsKernelPorts).port,
-                        // path =
-                        null,
-                        // query =
-                        null,
-                        // fragment =
-                        null,
+                        /* scheme = */ "ws",
+                        /* userInfo = */ null,
+                        /* host = */ jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
+                        /* port = */ (jupyterParams.ports as WsKernelPorts).port,
+                        /* path = */ null,
+                        /* query = */ null,
+                        /* fragment = */ null,
                     ),
                 ) {
                     override fun onMessage(message: String) = messageHandler.onMessage(message)

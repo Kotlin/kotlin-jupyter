@@ -27,11 +27,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
     loggerFactory: KernelLoggerFactory,
     side: JupyterSocketSide,
 ) : JupyterClientReceiveSockets {
-    val context: ZMQ.Context =
-        ZMQ.context(
-            // ioThreads =
-            1,
-        )
+    val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
 
     override val shell: JupyterZmqSocket
     override val control: JupyterZmqSocket

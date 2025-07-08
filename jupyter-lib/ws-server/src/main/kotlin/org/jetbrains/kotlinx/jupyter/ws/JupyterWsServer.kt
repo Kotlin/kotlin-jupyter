@@ -56,17 +56,9 @@ class JupyterWsServerRunner : JupyterServerRunner {
                 val address =
                     if (jupyterParams.host == ANY_HOST_NAME) {
                         // InetSocketAddress does not support "*" as a hostname
-                        InetSocketAddress(
-                            // port =
-                            ports.port,
-                        )
+                        InetSocketAddress(/* port = */ ports.port)
                     } else {
-                        InetSocketAddress(
-                            // hostname =
-                            jupyterParams.host,
-                            // port =
-                            ports.port,
-                        )
+                        InetSocketAddress(/* hostname = */ jupyterParams.host, /* port = */ ports.port)
                     }
 
                 JupyterWsServer(

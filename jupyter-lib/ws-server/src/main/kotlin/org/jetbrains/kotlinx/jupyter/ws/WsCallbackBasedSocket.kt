@@ -61,8 +61,7 @@ internal abstract class WsCallbackBasedSocket(
         val msgDataJsonBytes = msgDataJsonString.toByteArray(Charsets.UTF_8)
         val resultBuffer =
             ByteBuffer.allocate(
-                // capacity =
-                msgDataStartIndex + msgDataJsonBytes.size + buffers.sumOf { it.size },
+                /* capacity = */ msgDataStartIndex + msgDataJsonBytes.size + buffers.sumOf { it.size },
             )
         resultBuffer.order(ByteOrder.BIG_ENDIAN)
         resultBuffer.putInt(buffers.size + 1)
