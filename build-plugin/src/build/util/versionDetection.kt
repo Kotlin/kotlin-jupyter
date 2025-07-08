@@ -16,6 +16,7 @@ fun Project.getPropertyByCommand(
 
     val execTask = providers.exec {
         commandLine(*cmdArgs)
+        isIgnoreExitValue = true
         workingDir?.let { this.workingDir = it }
     }
 

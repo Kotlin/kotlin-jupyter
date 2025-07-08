@@ -44,7 +44,7 @@ class PythonPackageTasksConfigurator(
                 }
 
                 doLast {
-                    project.providers.exec {
+                    val execTask = project.providers.exec {
                         commandLine(
                             settings.anacondaUploadScript.absolutePath,
                             taskSpec.credentials.username,
@@ -52,7 +52,12 @@ class PythonPackageTasksConfigurator(
                             artifactPath.absolutePath.toString(),
                             taskSpec.username,
                         )
-                    }.result.get()
+                        isIgnoreExitValue = true
+                    }
+                    if (execTask.result.get().exitValue != 0) {
+                        val standardOutput = execTask.standardOutput.asText.get()
+                        throw RuntimeException("Unable to publish conda package:\n$standardOutput")
+                    }
                 }
             }
         }
