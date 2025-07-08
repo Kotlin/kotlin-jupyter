@@ -157,7 +157,7 @@ private class WsCallbackBasedSocketQueued(
                     callbacks.runCallbacks(message)
                 }
             } catch (_: InterruptedException) {
-                callbacks.close()
+                close()
                 mainListenerThread.interrupt()
             } catch (e: Throwable) {
                 logger.error("Error during message processing", e)

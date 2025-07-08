@@ -13,16 +13,22 @@ import org.jetbrains.kotlinx.jupyter.protocol.CallbackHandler
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.protocol.data
+import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 internal const val CHANNEL_FIELD_NAME = "channel"
 
+/**
+ * Does not own the WebSockets it gets with [getWebSockets].
+ * Calling [close] on this instance is still required, but won't close any WebSockets.
+ */
 internal abstract class WsCallbackBasedSocket(
     loggerFactory: KernelLoggerFactory,
     private val getWebSockets: () -> Iterable<WebSocket>,
     private val channel: JupyterSocketType,
-) : JupyterCallbackBasedSocket {
+) : JupyterCallbackBasedSocket,
+    Closeable {
     private val logger = loggerFactory.getLogger(this::class)
     protected val callbacks = CallbackHandler(logger)
 
@@ -83,4 +89,8 @@ internal abstract class WsCallbackBasedSocket(
     }
 
     override fun onRawMessage(callback: RawMessageCallback) = callbacks.addCallback(callback)
+
+    override fun close() {
+        callbacks.close()
+    }
 }

@@ -119,8 +119,4 @@ private class WsCallbackBasedSocketImmediate(
     override fun messageReceived(msg: RawMessage) {
         callbacks.runCallbacks(msg)
     }
-
-    override fun close() {
-        callbacks.close()
-    }
 }
