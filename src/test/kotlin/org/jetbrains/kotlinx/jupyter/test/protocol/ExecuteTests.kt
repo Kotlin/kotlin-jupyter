@@ -988,4 +988,4 @@ class ExecuteWsTests :
         generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
     )
 
-private const val CONNECT_RETRY_TIMEOUT_SECONDS = 10
+private const val CONNECT_RETRY_TIMEOUT_SECONDS = 30
