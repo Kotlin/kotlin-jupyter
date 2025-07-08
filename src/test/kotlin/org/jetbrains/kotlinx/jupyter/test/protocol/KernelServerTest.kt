@@ -2,6 +2,7 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.type
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
@@ -29,28 +30,34 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
     @Test
     fun testHeartbeat() {
         with(connectClientSocket(JupyterZmqSocketInfo.HB)) {
-            try {
-                zmqSocket.send("abc")
-                val msg = zmqSocket.recvString()
-                assertEquals("abc", msg)
-            } finally {
-                close()
-                context.term()
-            }
+            tryFinally(
+                action = {
+                    zmqSocket.send("abc")
+                    val msg = zmqSocket.recvString()
+                    assertEquals("abc", msg)
+                },
+                finally = {
+                    close()
+                    context.term()
+                },
+            )
         }
     }
 
     @Test
     fun testShell() {
         with(connectClientSocket(JupyterZmqSocketInfo.CONTROL)) {
-            try {
-                sendMessage(MessageType.INTERRUPT_REQUEST, null)
-                val msg = receiveRawMessage()
-                assertEquals(MessageType.INTERRUPT_REPLY.type, msg?.type)
-            } finally {
-                close()
-                context.term()
-            }
+            tryFinally(
+                action = {
+                    sendMessage(MessageType.INTERRUPT_REQUEST, null)
+                    val msg = receiveRawMessage()
+                    assertEquals(MessageType.INTERRUPT_REPLY.type, msg?.type)
+                },
+                finally = {
+                    close()
+                    context.term()
+                },
+            )
         }
     }
 }

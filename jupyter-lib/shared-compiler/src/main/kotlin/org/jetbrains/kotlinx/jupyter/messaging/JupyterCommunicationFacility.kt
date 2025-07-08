@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import org.jetbrains.kotlinx.jupyter.util.Provider
@@ -31,11 +32,10 @@ fun JupyterCommunicationFacility.sendStatus(status: KernelStatus) {
 
 fun JupyterCommunicationFacility.doWrappedInBusyIdle(action: () -> Unit) {
     sendStatus(KernelStatus.BUSY)
-    try {
-        action()
-    } finally {
-        sendStatus(KernelStatus.IDLE)
-    }
+    tryFinally(
+        action = action,
+        finally = { sendStatus(KernelStatus.IDLE) },
+    )
 }
 
 fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(

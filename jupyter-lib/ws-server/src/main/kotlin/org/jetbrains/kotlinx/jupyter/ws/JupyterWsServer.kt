@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
@@ -97,33 +98,36 @@ class JupyterWsServerRunner : JupyterServerRunner {
 
         val closeables = setup(sockets)
 
-        try {
-            val mainThread = Thread.currentThread()
-            val socketListenerThreads =
-                socketsMap.values.mapNotNull {
-                    it
-                        .takeIf(JupyterWsSocketHolder::processIncomingMessages)
-                        ?.socket
-                        ?.startListening(mainListenerThread = mainThread)
+        tryFinally(
+            action = {
+                val mainThread = Thread.currentThread()
+                val socketListenerThreads =
+                    socketsMap.values.mapNotNull {
+                        it
+                            .takeIf(JupyterWsSocketHolder::processIncomingMessages)
+                            ?.socket
+                            ?.startListening(mainListenerThread = mainThread)
+                    }
+                wsServer.run()
+                try {
+                    socketListenerThreads.forEach {
+                        it.join()
+                    }
+                } catch (_: InterruptedException) {
+                    socketListenerThreads.forEach {
+                        it.interrupt()
+                    }
                 }
-            wsServer.run()
-            try {
-                socketListenerThreads.forEach {
-                    it.join()
+            },
+            finally = {
+                mergeExceptions {
+                    for (closeable in closeables) {
+                        catchIndependently { closeable.close() }
+                    }
+                    catchIndependently { wsServer.stop() }
                 }
-            } catch (_: InterruptedException) {
-                socketListenerThreads.forEach {
-                    it.interrupt()
-                }
-            }
-        } finally {
-            mergeExceptions {
-                for (closeable in closeables) {
-                    catchIndependently { closeable.close() }
-                }
-                catchIndependently { wsServer.stop() }
-            }
-        }
+            },
+        )
     }
 
     private class JupyterWsSocketHolder(

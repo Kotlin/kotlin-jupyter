@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
@@ -51,48 +52,51 @@ class JupyterZmqServerRunner : JupyterServerRunner {
             }
 
         val closeables = setup(sockets)
-        try {
-            val mainThread = Thread.currentThread()
+        tryFinally(
+            action = {
+                val mainThread = Thread.currentThread()
 
-            val controlThread =
-                thread {
-                    socketLoop(logger, "Control: Interrupted", mainThread) {
-                        controlSocket.receiveMessageAndRunCallbacks()
+                val controlThread =
+                    thread {
+                        socketLoop(logger, "Control: Interrupted", mainThread) {
+                            controlSocket.receiveMessageAndRunCallbacks()
+                        }
                     }
+
+                val hbThread =
+                    thread {
+                        socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
+                            heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
+                        }
+                    }
+
+                socketLoop(logger, "Main: Interrupted", controlThread, hbThread) {
+                    shellSocket.receiveMessageAndRunCallbacks()
                 }
 
-            val hbThread =
-                thread {
-                    socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
-                        heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
-                    }
+                try {
+                    controlThread.join()
+                    hbThread.join()
+                } catch (_: InterruptedException) {
                 }
-
-            socketLoop(logger, "Main: Interrupted", controlThread, hbThread) {
-                shellSocket.receiveMessageAndRunCallbacks()
-            }
-
-            try {
-                controlThread.join()
-                hbThread.join()
-            } catch (_: InterruptedException) {
-            }
-        } finally {
-            closeWithTimeout(
-                timeoutMs = 15.seconds.inWholeMilliseconds,
-                doClose = {
-                    mergeExceptions {
-                        for (closeable in closeables) {
-                            catchIndependently { closeable.close() }
+            },
+            finally = {
+                closeWithTimeout(
+                    timeoutMs = 15.seconds.inWholeMilliseconds,
+                    doClose = {
+                        mergeExceptions {
+                            for (closeable in closeables) {
+                                catchIndependently { closeable.close() }
+                            }
+                            for (socket in socketList) {
+                                catchIndependently { socket.close() }
+                            }
+                            catchIndependently { zmqContext.close() }
                         }
-                        for (socket in socketList) {
-                            catchIndependently { socket.close() }
-                        }
-                        catchIndependently { zmqContext.close() }
-                    }
-                },
-            )
-        }
+                    },
+                )
+            },
+        )
     }
 
     private fun socketLoop(

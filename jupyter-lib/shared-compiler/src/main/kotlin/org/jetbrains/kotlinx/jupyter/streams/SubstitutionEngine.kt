@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.streams
 
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -66,11 +67,10 @@ class BlockingSubstitutionEngine<DataT>(
         val newData = dataFactory(initialData)
         return lock.withLock {
             val oldData = substitutor(newData)
-            try {
-                body()
-            } finally {
-                finalizer(newData, oldData)
-            }
+            tryFinally(
+                action = body,
+                finally = { finalizer(newData, oldData) },
+            )
         }
     }
 }
@@ -98,16 +98,17 @@ class NonBlockingSubstitutionEngine<DataT : Any>(
                 data
             }
 
-        return try {
-            body()
-        } finally {
-            lock.withLock {
-                with(dataList.remove(newData)) {
-                    if (wasLast) {
-                        finalizer(newData, newLast)
+        return tryFinally(
+            action = body,
+            finally = {
+                lock.withLock {
+                    with(dataList.remove(newData)) {
+                        if (wasLast) {
+                            finalizer(newData, newLast)
+                        }
                     }
                 }
-            }
-        }
+            },
+        )
     }
 }

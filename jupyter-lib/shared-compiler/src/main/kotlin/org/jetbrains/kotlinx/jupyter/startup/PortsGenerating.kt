@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import java.io.Closeable
 import java.io.IOException
 import java.net.DatagramSocket
@@ -33,14 +34,17 @@ fun isPortAvailable(port: Int): Boolean =
 
 private fun checkSocketIsFree(socketFactory: () -> Closeable): Boolean {
     var socket: Closeable? = null
-    return try {
-        socket = socketFactory()
-        true
-    } catch (_: IOException) {
-        false
-    } finally {
-        socket?.close()
-    }
+    return tryFinally(
+        action = {
+            try {
+                socket = socketFactory()
+                true
+            } catch (_: IOException) {
+                false
+            }
+        },
+        finally = { socket?.close() },
+    )
 }
 
 fun randomIntsInRange(

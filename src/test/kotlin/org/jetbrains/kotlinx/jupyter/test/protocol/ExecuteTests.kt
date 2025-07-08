@@ -22,6 +22,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
@@ -249,12 +250,13 @@ abstract class ExecuteTests(
 
     // Make sure we also drain the ioPubSocket when sending protocol messages
     private fun <T> withReceivingStatusMessages(body: () -> T): T =
-        try {
-            receiveStatusMessage(KernelStatus.BUSY)
-            body()
-        } finally {
-            receiveStatusMessage(KernelStatus.IDLE)
-        }
+        tryFinally(
+            action = {
+                receiveStatusMessage(KernelStatus.BUSY)
+                body()
+            },
+            finally = { receiveStatusMessage(KernelStatus.IDLE) },
+        )
 
     private inline fun <reified T : Any> JupyterReceiveSocket.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()

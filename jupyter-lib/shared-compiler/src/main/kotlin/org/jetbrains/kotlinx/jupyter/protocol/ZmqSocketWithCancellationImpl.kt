@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
+import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
@@ -78,10 +79,9 @@ class ZmqSocketWithCancellationImpl(
     private fun isCancelled() = cancellationToken.isCancellationRequested
 
     override fun close() {
-        try {
-            cancellationToken.cancel()
-        } finally {
-            socket.close()
-        }
+        tryFinally(
+            action = { cancellationToken.cancel() },
+            finally = { socket.close() },
+        )
     }
 }
