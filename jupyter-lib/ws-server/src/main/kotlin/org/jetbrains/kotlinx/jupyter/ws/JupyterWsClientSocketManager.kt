@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
@@ -103,10 +104,12 @@ private class WsClientSockets(
     }
 
     override fun close() {
-        for (socket in socketsMap.values) {
-            socket.close()
+        mergeExceptions {
+            for (socket in socketsMap.values) {
+                catchIndependently { socket.close() }
+            }
+            catchIndependently { wsClient.closeBlocking() }
         }
-        wsClient.closeBlocking()
     }
 }
 
