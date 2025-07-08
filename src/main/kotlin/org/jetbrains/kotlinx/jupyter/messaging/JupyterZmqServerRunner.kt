@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocketImpl
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
@@ -39,9 +40,14 @@ class JupyterZmqServerRunner : JupyterServerRunner {
             openServerZmqSocket(loggerFactory, socketInfo, zmqContext, config)
                 .also { socketList.add(it) }
 
+        fun openCallbackBasedSocket(socketInfo: JupyterZmqSocketInfo): JupyterCallbackBasedSocketImpl =
+            openServerZmqSocket(loggerFactory, socketInfo, zmqContext, config)
+                .callbackBased(logger)
+                .also { socketList.add(it) }
+
         val heartbeat = openSocket(JupyterZmqSocketInfo.HB)
-        val shellSocket = openSocket(JupyterZmqSocketInfo.SHELL).callbackBased(logger)
-        val controlSocket = openSocket(JupyterZmqSocketInfo.CONTROL).callbackBased(logger)
+        val shellSocket = openCallbackBasedSocket(JupyterZmqSocketInfo.SHELL)
+        val controlSocket = openCallbackBasedSocket(JupyterZmqSocketInfo.CONTROL)
 
         val sockets =
             object : JupyterServerImplSockets {

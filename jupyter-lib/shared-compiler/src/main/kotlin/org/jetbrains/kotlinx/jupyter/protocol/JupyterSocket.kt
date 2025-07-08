@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.slf4j.Logger
+import java.io.Closeable
 import java.util.concurrent.ArrayBlockingQueue
 
 interface JupyterSendSocket {
@@ -26,7 +27,9 @@ interface JupyterCallbackBasedSocket : JupyterSendSocket {
     fun onRawMessage(callback: RawMessageCallback)
 }
 
-interface JupyterCallbackBasedSocketImpl : JupyterCallbackBasedSocket {
+interface JupyterCallbackBasedSocketImpl :
+    JupyterCallbackBasedSocket,
+    Closeable {
     /**
      * Blocks until a message arrives.
      * Runs all registered callbacks on it when it happens.
@@ -36,8 +39,13 @@ interface JupyterCallbackBasedSocketImpl : JupyterCallbackBasedSocket {
     fun receiveMessageAndRunCallbacks()
 }
 
-/** The callbacks won't be handled unless [JupyterCallbackBasedSocketImpl.receiveMessageAndRunCallbacks] is called!  */
-fun JupyterSendReceiveSocket.callbackBased(logger: Logger): JupyterCallbackBasedSocketImpl {
+/**
+ * The callbacks won't be handled unless [JupyterCallbackBasedSocketImpl.receiveMessageAndRunCallbacks] is called!
+ * Returns a [Closeable] instance,
+ * whose [Closeable.close] must be called instead of (or in addition to) the one in the original socket.
+ */
+fun <T> T.callbackBased(logger: Logger): JupyterCallbackBasedSocketImpl
+    where T : JupyterSendReceiveSocket, T : Closeable {
     val callbackHandler = CallbackHandler(logger)
 
     return object : JupyterCallbackBasedSocketImpl, JupyterSendSocket by this {
@@ -48,6 +56,11 @@ fun JupyterSendReceiveSocket.callbackBased(logger: Logger): JupyterCallbackBased
             if (message != null) {
                 callbackHandler.runCallbacks(message)
             }
+        }
+
+        override fun close() {
+            callbackHandler.close()
+            this@callbackBased.close()
         }
     }
 }

@@ -3,12 +3,15 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.zeromq.ZMQ
+import java.io.Closeable
 import kotlin.concurrent.thread
 
 class JupyterZmqClientSocketManager(
@@ -58,7 +61,15 @@ class JupyterZmqClientSockets internal constructor(
         }
 
     override fun close() {
-        delegate.close()
+        mergeExceptions {
+            // we have to close the sockets ourselves instead of just calling `delegate.close()`,
+            // because these are wrappers that store callbacks. calling `socket.close()` deletes the callbacks,
+            // preventing leaks.
+            for (socket in listOf(shell, control, ioPub, stdin)) {
+                catchIndependently { socket.close() }
+            }
+            catchIndependently { delegate.close() }
+        }
         mainThread.interrupt()
         try {
             mainThread.join()
@@ -68,10 +79,16 @@ class JupyterZmqClientSockets internal constructor(
     }
 
     /** Such socket ignores attempts to send messages */
-    private fun JupyterReceiveSocket.noOpSend(): JupyterSendReceiveSocket =
-        object : JupyterSendReceiveSocket, JupyterReceiveSocket by this {
-            override fun sendRawMessage(msg: RawMessage) {}
-        }
+    private fun JupyterZmqSocket.noOpSend(): NoOpSendSocket = NoOpSendSocket(this)
+
+    /** Such socket ignores attempts to send messages */
+    private class NoOpSendSocket(
+        private val receiveSocket: JupyterZmqSocket,
+    ) : JupyterReceiveSocket by receiveSocket,
+        Closeable by receiveSocket,
+        JupyterSendReceiveSocket {
+        override fun sendRawMessage(msg: RawMessage) {}
+    }
 }
 
 private inline fun socketLoop(
