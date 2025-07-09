@@ -26,7 +26,7 @@ internal const val CHANNEL_FIELD_NAME = "channel"
 internal abstract class WsCallbackBasedSocket(
     loggerFactory: KernelLoggerFactory,
     private val getWebSockets: () -> Iterable<WebSocket>,
-    private val channel: JupyterSocketType,
+    protected val channel: JupyterSocketType,
 ) : JupyterCallbackBasedSocket,
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)

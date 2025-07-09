@@ -63,14 +63,14 @@ class JupyterZmqServerRunner : JupyterServerRunner {
                 val mainThread = Thread.currentThread()
 
                 val controlThread =
-                    thread {
+                    thread(name = "JupyterZmqServerRunner.CONTROL") {
                         socketLoop(logger, "Control: Interrupted", mainThread) {
                             controlSocket.receiveMessageAndRunCallbacks()
                         }
                     }
 
                 val hbThread =
-                    thread {
+                    thread(name = "JupyterZmqServerRunner.HB") {
                         socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
                             heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
                         }

@@ -42,7 +42,7 @@ class KotlinJupyterKernelService(
     private var shouldRestart = true
 
     private val kernelThread =
-        thread {
+        thread(name = "KotlinJupyterKernelService.kernel") {
             runKernelService()
         }
 

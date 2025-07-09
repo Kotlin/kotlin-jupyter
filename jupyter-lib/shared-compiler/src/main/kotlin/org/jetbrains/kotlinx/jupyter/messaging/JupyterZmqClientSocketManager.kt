@@ -39,11 +39,12 @@ class JupyterZmqClientSockets internal constructor(
     override val ioPub = delegate.ioPub.noOpSend().callbackBased(logger)
 
     private val mainThread =
-        thread {
+        thread(name = "JupyterZmqClientSockets.main") {
             val socketThreads =
-                listOf(shell, control, stdin, ioPub).map {
-                    thread {
-                        socketLoop(parentThread = Thread.currentThread()) { it.receiveMessageAndRunCallbacks() }
+                listOf(::shell, ::control, ::stdin, ::ioPub).map { socketProp ->
+                    val socket = socketProp.get()
+                    thread(name = "JupyterZmqClientSockets.${socketProp.name}") {
+                        socketLoop(parentThread = Thread.currentThread()) { socket.receiveMessageAndRunCallbacks() }
                     }
                 }
             try {

@@ -156,7 +156,7 @@ private class WsCallbackBasedSocketQueued(
      * Does not [close] this instance when the message processing is over.
      */
     fun startListening(mainListenerThread: Thread): Thread =
-        thread {
+        thread(name = "WsCallbackBasedSocketQueued($channel)") {
             try {
                 while (true) {
                     val message = messages.take()

@@ -85,7 +85,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
             )
         val replSettings = DefaultReplSettings(kernelConfig, replConfig)
         serverThread =
-            thread {
+            thread(name = "ThreadServerTestExecutor.server") {
                 runServer(replSettings)
             }
     }
