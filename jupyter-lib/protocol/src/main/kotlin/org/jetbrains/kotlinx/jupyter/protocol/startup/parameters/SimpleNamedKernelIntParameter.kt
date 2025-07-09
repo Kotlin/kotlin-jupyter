@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 /**
  * A simple implementation of a named kernel parameter that handles integer values.
@@ -11,8 +11,8 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
 class SimpleNamedKernelIntParameter(
     name: String,
 ) : SimpleNamedKernelParameter<Int>(
-        name,
-        { arg, _ ->
-            arg.toIntOrNull() ?: throw IllegalArgumentException("Argument should be integer: $arg")
-        },
-    )
+    name,
+    { arg, _ ->
+        arg.toIntOrNull() ?: throw IllegalArgumentException("Argument should be integer: $arg")
+    },
+)

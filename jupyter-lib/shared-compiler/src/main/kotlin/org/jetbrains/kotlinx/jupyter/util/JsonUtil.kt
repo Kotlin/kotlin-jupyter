@@ -4,7 +4,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.MessageFormat
 
 @JvmName("jsonObjectForString")
 fun jsonObject(vararg namedValues: Pair<String, String?>): JsonObject =

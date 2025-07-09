@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 enum class JupyterSocketSide {
     SERVER,

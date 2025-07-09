@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 /**
  * Class that binds a parameter handler to a value provider function.

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 abstract class SimpleNamedKernelParameter<T : Any>(
     val name: String,

@@ -7,7 +7,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
-import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 

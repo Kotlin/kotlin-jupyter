@@ -9,10 +9,10 @@ import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
-import org.jetbrains.kotlinx.jupyter.protocol.CallbackHandler
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.protocol.RawMessageCallback
-import org.jetbrains.kotlinx.jupyter.protocol.data
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.CallbackHandler
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterCallbackBasedSocket
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.RawMessageCallback
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.data
 import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

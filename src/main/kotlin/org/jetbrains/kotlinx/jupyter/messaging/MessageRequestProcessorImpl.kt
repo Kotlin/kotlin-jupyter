@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 
 open class MessageRequestProcessorImpl(

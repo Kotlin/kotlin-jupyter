@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 /**
  * Interface for handling the parsing and serialization of a specific kernel parameter type.

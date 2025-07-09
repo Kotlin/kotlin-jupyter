@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 import java.io.Closeable
 
@@ -27,9 +27,9 @@ interface JupyterZmqSocket :
     Closeable {
     val zmqSocket: ZmqSocketWithCancellation
 
-    // Used on server side
+    // Used on the server side
     fun bind(): Boolean
 
-    // Used on client side
+    // Used on the client side
     fun connect(): Boolean
 }

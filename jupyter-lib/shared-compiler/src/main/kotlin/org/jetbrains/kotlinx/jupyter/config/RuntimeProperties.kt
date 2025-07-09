@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.config
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 
 fun String.parseIniConfig() =

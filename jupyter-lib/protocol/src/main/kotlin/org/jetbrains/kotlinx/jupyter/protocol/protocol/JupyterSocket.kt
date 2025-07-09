@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.slf4j.Logger

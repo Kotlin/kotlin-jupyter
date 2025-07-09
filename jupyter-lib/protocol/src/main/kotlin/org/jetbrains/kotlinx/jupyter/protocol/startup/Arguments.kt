@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup
+package org.jetbrains.kotlinx.jupyter.protocol.startup
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -13,9 +13,9 @@ import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
-import org.jetbrains.kotlinx.jupyter.protocol.HMAC
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.HMAC
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelArgumentsBuilder
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelOwnParams
 import java.io.File
 import java.util.EnumMap
 

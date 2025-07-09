@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
-import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.startup.ZmqKernelPorts
 import java.io.Closeable
 import java.io.IOException
 import java.net.DatagramSocket

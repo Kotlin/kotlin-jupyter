@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -7,9 +7,9 @@ import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParams
-import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
+import org.jetbrains.kotlinx.jupyter.protocol.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.slf4j.Logger
 import org.zeromq.ZMQ

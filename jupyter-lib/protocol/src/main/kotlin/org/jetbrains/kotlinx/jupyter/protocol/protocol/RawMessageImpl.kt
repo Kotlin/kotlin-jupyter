@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

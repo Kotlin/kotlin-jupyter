@@ -1,12 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
-import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import java.io.File

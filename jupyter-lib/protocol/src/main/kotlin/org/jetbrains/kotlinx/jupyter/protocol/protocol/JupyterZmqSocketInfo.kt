@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.protocol.protocol
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.zeromq.SocketType

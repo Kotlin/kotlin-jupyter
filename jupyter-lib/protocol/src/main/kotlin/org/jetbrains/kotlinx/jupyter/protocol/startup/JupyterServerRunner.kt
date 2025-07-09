@@ -1,8 +1,8 @@
-package org.jetbrains.kotlinx.jupyter.startup
+package org.jetbrains.kotlinx.jupyter.protocol.startup
 
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerImplSockets
 import java.io.Closeable
 import java.util.ServiceLoader
 

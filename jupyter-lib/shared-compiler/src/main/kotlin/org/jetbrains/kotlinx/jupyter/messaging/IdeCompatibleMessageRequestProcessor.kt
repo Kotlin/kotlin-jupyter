@@ -17,7 +17,8 @@ import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
-import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx

@@ -1,6 +1,6 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
-import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelArgs
 import java.io.File
 
 class KernelArgumentsBuilder(

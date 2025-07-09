@@ -7,12 +7,12 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterCallbackBasedSocket
+import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
 import java.io.Closeable
 import java.net.URI
 import java.nio.ByteBuffer

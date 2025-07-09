@@ -63,7 +63,6 @@ import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResol
 import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
-import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.execution.InterruptionCallbacksProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
@@ -82,6 +81,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.requireUniqueTargets
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.ClasspathProvider
@@ -315,13 +315,13 @@ class ReplForJupyterImpl(
 
     private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
         when (compilerMode) {
-            K1 -> {
+            ReplCompilerMode.K1 -> {
                 JupyterCompilerWithCompletion.createK1Compiler(
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
             }
-            K2 -> {
+            ReplCompilerMode.K2 -> {
                 JupyterCompilerWithCompletion.createK2Compiler(
                     rootDisposable,
                     compilerConfiguration,
@@ -333,8 +333,8 @@ class ReplForJupyterImpl(
 
     private val evaluator: KernelReplEvaluator by lazy {
         when (compilerMode) {
-            K1 -> BasicJvmReplEvaluator()
-            K2 -> K2ReplEvaluator()
+            ReplCompilerMode.K1 -> BasicJvmReplEvaluator()
+            ReplCompilerMode.K2 -> K2ReplEvaluator()
         }
     }
 

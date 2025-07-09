@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
 /**
  * Represents a simple named kernel parameter with a string value.
@@ -10,6 +10,6 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
 class SimpleNamedKernelStringParameter(
     name: String,
 ) : SimpleNamedKernelParameter<String>(
-        name,
-        { argValue, _ -> argValue },
-    )
+    name,
+    { argValue, _ -> argValue },
+)
