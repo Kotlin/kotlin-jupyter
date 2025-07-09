@@ -10,7 +10,10 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.slf4j.Logger
 import org.zeromq.ZMQ
+import org.zeromq.ZMQException
+import zmq.ZError
 import java.io.Closeable
 import kotlin.concurrent.thread
 
@@ -40,11 +43,14 @@ class JupyterZmqClientSockets internal constructor(
 
     private val mainThread =
         thread(name = "JupyterZmqClientSockets.main") {
+            val mainThread = Thread.currentThread()
             val socketThreads =
                 listOf(::shell, ::control, ::stdin, ::ioPub).map { socketProp ->
                     val socket = socketProp.get()
                     thread(name = "JupyterZmqClientSockets.${socketProp.name}") {
-                        socketLoop(parentThread = Thread.currentThread()) { socket.receiveMessageAndRunCallbacks() }
+                        socketLoop(parentThread = mainThread, socketName = socketProp.name, logger) {
+                            socket.receiveMessageAndRunCallbacks()
+                        }
                     }
                 }
             try {
@@ -94,14 +100,27 @@ class JupyterZmqClientSockets internal constructor(
 
 private inline fun socketLoop(
     parentThread: Thread,
+    socketName: String,
+    logger: Logger,
     loopBody: () -> Unit,
 ) {
     while (true) {
         try {
             loopBody()
-        } catch (_: InterruptedException) {
-            parentThread.interrupt()
-            break
+        } catch (e: Throwable) {
+            when (e) {
+                is InterruptedException -> {
+                    parentThread.interrupt()
+                    break
+                }
+
+                is ZMQException if e.errorCode == ZError.ECANCELED -> {
+                    parentThread.interrupt()
+                    break
+                }
+
+                else -> logger.error("Exception in socket loop for '$socketName' socket", e)
+            }
         }
     }
 }

@@ -18,6 +18,8 @@ import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.slf4j.Logger
 import org.zeromq.ZMQ
+import org.zeromq.ZMQException
+import zmq.ZError
 import java.io.Closeable
 import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
@@ -114,12 +116,22 @@ class JupyterZmqServerRunner : JupyterServerRunner {
         while (true) {
             try {
                 loopBody()
-            } catch (_: InterruptedException) {
-                logger.debug(interruptedMessage)
-                threadsToInterrupt.forEach { it.interrupt() }
-                break
             } catch (e: Throwable) {
-                logger.error("Error during message processing", e)
+                when (e) {
+                    is InterruptedException -> {
+                        logger.debug(interruptedMessage)
+                        threadsToInterrupt.forEach { it.interrupt() }
+                        break
+                    }
+
+                    is ZMQException if e.errorCode == ZError.ECANCELED -> {
+                        logger.debug(interruptedMessage)
+                        threadsToInterrupt.forEach { it.interrupt() }
+                        break
+                    }
+
+                    else -> logger.error("Error during message processing", e)
+                }
             }
         }
     }
