@@ -33,14 +33,11 @@ class ZmqSocketWithCancellationImpl(
     @Throws(InterruptedException::class)
     override fun recvString() = String(recv(), ZMQ.CHARSET)
 
-    override fun sendMore(data: String): Boolean {
-        assertNotCancelled()
-        return socket.sendMore(data)
-    }
+    override fun sendMore(data: String): Boolean = sendMore(data.toByteArray(ZMQ.CHARSET))
 
     override fun sendMore(data: ByteArray): Boolean {
         assertNotCancelled()
-        return socket.sendMore(data)
+        return socket.send(data, zmq.ZMQ.ZMQ_SNDMORE, cancellationToken)
     }
 
     override fun send(data: ByteArray): Boolean {
@@ -80,7 +77,7 @@ class ZmqSocketWithCancellationImpl(
 
     override fun close() {
         tryFinally(
-            action = { cancellationToken.cancel() },
+            action = { if (!isCancelled()) cancellationToken.cancel() },
             finally = { socket.close() },
         )
     }
