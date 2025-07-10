@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver

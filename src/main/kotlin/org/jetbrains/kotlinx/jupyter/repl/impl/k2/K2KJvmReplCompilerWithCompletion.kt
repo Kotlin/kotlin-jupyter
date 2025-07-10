@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplCompilationStat
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplCompiler
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ScriptDiagnosticsMessageCollector
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.writer.ConsoleReplWriter
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.config.DefaultKernelLoggerFactory
 import org.slf4j.Logger
 import kotlin.script.experimental.api.CompiledScript
 import kotlin.script.experimental.api.ReplAnalyzerResult

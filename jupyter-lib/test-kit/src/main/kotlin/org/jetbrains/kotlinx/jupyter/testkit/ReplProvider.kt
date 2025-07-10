@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.testkit
 
 import jupyter.kotlin.DependsOn
 import org.jetbrains.kotlinx.jupyter.api.EmbeddedKernelRunMode
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRepositoriesCoordinates
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
