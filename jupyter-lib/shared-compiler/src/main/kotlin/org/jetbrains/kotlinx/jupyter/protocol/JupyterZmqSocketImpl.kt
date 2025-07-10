@@ -183,13 +183,3 @@ fun KernelJupyterParams.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): S
     val port = ports.ports.getValue(socketInfo.type)
     return "$transport://$host:$port"
 }
-
-fun openServerZmqSocket(
-    loggerFactory: KernelLoggerFactory,
-    socketInfo: JupyterZmqSocketInfo,
-    context: ZMQ.Context,
-    kernelConfig: KernelConfig,
-): JupyterZmqSocket =
-    createZmqSocket(loggerFactory, socketInfo, context, kernelConfig, JupyterSocketSide.SERVER).apply {
-        bind()
-    }
