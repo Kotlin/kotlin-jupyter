@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.exceptions.tryFinally
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
+import zmq.ZError
 
 class ZmqSocketWithCancellationImpl(
     private val socket: ZMQ.Socket,
@@ -12,17 +13,7 @@ class ZmqSocketWithCancellationImpl(
 
     @Throws(InterruptedException::class)
     override fun recv(): ByteArray {
-        assertNotCancelled()
-
-        val result =
-            try {
-                socket.recv(0, cancellationToken)
-            } catch (e: ZMQException) {
-                if (e.errorCode == ZMQ.Error.EINTR.code) {
-                    throw InterruptedException()
-                }
-                throw e
-            }
+        val result = cancellableOperation { socket.recv(0, cancellationToken) }
 
         return result ?: throw ZMQException(
             "Unable to receive message",
@@ -35,17 +26,35 @@ class ZmqSocketWithCancellationImpl(
 
     override fun sendMore(data: String): Boolean = sendMore(data.toByteArray(ZMQ.CHARSET))
 
-    override fun sendMore(data: ByteArray): Boolean {
-        assertNotCancelled()
-        return socket.send(data, zmq.ZMQ.ZMQ_SNDMORE, cancellationToken)
-    }
-
-    override fun send(data: ByteArray): Boolean {
-        assertNotCancelled()
-        return socket.send(data, 0, cancellationToken)
-    }
+    override fun sendMore(data: ByteArray): Boolean = send(data, flags = zmq.ZMQ.ZMQ_SNDMORE)
 
     override fun send(data: String): Boolean = send(data.toByteArray(ZMQ.CHARSET))
+
+    override fun send(data: ByteArray): Boolean = send(data, flags = 0)
+
+    private fun send(
+        data: ByteArray,
+        flags: Int,
+    ): Boolean = cancellableOperation { socket.send(data, flags, cancellationToken) }
+
+    private inline fun <R> cancellableOperation(block: () -> R): R {
+        assertNotCancelled()
+        return try {
+            block()
+        } catch (e: ZMQException) {
+            if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) {
+                throw InterruptedException()
+            }
+            throw e
+        } catch (e: NullPointerException) {
+            // Sometimes, ZMQ fails with NPE when the socket is closed during send/recv
+            if (isCancelled()) {
+                throw InterruptedException().apply { addSuppressed(e) }
+            } else {
+                throw e
+            }
+        }
+    }
 
     override fun makeRelaxed() {
         socket.base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
