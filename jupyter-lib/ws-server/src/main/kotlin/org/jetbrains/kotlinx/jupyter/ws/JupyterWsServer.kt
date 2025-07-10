@@ -33,6 +33,8 @@ class WsKernelPorts(
     val port: Int,
 ) : KernelPorts {
     override fun serialize(): Map<String, JsonPrimitive> = mapOf("ws_port" to JsonPrimitive(port))
+
+    override fun toString(): String = "WsKernelPorts(${serialize()})"
 }
 
 class JupyterWsServerRunner : JupyterServerRunner {

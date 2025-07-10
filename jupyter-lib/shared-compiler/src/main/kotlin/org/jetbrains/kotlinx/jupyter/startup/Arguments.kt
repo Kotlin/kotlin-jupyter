@@ -60,6 +60,8 @@ class ZmqKernelPorts(
         ports.entries.associate { (socket, port) ->
             socket.zmqPortField to JsonPrimitive(port)
         }
+
+    override fun toString(): String = "ZmqKernelPorts(${serialize()})"
 }
 
 data class KernelArgs(
