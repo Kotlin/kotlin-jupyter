@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.messaging
+package org.jetbrains.kotlinx.jupyter.protocol.messaging
 
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger

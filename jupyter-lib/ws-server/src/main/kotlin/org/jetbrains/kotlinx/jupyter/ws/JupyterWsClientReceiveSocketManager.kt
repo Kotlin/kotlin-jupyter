@@ -1,9 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.ws
 
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSocketManager
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientReceiveSockets
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSocketManager
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSockets
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.protocol.sendReceive
