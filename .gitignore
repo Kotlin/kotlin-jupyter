@@ -14,6 +14,7 @@
 # Folders with build files
 out/
 /build/
+/teamcity/build/
 /build-plugin/**/.idea/
 /build-plugin/**/build/
 !/build-plugin/**/src/build/
