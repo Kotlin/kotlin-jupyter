@@ -15,11 +15,11 @@ import java.io.Closeable
 
 internal class JupyterZmqServerImplSockets(
     private val loggerFactory: KernelLoggerFactory,
-    private val zmqContext: ZMQ.Context,
     private val config: KernelConfig,
 ) : JupyterServerImplSockets,
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)
+    private val zmqContext: ZMQ.Context = ZMQ.context(1)
 
     private val socketsToClose = mutableListOf<Closeable>()
     private val socketsToBind = mutableListOf<JupyterZmqSocket>()
@@ -55,6 +55,7 @@ internal class JupyterZmqServerImplSockets(
             for (socket in socketsToClose) {
                 catchIndependently { socket.close() }
             }
+            catchIndependently { zmqContext.close() }
         }
     }
 }

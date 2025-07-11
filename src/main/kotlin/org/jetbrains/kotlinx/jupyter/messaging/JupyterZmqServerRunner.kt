@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.slf4j.Logger
-import org.zeromq.ZMQ
 import org.zeromq.ZMQException
 import zmq.ZError
 import java.io.Closeable
@@ -29,9 +28,7 @@ class JupyterZmqServerRunner : JupyterServerRunner {
         setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
     ) {
         val logger = loggerFactory.getLogger(this::class)
-        val zmqContext: ZMQ.Context = ZMQ.context(1)
-
-        val sockets = JupyterZmqServerImplSockets(loggerFactory, zmqContext, config)
+        val sockets = JupyterZmqServerImplSockets(loggerFactory, config)
 
         val closeables = setup(sockets)
         tryFinally(
@@ -73,7 +70,6 @@ class JupyterZmqServerRunner : JupyterServerRunner {
                                 catchIndependently { closeable.close() }
                             }
                             catchIndependently { sockets.close() }
-                            catchIndependently { zmqContext.close() }
                         }
                     },
                 )
