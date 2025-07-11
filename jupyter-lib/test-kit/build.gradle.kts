@@ -27,7 +27,7 @@ buildSettings {
     }
 }
 
-tasks.dokkaHtmlPartial {
+tasks.dokkaGeneratePublicationHtml {
     mustRunAfter(rootShadowJar)
 }
 

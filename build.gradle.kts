@@ -214,7 +214,7 @@ tasks {
         }
     }
 
-    dokkaHtmlMultiModule {
+    dokkaGeneratePublicationHtml {
         mustRunAfter(shadowJar.get())
     }
 
