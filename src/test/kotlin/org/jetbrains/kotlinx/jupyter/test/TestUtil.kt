@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.assertions.fail
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.JavaRuntime
@@ -76,7 +77,6 @@ import java.nio.file.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
-import kotlin.test.assertEquals
 
 val testDataDir = File("src/test/testData")
 
@@ -129,7 +129,7 @@ val KERNEL_LIBRARIES =
         logger.errorForUser(message = message, throwable = exception)
     }
 
-fun assertUnit(value: Any?) = assertEquals(Unit, value)
+fun Any?.shouldBeUnit() = this shouldBe Unit
 
 fun assertStartsWith(
     expectedPrefix: CharSequence,

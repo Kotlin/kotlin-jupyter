@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionInfo
@@ -51,60 +49,6 @@ class DefaultInfoLibraryResolver(
     }
 }
 
-class LocalLibraryResolver(
-    parent: LibraryResolver?,
-    loggerFactory: KernelLoggerFactory,
-    private val libraryDescriptorsManager: LibraryDescriptorsManager,
-    mainLibrariesDir: File?,
-) : ChainedLibraryResolver(parent) {
-    private val logger = loggerFactory.getLogger(this::class)
-    private val pathsToCheck: List<File>
-
-    init {
-        val paths =
-            mutableListOf(
-                libraryDescriptorsManager.userCacheDir,
-                libraryDescriptorsManager.userLibrariesDir,
-            )
-        mainLibrariesDir?.let { paths.add(it) }
-
-        pathsToCheck = paths
-    }
-
-    override fun shouldResolve(reference: LibraryReference): Boolean = reference.shouldBeCachedLocally
-
-    override fun tryResolve(
-        reference: LibraryReference,
-        arguments: List<Variable>,
-    ): LibraryDefinition? {
-        val files =
-            pathsToCheck.mapNotNull { dir ->
-                val file = reference.getFile(dir)
-                if (file.exists()) file else null
-            }
-
-        if (files.size > 1) {
-            logger.warn("More than one file for library $reference found in local cache directories")
-        }
-
-        val jsonFile = files.firstOrNull() ?: return null
-        return parseLibraryDescriptor(jsonFile.readText()).convertToDefinition(arguments)
-    }
-
-    override fun save(
-        reference: LibraryReference,
-        definition: LibraryDefinition,
-    ) {
-        val text = definition.originalDescriptorText ?: return
-        val dir = pathsToCheck.first()
-        val file = reference.getFile(dir)
-        file.parentFile.mkdirs()
-        file.writeText(text)
-    }
-
-    private fun LibraryReference.getFile(dir: File) = dir.resolve(libraryDescriptorsManager.descriptorFileName(key))
-}
-
 open class ResourcesLibraryResolver(
     parent: LibraryResolver?,
     private val libraryDescriptorsManager: LibraryDescriptorsManager,
@@ -137,8 +81,8 @@ open class ResourcesLibraryResolver(
         }
 }
 
-private fun LibraryDescriptorsManager.getDescriptorOptions(sha: String): LibraryDescriptorGlobalOptions {
-    val optionsText = downloadGlobalDescriptorOptions(sha) ?: return DefaultLibraryDescriptorGlobalOptions
+private fun LibraryDescriptorsManager.getDescriptorOptions(ref: String): LibraryDescriptorGlobalOptions {
+    val optionsText = downloadGlobalDescriptorOptions(ref) ?: return DefaultLibraryDescriptorGlobalOptions
     return parseLibraryDescriptorGlobalOptions(optionsText)
 }
 
@@ -161,7 +105,7 @@ class FallbackLibraryResolver(
 
                 val descriptorText =
                     try {
-                        libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
+                        libraryDescriptorsManager.downloadLibraryDescriptor(ref, name)
                     } catch (e: IOException) {
                         KernelStreams.err.println(
                             "WARNING: Can't resolve library $name from the given reference. " +
@@ -171,13 +115,13 @@ class FallbackLibraryResolver(
                         resourcesResolver.resolveDescriptorFromResources(name)
                     }
 
-                descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
+                descriptorText to libraryDescriptorsManager.getDescriptorOptions(ref)
             },
             resolverWithOptions<AbstractLibraryResolutionInfo.ByGitRef> { name ->
                 if (name == null) throw ReplLibraryLoadingException(message = "Reference library resolver needs name to be specified")
-                val descriptorText = libraryDescriptorsManager.downloadLibraryDescriptor(sha, name)
+                val descriptorText = libraryDescriptorsManager.downloadLibraryDescriptor(ref, name)
 
-                descriptorText to libraryDescriptorsManager.getDescriptorOptions(sha)
+                descriptorText to libraryDescriptorsManager.getDescriptorOptions(ref)
             },
             resolver<AbstractLibraryResolutionInfo.ByFile> {
                 file.readText()

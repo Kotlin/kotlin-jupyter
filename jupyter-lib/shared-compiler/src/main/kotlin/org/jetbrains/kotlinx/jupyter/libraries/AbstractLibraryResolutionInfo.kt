@@ -31,14 +31,17 @@ abstract class AbstractLibraryResolutionInfo(
     }
 
     open class ByGitRef(
-        private val ref: String,
+        val ref: String,
         private val libraryDescriptorsManager: LibraryDescriptorsManager,
     ) : AbstractLibraryResolutionInfo("ref") {
         override val valueKey: String
             get() = sha
 
         val sha: String by lazy {
-            libraryDescriptorsManager.getLatestCommitToLibraries(ref, null)?.sha ?: return@lazy ref
+            when {
+                ref == libraryDescriptorsManager.defaultBranch -> libraryDescriptorsManager.latestCommitOnDefaultBranch ?: ref
+                else -> libraryDescriptorsManager.getLatestCommitToLibraries(ref, null)?.sha ?: ref
+            }
         }
 
         override val args = listOf(Variable("ref", ref))

@@ -69,7 +69,6 @@ interface LibraryDescriptorsManager {
 
     class CommitInfo(
         val sha: String,
-        val timestamp: String,
     )
 
     companion object {
@@ -111,12 +110,15 @@ private class LibraryDescriptorsManagerImpl(
 
     private val authUser: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_USER")
     private val authToken: String? = System.getenv("KOTLIN_JUPYTER_GITHUB_TOKEN")
-    private val apiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"
+    private val githubApiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"
+    private val rawContentApiPrefix = "https://$RAW_GITHUB_CONTENT_HOST/$user/$repo"
     override val userLibrariesDir = userSettingsDir.resolve(userPath)
     override val userCacheDir = userSettingsDir.resolve("cache")
     override val localLibrariesDir = File(localPath)
     override val defaultBranch = "master"
-    override val latestCommitOnDefaultBranch get() = getLatestCommitToLibraries(defaultBranch)?.sha
+    override val latestCommitOnDefaultBranch by lazy {
+        getLatestCommitToLibraries(defaultBranch)?.sha
+    }
 
     override fun homeLibrariesDir(homeDir: File?) = (homeDir ?: File("")).resolve(homePath)
 
@@ -143,7 +145,7 @@ private class LibraryDescriptorsManagerImpl(
         sinceTimestamp: String?,
     ): LibraryDescriptorsManager.CommitInfo? {
         return catchAll {
-            var url = "$apiPrefix/commits?path=$remotePath&sha=$ref"
+            var url = "$githubApiPrefix/commits?path=$remotePath&sha=$ref"
             if (sinceTimestamp != null) {
                 url += "&since=$sinceTimestamp"
             }
@@ -163,17 +165,15 @@ private class LibraryDescriptorsManagerImpl(
             } else {
                 val commit = arr[0] as JsonObject
                 val sha = (commit["sha"] as JsonPrimitive).content
-                val timestamp = (((commit["commit"] as JsonObject)["committer"] as JsonObject)["date"] as JsonPrimitive).content
-                LibraryDescriptorsManager.CommitInfo(sha, timestamp)
+                LibraryDescriptorsManager.CommitInfo(sha)
             }
         }
     }
 
     override fun downloadGlobalDescriptorOptions(ref: String): String? {
-        val url = resolveAgainstRemotePath(OPTIONS_FILE, ref)
-        logger.info("Requesting global descriptor options at $url")
+        logger.info("Downloading global descriptor options")
         return try {
-            downloadSingleFile(url)
+            downloadFileDirectly(OPTIONS_FILE, ref)
         } catch (e: Throwable) {
             logger.warn("Unable to load global descriptor options", e)
             null
@@ -184,33 +184,19 @@ private class LibraryDescriptorsManagerImpl(
         ref: String,
         name: String,
     ): String {
-        val url = resolveAgainstRemotePath("$name.$DESCRIPTOR_EXTENSION", ref)
-        logger.info("Requesting library descriptor at $url")
-        return downloadSingleFile(url)
+        val fileName = "$name.$DESCRIPTOR_EXTENSION"
+        logger.info("Downloading library descriptor $fileName")
+        return downloadFileDirectly(fileName, ref)
     }
 
-    override fun checkRefExistence(ref: String): Boolean {
-        val response = getGithubHttpWithAuth(resolveAgainstRemotePath("", ref))
-        return response.status.successful
-    }
-
-    private fun resolveAgainstRemotePath(
-        filePath: String,
-        ref: String,
-    ): String =
-        buildString {
-            append(apiPrefix)
-            append("/contents")
-            if (remotePath.isNotEmpty()) {
-                append("/")
-                append(remotePath)
-            }
-            if (filePath.isNotEmpty()) {
-                append("/")
-                append(filePath)
-            }
-            append("?ref=")
-            append(ref)
+    override fun checkRefExistence(ref: String): Boolean =
+        // We suppose that each self-respecting git ref in
+        // libraries repo should have at least one of these files
+        listOf(".properties", "LICENSE").any { fileName ->
+            val url = buildRawContentApiDownloadUrl(fileName, ref)
+            logger.info("Checking ref existence directly at $url")
+            val response = httpClient.getHttp(url)
+            response.status.successful
         }
 
     override fun checkIfRefUpToDate(remoteRef: String?): Boolean {
@@ -227,7 +213,7 @@ private class LibraryDescriptorsManagerImpl(
         localLibrariesDir.deleteRecursively()
         localLibrariesDir.mkdirs()
 
-        val url = resolveAgainstRemotePath("", ref)
+        val url = buildGithubApiDownloadUrl("", ref)
         logger.info("Requesting library descriptors at $url")
         val response = getGithubHttpWithAuth(url).jsonArray
 
@@ -264,13 +250,53 @@ private class LibraryDescriptorsManagerImpl(
         return response
     }
 
-    private fun downloadSingleFile(contentsApiUrl: String): String {
-        val response = getGithubHttpWithAuth(contentsApiUrl).jsonObject
-        val downloadUrl = response["download_url"]!!.jsonPrimitive.content
-        val res = httpClient.getHttp(downloadUrl)
+    private fun downloadFileDirectly(
+        filePath: String,
+        ref: String,
+    ): String {
+        val url = buildRawContentApiDownloadUrl(filePath, ref)
+        logger.info("Directly downloading file from $url")
+        val res = httpClient.getHttp(url)
         res.assertSuccessful()
         return res.text
     }
+
+    private fun buildRawContentApiDownloadUrl(
+        filePath: String,
+        ref: String,
+    ): String =
+        buildString {
+            append(rawContentApiPrefix)
+            append("/")
+            append(ref)
+            if (remotePath.isNotEmpty()) {
+                append("/")
+                append(remotePath)
+            }
+            if (filePath.isNotEmpty()) {
+                append("/")
+                append(filePath)
+            }
+        }
+
+    private fun buildGithubApiDownloadUrl(
+        @Suppress("SameParameterValue") filePath: String,
+        ref: String,
+    ): String =
+        buildString {
+            append(githubApiPrefix)
+            append("/contents")
+            if (remotePath.isNotEmpty()) {
+                append("/")
+                append(remotePath)
+            }
+            if (filePath.isNotEmpty()) {
+                append("/")
+                append(filePath)
+            }
+            append("?ref=")
+            append(ref)
+        }
 
     private fun saveLocalRef(ref: String) {
         commitHashFile.createDirsAndWrite(ref)
@@ -294,6 +320,7 @@ private class LibraryDescriptorsManagerImpl(
 
     companion object {
         private const val GITHUB_API_HOST = "api.github.com"
+        private const val RAW_GITHUB_CONTENT_HOST = "raw.githubusercontent.com"
         private const val DESCRIPTOR_EXTENSION = "json"
         private const val COMMIT_HASH_FILE = "commit_sha"
         private const val OPTIONS_FILE = "global.options"

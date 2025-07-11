@@ -37,12 +37,19 @@ class LibrariesProcessorImpl(
 
     override fun processNewLibraries(arg: String): List<LibraryDefinitionProducer> =
         splitLibraryCalls(arg).map {
-            val (libRef, vars) = libraryReferenceParser.parseReferenceWithArgs(it)
+            val (libRef, arguments) = libraryReferenceParser.parseReferenceWithArgs(it)
+
+            val wasRequestedBefore =
+                _requests.any { request ->
+                    request.reference == libRef && request.arguments == arguments
+                }
+            if (wasRequestedBefore) return@map EmptyLibraryDefinitionProducer
+
             val library =
-                libraryResolver?.resolve(libRef, vars)
+                libraryResolver?.resolve(libRef, arguments)
                     ?: throw ReplException("Unknown library '$libRef'")
 
-            _requests.add(LibraryResolutionRequest(libRef, vars, library))
+            _requests.add(LibraryResolutionRequest(libRef, arguments, library))
 
             checkKernelVersionRequirements(libRef.toString(), library)
 

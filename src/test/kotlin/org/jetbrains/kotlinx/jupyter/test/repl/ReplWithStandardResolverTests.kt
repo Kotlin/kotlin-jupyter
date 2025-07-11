@@ -19,8 +19,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.AbstractLibraryResolutionInfo
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
-import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
@@ -125,7 +125,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
         val res3 = eval("%use lets-plot@$libsCommit")
         assertEquals(1, displays.count())
-        assertUnit(res3.renderedValue)
+        res3.renderedValue.shouldBeUnit()
         displays.clear()
 
         val res4 =

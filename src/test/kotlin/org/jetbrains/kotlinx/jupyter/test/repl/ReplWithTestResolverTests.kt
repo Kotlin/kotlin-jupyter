@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -14,17 +15,16 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
-import org.jetbrains.kotlinx.jupyter.test.assertUnit
 import org.jetbrains.kotlinx.jupyter.test.displayValue
 import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeout
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.time.Duration
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -37,18 +37,28 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
     fun testLetsPlot() {
         val code1 = "%use lets-plot"
         val code2 =
-            """letsPlot(mapOf<String, Any>("cat" to listOf("a", "b")))"""
+            """
+            val data = mapOf<String, Any>(
+                "City" to listOf("Berlin", "Krakow", "Amsterdam"),
+                "Temperature" to listOf(10, -2, 13)
+            )
+            ggplot(data) { x = "City"; y = "Temperature" } +
+            ggsize(700, 500) +
+            geomBoxplot { fill = "City" } +
+            // Customizes colors
+            scaleFillManual(values = listOf("light_yellow", "light_magenta", "light_green"))
+            """.trimIndent()
 
-        val res1 = eval(code1)
-        assertEquals(2, displays.count())
+        val res1 = evalSuccess(code1)
+        displays.count() shouldBe 2
         displays.clear()
-        assertUnit(res1.renderedValue)
-        eval(code2)
-        assertEquals(1, displays.count())
+        res1.renderedValue.shouldBeUnit()
+        evalSuccess(code2)
+        displays.count() shouldBe 1
         val mime = displays[0] as? MimeTypedResult
-        assertNotNull(mime)
-        assertEquals(1, mime.size)
-        assertEquals(MimeTypes.HTML, mime.entries.first().key)
+        mime.shouldNotBeNull()
+        mime.size shouldBe 1
+        mime.entries.first().key shouldBe MimeTypes.HTML
     }
 
     @Test

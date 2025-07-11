@@ -30,6 +30,8 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
         return result.error.shouldBeTypeOf<T>()
     }
 
+    protected fun evalSuccess(code: Code) = eval(code).shouldBeTypeOf<EvalResultEx.Success>()
+
     protected fun completeOrFail(
         code: Code,
         cursor: Int,

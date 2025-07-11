@@ -84,8 +84,6 @@ abstract class AbstractReplTest {
             )
         val resolver =
             getStandardResolver(
-                testLoggerFactory,
-                ".",
                 standardResolutionInfoProvider,
                 httpUtil.httpClient,
                 httpUtil.libraryDescriptorsManager,
@@ -127,8 +125,6 @@ abstract class AbstractReplTest {
             )
         val libraryResolver =
             getStandardResolver(
-                testLoggerFactory,
-                ".",
                 standardResolutionInfoProvider,
                 httpUtil.httpClient,
                 httpUtil.libraryDescriptorsManager,

@@ -7,16 +7,12 @@ import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import java.io.File
 
 fun getStandardResolver(
-    loggerFactory: KernelLoggerFactory,
-    homeDir: String? = null,
     infoProvider: ResolutionInfoProvider,
     httpClient: HttpClient,
     libraryDescriptorsManager: LibraryDescriptorsManager,
 ): LibraryResolver {
     // Standard resolver doesn't cache results in memory
     var res: LibraryResolver = FallbackLibraryResolver(httpClient, libraryDescriptorsManager)
-    val librariesDir: File? = homeDir?.let { libraryDescriptorsManager.homeLibrariesDir(File(it)) }
-    res = LocalLibraryResolver(res, loggerFactory, libraryDescriptorsManager, librariesDir)
     res = DefaultInfoLibraryResolver(res, infoProvider, libraryDescriptorsManager, listOf(libraryDescriptorsManager.userLibrariesDir))
     return res
 }

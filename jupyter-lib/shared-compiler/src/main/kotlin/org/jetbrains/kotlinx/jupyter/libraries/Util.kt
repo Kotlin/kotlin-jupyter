@@ -88,7 +88,7 @@ fun parseCall(
 ): Pair<String, List<Variable>> {
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
-    val name = str.substring(0, openBracketIndex).trim()
+    val name = str.take(openBracketIndex).trim()
     val argsString = str.substring(openBracketIndex + 1)
     return name to parseLibraryArguments(argsString, brackets).map { it.variable }.toList()
 }
@@ -105,6 +105,10 @@ fun parseLibraryArguments(
 }
 
 fun parseLibraryName(str: String): Pair<String, List<Variable>> = parseCall(str, Brackets.ROUND)
+
+object EmptyLibraryDefinitionProducer : LibraryDefinitionProducer {
+    override fun getDefinitions(notebook: Notebook): List<LibraryDefinition> = emptyList()
+}
 
 class TrivialLibraryDefinitionProducer(
     private val library: LibraryDefinition,

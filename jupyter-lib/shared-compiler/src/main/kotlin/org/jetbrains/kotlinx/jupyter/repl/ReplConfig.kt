@@ -10,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
-import java.io.File
 
 data class ReplConfig(
     val mavenRepositories: List<MavenRepositoryCoordinates> = listOf(),
@@ -25,7 +24,6 @@ data class ReplConfig(
             resolutionInfoProviderFactory: ResolutionInfoProviderFactory,
             loggerFactory: KernelLoggerFactory = DefaultKernelLoggerFactory,
             httpUtil: LibraryHttpUtil = createLibraryHttpUtil(loggerFactory),
-            homeDir: File? = null,
             kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
             scriptReceivers: List<Any>? = emptyList(),
         ): ReplConfig {
@@ -35,8 +33,6 @@ data class ReplConfig(
                 mavenRepositories = defaultRepositoriesCoordinates,
                 libraryResolver =
                     getStandardResolver(
-                        loggerFactory,
-                        homeDir?.toString(),
                         resolutionInfoProvider,
                         httpUtil.httpClient,
                         httpUtil.libraryDescriptorsManager,

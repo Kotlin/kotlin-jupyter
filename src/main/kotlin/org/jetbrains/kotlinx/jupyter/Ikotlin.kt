@@ -146,7 +146,6 @@ fun createReplSettings(
         ReplConfig.create(
             myResolutionInfoProviderFactory,
             loggerFactory,
-            homeDir = kernelConfig.ownParams.homeDir,
             kernelRunMode = kernelRunMode,
             scriptReceivers = scriptReceivers,
         )

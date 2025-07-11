@@ -20,7 +20,7 @@ class LibraryReferenceParserImpl(
         val sepIndex = string.indexOf('@')
         if (sepIndex == -1) return LibraryReference(AbstractLibraryResolutionInfo.Default(), string)
 
-        val nameString = string.substring(0, sepIndex)
+        val nameString = string.take(sepIndex)
         val infoString = string.substring(sepIndex + 1)
         val info = parseResolutionInfo(infoString)
         return LibraryReference(info, nameString)
