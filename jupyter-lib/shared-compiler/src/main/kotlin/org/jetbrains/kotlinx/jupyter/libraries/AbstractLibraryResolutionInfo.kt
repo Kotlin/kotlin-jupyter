@@ -13,21 +13,18 @@ abstract class AbstractLibraryResolutionInfo(
         val url: URL,
     ) : AbstractLibraryResolutionInfo("url") {
         override val args = listOf(Variable("url", url.toString()))
-        override val shouldBeCachedLocally get() = false
     }
 
     class ByFile(
         val file: File,
     ) : AbstractLibraryResolutionInfo("file") {
         override val args = listOf(Variable("file", file.path))
-        override val shouldBeCachedLocally get() = false
     }
 
     class ByDir(
         val librariesDir: File,
     ) : AbstractLibraryResolutionInfo("bundled") {
         override val args = listOf(Variable("dir", librariesDir.path))
-        override val shouldBeCachedLocally get() = false
     }
 
     open class ByGitRef(
@@ -49,7 +46,6 @@ abstract class AbstractLibraryResolutionInfo(
 
     object ByClasspath : AbstractLibraryResolutionInfo("classpath") {
         override val args = emptyList<Variable>()
-        override val shouldBeCachedLocally get() = false
     }
 
     class ByGitRefWithClasspathFallback(
@@ -64,7 +60,6 @@ abstract class AbstractLibraryResolutionInfo(
         val string: String = "",
     ) : AbstractLibraryResolutionInfo("default") {
         override val args: List<Variable> = listOf()
-        override val shouldBeCachedLocally get() = false
     }
 
     protected abstract val args: List<Variable>

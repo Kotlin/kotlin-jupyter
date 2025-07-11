@@ -89,7 +89,7 @@ fun parseCall(
     val openBracketIndex = str.indexOf(brackets.open)
     if (openBracketIndex == -1) return str.trim() to emptyList()
     val name = str.take(openBracketIndex).trim()
-    val argsString = str.substring(openBracketIndex + 1)
+    val argsString = str.drop(openBracketIndex + 1)
     return name to parseLibraryArguments(argsString, brackets).map { it.variable }.toList()
 }
 

@@ -31,7 +31,6 @@ fun interface CommonLoggerFactory {
 
 interface LibraryDescriptorsManager {
     val userLibrariesDir: File
-    val userCacheDir: File
     val localLibrariesDir: File
     val defaultBranch: String
     val latestCommitOnDefaultBranch: String?
@@ -113,7 +112,6 @@ private class LibraryDescriptorsManagerImpl(
     private val githubApiPrefix = "https://$GITHUB_API_HOST/repos/$user/$repo"
     private val rawContentApiPrefix = "https://$RAW_GITHUB_CONTENT_HOST/$user/$repo"
     override val userLibrariesDir = userSettingsDir.resolve(userPath)
-    override val userCacheDir = userSettingsDir.resolve("cache")
     override val localLibrariesDir = File(localPath)
     override val defaultBranch = "master"
     override val latestCommitOnDefaultBranch by lazy {
