@@ -41,18 +41,16 @@ class ZmqSocketWithCancellationImpl(
         assertNotCancelled()
         return try {
             block()
-        } catch (e: ZMQException) {
-            if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) {
-                throw InterruptedException()
+        } catch (e: Throwable) {
+            // Sometimes, ZMQ fails with different exceptions (like NPE or ClosedSelectorException)
+            // when the socket is closed during send/recv
+            if (isCancelled() ||
+                e is ZMQException &&
+                (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED)
+            ) {
+                throw InterruptedException().apply { initCause(e) }
             }
             throw e
-        } catch (e: NullPointerException) {
-            // Sometimes, ZMQ fails with NPE when the socket is closed during send/recv
-            if (isCancelled()) {
-                throw InterruptedException().apply { addSuppressed(e) }
-            } else {
-                throw e
-            }
         }
     }
 
