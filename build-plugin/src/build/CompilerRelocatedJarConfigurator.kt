@@ -21,6 +21,9 @@ val CompilerRelocatedJarConfigurator: ShadowJarAction = {
         attributes["Implementation-Version"] = project.version
     }
 
+    exclude("module-info.class")
+    exclude("**/module-info.class")
+
     // See KTNB-707
     exclude("logback.xml")
 
