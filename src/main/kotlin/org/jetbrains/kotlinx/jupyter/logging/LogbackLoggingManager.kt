@@ -67,7 +67,7 @@ class LogbackLoggingManager(
         return logbackToSLF4JLevel[logbackLevel] ?: org.slf4j.event.Level.DEBUG
     }
 
-    fun mainLogbackLoggerLevel(): Level {
+    private fun mainLogbackLoggerLevel(): Level {
         val mainLogger = rootLogger ?: return Level.DEBUG
         return mainLogger.level
     }

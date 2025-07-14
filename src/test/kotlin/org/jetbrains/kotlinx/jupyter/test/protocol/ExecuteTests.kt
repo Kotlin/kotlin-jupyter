@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
-import ch.qos.logback.classic.Level.DEBUG
-import ch.qos.logback.classic.Level.OFF
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -488,19 +486,22 @@ abstract class ExecuteTests(
 
     @Test
     fun testIsComplete() {
-        assertEquals("complete", doIsComplete("2 + 2"))
-        when (replCompilerMode) {
-            K1 -> {
-                assertEquals("incomplete", doIsComplete("fun f() : Int { return 1"))
-                val loggingManager = LogbackLoggingManager(testLoggerFactory)
-                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
+        doIsComplete("2 + 2") shouldBe "complete"
+
+        doIsComplete("fun f() : Int { return 1") shouldBe
+            when (replCompilerMode) {
+                K1 -> {
+                    "incomplete"
+                }
+                K2 -> {
+                    // Modify test until KTNB-916 is fixed
+                    "complete"
+                }
             }
-            K2 -> {
-                // Modify test until KTNB-916 is fixed
-                assertEquals("complete", doIsComplete("fun f() : Int { return 1"))
-                val loggingManager = LogbackLoggingManager(testLoggerFactory)
-                loggingManager.mainLogbackLoggerLevel() shouldBe (if (runServerInSeparateProcess) DEBUG else OFF)
-            }
+
+        // Check that the `isComplete` request turns the logging off
+        LogbackLoggingManager(testLoggerFactory).apply {
+            isLoggingEnabled() shouldBe runServerInSeparateProcess
         }
     }
 

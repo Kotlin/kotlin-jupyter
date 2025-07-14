@@ -12,7 +12,8 @@ package org.jetbrains.kotlinx.jupyter.common
  * println("Hello world")
  * ```
  *
- * Adding a new magic value also requires registering a handler in [org.jetbrains.kotlinx.jupyter.magics.AbstractMagicsHandler].
+ * Adding a new magic value also requires registering a handler in a magic handler class that extends
+ * `org.jetbrains.kotlinx.jupyter.magics.BaseMagicsHandler` and adding it to the `org.jetbrains.kotlinx.jupyter.magics.MagicsHandlerRegistry`.
  */
 enum class ReplLineMagic(
     val desc: String,
@@ -54,7 +55,7 @@ enum class ReplLineMagic(
             }
 
         private val enumValues =
-            values().associate {
+            entries.associate {
                 it.nameForUser to ReplEnum.CodeInsightValue(it, it.nameForUser, it.desc, type)
             }
 

@@ -4,23 +4,35 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
-import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
-import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
-import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
-import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
-import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
+import org.jetbrains.kotlinx.jupyter.magics.contexts.CommandHandlingMagicHandlerContext
+import org.jetbrains.kotlinx.jupyter.magics.contexts.LoggingMagicHandlerContext
+import org.jetbrains.kotlinx.jupyter.magics.contexts.MagicHandlerContext
+import org.jetbrains.kotlinx.jupyter.magics.contexts.requireContext
 
-class FullMagicsHandler(
-    replOptions: ReplOptions,
-    librariesProcessor: LibrariesProcessor,
-    switcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
-    loggingManager: LoggingManager,
-) : LogLevelHandlingMagicsHandler(replOptions, librariesProcessor, switcher, loggingManager) {
-    override fun handleLogHandler() {
-        val logbackLoggingManager = loggingManager as? LogbackLoggingManager ?: return
-        val commandArgs = arg?.split(Regex("""\s+""")).orEmpty()
+/**
+ * Handler for log appender management commands.
+ * Handles the %logHandler command for managing log appenders.
+ */
+class LogbackLoggingMagicsHandler(
+    context: MagicHandlerContext,
+) : BasicMagicsHandler(context) {
+    private val loggingContext = context.requireContext<LoggingMagicHandlerContext>()
+
+    override val callbackMap: Map<ReplLineMagic, () -> Unit> =
+        mapOf(
+            ReplLineMagic.LOG_HANDLER to ::handleLogHandler,
+        )
+
+    /**
+     * Handles the %logHandler command, which manages log appenders.
+     */
+    private fun handleLogHandler() {
+        val logbackLoggingManager = loggingContext.loggingManager as? LogbackLoggingManager ?: return
+        val commandArgs = commandHandlingContext.arg?.split(Regex("""\s+""")).orEmpty()
         val command = commandArgs.firstOrNull() ?: throw ReplException("Log handler command has not been passed")
+
         when (command) {
             "list" -> {
                 println("Log appenders:")
@@ -64,7 +76,15 @@ class FullMagicsHandler(
                     ) ?: throw ReplException("Log handler remove command needs appender name argument")
                 logbackLoggingManager.removeAppender(appenderName)
             }
-            else -> throw ReplException("")
+            else -> throw ReplException("Unknown log handler command: $command")
         }
     }
+
+    companion object : MagicHandlerFactoryImpl(
+        ::LogbackLoggingMagicsHandler,
+        listOf(
+            LoggingMagicHandlerContext::class,
+            CommandHandlingMagicHandlerContext::class,
+        ),
+    )
 }

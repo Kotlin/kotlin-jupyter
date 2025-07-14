@@ -14,7 +14,6 @@ import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutorImpl
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
-import org.jetbrains.kotlinx.jupyter.logging.ReplComponentsProviderWithLogbackManager
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
@@ -179,9 +178,7 @@ internal fun createMessageHandler(
             communicationFacility,
             commManager,
             NoOpInMemoryReplResultsHolder,
-        ).let { defaultProvider ->
-            ReplComponentsProviderWithLogbackManager(defaultProvider)
-        }
+        )
     val repl = replProvider.createRepl()
     return MessageHandlerImpl(loggerFactory, repl, commManager, messageFactoryProvider, socketManager, executor)
 }

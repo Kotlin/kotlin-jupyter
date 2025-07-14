@@ -11,9 +11,11 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
-import org.jetbrains.kotlinx.jupyter.magics.FullMagicsHandler
+import org.jetbrains.kotlinx.jupyter.magics.CompositeMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.MagicsProcessor
 import org.jetbrains.kotlinx.jupyter.magics.NoopMagicsHandler
+import org.jetbrains.kotlinx.jupyter.magics.contexts.createDefaultMagicHandlerContext
+import org.jetbrains.kotlinx.jupyter.magics.loadMagicHandlerFactories
 import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
@@ -152,13 +154,29 @@ class ParseMagicsTests {
     ) {
         val httpUtil = createLibraryHttpUtil(testLoggerFactory)
         val switcher = ResolutionInfoSwitcher.noop(EmptyResolutionInfoProvider(httpUtil.libraryInfoCache))
-        val magicsHandler =
-            FullMagicsHandler(
-                options,
-                LibrariesProcessorImpl(testLibraryResolver, httpUtil.libraryReferenceParser, defaultRuntimeProperties.version),
-                switcher,
-                LogbackLoggingManager(testLoggerFactory),
+        val librariesProcessor =
+            LibrariesProcessorImpl(
+                testLibraryResolver,
+                httpUtil.libraryReferenceParser,
+                defaultRuntimeProperties.version,
             )
+        val loggingManager = LogbackLoggingManager(testLoggerFactory)
+
+        // Create a context with all the dependencies
+        val context =
+            createDefaultMagicHandlerContext(
+                librariesProcessor,
+                switcher,
+                options,
+                loggingManager,
+            )
+
+        // Create a registry and register all the handlers
+        val magicsHandler =
+            CompositeMagicsHandler(context).apply {
+                createAndRegister(loadMagicHandlerFactories())
+            }
+
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
             assertEquals(expectedProcessedCode, this.code)

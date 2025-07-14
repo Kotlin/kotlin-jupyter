@@ -27,9 +27,11 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
 import org.jetbrains.kotlinx.jupyter.libraries.getDefaultResolutionInfoSwitcher
+import org.jetbrains.kotlinx.jupyter.magics.CompositeMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.LibrariesAwareMagicsHandler
-import org.jetbrains.kotlinx.jupyter.magics.LogLevelHandlingMagicsHandler
 import org.jetbrains.kotlinx.jupyter.magics.Slf4jLoggingManager
+import org.jetbrains.kotlinx.jupyter.magics.contexts.createDefaultMagicHandlerContext
+import org.jetbrains.kotlinx.jupyter.magics.loadMagicHandlerFactories
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
@@ -44,10 +46,12 @@ import org.jetbrains.kotlinx.jupyter.repl.SessionOptionsImpl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
+import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManagerProvider
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.notebook.impl.NotebookImpl
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
+import java.util.ServiceLoader
 
 abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsProviderImpl() {
     override fun provideLoggerFactory(): KernelLoggerFactory = DefaultKernelLoggerFactory
@@ -123,15 +127,26 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideSessionOptions(): SessionOptions = SessionOptionsImpl()
 
-    override fun provideLoggingManager(): LoggingManager = Slf4jLoggingManager
+    override fun provideLoggingManager(): LoggingManager =
+        ServiceLoader
+            .load(LoggingManagerProvider::class.java)
+            .maxByOrNull { it.priority }
+            ?.createLoggingManager(loggerFactory)
+            ?: Slf4jLoggingManager
 
-    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler =
-        LogLevelHandlingMagicsHandler(
-            replOptions,
-            librariesProcessor,
-            libraryInfoSwitcher,
-            loggingManager,
-        )
+    override fun provideMagicsHandler(): LibrariesAwareMagicsHandler {
+        val context =
+            createDefaultMagicHandlerContext(
+                librariesProcessor,
+                libraryInfoSwitcher,
+                replOptions,
+                loggingManager,
+            )
+
+        return CompositeMagicsHandler(context).apply {
+            createAndRegister(loadMagicHandlerFactories())
+        }
+    }
 
     override fun provideLibraryReferenceParser(): LibraryReferenceParser = LibraryReferenceParserImpl(libraryInfoCache)
 
