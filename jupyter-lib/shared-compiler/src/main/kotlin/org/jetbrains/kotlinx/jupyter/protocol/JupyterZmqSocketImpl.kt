@@ -180,7 +180,10 @@ fun createZmqSocket(
     )
 }
 
-fun KernelJupyterParams.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo, side: JupyterSocketSide): String {
+fun KernelJupyterParams.addressForZmqSocket(
+    socketInfo: JupyterZmqSocketInfo,
+    side: JupyterSocketSide,
+): String {
     require(ports is ZmqKernelPorts) { "Wrong KernelAddress type" }
     val port = ports.ports.getValue(socketInfo.type)
     val host = host.takeUnless { it == ANY_HOST_NAME && side != JupyterSocketSide.SERVER } ?: LOCALHOST
