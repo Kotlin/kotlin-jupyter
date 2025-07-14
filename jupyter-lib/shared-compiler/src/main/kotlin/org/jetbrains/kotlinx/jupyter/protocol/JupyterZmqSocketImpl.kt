@@ -7,8 +7,10 @@ import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParams
+import org.jetbrains.kotlinx.jupyter.startup.LOCALHOST
 import org.jetbrains.kotlinx.jupyter.startup.ZmqKernelPorts
 import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.slf4j.Logger
@@ -181,5 +183,6 @@ fun createZmqSocket(
 fun KernelJupyterParams.addressForZmqSocket(socketInfo: JupyterZmqSocketInfo): String {
     require(ports is ZmqKernelPorts) { "Wrong KernelAddress type" }
     val port = ports.ports.getValue(socketInfo.type)
+    val host = host.takeUnless { it == ANY_HOST_NAME } ?: LOCALHOST
     return "$transport://$host:$port"
 }

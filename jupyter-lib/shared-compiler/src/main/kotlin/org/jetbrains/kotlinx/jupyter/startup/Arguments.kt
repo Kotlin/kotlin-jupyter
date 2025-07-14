@@ -133,6 +133,7 @@ object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
 }
 
 const val ANY_HOST_NAME = "*"
+const val LOCALHOST = "localhost"
 
 data class KernelConfig(
     val jupyterParams: KernelJupyterParams,

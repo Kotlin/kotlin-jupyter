@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.LOCALHOST
 import java.io.Closeable
 import java.net.URI
 import java.nio.ByteBuffer
@@ -31,7 +32,7 @@ class JupyterWsClientSocketManager(
                     URI(
                         /* scheme = */ "ws",
                         /* userInfo = */ null,
-                        /* host = */ jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: "0.0.0.0",
+                        /* host = */ jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: LOCALHOST,
                         /* port = */ (jupyterParams.ports as WsKernelPorts).port,
                         /* path = */ null,
                         /* query = */ null,
