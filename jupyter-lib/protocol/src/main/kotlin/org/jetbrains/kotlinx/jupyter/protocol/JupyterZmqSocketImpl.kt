@@ -8,7 +8,6 @@ import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
-import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.LOCALHOST
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ZmqKernelPorts
@@ -164,19 +163,18 @@ fun createZmqSocket(
     loggerFactory: KernelLoggerFactory,
     socketInfo: JupyterZmqSocketInfo,
     context: ZMQ.Context,
-    kernelConfig: KernelConfig,
+    configParams: KernelJupyterParams,
     side: JupyterSocketSide,
 ): JupyterZmqSocket {
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
 
-    val jupyterParams = kernelConfig.jupyterParams
     return JupyterZmqSocketImpl(
         loggerFactory = loggerFactory,
         name = socketInfo.name,
         socket = zmqSocket,
-        address = jupyterParams.addressForZmqSocket(socketInfo, side),
-        hmac = jupyterParams.hmac,
+        address = configParams.addressForZmqSocket(socketInfo, side),
+        hmac = configParams.hmac,
     )
 }
 

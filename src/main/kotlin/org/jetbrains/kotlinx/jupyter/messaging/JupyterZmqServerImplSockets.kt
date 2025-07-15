@@ -26,12 +26,12 @@ internal class JupyterZmqServerImplSockets(
     private val socketsToBind = mutableListOf<JupyterZmqSocket>()
 
     private fun createSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, config, JupyterSocketSide.SERVER)
+        createZmqSocket(loggerFactory, socketInfo, zmqContext, config.jupyterParams, JupyterSocketSide.SERVER)
             .also { socketsToBind.add(it) }
             .also { socketsToClose.add(it) }
 
     private fun createCallbackBasedSocket(socketInfo: JupyterZmqSocketInfo): JupyterCallbackBasedSocketImpl =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, config, JupyterSocketSide.SERVER)
+        createZmqSocket(loggerFactory, socketInfo, zmqContext, config.jupyterParams, JupyterSocketSide.SERVER)
             .also { socketsToBind.add(it) }
             .callbackBased(logger)
             .also { socketsToClose.add(it) }

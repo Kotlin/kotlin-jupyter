@@ -7,14 +7,14 @@ import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSock
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSockets
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
-import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 
 class JupyterWsClientReceiveSocketManager(
     loggerFactory: KernelLoggerFactory,
 ) : JupyterClientReceiveSocketManager {
     private val delegate = JupyterWsClientSocketManager(loggerFactory)
 
-    override fun open(config: KernelConfig): JupyterClientReceiveSockets = WsClientReceiveSockets(delegate.open(config))
+    override fun open(configParams: KernelJupyterParams): JupyterClientReceiveSockets = WsClientReceiveSockets(delegate.open(configParams))
 
     private class WsClientReceiveSockets(
         private val delegate: JupyterClientSockets,

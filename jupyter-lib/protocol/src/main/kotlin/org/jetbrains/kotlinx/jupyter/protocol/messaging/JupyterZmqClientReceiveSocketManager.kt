@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
-import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 
@@ -14,16 +14,16 @@ class JupyterZmqClientReceiveSocketManager(
     private val loggerFactory: KernelLoggerFactory,
     private val side: JupyterSocketSide = JupyterSocketSide.CLIENT,
 ) : JupyterClientReceiveSocketManager {
-    override fun open(config: KernelConfig): JupyterZmqClientReceiveSockets =
+    override fun open(configParams: KernelJupyterParams): JupyterZmqClientReceiveSockets =
         JupyterZmqClientReceiveSockets(
-            kernelConfig = config,
+            configParams = configParams,
             loggerFactory = loggerFactory,
             side = side,
         )
 }
 
 class JupyterZmqClientReceiveSockets internal constructor(
-    kernelConfig: KernelConfig,
+    configParams: KernelJupyterParams,
     loggerFactory: KernelLoggerFactory,
     side: JupyterSocketSide,
 ) : JupyterClientReceiveSockets {
@@ -35,7 +35,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
     override val stdin: JupyterZmqSocket
 
     init {
-        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, kernelConfig, side)
+        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, configParams, side)
 
         shell =
             createSocket(JupyterZmqSocketInfo.SHELL).apply {

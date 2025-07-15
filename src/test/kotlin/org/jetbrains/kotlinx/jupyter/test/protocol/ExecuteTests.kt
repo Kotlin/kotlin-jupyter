@@ -115,7 +115,7 @@ abstract class ExecuteTests(
             val now = TimeSource.Monotonic.markNow()
             while (now.elapsedNow() < CONNECT_RETRY_TIMEOUT_SECONDS.seconds) {
                 try {
-                    mutableSockets = socketManager.open(kernelConfig)
+                    mutableSockets = socketManager.open(kernelConfig.jupyterParams)
                     break
                 } catch (_: ConnectException) {
                     Thread.sleep(500)

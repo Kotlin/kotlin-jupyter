@@ -23,7 +23,7 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             testLoggerFactory,
             socketInfo,
             context,
-            kernelConfig,
+            kernelConfig.jupyterParams,
             JupyterSocketSide.CLIENT,
         ).apply { connect() }
 
