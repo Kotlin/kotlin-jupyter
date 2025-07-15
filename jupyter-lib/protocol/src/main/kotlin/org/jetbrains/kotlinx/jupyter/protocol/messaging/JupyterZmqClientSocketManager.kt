@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
-import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.slf4j.Logger
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
@@ -23,7 +23,8 @@ class JupyterZmqClientSocketManager(
 ) : JupyterClientSocketManager {
     private val delegate = JupyterZmqClientReceiveSocketManager(loggerFactory, side)
 
-    override fun open(config: KernelConfig): JupyterZmqClientSockets = JupyterZmqClientSockets(delegate.open(config), loggerFactory)
+    override fun open(configParams: KernelJupyterParams): JupyterZmqClientSockets =
+        JupyterZmqClientSockets(delegate.open(configParams), loggerFactory)
 }
 
 class JupyterZmqClientSockets internal constructor(

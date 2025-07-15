@@ -12,7 +12,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
-import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.LOCALHOST
 import java.io.Closeable
 import java.net.URI
@@ -22,9 +22,8 @@ import java.util.EnumMap
 class JupyterWsClientSocketManager(
     private val loggerFactory: KernelLoggerFactory,
 ) : JupyterClientSocketManager {
-    override fun open(config: KernelConfig): JupyterClientSockets {
+    override fun open(configParams: KernelJupyterParams): JupyterClientSockets {
         val errors = mutableListOf<Exception>()
-        val jupyterParams = config.jupyterParams
         return WsClientSockets(
             loggerFactory = loggerFactory,
             createWsClient = { messageHandler ->
@@ -32,8 +31,8 @@ class JupyterWsClientSocketManager(
                     URI(
                         /* scheme = */ "ws",
                         /* userInfo = */ null,
-                        /* host = */ jupyterParams.host.takeUnless { it == ANY_HOST_NAME } ?: LOCALHOST,
-                        /* port = */ (jupyterParams.ports as WsKernelPorts).port,
+                        /* host = */ configParams.host.takeUnless { it == ANY_HOST_NAME } ?: LOCALHOST,
+                        /* port = */ (configParams.ports as WsKernelPorts).port,
                         /* path = */ null,
                         /* query = */ null,
                         /* fragment = */ null,
