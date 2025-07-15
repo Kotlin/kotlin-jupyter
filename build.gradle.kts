@@ -245,7 +245,7 @@ val embeddableKernelJar =
         binaryTaskConfigurator = CompilerRelocatedJarConfigurator,
     )
 val scriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(scriptClasspathShadowed, withSources = true)
-val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = false)
+val ideScriptClasspathShadowedJar = tasks.registerShadowJarTasksBy(ideScriptClasspathShadowed, withSources = true)
 
 val kernelZip =
     tasks.register("kernelZip", Zip::class) {
