@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 abstract class AbstractMessageHandler : MessageHandler {
     abstract fun createProcessor(message: RawMessage): MessageRequestProcessor

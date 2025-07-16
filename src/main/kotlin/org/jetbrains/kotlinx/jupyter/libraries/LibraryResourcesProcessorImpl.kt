@@ -1,9 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResource
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import java.util.EnumMap
 
 class LibraryResourcesProcessorImpl(

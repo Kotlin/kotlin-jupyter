@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.JsonElement
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 interface MessageFactory {
     val messageId: List<ByteArray>

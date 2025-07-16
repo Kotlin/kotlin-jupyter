@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.protocol
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
+
 class HMAC(
     algorithm: String,
     key: String,

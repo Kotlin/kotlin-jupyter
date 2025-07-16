@@ -5,12 +5,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.JUPYTER_PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
-import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.data
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -95,7 +95,7 @@ fun makeHeader(
         type,
         sessionId,
         username,
-        PROTOCOL_VERSION,
+        JUPYTER_PROTOCOL_VERSION,
         ISO8601DateNow,
     )
 

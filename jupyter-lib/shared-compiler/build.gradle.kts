@@ -19,6 +19,7 @@ plugins {
 dependencies {
     // Internal dependencies
     api(projects.api) { isTransitive = false }
+    api(projects.protocolApi) { isTransitive = false }
     api(projects.lib) { isTransitive = false }
     api(projects.commonDependencies) { isTransitive = false }
     api(projects.protocol) { isTransitive = false }

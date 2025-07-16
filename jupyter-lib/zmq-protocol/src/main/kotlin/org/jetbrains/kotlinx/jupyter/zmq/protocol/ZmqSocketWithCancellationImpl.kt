@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.zeromq.SocketType

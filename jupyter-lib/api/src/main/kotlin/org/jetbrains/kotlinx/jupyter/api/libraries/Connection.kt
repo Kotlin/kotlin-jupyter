@@ -1,59 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
-import java.util.Locale
-
-/**
- * Jupyter connection socket types.
- * You can find information about each Jupyter socket type here:
- * https://jupyter-client.readthedocs.io/en/stable/messaging.html#introduction
- *
- * For now, only adding callbacks for messages on `control` and `shell` sockets makes sense.
- */
-enum class JupyterSocketType {
-    HB,
-    SHELL,
-    CONTROL,
-    STDIN,
-    IOPUB,
-}
-
-/** This name is used in Jupyter messaging protocol (as channel identifier) */
-val JupyterSocketType.jupyterName get() = name.lowercase(Locale.getDefault())
-
-/**
- * Raw Jupyter message.
- */
-interface RawMessage {
-    val id: List<ByteArray>
-    val header: JsonObject
-    val parentHeader: JsonObject?
-    val metadata: JsonObject?
-    val content: JsonElement
-}
-
-val RawMessage.type: String?
-    get() {
-        val type = header["msg_type"]
-        if (type !is JsonPrimitive || !type.isString) return null
-        return type.content
-    }
-
-val RawMessage.sessionId: String? get() = header["session"]?.jsonPrimitive?.content
-val RawMessage.username: String? get() = header["username"]?.jsonPrimitive?.content
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 
 typealias CommOpenCallback = (Comm, JsonObject) -> Unit
 typealias CommMsgCallback = (JsonObject) -> Unit
 typealias CommCloseCallback = (JsonObject) -> Unit
-typealias RawMessageAction = (RawMessage) -> Unit
 
 /**
  * Manages custom messages in the notebook, for more info see

@@ -20,7 +20,6 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
@@ -30,7 +29,6 @@ import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
-import org.jetbrains.kotlinx.jupyter.api.getLogger
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
@@ -82,6 +80,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.requireUniqueTargets
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.ClasspathProvider

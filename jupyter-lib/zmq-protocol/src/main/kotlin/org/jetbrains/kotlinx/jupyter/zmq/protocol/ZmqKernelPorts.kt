@@ -1,10 +1,13 @@
-package org.jetbrains.kotlinx.jupyter.protocol.startup
+package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
+import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
+import org.jetbrains.kotlinx.jupyter.protocol.api.jupyterName
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
+import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
+import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.util.EnumMap
 
 class ZmqKernelPorts(
@@ -40,3 +43,8 @@ class ZmqKernelPorts(
 
     override fun toString(): String = "ZmqKernelPorts(${serialize()})"
 }
+
+fun createRandomZmqKernelPorts() =
+    PortsGenerator
+        .create(32768, 65536)
+        .let { generator -> ZmqKernelPorts { generator.randomPort() } }

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.getLogger
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.IOException
