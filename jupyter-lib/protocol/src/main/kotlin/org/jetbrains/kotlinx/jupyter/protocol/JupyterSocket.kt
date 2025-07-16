@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.slf4j.Logger
 import java.io.Closeable
 import java.util.concurrent.ArrayBlockingQueue

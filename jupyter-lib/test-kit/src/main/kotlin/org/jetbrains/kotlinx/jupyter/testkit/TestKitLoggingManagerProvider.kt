@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.testkit
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.magics.Slf4jLoggingManager
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManagerProvider
 

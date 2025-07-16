@@ -3,12 +3,9 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.Code
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.StreamSubstitutionType
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
-import org.jetbrains.kotlinx.jupyter.api.getLogger
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.commands.runCommand
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
@@ -17,8 +14,11 @@ import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
-import org.jetbrains.kotlinx.jupyter.protocol.PROTOCOL_VERSION
-import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
+import org.jetbrains.kotlinx.jupyter.protocol.JUPYTER_PROTOCOL_VERSION
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -26,7 +26,6 @@ import org.jetbrains.kotlinx.jupyter.streams.CapturingOutputStream
 import org.jetbrains.kotlinx.jupyter.streams.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.streams.StdinInputStream
 import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -201,7 +200,7 @@ open class IdeCompatibleMessageRequestProcessor(
                 MessageType.KERNEL_INFO_REPLY,
                 content =
                     KernelInfoReply(
-                        PROTOCOL_VERSION,
+                        JUPYTER_PROTOCOL_VERSION,
                         "Kotlin",
                         currentKernelVersion.toMaybeUnspecifiedString(),
                         "Kotlin kernel v. ${currentKernelVersion.toMaybeUnspecifiedString()}, Kotlin v. $currentKotlinVersion",

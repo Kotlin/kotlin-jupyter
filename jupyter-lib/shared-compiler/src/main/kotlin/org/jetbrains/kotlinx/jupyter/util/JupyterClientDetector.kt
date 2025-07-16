@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.util
 
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.getLogger
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 
 class JupyterClientDetector(
     loggerFactory: KernelLoggerFactory,

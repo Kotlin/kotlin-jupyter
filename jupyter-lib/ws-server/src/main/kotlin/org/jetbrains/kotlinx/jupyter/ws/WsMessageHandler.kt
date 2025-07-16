@@ -4,10 +4,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
-import org.jetbrains.kotlinx.jupyter.api.libraries.jupyterName
 import org.jetbrains.kotlinx.jupyter.messaging.makeRawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.jupyterName
 import org.slf4j.Logger
 import java.nio.ByteBuffer
 

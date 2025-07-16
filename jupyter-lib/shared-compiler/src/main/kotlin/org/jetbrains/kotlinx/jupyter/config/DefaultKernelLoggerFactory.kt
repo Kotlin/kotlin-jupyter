@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.config
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

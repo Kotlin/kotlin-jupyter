@@ -19,8 +19,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageHeader
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.messageDataJson
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import kotlin.reflect.full.createType
 
 object MessageDataSerializer : KSerializer<MessageData> {

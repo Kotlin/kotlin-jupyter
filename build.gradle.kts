@@ -67,6 +67,7 @@ dependencies {
 
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
+    api(projects.zmqProtocol)
 
     // Standard dependencies
     implementation(libs.kotlin.dev.reflect)

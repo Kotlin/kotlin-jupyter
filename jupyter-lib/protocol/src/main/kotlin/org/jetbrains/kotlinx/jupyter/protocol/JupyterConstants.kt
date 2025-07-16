@@ -1,3 +1,3 @@
 package org.jetbrains.kotlinx.jupyter.protocol
 
-const val PROTOCOL_VERSION = "5.3"
+const val JUPYTER_PROTOCOL_VERSION = "5.3"

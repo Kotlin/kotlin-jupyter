@@ -24,11 +24,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceFallbacksBundle
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-private val emptyJsonObject = JsonObject(mapOf())
-
-@Suppress("UnusedReceiverParameter")
-val Json.EMPTY get() = emptyJsonObject
-
 abstract class PrimitiveStringPropertySerializer<T : Any>(
     kClass: KClass<T>,
     private val prop: KProperty1<T, String>,

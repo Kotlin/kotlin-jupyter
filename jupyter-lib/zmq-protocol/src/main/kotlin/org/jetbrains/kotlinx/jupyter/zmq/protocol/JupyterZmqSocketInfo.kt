@@ -1,6 +1,7 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterSocketType
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
+import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.zeromq.SocketType
 
 enum class JupyterZmqSocketInfo(

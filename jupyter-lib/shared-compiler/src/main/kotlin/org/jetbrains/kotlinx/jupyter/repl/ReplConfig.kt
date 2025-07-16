@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
@@ -10,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.libraries.getStandardResolver
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 data class ReplConfig(
     val mavenRepositories: List<MavenRepositoryCoordinates> = listOf(),

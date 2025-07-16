@@ -18,8 +18,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.serializers.MessageTypeSerializer
 import org.jetbrains.kotlinx.jupyter.messaging.serializers.PathSerializer
 import org.jetbrains.kotlinx.jupyter.messaging.serializers.ScriptDiagnosticSerializer
 import org.jetbrains.kotlinx.jupyter.messaging.serializers.UpdateClientMetadataReplySerializer
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.toUpperCaseAsciiOnly
 import java.nio.file.Path
 import kotlin.reflect.KClass

@@ -15,7 +15,7 @@ import org.jetbrains.kotlinx.jupyter.api.outputs.hasModifier
 import org.jetbrains.kotlinx.jupyter.api.outputs.isExpandedJson
 import org.jetbrains.kotlinx.jupyter.api.outputs.isIsolatedHtml
 import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
-import org.jetbrains.kotlinx.jupyter.util.EMPTY
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
 import java.util.concurrent.atomic.AtomicLong
 

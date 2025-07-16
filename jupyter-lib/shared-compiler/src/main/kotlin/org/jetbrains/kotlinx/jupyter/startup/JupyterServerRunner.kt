@@ -1,8 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerImplSockets
+import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import java.io.Closeable
 import java.util.ServiceLoader
@@ -21,7 +21,7 @@ interface JupyterServerRunner {
 
     /**
      * Opens sockets, runs [setup] and then runs the server, blocking the thread.
-     * The server is stopped when one of the callbacks (see [org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerImplSockets]) throws [InterruptedException].
+     * The server is stopped when one of the callbacks (see [org.jetbrains.kotlinx.jupyter.messaging.JupyterServerImplSockets]) throws [InterruptedException].
      * Closable resources returned from [setup] are closed on shutdown.
      */
     fun run(

@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
-import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 class MessageFactoryImpl : MessageFactory {
     private var _messageId: List<ByteArray> = listOf(byteArrayOf(1))

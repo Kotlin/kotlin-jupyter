@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.api
+package org.jetbrains.kotlinx.jupyter.protocol.api
 
 import org.slf4j.Logger
 import kotlin.reflect.KClass

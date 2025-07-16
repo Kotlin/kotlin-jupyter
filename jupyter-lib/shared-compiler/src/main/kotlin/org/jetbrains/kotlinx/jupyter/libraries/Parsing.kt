@@ -2,8 +2,8 @@ package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 fun parseLibraryDescriptor(json: String): LibraryDescriptor =
     try {

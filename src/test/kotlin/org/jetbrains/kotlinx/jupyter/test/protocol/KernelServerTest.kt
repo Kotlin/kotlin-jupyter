@@ -1,13 +1,13 @@
 
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
-import org.jetbrains.kotlinx.jupyter.api.libraries.type
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterZmqSocketInfo
-import org.jetbrains.kotlinx.jupyter.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.protocol.api.type
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
