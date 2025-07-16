@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
-import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.util.DefaultPromptOptions
 import org.jetbrains.kotlinx.jupyter.util.Provider
 

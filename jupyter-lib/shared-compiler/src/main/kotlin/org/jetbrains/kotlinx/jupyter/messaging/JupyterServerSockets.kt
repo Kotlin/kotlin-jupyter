@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.protocol.messaging
+package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
