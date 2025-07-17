@@ -125,10 +125,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         )
         val code2 = "a + 2 + b.toInt()"
         val res = eval(code2)
-        when (repl.compilerMode) {
-            K1 -> res.renderedValue shouldBe 8
-            K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
-        }
+        res.renderedValue shouldBe 8
     }
 
     @Test

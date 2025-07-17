@@ -646,19 +646,18 @@ class ReplTests : AbstractSingleReplTest() {
             K1 -> {
                 val res1 = eval("listOf(1, 2)").renderedValue
                 res1 shouldBe listOf(2, 4)
-                val res2 = eval("listOf('1', '2')").renderedValue
-                res2 shouldBe listOf('1', '2')
             }
             K2 -> {
                 // Wait for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
                 // We cannot correctly read the property types which breaks looking up registered compile time renders.
-                // TODO Bug has been fixed, why is this still failing?
+                // It's still falling because we don't have KTypes for result values
                 val res1 = eval("listOf(1, 2)").renderedValue
                 res1 shouldBe listOf(1, 2)
-                val res2 = eval("listOf('1', '2')").renderedValue
-                res2 shouldBe listOf('1', '2')
             }
         }
+
+        val res2 = eval("listOf('1', '2')").renderedValue
+        res2 shouldBe listOf('1', '2')
     }
 
     @Test
@@ -1051,11 +1050,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("val a = 1")
         eval("a").renderedValue shouldBe 1
         eval("val a = 2")
-        eval("a").renderedValue shouldBe
-            when (repl.compilerMode) {
-                K1 -> 2
-                K2 -> 1
-            }
+        eval("a").renderedValue shouldBe 2
     }
 
     // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work
@@ -1064,10 +1059,6 @@ class ReplTests : AbstractSingleReplTest() {
         eval("fun f() = 1")
         eval("f()").renderedValue shouldBe 1
         eval("fun f() = 'c'")
-        eval("f()").renderedValue shouldBe
-            when (repl.compilerMode) {
-                K1 -> 'c'
-                K2 -> 1
-            }
+        eval("f()").renderedValue shouldBe 'c'
     }
 }

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test
 
 class ReplVarsTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
-    private val replCompilerMode get() = repl.compilerMode
 
     private val varState get() = repl.notebook.variablesState
     private val cellVars get() = repl.notebook.cellVariables
@@ -106,16 +105,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             2,
         )
         varState shouldHaveSize 3
-        varState.getStringValue("x") shouldBe
-            when (replCompilerMode) {
-                K1 -> "1024"
-                K2 -> "abc"
-            }
-        varState.getStringValue("y") shouldBe
-            when (replCompilerMode) {
-                K1 -> "${123 * 2}"
-                K2 -> "123"
-            }
+        varState.getStringValue("x") shouldBe "1024"
+        varState.getStringValue("y") shouldBe "${123 * 2}"
         varState.getValue("z") shouldBe "abc"
     }
 

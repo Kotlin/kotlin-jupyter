@@ -180,7 +180,6 @@ internal class InternalEvaluatorImpl(
                                 resultWithDiagnostics.reports.firstOrNull()?.exception,
                             )
                         }
-                        else -> throw IllegalStateException("Unknown eval result type $this")
                     }
                 }
                 is ResultWithDiagnostics.Failure -> {
@@ -193,7 +192,6 @@ internal class InternalEvaluatorImpl(
                     val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
                     throw ReplCompilerException(code, updatedDiagnostics, metadata = metadata)
                 }
-                else -> throw IllegalStateException("Unknown result")
             }
         } finally {
             isExecuting = false

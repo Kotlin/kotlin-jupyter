@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin.util
 
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.provider.Property
@@ -7,11 +8,13 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.repositories
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import java.io.File
-import java.util.Locale
 
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 internal fun Project.configureDependency(
     scope: String,
     dependency: ExternalModuleDependency,
@@ -19,6 +22,7 @@ internal fun Project.configureDependency(
     repositories {
         if (kotlinVersion().isDevKotlinVersion) {
             addMavenIfDoesNotExist(KOTLIN_DEV_REPOSITORY_NAME, KOTLIN_DEV_REPOSITORY_URL)
+            addMavenIfDoesNotExist(KOTLIN_BOOTSTRAP_REPOSITORY_NAME, KOTLIN_BOOTSTRAP_REPOSITORY_URL)
         }
     }
 
@@ -37,26 +41,37 @@ internal fun Project.configureDependency(
             targets.whenAdded(
                 { it is KotlinJvmTarget },
                 { target ->
-                    val jvmTargetName = target.name
-                    val capitalizedScope = scope.capitalize(Locale.ROOT)
-                    val possibleConfigurationNames =
-                        listOf(
-                            jvmTargetName + "Compilation" + capitalizedScope, // 1.8 onwards
-                            jvmTargetName + capitalizedScope, // 1.7 and before
-                        )
-                    val configuration =
-                        possibleConfigurationNames
-                            .mapNotNull { project.configurations.findByName(it) }
-                            .firstOrNull()
-                            ?: error(
-                                "None of $possibleConfigurationNames configurations could be resolved " +
-                                    "for a multiplatform project. ${allConfigurationsNamesMessage()}",
-                            )
-                    dependencies {
-                        configuration.invoke(dependency)
-                    }
+                    sourceSets.addDependency(scope, target.name, dependency)
                 },
             )
+        }
+    }
+}
+
+private fun NamedDomainObjectContainer<KotlinSourceSet>.addDependency(
+    scope: String,
+    targetName: String,
+    dependency: ExternalModuleDependency,
+) {
+    val isTestScope = scope.startsWith("test")
+    val cleanScopeName =
+        if (isTestScope) {
+            scope.removePrefix("test").replaceFirstChar { it.lowercase() }
+        } else {
+            scope
+        }
+
+    val sourceSetName = targetName + if (isTestScope) "Test" else "Main"
+
+    named(sourceSetName) {
+        dependencies {
+            when (cleanScopeName) {
+                "implementation" -> implementation(dependency)
+                "api" -> api(dependency)
+                "runtimeOnly" -> runtimeOnly(dependency)
+                "compileOnly" -> compileOnly(dependency)
+                else -> error("Unknown scope: $cleanScopeName")
+            }
         }
     }
 }

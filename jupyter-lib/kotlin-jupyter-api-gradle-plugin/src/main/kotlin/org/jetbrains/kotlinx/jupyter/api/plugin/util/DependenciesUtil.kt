@@ -11,6 +11,8 @@ import java.net.URI
 private const val GROUP_ID = "org.jetbrains.kotlinx"
 internal const val KOTLIN_DEV_REPOSITORY_NAME = "Kotlin Dev repo"
 internal const val KOTLIN_DEV_REPOSITORY_URL = "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev"
+internal const val KOTLIN_BOOTSTRAP_REPOSITORY_NAME = "Kotlin Bootstrap repo"
+internal const val KOTLIN_BOOTSTRAP_REPOSITORY_URL = "https://redirector.kotlinlang.org/maven/bootstrap"
 
 internal val String.isDevKotlinVersion: Boolean get() = "-" in this
 
