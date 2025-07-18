@@ -34,7 +34,7 @@ buildSettings {
 
 kotlinPublications {
     publication {
-        publicationName.set("jupyter-protocol")
+        publicationName.set("protocol")
         description.set("Protocol implementations and message handling utilities for Jupyter communication")
     }
 }
