@@ -71,8 +71,7 @@ Jupyter notebooks. It also describes the supported integration features a librar
       * [JupyterIntegration API](#jupyterintegration-api-21)
   * [Creating a library descriptor](#creating-a-library-descriptor)
   * [Integration using the Kotlin API](#integration-using-the-kotlin-api)
-    * [Adding library integration using the KSP plugin](#adding-library-integration-using-the-ksp-plugin)
-    * [Adding library integration without annotation processor](#adding-library-integration-without-annotation-processor)
+    * [Adding library integration using Gradle](#adding-library-integration-using-gradle)
     * [Integration testing for the integration logic](#integration-testing-for-the-integration-logic)
     * [Integration using other build systems](#integration-using-other-build-systems)
 <!-- TOC -->

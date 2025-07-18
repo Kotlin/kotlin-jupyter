@@ -13,7 +13,6 @@ import build.util.getBuildDirectory
 import build.util.gradleKotlin
 import build.util.isProtectedBranch
 import build.util.jvmTarget
-import build.util.ksp
 import build.util.prop
 import build.util.stableKotlin
 import build.util.stringPropOrEmpty
