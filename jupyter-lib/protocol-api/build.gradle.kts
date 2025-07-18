@@ -31,7 +31,7 @@ buildSettings {
 
 kotlinPublications {
     publication {
-        publicationName.set("jupyter-protocol-api")
+        publicationName.set("protocol-api")
         description.set("Core protocol abstractions and basic types for Jupyter kernel communication")
     }
 }
