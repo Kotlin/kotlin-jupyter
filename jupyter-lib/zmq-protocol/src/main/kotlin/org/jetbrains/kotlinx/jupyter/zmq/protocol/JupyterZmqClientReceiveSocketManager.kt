@@ -27,6 +27,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
     side: JupyterSocketSide,
 ) : JupyterClientReceiveSockets {
     val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
+    private val hmac by lazy { configParams.createHmac() }
 
     override val shell: JupyterZmqSocket
     override val control: JupyterZmqSocket
@@ -34,7 +35,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
     override val stdin: JupyterZmqSocket
 
     init {
-        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, configParams, side)
+        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, configParams, side, hmac)
 
         shell =
             createSocket(JupyterZmqSocketInfo.SHELL).apply {

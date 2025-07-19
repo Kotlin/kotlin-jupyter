@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.type
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -17,6 +18,7 @@ import org.zeromq.ZMQ
 @Execution(ExecutionMode.SAME_THREAD)
 class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private val context: ZMQ.Context = ZMQ.context(1)
+    private val hmac by lazy { kernelConfig.jupyterParams.createHmac() }
 
     private fun connectClientSocket(socketInfo: JupyterZmqSocketInfo) =
         createZmqSocket(
@@ -25,6 +27,7 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             context,
             kernelConfig.jupyterParams,
             JupyterSocketSide.CLIENT,
+            hmac,
         ).apply { connect() }
 
     @Test

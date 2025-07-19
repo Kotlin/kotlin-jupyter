@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.protocol.startup
 
-import org.jetbrains.kotlinx.jupyter.protocol.HMAC
-
 const val KERNEL_TRANSPORT_SCHEME = "tcp"
 const val KERNEL_SIGNATURE_SCHEME = "HmacSHA256"
 
@@ -14,11 +12,4 @@ data class KernelJupyterParams(
     val host: String,
     val ports: KernelPorts,
     val transport: String?,
-) {
-    val hmac by lazy {
-        HMAC(
-            algorithm = signatureScheme.replace("-", ""),
-            key = signatureKey,
-        )
-    }
-}
+)

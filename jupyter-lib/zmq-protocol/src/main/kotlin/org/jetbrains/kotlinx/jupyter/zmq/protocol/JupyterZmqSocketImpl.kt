@@ -4,7 +4,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
-import org.jetbrains.kotlinx.jupyter.protocol.HMAC
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
@@ -132,6 +131,7 @@ fun createZmqSocket(
     context: ZMQ.Context,
     configParams: KernelJupyterParams,
     side: JupyterSocketSide,
+    hmac: HMAC,
 ): JupyterZmqSocket {
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
@@ -141,7 +141,7 @@ fun createZmqSocket(
         name = socketInfo.name,
         socket = zmqSocket,
         address = configParams.addressForZmqSocket(socketInfo, side),
-        hmac = configParams.hmac,
+        hmac = hmac,
     )
 }
 

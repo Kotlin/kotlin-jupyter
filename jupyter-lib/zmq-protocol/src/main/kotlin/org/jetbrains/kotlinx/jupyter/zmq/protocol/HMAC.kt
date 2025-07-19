@@ -1,9 +1,14 @@
-package org.jetbrains.kotlinx.jupyter.protocol
+package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
+fun KernelJupyterParams.createHmac() =
+    HMAC(
+        algorithm = signatureScheme.replace("-", ""),
+        key = signatureKey,
+    )
 
 class HMAC(
     algorithm: String,
@@ -22,3 +27,5 @@ class HMAC(
 
     operator fun invoke(vararg data: ByteArray): String = invoke(data.asIterable())
 }
+
+private fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })
