@@ -116,6 +116,7 @@ dependencies {
     ideScriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
     }
+    ideScriptClasspathShadowed(projects.protocolApi) { isTransitive = false }
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
     ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
 

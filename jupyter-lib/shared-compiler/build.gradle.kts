@@ -55,9 +55,6 @@ dependencies {
             "stdlib-common",
         )
     }
-
-    // ZeroMQ library for Jupyter messaging protocol implementation
-    api(libs.zeromq)
 }
 
 buildSettings {
