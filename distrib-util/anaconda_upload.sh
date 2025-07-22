@@ -13,7 +13,7 @@ ANACONDA_USER="$4"
 
 # Log in to Anaconda
 echo "Logging in to Anaconda..."
-echo "yes" | anaconda login --username "$USERNAME" --password "$PASSWORD"
+echo "yes" | anaconda login --at anaconda.org --username "$USERNAME" --password "$PASSWORD"
 if [ $? -ne 0 ]; then
     echo "Failed to log in to Anaconda"
     exit 2
