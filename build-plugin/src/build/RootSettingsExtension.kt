@@ -151,7 +151,7 @@ class RootSettingsExtension(
         UploadTaskSpecs(
             DistributionPackageSettings(
                 "conda-package",
-                "$packageName-$pyPackageVersion-py_0.tar.bz2"
+                "$packageName-$pyPackageVersion-py_0.conda"
             ),
             "conda",
             CONDA_GROUP,
