@@ -6,9 +6,9 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
