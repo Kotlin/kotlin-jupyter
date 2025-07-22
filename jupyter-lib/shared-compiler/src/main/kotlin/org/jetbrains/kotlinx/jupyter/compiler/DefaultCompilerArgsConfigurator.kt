@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.compiler
 
 import jupyter.kotlin.CompilerArgs
-import jupyter.kotlin.JavaRuntime
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.asSuccess
@@ -12,7 +11,7 @@ import kotlin.script.experimental.api.asSuccess
  * @see org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
  */
 class DefaultCompilerArgsConfigurator(
-    jvmTargetVersion: String = JavaRuntime.version,
+    jvmTargetVersion: String,
     extraArgs: List<String> = emptyList(),
 ) : CompilerArgsConfigurator {
     private val argsList =

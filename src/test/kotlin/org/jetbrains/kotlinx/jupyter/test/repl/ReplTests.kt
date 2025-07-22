@@ -527,9 +527,9 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testJavaRuntimeUtils() {
-        val result = eval("JavaRuntimeUtils.version")
+        val result = eval("JavaRuntimeUtils.javaVersion.versionString")
         val resultVersion = result.renderedValue
-        val expectedVersion = JavaRuntime.version
+        val expectedVersion = JavaRuntime.javaVersion.versionString
         resultVersion shouldBe expectedVersion
     }
 

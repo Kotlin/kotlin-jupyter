@@ -95,7 +95,7 @@ fun runCommand(
                     """ |Kotlin Jupyter kernel.
                         |Kernel version: $currentKernelVersion
                         |Kotlin version: $currentKotlinVersion
-                        |JVM version: ${JavaRuntime.version}
+                        |JVM version: ${JavaRuntime.javaVersion.versionString}
                         |
                         |Commands:
                         |$commands

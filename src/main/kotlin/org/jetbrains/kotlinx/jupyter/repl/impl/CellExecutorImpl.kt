@@ -224,7 +224,7 @@ internal class CellExecutorImpl(
 
         override fun loadStdlibJdkExtensions(version: String?) {
             val availableExtensionsVersions = listOf(7, 8)
-            val jdkVersion = JavaRuntime.versionAsInt
+            val jdkVersion = JavaRuntime.javaVersion.versionInteger
             val versionToLoad = availableExtensionsVersions.lastOrNull { it <= jdkVersion } ?: return
             loadKotlinArtifacts(listOf("stdlib-jdk$versionToLoad"), version)
         }

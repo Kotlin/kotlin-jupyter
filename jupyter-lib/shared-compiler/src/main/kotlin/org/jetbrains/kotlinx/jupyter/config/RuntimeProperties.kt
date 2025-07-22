@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.config
 
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
+import org.jetbrains.kotlinx.jupyter.compiler.util.MAX_SUPPORTED_JVM_TARGET
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
@@ -22,7 +23,7 @@ fun readResourceAsIniFile(
     ?.parseIniConfig()
     .orEmpty()
 
-val kernelClassLoader = KernelStreams::class.java.classLoader
+val kernelClassLoader: ClassLoader = KernelStreams::class.java.classLoader
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(
@@ -67,7 +68,11 @@ class RuntimeKernelProperties(
     override val currentSha: String
         get() = map["currentSha"] ?: throw RuntimeException("Current commit SHA is not specified!")
     override val jvmTargetForSnippets by lazy {
-        map["jvmTargetForSnippets"] ?: JavaRuntime.version
+        map["jvmTargetForSnippets"]
+            ?: listOf(
+                JavaRuntime.javaVersion,
+                MAX_SUPPORTED_JVM_TARGET,
+            ).minBy { it.versionInteger }.versionString
     }
     override val kotlinVersion: String
         get() = map["kotlinVersion"] ?: throw RuntimeException("Kotlin version is not specified!")

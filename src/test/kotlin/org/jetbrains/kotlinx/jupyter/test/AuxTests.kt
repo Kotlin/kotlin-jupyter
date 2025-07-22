@@ -1,7 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.shouldBe
+import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
+import org.jetbrains.kotlinx.jupyter.api.jvm.JavaVersion
+import org.jetbrains.kotlinx.jupyter.compiler.util.MAX_SUPPORTED_JVM_TARGET
 import org.jetbrains.kotlinx.jupyter.util.PriorityList
 import org.junit.jupiter.api.Test
 
@@ -43,5 +46,18 @@ class AuxTests {
                 "default 2" to ProcessingPriority.DEFAULT,
                 "default 3" to ProcessingPriority.DEFAULT,
             )
+    }
+
+    @Test
+    fun `max Java target version matches actual one`() {
+        val ourMaxJavaTarget = MAX_SUPPORTED_JVM_TARGET.versionString
+        val kotlinMaxJvmTarget =
+            JvmTarget
+                .supportedValues()
+                .map { JavaVersion(8) { it.description } }
+                .maxBy { it.versionInteger }
+                .versionString
+
+        ourMaxJavaTarget shouldBe kotlinMaxJvmTarget
     }
 }

@@ -54,7 +54,7 @@ class ConfigTest {
         val minExpectedVersion = 11
         val maxExpectedVersion = 21
 
-        assertTrue(JavaRuntime.versionAsInt >= minExpectedVersion)
+        assertTrue(JavaRuntime.javaVersion.versionInteger >= minExpectedVersion)
         JavaRuntime.assertVersion { it >= minExpectedVersion }
         JavaRuntime.assertVersionAtLeast(minExpectedVersion)
         JavaRuntime.assertVersionInRange(minExpectedVersion, maxExpectedVersion)

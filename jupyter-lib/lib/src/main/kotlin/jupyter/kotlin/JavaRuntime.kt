@@ -1,40 +1,25 @@
 package jupyter.kotlin
 
 import org.jetbrains.kotlinx.jupyter.api.JREInfoProvider
+import org.jetbrains.kotlinx.jupyter.api.jvm.JavaVersion
 
 object JavaRuntime : JREInfoProvider {
-    private const val DEFAULT_VERSION = 8
-
-    override val version by lazy {
-        val defaultVersionStr = (if (DEFAULT_VERSION <= 8) "1." else "") + "$DEFAULT_VERSION"
-        val version: String? = System.getProperty("java.version")
-
-        val versionParts = version?.split('.')
-        if (versionParts.isNullOrEmpty()) {
-            defaultVersionStr
-        } else if (versionParts[0] == "1") {
-            if (versionParts.size > 1) {
-                "1.${versionParts[1]}"
-            } else {
-                defaultVersionStr
-            }
-        } else {
-            versionParts[0]
+    override val javaVersion =
+        JavaVersion(8) {
+            System.getProperty("java.version")
         }
-    }
 
-    override val versionAsInt by lazy {
-        val regex = Regex("^(1\\.)?(\\d+)(\\..*)?$")
-        val match = regex.matchEntire(version)
-        val plainVersion = match?.groupValues?.get(2)
-        plainVersion?.toIntOrNull() ?: DEFAULT_VERSION
-    }
+    @Deprecated("Use javaVersion instead", replaceWith = ReplaceWith("javaVersion.versionString"))
+    override val version get() = javaVersion.versionString
+
+    @Deprecated("Use javaVersion instead", replaceWith = ReplaceWith("javaVersion.versionInteger"))
+    override val versionAsInt get() = javaVersion.versionInteger
 
     override fun assertVersion(
         message: String,
         condition: (Int) -> Boolean,
     ) {
-        if (!condition(versionAsInt)) {
+        if (!condition(javaVersion.versionInteger)) {
             throw AssertionError(message)
         }
     }
