@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocketImpl
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger

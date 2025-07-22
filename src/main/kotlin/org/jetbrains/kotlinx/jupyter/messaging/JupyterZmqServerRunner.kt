@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions

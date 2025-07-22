@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter

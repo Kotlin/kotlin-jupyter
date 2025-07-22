@@ -15,7 +15,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.ExecuteRequest
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacilityImpl
-import org.jetbrains.kotlinx.jupyter.messaging.JupyterServerSockets
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageData
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider

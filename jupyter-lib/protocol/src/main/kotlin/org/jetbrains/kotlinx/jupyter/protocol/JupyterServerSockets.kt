@@ -1,8 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.messaging
-
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
-import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+package org.jetbrains.kotlinx.jupyter.protocol
 
 /**
  * Interface describing the server side of sockets available in a Jupyter Kernel.

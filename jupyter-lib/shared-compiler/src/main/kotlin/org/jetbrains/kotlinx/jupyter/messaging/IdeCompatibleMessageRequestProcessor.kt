@@ -15,6 +15,7 @@ import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.JUPYTER_PROTOCOL_VERSION
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
