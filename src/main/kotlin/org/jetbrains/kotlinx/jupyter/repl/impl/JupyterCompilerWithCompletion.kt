@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.jetbrains.kotlin.com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
@@ -23,7 +22,6 @@ internal interface JupyterCompilerWithCompletion : JupyterCompiler {
 
     companion object {
         fun createK2Compiler(
-            disposable: Disposable,
             compilationConfiguration: ScriptCompilationConfiguration,
             evaluationConfiguration: ScriptEvaluationConfiguration,
         ): JupyterCompilerWithCompletion =

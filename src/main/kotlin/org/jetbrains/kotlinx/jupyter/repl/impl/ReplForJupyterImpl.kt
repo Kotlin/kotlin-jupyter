@@ -10,7 +10,6 @@ import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
-import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
@@ -172,7 +171,6 @@ class ReplForJupyterImpl(
     BaseKernelHost,
     UserHandlesProvider,
     Closeable {
-    val rootDisposable = Disposer.newDisposable("REPL Disposable")
     private val logger = loggerFactory.getLogger(this::class)
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
 
@@ -323,7 +321,6 @@ class ReplForJupyterImpl(
             }
             K2 -> {
                 JupyterCompilerWithCompletion.createK2Compiler(
-                    rootDisposable,
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
@@ -798,6 +795,5 @@ class ReplForJupyterImpl(
 
     override fun close() {
         notebook.closeIfPossible()
-        rootDisposable.dispose()
     }
 }
