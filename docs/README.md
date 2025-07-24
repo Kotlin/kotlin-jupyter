@@ -383,7 +383,7 @@ You can add dynamic dependencies to the notebook using the following annotations
   class directories or JARs, as well as Ivy and Maven artifacts:
 
    ```kotlin 
-   @file:DependsOn(“io.ktor:ktor-client-core-jvm:$ktorVersion“)
+   @file:DependsOn("io.ktor:ktor-client-core-jvm:$ktorVersion")
    ```
 
 * **`@file:Repository(<absolute-path>)`:** In this annotation, you need to specify the absolute path of the dependency.
