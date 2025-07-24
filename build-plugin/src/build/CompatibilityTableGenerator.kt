@@ -76,7 +76,7 @@ class CompatibilityTableGenerator(
         }
 
         val newVersions = TreeMap<KotlinKernelVersion, List<String>>().apply {
-            val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/multiple/status:success,buildType:(id:${kernelTeamcity.projectId})"
+            val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds?locator=branch:(default:any),status:success,buildType:(id:${kernelTeamcity.projectId})"
             val allBuildsResponse = settings.httpClient.httpRequest(
                     buildRequest("GET", allBuildsUrl) {
                         header("Accept", "application/json")
@@ -92,7 +92,7 @@ class CompatibilityTableGenerator(
                 val artifactResponse = settings.httpClient.httpRequest(
                         buildRequest("GET", artifactUrl)
                 )
-                if(artifactResponse.status.successful) {
+                if (artifactResponse.status.successful) {
                     val verMap = artifactResponse.text
                             .lines()
                             .filter { it.contains("=") }
