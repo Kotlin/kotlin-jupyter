@@ -19,7 +19,7 @@ class ApiGradlePlugin : Plugin<Project> {
     override fun apply(target: Project): Unit =
         with(target) {
             val pluginExtension = KotlinJupyterPluginExtension(target)
-            extensions.add("kotlinJupyter", pluginExtension)
+            extensions.add(KotlinJupyterPluginExtension.NAME, pluginExtension)
 
             val jupyterBuildPath = getBuildDirectory().resolve(FQNS_PATH)
             jupyterBuildPath.mkdirs()

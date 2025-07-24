@@ -6,6 +6,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
+import org.jetbrains.kotlinx.jupyter.api.plugin.KotlinJupyterPluginExtension
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.FQNAware
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.LibrariesScanResult
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.emptyScanResult
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.getBuildDirectory
 import java.io.File
 
@@ -31,11 +35,19 @@ open class JupyterApiResourcesTask : DefaultTask() {
 
     @TaskAction
     fun createDescriptions() {
-        val resultObject =
+        val jupyterExtension = project.extensions.findByType(KotlinJupyterPluginExtension::class.java)
+        val jupyterExtensionScanResult = jupyterExtension?.libraryFqns ?: emptyScanResult
+
+        val taskScanResult =
             LibrariesScanResult(
-                definitions = libraryDefinitions.map { FQNAware(it) }.toTypedArray(),
-                producers = libraryProducers.map { FQNAware(it) }.toTypedArray(),
-            ) + getScanResultFromAnnotations()
+                definitions = libraryDefinitions.map { FQNAware(it) }.toSet(),
+                producers = libraryProducers.map { FQNAware(it) }.toSet(),
+            )
+
+        val resultObject =
+            jupyterExtensionScanResult +
+                taskScanResult +
+                getScanResultFromAnnotations()
         val json = Gson().toJson(resultObject)
 
         val jupyterDir = outputDir.resolve("META-INF/kotlin-jupyter-libraries")
@@ -47,14 +59,14 @@ open class JupyterApiResourcesTask : DefaultTask() {
     private fun getScanResultFromAnnotations(): LibrariesScanResult {
         val path = project.getBuildDirectory().resolve(ApiGradlePlugin.FQNS_PATH)
 
-        fun fqns(name: String): Array<FQNAware> {
+        fun fqns(name: String): Set<FQNAware> {
             val file = path.resolve(name)
-            if (!file.exists()) return emptyArray()
+            if (!file.exists()) return emptySet()
             return file
                 .readLines()
                 .filter { it.isNotBlank() }
                 .map { FQNAware(it) }
-                .toTypedArray()
+                .toSet()
         }
 
         return LibrariesScanResult(
@@ -63,30 +75,9 @@ open class JupyterApiResourcesTask : DefaultTask() {
         )
     }
 
-    data class FQNAware(
-        val fqn: String,
-    )
-
-    class LibrariesScanResult(
-        val definitions: Array<FQNAware>,
-        val producers: Array<FQNAware>,
-    )
-
     operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult =
         LibrariesScanResult(
-            union(definitions, other.definitions),
-            union(producers, other.producers),
+            definitions + other.definitions,
+            producers + other.producers,
         )
-
-    companion object {
-        private inline fun <reified T> union(
-            a: Array<T>,
-            b: Array<T>,
-        ): Array<T> {
-            val result = mutableSetOf<T>()
-            result.addAll(a)
-            result.addAll(b)
-            return result.toTypedArray()
-        }
-    }
 }
