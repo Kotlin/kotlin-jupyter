@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.inspectors.forAny
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
@@ -229,7 +230,7 @@ class ReplTests : AbstractSingleReplTest() {
 
         val htmlLibPath = "org/jetbrains/kotlinx/kotlinx-html-jvm/0.7.2/kotlinx-html-jvm".replace('/', File.separatorChar)
 
-        newClasspath.any { htmlLibPath in it }.shouldBeTrue()
+        newClasspath.forAny { it shouldContain htmlLibPath }
     }
 
     @Test
