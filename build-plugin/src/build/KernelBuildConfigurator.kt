@@ -172,7 +172,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun registerCompatibilityTableTask() {
-        CompatibilityTableGenerator(project, settings).registerTasks { }
+        CompatibilityTableGenerator(project, settings).registerTasks()
     }
 
     private fun configureJarTasks() {

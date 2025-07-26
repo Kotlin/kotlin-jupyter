@@ -2,18 +2,19 @@ package build
 
 import build.util.INTERNAL_TEAMCITY_URL
 import build.util.TeamcityProject
+import build.util.configureGitRobotCommitter
+import build.util.gitCommit
+import build.util.gitPush
 import kotlinx.serialization.json.*
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import java.io.File
-import kotlin.math.max
+import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.httpRequest
 import org.jetbrains.kotlinx.jupyter.common.jsonObject
-import org.jetbrains.kotlinx.jupyter.common.Request
-import org.jetbrains.kotlinx.jupyter.common.buildRequest
 import org.jetbrains.kotlinx.jupyter.common.successful
+import java.io.File
 import java.util.TreeMap
+import kotlin.math.max
 
 class CompatibilityTableGenerator(
     private val project: Project,
@@ -28,7 +29,7 @@ class CompatibilityTableGenerator(
         }
     }
 
-    fun registerTasks(configuration: Task.() -> Unit) {
+    fun registerTasks() {
         val mdFile = project.rootDir.resolve(settings.compatibilityTableFileName)
         project.tasks.register(GENERATE_COMPAT_TABLE) {
             group = HELP_GROUP
@@ -40,8 +41,20 @@ class CompatibilityTableGenerator(
             doLast {
                 updateMdFile(mdFile)
             }
+        }
 
-            configuration()
+        project.tasks.register(PUSH_COMPAT_TABLE) {
+            group = HELP_GROUP
+
+            dependsOn(GENERATE_COMPAT_TABLE)
+
+            doLast {
+                with(project.rootProject){
+                    configureGitRobotCommitter()
+                    gitCommit("Update versions compatibility table")
+                    gitPush()
+                }
+            }
         }
     }
 

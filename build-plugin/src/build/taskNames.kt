@@ -14,6 +14,7 @@ const val CHECK_README_TASK = "checkReadme"
 const val GENERATE_README_TASK = "generateReadme"
 const val PUSH_NEW_README_TASK = "pushNewReadme"
 const val GENERATE_COMPAT_TABLE = "generateCompatTable"
+const val PUSH_COMPAT_TABLE = "pushCompatTable"
 
 const val BUILD_PROPERTIES_TASK = "buildProperties"
 const val CONDA_PACKAGE_TASK = "condaPackage"
