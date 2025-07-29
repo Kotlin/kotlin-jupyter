@@ -975,6 +975,19 @@ abstract class ExecuteTests(
             }
         }
     }
+
+    @Test
+    fun `loggerFactory should be accessible`() {
+        val logger =
+            doExecute(
+                """
+                val LOG = notebook.loggerFactory.getLogger("My debug logger")
+                LOG
+                """.trimIndent(),
+            )
+        logger shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "Logger[My debug logger]")
+        doExecute("LOG.debug(\"Debug message\")", hasResult = false)
+    }
 }
 
 class ExecuteZmqTests :

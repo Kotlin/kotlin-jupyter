@@ -96,6 +96,8 @@ val classpath =
     scriptCompilationClasspathFromContext(
         "lib",
         "api",
+        "protocol-api",
+        "slf4j-api",
         "shared-compiler",
         "kotlin-stdlib",
         "kotlin-reflect",
