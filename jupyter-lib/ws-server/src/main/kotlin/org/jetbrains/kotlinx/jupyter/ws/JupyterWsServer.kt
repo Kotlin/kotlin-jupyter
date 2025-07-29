@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.ws
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
@@ -32,14 +34,17 @@ import kotlin.concurrent.thread
 class WsKernelPorts(
     val port: Int,
 ) : KernelPorts {
-    override fun serialize(): Map<String, JsonPrimitive> = mapOf("ws_port" to JsonPrimitive(port))
+    override fun serialize(): JsonObject =
+        buildJsonObject {
+            put("ws_port", JsonPrimitive(port))
+        }
 
     override fun toString(): String = "WsKernelPorts(${serialize()})"
 }
 
 class JupyterWsServerRunner : JupyterServerRunner {
-    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? {
-        return WsKernelPorts(port = Json.decodeFromJsonElement<Int>(jsonFields["ws_port"] ?: return null))
+    override fun tryDeserializePorts(json: JsonObject): KernelPorts? {
+        return WsKernelPorts(port = Json.decodeFromJsonElement<Int>(json["ws_port"] ?: return null))
     }
 
     override fun canRun(ports: KernelPorts): Boolean = ports is WsKernelPorts

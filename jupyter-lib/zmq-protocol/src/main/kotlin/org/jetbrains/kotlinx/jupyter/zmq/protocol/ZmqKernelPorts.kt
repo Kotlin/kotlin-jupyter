@@ -1,7 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.jupyterName
@@ -25,10 +27,10 @@ class ZmqKernelPorts(
                     },
             )
 
-        fun tryDeserialize(jsonFields: Map<String, JsonPrimitive>): ZmqKernelPorts? {
+        fun tryDeserialize(json: JsonObject): ZmqKernelPorts? {
             return ZmqKernelPorts { socket ->
                 val fieldName = socket.zmqPortField
-                jsonFields[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
+                json[fieldName]?.let { Json.decodeFromJsonElement<Int>(it) }
                     ?: return null
             }
         }
@@ -36,9 +38,11 @@ class ZmqKernelPorts(
         private val JupyterSocketType.zmqPortField get() = "${jupyterName}_port"
     }
 
-    override fun serialize(): Map<String, JsonPrimitive> =
-        ports.entries.associate { (socket, port) ->
-            socket.zmqPortField to JsonPrimitive(port)
+    override fun serialize(): JsonObject =
+        buildJsonObject {
+            for ((socket, port) in ports) {
+                put(socket.zmqPortField, JsonPrimitive(port))
+            }
         }
 
     override fun toString(): String = "ZmqKernelPorts(${serialize()})"

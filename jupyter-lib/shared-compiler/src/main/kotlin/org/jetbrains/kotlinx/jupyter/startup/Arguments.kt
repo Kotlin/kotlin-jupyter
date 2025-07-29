@@ -1,15 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.serializer
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.AbstractKernelJupyterParamsSerializer
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_SIGNATURE_SCHEME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_TRANSPORT_SCHEME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
@@ -30,42 +26,11 @@ data class KernelArgs(
     fun argsList(): List<String> = KernelArgumentsBuilder(this).argsList()
 }
 
-object KernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
-    private val utilSerializer = serializer<Map<String, JsonPrimitive>>()
-
-    override val descriptor: SerialDescriptor
-        get() = utilSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): KernelJupyterParams {
-        val map = utilSerializer.deserialize(decoder)
-        val ports =
-            JupyterServerRunner.instances.firstNotNullOfOrNull {
-                it.tryDeserializePorts(map)
-            } ?: error("Unknown ports scheme")
-
-        return KernelJupyterParams(
-            signatureScheme = map["signature_scheme"]?.content ?: KERNEL_SIGNATURE_SCHEME,
-            signatureKey = map["key"]?.content.orEmpty(),
-            host = map["host"]?.content ?: ANY_HOST_NAME,
-            ports = ports,
-            transport = map["transport"]?.content ?: KERNEL_TRANSPORT_SCHEME,
-        )
-    }
-
-    override fun serialize(
-        encoder: Encoder,
-        value: KernelJupyterParams,
-    ) {
-        val map =
-            mutableMapOf(
-                "signature_scheme" to JsonPrimitive(value.signatureScheme),
-                "key" to JsonPrimitive(value.signatureKey),
-                "transport" to JsonPrimitive(value.transport),
-                "host" to JsonPrimitive(value.host),
-            )
-        map.putAll(value.ports.serialize())
-        utilSerializer.serialize(encoder, map)
-    }
+object KernelJupyterParamsSerializer : AbstractKernelJupyterParamsSerializer() {
+    override fun deserializePorts(map: JsonObject): KernelPorts =
+        JupyterServerRunner.instances.firstNotNullOfOrNull {
+            it.tryDeserializePorts(map)
+        } ?: error("Unknown ports scheme")
 }
 
 fun KernelConfig.toArgs(prefix: String = ""): KernelArgs {

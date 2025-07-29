@@ -37,7 +37,7 @@ abstract class KernelServerTestsBase(
     protected val kernelConfig =
         createKotlinKernelConfig(
             ports = generatePorts(),
-            signatureKey = "abc",
+            signatureKey = "test-signature",
             scriptClasspath = classpath,
             homeDir = File(""),
         )

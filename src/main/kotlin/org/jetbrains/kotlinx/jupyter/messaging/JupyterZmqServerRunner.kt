@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
@@ -19,7 +19,7 @@ import kotlin.concurrent.thread
 import kotlin.time.Duration.Companion.seconds
 
 class JupyterZmqServerRunner : JupyterServerRunner {
-    override fun tryDeserializePorts(jsonFields: Map<String, JsonPrimitive>): KernelPorts? = ZmqKernelPorts.tryDeserialize(jsonFields)
+    override fun tryDeserializePorts(json: JsonObject): KernelPorts? = ZmqKernelPorts.tryDeserialize(json)
 
     override fun canRun(ports: KernelPorts): Boolean = ports is ZmqKernelPorts
 
