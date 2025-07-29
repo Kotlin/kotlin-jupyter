@@ -10,6 +10,7 @@ import build.util.gitCommit
 import build.util.gitPush
 import build.util.isProtectedBranch
 import build.util.taskTempFile
+import groovy.json.JsonException
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -126,7 +127,14 @@ class ReadmeGenerator(
 
         return libraryFiles.toList().associateTo(sortedMapOf()) { file ->
             val libraryName = file.nameWithoutExtension
-            val json = JsonSlurper().parse(file) as Map<*, *>
+            val json = try{
+                JsonSlurper().parse(file) as Map<*, *>
+            } catch (e: JsonException) {
+                throw RuntimeException(
+                    "Failed to parse library file $file, text:\n${file.readText()}",
+                    e
+                )
+            }
             val link = json["link"] as? String
             val description = json["description"] as? String
 
