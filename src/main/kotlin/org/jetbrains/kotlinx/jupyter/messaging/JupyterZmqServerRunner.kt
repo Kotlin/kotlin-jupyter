@@ -6,9 +6,9 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqKernelPorts
 import org.slf4j.Logger
@@ -24,12 +24,12 @@ class JupyterZmqServerRunner : JupyterServerRunner {
     override fun canRun(ports: KernelPorts): Boolean = ports is ZmqKernelPorts
 
     override fun run(
-        config: KernelConfig,
+        jupyterParams: KernelJupyterParams,
         loggerFactory: KernelLoggerFactory,
         setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
     ) {
         val logger = loggerFactory.getLogger(this::class)
-        val sockets = JupyterZmqServerImplSockets(loggerFactory, config)
+        val sockets = JupyterZmqServerImplSockets(loggerFactory, jupyterParams)
 
         val closeables = setup(sockets)
         tryFinally(

@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.startup
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import java.io.Closeable
 import java.util.ServiceLoader
@@ -25,7 +26,7 @@ interface JupyterServerRunner {
      * Closable resources returned from [setup] are closed on shutdown.
      */
     fun run(
-        config: KernelConfig,
+        jupyterParams: KernelJupyterParams,
         loggerFactory: KernelLoggerFactory,
         setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
     )

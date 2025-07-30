@@ -1,11 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
 import org.jetbrains.kotlinx.jupyter.runServer
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.startup.javaCmdLine
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.TestInfo
 import org.slf4j.Logger
@@ -15,7 +16,7 @@ import kotlin.concurrent.thread
 interface ServerTestExecutor {
     fun setUp(
         testInfo: TestInfo,
-        kernelConfig: KernelConfig,
+        kernelConfig: KernelConfig<KotlinKernelOwnParams>,
     )
 
     fun tearDown()
@@ -29,7 +30,7 @@ class ProcessServerTestExecutor : ServerTestExecutor {
 
     override fun setUp(
         testInfo: TestInfo,
-        kernelConfig: KernelConfig,
+        kernelConfig: KernelConfig<KotlinKernelOwnParams>,
     ) {
         val testName = testInfo.displayName
         val command = kernelConfig.javaCmdLine(javaBin, testName, classpathArg)
@@ -75,7 +76,7 @@ class ThreadServerTestExecutor : ServerTestExecutor {
 
     override fun setUp(
         testInfo: TestInfo,
-        kernelConfig: KernelConfig,
+        kernelConfig: KernelConfig<KotlinKernelOwnParams>,
     ) {
         val replConfig =
             ReplConfig.create(

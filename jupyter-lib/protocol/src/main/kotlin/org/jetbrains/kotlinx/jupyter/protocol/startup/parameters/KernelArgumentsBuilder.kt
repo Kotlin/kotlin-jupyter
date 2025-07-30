@@ -1,17 +1,22 @@
-package org.jetbrains.kotlinx.jupyter.startup.parameters
+package org.jetbrains.kotlinx.jupyter.protocol.startup.parameters
 
-import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
 import java.io.File
 
-class KernelArgumentsBuilder(
-    private val ownParamsBuilder: KernelOwnParamsBuilder = KernelOwnParamsBuilder(),
+/**
+ * Builder class for constructing kernel arguments from command-line parameters.
+ *
+ * This class handles both parsing of command-line arguments into a structured format
+ * and serializing the current state back into command-line arguments.
+ * It integrates kernel-specific parameters with common parameters like the config file location.
+ *
+ * @param T The type of kernel-specific parameters this builder handles
+ * @property ownParamsBuilder Builder for kernel-specific parameters
+ * @property cfgFile Optional configuration file reference
+ */
+class KernelArgumentsBuilder<T : KernelOwnParams>(
+    private val ownParamsBuilder: KernelOwnParamsBuilder<T>,
     private var cfgFile: File? = null,
 ) {
-    constructor(kernelArgs: KernelArgs) : this(
-        KernelOwnParamsBuilder(kernelArgs.ownParams),
-        kernelArgs.cfgFile,
-    )
-
     /**
      * List of bound parameters that connect parameter definitions with their property references.
      * This allows for automatic parsing and serialization of command-line arguments.
@@ -29,7 +34,7 @@ class KernelArgumentsBuilder(
      * @param args Array of command-line arguments to parse
      * @return Resulting [KernelArgs]
      */
-    fun parseArgs(args: Array<out String>): KernelArgs {
+    fun parseArgs(args: Array<out String>): KernelArgs<T> {
         parseKernelParameters(args, boundParameters)
 
         val cfgFileValue = cfgFile ?: throw IllegalArgumentException("config file is not provided")

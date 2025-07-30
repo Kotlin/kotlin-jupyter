@@ -3,8 +3,9 @@ package org.jetbrains.kotlinx.jupyter.config
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.MAX_SUPPORTED_JVM_TARGET
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
 import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 
 fun String.parseIniConfig() =
@@ -45,7 +46,7 @@ val currentKotlinVersion by lazy {
 }
 
 fun createRuntimeProperties(
-    kernelConfig: KernelConfig,
+    kernelConfig: KernelConfig<KotlinKernelOwnParams>,
     defaultProperties: ReplRuntimeProperties = defaultRuntimeProperties,
 ): ReplRuntimeProperties =
     object : ReplRuntimeProperties by defaultProperties {

@@ -6,8 +6,8 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.parseCommandLine
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParamsBuilder
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParamsBuilder
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -18,13 +18,13 @@ import kotlin.reflect.full.memberProperties
 class ArgumentsParsingTest {
     @Test
     fun `own parameters builder should align with the corresponding class`() {
-        val boundParametersProperty = KernelOwnParamsBuilder::boundParameters
+        val boundParametersProperty = KotlinKernelOwnParamsBuilder::boundParameters
         val builderProperties =
-            KernelOwnParamsBuilder::class
+            KotlinKernelOwnParamsBuilder::class
                 .memberProperties
                 .filter { it != boundParametersProperty }
 
-        val classProperties = KernelOwnParams::class.memberProperties
+        val classProperties = KotlinKernelOwnParams::class.memberProperties
         builderProperties shouldBeSameSizeAs classProperties
 
         val classPropertiesMap = classProperties.associateBy { it.name }

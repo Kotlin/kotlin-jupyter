@@ -28,6 +28,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.startup.getConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelArgs
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelArgumentsBuilder
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplConfig
 import org.jetbrains.kotlinx.jupyter.repl.ResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.repl.config.DefaultReplSettings
@@ -35,11 +39,9 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.DefaultReplComponentsProvider
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.NoOpInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
-import org.jetbrains.kotlinx.jupyter.startup.KernelArgs
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
-import org.jetbrains.kotlinx.jupyter.startup.getConfig
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
+import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParamsSerializer
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParamsBuilder
 import org.slf4j.Logger
 import java.io.File
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
@@ -47,7 +49,10 @@ import kotlin.script.experimental.jvm.util.classpathFromClassloader
 @PublishedApi
 internal val iKotlinClass = object : Any() {}.javaClass.enclosingClass
 
-fun parseCommandLine(vararg args: String): KernelArgs = KernelArgumentsBuilder().parseArgs(args)
+fun parseCommandLine(vararg args: String): KernelArgs<KotlinKernelOwnParams> =
+    KernelArgumentsBuilder(
+        ownParamsBuilder = KotlinKernelOwnParamsBuilder(),
+    ).parseArgs(args)
 
 @PublishedApi
 internal fun printClassPath(logger: Logger) {
@@ -66,7 +71,7 @@ fun main(vararg args: String) {
     try {
         logger.info("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
-        val kernelConfig = kernelArgs.getConfig()
+        val kernelConfig = kernelArgs.getConfig(KernelJupyterParamsSerializer)
         val replSettings =
             createReplSettings(
                 loggerFactory,
@@ -103,7 +108,7 @@ fun embedKernel(
             .toTypedArray()
             .map(::File)
     val kernelOwnParams =
-        KernelOwnParams(
+        KotlinKernelOwnParams(
             scriptClasspath = scriptClasspath,
             homeDir = null,
             debugPort = null,
@@ -116,7 +121,7 @@ fun embedKernel(
         KernelArgs(
             cfgFile = cfgFile,
             ownParams = kernelOwnParams,
-        ).getConfig()
+        ).getConfig(KernelJupyterParamsSerializer)
     val replSettings =
         createReplSettings(
             DefaultKernelLoggerFactory,
@@ -131,7 +136,7 @@ fun embedKernel(
 fun createReplSettings(
     loggerFactory: KernelLoggerFactory,
     kernelRunMode: KernelRunMode,
-    kernelConfig: KernelConfig,
+    kernelConfig: KernelConfig<KotlinKernelOwnParams>,
     resolutionInfoProviderFactory: ResolutionInfoProviderFactory? = DefaultResolutionInfoProviderFactory,
     scriptReceivers: List<Any>? = null,
 ): DefaultReplSettings {
@@ -228,7 +233,7 @@ fun runServer(replSettings: DefaultReplSettings) {
     logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
 
     serverRunner.run(
-        config = kernelConfig,
+        jupyterParams = kernelConfig.jupyterParams,
         loggerFactory = loggerFactory,
         setup = { sockets ->
             printClassPath(logger)

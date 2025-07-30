@@ -2,9 +2,11 @@ package org.jetbrains.kotlinx.jupyter.startup.parameters
 
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelOwnParamsBuilder
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.MutableBoundKernelParameter
 import java.io.File
 
-class KernelOwnParamsBuilder(
+class KotlinKernelOwnParamsBuilder(
     var scriptClasspath: List<File>? = null,
     var homeDir: File? = null,
     var debugPort: Int? = null,
@@ -12,8 +14,8 @@ class KernelOwnParamsBuilder(
     var jvmTargetForSnippets: String? = null,
     var replCompilerMode: ReplCompilerMode? = null,
     var extraCompilerArguments: List<String>? = null,
-) {
-    constructor(kernelOwnParams: KernelOwnParams) : this(
+) : KernelOwnParamsBuilder<KotlinKernelOwnParams> {
+    constructor(kernelOwnParams: KotlinKernelOwnParams) : this(
         scriptClasspath = kernelOwnParams.scriptClasspath,
         homeDir = kernelOwnParams.homeDir,
         debugPort = kernelOwnParams.debugPort,
@@ -23,7 +25,7 @@ class KernelOwnParamsBuilder(
         extraCompilerArguments = kernelOwnParams.extraCompilerArguments,
     )
 
-    val boundParameters =
+    override val boundParameters =
         listOf(
             MutableBoundKernelParameter(scriptClasspathParameter, ::scriptClasspath),
             MutableBoundKernelParameter(homeDirParameter, ::homeDir),
@@ -34,8 +36,8 @@ class KernelOwnParamsBuilder(
             MutableBoundKernelParameter(extraCompilerArgumentsParameter, ::extraCompilerArguments),
         )
 
-    fun build(): KernelOwnParams =
-        KernelOwnParams(
+    override fun build(): KotlinKernelOwnParams =
+        KotlinKernelOwnParams(
             scriptClasspath = scriptClasspath ?: emptyList(),
             homeDir = homeDir,
             debugPort = debugPort,

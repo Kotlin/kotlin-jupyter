@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.startup
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -10,21 +9,10 @@ import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_SIGNATURE_SCHEME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KERNEL_TRANSPORT_SCHEME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelArgumentsBuilder
-import org.jetbrains.kotlinx.jupyter.startup.parameters.KernelOwnParams
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.toArgs
+import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
 import java.io.File
-
-data class KernelConfig(
-    val jupyterParams: KernelJupyterParams,
-    val ownParams: KernelOwnParams,
-)
-
-data class KernelArgs(
-    val cfgFile: File,
-    val ownParams: KernelOwnParams,
-) {
-    fun argsList(): List<String> = KernelArgumentsBuilder(this).argsList()
-}
 
 object KernelJupyterParamsSerializer : AbstractKernelJupyterParamsSerializer() {
     override fun deserializePorts(map: JsonObject): KernelPorts =
@@ -33,21 +21,9 @@ object KernelJupyterParamsSerializer : AbstractKernelJupyterParamsSerializer() {
         } ?: error("Unknown ports scheme")
 }
 
-fun KernelConfig.toArgs(prefix: String = ""): KernelArgs {
-    val cfgFile = File.createTempFile("kotlin-kernel-config-$prefix", ".json")
-    cfgFile.deleteOnExit()
-    val format = Json { prettyPrint = true }
-    cfgFile.writeText(format.encodeToString(KernelJupyterParamsSerializer, jupyterParams))
-
-    return KernelArgs(
-        cfgFile = cfgFile,
-        ownParams = ownParams,
-    )
-}
-
 const val MAIN_CLASS_NAME = "org.jetbrains.kotlinx.jupyter.IkotlinKt"
 
-fun KernelConfig.javaCmdLine(
+fun KernelConfig<KotlinKernelOwnParams>.javaCmdLine(
     // Path to java executable or just "java" in case it's on the path
     javaExecutable: String,
     // Prefix for the temporary directory where the connection file should be stored
@@ -57,7 +33,11 @@ fun KernelConfig.javaCmdLine(
     // Any JVM arguments such as -XmX
     extraJavaArguments: Collection<String> = emptyList(),
 ): List<String> {
-    val args = toArgs(tempDirPrefix).argsList().toTypedArray()
+    val args =
+        toArgs(
+            kernelJupyterParamsSerializer = KernelJupyterParamsSerializer,
+            configFileSuffix = tempDirPrefix,
+        ).argsList().toTypedArray()
     val debugPort = ownParams.debugPort
 
     return ArrayList<String>().apply {
@@ -72,17 +52,6 @@ fun KernelConfig.javaCmdLine(
         addAll(args)
     }
 }
-
-fun File.toKernelJupyterParams(): KernelJupyterParams {
-    val jsonString = canonicalFile.readText()
-    return Json.decodeFromString(KernelJupyterParamsSerializer, jsonString)
-}
-
-fun KernelArgs.getConfig(): KernelConfig =
-    KernelConfig(
-        jupyterParams = cfgFile.toKernelJupyterParams(),
-        ownParams = ownParams,
-    )
 
 /**
  * Creates a configuration for a Kotlin Kernel client.
@@ -108,7 +77,7 @@ fun createClientKotlinKernelConfig(
             transport = KERNEL_TRANSPORT_SCHEME,
         ),
     ownParams =
-        KernelOwnParams(
+        KotlinKernelOwnParams(
             homeDir = null,
             replCompilerMode = replCompilerMode,
             extraCompilerArguments = extraCompilerArgs,
@@ -147,7 +116,7 @@ fun createKotlinKernelConfig(
             transport = KERNEL_TRANSPORT_SCHEME,
         ),
     ownParams =
-        KernelOwnParams(
+        KotlinKernelOwnParams(
             scriptClasspath = scriptClasspath,
             homeDir = homeDir,
             debugPort = debugPort,

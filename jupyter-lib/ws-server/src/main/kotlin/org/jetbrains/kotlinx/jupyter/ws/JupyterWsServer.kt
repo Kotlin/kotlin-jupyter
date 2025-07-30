@@ -19,9 +19,9 @@ import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import java.io.Closeable
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
@@ -50,7 +50,7 @@ class JupyterWsServerRunner : JupyterServerRunner {
     override fun canRun(ports: KernelPorts): Boolean = ports is WsKernelPorts
 
     override fun run(
-        config: KernelConfig,
+        jupyterParams: KernelJupyterParams,
         loggerFactory: KernelLoggerFactory,
         setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
     ) {
@@ -58,7 +58,6 @@ class JupyterWsServerRunner : JupyterServerRunner {
 
         val wsServer: JupyterWsServer =
             run {
-                val jupyterParams = config.jupyterParams
                 val ports = jupyterParams.ports
                 require(ports is WsKernelPorts) { "Wrong KernelPorts type: $ports" }
                 val address =

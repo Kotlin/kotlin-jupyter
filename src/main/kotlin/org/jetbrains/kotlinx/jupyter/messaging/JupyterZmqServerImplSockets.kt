@@ -7,7 +7,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.callbackBased
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
-import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
+import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
@@ -17,12 +17,12 @@ import java.io.Closeable
 
 internal class JupyterZmqServerImplSockets(
     private val loggerFactory: KernelLoggerFactory,
-    private val config: KernelConfig,
+    private val jupyterParams: KernelJupyterParams,
 ) : JupyterServerImplSockets,
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)
     private val zmqContext: ZMQ.Context = ZMQ.context(1)
-    private val hmac by lazy { config.jupyterParams.createHmac() }
+    private val hmac by lazy { jupyterParams.createHmac() }
 
     private val socketsToClose = mutableListOf<Closeable>()
     private val socketsToBind = mutableListOf<JupyterZmqSocket>()
@@ -61,6 +61,6 @@ internal class JupyterZmqServerImplSockets(
             .also { socketsToClose.add(it) }
 
     private fun createAndBindSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, config.jupyterParams, JupyterSocketSide.SERVER, hmac)
+        createZmqSocket(loggerFactory, socketInfo, zmqContext, jupyterParams, JupyterSocketSide.SERVER, hmac)
             .also { socketsToBind.add(it) }
 }
