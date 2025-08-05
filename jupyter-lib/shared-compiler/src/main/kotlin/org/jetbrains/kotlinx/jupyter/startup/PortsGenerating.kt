@@ -13,12 +13,11 @@ object GeneratedPortsHolder {
     fun addPort(port: Int): Boolean = (port !in usedPorts) && isPortAvailable(port) && usedPorts.add(port)
 }
 
-fun isPortAvailable(port: Int): Boolean {
-    return listOf(
+fun isPortAvailable(port: Int): Boolean =
+    listOf(
         { ServerSocket(port).apply { reuseAddress = true } },
         { DatagramSocket(port).apply { reuseAddress = true } },
     ).all { checkSocketIsFree(it) }
-}
 
 private fun checkSocketIsFree(socketFactory: () -> Closeable): Boolean {
     var socket: Closeable? = null
@@ -36,9 +35,7 @@ fun randomIntsInRange(
     rangeStart: Int,
     rangeEnd: Int,
     limit: Int = rangeEnd - rangeStart,
-): Sequence<Int> {
-    return generateSequence { Random.nextInt(rangeStart, rangeEnd) }.take(limit)
-}
+): Sequence<Int> = generateSequence { Random.nextInt(rangeStart, rangeEnd) }.take(limit)
 
 class PortsGenerator(
     private val portsToTry: () -> Sequence<Int>,
@@ -59,5 +56,6 @@ fun PortsGenerator.Companion.create(
 }
 
 fun createRandomKernelPorts() =
-    PortsGenerator.create(32768, 65536)
+    PortsGenerator
+        .create(32768, 65536)
         .let { generator -> createKernelPorts { generator.randomPort() } }

@@ -20,7 +20,5 @@ class LibraryResourcesProcessorImpl(
     override fun wrapLibrary(
         resource: LibraryResource,
         classLoader: ClassLoader,
-    ): String {
-        return processorMap.getValue(resource.type).wrapLibrary(resource, classLoader)
-    }
+    ): String = processorMap.getValue(resource.type).wrapLibrary(resource, classLoader)
 }

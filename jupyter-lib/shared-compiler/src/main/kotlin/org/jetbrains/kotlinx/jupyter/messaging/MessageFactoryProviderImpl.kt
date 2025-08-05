@@ -3,7 +3,9 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import org.jetbrains.kotlinx.jupyter.api.libraries.RawMessage
 import org.jetbrains.kotlinx.jupyter.util.UpdatableProviderImpl
 
-class MessageFactoryProviderImpl : MessageFactoryProvider, UpdatableProviderImpl<MessageFactory>() {
+class MessageFactoryProviderImpl :
+    UpdatableProviderImpl<MessageFactory>(),
+    MessageFactoryProvider {
     override fun update(rawMessage: RawMessage) {
         update(
             MessageFactoryImpl().apply {

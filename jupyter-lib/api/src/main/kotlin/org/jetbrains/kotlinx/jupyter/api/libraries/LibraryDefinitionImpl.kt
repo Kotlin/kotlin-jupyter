@@ -44,9 +44,7 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var colorSchemeChangedCallbacks: List<ColorSchemeChangedCallback> = emptyList()
 
     companion object {
-        internal fun build(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition {
-            return LibraryDefinitionImpl().also(buildAction)
-        }
+        internal fun build(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition = LibraryDefinitionImpl().also(buildAction)
     }
 }
 
@@ -55,6 +53,4 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
  * Build action receives [LibraryDefinitionImpl] as an explicit argument
  * because of problems with names clashing that may arise.
  */
-fun libraryDefinition(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition {
-    return LibraryDefinitionImpl.build(buildAction)
-}
+fun libraryDefinition(buildAction: (LibraryDefinitionImpl) -> Unit): LibraryDefinition = LibraryDefinitionImpl.build(buildAction)

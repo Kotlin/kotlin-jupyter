@@ -23,7 +23,8 @@ open class KotlinJupyterAutoConfiguration {
         client: SpringKotlinJupyterClient,
     ): KotlinJupyterKernelService {
         val scriptClasspath =
-            System.getProperty("java.class.path")
+            System
+                .getProperty("java.class.path")
                 .split(File.pathSeparator)
                 .map { File(it) }
 
@@ -47,7 +48,5 @@ open class KotlinJupyterAutoConfiguration {
     }
 
     @Bean
-    open fun springContext(): SpringContext {
-        return SpringContext()
-    }
+    open fun springContext(): SpringContext = SpringContext()
 }

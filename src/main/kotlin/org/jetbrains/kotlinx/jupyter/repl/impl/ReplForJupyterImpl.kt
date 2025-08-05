@@ -167,7 +167,10 @@ class ReplForJupyterImpl(
     magicsHandler: LibrariesAwareMagicsHandler,
     private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     override val compilerMode: ReplCompilerMode,
-) : ReplForJupyter, BaseKernelHost, UserHandlesProvider, Closeable {
+) : ReplForJupyter,
+    BaseKernelHost,
+    UserHandlesProvider,
+    Closeable {
     val rootDisposable = Disposer.newDisposable("REPL Disposable")
     private val logger = loggerFactory.getLogger(this::class)
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
@@ -439,8 +442,8 @@ class ReplForJupyterImpl(
 
     private var evalContextEnabled = false
 
-    private fun <T> withEvalContext(action: () -> T): T {
-        return synchronized(this) {
+    private fun <T> withEvalContext(action: () -> T): T =
+        synchronized(this) {
             require(!evalContextEnabled) { "Recursive execution is not supported" }
             evalContextEnabled = true
             try {
@@ -450,23 +453,20 @@ class ReplForJupyterImpl(
                 ctx.cellExecutionFinished()
             }
         }
-    }
 
     private val executor: CellExecutor = CellExecutorImpl(sharedContext)
 
-    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        return if (evalContextEnabled) {
+    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+        if (evalContextEnabled) {
             fileAnnotationsProcessor.process(context, hostProvider.host!!)
         } else {
             context.compilationConfiguration.asSuccess()
         }
-    }
 
-    override fun evalEx(evalData: EvalRequestData): EvalResultEx {
-        return withEvalContext {
+    override fun evalEx(evalData: EvalRequestData): EvalResultEx =
+        withEvalContext {
             evalExImpl(evalData)
         }
-    }
 
     private fun evalExImpl(evalData: EvalRequestData): EvalResultEx {
         beforeCellExecutionsProcessor.process(executor)
@@ -529,21 +529,21 @@ class ReplForJupyterImpl(
     private fun renderResult(
         result: InternalReplResult.Success,
         evalData: EvalRequestData,
-    ): Any? {
-        return result.internalResult.let { internalResult ->
-            logger.catchAll {
-                renderersProcessor.renderResult(executor, internalResult.result)
+    ): Any? =
+        result.internalResult
+            .let { internalResult ->
+                logger.catchAll {
+                    renderersProcessor.renderResult(executor, internalResult.result)
+                }
+            }?.let {
+                logger.catchAll {
+                    if (it is Renderable) it.render(notebook) else it
+                }
+            }?.let {
+                logger.catchAll {
+                    if (it is InMemoryMimeTypedResult) transformInMemoryResults(it, evalData) else it
+                }
             }
-        }?.let {
-            logger.catchAll {
-                if (it is Renderable) it.render(notebook) else it
-            }
-        }?.let {
-            logger.catchAll {
-                if (it is InMemoryMimeTypedResult) transformInMemoryResults(it, evalData) else it
-            }
-        }
-    }
 
     /**
      * If the render result is an in-memory value, we need to extract it from
@@ -640,15 +640,12 @@ class ReplForJupyterImpl(
         }
     }
 
-    override fun <T> eval(execution: ExecutionCallback<T>): T {
-        return withEvalContext {
+    override fun <T> eval(execution: ExecutionCallback<T>): T =
+        withEvalContext {
             executor.execute(execution)
         }
-    }
 
-    override fun evalOnShutdown(): List<ShutdownEvalResult> {
-        return shutdownExecutionsProcessor.process(executor)
-    }
+    override fun evalOnShutdown(): List<ShutdownEvalResult> = shutdownExecutionsProcessor.process(executor)
 
     /**
      * Updates current classpath with newly resolved libraries paths
@@ -763,8 +760,10 @@ class ReplForJupyterImpl(
         override val callback: (CompletionResult) -> Unit,
     ) : LockQueueArgs<CompletionResult>
 
-    private data class ListErrorsArgs(val code: String, override val callback: (ListErrorsResult) -> Unit) :
-        LockQueueArgs<ListErrorsResult>
+    private data class ListErrorsArgs(
+        val code: String,
+        override val callback: (ListErrorsResult) -> Unit,
+    ) : LockQueueArgs<ListErrorsResult>
 
     @JvmInline
     private value class LockQueue<T, Args : LockQueueArgs<T>>(
@@ -774,9 +773,7 @@ class ReplForJupyterImpl(
             this.args.set(args)
         }
 
-        fun get(): Args {
-            return args.get()!!
-        }
+        fun get(): Args = args.get()!!
     }
 
     init {

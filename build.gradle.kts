@@ -98,11 +98,13 @@ dependencies {
     testImplementation(libs.test.junit.params)
     testImplementation(libs.test.kotlintest.assertions)
 
-
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)
-    deploy(libs.kotlin.dev.scriptRuntime.get())
+    deploy(
+        libs.kotlin.dev.scriptRuntime
+            .get(),
+    )
 
     kernelShadowed(projects.kotlinJupyterKernel)
 

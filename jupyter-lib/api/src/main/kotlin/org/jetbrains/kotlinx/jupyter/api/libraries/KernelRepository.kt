@@ -10,21 +10,20 @@ data class KernelRepository(
     val path: String,
     val username: String? = null,
     val password: String? = null,
-) : VariablesSubstitutionAware<KernelRepository>, Comparable<KernelRepository> {
-    override fun replaceVariables(mapping: Map<String, String>): KernelRepository {
-        return KernelRepository(
+) : VariablesSubstitutionAware<KernelRepository>,
+    Comparable<KernelRepository> {
+    override fun replaceVariables(mapping: Map<String, String>): KernelRepository =
+        KernelRepository(
             replaceVariables(path, mapping),
             username?.let { replaceVariables(it, mapping) },
             password?.let { replaceVariables(it, mapping) },
         )
-    }
 
-    override fun compareTo(other: KernelRepository): Int {
-        return compareByProperties(
+    override fun compareTo(other: KernelRepository): Int =
+        compareByProperties(
             other,
             KernelRepository::path,
             KernelRepository::username,
             KernelRepository::password,
         )
-    }
 }

@@ -6,12 +6,12 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
-class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesResolver) :
-    ExternalDependenciesResolver by remoteResolver {
-    override fun acceptsRepository(repositoryCoordinates: RepositoryCoordinates): Boolean {
-        return hasRepository(repositoryCoordinates) ||
+class RemoteResolverWrapper(
+    private val remoteResolver: ExternalDependenciesResolver,
+) : ExternalDependenciesResolver by remoteResolver {
+    override fun acceptsRepository(repositoryCoordinates: RepositoryCoordinates): Boolean =
+        hasRepository(repositoryCoordinates) ||
             remoteResolver.acceptsRepository(repositoryCoordinates)
-    }
 
     override fun addRepository(
         repositoryCoordinates: RepositoryCoordinates,
@@ -23,7 +23,10 @@ class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesReso
     }
 
     companion object {
-        private class Shortcut(val shortcut: String, pathGetter: () -> String) {
+        private class Shortcut(
+            val shortcut: String,
+            pathGetter: () -> String,
+        ) {
             val path = pathGetter()
         }
 
@@ -46,16 +49,13 @@ class RemoteResolverWrapper(private val remoteResolver: ExternalDependenciesReso
                 "$PREFIX${it.shortcut}"
             }
 
-        fun hasRepository(repository: RepositoryCoordinates): Boolean {
-            return repositories.containsKey(repository.string)
-        }
+        fun hasRepository(repository: RepositoryCoordinates): Boolean = repositories.containsKey(repository.string)
 
-        fun getRepository(repository: RepositoryCoordinates): RepositoryCoordinates? {
-            return repositories[repository.string]?.path?.let { RepositoryCoordinates(it) }
-        }
+        fun getRepository(repository: RepositoryCoordinates): RepositoryCoordinates? =
+            repositories[repository.string]?.path?.let {
+                RepositoryCoordinates(it)
+            }
 
-        private fun String.toURLString(): String {
-            return File(this).toURI().toURL().toString()
-        }
+        private fun String.toURLString(): String = File(this).toURI().toURL().toString()
     }
 }

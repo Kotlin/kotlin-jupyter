@@ -13,12 +13,11 @@ import java.util.concurrent.ConcurrentHashMap
 object DetailsLevelSerializer : KSerializer<DetailLevel> {
     private val cache: MutableMap<Int, DetailLevel> = ConcurrentHashMap()
 
-    private fun getDetailsLevel(type: Int): DetailLevel {
-        return cache.computeIfAbsent(type) { newLevel ->
+    private fun getDetailsLevel(type: Int): DetailLevel =
+        cache.computeIfAbsent(type) { newLevel ->
             DetailLevel.entries.firstOrNull { it.level == newLevel }
                 ?: throw SerializationException("Unknown details level: $newLevel")
         }
-    }
 
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor(
@@ -26,9 +25,7 @@ object DetailsLevelSerializer : KSerializer<DetailLevel> {
             PrimitiveKind.INT,
         )
 
-    override fun deserialize(decoder: Decoder): DetailLevel {
-        return getDetailsLevel(decoder.decodeInt())
-    }
+    override fun deserialize(decoder: Decoder): DetailLevel = getDetailsLevel(decoder.decodeInt())
 
     override fun serialize(
         encoder: Encoder,

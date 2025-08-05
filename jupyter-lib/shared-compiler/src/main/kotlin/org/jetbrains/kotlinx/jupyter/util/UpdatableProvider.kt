@@ -11,9 +11,7 @@ interface UpdatableProvider<T : Any> : Provider<T> {
 open class UpdatableProviderImpl<T : Any> : UpdatableProvider<T> {
     private var value: T? = null
 
-    override fun provide(): T? {
-        return value
-    }
+    override fun provide(): T? = value
 
     override fun update(value: T) {
         this.value = value

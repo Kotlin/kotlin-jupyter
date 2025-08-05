@@ -42,42 +42,37 @@ abstract class AbstractReplTest {
             add(classPathEntry<ReplForJupyterImpl>())
         }
 
-    fun ReplForJupyter.listErrorsBlocking(code: String): ListErrorsResult {
-        return runBlocking {
+    fun ReplForJupyter.listErrorsBlocking(code: String): ListErrorsResult =
+        runBlocking {
             var res: ListErrorsResult? = null
             listErrors(code) {
                 res = it
             }
             res!!
         }
-    }
 
     fun ReplForJupyter.completeBlocking(
         code: String,
         cursor: Int,
-    ): CompletionResult {
-        return runBlocking {
+    ): CompletionResult =
+        runBlocking {
             var res: CompletionResult? = null
             complete(code, cursor) {
                 res = it
             }
             res!!
         }
-    }
 
-    protected fun makeSimpleRepl(): ReplForJupyter {
-        return createRepl(httpUtil, scriptClasspath = classpath)
-    }
+    protected fun makeSimpleRepl(): ReplForJupyter = createRepl(httpUtil, scriptClasspath = classpath)
 
-    protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter {
-        return createRepl(
+    protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter =
+        createRepl(
             httpUtil,
             scriptClasspath = classpath,
             homeDir = homeDir,
             libraryResolver = testLibraryResolver,
             displayHandler = displayHandler,
         )
-    }
 
     protected fun makeReplWithStandardResolver(
         displayHandlerProvider: (MutableNotebook) -> DisplayHandler = { NoOpDisplayHandler },

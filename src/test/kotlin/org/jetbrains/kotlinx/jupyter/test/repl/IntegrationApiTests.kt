@@ -10,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -46,19 +45,16 @@ import kotlin.test.assertNull
 class IntegrationApiTests {
     private val httpUtil = createLibraryHttpUtil(testLoggerFactory)
 
-    private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter {
-        return createRepl(
+    private fun makeRepl(libraryResolver: LibraryResolver): ReplForJupyter =
+        createRepl(
             httpUtil,
             scriptClasspath = classpath,
             homeDir = null,
             mavenRepositories = testRepositories,
             libraryResolver = libraryResolver,
         )
-    }
 
-    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter {
-        return makeRepl(libs.toList().toLibraries())
-    }
+    private fun makeRepl(vararg libs: Pair<String, LibraryDefinition>): ReplForJupyter = makeRepl(libs.toList().toLibraries())
 
     @Test
     fun `field handling`() {
@@ -166,13 +162,9 @@ class IntegrationApiTests {
                             override fun process(
                                 code: String,
                                 host: KotlinKernelHost,
-                            ): CodePreprocessor.Result {
-                                return CodePreprocessor.Result(code.replace("2+2", "3+3"))
-                            }
+                            ): CodePreprocessor.Result = CodePreprocessor.Result(code.replace("2+2", "3+3"))
 
-                            override fun accepts(code: String): Boolean {
-                                return code == "2+2"
-                            }
+                            override fun accepts(code: String): Boolean = code == "2+2"
                         },
                     )
 
@@ -181,9 +173,7 @@ class IntegrationApiTests {
                             override fun process(
                                 code: String,
                                 host: KotlinKernelHost,
-                            ): CodePreprocessor.Result {
-                                return CodePreprocessor.Result(code.replace("1", "2"))
-                            }
+                            ): CodePreprocessor.Result = CodePreprocessor.Result(code.replace("1", "2"))
                         },
                     )
                 }

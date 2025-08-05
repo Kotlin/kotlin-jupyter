@@ -20,13 +20,21 @@ class TextRenderingTests {
         render(obj) shouldBe expected
     }
 
-    private class MyX(val v: Int)
+    private class MyX(
+        val v: Int,
+    )
 
-    private class MyY(val ss: String, val x: MyX) {
+    private class MyY(
+        val ss: String,
+        val x: MyX,
+    ) {
         fun f(): Int = 42
     }
 
-    private data class MyD(val a: Int, val b: Int)
+    private data class MyD(
+        val a: Int,
+        val b: Int,
+    )
 
     private class Node(
         val d: Int,

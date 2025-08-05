@@ -17,8 +17,8 @@ class KotlinCompleter {
         preprocessedCode: String,
         id: Int,
         cursor: Int,
-    ): CompletionResult {
-        return try {
+    ): CompletionResult =
+        try {
             val codeLine = SourceCodeImpl(id, code)
             val preprocessedCodeLine = SourceCodeImpl(id, preprocessedCode)
             val codePos = cursor.toSourceCodePositionWithNewAbsolute(codeLine, preprocessedCodeLine)
@@ -31,7 +31,6 @@ class KotlinCompleter {
         } catch (e: Exception) {
             CompletionResult.Error(e.javaClass.simpleName, e.message ?: "", e.stackTrace.map { it.toString() })
         }
-    }
 
     companion object {
         fun getResult(

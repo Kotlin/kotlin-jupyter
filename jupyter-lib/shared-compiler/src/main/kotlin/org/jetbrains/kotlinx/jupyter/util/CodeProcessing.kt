@@ -48,6 +48,4 @@ fun SourceCode.Position.withNewAbsolute(
 fun Int.toSourceCodePositionWithNewAbsolute(
     code: SourceCode,
     newCode: SourceCode,
-): SourceCode.Position? {
-    return toSourceCodePosition(code).withNewAbsolute(code, newCode)
-}
+): SourceCode.Position? = toSourceCodePosition(code).withNewAbsolute(code, newCode)

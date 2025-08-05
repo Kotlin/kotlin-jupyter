@@ -60,9 +60,7 @@ class LogbackLoggingManager(
 
     override fun disableLogging() = setRootLoggingLevel(Level.OFF)
 
-    override fun isLoggingEnabled(): Boolean {
-        return mainLogbackLoggerLevel() != Level.OFF
-    }
+    override fun isLoggingEnabled(): Boolean = mainLogbackLoggerLevel() != Level.OFF
 
     override fun mainLoggerLevel(): org.slf4j.event.Level {
         val logbackLevel = mainLogbackLoggerLevel()

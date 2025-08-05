@@ -38,7 +38,9 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  * more explicit, so `stream` becomes `StreamMessage`.
  */
 @Serializable(MessageTypeSerializer::class)
-enum class MessageType(val contentClass: KClass<out MessageContent>) {
+enum class MessageType(
+    val contentClass: KClass<out MessageContent>,
+) {
     NONE(ExecuteAbortReply::class),
 
     EXECUTE_REQUEST(ExecuteRequest::class),
@@ -117,13 +119,12 @@ enum class MessageType(val contentClass: KClass<out MessageContent>) {
         get() = name.lowercase()
 
     companion object {
-        fun fromString(type: String): MessageType? {
-            return try {
+        fun fromString(type: String): MessageType? =
+            try {
                 MessageType.valueOf(type.toUpperCaseAsciiOnly())
             } catch (e: IllegalArgumentException) {
                 null
             }
-        }
     }
 }
 
@@ -143,7 +144,9 @@ data class MessageHeader(
 // Wrapper for `detail_level`
 // See https://jupyter-client.readthedocs.io/en/latest/messaging.html#introspection
 @Serializable(DetailsLevelSerializer::class)
-enum class DetailLevel(val level: Int) {
+enum class DetailLevel(
+    val level: Int,
+) {
     STANDARD(0),
     DETAILED(1),
 }
@@ -189,7 +192,9 @@ data class ExecuteRequest(
 sealed interface ExecuteReply : MessageContent
 
 @Serializable
-class ExecuteAbortReply : AbortReplyContent(), ExecuteReply
+class ExecuteAbortReply :
+    AbortReplyContent(),
+    ExecuteReply
 
 @Serializable
 class ExecuteErrorReply(
@@ -206,7 +211,8 @@ class ExecuteErrorReply(
      */
     override val traceback: List<String>,
     val additionalInfo: JsonObject,
-) : ErrorReplyContent(), ExecuteReply
+) : ErrorReplyContent(),
+    ExecuteReply
 
 @Serializable
 class ExecuteSuccessReply(
@@ -216,7 +222,8 @@ class ExecuteSuccessReply(
     @SerialName("user_expressions")
     val userExpressions: Map<String, JsonElement> = mapOf(),
     val additionalInfo: JsonObject? = null,
-) : OkReplyContent(), ExecuteReply
+) : OkReplyContent(),
+    ExecuteReply
 
 @Serializable
 class Payload(
@@ -323,7 +330,9 @@ class UpdateClientMetadataRequest(
 sealed interface UpdateClientMetadataReply : MessageContent
 
 @Serializable
-class UpdateClientMetadataSuccessReply : OkReplyContent(), UpdateClientMetadataReply
+class UpdateClientMetadataSuccessReply :
+    OkReplyContent(),
+    UpdateClientMetadataReply
 
 @Serializable
 class UpdateClientMetadataErrorReply(
@@ -332,7 +341,8 @@ class UpdateClientMetadataErrorReply(
     @SerialName("evalue")
     override val value: String,
     override val traceback: List<String>,
-) : ErrorReplyContent(), UpdateClientMetadataReply {
+) : ErrorReplyContent(),
+    UpdateClientMetadataReply {
     constructor (ex: Exception) : this(
         ex.javaClass.simpleName,
         ex.message ?: "",

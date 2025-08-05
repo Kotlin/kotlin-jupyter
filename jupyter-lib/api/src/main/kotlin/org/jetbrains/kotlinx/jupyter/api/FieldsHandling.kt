@@ -75,9 +75,7 @@ interface CompileTimeFieldHandler : FieldHandler {
     override fun accepts(
         value: Any?,
         property: KProperty<*>,
-    ): Boolean {
-        return acceptsType(property.returnType.withNullability(false))
-    }
+    ): Boolean = acceptsType(property.returnType.withNullability(false))
 }
 
 class FieldHandlerByClass(
@@ -127,9 +125,7 @@ object NullabilityEraser : FieldHandler {
     override fun accepts(
         value: Any?,
         property: KProperty<*>,
-    ): Boolean {
-        return value != null && property.returnType.isMarkedNullable
-    }
+    ): Boolean = value != null && property.returnType.isMarkedNullable
 
     override fun finalize(host: KotlinKernelHost) {
         try {
@@ -141,10 +137,9 @@ object NullabilityEraser : FieldHandler {
         }
     }
 
-    override fun toString(): String {
-        return "Nullable fields handler: generates non-nullable" +
+    override fun toString(): String =
+        "Nullable fields handler: generates non-nullable" +
             " overrides for nullable variables with non-null values"
-    }
 }
 
 data class VariableDeclaration(

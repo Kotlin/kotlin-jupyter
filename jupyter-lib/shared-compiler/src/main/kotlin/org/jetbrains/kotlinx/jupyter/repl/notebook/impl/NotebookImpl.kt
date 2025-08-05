@@ -52,7 +52,8 @@ class NotebookImpl(
     override val libraryLoader: LibraryLoader,
     override val kernelRunMode: KernelRunMode,
     debugPortProvided: Boolean,
-) : MutableNotebook, Closeable {
+) : MutableNotebook,
+    Closeable {
     @Suppress("FunctionName")
     private fun `$debugMethod`() {
         try {
@@ -98,28 +99,21 @@ class NotebookImpl(
 
     override val resultsAccessor = ResultsAccessor { getResult(it) }
 
-    override fun getCell(id: Int): MutableCodeCell {
-        return cells[id] ?: throw ArrayIndexOutOfBoundsException(
+    override fun getCell(id: Int): MutableCodeCell =
+        cells[id] ?: throw ArrayIndexOutOfBoundsException(
             "There is no cell with number '$id'",
         )
-    }
 
-    override fun getResult(id: Int): Any? {
-        return getCell(id).result
-    }
+    override fun getResult(id: Int): Any? = getCell(id).result
 
     private val history = arrayListOf<MutableCodeCell>()
     private var mainCellCreated = false
 
     override val displays = DisplayContainerImpl()
 
-    override fun getAllDisplays(): List<DisplayResultWithCell> {
-        return displays.getAll()
-    }
+    override fun getAllDisplays(): List<DisplayResultWithCell> = displays.getAll()
 
-    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> {
-        return displays.getById(id)
-    }
+    override fun getDisplaysById(id: String?): List<DisplayResultWithCell> = displays.getById(id)
 
     override val kernelVersion: KotlinKernelVersion
         get() = runtimeProperties.version ?: throw IllegalStateException("Kernel version is not known")
@@ -168,9 +162,7 @@ class NotebookImpl(
         context.colorSchemeChangeCallbacksProcessor.schemeChanged(newScheme)
     }
 
-    override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult {
-        return data.toIFrame(_currentColorScheme)
-    }
+    override fun renderHtmlAsIFrame(data: HtmlData): MimeTypedResult = data.toIFrame(_currentColorScheme)
 
     // This path is not set until a KernelRequestInfo message has been sent.
     // For normal usage, this should always happen, but it is not always
@@ -229,9 +221,7 @@ class NotebookImpl(
     override val colorSchemeChangeCallbacksProcessor: ExtensionsProcessor<ColorSchemeChangedCallback>
         get() = sharedReplContext?.colorSchemeChangeCallbacksProcessor ?: throwItemNotInitialized("Color scheme change callbacks processor")
 
-    private fun throwItemNotInitialized(itemName: String): Nothing {
-        throw IllegalStateException("$itemName is not initialized yet")
-    }
+    private fun throwItemNotInitialized(itemName: String): Nothing = throw IllegalStateException("$itemName is not initialized yet")
 
     override val libraryRequests: Collection<LibraryResolutionRequest>
         get() = sharedReplContext?.librariesProcessor?.requests.orEmpty()
@@ -239,17 +229,14 @@ class NotebookImpl(
     override fun getLibraryFromDescriptor(
         descriptorText: String,
         options: Map<String, String>,
-    ): LibraryDefinition {
-        return parseLibraryDescriptor(descriptorText)
+    ): LibraryDefinition =
+        parseLibraryDescriptor(descriptorText)
             .convertToDefinition(options.entries.map { Variable(it.key, it.value) })
-    }
 
     override fun prompt(
         prompt: String,
         isPassword: Boolean,
-    ): String {
-        return communicationFacility.getInput(prompt, isPassword)
-    }
+    ): String = communicationFacility.getInput(prompt, isPassword)
 
     override var executionHost: KotlinKernelHost? = null
 

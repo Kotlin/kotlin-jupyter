@@ -189,13 +189,12 @@ fun rawMessageCallback(
     socket: JupyterSocketType,
     messageType: String?,
     action: RawMessageAction,
-): RawMessageCallback {
-    return object : RawMessageCallback {
+): RawMessageCallback =
+    object : RawMessageCallback {
         override val socket: JupyterSocketType get() = socket
         override val messageType: String? get() = messageType
         override val action: RawMessageAction get() = action
     }
-}
 
 /**
  * Send an object. `data` should be serializable to JSON object
@@ -205,9 +204,8 @@ inline fun <reified T> Comm.sendData(data: T) {
     send(Json.encodeToJsonElement(data).jsonObject)
 }
 
-inline fun <reified T> Comm.onData(crossinline action: (T) -> Unit): CommMsgCallback {
-    return onMessage { json ->
+inline fun <reified T> Comm.onData(crossinline action: (T) -> Unit): CommMsgCallback =
+    onMessage { json ->
         val data = Json.decodeFromJsonElement<T>(json)
         action(data)
     }
-}

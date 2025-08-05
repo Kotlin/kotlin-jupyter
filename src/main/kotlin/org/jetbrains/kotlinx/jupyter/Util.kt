@@ -69,9 +69,7 @@ fun CodeInterval.diagnostic(
     code: String,
     message: String,
     severity: ScriptDiagnostic.Severity = ScriptDiagnostic.Severity.ERROR,
-): ScriptDiagnostic {
-    return generateDiagnosticFromAbsolute(code, from, to, message, severity)
-}
+): ScriptDiagnostic = generateDiagnosticFromAbsolute(code, from, to, message, severity)
 
 fun generateDiagnosticFromAbsolute(
     code: String,
@@ -79,9 +77,7 @@ fun generateDiagnosticFromAbsolute(
     to: Int,
     message: String,
     severity: String,
-): ScriptDiagnostic {
-    return generateDiagnosticFromAbsolute(code, from, to, message, ScriptDiagnostic.Severity.valueOf(severity))
-}
+): ScriptDiagnostic = generateDiagnosticFromAbsolute(code, from, to, message, ScriptDiagnostic.Severity.valueOf(severity))
 
 fun withPath(
     path: String?,
@@ -149,21 +145,19 @@ class HomeDirLibraryDescriptorsProvider(
 ) : ResourceLibraryDescriptorsProvider(loggerFactory) {
     private val logger = loggerFactory.getLogger(this::class)
 
-    override fun getDescriptors(): Map<String, LibraryDescriptor> {
-        return if (homeDir == null) {
+    override fun getDescriptors(): Map<String, LibraryDescriptor> =
+        if (homeDir == null) {
             super.getDescriptors()
         } else {
             libraryDescriptors(homeDir)
         }
-    }
 
-    override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions {
-        return if (homeDir == null) {
+    override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions =
+        if (homeDir == null) {
             super.getDescriptorGlobalOptions()
         } else {
             descriptorOptions(homeDir)
         }
-    }
 
     val descriptorOptions =
         createCachedFun(calculateKey = { file: File -> file.absolutePath }) { homeDir: File ->
@@ -185,13 +179,15 @@ class HomeDirLibraryDescriptorsProvider(
                     .homeLibrariesDir(homeDir)
                     .listFiles(libraryDescriptorsManager::isLibraryDescriptor)
                     .orEmpty()
-            libraryFiles.toList().mapNotNull { file ->
-                val libraryName = file.nameWithoutExtension
-                logger.info("Parsing descriptor for library '$libraryName'")
-                logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
-                    libraryName to parseLibraryDescriptor(file.readText())
-                }
-            }.toMap()
+            libraryFiles
+                .toList()
+                .mapNotNull { file ->
+                    val libraryName = file.nameWithoutExtension
+                    logger.info("Parsing descriptor for library '$libraryName'")
+                    logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
+                        libraryName to parseLibraryDescriptor(file.readText())
+                    }
+                }.toMap()
         }
 }
 
@@ -224,7 +220,10 @@ fun JsonElement.resolvePath(path: List<String>): JsonElement? {
     return cur
 }
 
-data class MutablePair<T1, T2>(var first: T1, var second: T2)
+data class MutablePair<T1, T2>(
+    var first: T1,
+    var second: T2,
+)
 
 fun Any.closeIfPossible() {
     if (this is Closeable) close()

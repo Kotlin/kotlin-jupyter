@@ -1,11 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin
 
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.configureDependency
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.kernelDependency
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.propertyByFlag
-import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class KotlinJupyterPluginExtension(
     private val project: Project,

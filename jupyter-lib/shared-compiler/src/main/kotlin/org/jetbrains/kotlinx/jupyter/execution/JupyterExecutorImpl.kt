@@ -66,9 +66,7 @@ class JupyterExecutorImpl(
             resultFuture.complete(result)
         }
 
-        fun join(): ExecutionResult<T> {
-            return resultFuture.join()
-        }
+        fun join(): ExecutionResult<T> = resultFuture.join()
     }
 
     private val tasksQueue = ArrayBlockingQueue<Task<*>>(MAX_QUEUED_TASKS)

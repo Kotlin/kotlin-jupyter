@@ -2,7 +2,9 @@ package org.jetbrains.kotlinx.jupyter.magics
 
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 
-abstract class LibrariesAwareAbstractMagicsHandler : LibrariesAwareMagicsHandler, AbstractMagicsHandler() {
+abstract class LibrariesAwareAbstractMagicsHandler :
+    AbstractMagicsHandler(),
+    LibrariesAwareMagicsHandler {
     protected val newLibraries: MutableList<LibraryDefinitionProducer> = mutableListOf()
 
     override fun getLibraries(): List<LibraryDefinitionProducer> {

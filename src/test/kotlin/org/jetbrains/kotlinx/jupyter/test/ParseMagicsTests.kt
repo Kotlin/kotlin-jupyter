@@ -181,11 +181,10 @@ class ParseMagicsTests {
     private fun getParsedText(
         code: String,
         intervals: List<CodeInterval>,
-    ): String {
-        return intervals.joinToString("") {
+    ): String =
+        intervals.joinToString("") {
             code.substring(it.from, it.to)
         }
-    }
 
     @Test
     fun `single magic`() {

@@ -5,6 +5,8 @@ interface Response {
     val text: String
 }
 
-data class Status(val code: Int)
+data class Status(
+    val code: Int,
+)
 
 val Status.successful: Boolean get() = code in 200..299

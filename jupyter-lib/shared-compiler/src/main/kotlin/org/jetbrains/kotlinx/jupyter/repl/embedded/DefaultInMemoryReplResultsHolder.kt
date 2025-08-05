@@ -11,9 +11,7 @@ import kotlin.random.Random
 class DefaultInMemoryReplResultsHolder : InMemoryReplResultsHolder {
     private val cache = mutableMapOf<String, Any?>()
 
-    override fun getReplResult(id: String): Any? {
-        return cache[id]
-    }
+    override fun getReplResult(id: String): Any? = cache[id]
 
     private fun nextRandomId(): String {
         // Make a reasonable attempt at avoiding conflicts with
@@ -25,11 +23,10 @@ class DefaultInMemoryReplResultsHolder : InMemoryReplResultsHolder {
         return newId
     }
 
-    override fun addReplResult(result: Any?): String {
-        return nextRandomId().also { id ->
+    override fun addReplResult(result: Any?): String =
+        nextRandomId().also { id ->
             cache[id] = result
         }
-    }
 
     override fun setReplResult(
         id: String,
@@ -38,9 +35,7 @@ class DefaultInMemoryReplResultsHolder : InMemoryReplResultsHolder {
         cache[id] = result
     }
 
-    override fun removeReplResult(id: String): Boolean {
-        return cache.remove(id) != null
-    }
+    override fun removeReplResult(id: String): Boolean = cache.remove(id) != null
 
     override val size: Int
         get() = cache.size

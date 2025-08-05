@@ -67,9 +67,7 @@ abstract class SocketWithCancellationBase(
         return res
     }
 
-    protected fun connect(address: String): Boolean {
-        return socket.connect(address)
-    }
+    protected fun connect(address: String): Boolean = socket.connect(address)
 
     protected fun assertNotCancelled() {
         if (isCancelled()) throw InterruptedException()

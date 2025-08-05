@@ -15,7 +15,11 @@ import org.jetbrains.kotlinx.jupyter.util.trimEmptyLines
  * the visible limit. Note, a compiler plugin might inject code in the middle of a user's code.
  * If this happens, there is no way to detect it, so for now, we ignore the possibility.
  */
-class ErrorLocation(val jupyterRequestCount: Int, val lineNumber: Int, val visibleSourceLines: Int)
+class ErrorLocation(
+    val jupyterRequestCount: Int,
+    val lineNumber: Int,
+    val visibleSourceLines: Int,
+)
 
 /**
  * Thrown if the user's REPL code threw an exception at runtime.
@@ -60,9 +64,7 @@ class ReplEvalRuntimeException(
             emptyList()
         }
 
-    override fun render(): String {
-        return jupyterException.renderException()
-    }
+    override fun render(): String = jupyterException.renderException()
 
     override val traceback get(): List<String> {
         val userException = jupyterException

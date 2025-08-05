@@ -45,7 +45,9 @@ fun JupyterIntegration.Builder.dependencies(action: DependencyHandlerScope.() ->
     DependencyHandlerScopeImpl(this).action()
 }
 
-private class RepositoryHandlerScopeImpl(private val builder: JupyterIntegration.Builder) : RepositoryHandlerScope {
+private class RepositoryHandlerScopeImpl(
+    private val builder: JupyterIntegration.Builder,
+) : RepositoryHandlerScope {
     override fun dir(dir: File) {
         builder.repositories(dir.absolutePath)
     }
@@ -65,13 +67,12 @@ private class MavenRepositoryBuilder {
     var username: String? = null
     var password: String? = null
 
-    fun build(): KernelRepository {
-        return KernelRepository(
+    fun build(): KernelRepository =
+        KernelRepository(
             url ?: error("URL isn't set for Maven repository"),
             username,
             password,
         )
-    }
 }
 
 private class MavenRepositoryConfigurationScopeImpl : MavenRepositoryConfigurationScope {
@@ -87,9 +88,7 @@ private class MavenRepositoryConfigurationScopeImpl : MavenRepositoryConfigurati
         CredentialsConfigurationScopeImpl().action()
     }
 
-    fun build(): KernelRepository {
-        return builder.build()
-    }
+    fun build(): KernelRepository = builder.build()
 
     inner class CredentialsConfigurationScopeImpl : CredentialsConfigurationScope {
         override var password: String?
@@ -106,7 +105,9 @@ private class MavenRepositoryConfigurationScopeImpl : MavenRepositoryConfigurati
     }
 }
 
-private class DependencyHandlerScopeImpl(private val builder: JupyterIntegration.Builder) : DependencyHandlerScope {
+private class DependencyHandlerScopeImpl(
+    private val builder: JupyterIntegration.Builder,
+) : DependencyHandlerScope {
     override fun implementation(coordinates: String) {
         builder.dependencies(coordinates)
     }

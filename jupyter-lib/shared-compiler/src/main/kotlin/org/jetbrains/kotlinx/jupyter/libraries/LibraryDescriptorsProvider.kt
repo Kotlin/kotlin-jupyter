@@ -9,9 +9,7 @@ import org.jetbrains.kotlinx.jupyter.config.kernelClassLoader
 interface LibraryDescriptorsProvider {
     fun getDescriptors(): Map<String, LibraryDescriptor>
 
-    fun getDescriptorForVersionsCompletion(fullName: String): LibraryDescriptor? {
-        return getDescriptors()[fullName]
-    }
+    fun getDescriptorForVersionsCompletion(fullName: String): LibraryDescriptor? = getDescriptors()[fullName]
 
     fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions = DefaultLibraryDescriptorGlobalOptions
 }
@@ -37,8 +35,7 @@ open class ResourceLibraryDescriptorsProvider(
                         libraryName to parseLibraryDescriptor(text)
                     }
                 }
-            }
-            .toMap()
+            }.toMap()
     }
 
     private val descriptorOptionsFromResources: LibraryDescriptorGlobalOptions by lazy {
@@ -54,13 +51,9 @@ open class ResourceLibraryDescriptorsProvider(
         }
     }
 
-    override fun getDescriptors(): Map<String, LibraryDescriptor> {
-        return librariesFromResources
-    }
+    override fun getDescriptors(): Map<String, LibraryDescriptor> = librariesFromResources
 
-    override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions {
-        return descriptorOptionsFromResources
-    }
+    override fun getDescriptorGlobalOptions(): LibraryDescriptorGlobalOptions = descriptorOptionsFromResources
 
     companion object {
         private const val RESOURCES_LIBRARY_PATH = "jupyterLibraries"

@@ -55,7 +55,9 @@ fun JupyterIntegration.Builder.declareBeansByNames(beanNames: Iterable<String>) 
                 if (varName in forbiddenVariableNames) return@forEachSafe
 
                 val beanClass =
-                    springContext.getType(beanName)?.kotlin
+                    springContext
+                        .getType(beanName)
+                        ?.kotlin
                         ?.findSuitableBeanClass() ?: return@forEachSafe
 
                 val bean =

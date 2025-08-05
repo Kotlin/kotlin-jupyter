@@ -10,7 +10,5 @@ object NoopMagicsHandler : LibrariesAwareMagicsHandler {
     ) {
     }
 
-    override fun getLibraries(): List<LibraryDefinitionProducer> {
-        return emptyList()
-    }
+    override fun getLibraries(): List<LibraryDefinitionProducer> = emptyList()
 }

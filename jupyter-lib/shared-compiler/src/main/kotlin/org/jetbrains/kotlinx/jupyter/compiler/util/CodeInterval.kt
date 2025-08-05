@@ -10,7 +10,5 @@ data class CodeInterval(
      */
     val to: Int,
 ) {
-    operator fun contains(position: Int): Boolean {
-        return position in from until to
-    }
+    operator fun contains(position: Int): Boolean = position in from until to
 }

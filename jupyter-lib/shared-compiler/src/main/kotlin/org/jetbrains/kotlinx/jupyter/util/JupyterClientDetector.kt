@@ -9,14 +9,13 @@ class JupyterClientDetector(
 ) {
     private val logger = loggerFactory.getLogger(this::class)
 
-    fun detect(): JupyterClientType {
-        return try {
+    fun detect(): JupyterClientType =
+        try {
             doDetect()
         } catch (e: LinkageError) {
             logger.error("Unable to detect Jupyter client type because of incompatible JVM version", e)
             JupyterClientType.UNKNOWN
         }
-    }
 
     private fun doDetect(): JupyterClientType {
         logger.info("Detecting Jupyter client type")
@@ -57,9 +56,7 @@ class JupyterClientDetector(
         override fun isThisClient(
             command: String,
             arguments: List<String>,
-        ): Boolean {
-            return predicate(command, arguments)
-        }
+        ): Boolean = predicate(command, arguments)
     }
 
     private val detectors =

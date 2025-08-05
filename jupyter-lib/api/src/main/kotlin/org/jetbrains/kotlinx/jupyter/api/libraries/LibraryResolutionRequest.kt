@@ -5,8 +5,8 @@ class LibraryResolutionRequest(
     val arguments: List<Variable>,
     val definition: LibraryDefinition,
 ) {
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("Library request: ")
             append(reference.toString())
             if (arguments.isNotEmpty()) {
@@ -15,5 +15,4 @@ class LibraryResolutionRequest(
                 append(")")
             }
         }
-    }
 }

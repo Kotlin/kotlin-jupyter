@@ -13,9 +13,8 @@ class InternalVariablesMarkersProcessorImpl : InternalVariablesMarkersProcessor 
         this.markers.addAll(markers)
     }
 
-    override fun isInternal(property: KProperty<*>): Boolean {
-        return rethrowAsLibraryException(LibraryProblemPart.INTERNAL_VARIABLES_MARKERS) {
+    override fun isInternal(property: KProperty<*>): Boolean =
+        rethrowAsLibraryException(LibraryProblemPart.INTERNAL_VARIABLES_MARKERS) {
             markers.any { it.isInternal(property) }
         }
-    }
 }

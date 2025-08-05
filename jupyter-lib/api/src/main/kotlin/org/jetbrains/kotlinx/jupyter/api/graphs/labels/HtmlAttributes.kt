@@ -38,8 +38,6 @@ abstract class HtmlAttributes<out Attr>(
     abstract class HtmlAttributesCompanion<T : HtmlAttributes<T>> {
         abstract val default: T
 
-        fun build(action: T.() -> Unit): T {
-            return default.copy().apply { action() }
-        }
+        fun build(action: T.() -> Unit): T = default.copy().apply { action() }
     }
 }

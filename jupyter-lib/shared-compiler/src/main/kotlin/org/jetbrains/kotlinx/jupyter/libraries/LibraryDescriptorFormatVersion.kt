@@ -10,9 +10,7 @@ class LibraryDescriptorFormatVersion(
     val major: Int,
     val minor: Int,
 ) {
-    override fun toString(): String {
-        return "$major.$minor"
-    }
+    override fun toString(): String = "$major.$minor"
 
     companion object {
         fun fromString(str: String): LibraryDescriptorFormatVersion? {
@@ -28,8 +26,7 @@ class LibraryDescriptorFormatVersion(
 object LibraryDescriptorFormatVersionSerializer : StringValueSerializer<LibraryDescriptorFormatVersion>(
     LibraryDescriptorFormatVersion::class,
     { it.toString() },
-    {
-            str ->
+    { str ->
         LibraryDescriptorFormatVersion.fromString(
             str,
         ) ?: throw SerializationException("Wrong format of library descriptor format version: $str")

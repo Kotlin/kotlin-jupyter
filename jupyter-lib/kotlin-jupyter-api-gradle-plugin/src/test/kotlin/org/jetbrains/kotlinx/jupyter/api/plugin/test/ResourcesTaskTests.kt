@@ -10,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaratio
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.junit.jupiter.api.Test
-import java.io.File
 import java.nio.file.Files.createTempDirectory
 import kotlin.test.assertEquals
 
@@ -46,7 +45,8 @@ class ResourcesTaskTests {
         val taskName = RESOURCES_TASK_NAME.withPrefix(type)
         arguments.add(0, taskName)
 
-        return GradleRunner.create()
+        return GradleRunner
+            .create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(arguments)
@@ -104,13 +104,12 @@ class ResourcesTaskTests {
         private const val RESOURCES_TASK_NAME = "processResources"
         private const val JUPYTER_RESOURCES_TASK_NAME = "processJupyterApiResources"
 
-        private fun mainSourceSetBuildResourcesPath(type: String = ""): String {
-            return if (type.isEmpty()) {
+        private fun mainSourceSetBuildResourcesPath(type: String = ""): String =
+            if (type.isEmpty()) {
                 "build/resources/main"
             } else {
                 "build/processedResources/$type/main"
             }
-        }
 
         private fun buildLibrariesJsonPath(type: String = "") =
             "${mainSourceSetBuildResourcesPath(type)}/$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME"

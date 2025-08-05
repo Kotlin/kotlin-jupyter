@@ -4,7 +4,10 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.htmlResult
 import java.io.File
 
-data class HTMLAttr(val name: String, val value: String)
+data class HTMLAttr(
+    val name: String,
+    val value: String,
+)
 
 @Suppress("FunctionName")
 fun HTML(

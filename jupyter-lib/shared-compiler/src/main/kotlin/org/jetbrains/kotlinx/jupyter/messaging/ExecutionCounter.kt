@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * See https://jupyter-client.readthedocs.io/en/stable/messaging.html#execution-counter-prompt-number
  * for further details.
  */
-class ExecutionCounter(initialValue: Int) {
+class ExecutionCounter(
+    initialValue: Int,
+) {
     private val counter = AtomicInteger(initialValue)
 
     /**
@@ -33,7 +35,9 @@ class ExecutionCounter(initialValue: Int) {
  */
 @JvmInline
 @Serializable
-value class ExecutionCount(val value: Int) {
+value class ExecutionCount(
+    val value: Int,
+) {
     override fun toString(): String = value.toString()
 
     companion object {

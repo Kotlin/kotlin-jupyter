@@ -15,16 +15,15 @@ import java.net.URI
 import java.util.Base64
 import javax.imageio.ImageIO
 
-class Image(private val attributes: List<HTMLAttr>) : Renderable {
-    override fun render(notebook: Notebook): MimeTypedResult {
-        return HTML(toHTML())
-    }
+class Image(
+    private val attributes: List<HTMLAttr>,
+) : Renderable {
+    override fun render(notebook: Notebook): MimeTypedResult = HTML(toHTML())
 
-    fun toHTML(): String {
-        return attributes.joinToString("", """<img""", """/>""") {
+    fun toHTML(): String =
+        attributes.joinToString("", """<img""", """/>""") {
             """ ${it.name}="${it.value}""""
         }
-    }
 
     constructor(url: String, embed: Boolean = false) : this(
         listOf(
@@ -82,9 +81,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             return stream.toByteArray()
         }
 
-        fun referSrc(url: String): HTMLAttr {
-            return HTMLAttr("src", url)
-        }
+        fun referSrc(url: String): HTMLAttr = HTMLAttr("src", url)
 
         fun embedSrc(
             data: ByteArray,
@@ -109,9 +106,7 @@ class Image(private val attributes: List<HTMLAttr>) : Renderable {
             }
         }
 
-        fun loadData(file: File): ByteArray {
-            return file.readBytes()
-        }
+        fun loadData(file: File): ByteArray = file.readBytes()
 
         fun detectMime(uri: URI): String {
             val format = uri.toString().substringAfterLast('.', "")

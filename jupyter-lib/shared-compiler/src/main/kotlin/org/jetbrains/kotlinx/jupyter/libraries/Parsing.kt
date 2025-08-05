@@ -5,13 +5,12 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 
-fun parseLibraryDescriptor(json: String): LibraryDescriptor {
-    return try {
+fun parseLibraryDescriptor(json: String): LibraryDescriptor =
+    try {
         Json.decodeFromString(json)
     } catch (e: SerializationException) {
         throw ReplException("Error during library deserialization. Library descriptor text:\n$json", e)
     }
-}
 
 fun parseLibraryDescriptors(
     loggerFactory: KernelLoggerFactory,

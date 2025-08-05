@@ -6,7 +6,6 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KTypeProvider
 import org.jetbrains.kotlinx.jupyter.api.KernelLoggerFactory
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
@@ -181,7 +180,6 @@ internal class InternalEvaluatorImpl(
                                 resultWithDiagnostics.reports.firstOrNull()?.exception,
                             )
                         }
-                        else -> throw IllegalStateException("Unknown eval result type $this")
                     }
                 }
                 is ResultWithDiagnostics.Failure -> {
@@ -194,7 +192,6 @@ internal class InternalEvaluatorImpl(
                     val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
                     throw ReplCompilerException(code, updatedDiagnostics, metadata = metadata)
                 }
-                else -> throw IllegalStateException("Unknown result")
             }
         } finally {
             isExecuting = false

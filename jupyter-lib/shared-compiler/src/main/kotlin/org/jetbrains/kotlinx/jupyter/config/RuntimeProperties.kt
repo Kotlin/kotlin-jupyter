@@ -6,12 +6,21 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.KernelConfig
 import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 
-fun String.parseIniConfig() = lineSequence().map { it.split('=') }.filter { it.count() == 2 }.map { it[0] to it[1] }.toMap()
+fun String.parseIniConfig() =
+    lineSequence()
+        .map { it.split('=') }
+        .filter { it.count() == 2 }
+        .map { it[0] to it[1] }
+        .toMap()
 
 fun readResourceAsIniFile(
     fileName: String,
     classLoader: ClassLoader,
-) = classLoader.getResource(fileName)?.readText()?.parseIniConfig().orEmpty()
+) = classLoader
+    .getResource(fileName)
+    ?.readText()
+    ?.parseIniConfig()
+    .orEmpty()
 
 val kernelClassLoader = KernelStreams::class.java.classLoader
 
@@ -37,14 +46,15 @@ val currentKotlinVersion by lazy {
 fun createRuntimeProperties(
     kernelConfig: KernelConfig,
     defaultProperties: ReplRuntimeProperties = defaultRuntimeProperties,
-): ReplRuntimeProperties {
-    return object : ReplRuntimeProperties by defaultProperties {
+): ReplRuntimeProperties =
+    object : ReplRuntimeProperties by defaultProperties {
         override val jvmTargetForSnippets: String
             get() = kernelConfig.jvmTargetForSnippets ?: defaultProperties.jvmTargetForSnippets
     }
-}
 
-class RuntimeKernelProperties(val map: Map<String, String>) : ReplRuntimeProperties {
+class RuntimeKernelProperties(
+    val map: Map<String, String>,
+) : ReplRuntimeProperties {
     override val version: KotlinKernelVersion? by lazy {
         map["version"]?.let { KotlinKernelVersion.from(it) }
     }

@@ -9,8 +9,8 @@ import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 class ThrowableRenderersProcessorImpl : ThrowableRenderersProcessor {
     private val renderers = mutableListOf<ThrowableRenderer>()
 
-    override fun renderThrowable(throwable: Throwable): Any? {
-        return try {
+    override fun renderThrowable(throwable: Throwable): Any? =
+        try {
             rethrowAsLibraryException(LibraryProblemPart.THROWABLE_RENDERERS) {
                 renderers.firstOrNull { it.accepts(throwable) }?.render(throwable)
             }
@@ -23,7 +23,6 @@ class ThrowableRenderersProcessorImpl : ThrowableRenderersProcessor {
             ${ex.stackTraceToString()}
             """.trimIndent()
         }
-    }
 
     override fun register(renderer: ThrowableRenderer) {
         renderers.add(renderer)

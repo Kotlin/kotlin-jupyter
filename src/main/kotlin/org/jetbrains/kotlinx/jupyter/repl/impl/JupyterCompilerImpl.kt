@@ -104,8 +104,8 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
         }
     }
 
-    private fun updateConfig(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        return refinementCallbacks.fold(
+    private fun updateConfig(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+        refinementCallbacks.fold(
             context.compilationConfiguration.asSuccess(),
         ) { config: ResultWithDiagnostics<ScriptCompilationConfiguration>, callback ->
             config.valueOrNull()?.let { conf ->
@@ -118,7 +118,6 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                 )
             } ?: config
         }
-    }
 
     private val getCompilationConfiguration =
         createCachedFun { options: JupyterCompilingOptions ->

@@ -15,6 +15,4 @@ class SpringKotlinJupyterKernelPorts {
     var iopub: Int = getDefaultPort(JupyterSocketType.IOPUB)
 }
 
-private fun getDefaultPort(type: JupyterSocketType): Int {
-    return defaultSpringAppPorts[type] ?: error("Default for $type is not known")
-}
+private fun getDefaultPort(type: JupyterSocketType): Int = defaultSpringAppPorts[type] ?: error("Default for $type is not known")

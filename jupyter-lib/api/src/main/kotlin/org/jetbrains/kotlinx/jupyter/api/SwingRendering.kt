@@ -10,16 +10,12 @@ import javax.swing.JFrame
 /**
  * Takes a screenshot of a [JDialog].
  */
-fun JDialog.takeScreenshot(): BufferedImage? {
-    return rootPane.takeScreenshot()
-}
+fun JDialog.takeScreenshot(): BufferedImage? = rootPane.takeScreenshot()
 
 /**
  * Takes a screenshot of a [JFrame].
  */
-fun JFrame.takeScreenshot(): BufferedImage? {
-    return rootPane.takeScreenshot()
-}
+fun JFrame.takeScreenshot(): BufferedImage? = rootPane.takeScreenshot()
 
 /**
  * Takes a screenshot of the Swing component. This is only possible if the

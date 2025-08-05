@@ -105,8 +105,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         val code2 = "a + 2 + b.toInt()"
-        val res = eval(code2).renderedValue
-        assertEquals(8, res)
+        val res = eval(code2)
+        res.renderedValue shouldBe 8
     }
 
     @Test

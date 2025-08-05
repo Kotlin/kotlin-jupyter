@@ -6,4 +6,5 @@ package org.jetbrains.kotlinx.jupyter.api.exceptions
 open class ReplUnwrappedExceptionImpl(
     message: String,
     cause: Throwable? = null,
-) : ReplMessageOnlyException(message, cause), ReplUnwrappedException
+) : ReplMessageOnlyException(message, cause),
+    ReplUnwrappedException

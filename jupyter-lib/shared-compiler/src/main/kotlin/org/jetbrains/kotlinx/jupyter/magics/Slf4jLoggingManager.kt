@@ -7,14 +7,10 @@ object Slf4jLoggingManager : LoggingManager {
     override fun setRootLoggingLevel(level: Level) {
     }
 
-    override fun mainLoggerLevel(): Level {
-        return Level.DEBUG
-    }
+    override fun mainLoggerLevel(): Level = Level.DEBUG
 
     override fun disableLogging() {
     }
 
-    override fun isLoggingEnabled(): Boolean {
-        return true
-    }
+    override fun isLoggingEnabled(): Boolean = true
 }

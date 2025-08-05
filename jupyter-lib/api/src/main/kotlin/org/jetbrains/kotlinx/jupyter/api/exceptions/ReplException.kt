@@ -8,7 +8,10 @@ import java.lang.reflect.InvocationTargetException
 /**
  * Base class for all kinds of exceptions that may happen in REPL
  */
-open class ReplException(message: String, cause: Throwable? = null) : Exception(message, cause) {
+open class ReplException(
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause) {
     /**
      * Type (in JVM sense) and message of this exception that will end up as `ename` and `evalue`
      * in the Jupyter error reply message
@@ -62,9 +65,8 @@ fun Throwable.messageAndStackTrace(withMessage: Boolean = true): String {
     return writer.toString()
 }
 
-fun Throwable.renderException(): String {
-    return when (this) {
+fun Throwable.renderException(): String =
+    when (this) {
         is ReplException -> render().orEmpty()
         else -> messageAndStackTrace()
     }
-}

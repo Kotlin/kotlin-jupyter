@@ -75,7 +75,6 @@ object MessageDataSerializer : KSerializer<MessageData> {
     }
 
     @InternalSerializationApi
-    private fun chooseSerializer(messageType: MessageType): KSerializer<out MessageContent> {
-        return contentSerializers[messageType.type] ?: throw ReplException("Unknown message type: $messageType")
-    }
+    private fun chooseSerializer(messageType: MessageType): KSerializer<out MessageContent> =
+        contentSerializers[messageType.type] ?: throw ReplException("Unknown message type: $messageType")
 }

@@ -57,8 +57,8 @@ private fun generateStyleSection(
         """.trimIndent()
 }
 
-private fun generateVarsTable(variablesState: Map<String, VariableState>): String {
-    return buildString {
+private fun generateVarsTable(variablesState: Map<String, VariableState>): String =
+    buildString {
         append(
             """
             <table class="$VARIABLES_TABLE_STYLE_CLASS" style="width:80%;margin-left:auto;margin-right:auto;" align="center">
@@ -83,4 +83,3 @@ private fun generateVarsTable(variablesState: Map<String, VariableState>): Strin
 
         append("\n</table>\n")
     }
-}
