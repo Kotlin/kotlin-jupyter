@@ -3,6 +3,7 @@ package build
 import build.util.INTERNAL_TEAMCITY_URL
 import build.util.TeamcityProject
 import build.util.configureGitRobotCommitter
+import build.util.getCurrentBranch
 import build.util.gitCommit
 import build.util.gitPush
 import kotlinx.serialization.json.*
@@ -52,7 +53,10 @@ class CompatibilityTableGenerator(
                 with(project.rootProject){
                     configureGitRobotCommitter()
                     gitCommit("Update versions compatibility table")
-                    gitPush()
+                    gitPush(
+                        remoteUrl = settings.kernelRepoUrl,
+                        branch = getCurrentBranch(),
+                    )
                 }
             }
         }
