@@ -10,7 +10,8 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Renderable
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.*
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K1
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K2
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
