@@ -56,7 +56,7 @@ class ResultHandlerCodeExecution(
         val argTemplate = "\$it"
         val execCode =
             if (argTemplate in code) {
-                val resName =
+                var resName =
                     result.name ?: run {
                         val newName = "___myRes"
                         host.execute {
@@ -64,7 +64,13 @@ class ResultHandlerCodeExecution(
                         }
                         newName
                     }
-                code.replace(argTemplate, resName)
+                if (requiresBackticks(resName)) {
+                    resName = "`$resName`"
+                }
+                code
+                    // We don't want to backtick already backticked identifiers
+                    .replace("`$argTemplate`", resName)
+                    .replace(argTemplate, resName)
             } else {
                 code
             }
@@ -79,6 +85,8 @@ class ResultHandlerCodeExecution(
             org.jetbrains.kotlinx.jupyter.util
                 .replaceVariables(code, mapping),
         )
+
+    private fun requiresBackticks(identifier: String): Boolean = identifier.any { !it.isLetterOrDigit() }
 }
 
 /**
