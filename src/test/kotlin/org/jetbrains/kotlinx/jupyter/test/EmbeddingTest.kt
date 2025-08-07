@@ -1,6 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -26,7 +29,7 @@ class SomeSingleton {
 }
 
 /**
- * Used for [EmbedReplTest.testSubtypeRenderer]
+ * Used for [EmbedReplTest.testSubtypeAndExactRenderer]
  */
 @Suppress("unused")
 class TestSum(
@@ -35,7 +38,15 @@ class TestSum(
 )
 
 /**
- * Used for [EmbedReplTest.testSubtypeRenderer]
+ * Used for [EmbedReplTest.testSubtypeAndExactRenderer]
+ */
+@Suppress("unused")
+class TestQuad(
+    val c: Int,
+)
+
+/**
+ * Used for [EmbedReplTest.testSubtypeAndExactRenderer]
  */
 class TestFunList<T>(
     private val head: T,
@@ -51,7 +62,7 @@ class TestFunList<T>(
 }
 
 /**
- * Used for [EmbedReplTest.testSubtypeRenderer]
+ * Used for [EmbedReplTest.testSubtypeAndExactRenderer]
  */
 @Suppress("unused")
 val testLibraryDefinition1 =
@@ -62,9 +73,13 @@ val testLibraryDefinition1 =
                     TestSum::class,
                     ResultHandlerCodeExecution("\$it.a + \$it.b"),
                 ),
-                SubtypeRendererTypeHandler(
-                    TestFunList::class,
+                ExactRendererTypeHandler(
+                    TestFunList::class.qualifiedName!!,
                     ResultHandlerCodeExecution("\$it.render()"),
+                ),
+                ExactRendererTypeHandler(
+                    TestQuad::class.qualifiedName!!,
+                    ResultHandlerCodeExecution("\$it.c * `\$it`.c"),
                 ),
             )
     }
@@ -122,14 +137,14 @@ class EmbedReplTest : AbstractSingleReplTest() {
     }
 
     @Test
-    fun testSubtypeRenderer() {
+    fun testSubtypeAndExactRenderer() {
         repl.eval {
             addLibrary(testLibraryDefinition1)
         }
         val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
         when (repl.compilerMode) {
             ReplCompilerMode.K1 -> {
-                assertEquals(13, result1.renderedValue)
+                result1.renderedValue shouldBe 13
                 val result2 =
                     eval(
                         """
@@ -137,12 +152,21 @@ class EmbedReplTest : AbstractSingleReplTest() {
                         TestFunList(12, TestFunList(13, TestFunList(14, null)))
                         """.trimIndent(),
                     )
-                assertEquals("[12, 13, 14]", result2.renderedValue)
+                result2.renderedValue shouldBe "[12, 13, 14]"
+
+                val result3 =
+                    eval(
+                        """
+                        import org.jetbrains.kotlinx.jupyter.test.TestQuad
+                        TestQuad(15)
+                        """.trimIndent(),
+                    )
+                result3.renderedValue shouldBe 225
             }
             ReplCompilerMode.K2 -> {
                 // Type renderes do not work yet due to:
                 // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-                assertEquals(null, result1.renderedValue)
+                result1.renderedValue.shouldBeNull()
             }
         }
     }
@@ -178,11 +202,11 @@ class EmbedReplTest : AbstractSingleReplTest() {
             )
         when (repl.compilerMode) {
             ReplCompilerMode.K1 -> {
-                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
+                result.shouldBeInstanceOf<EvalResultEx.Success>()
             }
             ReplCompilerMode.K2 -> {
                 // Fails because of https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
-                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Error>()
+                result.shouldBeInstanceOf<EvalResultEx.Error>()
             }
         }
     }
