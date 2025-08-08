@@ -12,6 +12,7 @@ dependencies {
         exclude(group = LOGBACK_GROUP)
     }
     api(libs.jupyterNotebooksParser)
+    implementation(libs.kotlin.dev.stdlib)
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
