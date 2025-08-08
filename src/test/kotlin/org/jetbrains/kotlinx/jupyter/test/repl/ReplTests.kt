@@ -7,6 +7,8 @@ import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.paths.shouldContainFile
+import io.kotest.matchers.paths.shouldExist
 import io.kotest.matchers.sequences.shouldBeEmpty
 import io.kotest.matchers.sequences.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -20,8 +22,11 @@ import kotlinx.serialization.serializer
 import org.jetbrains.kotlinx.jupyter.api.CodeCell
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K1
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K2
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplUnwrappedExceptionImpl
+import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplLibraryException
@@ -35,8 +40,10 @@ import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
@@ -1061,5 +1068,45 @@ class ReplTests : AbstractSingleReplTest() {
         eval("f()").renderedValue shouldBe 1
         eval("fun f() = 'c'")
         eval("f()").renderedValue shouldBe 'c'
+    }
+
+    // KTNB-1129
+    @Test
+    fun `custom packages should be possible`() {
+        eval(
+            """
+            SessionOptions.serializeScriptData = true
+            """.trimIndent(),
+        )
+
+        // Doesn't work in K2, see KT-80019
+        assumeTrue(repl.compilerMode == K1)
+
+        val res =
+            eval(
+                """
+                package com.xxx.pack
+                fun great() = "Great result!"
+                """.trimIndent(),
+            )
+
+        evalSuccess("great()").renderedValue shouldBe "Great result!"
+
+        withTempDirectories("customPackages") {
+            val scriptsDir = newTempDir()
+            val sourcesDir = newTempDir()
+
+            val classNames =
+                CompiledScriptsSerializer().deserializeAndSave(
+                    res.metadata.compiledData,
+                    scriptsDir,
+                    sourcesDir,
+                )
+
+            scriptsDir.resolve("com/xxx/pack/Line_1_jupyter.class").shouldExist()
+            sourcesDir.shouldContainFile("Line_1.kts")
+
+            classNames shouldBe listOf("com.xxx.pack.Line_1_jupyter")
+        }
     }
 }

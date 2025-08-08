@@ -463,3 +463,32 @@ fun Any?.shouldBeInstanceOf(kclass: KClass<*>) {
         throw AssertionError("Expected instance of ${kclass.qualifiedName}, but got ${this::class.qualifiedName}")
     }
 }
+
+interface TempDirProvider {
+    fun newTempDir(): Path
+}
+
+/**
+ * Creates a temporary directory, calls [action] with its path as a receiver,
+ */
+fun withTempDirectories(
+    dirPrefix: String,
+    action: TempDirProvider.() -> Unit,
+) {
+    val directories: MutableList<Path> = mutableListOf()
+
+    try {
+        val provider =
+            object : TempDirProvider {
+                override fun newTempDir(): Path =
+                    kotlin.io.path.createTempDirectory(dirPrefix).also {
+                        directories.add(it)
+                    }
+            }
+        action(provider)
+    } finally {
+        for (dir in directories) {
+            dir.toFile().deleteRecursively()
+        }
+    }
+}

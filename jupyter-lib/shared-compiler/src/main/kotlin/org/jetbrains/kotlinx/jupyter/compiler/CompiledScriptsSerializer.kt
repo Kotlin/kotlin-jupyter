@@ -66,7 +66,11 @@ class CompiledScriptsSerializer {
             val file = scriptsDir.resolve(script.fileName).toFile()
             file.parentFile.mkdirs()
             if (script.isImplicitReceiver) {
-                classNames.add(file.nameWithoutExtension)
+                val classFqn =
+                    script.fileName
+                        .removeSuffix(".class")
+                        .replace('/', '.')
+                classNames.add(classFqn)
             }
             FileOutputStream(file).use { fos ->
                 BufferedOutputStream(fos).use { out ->
