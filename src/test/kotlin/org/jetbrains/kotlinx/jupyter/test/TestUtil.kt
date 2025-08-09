@@ -60,6 +60,7 @@ import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
@@ -74,6 +75,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
@@ -469,7 +471,9 @@ interface TempDirProvider {
 }
 
 /**
- * Creates a temporary directory, calls [action] with its path as a receiver,
+ * Allows creating temporary directories, that will be removed after
+ * [action] is finished.
+ * Directories will have the prefix [dirPrefix].
  */
 fun withTempDirectories(
     dirPrefix: String,
@@ -481,14 +485,18 @@ fun withTempDirectories(
         val provider =
             object : TempDirProvider {
                 override fun newTempDir(): Path =
-                    kotlin.io.path.createTempDirectory(dirPrefix).also {
+                    createTempDirectory(dirPrefix).also {
                         directories.add(it)
                     }
             }
         action(provider)
     } finally {
-        for (dir in directories) {
-            dir.toFile().deleteRecursively()
+        mergeExceptions {
+            for (dir in directories) {
+                catchIndependently {
+                    dir.toFile().deleteRecursively()
+                }
+            }
         }
     }
 }
