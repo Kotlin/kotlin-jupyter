@@ -75,7 +75,9 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteRecursively
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
@@ -475,6 +477,7 @@ interface TempDirProvider {
  * [action] is finished.
  * Directories will have the prefix [dirPrefix].
  */
+@OptIn(ExperimentalPathApi::class)
 fun withTempDirectories(
     dirPrefix: String,
     action: TempDirProvider.() -> Unit,
@@ -486,6 +489,7 @@ fun withTempDirectories(
             object : TempDirProvider {
                 override fun newTempDir(): Path =
                     createTempDirectory(dirPrefix).also {
+                        it.toFile().deleteOnExit()
                         directories.add(it)
                     }
             }
@@ -494,7 +498,7 @@ fun withTempDirectories(
         mergeExceptions {
             for (dir in directories) {
                 catchIndependently {
-                    dir.toFile().deleteRecursively()
+                    dir.deleteRecursively()
                 }
             }
         }
