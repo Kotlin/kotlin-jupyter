@@ -468,7 +468,15 @@ fun Any?.shouldBeInstanceOf(kclass: KClass<*>) {
     }
 }
 
-interface TempDirProvider {
+/**
+ * A factory interface for creating temporary files and directories on the filesystem.
+ */
+interface TempFilesFactory {
+    /**
+     * Creates a new empty temporary directory.
+     * Clients shouldn't care about the directory cleanup,
+     * it's the responsibility of the exact implementation.
+     */
     fun newTempDir(): Path
 }
 
@@ -480,13 +488,13 @@ interface TempDirProvider {
 @OptIn(ExperimentalPathApi::class)
 fun withTempDirectories(
     dirPrefix: String,
-    action: TempDirProvider.() -> Unit,
+    action: TempFilesFactory.() -> Unit,
 ) {
     val directories: MutableList<Path> = mutableListOf()
 
     try {
         val provider =
-            object : TempDirProvider {
+            object : TempFilesFactory {
                 override fun newTempDir(): Path =
                     createTempDirectory(dirPrefix).also {
                         it.toFile().deleteOnExit()

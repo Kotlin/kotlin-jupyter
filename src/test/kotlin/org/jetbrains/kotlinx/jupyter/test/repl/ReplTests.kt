@@ -43,7 +43,6 @@ import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
@@ -1080,8 +1079,6 @@ class ReplTests : AbstractSingleReplTest() {
         )
 
         // Doesn't work in K2, see KT-80019
-        assumeTrue(repl.compilerMode == K1)
-
         val res =
             eval(
                 """
@@ -1090,23 +1087,39 @@ class ReplTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
 
-        evalSuccess("great()").renderedValue shouldBe "Great result!"
+        eval("great()").let { invocationResult ->
+            when (repl.compilerMode) {
+                K1 -> invocationResult.renderedValue shouldBe "Great result!"
+                K2 -> invocationResult.shouldBeInstanceOf<EvalResultEx.Error>()
+            }
+        }
 
-        withTempDirectories("customPackages") {
-            val scriptsDir = newTempDir()
-            val sourcesDir = newTempDir()
+        when (repl.compilerMode) {
+            K1 -> {
+                withTempDirectories("customPackages") {
+                    val scriptsDir = newTempDir()
+                    val sourcesDir = newTempDir()
 
-            val classNames =
-                CompiledScriptsSerializer().deserializeAndSave(
-                    res.metadata.compiledData,
-                    scriptsDir,
-                    sourcesDir,
-                )
+                    val classNames =
+                        CompiledScriptsSerializer().deserializeAndSave(
+                            res.metadata.compiledData,
+                            scriptsDir,
+                            sourcesDir,
+                        )
 
-            scriptsDir.resolve("com/xxx/pack/Line_1_jupyter.class").shouldExist()
-            sourcesDir.shouldContainFile("Line_1.kts")
+                    scriptsDir.resolve("com/xxx/pack/Line_1_jupyter.class").shouldExist()
+                    sourcesDir.shouldContainFile("Line_1.kts")
 
-            classNames shouldBe listOf("com.xxx.pack.Line_1_jupyter")
+                    classNames shouldBe listOf("com.xxx.pack.Line_1_jupyter")
+                }
+            }
+            K2 -> {
+                res.shouldBeInstanceOf<EvalResultEx.Error>()
+                with(res.metadata.compiledData) {
+                    scripts.shouldBeEmpty()
+                    sources.shouldBeEmpty()
+                }
+            }
         }
     }
 }
