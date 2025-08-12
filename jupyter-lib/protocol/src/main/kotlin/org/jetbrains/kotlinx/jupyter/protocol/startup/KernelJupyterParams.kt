@@ -27,6 +27,13 @@ fun <T : KernelOwnParams> KernelArgs<T>.getConfig(jupyterParamsSerializer: KSeri
         ownParams = ownParams,
     )
 
+/**
+ * Simply deserializes the given JSON connection file into a [KernelJupyterParams]
+ * instance using the given [serializer].
+ *
+ * This method throws on any I/O or parsing error.
+ * We assume we get the correct file from the start initiator.
+ */
 fun File.toKernelJupyterParams(serializer: KSerializer<KernelJupyterParams>): KernelJupyterParams {
     val jsonString = canonicalFile.readText()
     return Json.decodeFromString(serializer, jsonString)

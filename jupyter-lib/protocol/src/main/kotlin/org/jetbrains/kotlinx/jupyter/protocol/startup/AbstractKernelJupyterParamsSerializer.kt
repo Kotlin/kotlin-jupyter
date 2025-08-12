@@ -13,6 +13,17 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
 
+/**
+ * This abstract class is fully functional serializer/deserializer for
+ * [KernelJupyterParams] from the connection JSON.
+ *
+ * You only need to implement [deserializePorts] method that should create an instance
+ * of [KernelPorts] from the given JSON object.
+ *
+ * We put this class separately to the protocol module
+ * to decouple it from the server-related classes and to provide access to it from
+ * intellij.
+ */
 abstract class AbstractKernelJupyterParamsSerializer : KSerializer<KernelJupyterParams> {
     @Serializable
     private data class KernelJupyterOtherParams(
