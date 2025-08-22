@@ -47,8 +47,6 @@ graphvizJava = "0.18.1"
 springBoot = "3.5.3"
 springDependencyManagement = "1.1.7"
 
-intellijPlatform = "251.27812.12"
-
 [libraries]
 
 # Dev Kotlin dependencies
@@ -135,8 +133,6 @@ ext-xmlgraphics-batikCodec = { module = "org.apache.xmlgraphics:batik-codec", ve
 ext-xmlgraphics-commons = { module = "org.apache.xmlgraphics:xmlgraphics-commons", version.ref = "xmlgraphicsCommons" }
 
 ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava" }
-
-intellij-platform-util = { module = "com.jetbrains.intellij.platform:util", version.ref = "intellijPlatform" }
 
 # Gradle Plugins
 

@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.repl
 
-import com.intellij.openapi.diagnostic.thisLogger
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
@@ -110,7 +109,7 @@ class ContextUpdater(
                 val value = field.get(scriptInstance)
                 context.addVariable(fieldName, KotlinVariableInfo(value, kotlinProperty, field, scriptInstance))
             } catch (ex: Exception) {
-                thisLogger().error("Exception accessing variable: $fieldName", ex)
+                logger.error("Exception accessing variable: $fieldName", ex)
             }
         }
     }

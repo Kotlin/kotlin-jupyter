@@ -59,10 +59,6 @@ repositories {
 
 @Suppress("ktlint:standard:chain-method-continuation")
 dependencies {
-    // Required by K2KJvmReplCompilerWithCompletion.
-    // Should be moved to Kotlin Compiler eventually once complete
-    compileOnly(libs.intellij.platform.util)
-
     implementation(libs.kotlin.dev.stdlib)
 
     // Dependency on module with compiler.
