@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
 import org.jetbrains.kotlinx.jupyter.api.Notebook
@@ -27,6 +28,7 @@ class LibrariesScanner(
 
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
+    private val processedDescriptors = mutableSetOf<JsonObject>()
 
     private fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNamesToLoad(
         host: KotlinKernelHost,
@@ -46,9 +48,13 @@ class LibrariesScanner(
                     discardedFQNs.add(typeName)
                     false
                 }
+
                 null -> typeName !in discardedFQNs && processedFQNs.add(typeName)
             }
         }
+
+    private fun Iterable<JsonObject>.filterDescriptorsToLoad() =
+        filter { processedDescriptors.add(it) }
 
     fun addLibrariesFromClassLoader(
         classLoader: ClassLoader,
@@ -77,23 +83,28 @@ class LibrariesScanner(
         }
     }
 
+    private val jsonParser = Json { ignoreUnknownKeys = true }
+
     private fun scanForLibraries(
         classLoader: ClassLoader,
         host: KotlinKernelHost,
         integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
     ): LibrariesScanResult {
         val results =
-            classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList().map { url ->
-                val contents = url.readText()
-                Json.decodeFromString<LibrariesScanResult>(contents)
-            }
+            classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList()
+                .map { url ->
+                    val contents = url.readText()
+                    jsonParser.decodeFromString<LibrariesScanResult>(contents)
+                }
 
         val definitions = mutableListOf<LibrariesDefinitionDeclaration>()
         val producers = mutableListOf<LibrariesProducerDeclaration>()
+        val descriptors = mutableListOf<JsonObject>()
 
         for (result in results) {
             definitions.addAll(result.definitions)
             producers.addAll(result.producers)
+            descriptors.addAll(result.descriptors)
         }
 
         fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNames() = filterNamesToLoad(host, integrationTypeNameRules)
@@ -101,6 +112,7 @@ class LibrariesScanner(
         return LibrariesScanResult(
             definitions.filterNames(),
             producers.filterNames(),
+            descriptors.filterDescriptorsToLoad(),
         )
     }
 
@@ -140,6 +152,13 @@ class LibrariesScanner(
                 }
             }
         }
+
+        scanResult.descriptors.forEach {
+            val descriptor = parseLibraryDescriptor(it)
+            val definition = descriptor.convertToDefinition(arguments = emptyList())
+            definitions.add(definition)
+        }
+
         return definitions
     }
 

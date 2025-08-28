@@ -30,6 +30,13 @@ open class JupyterApiResourcesTask : DefaultTask() {
     @Input
     var libraryDefinitions: List<String> = emptyList()
 
+    /**
+     * List of JSON library descriptors in the
+     * [library descriptor format](https://github.com/Kotlin/kotlin-jupyter/blob/master/docs/libraries.md#creating-a-library-descriptor).
+     */
+    @Input
+    var libraryDescriptors: List<String> = emptyList()
+
     @OutputDirectory
     val outputDir: File = project.getBuildDirectory().resolve("jupyterProcessedResources")
 
@@ -42,6 +49,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
             LibrariesScanResult(
                 definitions = libraryDefinitions.map { FQNAware(it) }.toSet(),
                 producers = libraryProducers.map { FQNAware(it) }.toSet(),
+                descriptors = libraryDescriptors.toSet(),
             )
 
         val resultObject =
@@ -70,14 +78,16 @@ open class JupyterApiResourcesTask : DefaultTask() {
         }
 
         return LibrariesScanResult(
-            fqns("definitions"),
-            fqns("producers"),
+            definitions = fqns("definitions"),
+            producers = fqns("producers"),
+            descriptors = emptySet(),
         )
     }
 
     operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult =
         LibrariesScanResult(
-            definitions + other.definitions,
-            producers + other.producers,
+            definitions = definitions + other.definitions,
+            producers = producers + other.producers,
+            descriptors = descriptors + other.descriptors,
         )
 }

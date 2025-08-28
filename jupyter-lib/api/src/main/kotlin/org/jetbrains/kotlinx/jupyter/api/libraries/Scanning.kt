@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.TypeName
 
 /**
@@ -48,9 +49,13 @@ data class LibrariesProducerDeclaration(
 /**
  * Serialized form of this class instance is a correct content of
  * [KOTLIN_JUPYTER_LIBRARIES_FILE_NAME] file, and vice versa.
+ *
+ * @param descriptors List of library descriptor JSON objects adhering to
+ *   `org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor`.
  */
 @Serializable
 data class LibrariesScanResult(
     val definitions: List<LibrariesDefinitionDeclaration> = emptyList(),
     val producers: List<LibrariesProducerDeclaration> = emptyList(),
+    val descriptors: List<JsonObject> = emptyList(),
 )

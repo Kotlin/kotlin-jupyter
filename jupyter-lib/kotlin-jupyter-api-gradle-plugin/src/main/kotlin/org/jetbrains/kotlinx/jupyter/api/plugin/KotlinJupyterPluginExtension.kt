@@ -15,11 +15,13 @@ class KotlinJupyterPluginExtension(
 
     private val libraryProducers: MutableSet<FQNAware> = mutableSetOf()
     private val libraryDefinitions: MutableSet<FQNAware> = mutableSetOf()
+    private val libraryDescriptors: MutableSet<String> = mutableSetOf()
 
     internal val libraryFqns get() =
         LibrariesScanResult(
             definitions = libraryDefinitions,
             producers = libraryProducers,
+            descriptors = libraryDescriptors,
         )
 
     internal fun addDependenciesIfNeeded() {
@@ -42,6 +44,7 @@ class KotlinJupyterPluginExtension(
     /**
      * Add adding library integrations by specifying their fully qualified names
      */
+    @Suppress("unused")
     fun integrations(action: IntegrationsSpec.() -> Unit) {
         IntegrationsSpec().apply(action)
     }
@@ -55,6 +58,11 @@ class KotlinJupyterPluginExtension(
         @Suppress("unused")
         fun definition(className: String) {
             libraryDefinitions.add(FQNAware(className))
+        }
+
+        @Suppress("unused")
+        fun descriptor(descriptor: String) {
+            libraryDescriptors.add(descriptor)
         }
     }
 

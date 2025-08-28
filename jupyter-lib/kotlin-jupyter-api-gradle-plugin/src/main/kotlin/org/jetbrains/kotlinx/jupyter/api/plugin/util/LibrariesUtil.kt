@@ -7,6 +7,7 @@ data class FQNAware(
 class LibrariesScanResult(
     val definitions: Set<FQNAware> = emptySet(),
     val producers: Set<FQNAware> = emptySet(),
+    val descriptors: Set<String> = emptySet(),
 )
 
 val emptyScanResult = LibrariesScanResult()
