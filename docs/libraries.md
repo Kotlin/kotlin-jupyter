@@ -933,12 +933,19 @@ resources. This file should contain FQNs of all integration classes in the JSON 
         {
             "fqn": "org.jetbrains.kotlinx.jupyter.example.GettingStartedIntegration"
         }
-    ]
+    ],
+    "descriptors": []
 }
 ```
 
 Classes derived from the `LibraryDefinition` interface should be added to the `definitions` array.
 Classes derived from the `LibraryDefinitionProducer` interface should be added to the `producers` array.
+
+Additionally, you're allowed to add full custom library descriptors to the `descriptors` array.
+This is an advanced option that allows you to load additional dependencies or add additional imports using the
+[library descriptor API](#creating-a-library-descriptor).
+This can be particularly useful for libraries that cannot depend on the jupyter-api artifact but still want to modify
+the kernel behavior when loaded.
 
 For more information, see:
 
