@@ -62,7 +62,9 @@ class KotlinJupyterPluginExtension(
         }
 
         @Suppress("unused")
-        fun descriptor(@Language("JSON") descriptor: String) {
+        fun descriptor(
+            @Language("JSON") descriptor: String,
+        ) {
             libraryDescriptors.add(descriptor)
         }
     }
