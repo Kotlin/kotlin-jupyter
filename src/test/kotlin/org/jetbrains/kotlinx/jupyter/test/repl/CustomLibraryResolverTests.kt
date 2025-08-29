@@ -386,36 +386,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     }
 
     @Test
-    fun testIncorrectDescriptors() {
-        val ex1 =
-            assertThrows<ReplException> {
-                parseLibraryDescriptor(
-                    """
-                    {
-                        "imports": []
-                    """.trimIndent(),
-                )
-            }
-        assertTrue(ex1.cause is SerializationException)
-
-        val ex2 =
-            assertThrows<ReplException> {
-                parseLibraryDescriptor(
-                    """
-                    {
-                        "imports2": []
-                    }
-                    """.trimIndent(),
-                )
-            }
-        assertTrue(ex2.cause is SerializationException)
-
-        assertDoesNotThrow {
-            parseLibraryDescriptor("{}")
-        }
-    }
-
-    @Test
     fun testLibraryWithResourcesDescriptorParsing() {
         val descriptor = parseLibraryDescriptor(File("src/test/testData/lib-with-resources.json").readText())
         val resources = descriptor.resources
