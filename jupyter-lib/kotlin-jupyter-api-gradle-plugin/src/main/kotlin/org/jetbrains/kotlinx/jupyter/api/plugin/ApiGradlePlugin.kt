@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlinx.jupyter.api.plugin.tasks.JupyterApiResourcesTask
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.addMavenCentralIfDoesNotExist
-import org.jetbrains.kotlinx.jupyter.api.plugin.util.getBuildDirectory
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.whenAdded
 
 class ApiGradlePlugin : Plugin<Project> {
@@ -20,9 +19,6 @@ class ApiGradlePlugin : Plugin<Project> {
         with(target) {
             val pluginExtension = KotlinJupyterPluginExtension(target)
             extensions.add(KotlinJupyterPluginExtension.NAME, pluginExtension)
-
-            val jupyterBuildPath = getBuildDirectory().resolve(FQNS_PATH)
-            jupyterBuildPath.mkdirs()
             pluginExtension.addDependenciesIfNeeded()
 
             repositories {
@@ -63,8 +59,4 @@ class ApiGradlePlugin : Plugin<Project> {
                 }
             }
         }
-
-    companion object {
-        const val FQNS_PATH = "generated/jupyter/fqns"
-    }
 }

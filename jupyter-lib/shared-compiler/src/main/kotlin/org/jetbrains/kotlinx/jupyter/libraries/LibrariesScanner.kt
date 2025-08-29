@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesInstantiable
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesProducerDeclaration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
+import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.config.errorForUser
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
@@ -25,10 +26,11 @@ class LibrariesScanner(
     loggerFactory: KernelLoggerFactory,
 ) : LibraryLoader {
     private val logger = loggerFactory.getLogger(this::class)
+    private val jsonParser = Json { ignoreUnknownKeys = true }
 
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
-    private val processedDescriptors = mutableSetOf<JsonObject>()
+    private val processedDescriptorHashes = mutableSetOf<Int>()
 
     private fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNamesToLoad(
         host: KotlinKernelHost,
@@ -53,8 +55,8 @@ class LibrariesScanner(
             }
         }
 
-    private fun Iterable<JsonObject>.filterDescriptorsToLoad() =
-        filter { processedDescriptors.add(it) }
+    /** Makes sure each unique descriptor is only loaded once by caching their hashes in [processedDescriptorHashes]. */
+    private fun Iterable<JsonObject>.filterDescriptorsToLoad() = filter { processedDescriptorHashes.add(it.hashCode()) }
 
     fun addLibrariesFromClassLoader(
         classLoader: ClassLoader,
@@ -83,15 +85,15 @@ class LibrariesScanner(
         }
     }
 
-    private val jsonParser = Json { ignoreUnknownKeys = true }
-
     private fun scanForLibraries(
         classLoader: ClassLoader,
         host: KotlinKernelHost,
         integrationTypeNameRules: List<AcceptanceRule<TypeName>> = listOf(),
     ): LibrariesScanResult {
         val results =
-            classLoader.getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME").toList()
+            classLoader
+                .getResources("$KOTLIN_JUPYTER_RESOURCES_PATH/$KOTLIN_JUPYTER_LIBRARIES_FILE_NAME")
+                .toList()
                 .map { url ->
                     val contents = url.readText()
                     jsonParser.decodeFromString<LibrariesScanResult>(contents)
@@ -155,7 +157,8 @@ class LibrariesScanner(
 
         scanResult.descriptors.forEach {
             val descriptor = parseLibraryDescriptor(it)
-            val definition = descriptor.convertToDefinition(arguments = emptyList())
+            val arguments = libraryOptions.map { (name, value) -> Variable(name, value) }
+            val definition = descriptor.convertToDefinition(arguments)
             definitions.add(definition)
         }
 

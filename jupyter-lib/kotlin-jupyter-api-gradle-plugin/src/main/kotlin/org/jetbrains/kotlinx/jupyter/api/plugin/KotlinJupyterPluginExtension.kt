@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin
 
 import org.gradle.api.Project
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.FQNAware
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.configureDependency
@@ -61,7 +62,7 @@ class KotlinJupyterPluginExtension(
         }
 
         @Suppress("unused")
-        fun descriptor(descriptor: String) {
+        fun descriptor(@Language("JSON") descriptor: String) {
             libraryDescriptors.add(descriptor)
         }
     }

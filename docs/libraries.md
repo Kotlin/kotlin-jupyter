@@ -947,6 +947,25 @@ This is an advanced option that allows you to load additional dependencies or ad
 This can be particularly useful for libraries that cannot depend on the jupyter-api artifact but still want to modify
 the kernel behavior when loaded.
 
+For example:
+
+```json
+{
+    "definitions": [], 
+    "producers": [],
+    "descriptors": [
+      {
+        "dependencies": [
+          "my.library:my-library-jupyter-integration:1.0.0"
+        ],
+        "init": [
+          "DISPLAY(\"Implicitly loading Jupyter integration for MyLibrary...\")"
+        ]
+      }
+    ]
+}
+```
+
 For more information, see:
 
 * [Libraries repository](https://github.com/Kotlin/kotlin-jupyter-libraries)

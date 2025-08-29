@@ -5,7 +5,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlinx.jupyter.api.plugin.ApiGradlePlugin
 import org.jetbrains.kotlinx.jupyter.api.plugin.KotlinJupyterPluginExtension
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.FQNAware
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.LibrariesScanResult
@@ -52,36 +51,13 @@ open class JupyterApiResourcesTask : DefaultTask() {
                 descriptors = libraryDescriptors.toSet(),
             )
 
-        val resultObject =
-            jupyterExtensionScanResult +
-                taskScanResult +
-                getScanResultFromAnnotations()
+        val resultObject = jupyterExtensionScanResult + taskScanResult
         val json = Gson().toJson(resultObject)
 
         val jupyterDir = outputDir.resolve("META-INF/kotlin-jupyter-libraries")
         val libFile = jupyterDir.resolve("libraries.json")
         libFile.parentFile.mkdirs()
         libFile.writeText(json)
-    }
-
-    private fun getScanResultFromAnnotations(): LibrariesScanResult {
-        val path = project.getBuildDirectory().resolve(ApiGradlePlugin.FQNS_PATH)
-
-        fun fqns(name: String): Set<FQNAware> {
-            val file = path.resolve(name)
-            if (!file.exists()) return emptySet()
-            return file
-                .readLines()
-                .filter { it.isNotBlank() }
-                .map { FQNAware(it) }
-                .toSet()
-        }
-
-        return LibrariesScanResult(
-            definitions = fqns("definitions"),
-            producers = fqns("producers"),
-            descriptors = emptySet(),
-        )
     }
 
     operator fun LibrariesScanResult.plus(other: LibrariesScanResult): LibrariesScanResult =
