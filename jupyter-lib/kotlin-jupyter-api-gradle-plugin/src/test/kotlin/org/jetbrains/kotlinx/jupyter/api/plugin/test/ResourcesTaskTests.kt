@@ -1,9 +1,14 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin.test
 
+import io.kotest.matchers.maps.shouldNotContainKey
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_LIBRARIES_FILE_NAME
 import org.jetbrains.kotlinx.jupyter.api.libraries.KOTLIN_JUPYTER_RESOURCES_PATH
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibrariesDefinitionDeclaration
@@ -13,7 +18,6 @@ import org.jetbrains.kotlinx.jupyter.api.plugin.KotlinJupyterPluginExtension
 import org.junit.jupiter.api.Test
 import java.nio.file.Files.createTempDirectory
 import java.util.Locale.getDefault
-import kotlin.test.assertEquals
 
 class ResourcesTaskTests {
     private val projectDir = createTempDirectory("jupyter-gradle-test-project").toFile()
@@ -75,9 +79,15 @@ class ResourcesTaskTests {
         type: String = "",
     ) {
         val librariesJsonText = projectDir.resolve(buildLibrariesJsonPath(type)).readText()
-        val libraryInfo = Json.decodeFromString<LibrariesScanResult>(serializer(), librariesJsonText)
+        val librariesJsonElement = Json.parseToJsonElement(librariesJsonText)
+        val libraryInfo = Json.decodeFromJsonElement<LibrariesScanResult>(serializer(), librariesJsonElement)
 
-        assertEquals(expected, libraryInfo)
+        libraryInfo shouldBe expected
+        if (libraryInfo.descriptors.isEmpty()) {
+            librariesJsonElement
+                .shouldBeInstanceOf<JsonObject>()
+                .shouldNotContainKey("descriptors")
+        }
     }
 
     @Test
@@ -129,6 +139,35 @@ class ResourcesTaskTests {
             LibrariesScanResult(
                 definitions = listOf("test.Definition3").map(::LibrariesDefinitionDeclaration),
                 producers = listOf("test.Producer3").map(::LibrariesProducerDeclaration),
+            ),
+        )
+    }
+
+    @Test
+    fun `descriptors are supported`() {
+        @Language("json")
+        val descriptorText =
+            """
+            {
+                "init": [
+                    "val x = 1"
+                ]
+            }
+            """.trimIndent()
+        setupKotlinExtensionTest(
+            """
+            integrations {
+                descriptor(${"\"\"\""}$descriptorText${"\"\"\""})
+            }
+            """.trimIndent(),
+        )
+        runResourcesTask()
+        assertLibrariesJsonContents(
+            LibrariesScanResult(
+                descriptors =
+                    listOf(descriptorText).map { jsonText ->
+                        Json.parseToJsonElement(jsonText) as JsonObject
+                    },
             ),
         )
     }

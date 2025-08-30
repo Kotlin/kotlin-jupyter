@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.api.plugin.tasks
 
-import com.google.gson.Gson
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
@@ -10,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.plugin.util.FQNAware
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.LibrariesScanResult
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.emptyScanResult
 import org.jetbrains.kotlinx.jupyter.api.plugin.util.getBuildDirectory
+import org.jetbrains.kotlinx.jupyter.api.plugin.util.gson
 import java.io.File
 
 open class JupyterApiResourcesTask : DefaultTask() {
@@ -52,7 +52,7 @@ open class JupyterApiResourcesTask : DefaultTask() {
             )
 
         val resultObject = jupyterExtensionScanResult + taskScanResult
-        val json = Gson().toJson(resultObject)
+        val json = gson.toJson(resultObject)
 
         val jupyterDir = outputDir.resolve("META-INF/kotlin-jupyter-libraries")
         val libFile = jupyterDir.resolve("libraries.json")

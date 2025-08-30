@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.libraries
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.LibraryLoader
@@ -30,7 +31,7 @@ class LibrariesScanner(
 
     private val processedFQNs = mutableSetOf<TypeName>()
     private val discardedFQNs = mutableSetOf<TypeName>()
-    private val processedDescriptorHashes = mutableSetOf<Int>()
+    private val processedDescriptors = mutableSetOf<JsonElement>()
 
     private fun <I : LibrariesInstantiable<*>> Iterable<I>.filterNamesToLoad(
         host: KotlinKernelHost,
@@ -55,8 +56,14 @@ class LibrariesScanner(
             }
         }
 
-    /** Makes sure each unique descriptor is only loaded once by caching their hashes in [processedDescriptorHashes]. */
-    private fun Iterable<JsonObject>.filterDescriptorsToLoad() = filter { processedDescriptorHashes.add(it.hashCode()) }
+    /**
+     * Makes sure each unique descriptor is only loaded once by
+     * caching them in [processedDescriptors].
+     */
+    private fun Iterable<JsonObject>.filterDescriptorsToLoad() =
+        filter {
+            processedDescriptors.add(it)
+        }
 
     fun addLibrariesFromClassLoader(
         classLoader: ClassLoader,

@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.receivers.TempAnnotation
 import jupyter.kotlin.variablesReport
@@ -34,7 +35,6 @@ import java.io.File
 import kotlin.reflect.typeOf
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class CustomLibraryResolverTests : AbstractReplTest() {
     @Test
@@ -383,6 +383,24 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 "b",
             )
         assertEquals(expected, repl.executedCodes)
+    }
+
+    @Test
+    fun testIncorrectDescriptors() {
+        val ex1 =
+            assertThrows<ReplException> {
+                parseLibraryDescriptor(
+                    """
+                    {
+                        "imports": []
+                    """.trimIndent(),
+                )
+            }
+        ex1.cause.shouldBeInstanceOf<SerializationException>()
+
+        assertDoesNotThrow {
+            parseLibraryDescriptor("{}")
+        }
     }
 
     @Test
