@@ -34,6 +34,7 @@ import org.jetbrains.kotlinx.jupyter.api.TextRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
@@ -105,7 +106,6 @@ val classpath =
         "shared-compiler",
         "kotlin-stdlib",
         "kotlin-reflect",
-        "kotlin-script-runtime",
         "kotlinx-serialization-json-jvm",
         "kotlinx-serialization-core-jvm",
         classLoader = TestDisplayHandler::class.java.classLoader,
@@ -286,7 +286,7 @@ object NotebookMock : Notebook {
     override val variablesState = mutableMapOf<String, VariableStateImpl>()
     override val cellVariables = mapOf<Int, Set<String>>()
     override val resultsAccessor = ResultsAccessor { getResult(it) }
-    override val currentClasspath: List<String>
+    override val dependencyManager: DependencyManager
         get() = notImplemented()
 
     override val sessionOptions: SessionOptions

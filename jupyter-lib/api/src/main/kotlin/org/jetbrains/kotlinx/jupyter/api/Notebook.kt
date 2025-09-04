@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
@@ -41,9 +42,9 @@ interface Notebook {
     val variablesState: Map<String, VariableState>
 
     /**
-     * Current session classpath
+     * Dependency manager for this notebook
      */
-    val currentClasspath: List<String>
+    val dependencyManager: DependencyManager
 
     /**
      * Intermediate classloader between kernel-itself class loader and snippets' class loader chain.

@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.dependencies
 
 import java.io.File
-import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.asSuccess
@@ -16,14 +15,8 @@ open class ScriptDependencyAnnotationHandlerImpl(
         annotations: List<Annotation>,
     ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         if (annotations.isEmpty()) return configuration.asSuccess()
-        val scriptContents =
-            object : ScriptContents {
-                override val annotations: Iterable<Annotation> = annotations
-                override val file: File? = null
-                override val text: CharSequence? = null
-            }
         return resolver
-            .resolveFromAnnotations(scriptContents)
+            .resolveFromAnnotations(annotations)
             .onSuccess { classpath ->
                 onResolvedClasspath(configuration, classpath).asSuccess()
             }

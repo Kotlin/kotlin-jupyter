@@ -63,7 +63,6 @@ dependencies {
     springKernel(libs.kotlin.dev.scriptingCompilerImplEmbeddable) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCompilerEmbeddable) { isTransitive = false }
     springKernel(libs.kotlin.dev.compilerEmbeddable)
-    springKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
     springKernel(libs.serialization.dev.embeddedPlugin) { isTransitive = false }
 
     springKernel(libs.coroutines.core) { isTransitive = false }

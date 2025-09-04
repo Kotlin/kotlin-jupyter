@@ -103,7 +103,6 @@ dependencies {
     deploy(projects.lib)
     deploy(projects.api)
     deploy(libs.logging.slf4j.api)
-    deploy(libs.kotlin.dev.scriptRuntime.get())
 
     kernelShadowed(projects.kotlinJupyterKernel)
 
@@ -124,7 +123,6 @@ dependencies {
 
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
-    embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
     addSharedEmbeddedDependenciesTo(embeddableKernel)
 }
 
