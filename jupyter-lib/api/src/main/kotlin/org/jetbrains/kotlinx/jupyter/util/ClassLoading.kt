@@ -23,5 +23,8 @@ fun createDefaultDelegatingClassLoader(parent: ClassLoader): ClassLoader {
             }
         }
 
-    return DelegatingClassLoader(parent, strategy)
+    val mainClassLoader = DelegatingClassLoader(parent, strategy)
+    return MultiDelegatingClassLoader().apply {
+        addParent(mainClassLoader)
+    }
 }

@@ -42,6 +42,7 @@ import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
+import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -834,7 +835,7 @@ class ReplTests : AbstractSingleReplTest() {
     @Test
     fun `intermediate classloader is available via notebook API`() {
         val res = eval("notebook.intermediateClassLoader")
-        val intermediateClassLoader = res.renderedValue.shouldBeInstanceOf<DelegatingClassLoader>()
+        val intermediateClassLoader = res.renderedValue.shouldBeInstanceOf<MultiDelegatingClassLoader>()
         val cellClass = intermediateClassLoader.loadClass("org.jetbrains.kotlinx.jupyter.api.CodeCell")
         cellClass shouldBe CodeCell::class.java
     }
