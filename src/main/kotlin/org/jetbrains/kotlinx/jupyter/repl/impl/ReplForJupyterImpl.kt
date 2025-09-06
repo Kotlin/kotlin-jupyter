@@ -134,6 +134,7 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.updateClasspath
 
 typealias KernelReplEvaluator = ReplEvaluator<CompiledSnippet, KJvmEvaluatedSnippet>
 
@@ -324,6 +325,12 @@ class ReplForJupyterImpl(
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
+            }
+        }.apply {
+            updateCompilationConfig {
+                dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
+                    updateClasspath(classpath)
+                }
             }
         }
     }

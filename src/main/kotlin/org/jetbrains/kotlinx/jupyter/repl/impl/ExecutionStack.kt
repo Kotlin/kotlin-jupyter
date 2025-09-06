@@ -8,6 +8,7 @@ class MutableExecutionStackFrame(
     override val previous: ExecutionStackFrame? = null,
 ) : ExecutionStackFrame {
     override val libraries = mutableListOf<LibraryDefinition>()
+    override var ignoreDependencyErrors: Boolean = false
 }
 
 fun ExecutionStackFrame?.traverseStack() = generateSequence(this) { it.previous }
@@ -24,4 +25,8 @@ val ExecutionStackFrame?.libraryOptions: Map<String, String> get() {
             }
         }
     }
+}
+
+val ExecutionStackFrame?.shouldIgnoreDependencyErrors: Boolean get() {
+    return traverseStack().any { it.ignoreDependencyErrors }
 }

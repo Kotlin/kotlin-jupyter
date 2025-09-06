@@ -45,6 +45,8 @@ class DependencyManagerImpl(
         addedSources.addAll(newClasspath)
     }
 
+    val recentlyAddedBinaryClasspath: List<File> get() = addedBinaries.distinct()
+
     /**
      * Updates current classpath with newly resolved libraries paths
      * Also, prints information about resolved libraries to stdout if [ReplOptions.trackClasspath] is true
@@ -52,8 +54,8 @@ class DependencyManagerImpl(
      * @return Newly resolved classpath
      */
     fun popAddedClasspath(): List<File> {
-        val resolvedClasspath = addedBinaries.distinct()
-
+        val resolvedClasspath = recentlyAddedBinaryClasspath
+        addedBinaries.clear()
         val (oldClasspath, newClasspath) = resolvedClasspath.partition { it in binaries }
         binaries.addAll(newClasspath)
         if (trackClasspath.get()) {

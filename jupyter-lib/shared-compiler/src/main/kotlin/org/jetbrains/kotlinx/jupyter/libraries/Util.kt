@@ -118,30 +118,8 @@ class TrivialLibraryDefinitionProducer(
 
 fun List<LibraryDefinitionProducer>.getDefinitions(notebook: Notebook): List<LibraryDefinition> = flatMap { it.getDefinitions(notebook) }
 
-fun String.escapeSpecialChars(): String =
-    buildString {
-        for (char in this@escapeSpecialChars) {
-            when (char) {
-                '\\' -> append("\\\\")
-                '\"' -> append("\\\"")
-                '\'' -> append("\\'")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(char)
-            }
-        }
-    }
-
-fun buildDependenciesInitCode(libraries: Collection<LibraryDefinition>): Code? {
-    val builder = StringBuilder()
-    libraries.flatMapTo(TreeSet()) { it.repositories }.forEach { repo ->
-        val pathArg = "\"${repo.path.escapeSpecialChars()}\""
-        val usernameArg = repo.username?.let { ", username=\"${it.escapeSpecialChars()}\"" }.orEmpty()
-        val passwordArg = repo.password?.let { ", password=\"${it.escapeSpecialChars()}\"" }.orEmpty()
-        builder.appendLine("@file:Repository($pathArg$usernameArg$passwordArg)")
-    }
-    libraries.flatMapTo(TreeSet()) { it.dependencies }.forEach { builder.appendLine("@file:DependsOn(\"$it\")") }
-    libraries.flatMapTo(TreeSet()) { it.imports }.forEach { builder.appendLine("import $it") }
-    return if (builder.isNotBlank()) builder.toString() else null
-}
+fun buildImportsCode(libraries: Collection<LibraryDefinition>): Code? =
+    libraries
+        .flatMapTo(TreeSet()) { it.imports }
+        .joinToString("") { "import $it\n" }
+        .takeIf { it.isNotEmpty() }

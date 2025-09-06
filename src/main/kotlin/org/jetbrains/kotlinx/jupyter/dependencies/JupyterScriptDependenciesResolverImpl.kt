@@ -91,6 +91,8 @@ open class JupyterScriptDependenciesResolverImpl(
     }
 
     override fun resolveFromAnnotations(annotations: List<Annotation>): ResultWithDiagnostics<List<File>> {
+        if (annotations.isEmpty()) return ResultWithDiagnostics.Success(emptyList())
+
         val repositories: MutableList<RepositoryDescription> = mutableListOf()
         val dependencies: MutableList<Dependency> = mutableListOf()
 
@@ -135,6 +137,8 @@ open class JupyterScriptDependenciesResolverImpl(
     }
 
     override fun addRepositories(repositories: List<RepositoryDescription>) {
+        if (repositories.isEmpty()) return
+
         var existingRepositories: List<Repo>? = null
         for (repository in repositories) {
             logger.info("Adding repository: ${repository.value}")
@@ -160,7 +164,10 @@ open class JupyterScriptDependenciesResolverImpl(
         }
     }
 
-    override fun resolve(dependencyDescriptions: Collection<DependencyDescription>): ResolutionResult {
+    override fun resolve(
+        dependencyDescriptions: Collection<DependencyDescription>,
+        addToClasspath: Boolean,
+    ): ResolutionResult {
         val dependencies = dependencyDescriptions.map { it.description.toDependency() }
         val binaryClasspath = mutableListOf<File>()
         val sourceClasspath = mutableListOf<File>()
@@ -171,9 +178,15 @@ open class JupyterScriptDependenciesResolverImpl(
                 dependencies = dependencies,
                 scriptDiagnosticsResult = scriptDiagnostics,
                 onBinaryResolved = { files ->
+                    if (addToClasspath) {
+                        addedBinaryClasspath.addAll(files)
+                    }
                     binaryClasspath.addAll(files)
                 },
                 onSourceResolved = { files ->
+                    if (addToClasspath) {
+                        addedSourceClasspath.addAll(files)
+                    }
                     sourceClasspath.addAll(files)
                 },
             )

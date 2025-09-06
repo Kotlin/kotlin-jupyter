@@ -41,14 +41,14 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     fun testUseMagic() {
         val lib1 =
             "mylib" to
-                """
+                $$"""
                 {
                     "properties": {
                         "v1": "0.2"
                     },
                     "dependencies": [
-                        "artifact1:${'$'}v1",
-                        "artifact2:${'$'}v1"
+                        "artifact1:$v1",
+                        "artifact2:$v1"
                     ],
                     "imports": [
                         "package1",
@@ -62,17 +62,17 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 """.trimIndent()
         val lib2 =
             "other" to
-                """
+                $$"""
                 {
                     "properties": {
                         "a": "temp", 
                         "b": "test"
                     },
                     "repositories": [
-                        "repo-${'$'}a"
+                        "repo-$a"
                     ],
                     "dependencies": [
-                        "path-${'$'}b"
+                        "path-$b"
                     ],
                     "imports": [
                         "otherPackage"
@@ -84,7 +84,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 """.trimIndent()
         val lib3 =
             "another" to
-                """
+                $$"""
                 {
                     "properties": {
                         "v": "1" 
@@ -93,7 +93,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                         "anotherDep"
                     ],
                     "imports": [
-                        "anotherPackage${'$'}v"
+                        "anotherPackage$v"
                     ],
                     "init": [
                         "%use other(b=release, a=debug)",
@@ -106,29 +106,24 @@ class CustomLibraryResolverTests : AbstractReplTest() {
 
         val executor = makeReplWithLibraries(libs).mockExecution()
 
-        executor.execute("%use mylib(1.0), another")
+        executor.execute("%use mylib(1.0), another", ignoreDependencyErrors = true)
         val executedCodes = executor.executedCodes
         executedCodes.forEach(::println)
 
         val expectedCodes =
             arrayOf(
                 """
-                    @file:DependsOn("artifact1:1.0")
-                    @file:DependsOn("artifact2:1.0")
                     import package1
                     import package2
-                    """,
+                """,
                 "code1",
                 "code2",
                 """
-                @file:DependsOn("anotherDep")
-                import anotherPackage1
-            """,
+                    import anotherPackage1
+                """,
                 """
-                    @file:Repository("repo-debug")
-                    @file:DependsOn("path-release")
                     import otherPackage
-                    """,
+                """,
                 "otherInit",
                 "anotherInit",
             ).map { it.trimIndent() }
@@ -176,10 +171,10 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     fun testTransitiveRendering() {
         val lib =
             "mylib" to
-                """
+                $$"""
                 {
                     "renderers": {
-                        "java.lang.String": "HTML(\"<b>\" + ${"$"}it + \"</b>\")"
+                        "java.lang.String": "HTML(\"<b>\" + $it + \"</b>\")"
                     }
                 }
                 """.trimIndent()

@@ -11,8 +11,8 @@ interface DependencyResolver {
 
     fun addRepositories(repositories: List<RepositoryDescription>)
 
-    /**
-     * Pure function
-     */
-    fun resolve(dependencyDescriptions: Collection<DependencyDescription>): ResolutionResult
+    fun resolve(
+        dependencyDescriptions: Collection<DependencyDescription>,
+        addToClasspath: Boolean = false,
+    ): ResolutionResult
 }

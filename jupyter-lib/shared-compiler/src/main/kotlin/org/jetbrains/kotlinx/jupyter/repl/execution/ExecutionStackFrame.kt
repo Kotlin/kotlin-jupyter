@@ -6,4 +6,5 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 interface ExecutionStackFrame {
     val previous: ExecutionStackFrame?
     val libraries: List<LibraryDefinition>
+    val ignoreDependencyErrors: Boolean
 }
