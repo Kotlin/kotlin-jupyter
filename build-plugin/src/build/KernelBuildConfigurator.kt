@@ -12,6 +12,7 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.api.Project
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.configure
@@ -187,6 +188,7 @@ internal class KernelBuildConfigurator(private val project: Project) {
             archiveBaseName.set(settings.packageName)
             archiveClassifier.set("all")
             mergeServiceFiles()
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
             transform(ComponentsXmlResourceTransformer())
 
             manifest {

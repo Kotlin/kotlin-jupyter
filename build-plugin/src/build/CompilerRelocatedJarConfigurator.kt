@@ -5,10 +5,12 @@ import build.util.ContentTransformer
 import build.util.relocatePackages
 import build.util.transformPluginXmlContent
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
+import org.gradle.api.file.DuplicatesStrategy
 import org.jetbrains.gradle.shadow.ShadowJarAction
 
 val CompilerRelocatedJarConfigurator: ShadowJarAction = {
     mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     transform(ComponentsXmlResourceTransformer())
 
     transform(
