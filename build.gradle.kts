@@ -6,8 +6,7 @@ import build.PUBLISHING_GROUP
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.typedProperty
-import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.shadowJar
-import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin.Companion.shadowRuntimeElements
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
 import org.gradle.kotlin.dsl.accessors.runtime.addConfiguredDependencyTo
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
@@ -183,13 +182,6 @@ buildSettings {
     }
 }
 
-// Workaround for https://github.com/johnrengelman/shadow/issues/651
-components.withType(AdhocComponentWithVariants::class.java).forEach { c ->
-    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements.get()) {
-        skip()
-    }
-}
-
 tasks {
     register("publishToPluginPortal") {
         group = PUBLISHING_GROUP
@@ -250,6 +242,10 @@ val kernelZip =
         from(deploy)
         include("*.jar")
     }
+
+shadow {
+    addShadowVariantIntoJavaComponent.set(false)
+}
 
 changelog {
     githubUser = rootSettings.githubRepoUser
