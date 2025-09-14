@@ -7,9 +7,6 @@ import jupyter.kotlin.Repository
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.KotlinKernelHostProvider
 import jupyter.kotlin.providers.UserHandlesProvider
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
@@ -17,19 +14,17 @@ import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
-import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
-import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.NullabilityEraser
 import org.jetbrains.kotlinx.jupyter.api.ProcessingPriority
 import org.jetbrains.kotlinx.jupyter.api.Renderable
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
@@ -99,7 +94,6 @@ import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
 import org.jetbrains.kotlinx.jupyter.repl.ShutdownEvalResult
-import org.jetbrains.kotlinx.jupyter.repl.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.execution.AfterCellExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.execution.BeforeCellExecutionsProcessor
 import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
@@ -164,7 +158,7 @@ class ReplForJupyterImpl(
     override val sessionOptions: SessionOptions,
     override val loggingManager: LoggingManager,
     magicsHandler: LibrariesAwareMagicsHandler,
-    private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
+    inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     override val compilerMode: ReplCompilerMode,
     extraCompilerArguments: List<String> = emptyList(),
 ) : ReplForJupyter,
@@ -475,7 +469,7 @@ class ReplForJupyterImpl(
         fun getMetadata() = calculateEvalMetadata(evalData.storeHistory, result.metadata)
         return when (result) {
             is InternalReplResult.Success -> {
-                val rendered = renderResult(result, evalData)
+                val rendered = renderResult(result)
                 val displayValue =
                     logger.catchAll {
                         notebook.postRender(rendered)
@@ -525,44 +519,21 @@ class ReplForJupyterImpl(
         }
     }
 
-    private fun renderResult(
-        result: InternalReplResult.Success,
-        evalData: EvalRequestData,
-    ): Any? =
-        result.internalResult
-            .let { internalResult ->
-                logger.catchAll {
-                    renderersProcessor.renderResult(executor, internalResult.result)
-                }
-            }?.let {
-                logger.catchAll {
-                    if (it is Renderable) it.render(notebook) else it
-                }
-            }?.let {
-                logger.catchAll {
-                    if (it is InMemoryMimeTypedResult) transformInMemoryResults(it, evalData) else it
-                }
+    private fun renderResult(result: InternalReplResult.Success): Any? =
+        executor.execute {
+            withHost(this) {
+                result.internalResult
+                    .let { internalResult ->
+                        logger.catchAll {
+                            renderersProcessor.renderResult(executor, internalResult.result)
+                        }
+                    }?.let {
+                        logger.catchAll {
+                            if (it is Renderable) it.render(notebook) else it
+                        }
+                    }
             }
-
-    /**
-     * If the render result is an in-memory value, we need to extract it from
-     * the mimetype and put it into the `InMemoryReplResultsHolder`. Then we
-     * construct a new DisplayResult where the in-memory value is replaced by
-     * its `jupyterId`. This allows us to re-use the existing Jupyter protocol
-     * infrastructure to send display results, but also allows a custom UI
-     * component on the Client side to find the in-memory value
-     * again by asking for it in the `InMemoryReplResultsHolder`.
-     */
-    private fun transformInMemoryResults(
-        rendered: InMemoryMimeTypedResult,
-        evalData: EvalRequestData,
-    ): MimeTypedResultEx {
-        val id = evalData.executionCount.toString()
-        val inMemoryValue = rendered.inMemoryOutput.result
-        inMemoryReplResultsHolder.setReplResult(id, inMemoryValue)
-        val mimeData = rendered.fallbackResult + Pair(rendered.inMemoryOutput.mimeType, JsonPrimitive(id))
-        return MimeTypedResultEx(Json.encodeToJsonElement(mimeData), null, standardMetadataModifiers())
-    }
+        }
 
     private fun calculateEvalMetadata(
         storeHistory: Boolean,

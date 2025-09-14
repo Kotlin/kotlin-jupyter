@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.repl.embedded
 
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
+
 /**
  * Implementation that doesn't store anything. Should be used when the kernel isn't running
  * in embedded mode.

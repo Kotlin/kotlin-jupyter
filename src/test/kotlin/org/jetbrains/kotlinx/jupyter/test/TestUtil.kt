@@ -45,7 +45,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.api.withId
+import org.jetbrains.kotlinx.jupyter.api.withIdIfNotNull
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
@@ -252,7 +252,7 @@ open class TestDisplayHandlerWithRendering(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value, id)?.let { if (id != null) it.withId(id) else it } ?: return
+        val display = renderValue(notebook, host, value)?.withIdIfNotNull(id) ?: return
         notebook.currentCell?.addDisplay(display)
     }
 
@@ -261,7 +261,7 @@ open class TestDisplayHandlerWithRendering(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value, id) ?: return
+        val display = renderValue(notebook, host, value) ?: return
         val container = notebook.displays
         container.update(id, display)
         container.getById(id).distinctBy { it.cell.id }.forEach {

@@ -239,6 +239,16 @@ inline fun <T : Any> createRenderer(
 inline fun <reified T : Any> createRenderer(crossinline renderAction: (T) -> Any?): RendererFieldHandler =
     createRenderer(T::class, renderAction)
 
+inline fun <T : Any> createRendererWithHost(
+    kClass: KClass<T>,
+    crossinline renderAction: (KotlinKernelHost, FieldValue) -> Any?,
+): RendererFieldHandler = createRenderer({ it.isOfRuntimeType(kClass) }, renderAction)
+
+inline fun <reified T : Any> createRendererWithHost(crossinline renderAction: (KotlinKernelHost, T) -> Any?): RendererFieldHandler =
+    createRendererWithHost(T::class) { host, field ->
+        renderAction(host, field.value as T)
+    }
+
 inline fun <reified T : Any> createRendererByCompileTimeType(crossinline renderAction: (FieldValue) -> Any?): RendererFieldHandler =
     createRendererByCompileTimeType(typeOf<T>(), renderAction)
 

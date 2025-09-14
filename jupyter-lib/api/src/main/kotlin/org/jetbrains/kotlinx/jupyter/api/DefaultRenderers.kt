@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.api
 
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.Array
@@ -67,6 +68,7 @@ val arrayRenderer =
 private fun createSwingInMemoryMimeTypedResult(
     fallbackImage: BufferedImage?,
     swingResult: Any,
+    inMemoryReplResultsHolder: InMemoryReplResultsHolder,
 ): InMemoryMimeTypedResult {
     val fallback =
         if (fallbackImage == null) {
@@ -77,6 +79,7 @@ private fun createSwingInMemoryMimeTypedResult(
     return InMemoryMimeTypedResult(
         InMemoryResult(InMemoryMimeTypes.SWING, swingResult),
         mapOf(fallback),
+        inMemoryReplResultsHolder,
     )
 }
 
@@ -85,27 +88,24 @@ private fun createSwingInMemoryMimeTypedResult(
  * fallback data.
  */
 val swingJFrameInMemoryRenderer =
-    createRenderer<JFrame> { frame: JFrame ->
-        val fallbackImage: BufferedImage? = frame.takeScreenshot()
-        createSwingInMemoryMimeTypedResult(fallbackImage, frame)
-    }.named("Default Swing JFrame renderer")
+    createUiComponentRenderer<JFrame> { it.takeScreenshot() }.named("Default Swing JFrame renderer")
 
 /**
  * Renders a Swing [JDialog] in-memory, but also provides a screenshot of the UI as
  * fallback data.
  */
 val swingJDialogInMemoryRenderer =
-    createRenderer<JDialog> { dialog: JDialog ->
-        val fallbackImage: BufferedImage? = dialog.takeScreenshot()
-        createSwingInMemoryMimeTypedResult(fallbackImage, dialog)
-    }.named("Default Swing JDialog renderer")
+    createUiComponentRenderer<JDialog> { it.takeScreenshot() }.named("Default Swing JDialog renderer")
 
 /**
  * Renders a Swing [JComponent] in-memory, but also provides a screenshot of the UI as
  * fallback data.
  */
 val swingJComponentInMemoryRenderer: RendererFieldHandler =
-    createRenderer<JComponent> { component: JComponent ->
-        val fallbackImage: BufferedImage? = component.takeScreenshot()
-        createSwingInMemoryMimeTypedResult(fallbackImage, component)
-    }.named("Default Swing JComponent renderer")
+    createUiComponentRenderer<JComponent> { it.takeScreenshot() }.named("Default Swing JComponent renderer")
+
+private inline fun <reified T : Any> createUiComponentRenderer(crossinline getScreenshot: (T) -> BufferedImage?): RendererFieldHandler =
+    createRendererWithHost<T> { host, component ->
+        val fallbackImage: BufferedImage? = getScreenshot(component)
+        createSwingInMemoryMimeTypedResult(fallbackImage, component, host.inMemoryReplResultsHolder)
+    }

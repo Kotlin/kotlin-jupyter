@@ -1,6 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.repl.embedded
-
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
+package org.jetbrains.kotlinx.jupyter.api.embedded
 
 /**
  * Interface for classes that can store in-memory results from the REPL.
@@ -10,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResult
  * to serialize them to JSON first.
  *
  * Each instance should be bound to a single jupyter session, and all ids
- * used should be unique within that session. Generally [DisplayResult.id]
+ * used should be unique within that session. Generally [org.jetbrains.kotlinx.jupyter.api.DisplayResult.id]
  * should suffice.
  *
  * From the view of the [InMemoryReplResultsHolder], all values are opaque values,
@@ -19,7 +17,7 @@ import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 interface InMemoryReplResultsHolder {
     /**
      * Returns the REPL result for a given id or `null` if no result exists or `null` was the result.
-     * @param id unique id for the given REPL result. Normally this is [DisplayResult.id].
+     * @param id unique id for the given REPL result. Normally this is [org.jetbrains.kotlinx.jupyter.api.DisplayResult.id].
      * @return the repl result associated with the given [id] or `null` if no result was found.
      */
     fun getReplResult(id: String): Any?
@@ -34,7 +32,7 @@ interface InMemoryReplResultsHolder {
 
     /**
      * Sets the REPL result for a given id.
-     * @param id unique id for the given REPL result. Normally this is [DisplayResult.id].
+     * @param id unique id for the given REPL result. Normally this is [org.jetbrains.kotlinx.jupyter.api.DisplayResult.id].
      * @param result the REPL result to store.
      */
     fun setReplResult(

@@ -40,10 +40,14 @@ class DisplayContainerImpl : MutableDisplayContainer {
         display: DisplayResult,
     ) {
         synchronized(displays) {
-            val initialDisplays = displays[id] ?: return
-            val updated = initialDisplays.map { DisplayResultWrapper.create(display, it.cell) }
-            initialDisplays.clear()
-            initialDisplays.addAll(updated)
+            val currentDisplays = displays[id] ?: return
+            val updated =
+                currentDisplays.map { currentDisplay ->
+                    currentDisplay.display.dispose()
+                    DisplayResultWrapper.create(display, currentDisplay.cell)
+                }
+            currentDisplays.clear()
+            currentDisplays.addAll(updated)
         }
     }
 }

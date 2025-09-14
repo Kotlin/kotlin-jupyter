@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
@@ -300,6 +301,9 @@ internal class CellExecutorImpl(
 
         override val lastClassLoader: ClassLoader
             get() = sharedContext.evaluator.lastClassLoader
+
+        override val inMemoryReplResultsHolder: InMemoryReplResultsHolder
+            get() = sharedContext.inMemoryReplResultsHolder
 
         companion object {
             private const val TEMP_OBJECT_NAME = "___temp_declarations"

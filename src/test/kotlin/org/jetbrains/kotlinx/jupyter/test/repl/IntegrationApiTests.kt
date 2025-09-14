@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
@@ -15,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.mavenLocal
 import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
+import org.jetbrains.kotlinx.jupyter.api.outputs.display
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
@@ -430,5 +432,32 @@ class IntegrationApiTests {
                 )
             }
         assertNull(res)
+    }
+
+    @Test
+    fun `renderer should not throw NPE on accessing Notebook#display()`() {
+        val displays = mutableListOf<Any>()
+        val repl =
+            createRepl(
+                httpUtil,
+                scriptClasspath = classpath,
+                homeDir = null,
+                mavenRepositories = testRepositories,
+                displayHandler = TestDisplayHandler(displays),
+            )
+
+        repl.eval {
+            addLibrary(
+                createLibrary(repl.notebook) {
+                    render<Int> { intToRender ->
+                        notebook.display("Rendering $intToRender")
+                        "$intToRender $intToRender"
+                    }
+                },
+            )
+        }
+
+        repl.evalRendered("42") shouldBe "42 42"
+        displays.shouldHaveSingleElement("Rendering 42")
     }
 }

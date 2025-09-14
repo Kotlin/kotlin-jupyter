@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.embedded
 
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import kotlin.random.Random
 
 /**

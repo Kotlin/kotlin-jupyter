@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
@@ -83,4 +84,6 @@ interface KotlinKernelHost : ExecutionHost {
     fun declare(variables: Iterable<VariableDeclaration>)
 
     val lastClassLoader: ClassLoader
+
+    val inMemoryReplResultsHolder: InMemoryReplResultsHolder
 }

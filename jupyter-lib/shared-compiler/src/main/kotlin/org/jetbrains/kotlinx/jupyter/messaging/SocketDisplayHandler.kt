@@ -5,7 +5,7 @@ import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.containsDisplayId
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.api.withId
+import org.jetbrains.kotlinx.jupyter.api.withIdIfNotNull
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.renderValue
@@ -30,7 +30,7 @@ class SocketDisplayHandler(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value, id)?.let { if (id != null) it.withId(id) else it } ?: return
+        val display = renderValue(notebook, host, value)?.withIdIfNotNull(id) ?: return
         val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
@@ -44,7 +44,7 @@ class SocketDisplayHandler(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value, id) ?: return
+        val display = renderValue(notebook, host, value) ?: return
         val json = display.toJson(Json.EMPTY, id)
         if (id == null || !json.containsDisplayId(id)) {
             throw RuntimeException("`update_display_data` response should provide an id of data being updated")

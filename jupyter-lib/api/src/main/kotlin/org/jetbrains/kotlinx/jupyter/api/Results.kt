@@ -8,6 +8,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.outputs.IsolatedHtmlMarker
 import org.jetbrains.kotlinx.jupyter.api.outputs.MetadataModifier
@@ -18,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.api.outputs.standardMetadataModifiers
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.util.escapeForIframe
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.plus
 
 /**
  * Type alias for FQNs - fully qualified names of classes
@@ -62,6 +64,25 @@ interface DisplayResult : Renderable {
     val id: String? get() = null
 
     /**
+     * Returns the new instance of [DisplayResult] with the given [id] set.
+     */
+    fun withId(id: String): DisplayResult {
+        val original = this
+        return if (id == original.id) {
+            original
+        } else {
+            object : DisplayResult {
+                override fun toJson(
+                    additionalMetadata: JsonObject,
+                    overrideId: String?,
+                ) = original.toJson(additionalMetadata, overrideId ?: id)
+
+                override val id = id
+            }
+        }
+    }
+
+    /**
      * Converts display data to JSON object for `display_data` response
      *
      * @param additionalMetadata Additional reply metadata
@@ -79,6 +100,12 @@ interface DisplayResult : Renderable {
      * Renders display result, generally should return `this`
      */
     override fun render(notebook: Notebook): DisplayResult = this
+
+    /**
+     * Called when this display result is no longer needed, i.e., when it is removed from the notebook display map on
+     * display update.
+     */
+    fun dispose() = Unit
 }
 
 /**
@@ -110,19 +137,11 @@ fun DisplayResult?.toJson(): JsonObject {
     return Json.encodeToJsonElement(mapOf("data" to null, "metadata" to JsonObject(mapOf()))) as JsonObject
 }
 
-@Suppress("unused")
-fun DisplayResult.withId(id: String) =
-    if (id == this.id) {
+fun DisplayResult.withIdIfNotNull(id: String?) =
+    if (id == null) {
         this
     } else {
-        object : DisplayResult {
-            override fun toJson(
-                additionalMetadata: JsonObject,
-                overrideId: String?,
-            ) = this@withId.toJson(additionalMetadata, overrideId ?: id)
-
-            override val id = id
-        }
+        withId(id)
     }
 
 /**
@@ -167,11 +186,48 @@ fun JsonObject.containsDisplayId(id: String): Boolean {
 class InMemoryMimeTypedResult(
     val inMemoryOutput: InMemoryResult,
     val fallbackResult: Map<String, JsonElement>,
+    private val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
+    initialId: String? = null,
 ) : DisplayResult {
+    private val fallbackTypedResult by lazy {
+        val mimeData = fallbackResult + Pair(inMemoryOutput.mimeType, JsonPrimitive(id))
+        MimeTypedResultEx(
+            mimeData = Json.encodeToJsonElement(mimeData),
+            id,
+            standardMetadataModifiers(),
+        )
+    }
+
+    override val id: String =
+        if (initialId == null) {
+            inMemoryReplResultsHolder.addReplResult(inMemoryOutput.result)
+        } else {
+            inMemoryReplResultsHolder.setReplResult(initialId, inMemoryOutput.result)
+            initialId
+        }
+
     override fun toJson(
         additionalMetadata: JsonObject,
         overrideId: String?,
-    ): JsonObject = throw UnsupportedOperationException("This method is not supported for in-memory values")
+    ): JsonObject = fallbackTypedResult.toJson(additionalMetadata, overrideId)
+
+    override fun withId(id: String): InMemoryMimeTypedResult {
+        if (this.id == id) return this
+
+        inMemoryReplResultsHolder.removeReplResult(this.id)
+        return InMemoryMimeTypedResult(
+            inMemoryOutput,
+            fallbackResult,
+            inMemoryReplResultsHolder,
+            id,
+        )
+    }
+
+    override fun dispose() {
+        if (inMemoryReplResultsHolder.getReplResult(id) === inMemoryOutput.result) {
+            inMemoryReplResultsHolder.removeReplResult(id)
+        }
+    }
 }
 
 /**
@@ -192,7 +248,7 @@ class MimeTypedResult(
 open class MimeTypedResultEx(
     private val mimeData: JsonElement,
     override val id: String? = null,
-    metadataModifiers: List<MetadataModifier> = emptyList(),
+    metadataModifiers: Collection<MetadataModifier> = emptyList(),
 ) : DisplayResult {
     private val metadataModifiers: MutableSet<MetadataModifier> = mutableSetOf()
 
@@ -258,6 +314,11 @@ open class MimeTypedResultEx(
             )
         result.setDisplayId(overrideId ?: id)
         return Json.encodeToJsonElement(result) as JsonObject
+    }
+
+    override fun withId(id: String): MimeTypedResultEx {
+        if (this.id == id) return this
+        return MimeTypedResultEx(mimeData, id, metadataModifiers)
     }
 
     override fun toString(): String {

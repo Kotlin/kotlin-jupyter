@@ -2,12 +2,13 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypes
-import org.jetbrains.kotlinx.jupyter.api.MimeTypedResultEx
 import org.jetbrains.kotlinx.jupyter.api.takeScreenshot
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
@@ -25,7 +26,6 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import kotlin.reflect.KClass
 import kotlin.test.DefaultAsserter.fail
-import kotlin.test.assertEquals
 
 /**
  * Class responsible for testing how in-memory results are handled by the embedded kernel.
@@ -143,18 +143,18 @@ class InMemoryResultTests : AbstractSingleReplTest() {
         code: String,
     ) {
         val result = eval(code)
-        result.renderedValue.shouldBeInstanceOf<MimeTypedResultEx>()
-        result.displayValue.shouldBeInstanceOf<MimeTypedResultEx>()
-        val displayObj = result.displayValue as MimeTypedResultEx
+        result.renderedValue.shouldBeInstanceOf<InMemoryMimeTypedResult>()
+        val displayObj = result.displayValue.shouldBeInstanceOf<InMemoryMimeTypedResult>()
         val displayDataJson = displayObj.toJson(Json.EMPTY, null)
         val displayData = displayDataJson["data"] as JsonObject
         displayData.size.shouldBe(2)
         displayData.shouldContainKey("image/png")
         displayData.shouldContainKey(InMemoryMimeTypes.SWING)
-        assertEquals("-1", (displayData[InMemoryMimeTypes.SWING] as JsonPrimitive).content)
+        val id = (displayData[InMemoryMimeTypes.SWING] as JsonPrimitive).content
+        id.shouldStartWith("generated-")
         val inMemHolder = repl.notebook.sharedReplContext!!.inMemoryReplResultsHolder
         inMemHolder.size.shouldBe(1)
-        inMemHolder.getReplResult("-1").shouldBeInstanceOf(expectedOutputClass)
+        inMemHolder.getReplResult(id).shouldBeInstanceOf(expectedOutputClass)
     }
 
     // Check if a screenshot actually contains anything useful.
