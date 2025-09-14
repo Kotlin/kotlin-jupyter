@@ -25,8 +25,6 @@ With the Kotlin Kernel for notebooks, you gain access to a range of features lik
 You can leverage Kotlin Kernel's benefits in [IntelliJ IDEA](https://www.jetbrains.com/idea/) through the [Kotlin Notebook plugin](https://plugins.jetbrains.com/plugin/16340-kotlin-notebook), in your [Jupyter Notebook](https://jupyter.org/), or in [Datalore](https://www.jetbrains.com/datalore/).
 
 ## Contents
-<details>
-<summary>Click here to expand the table of contents.</summary>
 
 <!-- TOC -->
 * [Kotlin Kernel for Jupyter notebooks](#kotlin-kernel-for-jupyter-notebooks)
@@ -72,8 +70,6 @@ You can leverage Kotlin Kernel's benefits in [IntelliJ IDEA](https://www.jetbrai
   * [Documentation](#documentation)
   * [Contribute](#contribute)
 <!-- TOC -->
-
-</details>
 
 ## Get started
 
@@ -356,9 +352,6 @@ The features of the Kotlin Kernel for Jupyter notebooks include:
 * [Autocompletion](#autocompletion)
 * [Error analysis](#error-analysis)
 
-<details>
-<summary>Click here to expand the features.</summary>
-
 ### REPL commands
 
 Our Kotlin Kernel for notebooks comes with a set of REPL commands that let you explore your notebook environment. The following REPL commands are supported:
@@ -540,9 +533,6 @@ Additionally, you can try resolving the library descriptor from a local file or 
 
 Here you can find all the supported libraries you can use in you Kotlin notebooks through the `%use` line magic.
 
-<details>
-<summary>Click to see the list of supported libraries.</summary>
-
  - [2p-kt](https://github.com/tuProlog/2p-kt) - Kotlin Multi-Platform ecosystem for symbolic AI
  - [adventOfCode](https://github.com/Toldoven/aoc-kotlin-notebook) - Interactive Advent of Code framework for Kotlin Notebook
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
@@ -596,8 +586,6 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [spring-ai-ollama](https://github.com/spring-projects/spring-ai) - Spring AI is a specialized application framework designed specifically for AI engineering, providing seamless integration with local models powered by Ollama.
  - [spring-ai-openai](https://github.com/spring-projects/spring-ai) - Spring AI is a application framework designed specifically for AI engineering, offering seamless integration with OpenAI models.
  - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers
-
-</details>
 
 ### Rich output
 
@@ -674,8 +662,6 @@ an error message that can help you to fix the error.
 
 This error analysis is achieved by the kernel-level extension of Jupyter Notebook. The extension sends
 error-analysis requests to the kernel and renders their results.
-
-</details>
 
 ## Debug your Kotlin notebook client
 
