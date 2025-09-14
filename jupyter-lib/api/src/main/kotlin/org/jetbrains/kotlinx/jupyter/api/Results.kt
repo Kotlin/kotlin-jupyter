@@ -248,7 +248,7 @@ class MimeTypedResult(
 open class MimeTypedResultEx(
     private val mimeData: JsonElement,
     override val id: String? = null,
-    metadataModifiers: Collection<MetadataModifier> = emptyList(),
+    metadataModifiers: List<MetadataModifier> = emptyList(),
 ) : DisplayResult {
     private val metadataModifiers: MutableSet<MetadataModifier> = mutableSetOf()
 
@@ -318,7 +318,7 @@ open class MimeTypedResultEx(
 
     override fun withId(id: String): MimeTypedResultEx {
         if (this.id == id) return this
-        return MimeTypedResultEx(mimeData, id, metadataModifiers)
+        return MimeTypedResultEx(mimeData, id, metadataModifiers.toList())
     }
 
     override fun toString(): String {
