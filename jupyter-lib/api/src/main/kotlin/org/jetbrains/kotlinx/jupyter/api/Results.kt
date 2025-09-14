@@ -214,7 +214,7 @@ class InMemoryMimeTypedResult(
     override fun withId(id: String): InMemoryMimeTypedResult {
         if (this.id == id) return this
 
-        inMemoryReplResultsHolder.removeReplResult(this.id)
+        dispose()
         return InMemoryMimeTypedResult(
             inMemoryOutput,
             fallbackResult,
