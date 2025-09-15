@@ -51,8 +51,6 @@ import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
-import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolver
-import org.jetbrains.kotlinx.jupyter.dependencies.JupyterScriptDependenciesResolverImpl
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
@@ -78,7 +76,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
-import org.jetbrains.kotlinx.jupyter.repl.ClasspathProvider
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
 import org.jetbrains.kotlinx.jupyter.repl.EvalData
@@ -103,7 +100,6 @@ import org.jetbrains.kotlinx.jupyter.repl.logging.LoggingManager
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
 import org.jetbrains.kotlinx.jupyter.repl.postRender
-import org.jetbrains.kotlinx.jupyter.repl.result.Classpath
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalMetadata
@@ -132,6 +128,7 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.updateClasspath
 
 typealias KernelReplEvaluator = ReplEvaluator<CompiledSnippet, KJvmEvaluatedSnippet>
 
@@ -175,14 +172,6 @@ class ReplForJupyterImpl(
         )
 
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
-
-    private val resolver: JupyterScriptDependenciesResolver =
-        JupyterScriptDependenciesResolverImpl(
-            loggerFactory,
-            mavenRepositories,
-            sessionOptions::resolveSources,
-            sessionOptions::resolveMpp,
-        )
 
     private val ctx = KotlinContext()
 
@@ -257,8 +246,20 @@ class ReplForJupyterImpl(
                 ?.flatMap { it.classpath }
                 .orEmpty()
 
-    override val currentClasspath = compilerConfiguration.classpath.map { it.canonicalPath }.toMutableSet()
-    private val currentSources = mutableSetOf<String>()
+    private val dependencyManager =
+        DependencyManagerImpl(
+            loggerFactory,
+            mavenRepositories,
+            sessionOptions::resolveSources,
+            sessionOptions::resolveMpp,
+            options::trackClasspath,
+        ).apply {
+            addBinaryClasspath(
+                compilerConfiguration.classpath.toSet(),
+            )
+        }
+
+    override val currentClasspath get() = dependencyManager.currentBinaryClasspath.map { it.canonicalPath }
     private val evaluatedSnippetsMetadata = mutableListOf<InternalMetadata>()
 
     private val allEvaluatedSnippetsMetadata: InternalMetadata get() {
@@ -278,8 +279,8 @@ class ReplForJupyterImpl(
 
     override val currentSessionState: EvaluatedSnippetMetadata get() {
         return EvaluatedSnippetMetadata(
-            currentClasspath.toList(),
-            currentSources.toList(),
+            dependencyManager.currentBinaryClasspath.map { it.canonicalPath },
+            dependencyManager.currentSourcesClasspath.map { it.canonicalPath },
             allEvaluatedSnippetsMetadata,
         )
     }
@@ -318,6 +319,12 @@ class ReplForJupyterImpl(
                     compilerConfiguration,
                     evaluatorConfiguration,
                 )
+            }
+        }.apply {
+            updateCompilationConfig {
+                dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
+                    updateClasspath(classpath)
+                }
             }
         }
     }
@@ -383,7 +390,7 @@ class ReplForJupyterImpl(
 
     private val fileAnnotationsProcessor: FileAnnotationsProcessor =
         FileAnnotationsProcessorImpl(
-            ScriptDependencyAnnotationHandlerImpl(resolver),
+            ScriptDependencyAnnotationHandlerImpl(dependencyManager.resolver),
             compilerArgsConfigurator,
             jupyterCompiler,
             hostProvider,
@@ -396,8 +403,6 @@ class ReplForJupyterImpl(
     private val beforeCellExecutionsProcessor = BeforeCellExecutionsProcessor()
     private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor(loggerFactory)
     private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor(loggerFactory)
-
-    private val classpathProvider = ClasspathProvider { currentClasspath.toList() }
 
     override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
 
@@ -426,7 +431,7 @@ class ReplForJupyterImpl(
             displayHandler,
             inMemoryReplResultsHolder,
             sessionOptions,
-            classpathProvider,
+            dependencyManager,
         ).also {
             notebook.sharedReplContext = it
             commHandlers.requireUniqueTargets()
@@ -541,12 +546,12 @@ class ReplForJupyterImpl(
     ): EvaluatedSnippetMetadata {
         val newClasspath =
             logger.catchAll {
-                updateClasspath()
+                dependencyManager.popAddedClasspath().map { it.canonicalPath }
             } ?: emptyList()
 
         val newSources =
             logger.catchAll {
-                updateSources()
+                dependencyManager.popAddedSources().map { it.canonicalPath }
             } ?: emptyList()
 
         if (!storeHistory) {
@@ -616,42 +621,6 @@ class ReplForJupyterImpl(
         }
 
     override fun evalOnShutdown(): List<ShutdownEvalResult> = shutdownExecutionsProcessor.process(executor)
-
-    /**
-     * Updates current classpath with newly resolved libraries paths
-     * Also, prints information about resolved libraries to stdout if [ReplOptions.trackClasspath] is true
-     *
-     * @return Newly resolved classpath
-     */
-    private fun updateClasspath(): Classpath {
-        val resolvedClasspath = resolver.popAddedClasspath().map { it.canonicalPath }
-        if (resolvedClasspath.isEmpty()) return emptyList()
-
-        val (oldClasspath, newClasspath) = resolvedClasspath.partition { it in currentClasspath }
-        currentClasspath.addAll(newClasspath)
-        if (options.trackClasspath) {
-            val sb = StringBuilder()
-            if (newClasspath.isNotEmpty()) {
-                sb.appendLine("${newClasspath.count()} new paths were added to classpath:")
-                newClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
-            }
-            if (oldClasspath.isNotEmpty()) {
-                sb.appendLine("${oldClasspath.count()} resolved paths were already in classpath:")
-                oldClasspath.sortedBy { it }.forEach { sb.appendLine(it) }
-            }
-            sb.appendLine("Current classpath size: ${currentClasspath.count()}")
-            println(sb.toString())
-        }
-
-        return newClasspath
-    }
-
-    private fun updateSources(): Classpath {
-        val resolvedClasspath = resolver.popAddedSources().map { it.canonicalPath }
-        val newClasspath = resolvedClasspath.filter { it !in currentSources }
-        currentSources.addAll(newClasspath)
-        return newClasspath
-    }
 
     private val completionQueue = LockQueue<CompletionResult, CompletionArgs>()
 

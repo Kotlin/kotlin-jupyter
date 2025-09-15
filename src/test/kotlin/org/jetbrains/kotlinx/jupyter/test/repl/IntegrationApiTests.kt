@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.collections.shouldHaveSingleElement
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
@@ -19,7 +20,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.repositories
 import org.jetbrains.kotlinx.jupyter.api.outputs.display
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
-import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
+import org.jetbrains.kotlinx.jupyter.libraries.buildImportsCode
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
@@ -290,9 +291,9 @@ class IntegrationApiTests {
     fun `notebook API inside renderer`() {
         val repl = makeRepl()
         repl.evalRaw(
-            """
+            $$"""
             USE {
-                render<Number> { "${"$"}{notebook?.currentCell?.internalId}. ${"$"}{it.toLong() * 10}" }
+                render<Number> { "${notebook?.currentCell?.internalId}. ${it.toLong() * 10}" }
             }
             """.trimIndent(),
         )
@@ -399,15 +400,7 @@ class IntegrationApiTests {
                 dependencies("my.group:dep:42")
             }
 
-        val code = buildDependenciesInitCode(listOf(lib))
-
-        code shouldBe
-            """
-            @file:Repository("*mavenLocal")
-            @file:Repository("sftp://repo.mycompany.com:22/repo", username="xx\"y", password="678\n9")
-            @file:DependsOn("my.group:dep:42")
-            
-            """.trimIndent()
+        buildImportsCode(listOf(lib)).shouldBeNull()
     }
 
     @Test

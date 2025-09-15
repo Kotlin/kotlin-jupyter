@@ -19,6 +19,7 @@ import org.jetbrains.kotlinx.jupyter.api.ResultsAccessor
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.api.VariableState
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
@@ -89,8 +90,10 @@ class NotebookImpl(
             ?: throw IllegalStateException("Evaluator is not initialized yet")
     }
 
-    override val currentClasspath: List<String>
-        get() = sharedReplContext?.currentClasspathProvider?.provideClasspath() ?: emptyList()
+    override val dependencyManager: DependencyManager
+        get() =
+            sharedReplContext?.dependencyManager
+                ?: throw IllegalStateException("Dependency manager is not initialized yet")
 
     override val sessionOptions: SessionOptions get() {
         return sharedReplContext?.sessionOptions

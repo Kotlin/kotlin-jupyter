@@ -7,6 +7,9 @@ import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
+import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
+import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
 import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
@@ -20,7 +23,7 @@ import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.joinToLines
-import org.jetbrains.kotlinx.jupyter.libraries.buildDependenciesInitCode
+import org.jetbrains.kotlinx.jupyter.libraries.buildImportsCode
 import org.jetbrains.kotlinx.jupyter.libraries.getDefinitions
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.repl.SharedReplContext
@@ -49,9 +52,20 @@ internal class CellExecutorImpl(
         currentCellId: CellId,
         stackFrame: ExecutionStackFrame?,
         executorWorkflowListener: ExecutorWorkflowListener?,
+        ignoreDependencyErrors: Boolean,
     ): InternalEvalResult {
         with(replContext) {
-            val context = ExecutionContext(replContext, this@CellExecutorImpl, stackFrame.push())
+            val frame =
+                stackFrame.push().apply {
+                    this.ignoreDependencyErrors = ignoreDependencyErrors
+                }
+
+            val context =
+                ExecutionContext(
+                    replContext,
+                    this@CellExecutorImpl,
+                    frame,
+                )
 
             logger.debug("Executing code:\n$code")
             val preprocessedCode =
@@ -133,7 +147,14 @@ internal class CellExecutorImpl(
         }
     }
 
-    override fun <T> execute(callback: KotlinKernelHost.() -> T): T = callback(ExecutionContext(replContext, this, null.push()))
+    override fun <T> execute(callback: KotlinKernelHost.() -> T): T =
+        callback(
+            ExecutionContext(
+                replContext,
+                this,
+                null.push(),
+            ),
+        )
 
     private class ExecutionContext(
         private val sharedContext: SharedReplContext,
@@ -155,7 +176,7 @@ internal class CellExecutorImpl(
                 sharedContext.internalVariablesMarkersProcessor.registerAll(library.internalVariablesMarkers)
             }
             rethrowAsLibraryException(LibraryProblemPart.PREBUILT) {
-                buildDependenciesInitCode(libraries)?.let { runChild(it) }
+                configureDependencies(libraries)?.let { runChild(it) }
             }
             for (library in libraries) {
                 rethrowAsLibraryException(LibraryProblemPart.INIT) {
@@ -185,6 +206,48 @@ internal class CellExecutorImpl(
 
                 sharedContext.beforeCellExecutionsProcessor.registerAll(library.initCell)
                 sharedContext.shutdownExecutionsProcessor.registerAll(library.shutdown)
+            }
+        }
+
+        private fun configureDependencies(libraries: Collection<LibraryDefinition>): String? {
+            val repositories =
+                libraries.flatMap { library ->
+                    library.repositories.map { repository ->
+                        RepositoryDescription(
+                            repository.path,
+                            repository.username.orEmpty(),
+                            repository.password.orEmpty(),
+                        )
+                    }
+                }
+
+            val dependencyDescriptions =
+                libraries.flatMap { library ->
+                    library.dependencies.map(::DependencyDescription)
+                }
+
+            ignoreDependencyErrorsIfNeeded {
+                with(sharedContext.dependencyManager.resolver) {
+                    addRepositories(repositories)
+                    when (val result = resolve(dependencyDescriptions, addToClasspath = true)) {
+                        is ResolutionResult.Success -> {}
+                        is ResolutionResult.Failure -> throw RuntimeException(result.message)
+                    }
+                }
+            }
+
+            // In case something was added to the classpath, we need to execute something to update the classloader
+            return buildImportsCode(libraries)
+                ?: "1".takeIf { dependencyDescriptions.isNotEmpty() }
+        }
+
+        private fun ignoreDependencyErrorsIfNeeded(action: () -> Unit) {
+            try {
+                action()
+            } catch (e: Throwable) {
+                if (!stackFrame.shouldIgnoreDependencyErrors) {
+                    throw e
+                }
             }
         }
 
@@ -220,7 +283,7 @@ internal class CellExecutorImpl(
                         it.dependencies = artifacts.map { name -> "org.jetbrains.kotlin:kotlin-$name:$kotlinVersion" }
                     },
                 )
-            buildDependenciesInitCode(libraries)?.let { scheduleExecution(it) }
+            configureDependencies(libraries)?.let { scheduleExecution(it) }
         }
 
         override fun loadStdlibJdkExtensions(version: String?) {

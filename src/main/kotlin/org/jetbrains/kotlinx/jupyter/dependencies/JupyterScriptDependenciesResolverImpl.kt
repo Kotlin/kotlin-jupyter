@@ -7,12 +7,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
+import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
+import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
 import kotlin.reflect.KMutableProperty0
-import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.asSuccess
@@ -34,6 +36,8 @@ open class JupyterScriptDependenciesResolverImpl(
     mavenRepositories: List<MavenRepositoryCoordinates>,
     resolveSourcesOption: KMutableProperty0<Boolean>,
     resolveMppOption: KMutableProperty0<Boolean>,
+    private val addedBinaryClasspath: MutableList<File>,
+    private val addedSourceClasspath: MutableList<File>,
 ) : JupyterScriptDependenciesResolver {
     private val logger = loggerFactory.getLogger(JupyterScriptDependenciesResolverImpl::class.java)
 
@@ -63,11 +67,9 @@ open class JupyterScriptDependenciesResolverImpl(
         )
 
     private val repositories = arrayListOf<Repo>()
-    private val addedClasspath = arrayListOf<File>()
 
     override var resolveSources: Boolean by resolveSourcesOption
     override var resolveMpp: Boolean by resolveMppOption
-    private val addedSourcesClasspath = arrayListOf<File>()
 
     init {
         mavenRepositories.forEach { addRepository(Repo(it)) }
@@ -88,91 +90,157 @@ open class JupyterScriptDependenciesResolverImpl(
         return resolver.addRepository(RepositoryCoordinates(repo.repo.coordinates), repo.options, null).valueOrNull() == true
     }
 
-    override fun popAddedClasspath(): List<File> {
-        val result = addedClasspath.toList()
-        addedClasspath.clear()
-        return result
-    }
+    override fun resolveFromAnnotations(annotations: List<Annotation>): ResultWithDiagnostics<List<File>> {
+        if (annotations.isEmpty()) return ResultWithDiagnostics.Success(emptyList())
 
-    override fun popAddedSources(): List<File> {
-        val result = addedSourcesClasspath.toList()
-        addedSourcesClasspath.clear()
-        return result
-    }
+        val repositories: MutableList<RepositoryDescription> = mutableListOf()
+        val dependencies: MutableList<Dependency> = mutableListOf()
 
-    override fun resolveFromAnnotations(script: ScriptContents): ResultWithDiagnostics<List<File>> {
-        val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
-        val classpath = mutableListOf<File>()
-        var existingRepositories: List<Repo>? = null
-        val dependencies = mutableListOf<Dependency>()
-
-        script.annotations.forEach { annotation ->
+        for (annotation in annotations) {
             when (annotation) {
-                is Repository -> {
-                    logger.info("Adding repository: ${annotation.value}")
-                    val newRepositories = existingRepositories ?: ArrayList(repositories)
-                    existingRepositories = newRepositories
-
-                    val options =
-                        if (annotation.username.isNotEmpty() || annotation.password.isNotEmpty()) {
-                            buildOptions(
-                                DependenciesResolverOptionsName.USERNAME to annotation.username,
-                                DependenciesResolverOptionsName.PASSWORD to annotation.password,
-                            )
-                        } else {
-                            Options.Empty
-                        }
-                    val repo = Repo(MavenRepositoryCoordinates(annotation.value), options)
-
-                    if (!addRepository(repo)) {
-                        throw IllegalArgumentException("Illegal argument for Repository annotation: $annotation")
-                    }
-
-                    newRepositories.forEach { addRepository(it) }
-                }
-                is DependsOn -> {
-                    dependencies.add(annotation.toDependency())
-                }
+                is Repository ->
+                    repositories.add(
+                        RepositoryDescription(
+                            annotation.value,
+                            annotation.username,
+                            annotation.password,
+                        ),
+                    )
+                is DependsOn ->
+                    dependencies.add(
+                        annotation.toDependency(),
+                    )
                 else -> throw Exception("Unknown annotation ${annotation.javaClass}")
             }
         }
 
-        try {
+        addRepositories(repositories)
+
+        val classpath = mutableListOf<File>()
+        val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
+
+        doResolveSafe(scriptDiagnostics) {
             tryResolve(
-                dependencies,
-                scriptDiagnostics,
-                classpath,
+                dependencies = dependencies,
+                scriptDiagnosticsResult = scriptDiagnostics,
+                onBinaryResolved = { files ->
+                    addedBinaryClasspath.addAll(files)
+                    classpath.addAll(files)
+                },
+                onSourceResolved = { files ->
+                    addedSourceClasspath.addAll(files)
+                },
             )
+        }
+
+        return makeResolutionResult(classpath, scriptDiagnostics)
+    }
+
+    override fun addRepositories(repositories: List<RepositoryDescription>) {
+        if (repositories.isEmpty()) return
+
+        var existingRepositories: List<Repo>? = null
+        for (repository in repositories) {
+            logger.info("Adding repository: ${repository.value}")
+            val newRepositories = existingRepositories ?: ArrayList(this.repositories)
+            existingRepositories = newRepositories
+
+            val options =
+                if (repository.username.isNotEmpty() || repository.password.isNotEmpty()) {
+                    buildOptions(
+                        DependenciesResolverOptionsName.USERNAME to repository.username,
+                        DependenciesResolverOptionsName.PASSWORD to repository.password,
+                    )
+                } else {
+                    Options.Empty
+                }
+            val repo = Repo(MavenRepositoryCoordinates(repository.value), options)
+
+            if (!addRepository(repo)) {
+                throw IllegalArgumentException("Illegal argument for Repository annotation: $repository")
+            }
+
+            newRepositories.forEach { addRepository(it) }
+        }
+    }
+
+    override fun resolve(
+        dependencyDescriptions: Collection<DependencyDescription>,
+        addToClasspath: Boolean,
+    ): ResolutionResult {
+        val dependencies = dependencyDescriptions.map { it.description.toDependency() }
+        val binaryClasspath = mutableListOf<File>()
+        val sourceClasspath = mutableListOf<File>()
+        val scriptDiagnostics = mutableListOf<ScriptDiagnostic>()
+
+        doResolveSafe(scriptDiagnostics) {
+            tryResolve(
+                dependencies = dependencies,
+                scriptDiagnosticsResult = scriptDiagnostics,
+                onBinaryResolved = { files ->
+                    if (addToClasspath) {
+                        addedBinaryClasspath.addAll(files)
+                    }
+                    binaryClasspath.addAll(files)
+                },
+                onSourceResolved = { files ->
+                    if (addToClasspath) {
+                        addedSourceClasspath.addAll(files)
+                    }
+                    sourceClasspath.addAll(files)
+                },
+            )
+        }
+
+        return if (scriptDiagnostics.isEmpty()) {
+            ResolutionResult.Success(binaryClasspath, sourceClasspath)
+        } else {
+            val message =
+                scriptDiagnostics.joinToString("\n") { diagnostic ->
+                    diagnostic.render()
+                }
+            ResolutionResult.Failure(message)
+        }
+    }
+
+    private fun doResolveSafe(
+        diagnostics: MutableList<ScriptDiagnostic>,
+        doResolve: () -> Unit,
+    ) {
+        try {
+            doResolve()
         } catch (e: Exception) {
             val diagnostic = ScriptDiagnostic(ScriptDiagnostic.unspecifiedError, "Unhandled exception during resolve", exception = e)
             logger.error(diagnostic.message, e)
-            scriptDiagnostics.add(diagnostic)
+            diagnostics.add(diagnostic)
         }
-        // Hack: after first resolution add "standard" Central repo to the end of the list, giving it the lowest priority
+        // Hack: after the first resolution add "standard" Central repo to the end of the list, giving it the lowest priority
         addRepository(CENTRAL_REPO)
-
-        return makeResolutionResult(classpath, scriptDiagnostics)
     }
 
     private suspend fun resolveWithOptions(
         dependencies: List<Dependency>,
         options: Options,
-    ): ResultWithDiagnostics<List<File>> = resolver.resolve(dependencies.map { ArtifactWithLocation(it.value, null) }, options)
+    ): ResultWithDiagnostics<List<File>> {
+        val artifacts =
+            dependencies.map {
+                ArtifactWithLocation(it.value, null)
+            }
+        return resolver.resolve(artifacts, options)
+    }
 
     private fun tryResolve(
         dependencies: List<Dependency>,
         scriptDiagnosticsResult: MutableList<ScriptDiagnostic>,
-        classpathResult: MutableList<File>,
+        onBinaryResolved: (List<File>) -> Unit,
+        onSourceResolved: (List<File>) -> Unit,
     ) {
         if (dependencies.isEmpty()) return
 
         logger.info("Resolving $dependencies")
         doResolve(
             { resolveWithOptions(dependencies, resolverOptions) },
-            onResolved = { files ->
-                addedClasspath.addAll(files)
-                classpathResult.addAll(files)
-            },
+            onResolved = onBinaryResolved,
             onFailure = { result ->
                 val diagnostics =
                     ScriptDiagnostic(
@@ -187,9 +255,7 @@ open class JupyterScriptDependenciesResolverImpl(
         if (dependencies.shouldResolveSources(resolveSources)) {
             doResolve(
                 { resolveWithOptions(dependencies, sourcesResolverOptions) },
-                onResolved = { files ->
-                    addedSourcesClasspath.addAll(files)
-                },
+                onResolved = onSourceResolved,
                 onFailure = { result ->
                     logger.warn("Failed to resolve sources for $dependencies:\n" + result.reports.joinToString("\n") { it.message })
                 },
@@ -212,7 +278,8 @@ open class JupyterScriptDependenciesResolverImpl(
                         tryResolve(
                             notYetResolvedArtifacts,
                             scriptDiagnosticsResult,
-                            classpathResult,
+                            onBinaryResolved,
+                            onSourceResolved,
                         )
                     }
                 },

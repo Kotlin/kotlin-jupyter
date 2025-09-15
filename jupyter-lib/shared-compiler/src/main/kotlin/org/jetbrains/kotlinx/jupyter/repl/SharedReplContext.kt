@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.ExtensionsProcessor
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.api.ThrowableRenderersProcessor
+import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyManager
 import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
@@ -50,5 +51,5 @@ data class SharedReplContext(
     val displayHandler: DisplayHandler,
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     val sessionOptions: SessionOptions,
-    val currentClasspathProvider: ClasspathProvider,
+    val dependencyManager: DependencyManager,
 )

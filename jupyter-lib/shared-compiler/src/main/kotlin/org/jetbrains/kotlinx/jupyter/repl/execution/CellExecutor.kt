@@ -21,5 +21,6 @@ interface CellExecutor : ExecutionHost {
         currentCellId: CellId = CellId.NO_CELL,
         stackFrame: ExecutionStackFrame? = null,
         executorWorkflowListener: ExecutorWorkflowListener? = null,
+        ignoreDependencyErrors: Boolean = false,
     ): InternalEvalResult
 }

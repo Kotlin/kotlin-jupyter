@@ -68,7 +68,7 @@ fun runCommand(
             ?: return ErrorJupyterResponse("Unknown command: $code\nTo see available commands, enter :help")
     return when (cmd) {
         ReplCommand.CLASSPATH -> {
-            val cp = repl.currentClasspath
+            val cp = repl.notebook.dependencyManager.currentBinaryClasspath
             OkJupyterResponse(textResult("Current classpath (${cp.count()} paths):\n${cp.joinToString("\n")}"))
         }
         ReplCommand.VARS -> {

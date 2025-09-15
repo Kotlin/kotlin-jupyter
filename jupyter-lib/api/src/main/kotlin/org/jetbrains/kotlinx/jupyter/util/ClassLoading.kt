@@ -8,6 +8,7 @@ val kernelFqnPrefixes =
         "jupyter.kotlin.",
         "org.jetbrains.kotlinx.jupyter.api.",
         "org.jetbrains.kotlinx.jupyter.protocol.api.",
+        "org.jetbrains.kotlinx.jupyter.util.",
         "kotlinx.serialization.",
         "org.slf4j.",
     )
@@ -23,5 +24,8 @@ fun createDefaultDelegatingClassLoader(parent: ClassLoader): ClassLoader {
             }
         }
 
-    return DelegatingClassLoader(parent, strategy)
+    val mainClassLoader = DelegatingClassLoader(parent, strategy)
+    return MultiDelegatingClassLoader().apply {
+        addParent(mainClassLoader)
+    }
 }

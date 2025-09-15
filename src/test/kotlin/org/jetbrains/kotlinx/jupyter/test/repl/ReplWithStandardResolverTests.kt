@@ -344,10 +344,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
                 """.trimIndent(),
             )
-        when (repl.compilerMode) {
-            K1 -> res.metadata.newSources.shouldHaveSize(84)
-            K2 -> res.metadata.newSources.shouldHaveSize(168)
-        }
+        res.metadata.newSources.shouldHaveSize(84)
     }
 
     @Test
