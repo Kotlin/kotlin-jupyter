@@ -538,6 +538,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
+ - [database](https://github.com/Kotlin/kotlin-jupyter-database) - Database Connection Helper Functions
  - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing
  - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
