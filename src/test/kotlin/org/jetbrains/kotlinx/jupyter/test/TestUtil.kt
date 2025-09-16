@@ -106,6 +106,7 @@ val classpath =
         "shared-compiler",
         "kotlin-stdlib",
         "kotlin-reflect",
+        "kotlin-script-runtime",
         "kotlinx-serialization-json-jvm",
         "kotlinx-serialization-core-jvm",
         classLoader = TestDisplayHandler::class.java.classLoader,

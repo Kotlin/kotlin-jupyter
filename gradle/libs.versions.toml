@@ -64,6 +64,7 @@ kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kot
 kotlin-dev-scriptingDependenciesMavenAll = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven-all", version.ref = "kotlinDependencies" }
 kotlin-dev-scriptingCommon = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-common", version.ref = "kotlin" }
 kotlin-dev-scriptingJvm = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version.ref = "kotlin" }
+kotlin-dev-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
 
 # Stable Kotlin dependencies
 kotlin-stable-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "stableKotlin" }
