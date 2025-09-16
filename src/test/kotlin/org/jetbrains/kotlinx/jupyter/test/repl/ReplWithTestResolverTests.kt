@@ -173,7 +173,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             shouldHaveAtLeastSize(10)
             shouldContain("0.8.0-rc-1")
         }
-        complete("%use lets-plot, data|").sortedMatches() shouldBe listOf("dataframe")
+        complete("%use lets-plot, data|").sortedMatches() shouldBe listOf("database", "dataframe")
         with(complete("%use kotlin-dl(|").matches()) {
             last() shouldBe "0.1.1"
 
