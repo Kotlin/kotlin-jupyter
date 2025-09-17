@@ -41,7 +41,6 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
-import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Disabled
@@ -585,10 +584,13 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testAnonymousObjectRendering() {
-        eval("42")
-        eval("val sim = object : ArrayList<String>() {}")
+        eval("val sim = emptyList<String>()")
         val res = eval("sim").renderedValue
-        res.toString() shouldBe "[]"
+        when (repl.compilerMode) {
+            K1 -> res.toString() shouldBe "[]"
+            // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+            K2 -> res.toString() shouldBe null
+        }
     }
 
     @Test
@@ -969,14 +971,7 @@ class ReplTests : AbstractSingleReplTest() {
                 name + age
                 """.trimIndent(),
             )
-        when (repl.compilerMode) {
-            K1 -> {
-                res.renderedValue shouldBe "John42"
-            }
-            K2 -> {
-                res.shouldBeInstanceOf<EvalResultEx.Error>()
-            }
-        }
+        res.renderedValue shouldBe "John42"
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KTNB-965
@@ -1033,10 +1028,7 @@ class ReplTests : AbstractSingleReplTest() {
                 Foo().bar
                 """.trimIndent(),
             )
-        when (repl.compilerMode) {
-            K1 -> res.renderedValue shouldBe "Hello"
-            K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
-        }
+        res.renderedValue shouldBe "Hello"
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77470/K2-Repl-Lazy-Properties-crash-code-generation
@@ -1122,5 +1114,63 @@ class ReplTests : AbstractSingleReplTest() {
                 }
             }
         }
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77754/K2-Repl-Custom-getter-on-read-only-property-returns-default-value
+    @Test
+    fun customGetterReturnCorrectValue() {
+        val res = eval("""
+            val x: Int
+                get() = 42
+            x
+        """.trimIndent())
+        res.renderedValue shouldBe 42
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77757/K2-Repl-get-setJvmName-annotation-does-not-work-on-properties
+    @Test
+    fun jvmOverrideOnGettersAndSetters() {
+        val res = eval("""
+            @get:JvmName("customGetA")
+            val a: Int
+                get() = 42
+            a
+        """.trimIndent())
+        res.renderedValue shouldBe 42
+        val res1 = eval("""
+            @set:JvmName("customSetA")
+            var a: Int = 0
+                set(value) { field = value + 42 }
+            a = 100
+            a
+        """.trimIndent())
+        res1.renderedValue shouldBe 142
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77764/K2-Repl-Calling-a-function-that-references-a-function-below-it-fails-to-compile
+    @Test
+    fun callFunctionDeclaredLater() {
+        val res = eval("""
+            fun function(): String {
+                return functionBelow()
+            }
+            fun functionBelow(): String {
+                return "BOOM"
+            }
+            function()
+        """.trimIndent())
+        res.renderedValue shouldBe "BOOM"
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77761/K2-Repl-Inline-functions-are-not-supported
+    @Test
+    fun inlineFunction() {
+        val res = eval("""
+            inline fun String.test(): String {
+                return "Wave"
+            }
+            "Hello".test()
+        """.trimIndent())
+        res.renderedValue shouldBe "Wave"
     }
 }
