@@ -86,8 +86,6 @@ Start using the Kotlin Kernel for Jupyter notebooks:
 
 ### Kotlin version support
 
-The latest version of the Kotlin Kernel for notebooks uses the Kotlin compiler of version 2.2.20-Beta2.
-The latest version of the Kotlin Kernel for notebooks uses the Kotlin compiler of version 2.2.20.
 The latest version of the Kotlin Kernel for notebooks uses the Kotlin compiler of version 2.3.0-dev-7923.
 
 ### Jupyter environments
