@@ -784,9 +784,9 @@ abstract class ExecuteTests(
     // In case of an exception happening in generated code. This code isn't visible to
     // the user. In that case, these things happen:
     // - Any stack trace line that references outside the visible code range only shows the request count.
-    // - We find the first "visible" error and promote that at the end of error output instead of the
+    // - We find the first "visible" error and promote that at as the end of error output instead of the
     //   first error. This means that the user can hopefully find the point in their code that triggers
-    //   the behavior
+    //   the behavior.
     // - If no visible user code can be found, only the request count is displayed but no line number.
     @Test
     fun testExceptionInGeneratedCodeShouldNotReferenceLine() {
@@ -857,8 +857,12 @@ abstract class ExecuteTests(
                             at Cell In[1], line 1, column 4: Expecting property name or receiver type
                             at Cell In[1], line 1, column 4: Property getter or setter expected
                             at Cell In[1], line 1, column 8: Expecting property name or receiver type
-                            at Cell In[1], line 1, column 1: This variable must either have an explicit type or be initialized.
-                            at Cell In[1], line 1, column 5: This variable must either have an explicit type or be initialized.
+                            at Cell In[1], line 1, column 1: Property must be initialized or be abstract.
+                            at Cell In[1], line 1, column 1: Conflicting declarations:
+                            var <no name provided>: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
+                            at Cell In[1], line 1, column 5: Property must be initialized or be abstract.
+                            at Cell In[1], line 1, column 5: Conflicting declarations:
+                            val <no name provided>: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
                             """.trimIndent()
                     }
                 }
@@ -988,17 +992,8 @@ abstract class ExecuteTests(
                 get() = "Hello"
             test
             """.trimIndent()
-        when (replCompilerMode) {
-            K1 -> {
-                val res = doExecute(code) as JsonObject
-                assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
-            }
-            K2 -> {
-                // This should be fixed by KT-76508
-                val res = doExecute(code) as JsonObject
-                res["text/plain"]?.jsonPrimitive?.content shouldBe "null"
-            }
-        }
+        val res = doExecute(code) as JsonObject
+        assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
     }
 
     @Test

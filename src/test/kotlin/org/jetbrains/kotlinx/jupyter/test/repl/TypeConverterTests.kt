@@ -6,8 +6,6 @@ import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.ResultFieldUpdateHandler
 import org.jetbrains.kotlinx.jupyter.api.createRenderer
-import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
-import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.library
@@ -25,34 +23,18 @@ class TypeConverterTests : AbstractReplTest() {
                 },
             ),
         ) {
-            when (compilerMode) {
-                K1 -> {
-                    evalRaw(
-                        """
-                        val (a, b) = 1 to 's'
-                        val c = "42"
-                        35
-                        """.trimIndent(),
-                    )
-                    evalRaw(
-                        """
-                        gen_a + gen_b + gen_c
-                        """.trimIndent(),
-                    ) shouldBe 3
-                }
-                K2 -> {
-                    // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-                    val result =
-                        evalEx(
-                            """
-                            val (a, b) = 1 to 's'
-                            val c = "42"
-                            35
-                            """.trimIndent(),
-                        )
-                    result.shouldBeTypeOf<EvalResultEx.Error>()
-                }
-            }
+            evalRaw(
+                """
+                val (a, b) = 1 to 's'
+                val c = "42"
+                35
+                """.trimIndent(),
+            )
+            evalRaw(
+                """
+                gen_a + gen_b + gen_c
+                """.trimIndent(),
+            ) shouldBe 3
         }
     }
 
@@ -82,16 +64,7 @@ class TypeConverterTests : AbstractReplTest() {
                 35
                 """.trimIndent(),
             )
-
-            when (compilerMode) {
-                K1 -> {
-                    resultInvocationCounter shouldBe 1
-                }
-                K2 -> {
-                    // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-                    resultInvocationCounter shouldBe 0
-                }
-            }
+            resultInvocationCounter shouldBe 1
         }
     }
 
@@ -158,17 +131,8 @@ class TypeConverterTests : AbstractReplTest() {
                 32
                 """.trimIndent(),
             ).let { renderedResult ->
-                when (compilerMode) {
-                    K1 -> {
-                        renderedResult.shouldBeTypeOf<MimeTypedResult>()
-                        renderedResult[MimeTypes.HTML] shouldBe "<b>64</b>"
-                    }
-                    K2 -> {
-                        // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-                        renderedResult.shouldBeTypeOf<Integer>()
-                        renderedResult shouldBe 32
-                    }
-                }
+                renderedResult.shouldBeTypeOf<MimeTypedResult>()
+                renderedResult[MimeTypes.HTML] shouldBe "<b>64</b>"
             }
 
             evalRendered(

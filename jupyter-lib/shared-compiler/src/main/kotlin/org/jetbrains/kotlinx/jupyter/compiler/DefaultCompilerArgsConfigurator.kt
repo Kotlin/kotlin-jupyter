@@ -21,6 +21,8 @@ class DefaultCompilerArgsConfigurator(
             // Ignore the Compose plugin if the Compose runtime isn't on the classpath
             "-P",
             "plugin:androidx.compose.compiler.plugins.kotlin:skipIrLoweringIfRuntimeNotFound=true",
+            // Required for Type Aliases to work in Notebooks
+            "-Xnested-type-aliases",
         ).apply {
             addAll(extraArgs)
         }
