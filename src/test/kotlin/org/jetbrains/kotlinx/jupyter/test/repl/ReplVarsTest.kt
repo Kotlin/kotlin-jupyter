@@ -297,9 +297,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
         eval(
             """
-            private val x = 341
+            internal val x = 341
             f += x
-            protected val z = "abcd"
+            private val z = "abcd"
             """.trimIndent(),
             2,
         )
