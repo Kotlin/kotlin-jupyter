@@ -9,11 +9,9 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.JSON
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.displayValue
 import org.jetbrains.kotlinx.jupyter.test.rawValue
@@ -104,15 +102,8 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             )
 
         val expectedJson = """{"x":42}"""
-        when (repl.compilerMode) {
-            K1 -> {
-                serialized.rawValue shouldBe expectedJson
-                serialized.renderedValue shouldBe JSON(expectedJson)
-            }
-            K2 -> {
-                serialized.shouldBeInstanceOf<EvalResultEx.Error>()
-            }
-        }
+        serialized.rawValue shouldBe expectedJson
+        serialized.renderedValue shouldBe JSON(expectedJson)
     }
 
     @Test

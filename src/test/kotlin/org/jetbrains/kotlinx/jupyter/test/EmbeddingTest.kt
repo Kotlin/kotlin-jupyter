@@ -1,6 +1,5 @@
 package org.jetbrains.kotlinx.jupyter.test
 
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
@@ -140,33 +139,24 @@ class EmbedReplTest : AbstractSingleReplTest() {
             addLibrary(testLibraryDefinition1)
         }
         val result1 = eval("org.jetbrains.kotlinx.jupyter.test.TestSum(5, 8)")
-        when (repl.compilerMode) {
-            K1 -> {
-                result1.renderedValue shouldBe 13
-                val result2 =
-                    eval(
-                        """
-                        import org.jetbrains.kotlinx.jupyter.test.TestFunList
-                        TestFunList(12, TestFunList(13, TestFunList(14, null)))
-                        """.trimIndent(),
-                    )
-                result2.renderedValue shouldBe "[12, 13, 14]"
+        result1.renderedValue shouldBe 13
+        val result2 =
+            eval(
+                """
+                import org.jetbrains.kotlinx.jupyter.test.TestFunList
+                TestFunList(12, TestFunList(13, TestFunList(14, null)))
+                """.trimIndent(),
+            )
+        result2.renderedValue shouldBe "[12, 13, 14]"
 
-                val result3 =
-                    eval(
-                        """
-                        import org.jetbrains.kotlinx.jupyter.test.TestQuad
-                        TestQuad(15)
-                        """.trimIndent(),
-                    )
-                result3.renderedValue shouldBe 225
-            }
-            K2 -> {
-                // Type renderes do not work yet due to:
-                // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-                result1.renderedValue.shouldBeNull()
-            }
-        }
+        val result3 =
+            eval(
+                """
+                import org.jetbrains.kotlinx.jupyter.test.TestQuad
+                TestQuad(15)
+                """.trimIndent(),
+            )
+        result3.renderedValue shouldBe 225
     }
 
     @Test
@@ -198,15 +188,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
                 @Serializable class Test(val x: Int)
                 """.trimIndent(),
             )
-        when (repl.compilerMode) {
-            K1 -> {
-                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
-            }
-            K2 -> {
-                // Fails because of https://youtrack.jetbrains.com/issue/KT-75672/K2-Repl-Serialization-plugin-crashes-compiler-backend
-                result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Error>()
-            }
-        }
+        result.shouldBeInstanceOf<org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx.Success>()
     }
 }
 
