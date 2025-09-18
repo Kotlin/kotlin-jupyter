@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.api.properties.asAccessible
 import org.jetbrains.kotlinx.jupyter.api.properties.isLazy
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
+import kotlin.reflect.jvm.javaMethod
 
 interface VariableState {
     val property: KProperty<*>
@@ -15,8 +16,6 @@ interface VariableState {
 data class VariableStateImpl(
     override val property: KProperty1<Any, *>,
     override val scriptInstance: Any,
-    // Just a Boolean rather than ReplCompilerMode as we cannot access the ReplCompilerMode
-    // enum from here, due to the way modules depend on each other.
     val compilerMode: ReplCompilerMode,
 ) : VariableState {
     private val stringCache =
@@ -45,7 +44,23 @@ data class VariableStateImpl(
                                 ),
                             )
                         } else {
-                            Result.success(prop.get(scriptInstance))
+                            when (compilerMode) {
+                                ReplCompilerMode.K1 -> {
+                                    Result.success(prop.get(scriptInstance))
+                                }
+                                ReplCompilerMode.K2 -> {
+                                    // K2 generates different metadata for private and public Notebook properties.
+                                    // Public fields have a getter, private does not. It feels like it should be
+                                    // possible to check this using kotlin-reflect,  but it doesn't look like it,
+                                    // or there is a bug in the metadata.
+                                    // A work-around is to check for the existence of the Java getter method.
+                                    val requireReceiver = (prop.getter.javaMethod != null)
+                                    when (requireReceiver) {
+                                        true -> Result.success(prop.getter.call(scriptInstance))
+                                        false -> Result.success(prop.getter.call())
+                                    }
+                                }
+                            }
                         }
                     } catch (ex: Throwable) {
                         Result.failure(ex)
