@@ -586,11 +586,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testAnonymousObjectRendering() {
         eval("val sim = emptyList<String>()")
         val res = eval("sim").renderedValue
-        when (repl.compilerMode) {
-            K1 -> res.toString() shouldBe "[]"
-            // https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
-            K2 -> res.toString() shouldBe null
-        }
+        res.toString() shouldBe "[]"
     }
 
     @Test
@@ -608,34 +604,25 @@ class ReplTests : AbstractSingleReplTest() {
 
     @Test
     fun testValueClassRendering() {
-        val result =
-            eval(
-                """
-                class Obj(val x: Int)
+        eval(
+            """
+            class Obj(val x: Int)
 
-                @JvmInline
-                value class Wrapper(val o: Obj)
-                """.trimIndent(),
-            )
-        when (repl.compilerMode) {
-            K1 -> {
-                eval(
-                    """
-                    USE {
-                        addRenderer(
-                            createRendererByCompileTimeType<Wrapper> { (it.value as Obj).x * 2 }
-                        )
-                    }
-                    """.trimIndent(),
+            @JvmInline
+            value class Wrapper(val o: Obj)
+            """.trimIndent(),
+        )
+        eval(
+            """
+            USE {
+                addRenderer(
+                    createRendererByCompileTimeType<Wrapper> { (it.value as Obj).x * 2 }
                 )
-                val res = eval("Wrapper(Obj(2))").renderedValue
-                res shouldBe 2 * 2
             }
-            K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KT-74786/K2-Repl-Unexpected-returnTypeRef-when-defining-a-value-class
-                result.shouldBeInstanceOf<EvalResultEx.Error>()
-            }
-        }
+            """.trimIndent(),
+        )
+        val res = eval("Wrapper(Obj(2))").renderedValue
+        res shouldBe 2 * 2
     }
 
     @Test
@@ -651,20 +638,8 @@ class ReplTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         setup.shouldBeInstanceOf<EvalResultEx.Success>()
-
-        when (repl.compilerMode) {
-            K1 -> {
-                val res1 = eval("listOf(1, 2)").renderedValue
-                res1 shouldBe listOf(2, 4)
-            }
-            K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
-                // We cannot correctly read the property types which breaks looking up registered compile time renders.
-                // It's still falling because we don't have KTypes for result values
-                val res1 = eval("listOf(1, 2)").renderedValue
-                res1 shouldBe listOf(1, 2)
-            }
-        }
+        val res1 = eval("listOf(1, 2)").renderedValue
+        res1 shouldBe listOf(2, 4)
 
         val res2 = eval("listOf('1', '2')").renderedValue
         res2 shouldBe listOf('1', '2')
@@ -921,15 +896,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("typealias MyStr = String")
         eval("val x: MyStr = \"abc\"")
         val res = eval("x")
-        when (repl.compilerMode) {
-            K1 -> {
-                res.renderedValue shouldBe "abc"
-            }
-            K2 -> {
-                // Waiting for https://youtrack.jetbrains.com/issue/KT-75946/K2-Repl-Using-a-type-alias-as-property-type-crashes-the-compiler
-                res.shouldBeInstanceOf<EvalResultEx.Error>()
-            }
-        }
+        res.renderedValue shouldBe "abc"
     }
 
     @Test
@@ -977,7 +944,6 @@ class ReplTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KTNB-965
     @Test
     fun testSmartCastKT965() {
-        if (repl.compilerMode != K2) return
         val result =
             eval(
                 """
@@ -1003,7 +969,6 @@ class ReplTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KTNB-967
     @Test
     fun testGenericIntersectionInType() {
-        if (repl.compilerMode != K2) return
         val result =
             eval(
                 """
@@ -1011,9 +976,7 @@ class ReplTests : AbstractSingleReplTest() {
                 "
                 """.trimIndent(),
             )
-        // Waiting for https://youtrack.jetbrains.com/issue/KTNB-967 to be fixed
-        // result.shouldBeInstanceOf<EvalResultEx.Success>()
-        result.shouldBeInstanceOf<EvalResultEx.Error>()
+        result.shouldBeInstanceOf<EvalResultEx.Success>()
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77202/K2-Repl-Local-Extension-Properties-are-not-supported
@@ -1071,7 +1034,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        // Doesn't work in K2, see KT-80019
+        // Doesn't work in K2, see https://youtrack.jetbrains.com/projects/KT/issues/KT-80019/K2-REPL-Specifying-a-package-directive-leads-to-a-compiler-exception
         val res =
             eval(
                 """
@@ -1119,58 +1082,73 @@ class ReplTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KT-77754/K2-Repl-Custom-getter-on-read-only-property-returns-default-value
     @Test
     fun customGetterReturnCorrectValue() {
-        val res = eval("""
-            val x: Int
-                get() = 42
-            x
-        """.trimIndent())
+        val res =
+            eval(
+                """
+                val x: Int
+                    get() = 42
+                x
+                """.trimIndent(),
+            )
         res.renderedValue shouldBe 42
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77757/K2-Repl-get-setJvmName-annotation-does-not-work-on-properties
     @Test
     fun jvmOverrideOnGettersAndSetters() {
-        val res = eval("""
-            @get:JvmName("customGetA")
-            val a: Int
-                get() = 42
-            a
-        """.trimIndent())
+        val res =
+            eval(
+                """
+                @get:JvmName("customGetA")
+                val a: Int
+                    get() = 42
+                a
+                """.trimIndent(),
+            )
         res.renderedValue shouldBe 42
-        val res1 = eval("""
-            @set:JvmName("customSetA")
-            var a: Int = 0
-                set(value) { field = value + 42 }
-            a = 100
-            a
-        """.trimIndent())
+        val res1 =
+            eval(
+                """
+                @set:JvmName("customSetA")
+                var a: Int = 0
+                    set(value) { field = value + 42 }
+                a = 100
+                a
+                """.trimIndent(),
+            )
         res1.renderedValue shouldBe 142
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77764/K2-Repl-Calling-a-function-that-references-a-function-below-it-fails-to-compile
     @Test
     fun callFunctionDeclaredLater() {
-        val res = eval("""
-            fun function(): String {
-                return functionBelow()
-            }
-            fun functionBelow(): String {
-                return "BOOM"
-            }
-            function()
-        """.trimIndent())
+        val res =
+            eval(
+                """
+                fun function(): String {
+                    return functionBelow()
+                }
+                fun functionBelow(): String {
+                    return "BOOM"
+                }
+                function()
+                """.trimIndent(),
+            )
         res.renderedValue shouldBe "BOOM"
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77761/K2-Repl-Inline-functions-are-not-supported
     @Test
     fun inlineFunction() {
-        val res = eval("""
-            inline fun String.test(): String {
-                return "Wave"
-            }
-            "Hello".test()
-        """.trimIndent())
+        val res =
+            eval(
+                """
+                inline fun String.test(): String {
+                    return "Wave"
+                }
+                "Hello".test()
+                """.trimIndent(),
+            )
         res.renderedValue shouldBe "Wave"
     }
 }

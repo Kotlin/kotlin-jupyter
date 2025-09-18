@@ -119,16 +119,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent(),
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
-                varState.getValue("x") shouldBe 1
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                varState.shouldBeEmpty()
-            }
-        }
+        varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
+        varState.getValue("x") shouldBe 1
     }
 
     @Test
@@ -140,15 +132,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val z = x
             """.trimIndent(),
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                varState.shouldNotBeEmpty()
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                varState.shouldBeEmpty()
-            }
-        }
+        varState.shouldNotBeEmpty()
 
         eval(
             """
@@ -158,18 +142,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             1,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                varState shouldHaveSize 3
-                varState.getStringValue("x") shouldBe "abc"
-                varState.getValue("y") shouldBe 123
-                varState.getStringValue("z") shouldBe "abc"
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                varState.shouldBeEmpty()
-            }
-        }
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "abc"
+        varState.getValue("y") shouldBe 123
+        varState.getStringValue("z") shouldBe "abc"
 
         eval(
             """
@@ -178,18 +154,10 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             2,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                varState shouldHaveSize 3
-                varState.getStringValue("x") shouldBe "1024"
-                varState.getValue("y") shouldBe 123 + 1024
-                varState.getStringValue("z") shouldBe "abc"
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                varState.shouldBeEmpty()
-            }
-        }
+        varState shouldHaveSize 3
+        varState.getStringValue("x") shouldBe "1024"
+        varState.getValue("y") shouldBe 123 + 1024
+        varState.getStringValue("z") shouldBe "abc"
     }
 
     @Test
@@ -238,15 +206,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var f = "abcd"
             """.trimIndent(),
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                cellVars.shouldNotBeEmpty()
-            }
-            K2 -> {
-                // See https://youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        cellVars.shouldNotBeEmpty()
 
         eval(
             """
@@ -254,15 +214,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             z += x
             """.trimIndent(),
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                cellVars shouldContainValue setOf("z", "f", "x")
-            }
-            K2 -> {
-                // See https://youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        cellVars shouldContainValue setOf("z", "f", "x")
     }
 
     @Test
@@ -298,15 +250,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             1,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                firstCellVars shouldContain "x"
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        firstCellVars shouldContain "x"
 
         eval(
             """
@@ -315,17 +259,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             2,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                cellVars.shouldNotBeEmpty()
-                firstCellVars.shouldBeEmpty()
-                secondCellVars shouldBe setOf("x", "f")
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        cellVars.shouldNotBeEmpty()
+        firstCellVars.shouldBeEmpty()
+        secondCellVars shouldBe setOf("x", "f")
     }
 
     @Test
@@ -356,16 +292,8 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             1,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                firstCellVars shouldContain "x"
-                firstCellVars shouldContain "z"
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        firstCellVars shouldContain "x"
+        firstCellVars shouldContain "z"
 
         eval(
             """
@@ -375,17 +303,9 @@ class ReplVarsTest : AbstractSingleReplTest() {
             """.trimIndent(),
             2,
         )
-        when (repl.compilerMode) {
-            K1 -> {
-                cellVars.shouldNotBeEmpty()
-                firstCellVars shouldBe setOf("f")
-                secondCellVars shouldBe setOf("x", "f", "z")
-            }
-            K2 -> {
-                // youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
-                cellVars.shouldBeEmpty()
-            }
-        }
+        cellVars.shouldNotBeEmpty()
+        firstCellVars shouldBe setOf("f")
+        secondCellVars shouldBe setOf("x", "f", "z")
     }
 
     @Test
