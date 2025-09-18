@@ -1151,4 +1151,10 @@ class ReplTests : AbstractSingleReplTest() {
             )
         res.renderedValue shouldBe "Wave"
     }
+
+    @Test
+    fun protectedTopLevelPropertiesNotSupported() {
+        val res = eval("protected val x = 42")
+        res.shouldBeInstanceOf<EvalResultEx.Error>()
+    }
 }
