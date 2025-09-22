@@ -9,16 +9,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 private val jsonParser = Json { ignoreUnknownKeys = true }
 
-private inline fun <T> parseCatching(
-    descriptor: T,
-    parse: (T) -> LibraryDescriptor,
-): LibraryDescriptor =
-    try {
-        parse(descriptor)
-    } catch (e: SerializationException) {
-        throw ReplException("Error during library deserialization. Library descriptor text:\n$descriptor", e)
-    }
-
 fun parseLibraryDescriptor(json: String): LibraryDescriptor =
     parseCatching(json) {
         jsonParser.decodeFromString(it)
@@ -39,3 +29,19 @@ fun parseLibraryDescriptors(
         parseLibraryDescriptor(it.value)
     }
 }
+
+private inline fun <T> parseCatching(
+    descriptor: T,
+    parse: (T) -> LibraryDescriptor,
+): LibraryDescriptor =
+    try {
+        parse(descriptor)
+    } catch (e: SerializationException) {
+        throw ReplException(
+            "Error during library deserialization. " +
+                "Read about library descriptor format at " +
+                "https://github.com/Kotlin/kotlin-jupyter/blob/master/docs/libraries.md#creating-a-library-descriptor\n" +
+                "Library descriptor text:\n$descriptor",
+            e,
+        )
+    }
