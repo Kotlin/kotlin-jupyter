@@ -41,7 +41,6 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
-import org.jetbrains.kotlinx.jupyter.util.DelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
 import org.junit.jupiter.api.Disabled
@@ -1050,6 +1049,20 @@ class ReplTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
         res.renderedValue shouldBe 42
+    }
+
+    @Test
+    fun testLazyPropertiesNotEvaluated() {
+        eval(
+            """
+            var counter = 0
+            val foo by lazy { ++counter; 42 }
+            """.trimIndent(),
+        )
+
+        eval("counter").renderedValue shouldBe 0
+        eval("foo").renderedValue shouldBe 42
+        eval("counter").renderedValue shouldBe 1
     }
 
     // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work

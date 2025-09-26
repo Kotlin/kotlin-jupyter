@@ -1,8 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import org.jetbrains.kotlinx.jupyter.api.properties.asAccessible
+import org.jetbrains.kotlinx.jupyter.api.properties.isLazy
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
-import kotlin.reflect.jvm.isAccessible
 
 interface VariableState {
     val property: KProperty<*>
@@ -37,7 +38,15 @@ data class VariableStateImpl(
             {
                 property.asAccessible { prop ->
                     try {
-                        Result.success(prop.get(scriptInstance))
+                        if (prop.isLazy(scriptInstance)) {
+                            Result.failure(
+                                IllegalStateException(
+                                    "Variable ${prop.name} is lazy and cannot be evaluated",
+                                ),
+                            )
+                        } else {
+                            Result.success(prop.get(scriptInstance))
+                        }
                     } catch (ex: Throwable) {
                         Result.failure(ex)
                     }
@@ -46,25 +55,13 @@ data class VariableStateImpl(
         )
 
     fun update(): Boolean =
-        (valCache.forceUpdate()).also { isChanged ->
+        valCache.forceUpdate().also { isChanged ->
             if (isChanged) stringCache.update()
         }
 
     override val stringValue: String? get() = stringCache.get()
 
     override val value: Result<Any?> get() = valCache.get()
-
-    companion object {
-        // We can currently not modify the accessible state in K2.
-        // See https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
-        private fun <T : KProperty<*>, R> T.asAccessible(action: (T) -> R): R {
-            val wasAccessible = isAccessible
-            isAccessible = true
-            val res = action(this)
-            isAccessible = wasAccessible
-            return res
-        }
-    }
 }
 
 private class VariableStateCache<T>(

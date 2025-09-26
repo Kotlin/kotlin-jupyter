@@ -3,6 +3,9 @@ package org.jetbrains.kotlinx.jupyter.repl
 import jupyter.kotlin.KotlinContext
 import jupyter.kotlin.KotlinFunctionInfo
 import jupyter.kotlin.KotlinVariableInfo
+import org.jetbrains.kotlinx.jupyter.api.properties.asAccessible
+import org.jetbrains.kotlinx.jupyter.api.properties.asAccessibleIfNotNull
+import org.jetbrains.kotlinx.jupyter.api.properties.isLazy
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.repl.impl.KernelReplEvaluator
@@ -18,7 +21,7 @@ import kotlin.script.experimental.util.LinkedSnippet
  * ContextUpdater updates current user-defined functions and variables
  * to use in completion and KotlinContext.
  *
- * It does this by using reflection on the scriptInstance in order to detect new properties and functions.
+ * It does this by using reflection on the scriptInstance to detect new properties and functions.
  */
 class ContextUpdater(
     loggerFactory: KernelLoggerFactory,
@@ -59,7 +62,7 @@ class ContextUpdater(
                     method.name == "main" &&
                     Modifier.isStatic(method.modifiers) ||
                     // K1 Repl entry point for running a snippet.
-                    method.name == "$\$eval" // K2 Repl method containing the snippet code.
+                    method.name == $$$"$$eval" // K2 Repl method containing the snippet code.
                 ) {
                     continue
                 }
@@ -104,10 +107,19 @@ class ContextUpdater(
             // `field.isAccessible` doesn't work correctly.
             // So instead we look up the value through the Java Property for now
             try {
+                @Suppress("UNCHECKED_CAST")
                 val kotlinProperty = kotlinProperties.firstOrNull { it.name == fieldName } as KProperty1<Any, *>?
-                field.isAccessible = true
-                val value = field.get(scriptInstance)
-                context.addVariable(fieldName, KotlinVariableInfo(value, kotlinProperty, field, scriptInstance))
+                kotlinProperty.asAccessibleIfNotNull { property ->
+                    if (property?.isLazy(scriptInstance) != true) {
+                        field.asAccessible(scriptInstance) {
+                            val value = field.get(scriptInstance)
+                            context.addVariable(
+                                fieldName,
+                                KotlinVariableInfo(value, kotlinProperty, field, scriptInstance),
+                            )
+                        }
+                    }
+                }
             } catch (ex: Exception) {
                 logger.error("Exception accessing variable: $fieldName", ex)
             }
