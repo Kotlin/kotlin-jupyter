@@ -38,6 +38,7 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.test.assertSuccess
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
@@ -1166,9 +1167,35 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "Wave"
     }
 
+    // Due to a difference in the underlying representation (class vs. object)
+    // protected properties at the top-level are not supported in K2.
     @Test
     fun protectedTopLevelPropertiesNotSupported() {
         val res = eval("protected val x = 42")
-        res.shouldBeInstanceOf<EvalResultEx.Error>()
+        when (repl.compilerMode) {
+            K1 -> res.shouldBeInstanceOf<EvalResultEx.Success>()
+            K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
+    }
+
+    // Test for https://github.com/Kotlin/kotlin-jupyter/issues/368
+    // Also reported here: https://youtrack.jetbrains.com/issue/KT-81423/K2-Repl-Return-value-not-working-when-combined-with-crossinline-anonymous-lambda
+    @Test
+    fun crossinlineAnonymousLambda() {
+        eval("""
+            class R {
+                val x: Int = 1
+            }
+            inline fun R.t(crossinline action: (R) -> Int) = object {
+                val y get() = action(this@t)
+            }
+        """.trimIndent()).assertSuccess()
+        val res = eval("""
+            R().t { it.x * 2 }
+        """.trimIndent())
+        when (repl.compilerMode) {
+            K1 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
+            K2 -> res.shouldBeInstanceOf<EvalResultEx.Success>()
+        }
     }
 }
