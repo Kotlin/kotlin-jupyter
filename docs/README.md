@@ -1,9 +1,9 @@
-[![JetBrains official project](https://jb.gg/badges/official.svg)](https://github.com/JetBrains#jetbrains-on-github)
+[![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Kotlin beta stability](https://img.shields.io/badge/project-beta-kotlin.svg?colorA=555555&colorB=AC29EC&label=&logo=kotlin&logoColor=ffffff&logoWidth=10)](https://kotlinlang.org/docs/components-stability.html)
 [![PyPI](https://img.shields.io/pypi/v/kotlin-jupyter-kernel?label=PyPi)](https://pypi.org/project/kotlin-jupyter-kernel/)
 [![Anaconda](https://anaconda.org/jetbrains/kotlin-jupyter-kernel/badges/version.svg)](https://anaconda.org/jetbrains/kotlin-jupyter-kernel)
 [![Gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/jetbrains/kotlin/kotlin-jupyter-api-gradle-plugin/maven-metadata.xml.svg?label=Gradle+plugin)](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jupyter.api)
-[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlin-jupyter-kernel?color=blue&label=Maven%20artifacts)](https://central.sonatype.com/search?q=kotlin-jupyter&smo=true)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlin-jupyter-kernel?color=blue&label=Maven%20artifacts)](https://search.maven.org/search?q=kotlin-jupyter)
 [![GitHub](https://img.shields.io/github/license/Kotlin/kotlin-jupyter)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kotlin/kotlin-jupyter/master?filepath=samples)
 
@@ -15,7 +15,7 @@ The Kotlin Kernel for Jupyter notebooks is a powerful tool that allows you to wr
 <img src="images/kotlin_notebook.gif" width="900" height="700" alt="Alt text for the GIF">
 
 The Kotlin Kernel for notebooks supports running code cells to immediately see outputs, basic code completion, error analysis,
-and other interactive coding features, enhancing the interactive experience provided by the [Kotlin REPL](https://www.jetbrains.com/help/idea/run-kotlin-interactively.html#kotlin-repl).
+and other interactive coding features, enhancing the interactive experience provided by the [Kotlin REPL](https://www.jetbrains.com/help/idea/kotlin-repl.html#kotlin-repl).
 
 With the Kotlin Kernel for notebooks, you gain access to a range of features like:
 * Accessing APIs within cells and using APIs for handling outputs.
@@ -692,7 +692,7 @@ We welcome contributions to further enhance our project! If you come across any 
 For issues specifically related to the Kotlin Notebook plugin, utilize [this tracker](https://youtrack.jetbrains.com/issues/KTNB).
 
 Pull requests are highly appreciated! When submitting a pull request, ensure it corresponds to an existing issue. Read
-[`CONTRIBUTING.md`](../CONTRIBUTING.md) for more information on how to work with the repository.
+[`CONTRIBUTING.MD`](../CONTRIBUTING.md) for more information on how to work with the repository.
 
 If you are planning a substantial change, we recommend discussing it with a [project maintainer](https://github.com/ileasile).
 You can reach out to me through [email](mailto:ilya.muradyan@jetbrains.com), [Kotlin Slack](https://kotlinlang.slack.com/archives/C05333T208Y), or [Telegram](https://t.me/ileasile).
