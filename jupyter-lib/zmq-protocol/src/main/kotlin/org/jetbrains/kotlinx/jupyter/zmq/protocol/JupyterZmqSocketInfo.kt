@@ -11,9 +11,9 @@ enum class JupyterZmqSocketInfo(
     val zmqIdeClientType: SocketType,
 ) {
     HB(JupyterSocketType.HB, SocketType.REP, SocketType.REQ, SocketType.DEALER),
-    SHELL(JupyterSocketType.SHELL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
-    CONTROL(JupyterSocketType.CONTROL, SocketType.ROUTER, SocketType.REQ, SocketType.DEALER),
-    STDIN(JupyterSocketType.STDIN, SocketType.REQ, SocketType.REP, SocketType.REP),
+    SHELL(JupyterSocketType.SHELL, SocketType.ROUTER, SocketType.DEALER, SocketType.DEALER),
+    CONTROL(JupyterSocketType.CONTROL, SocketType.ROUTER, SocketType.DEALER, SocketType.DEALER),
+    STDIN(JupyterSocketType.STDIN, SocketType.ROUTER, SocketType.DEALER, SocketType.DEALER),
     IOPUB(JupyterSocketType.IOPUB, SocketType.PUB, SocketType.SUB, SocketType.SUB),
     ;
 

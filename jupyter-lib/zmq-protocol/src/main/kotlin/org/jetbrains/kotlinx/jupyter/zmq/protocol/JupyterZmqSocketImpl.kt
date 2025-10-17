@@ -132,9 +132,14 @@ fun createZmqSocket(
     configParams: KernelJupyterParams,
     side: JupyterSocketSide,
     hmac: HMAC,
+    identity: ByteArray? = null,
 ): JupyterZmqSocket {
     val zmqSocket = context.socket(socketInfo.zmqType(side))
     zmqSocket.linger = 0
+
+    identity?.let {
+        zmqSocket.setIdentity(it)
+    }
 
     return JupyterZmqSocketImpl(
         loggerFactory = loggerFactory,
