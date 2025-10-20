@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSock
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
+import java.util.UUID
 
 class JupyterZmqClientReceiveSocketManager(
     private val loggerFactory: KernelLoggerFactory,
@@ -28,6 +29,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
 ) : JupyterClientReceiveSockets {
     val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
     private val hmac by lazy { configParams.createHmac() }
+    private val identity: ByteArray = UUID.randomUUID().toString().toByteArray(Charsets.UTF_8)
 
     override val shell: JupyterZmqSocket
     override val control: JupyterZmqSocket
@@ -35,7 +37,16 @@ class JupyterZmqClientReceiveSockets internal constructor(
     override val stdin: JupyterZmqSocket
 
     init {
-        fun createSocket(info: JupyterZmqSocketInfo) = createZmqSocket(loggerFactory, info, context, configParams, side, hmac)
+        fun createSocket(info: JupyterZmqSocketInfo) =
+            createZmqSocket(
+                loggerFactory,
+                info,
+                context,
+                configParams,
+                side,
+                hmac,
+                identity,
+            )
 
         shell =
             createSocket(JupyterZmqSocketInfo.SHELL).apply {
