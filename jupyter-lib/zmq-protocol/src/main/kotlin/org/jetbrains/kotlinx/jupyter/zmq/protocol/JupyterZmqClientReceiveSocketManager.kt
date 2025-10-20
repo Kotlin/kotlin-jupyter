@@ -45,9 +45,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
                 configParams,
                 side,
                 hmac,
-                identity.takeIf {
-                    info.zmqType(side) == SocketType.DEALER
-                },
+                identity,
             )
 
         shell =
