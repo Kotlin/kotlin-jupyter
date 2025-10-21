@@ -143,7 +143,6 @@ private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Con
         libs.kotlin.dev.scriptingCompilerEmbeddable,
         libs.kotlin.dev.scriptingIdeServices,
         libs.kotlin.dev.scriptingDependencies,
-        libs.kotlin.dev.scriptingDependenciesMavenAll,
         // Embedded version of serialization plugin for notebook code
         libs.serialization.dev.embeddedPlugin,
     ).forEach { dependency ->

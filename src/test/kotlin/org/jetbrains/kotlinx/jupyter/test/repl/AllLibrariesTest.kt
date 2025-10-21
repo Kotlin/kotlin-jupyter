@@ -16,7 +16,6 @@ import kotlin.io.path.nameWithoutExtension
  * are resolved successfully
  */
 @Execution(ExecutionMode.SAME_THREAD)
-@Disabled
 class AllLibrariesTest : AbstractSingleReplTest() {
     override val repl = makeReplWithStandardResolver()
 

@@ -16,7 +16,6 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
-    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
     implementation(libs.amper.dependencyResolver)
 }
 

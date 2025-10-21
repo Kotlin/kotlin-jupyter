@@ -58,7 +58,7 @@ dependencies {
     springKernel(projects.springStarter) { isTransitive = false }
 
     springKernel(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
-    springKernel(libs.kotlin.dev.scriptingDependenciesMavenAll) { isTransitive = false }
+    springKernel(libs.amper.dependencyResolver)
     springKernel(libs.kotlin.dev.scriptingIdeServices) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCompilerImplEmbeddable) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCompilerEmbeddable) { isTransitive = false }
