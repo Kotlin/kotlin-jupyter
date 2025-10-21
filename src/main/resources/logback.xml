@@ -16,6 +16,4 @@
     <logger name="org.jetbrains.kotlin.org.apache" level="ERROR" />
     <logger name="httpclient" level="ERROR" />
     <logger name="org.jetbrains.kotlin.httpclient" level="ERROR" />
-    <logger name="org.eclipse.aether" level="DEBUG" />
-    <logger name="org.jetbrains.kotlin.org.eclipse.aether" level="DEBUG" />
 </configuration>

@@ -3,10 +3,12 @@ package build
 import build.util.defaultVersionCatalog
 import build.util.junitApi
 import build.util.junitEngine
+import build.util.jvmForTests
 import build.util.kotlinTest
 import build.util.kotlintestAssertions
 import build.util.testImplementation
 import build.util.testRuntimeOnly
+import build.util.useJavaLauncherOfVersion
 import org.gradle.api.Project
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
@@ -33,6 +35,7 @@ class BuildSettingsExtension(private val project: Project) {
                 events("passed", "skipped", "failed")
             }
             maxHeapSize = "4000m"
+            useJavaLauncherOfVersion(project.defaultVersionCatalog.versions.jvmForTests)
             configure()
         }
     }

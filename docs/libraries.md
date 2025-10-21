@@ -181,8 +181,6 @@ Mind the following:
   both compile and runtime classpath. That's why you may see undesired variants offered in completion.
 * In Kotlin Notebook, sources of the dependencies are resolved and included in the response metadata.
   In other clients, they do not. To control this behavior, use the `SessionOptions.resolveSources` option.
-* MPP libraries are usually not resolved by the Maven resolver. You should either use the `jvm` variants of these
-  artifacts or enable experimental multiplatform resolution with the `SessionOptions.resolveMpp` option.
 * To show the current notebook classpath, use the `:classpath` command.
 
 #### Descriptor API

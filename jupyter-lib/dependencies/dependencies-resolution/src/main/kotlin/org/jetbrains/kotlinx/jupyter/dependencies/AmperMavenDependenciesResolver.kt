@@ -1,0 +1,263 @@
+package org.jetbrains.kotlinx.jupyter.dependencies
+
+import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionException
+import org.jetbrains.amper.dependency.resolution.Context
+import org.jetbrains.amper.dependency.resolution.MavenCoordinates
+import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
+import org.jetbrains.amper.dependency.resolution.MavenRepository
+import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
+import org.jetbrains.amper.dependency.resolution.ResolutionScope
+import org.jetbrains.amper.dependency.resolution.ResolutionState
+import org.jetbrains.amper.dependency.resolution.Resolver
+import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
+import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
+import java.net.MalformedURLException
+import java.net.URL
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.onFailure
+import kotlin.script.experimental.api.valueOrNull
+
+/**
+ * Resolves Maven coordinates using Amper's dependency resolution engine.
+ *
+ * Note: this type is used at runtime, but is relocated into a fat JAR, so the IDE may mark it as unused.
+ */
+@Suppress("unused")
+class AmperMavenDependenciesResolver(
+    private val cachePath: Path,
+) : SourceAwareDependenciesResolver {
+    private val repos = mutableListOf<MavenRepository>()
+    private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
+    private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
+
+    /**
+     * Returns true if the repository URL looks valid for Maven resolution.
+     */
+    override fun acceptsRepository(repository: Repository): Boolean = repository.value.toRepositoryUrlOrNull() != null
+
+    /**
+     * Adds a Maven repository to be used during resolution. Username/password may be taken from
+     * environment variables if specified with the special syntax, see [tryResolveEnvironmentVariable].
+     */
+    override fun addRepository(
+        repository: Repository,
+        sourceCodeLocation: SourceCode.LocationWithId?,
+    ): ResultWithDiagnostics<Boolean> {
+        val url =
+            repository.value.toRepositoryUrlOrNull()
+                ?: return false.asSuccess()
+
+        val usernameRaw = repository.username
+        val passwordRaw = repository.password
+
+        val reports = mutableListOf<ScriptDiagnostic>()
+
+        fun getFinalValue(
+            optionName: String,
+            rawValue: String?,
+        ): String? =
+            tryResolveEnvironmentVariable(rawValue, optionName, sourceCodeLocation)
+                .onFailure { reports.addAll(it.reports) }
+                .valueOrNull()
+
+        val username = getFinalValue("username", usernameRaw)
+        val password = getFinalValue("password", passwordRaw)
+
+        if (reports.isNotEmpty()) {
+            return ResultWithDiagnostics.Failure(reports)
+        }
+
+        repos.add(
+            MavenRepository(
+                url.toString(),
+                username,
+                password,
+            ),
+        )
+        return true.asSuccess()
+    }
+
+    /**
+     * Returns true if [artifactCoordinates] parse as Maven coordinates.
+     */
+    override fun acceptsArtifact(artifactCoordinates: String): Boolean = artifactCoordinates.toMavenArtifact() != null
+
+    /**
+     * Resolves the given artifacts via Amper resolver and returns all newly added files from the collector snapshot.
+     */
+    override suspend fun resolve(
+        artifactRequests: List<ArtifactRequest>,
+        resolveSources: Boolean,
+    ): ResultWithDiagnostics<ResolvedArtifacts> {
+        for (artifact in artifactRequests) {
+            requestedArtifacts[artifact.artifact] = artifact
+        }
+        val result =
+            doAmperResolve(
+                cachePath = cachePath,
+                artifactsWithLocations = requestedArtifacts.values,
+                resolveSources = resolveSources,
+                repos = repos,
+                dependencyCollector = dependencyCollector,
+            )
+        return when (result) {
+            is ResultWithDiagnostics.Failure -> {
+                result
+            }
+            is ResultWithDiagnostics.Success -> {
+                dependencyCollector.getSnapshot().asSuccess()
+            }
+        }
+    }
+}
+
+private suspend fun doAmperResolve(
+    cachePath: Path,
+    artifactsWithLocations: Collection<ArtifactRequest>,
+    resolveSources: Boolean,
+    repos: List<MavenRepository>,
+    dependencyCollector: DependencyCollector,
+): ResultWithDiagnostics<Unit> {
+    val resolutionContext =
+        Context {
+            scope = ResolutionScope.RUNTIME
+            platforms = setOf(ResolutionPlatform.JVM)
+            repositories = repos
+            cache = getDefaultFileCacheBuilder(cachePath)
+            verifyChecksumsLocally = false
+        }
+
+    val firstArtifactWithLocation =
+        artifactsWithLocations.firstOrNull()
+            ?: return Unit.asSuccess()
+
+    try {
+        val artifactIds =
+            artifactsWithLocations.map {
+                it.artifact.toMavenArtifact()!!
+            }
+
+        val root =
+            RootDependencyNodeWithContext(
+                templateContext = resolutionContext,
+                children =
+                    artifactIds.map {
+                        resolutionContext.toMavenDependencyNode(it)
+                    },
+            )
+
+        val resolvedGraph =
+            Resolver().resolveDependencies(
+                root,
+                downloadSources = resolveSources,
+            )
+
+        for (node in resolvedGraph.distinctBfsSequence()) {
+            if (node is MavenDependencyNode) {
+                val dependency = node.dependency
+                if (dependency.state != ResolutionState.RESOLVED) {
+                    throw AmperDependencyResolutionException(
+                        "Dependency '${dependency.coordinates}' was not resolved",
+                    )
+                }
+
+                for (file in dependency.files(withSources = resolveSources)) {
+                    val path = file.path ?: continue
+                    if (!path.exists()) continue
+
+                    when {
+                        file.isDocumentation -> {
+                            if (!path.name.endsWith("-javadoc.jar")) {
+                                dependencyCollector.addSource(dependency.coordinates, path.toFile())
+                            }
+                        }
+                        else -> {
+                            dependencyCollector.addBinary(dependency.coordinates, path.toFile())
+                        }
+                    }
+                }
+            }
+        }
+
+        return Unit.asSuccess()
+    } catch (e: AmperDependencyResolutionException) {
+        return makeAmperResolveFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
+    }
+}
+
+private fun String.toRepositoryUrlOrNull(): URL? =
+    try {
+        URL(this)
+    } catch (_: MalformedURLException) {
+        null
+    }
+
+private fun String.toMavenArtifact(): MavenCoordinates? {
+    val dependencyParts = split(":")
+    if (dependencyParts.size !in 3..5) {
+        return null
+    }
+
+    val groupId = dependencyParts[0]
+    val artifactId = dependencyParts[1]
+    val version = dependencyParts[2]
+    val classifier = dependencyParts.getOrNull(3)
+
+    return MavenCoordinates(
+        groupId,
+        artifactId,
+        version,
+        classifier,
+    )
+}
+
+private fun tryResolveEnvironmentVariable(
+    str: String?,
+    optionName: String,
+    location: SourceCode.LocationWithId?,
+): ResultWithDiagnostics<String?> {
+    if (str == null) return null.asSuccess()
+    if (!str.startsWith("$")) return str.asSuccess()
+    val envName = str.substring(1)
+    val envValue: String? = System.getenv(envName)
+    if (envValue.isNullOrEmpty()) {
+        return ResultWithDiagnostics.Failure(
+            ScriptDiagnostic(
+                ScriptDiagnostic.unspecifiedError,
+                "Environment variable `$envName` for $optionName is not set",
+                ScriptDiagnostic.Severity.ERROR,
+                location,
+            ),
+        )
+    }
+    return envValue.asSuccess()
+}
+
+/**
+ * Creates a failure result from an [exception], extracting a concise message from the primary cause
+ * (preferring [AmperDependencyResolutionException] if present).
+ */
+fun makeAmperResolveFailureResult(
+    exception: Throwable,
+    location: SourceCode.LocationWithId?,
+): ResultWithDiagnostics.Failure {
+    val allCauses = generateSequence(exception) { e: Throwable -> e.cause }.toList()
+    val primaryCause = allCauses.firstOrNull { it is AmperDependencyResolutionException } ?: exception
+
+    val message =
+        buildString {
+            append(primaryCause::class.simpleName)
+            if (primaryCause.message != null) {
+                append(": ")
+                append(primaryCause.message)
+            }
+        }
+
+    return makeResolveFailureResult(listOf(message), location, exception)
+}

@@ -251,7 +251,6 @@ class ReplForJupyterImpl(
             loggerFactory,
             mavenRepositories,
             sessionOptions::resolveSources,
-            sessionOptions::resolveMpp,
             options::trackClasspath,
         ).apply {
             addBinaryClasspath(

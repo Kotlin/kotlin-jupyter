@@ -1,11 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import jupyter.kotlin.providers.SessionOptionsProvider
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import org.junit.jupiter.params.ParameterizedInvocationConstants.ARGUMENTS_PLACEHOLDER
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.util.stream.Stream
@@ -23,10 +25,11 @@ class AllLibrariesTest : AbstractSingleReplTest() {
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("libraryNames")
     fun testLibrary(libraryName: String) {
-        if (libraryName in disabled) {
-            println("Library '$libraryName' is skipped")
+        if (enabled.isNotEmpty() && libraryName !in enabled || libraryName in disabled) {
+            Assumptions.abort<Unit>("Library '$libraryName' is skipped")
             return
         }
+        (repl as SessionOptionsProvider).sessionOptions.resolveSources = true
         val args = arguments[libraryName]?.invoke()?.let { "($it)" }.orEmpty()
         eval("%use $libraryName$args")
 
@@ -34,14 +37,22 @@ class AllLibrariesTest : AbstractSingleReplTest() {
     }
 
     companion object {
-        // a lot of heavy dependencies
-        // "deeplearning4j",
-        // a lot of heavy dependencies
-        // "deeplearning4j-cuda",
-        // we already have a corresponding test
-        // "dataframe",
-        // may lead to OOM
-        // "spark",
+        /**
+         * If empty, all libraries except [disabled] are used.
+         * If not empty, only libraries in this set are used.
+         */
+        private val enabled: Set<String> = setOf()
+
+        /**
+         * a lot of heavy dependencies
+         * "deeplearning4j",
+         * a lot of heavy dependencies
+         * "deeplearning4j-cuda",
+         * we already have a corresponding test
+         * "dataframe",
+         * may lead to OOM
+         * "spark",
+         */
         private val disabled: Set<String> = setOf()
 
         private val arguments: Map<String, () -> String> =

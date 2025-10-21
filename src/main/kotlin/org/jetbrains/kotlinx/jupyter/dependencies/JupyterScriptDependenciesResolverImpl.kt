@@ -1,18 +1,13 @@
 package org.jetbrains.kotlinx.jupyter.dependencies
 
 import jupyter.kotlin.DependsOn
-import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
+import org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
-import org.jetbrains.kotlinx.jupyter.resolvePath
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -20,74 +15,40 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 import kotlin.script.experimental.api.valueOrNull
-import kotlin.script.experimental.dependencies.ArtifactWithLocation
-import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
-import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
-import kotlin.script.experimental.dependencies.ExternalDependenciesResolver.Options
-import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
-import kotlin.script.experimental.dependencies.impl.DependenciesResolverOptionsName
-import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesResolverOptions
-import kotlin.script.experimental.dependencies.impl.set
-import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 
 open class JupyterScriptDependenciesResolverImpl(
     loggerFactory: KernelLoggerFactory,
     mavenRepositories: List<MavenRepositoryCoordinates>,
     resolveSourcesOption: KMutableProperty0<Boolean>,
-    resolveMppOption: KMutableProperty0<Boolean>,
     private val addedBinaryClasspath: MutableList<File>,
     private val addedSourceClasspath: MutableList<File>,
 ) : JupyterScriptDependenciesResolver {
     private val logger = loggerFactory.getLogger(JupyterScriptDependenciesResolverImpl::class.java)
 
-    private val resolver: ExternalDependenciesResolver =
-        CompoundDependenciesResolver(
-            FileSystemDependenciesResolver(),
-            RemoteResolverWrapper(MavenDependenciesResolver(true)),
-        )
-    private val resolverOptions =
-        buildOptions(
-            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
+    private val resolver: SourceAwareDependenciesResolver =
+        CompoundSourceAwareDependenciesResolver(
+            FileSystemSourceAwareDependenciesResolver(),
+            AmperMavenDependenciesResolver(kernelMavenCacheDir.toPath()),
         )
 
-    private val sourcesResolverOptions =
-        buildOptions(
-            DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
-            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
-            DependenciesResolverOptionsName.CLASSIFIER to "sources",
-            DependenciesResolverOptionsName.EXTENSION to "jar",
-        )
-
-    private val mppResolverOptions =
-        buildOptions(
-            DependenciesResolverOptionsName.PARTIAL_RESOLUTION to "true",
-            DependenciesResolverOptionsName.SCOPE to "compile,runtime",
-            DependenciesResolverOptionsName.EXTENSION to "module",
-        )
-
-    private val repositories = arrayListOf<Repo>()
+    private val repositories = arrayListOf<Repository>()
 
     override var resolveSources: Boolean by resolveSourcesOption
-    override var resolveMpp: Boolean by resolveMppOption
+    override var resolveMpp: Boolean
+        get() = true
+        set(_) {}
 
     init {
-        mavenRepositories.forEach { addRepository(Repo(it)) }
+        mavenRepositories.forEach { addRepository(Repository(it.coordinates)) }
+        // Ensure Central is present before the first resolution
+        addRepository(CENTRAL_REPO)
     }
 
-    private fun buildOptions(vararg options: Pair<DependenciesResolverOptionsName, String>): Options =
-        makeExternalDependenciesResolverOptions(
-            mutableMapOf<String, String>().apply {
-                for (option in options) this[option.first] = option.second
-            },
-        )
-
-    private fun addRepository(repo: Repo): Boolean {
-        val repoIndex = repositories.indexOfFirst { it.repo == repo.repo }
+    private fun addRepository(repository: Repository): Boolean {
+        val repoIndex = repositories.indexOfFirst { it.value == repository.value }
         if (repoIndex != -1) repositories.removeAt(repoIndex)
-        repositories.add(repo)
-
-        return resolver.addRepository(RepositoryCoordinates(repo.repo.coordinates), repo.options, null).valueOrNull() == true
+        repositories.add(repository)
+        return resolver.addRepository(repository, null).valueOrNull() == true
     }
 
     override fun resolveFromAnnotations(annotations: List<Annotation>): ResultWithDiagnostics<List<File>> {
@@ -98,7 +59,7 @@ open class JupyterScriptDependenciesResolverImpl(
 
         for (annotation in annotations) {
             when (annotation) {
-                is Repository ->
+                is jupyter.kotlin.Repository ->
                     repositories.add(
                         RepositoryDescription(
                             annotation.value,
@@ -138,29 +99,17 @@ open class JupyterScriptDependenciesResolverImpl(
 
     override fun addRepositories(repositories: List<RepositoryDescription>) {
         if (repositories.isEmpty()) return
-
-        var existingRepositories: List<Repo>? = null
-        for (repository in repositories) {
-            logger.info("Adding repository: ${repository.value}")
-            val newRepositories = existingRepositories ?: ArrayList(this.repositories)
-            existingRepositories = newRepositories
-
-            val options =
-                if (repository.username.isNotEmpty() || repository.password.isNotEmpty()) {
-                    buildOptions(
-                        DependenciesResolverOptionsName.USERNAME to repository.username,
-                        DependenciesResolverOptionsName.PASSWORD to repository.password,
-                    )
-                } else {
-                    Options.Empty
-                }
-            val repo = Repo(MavenRepositoryCoordinates(repository.value), options)
-
-            if (!addRepository(repo)) {
-                throw IllegalArgumentException("Illegal argument for Repository annotation: $repository")
+        for (repositoryDescription in repositories) {
+            logger.info("Adding repository: ${repositoryDescription.value}")
+            val repository =
+                Repository(
+                    repositoryDescription.value,
+                    repositoryDescription.username,
+                    repositoryDescription.password,
+                )
+            if (!addRepository(repository)) {
+                throw IllegalArgumentException("Illegal argument for Repository annotation: $repositoryDescription")
             }
-
-            newRepositories.forEach { addRepository(it) }
         }
     }
 
@@ -218,15 +167,10 @@ open class JupyterScriptDependenciesResolverImpl(
         addRepository(CENTRAL_REPO)
     }
 
-    private suspend fun resolveWithOptions(
-        dependencies: List<Dependency>,
-        options: Options,
-    ): ResultWithDiagnostics<List<File>> {
-        val artifacts =
-            dependencies.map {
-                ArtifactWithLocation(it.value, null)
-            }
-        return resolver.resolve(artifacts, options)
+    private suspend fun resolveWithOptions(dependencies: List<Dependency>): ResultWithDiagnostics<ResolvedArtifacts> {
+        val artifacts = dependencies.map { ArtifactRequest(it.value, null) }
+        val resolveSourcesFlag = dependencies.shouldResolveSources(resolveSources)
+        return resolver.resolve(artifacts, resolveSourcesFlag)
     }
 
     private fun tryResolve(
@@ -239,8 +183,9 @@ open class JupyterScriptDependenciesResolverImpl(
 
         logger.info("Resolving $dependencies")
         doResolve(
-            { resolveWithOptions(dependencies, resolverOptions) },
-            onResolved = onBinaryResolved,
+            { resolveWithOptions(dependencies) },
+            onBinaryResolved = onBinaryResolved,
+            onSourceResolved = onSourceResolved,
             onFailure = { result ->
                 val diagnostics =
                     ScriptDiagnostic(
@@ -251,46 +196,12 @@ open class JupyterScriptDependenciesResolverImpl(
                 scriptDiagnosticsResult.add(diagnostics)
             },
         )
-
-        if (dependencies.shouldResolveSources(resolveSources)) {
-            doResolve(
-                { resolveWithOptions(dependencies, sourcesResolverOptions) },
-                onResolved = onSourceResolved,
-                onFailure = { result ->
-                    logger.warn("Failed to resolve sources for $dependencies:\n" + result.reports.joinToString("\n") { it.message })
-                },
-            )
-        }
-
-        if (dependencies.shouldResolveAsMultiplatform(resolveMpp)) {
-            doResolve(
-                { resolveWithOptions(dependencies, mppResolverOptions) },
-                onResolved = { files ->
-                    val resolvedArtifacts = mutableSetOf<Dependency>()
-                    resolvedArtifacts.addAll(dependencies)
-                    resolveMpp(files) { artifactCoordinates ->
-                        val artifacts = artifactCoordinates.map { it.toDependency() }
-                        val notYetResolvedArtifacts =
-                            artifacts.filter { artifact ->
-                                resolvedArtifacts.add(artifact)
-                            }
-
-                        tryResolve(
-                            notYetResolvedArtifacts,
-                            scriptDiagnosticsResult,
-                            onBinaryResolved,
-                            onSourceResolved,
-                        )
-                    }
-                },
-                onFailure = {},
-            )
-        }
     }
 
     private fun doResolve(
-        resolveAction: suspend () -> ResultWithDiagnostics<List<File>>,
-        onResolved: (List<File>) -> Unit,
+        resolveAction: suspend () -> ResultWithDiagnostics<ResolvedArtifacts>,
+        onBinaryResolved: (List<File>) -> Unit,
+        onSourceResolved: (List<File>) -> Unit,
         onFailure: (ResultWithDiagnostics.Failure) -> Unit,
     ) {
         when (val result = runBlocking { resolveAction() }) {
@@ -298,42 +209,13 @@ open class JupyterScriptDependenciesResolverImpl(
                 onFailure(result)
             }
             is ResultWithDiagnostics.Success -> {
-                logger.info("Resolved: " + result.value.joinToString())
-                onResolved(result.value)
+                val resolvedArtifacts = result.value
+                logger.info("Resolved binaries: " + resolvedArtifacts.binaries.joinToString())
+                logger.info("Resolved sources: " + resolvedArtifacts.sources.joinToString())
+                onBinaryResolved(resolvedArtifacts.binaries)
+                onSourceResolved(resolvedArtifacts.sources)
             }
         }
-    }
-
-    private fun resolveMpp(
-        moduleFiles: List<File>,
-        jvmArtifactCallback: (List<String>) -> Unit,
-    ) {
-        val coordinates = mutableListOf<String>()
-
-        for (moduleFile in moduleFiles) {
-            val json =
-                try {
-                    Json.parseToJsonElement(moduleFile.readText())
-                } catch (_: Throwable) {
-                    continue
-                }
-
-            val variants = (json.resolvePath(listOf("variants")) as? JsonArray) ?: continue
-            for (v in variants) {
-                val attrs = (v.resolvePath(listOf("attributes")) as? JsonObject) ?: continue
-                val gradleUsage = (attrs["org.gradle.usage"] as? JsonPrimitive)?.content ?: continue
-
-                if (gradleUsage != "java-runtime") continue
-                val artifact = (v.resolvePath(listOf("available-at")) as? JsonObject) ?: continue
-                val group = (artifact["group"] as? JsonPrimitive)?.content ?: continue
-                val artifactId = (artifact["module"] as? JsonPrimitive)?.content ?: continue
-                val version = (artifact["version"] as? JsonPrimitive)?.content ?: continue
-
-                val artifactCoordinates = "$group:$artifactId:$version"
-                coordinates.add(artifactCoordinates)
-            }
-        }
-        jvmArtifactCallback(coordinates)
     }
 
     private fun makeResolutionResult(
@@ -345,14 +227,4 @@ open class JupyterScriptDependenciesResolverImpl(
         } else {
             makeFailureResult(scriptDiagnostics)
         }
-
-    private class Repo(
-        val repo: MavenRepositoryCoordinates,
-        val options: Options = Options.Empty,
-    )
-
-    companion object {
-        private val CENTRAL_REPO_COORDINATES = MavenRepositoryCoordinates("https://repo1.maven.org/maven2/")
-        private val CENTRAL_REPO = Repo(CENTRAL_REPO_COORDINATES)
-    }
 }

@@ -26,29 +26,85 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 includeBuild("build-plugin")
 
-subproject("common-dependencies", "build-plugin/")
-libSubproject("lib")
-libSubproject("api")
-libSubproject("kotlin-jupyter-api-gradle-plugin")
-libSubproject("shared-compiler")
-libSubproject("spring-starter")
-libSubproject("lib-ext")
-libSubproject("protocol")
-libSubproject("protocol-api")
-libSubproject("test-kit")
-libSubproject("test-kit-test")
-libSubproject("ws-server")
-libSubproject("zmq-protocol")
-exampleSubproject("getting-started")
+projectStructure {
+    folder("api-examples") {
+        project("getting-started")
+    }
+    folder("build-plugin") {
+        project("common-dependencies")
+    }
+    folder("jupyter-lib") {
+        project("lib")
+        project("api")
+        folder("dependencies") {
+            project("dependencies-resolution")
+            project("dependencies-resolution-shadowed")
+            project("dependencies-resolution-test")
+        }
+        project("kotlin-jupyter-api-gradle-plugin")
+        project("shared-compiler")
+        project("spring-starter")
+        project("lib-ext")
+        project("protocol")
+        project("protocol-api")
+        project("test-kit")
+        project("test-kit-test")
+        project("ws-server")
+        project("zmq-protocol")
+    }
+}
 
-fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
+fun Settings.projectStructure(configuration: ProjectStructure.() -> Unit) {
+    val structure = ProjectStructure()
+    structure.configuration()
+    structure.applyTo(this)
+}
 
-fun exampleSubproject(name: String) = subproject(name, "api-examples/")
+class ProjectStructure {
+    private val folders = mutableListOf<Folder>()
 
-fun subproject(
-    name: String,
-    parentPath: String,
-) {
-    include(name)
-    project(":$name").projectDir = file("$parentPath$name")
+    fun folder(
+        name: String,
+        configuration: Folder.() -> Unit,
+    ) {
+        val folder = Folder(name)
+        folder.configuration()
+        folders.add(folder)
+    }
+
+    fun applyTo(settings: Settings) {
+        folders.forEach { it.applyTo(settings, "") }
+    }
+
+    inner class Folder(
+        private val name: String,
+    ) {
+        private val subFolders = mutableListOf<Folder>()
+        private val projects = mutableListOf<String>()
+
+        fun folder(
+            name: String,
+            configuration: Folder.() -> Unit,
+        ) {
+            val subFolder = Folder(name)
+            subFolder.configuration()
+            subFolders.add(subFolder)
+        }
+
+        fun project(name: String) {
+            projects.add(name)
+        }
+
+        fun applyTo(
+            settings: Settings,
+            path: String,
+        ) {
+            val currentPath = if (path.isEmpty()) name else "$path/$name"
+            projects.forEach {
+                settings.include(it)
+                settings.project(":$it").projectDir = file("$currentPath/$it")
+            }
+            subFolders.forEach { it.applyTo(settings, currentPath) }
+        }
+    }
 }

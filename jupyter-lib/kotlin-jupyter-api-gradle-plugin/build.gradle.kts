@@ -1,13 +1,13 @@
 import build.CreateResourcesTask
 import build.util.defaultVersionCatalog
 import build.util.devKotlin
+import build.util.useJavaLauncherOfVersion
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.plugin.publish)
     `java-gradle-plugin`
     alias(libs.plugins.plugin.kotlin.dsl)
-    kotlin("libs.publisher")
+    alias(libs.plugins.publisher)
 }
 
 project.group = "org.jetbrains.kotlin"
@@ -41,7 +41,9 @@ java {
 
 buildSettings {
     withLanguageLevel(rootSettings.gradleCompatibleKotlinLanguageLevel)
-    withTests()
+    withTests {
+        useJavaLauncherOfVersion(libs.versions.jvmForGradlePluginTests.get())
+    }
     withCompilerArgs {
         jdkRelease(rootSettings.jvmTarget)
     }
@@ -49,7 +51,6 @@ buildSettings {
 
 val pluginName = "apiGradlePlugin"
 
-@Suppress("UnstableApiUsage")
 gradlePlugin {
     // These settings are set for the whole plugin bundle
     website.set(rootSettings.projectRepoUrl)
