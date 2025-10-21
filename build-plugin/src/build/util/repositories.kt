@@ -28,7 +28,9 @@ fun Project.addAllBuildRepositories() {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven(sharedProps.getProperty("kotlin.repository"))
+        sharedProps.getProperty("shared.repositories").split(',').forEach {
+            maven(it)
+        }
 
         for (teamcity in listOf(INTERNAL_KOTLIN_TEAMCITY, PUBLIC_KOTLIN_TEAMCITY)) {
             val locator = "buildType:(id:${teamcity.projectId}),number:$kotlinVersion,branch:default:any/artifacts/content/maven"

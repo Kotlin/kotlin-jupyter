@@ -45,8 +45,9 @@ val sharedProps =
 
 repositories {
     mavenCentral()
-    maven(sharedProps.getProperty("kotlin.repository"))
-    maven(sharedProps.getProperty("kotlin.ds.repository"))
+    sharedProps.getProperty("shared.repositories").split(',').forEach {
+        maven(it)
+    }
     maven {
         name = "intellij-deps"
         url = uri("https://www.jetbrains.com/intellij-repository/releases/")

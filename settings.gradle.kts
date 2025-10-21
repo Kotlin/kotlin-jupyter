@@ -9,8 +9,9 @@ pluginManagement {
                 load(File(rootDir, "shared.properties").inputStream())
             }
         gradlePluginPortal()
-        maven(sharedProps.getProperty("kotlin.repository"))
-        maven(sharedProps.getProperty("kotlin.ds.repository"))
+        sharedProps.getProperty("shared.repositories").split(',').forEach {
+            maven(it)
+        }
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }

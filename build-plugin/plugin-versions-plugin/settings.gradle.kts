@@ -9,9 +9,9 @@ pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        // Artifacts here are guaranteed to not be removed, unlike https://packages.jetbrains.team/maven/p/kt/dev.
-        // But note that /kt/dev is updated faster.
-        maven(sharedProps.getProperty("kotlin.repository"))
+        sharedProps.getProperty("shared.repositories").split(',').forEach {
+            maven(it)
+        }
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
@@ -34,7 +34,9 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven(sharedProps.getProperty("kotlin.repository"))
+        sharedProps.getProperty("shared.repositories").split(',').forEach {
+            maven(it)
+        }
         if (System.getenv("KOTLIN_JUPYTER_USE_MAVEN_LOCAL") != null) {
             mavenLocal()
         }
