@@ -15,7 +15,7 @@ kotlinxSerialization = "1.9.0"
 json5k = "0.3.0"
 kotlinxCoroutines = "1.10.2"
 jupyterNotebooksParser = "0.2.0-dev-10"
-compose = "1.7.3"
+amper = "0.9.0-dev-3361"
 
 ktlintGradle = "12.3.0"
 ktlint = "1.7.1"
@@ -83,6 +83,8 @@ kotlin-gradle-gradle = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-p
 serialization-dev-embedded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 serialization-dev-embeddedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-compiler-plugin-embeddable", version.ref = "kotlin" }
 serialization-dev-unshaded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-unshaded", version.ref = "kotlin" }
+
+amper-dependencyResolver = { group = "org.jetbrains.amper", name = "dependency-resolution", version.ref = "amper" }
 
 # Serialization runtime
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }

@@ -151,6 +151,14 @@ private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Con
             isTransitive = false
         }
     }
+
+    listOf(
+        libs.amper.dependencyResolver,
+    ).forEach { dependency ->
+        addConfiguredDependencyTo(this, configurationName, dependency) {
+            isTransitive = true
+        }
+    }
 }
 
 buildSettings {

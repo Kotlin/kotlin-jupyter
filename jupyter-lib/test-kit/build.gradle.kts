@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
     implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
+    implementation(libs.amper.dependencyResolver)
 }
 
 val rootShadowJar = ':' + build.SHADOW_JAR_TASK
