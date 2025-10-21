@@ -85,7 +85,7 @@ interface LibraryDescriptorsManager {
                 "libraries",
                 "jupyterLibraries",
                 exceptionsHandler,
-                File(System.getProperty("user.home")).resolve(".jupyter_kotlin"),
+                kernelCacheDir,
                 httpClient,
                 loggerFactory,
             )

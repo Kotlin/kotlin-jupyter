@@ -1,21 +1,22 @@
 [versions]
 jvmTarget = "11"
 springJvmTarget = "17"
+jvmForTests = "17"
+jvmForGradlePluginTests = "17"
 
 kotlin = "2.2.20"
-kotlinDependencies = "2.2.20"
 stableKotlin = "2.2.20"
 gradleKotlin = "2.2.20"
 kotlinDsl = "6.2.0"
 shadowJar = "9.1.0"
 ant = "1.10.13"
-shadowJarUtil = "0.4.2-11"
+shadowJarUtil = "0.4.2-12"
 changelogPlugin = "2.2.0"
 kotlinxSerialization = "1.9.0"
 json5k = "0.3.0"
 kotlinxCoroutines = "1.10.2"
 jupyterNotebooksParser = "0.2.0-dev-10"
-compose = "1.7.3"
+amper = "0.9.0-dev-3381"
 
 ktlintGradle = "12.3.0"
 ktlint = "1.7.1"
@@ -24,7 +25,7 @@ pluginPublishPlugin = "1.3.1"
 versionsPlugin = "0.52.0"
 
 slf4j = "2.0.17"
-logback = "1.5.18"
+logback = "1.5.20"
 http4k = "6.15.1.0"
 jupyterApi = "0.15.0-584"
 jetbrainsAnnotations = "26.0.2"
@@ -43,7 +44,7 @@ xmlgraphicsBatikCodec = "1.19"
 xmlgraphicsCommons = "2.11"
 graphvizJava = "0.18.1"
 
-springBoot = "3.5.3"
+springBoot = "3.5.7"
 springDependencyManagement = "1.1.7"
 
 [libraries]
@@ -60,8 +61,6 @@ kotlin-dev-scriptingCompilerImplUnshaded = { group = "org.jetbrains.kotlin", nam
 kotlin-dev-scriptingCompilerImplEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-impl-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingIdeServices = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-ide-services", version.ref = "kotlin" }
-kotlin-dev-scriptingDependencies = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies", version.ref = "kotlinDependencies" }
-kotlin-dev-scriptingDependenciesMavenAll = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-dependencies-maven-all", version.ref = "kotlinDependencies" }
 kotlin-dev-scriptingCommon = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-common", version.ref = "kotlin" }
 kotlin-dev-scriptingJvm = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-jvm", version.ref = "kotlin" }
 kotlin-dev-scriptRuntime = { group = "org.jetbrains.kotlin", name = "kotlin-script-runtime", version.ref = "kotlin" }
@@ -84,6 +83,8 @@ serialization-dev-embedded = { group = "org.jetbrains.kotlin", name = "kotlin-se
 serialization-dev-embeddedPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-compiler-plugin-embeddable", version.ref = "kotlin" }
 serialization-dev-unshaded = { group = "org.jetbrains.kotlin", name = "kotlin-serialization-unshaded", version.ref = "kotlin" }
 
+amper-dependencyResolver = { group = "org.jetbrains.amper", name = "dependency-resolution", version.ref = "amper" }
+
 # Serialization runtime
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 # JSON5 support for serialization
@@ -98,6 +99,7 @@ coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", ve
 
 # Logging
 logging-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+logging-slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
 logging-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 
 # Network
@@ -171,6 +173,9 @@ plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublis
 plugin-kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version.ref = "kotlinDsl" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+shadow = { id = "com.gradleup.shadow" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm" }
+publisher = { id = "org.jetbrains.kotlin.libs.publisher" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

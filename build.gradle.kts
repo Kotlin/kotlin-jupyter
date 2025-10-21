@@ -3,8 +3,10 @@
 import build.CompilerRelocatedJarConfigurator
 import build.CreateResourcesTask
 import build.PUBLISHING_GROUP
+import build.util.MAVEN_ARTIFACT_NAME_PREFIX
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
+import build.util.shadowOf
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
@@ -137,19 +139,23 @@ dependencies {
  */
 private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Configuration) {
     val configurationName = configuration.name
-    listOf(
+    for (dependency in listOf(
         libs.kotlin.dev.compilerEmbeddable,
         libs.kotlin.dev.scriptingCompilerImplEmbeddable,
         libs.kotlin.dev.scriptingCompilerEmbeddable,
         libs.kotlin.dev.scriptingIdeServices,
-        libs.kotlin.dev.scriptingDependencies,
-        libs.kotlin.dev.scriptingDependenciesMavenAll,
         // Embedded version of serialization plugin for notebook code
         libs.serialization.dev.embeddedPlugin,
-    ).forEach { dependency ->
+    )) {
         addConfiguredDependencyTo(this, configurationName, dependency) {
             isTransitive = false
         }
+    }
+
+    for (dependency in listOf(
+        shadowOf(projects.dependenciesResolutionShadowed),
+    )) {
+        add(configurationName, dependency)
     }
 }
 
@@ -264,7 +270,7 @@ changelog {
 
 kotlinPublications {
     defaultGroup.set("org.jetbrains.kotlinx")
-    defaultArtifactIdPrefix.set("kotlin-jupyter-")
+    defaultArtifactIdPrefix.set(MAVEN_ARTIFACT_NAME_PREFIX)
     fairDokkaJars.set(false)
 
     sonatypeSettings(

@@ -13,7 +13,6 @@ class DependencyManagerImpl(
     loggerFactory: KernelLoggerFactory,
     mavenRepositories: List<MavenRepositoryCoordinates>,
     resolveSourcesOption: KMutableProperty0<Boolean>,
-    resolveMppOption: KMutableProperty0<Boolean>,
     private val trackClasspath: KMutableProperty0<Boolean>,
 ) : DependencyManager {
     private val binaries = mutableSetOf<File>()
@@ -26,7 +25,6 @@ class DependencyManagerImpl(
             loggerFactory,
             mavenRepositories,
             resolveSourcesOption,
-            resolveMppOption,
             addedBinaries,
             addedSources,
         )

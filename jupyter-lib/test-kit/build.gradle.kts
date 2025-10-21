@@ -1,5 +1,6 @@
 import build.util.LOGBACK_GROUP
 import build.util.implementation
+import build.util.shadowOf
 
 plugins {
     kotlin("libs.publisher")
@@ -16,7 +17,7 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.serialization.json)
     implementation(libs.test.kotlintest.assertions)
-    implementation(libs.kotlin.dev.scriptingDependenciesMavenAll)
+    implementation(shadowOf(projects.dependenciesResolutionShadowed))
 }
 
 val rootShadowJar = ':' + build.SHADOW_JAR_TASK

@@ -30,7 +30,6 @@ val CompilerRelocatedJarConfigurator: ShadowJarAction = {
     exclude("logback.xml")
 
     relocatePackages {
-        +"kotlin.script.experimental.dependencies"
         +"org.jetbrains.kotlin."
         +"org.jetbrains.kotlinx.serialization."
     }

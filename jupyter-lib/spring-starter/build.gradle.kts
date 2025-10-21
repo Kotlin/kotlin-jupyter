@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import build.CompilerRelocatedJarConfigurator
+import build.util.shadowOf
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
 
@@ -56,9 +57,8 @@ dependencies {
     springKernel(projects.commonDependencies) { isTransitive = false }
     springKernel(projects.sharedCompiler) { isTransitive = false }
     springKernel(projects.springStarter) { isTransitive = false }
+    springKernel(shadowOf(projects.dependenciesResolutionShadowed))
 
-    springKernel(libs.kotlin.dev.scriptingDependencies) { isTransitive = false }
-    springKernel(libs.kotlin.dev.scriptingDependenciesMavenAll) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingIdeServices) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCompilerImplEmbeddable) { isTransitive = false }
     springKernel(libs.kotlin.dev.scriptingCompilerEmbeddable) { isTransitive = false }
