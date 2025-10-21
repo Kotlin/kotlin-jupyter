@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.junit.jupiter.params.ParameterizedTest
@@ -16,11 +17,13 @@ import kotlin.io.path.nameWithoutExtension
  * are resolved successfully
  */
 @Execution(ExecutionMode.SAME_THREAD)
+@Disabled
 class AllLibrariesTest : AbstractSingleReplTest() {
     override val repl = makeReplWithStandardResolver()
-    private val dir = File("/Users/Ilya.Muradyan/deps/amper").apply {
-        mkdirs()
-    }
+    private val dir =
+        File("/Users/Ilya.Muradyan/deps/amper").apply {
+            mkdirs()
+        }
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("libraryNames")
@@ -39,9 +42,11 @@ class AllLibrariesTest : AbstractSingleReplTest() {
                 "src" to currentSourcesClasspath,
             )) {
                 val cpFile = dir.resolve("$libraryName-$suffix.txt")
-                cpFile.writeText(cp.sortedBy { it.toString() }.joinToString("\n") {
-                    it.toString().removePrefix("/Users/Ilya.Muradyan/.amper/.m2.cache/")
-                })
+                cpFile.writeText(
+                    cp.sortedBy { it.toString() }.joinToString("\n") {
+                        it.toString().removePrefix("/Users/Ilya.Muradyan/.amper/.m2.cache/")
+                    },
+                )
             }
         }
 

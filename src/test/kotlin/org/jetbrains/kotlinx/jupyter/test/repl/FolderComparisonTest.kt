@@ -6,7 +6,6 @@ import java.io.File
 import kotlin.test.assertEquals
 
 class FolderComparisonTest {
-
     companion object {
         private const val FOLDER_A = "/Users/Ilya.Muradyan/deps/amper"
         private const val FOLDER_B = "/Users/Ilya.Muradyan/deps/old"
@@ -19,14 +18,14 @@ class FolderComparisonTest {
             require(folderA.exists() && folderA.isDirectory) { "Folder A doesn't exist or isn't a directory" }
             require(folderB.exists() && folderB.isDirectory) { "Folder B doesn't exist or isn't a directory" }
 
-            return folderA.walkTopDown()
+            return folderA
+                .walkTopDown()
                 .filter { it.isFile }
                 .mapNotNull { fileA ->
                     val relativePath = fileA.relativeTo(folderA).path
                     val fileB = File(folderB, relativePath)
                     if (fileB.exists()) fileA to fileB else null
-                }
-                .toList()
+                }.toList()
         }
     }
 
@@ -39,7 +38,7 @@ class FolderComparisonTest {
         assertEquals(
             contentA,
             contentB,
-            "Files differ: ${fileA.relativeTo(File(FOLDER_A))} vs ${fileB.relativeTo(File(FOLDER_B))}"
+            "Files differ: ${fileA.relativeTo(File(FOLDER_A))} vs ${fileB.relativeTo(File(FOLDER_B))}",
         )
     }
 }
