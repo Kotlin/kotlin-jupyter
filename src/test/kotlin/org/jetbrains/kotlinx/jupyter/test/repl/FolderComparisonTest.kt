@@ -1,10 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.File
 import kotlin.test.assertEquals
 
+@Disabled
 class FolderComparisonTest {
     companion object {
         private const val FOLDER_A = "/Users/Ilya.Muradyan/deps/amper"
