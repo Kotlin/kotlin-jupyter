@@ -1,12 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.ParameterizedTest.ARGUMENTS_PLACEHOLDER
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.File
 import java.nio.file.Files
 import java.util.stream.Stream
 import kotlin.io.path.nameWithoutExtension
@@ -16,9 +16,11 @@ import kotlin.io.path.nameWithoutExtension
  * are resolved successfully
  */
 @Execution(ExecutionMode.SAME_THREAD)
-@Disabled
 class AllLibrariesTest : AbstractSingleReplTest() {
     override val repl = makeReplWithStandardResolver()
+    private val dir = File("/Users/Ilya.Muradyan/deps/old").apply {
+        mkdirs()
+    }
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("libraryNames")
@@ -28,7 +30,20 @@ class AllLibrariesTest : AbstractSingleReplTest() {
             return
         }
         val args = arguments[libraryName]?.invoke()?.let { "($it)" }.orEmpty()
+        eval("SessionOptions.resolveSources = true")
         eval("%use $libraryName$args")
+
+        with(repl.notebook.dependencyManager) {
+            for ((suffix, cp) in mapOf(
+                "bin" to currentBinaryClasspath,
+                "src" to currentSourcesClasspath,
+            )) {
+                val cpFile = dir.resolve("$libraryName-$suffix.txt")
+                cpFile.writeText(cp.sortedBy { it.toString() }.joinToString("\n") {
+                    it.toString().removePrefix("/Users/Ilya.Muradyan/.m2/repository/")
+                })
+            }
+        }
 
         additionalTests[libraryName]?.invoke(this)
     }
