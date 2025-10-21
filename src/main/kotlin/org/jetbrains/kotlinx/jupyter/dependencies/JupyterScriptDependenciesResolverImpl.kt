@@ -21,7 +21,6 @@ open class JupyterScriptDependenciesResolverImpl(
     loggerFactory: KernelLoggerFactory,
     mavenRepositories: List<MavenRepositoryCoordinates>,
     resolveSourcesOption: KMutableProperty0<Boolean>,
-    resolveMppOption: KMutableProperty0<Boolean>,
     private val addedBinaryClasspath: MutableList<File>,
     private val addedSourceClasspath: MutableList<File>,
 ) : JupyterScriptDependenciesResolver {
@@ -36,7 +35,6 @@ open class JupyterScriptDependenciesResolverImpl(
     private val repositories = arrayListOf<RepositoryDescription>()
 
     override var resolveSources: Boolean by resolveSourcesOption
-    override var resolveMpp: Boolean by resolveMppOption
 
     init {
         mavenRepositories.forEach { addRepository(RepositoryDescription(it.coordinates)) }

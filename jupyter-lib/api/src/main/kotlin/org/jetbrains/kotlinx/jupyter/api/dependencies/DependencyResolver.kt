@@ -7,7 +7,6 @@ package org.jetbrains.kotlinx.jupyter.api.dependencies
  */
 interface DependencyResolver {
     var resolveSources: Boolean
-    var resolveMpp: Boolean
 
     fun addRepositories(repositories: List<RepositoryDescription>)
 

@@ -273,12 +273,6 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
 
     @Test
     fun `mpp dependencies are resolved to maven artifacts`() {
-        eval(
-            """
-            SessionOptions.resolveMpp = true
-            """.trimIndent(),
-        )
-
         val result =
             eval(
                 """
@@ -306,12 +300,6 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     @Test
     @Timeout(60, unit = TimeUnit.SECONDS)
     fun `mpp dependencies are not resolved for dataframe and kandy`() {
-        eval(
-            """
-            SessionOptions.resolveMpp = true
-            """.trimIndent(),
-        )
-
         val result =
             eval(
                 """
