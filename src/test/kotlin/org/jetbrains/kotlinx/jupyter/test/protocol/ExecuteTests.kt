@@ -859,10 +859,10 @@ abstract class ExecuteTests(
                             at Cell In[1], line 1, column 8: Expecting property name or receiver type
                             at Cell In[1], line 1, column 1: Property must be initialized or be abstract.
                             at Cell In[1], line 1, column 1: Conflicting declarations:
-                            var <no name provided>: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
+                            var <no name provided>: ??? (Cannot infer variable type without initializer / getter / delegate)
                             at Cell In[1], line 1, column 5: Property must be initialized or be abstract.
                             at Cell In[1], line 1, column 5: Conflicting declarations:
-                            val <no name provided>: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
+                            val <no name provided>: ??? (Cannot infer variable type without initializer / getter / delegate)
                             """.trimIndent()
                     }
                 }

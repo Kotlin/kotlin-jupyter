@@ -34,7 +34,7 @@ import java.io.File
  *
  * 1.  The cell code is wrapped in a [EvalRequestData] and passed to [evalEx].
  * 2.  All library extensions registered through [LibraryDefinition.initCell] are run.
- *     These cannot modify the cell code directly, but can change the classpath or inject new global variables.
+ *     These cannot modify the cell code directly but can change the classpath or inject new global variables.
  * 3.  The new cell is added to notebook metadata, and the snippet is sent to
  *     `org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl.execute` to be compiled.
  * 4.  The full cell is sent through all registered processors in [CompoundCodePreprocessor]. In particular, magics
@@ -42,14 +42,14 @@ import java.io.File
  *     `%use dataframe`, then this library is registered and initialized. This might result in new classes being added
  *     to the classpath. See `org.jetbrains.kotlinx.jupyter.repl.impl.CellExecutorImpl.ExecutionContext.doAddLibraries`.
  * 5.  Any remaining code is now pure Kotlin code. This is sent to [InternalEvaluator.eval]. This class is responsible
- *     for first compiling the snippet, and then executing the compiled code (evaluating it). The result of the
+ *     for first compiling the snippet and then executing the compiled code (evaluating it). The result of the
  *     evaluation is returned as an `org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult`.
  * 6.  All library extensions registered through [LibraryDefinition.converters] are run on the evaluation context. This
  *     can override the return value from the script.
  * 7.  All library extensions registered through [LibraryDefinition.classAnnotations] are run on the output class.
  *     Like `@Schema` from DataFrames.
- * 8.  [LibrariesScanner] run on the classloader in order to detect if any new kernel libraries have been added. If any
- *     are found they are instantiated. No kernel libraries can be added in step 5-7.
+ * 8.  [LibrariesScanner] run on the classloader to detect if any new kernel libraries have been added. If any
+ *     are found, they are instantiated. No kernel libraries can be added in steps 5-7.
  * 9.  If the color scheme changed any library extensions registered through [LibraryDefinition.colorSchemeChangedCallbacks]
  *     are triggered.
  * 10. Finally, any library extensions registered through [LibraryDefinition.afterCellExecution] are run.

@@ -217,7 +217,10 @@ internal class InternalEvaluatorImpl(
         val kClass = target.scriptClass ?: return emptyMap()
         val cellClassInstance = target.scriptInstance!!
 
-        val fields = kClass.declaredMemberProperties
+        val fields = kClass.declaredMemberProperties.filterNot {
+            // K2 Result fields are stored as normal properties unlike K1, where they did not.
+            it.name == $$$"$$result"
+        }
         return mutableMapOf<String, VariableStateImpl>().apply {
             for (property in fields) {
                 @Suppress("UNCHECKED_CAST")
