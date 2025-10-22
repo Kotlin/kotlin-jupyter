@@ -10,7 +10,11 @@ class FieldInfo(
 )
 
 val FieldInfo.name: VariableName get() = kotlinProperty?.name ?: javaField.name
-val FieldInfo.isCellResult: Boolean get() = kotlinProperty == null && name.startsWith("\$res")
+val FieldInfo.isCellResult: Boolean get() {
+    val k1CellResult = (kotlinProperty == null && name.startsWith($$"$res"))
+    val k2CellResult = (name == $$$"$$result")
+    return k1CellResult || k2CellResult
+}
 
 private fun KProperty<*>.toFieldInfo() =
     FieldInfo(this, javaField ?: throw IllegalArgumentException("Property $this should have backing field"))
