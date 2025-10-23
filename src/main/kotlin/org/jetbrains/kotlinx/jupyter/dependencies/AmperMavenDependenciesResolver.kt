@@ -4,7 +4,6 @@ import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionExcept
 import org.jetbrains.amper.dependency.resolution.Context
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
-import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.MavenRepository
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
@@ -125,11 +124,7 @@ private suspend fun doAmperResolve(
                 templateContext = resolutionContext,
                 children =
                     artifactIds.map {
-                        MavenDependencyNodeWithContext(
-                            templateContext = resolutionContext,
-                            coordinates = it,
-                            isBom = false,
-                        )
+                        resolutionContext.toMavenDependencyNode(it)
                     },
             )
 
