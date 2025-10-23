@@ -12,7 +12,6 @@ import org.jetbrains.amper.dependency.resolution.ResolutionState
 import org.jetbrains.amper.dependency.resolution.Resolver
 import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
-import java.io.File
 import java.net.MalformedURLException
 import java.net.URL
 import kotlin.io.path.exists
@@ -27,7 +26,9 @@ import kotlin.script.experimental.dependencies.ArtifactWithLocation
 import kotlin.script.experimental.dependencies.impl.makeResolveFailureResult
 
 class AmperMavenDependenciesResolver : SourceAwareDependenciesResolver {
-    val repos = mutableListOf<MavenRepository>()
+    private val repos = mutableListOf<MavenRepository>()
+    private val requestedArtifacts = mutableMapOf<String, ArtifactWithLocation>()
+    private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
     override fun acceptsRepository(repository: RepositoryDescription): Boolean = repository.value.toRepositoryUrlOrNull() != null
 
@@ -75,77 +76,99 @@ class AmperMavenDependenciesResolver : SourceAwareDependenciesResolver {
         artifactsWithLocations: List<ArtifactWithLocation>,
         resolveSources: Boolean,
     ): ResultWithDiagnostics<ResolvedArtifacts> {
-        val resolutionContext =
-            Context {
-                scope = ResolutionScope.RUNTIME
-                platforms = setOf(ResolutionPlatform.JVM)
-                repositories = repos
+        for (artifact in artifactsWithLocations) {
+            requestedArtifacts[artifact.artifact] = artifact
+        }
+        val result =
+            doAmperResolve(
+                requestedArtifacts.values,
+                resolveSources,
+                repos,
+                dependencyCollector,
+            )
+        return when (result) {
+            is ResultWithDiagnostics.Failure -> {
+                result
+            }
+            is ResultWithDiagnostics.Success -> {
+                dependencyCollector.getSnapshot().asSuccess()
+            }
+        }
+    }
+}
+
+private suspend fun doAmperResolve(
+    artifactsWithLocations: Collection<ArtifactWithLocation>,
+    resolveSources: Boolean,
+    repos: List<MavenRepository>,
+    dependencyCollector: DependencyCollector,
+): ResultWithDiagnostics<Unit> {
+    val resolutionContext =
+        Context {
+            scope = ResolutionScope.RUNTIME
+            platforms = setOf(ResolutionPlatform.JVM)
+            repositories = repos
+        }
+
+    val firstArtifactWithLocation =
+        artifactsWithLocations.firstOrNull()
+            ?: return Unit.asSuccess()
+
+    try {
+        val artifactIds =
+            artifactsWithLocations.map {
+                it.artifact.toMavenArtifact()!!
             }
 
-        val firstArtifactWithLocation =
-            artifactsWithLocations.firstOrNull()
-                ?: return ResultWithDiagnostics.Success(ResolvedArtifacts())
+        val root =
+            RootDependencyNodeWithContext(
+                templateContext = resolutionContext,
+                children =
+                    artifactIds.map {
+                        MavenDependencyNodeWithContext(
+                            templateContext = resolutionContext,
+                            coordinates = it,
+                            isBom = false,
+                        )
+                    },
+            )
 
-        try {
-            val artifactIds =
-                artifactsWithLocations.map {
-                    it.artifact.toMavenArtifact()!!
+        val resolvedGraph =
+            Resolver().resolveDependencies(
+                root,
+                downloadSources = resolveSources,
+            )
+
+        for (node in resolvedGraph.distinctBfsSequence()) {
+            if (node is MavenDependencyNode) {
+                val dependency = node.dependency
+                if (dependency.state != ResolutionState.RESOLVED) {
+                    throw AmperDependencyResolutionException(
+                        "Dependency '${dependency.coordinates}' was not resolved",
+                    )
                 }
 
-            val root =
-                RootDependencyNodeWithContext(
-                    templateContext = resolutionContext,
-                    children =
-                        artifactIds.map {
-                            MavenDependencyNodeWithContext(
-                                templateContext = resolutionContext,
-                                coordinates = it,
-                                isBom = false,
-                            )
-                        },
-                )
+                for (file in dependency.files(withSources = resolveSources)) {
+                    val path = file.path ?: continue
+                    if (!path.exists()) continue
 
-            val resolvedGraph =
-                Resolver().resolveDependencies(
-                    root,
-                    downloadSources = resolveSources,
-                )
-
-            val binaries = mutableListOf<File>()
-            val sources = mutableListOf<File>()
-
-            for (node in resolvedGraph.distinctBfsSequence()) {
-                if (node is MavenDependencyNode) {
-                    val dependency = node.dependency
-                    if (dependency.state != ResolutionState.RESOLVED) {
-                        throw AmperDependencyResolutionException(
-                            "Dependency '${dependency.coordinates}' was not resolved",
-                        )
-                    }
-
-                    for (file in dependency.files(withSources = resolveSources)) {
-                        val path = file.path ?: continue
-                        if (!path.exists()) continue
-
-                        when {
-                            file.isDocumentation -> {
-                                if (!path.name.endsWith("-javadoc.jar")) {
-                                    sources.add(path.toFile())
-                                }
+                    when {
+                        file.isDocumentation -> {
+                            if (!path.name.endsWith("-javadoc.jar")) {
+                                dependencyCollector.addSource(dependency.coordinates, path.toFile())
                             }
-                            else -> binaries.add(path.toFile())
+                        }
+                        else -> {
+                            dependencyCollector.addBinary(dependency.coordinates, path.toFile())
                         }
                     }
                 }
             }
-
-            return ResolvedArtifacts(
-                binaries = binaries,
-                sources = sources,
-            ).asSuccess()
-        } catch (e: AmperDependencyResolutionException) {
-            return makeResolveFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
         }
+
+        return Unit.asSuccess()
+    } catch (e: AmperDependencyResolutionException) {
+        return makeResolveFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
     }
 }
 
