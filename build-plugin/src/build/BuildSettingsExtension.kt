@@ -1,8 +1,11 @@
 package build
 
 import build.util.defaultVersionCatalog
+import build.util.javaToolchains
 import build.util.junitApi
 import build.util.junitEngine
+import build.util.jvmTarget
+import build.util.jvmTargetForTests
 import build.util.kotlinTest
 import build.util.kotlintestAssertions
 import build.util.testImplementation
@@ -10,6 +13,7 @@ import build.util.testRuntimeOnly
 import org.gradle.api.Project
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -33,6 +37,13 @@ class BuildSettingsExtension(private val project: Project) {
                 events("passed", "skipped", "failed")
             }
             maxHeapSize = "4000m"
+            javaLauncher.set(
+                project.javaToolchains.launcherFor {
+                    languageVersion.set(JavaLanguageVersion.of(
+                        project.defaultVersionCatalog.versions.jvmTargetForTests
+                    ))
+                }
+            )
             configure()
         }
     }
