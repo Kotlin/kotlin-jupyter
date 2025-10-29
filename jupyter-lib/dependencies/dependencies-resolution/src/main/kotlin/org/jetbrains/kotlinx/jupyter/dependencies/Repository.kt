@@ -16,3 +16,5 @@ class Repository(
     val username: String = "",
     val password: String = "",
 )
+
+const val MAVEN_LOCAL_NAME = "*mavenLocal"
