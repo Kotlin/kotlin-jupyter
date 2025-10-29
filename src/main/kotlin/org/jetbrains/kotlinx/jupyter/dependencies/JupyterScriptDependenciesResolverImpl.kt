@@ -32,6 +32,7 @@ open class JupyterScriptDependenciesResolverImpl(
                 // a bit later to preserve compatibility with older IDEs in embedded mode
                 cachePath =
                     File(System.getProperty("user.home"))
+                        .resolve(".jupyter_kotlin")
                         .resolve("maven_repository")
                         .toPath(),
             ),

@@ -1,3 +1,6 @@
+import build.CreateResourcesTask
+import build.util.buildProperties
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
 }
@@ -11,4 +14,13 @@ buildSettings {
     withCompilerArgs {
         jdkRelease(rootSettings.jvmTarget)
     }
+}
+
+CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
+    addPropertiesFile(
+        "dependencies-resolution.properties",
+        buildProperties {
+            add("amperVersion" to libs.versions.amper.get())
+        },
+    )
 }

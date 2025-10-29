@@ -9,12 +9,13 @@ import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.dependency.resolution.ResolutionState
 import org.jetbrains.amper.dependency.resolution.Resolver
+import org.jetbrains.amper.dependency.resolution.RootCacheEntryKey
 import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
+import org.jetbrains.amper.incrementalcache.IncrementalCache
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Path
-import java.util.TreeSet
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -31,18 +32,12 @@ import kotlin.script.experimental.api.valueOrNull
  */
 @Suppress("unused")
 class AmperMavenDependenciesResolver(
-    private val cachePath: Path,
+    cachePath: Path,
 ) : SourceAwareDependenciesResolver {
     // Deprioritize Central repo
-    private val repos =
-        TreeSet<MavenRepository>(
-            compareBy {
-                when (it.url) {
-                    CENTRAL_REPO.value -> 100
-                    else -> 1
-                }
-            },
-        )
+    private val mavenCachePath = cachePath.resolve(".m2")
+    private val incrementalCachePath = cachePath.resolve(".incrementalCache")
+    private val repos = mutableListOf<MavenRepository>()
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
     private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
@@ -110,10 +105,9 @@ class AmperMavenDependenciesResolver(
         }
         val result =
             doAmperResolve(
-                cachePath = cachePath,
+                resolutionContext = createResolutionContext(),
                 artifactsWithLocations = requestedArtifacts.values,
                 resolveSources = resolveSources,
-                repos = repos.toList(),
                 dependencyCollector = dependencyCollector,
             )
         return when (result) {
@@ -125,24 +119,28 @@ class AmperMavenDependenciesResolver(
             }
         }
     }
-}
 
-private suspend fun doAmperResolve(
-    cachePath: Path,
-    artifactsWithLocations: Collection<ArtifactRequest>,
-    resolveSources: Boolean,
-    repos: List<MavenRepository>,
-    dependencyCollector: DependencyCollector,
-): ResultWithDiagnostics<Unit> {
-    val resolutionContext =
+    private fun createResolutionContext(): Context =
         Context {
             scope = ResolutionScope.RUNTIME
             platforms = setOf(ResolutionPlatform.JVM)
-            repositories = repos
-            cache = getDefaultFileCacheBuilder(cachePath)
+            repositories = repos.toList()
+            cache = getDefaultFileCacheBuilder(mavenCachePath)
             verifyChecksumsLocally = false
+            incrementalCache =
+                IncrementalCache(
+                    incrementalCachePath,
+                    amperVersion,
+                )
         }
+}
 
+private suspend fun doAmperResolve(
+    resolutionContext: Context,
+    artifactsWithLocations: Collection<ArtifactRequest>,
+    resolveSources: Boolean,
+    dependencyCollector: DependencyCollector,
+): ResultWithDiagnostics<Unit> {
     val firstArtifactWithLocation =
         artifactsWithLocations.firstOrNull()
             ?: return Unit.asSuccess()
@@ -156,6 +154,7 @@ private suspend fun doAmperResolve(
         val root =
             RootDependencyNodeWithContext(
                 templateContext = resolutionContext,
+                rootCacheEntryKey = RootCacheEntryKey.FromChildren,
                 children =
                     artifactIds.map {
                         resolutionContext.toMavenDependencyNode(it)
