@@ -27,6 +27,5 @@ val defaultGlobalImports =
 val defaultRepositories =
     listOf(
         "https://repo.maven.apache.org/maven2/",
-        "https://jitpack.io/",
     ).map(::KernelRepository)
 val defaultRepositoriesCoordinates = defaultRepositories.map { MavenRepositoryCoordinates(it.path) }

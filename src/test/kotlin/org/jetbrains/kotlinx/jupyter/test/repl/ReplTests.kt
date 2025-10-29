@@ -171,7 +171,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testDependsOnAnnotationCompletion() {
         eval(
             """
-            @file:Repository("https://repo1.maven.org/maven2/")
+            @file:Repository("https://repo.maven.apache.org/maven2/")
             @file:DependsOn("com.github.doyaaaaaken:kotlin-csv-jvm:0.7.3")
             """.trimIndent(),
         )
