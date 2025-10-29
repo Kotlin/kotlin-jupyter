@@ -14,6 +14,7 @@ import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Path
+import java.util.TreeSet
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -32,7 +33,16 @@ import kotlin.script.experimental.api.valueOrNull
 class AmperMavenDependenciesResolver(
     private val cachePath: Path,
 ) : SourceAwareDependenciesResolver {
-    private val repos = mutableListOf<MavenRepository>()
+    // Deprioritize Central repo
+    private val repos =
+        TreeSet<MavenRepository>(
+            compareBy {
+                when (it.url) {
+                    CENTRAL_REPO.value -> 100
+                    else -> 1
+                }
+            },
+        )
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
     private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
@@ -103,7 +113,7 @@ class AmperMavenDependenciesResolver(
                 cachePath = cachePath,
                 artifactsWithLocations = requestedArtifacts.values,
                 resolveSources = resolveSources,
-                repos = repos,
+                repos = repos.toList(),
                 dependencyCollector = dependencyCollector,
             )
         return when (result) {

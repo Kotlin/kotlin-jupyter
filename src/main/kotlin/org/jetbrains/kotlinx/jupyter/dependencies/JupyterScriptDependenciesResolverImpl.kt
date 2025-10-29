@@ -5,7 +5,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
-import org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import java.io.File
@@ -28,7 +27,14 @@ open class JupyterScriptDependenciesResolverImpl(
     private val resolver: SourceAwareDependenciesResolver =
         CompoundSourceAwareDependenciesResolver(
             FileSystemSourceAwareDependenciesResolver(),
-            AmperMavenDependenciesResolver(kernelMavenCacheDir.toPath()),
+            AmperMavenDependenciesResolver(
+                // TODO: replace with org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
+                // a bit later to preserve compatibility with older IDEs in embedded mode
+                cachePath =
+                    File(System.getProperty("user.home"))
+                        .resolve("maven_repository")
+                        .toPath(),
+            ),
         )
 
     private val repositories = arrayListOf<Repository>()
