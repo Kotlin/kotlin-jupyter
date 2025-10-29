@@ -4,6 +4,7 @@ import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionExcept
 import org.jetbrains.amper.dependency.resolution.Context
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
+import org.jetbrains.amper.dependency.resolution.MavenLocal
 import org.jetbrains.amper.dependency.resolution.MavenRepository
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
@@ -16,6 +17,7 @@ import org.jetbrains.amper.incrementalcache.IncrementalCache
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Path
+import java.util.TreeSet
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -24,6 +26,7 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.onFailure
 import kotlin.script.experimental.api.valueOrNull
+import org.jetbrains.amper.dependency.resolution.Repository as AmperRepository
 
 /**
  * Resolves Maven coordinates using Amper's dependency resolution engine.
@@ -37,14 +40,33 @@ class AmperMavenDependenciesResolver(
     // Deprioritize Central repo
     private val mavenCachePath = cachePath.resolve(".m2")
     private val incrementalCachePath = cachePath.resolve(".incrementalCache")
-    private val repos = mutableListOf<MavenRepository>()
+
+    // Deprioritize Central repo, prioritize Maven Local, avoid duplicates
+    private val repos =
+        TreeSet<AmperRepository>(
+            compareBy { repo ->
+                when (repo) {
+                    is MavenRepository -> {
+                        when (repo.url) {
+                            CENTRAL_REPO.value -> 100
+                            else -> 1
+                        }
+                    }
+                    is MavenLocal -> {
+                        -100
+                    }
+                }
+            },
+        )
+
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
     private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
     /**
      * Returns true if the repository URL looks valid for Maven resolution.
      */
-    override fun acceptsRepository(repository: Repository): Boolean = repository.value.toRepositoryUrlOrNull() != null
+    override fun acceptsRepository(repository: Repository): Boolean =
+        repository.value == MAVEN_LOCAL_NAME || repository.value.toRepositoryUrlOrNull() != null
 
     /**
      * Adds a Maven repository to be used during resolution. Username/password may be taken from
@@ -54,38 +76,13 @@ class AmperMavenDependenciesResolver(
         repository: Repository,
         sourceCodeLocation: SourceCode.LocationWithId?,
     ): ResultWithDiagnostics<Boolean> {
-        val url =
-            repository.value.toRepositoryUrlOrNull()
-                ?: return false.asSuccess()
+        val repo =
+            when (val result = repository.convertToAmperRepository(sourceCodeLocation)) {
+                is ResultWithDiagnostics.Failure -> return result
+                is ResultWithDiagnostics.Success -> result.value ?: return false.asSuccess()
+            }
 
-        val usernameRaw = repository.username
-        val passwordRaw = repository.password
-
-        val reports = mutableListOf<ScriptDiagnostic>()
-
-        fun getFinalValue(
-            optionName: String,
-            rawValue: String?,
-        ): String? =
-            tryResolveEnvironmentVariable(rawValue, optionName, sourceCodeLocation)
-                .onFailure { reports.addAll(it.reports) }
-                .valueOrNull()
-
-        val username = getFinalValue("username", usernameRaw)
-        val password = getFinalValue("password", passwordRaw)
-
-        if (reports.isNotEmpty()) {
-            return ResultWithDiagnostics.Failure(reports)
-        }
-
-        repos.add(
-            MavenRepository(
-                url.toString(),
-                username,
-                password,
-            ),
-        )
-        return true.asSuccess()
+        return repos.add(repo).asSuccess()
     }
 
     /**
@@ -269,4 +266,35 @@ fun makeAmperResolveFailureResult(
         }
 
     return makeResolveFailureResult(listOf(message), location, exception)
+}
+
+private fun Repository.convertToAmperRepository(sourceCodeLocation: SourceCode.LocationWithId?): ResultWithDiagnostics<AmperRepository?> {
+    if (value == MAVEN_LOCAL_NAME) {
+        return MavenLocal.asSuccess()
+    }
+
+    val url = value.toRepositoryUrlOrNull() ?: return null.asSuccess()
+
+    val reports = mutableListOf<ScriptDiagnostic>()
+
+    fun getFinalValue(
+        optionName: String,
+        rawValue: String?,
+    ): String? =
+        tryResolveEnvironmentVariable(rawValue, optionName, sourceCodeLocation)
+            .onFailure { reports.addAll(it.reports) }
+            .valueOrNull()
+
+    val usernameSubstituted = getFinalValue("username", username)
+    val passwordSubstituted = getFinalValue("password", password)
+
+    if (reports.isNotEmpty()) {
+        return ResultWithDiagnostics.Failure(reports)
+    }
+
+    return MavenRepository(
+        url.toString(),
+        usernameSubstituted,
+        passwordSubstituted,
+    ).asSuccess()
 }
