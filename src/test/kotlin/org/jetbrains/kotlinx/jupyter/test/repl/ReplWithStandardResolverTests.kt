@@ -67,7 +67,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         fun urlClassLoadersCount() =
             generateSequence(repl.currentClassLoader) { classLoader ->
                 classLoader.parent?.takeIf { it != baseClassLoader }
-            }.filter { it is URLClassLoader }.count()
+            }.count { it is URLClassLoader }
         urlClassLoadersCount() shouldBe 1
 
         val res =
@@ -388,23 +388,25 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KT-76009/K2-Repl-Kotlin-specific-imports-does-not-work-if-dependency-is-added-to-the-classpath-after-1st-snippet
     @Test
     fun testKotlinImportsAfterFirstSnippet() {
-        val res0 = eval("1")
-        res0.shouldBeInstanceOf<EvalResultEx.Success>()
+        evalSuccess("1")
+        evalSuccess(
+            """
+            @file:DependsOn("org.jetbrains.kotlinx:dataframe-core:0.15.0")
+            """.trimIndent(),
+        )
+        evalSuccess(
+            """
+            import org.jetbrains.kotlinx.dataframe.impl.codeGen.urlCodeGenReader
+            """.trimIndent(),
+        )
+    }
 
-        val res1 =
-            eval(
-                """
-                @file:DependsOn("org.jetbrains.kotlinx:dataframe-core:0.15.0")
-                """.trimIndent(),
-            )
-        res1.shouldBeInstanceOf<EvalResultEx.Success>()
+    @Test
+    fun `kandy should be successfully added after dataframe`() {
+        evalSuccess("%use dataframe")
+        evalSuccess("%use kandy")
 
-        val res2 =
-            eval(
-                """
-                import org.jetbrains.kotlinx.dataframe.impl.codeGen.urlCodeGenReader
-                """.trimIndent(),
-            )
-        res2.shouldBeInstanceOf<EvalResultEx.Success>()
+        val kandyConfig = evalSuccess("kandyConfig.swingEnabled").internalResult.result.value
+        kandyConfig shouldBe true
     }
 }
