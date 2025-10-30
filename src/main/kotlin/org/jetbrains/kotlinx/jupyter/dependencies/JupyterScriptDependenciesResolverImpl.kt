@@ -13,7 +13,6 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
-import kotlin.script.experimental.api.valueOrNull
 
 open class JupyterScriptDependenciesResolverImpl(
     loggerFactory: KernelLoggerFactory,
@@ -55,7 +54,7 @@ open class JupyterScriptDependenciesResolverImpl(
         val repoIndex = repositories.indexOfFirst { it.value == repository.value }
         if (repoIndex != -1) repositories.removeAt(repoIndex)
         repositories.add(repository)
-        return resolver.addRepository(repository, null).valueOrNull() == true
+        return resolver.addRepository(repository, null) is ResultWithDiagnostics.Success
     }
 
     override fun resolveFromAnnotations(annotations: List<Annotation>): ResultWithDiagnostics<List<File>> {

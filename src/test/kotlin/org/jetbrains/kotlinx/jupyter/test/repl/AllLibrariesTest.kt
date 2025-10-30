@@ -31,7 +31,7 @@ class AllLibrariesTest : AbstractSingleReplTest() {
         }
         (repl as SessionOptionsProvider).sessionOptions.resolveSources = true
         val args = arguments[libraryName]?.invoke()?.let { "($it)" }.orEmpty()
-        eval("%use $libraryName$args")
+        evalSuccess("%use $libraryName$args")
 
         additionalTests[libraryName]?.invoke(this)
     }
