@@ -187,6 +187,9 @@ private suspend fun doAmperResolve(
         for (node in nodeSequence) {
             val dependency = node.dependency
             if (dependency.state != ResolutionState.RESOLVED) {
+                if (shouldIgnoreUnresolvedDependencyForRequest(currentArtifactCoordinates)) {
+                    continue
+                }
                 throw AmperDependencyResolutionException(
                     "Dependency '${dependency.coordinates}' was not resolved",
                 )
@@ -285,6 +288,16 @@ fun makeAmperResolveFailureResult(
 
     return makeResolveFailureResult(listOf(message), location, exception)
 }
+
+/**
+ * It's a workaround for https://youtrack.jetbrains.com/issue/AMPER-923/
+ * deeplearning4j-ui has a transitive but excluded dependency on `org.webjars.npm:coreui__coreui-plugin-npm-postinstall`
+ * which is in fact non-existent. So we just ignore it.
+ */
+private fun shouldIgnoreUnresolvedDependencyForRequest(request: Collection<MavenCoordinates>): Boolean =
+    request.any {
+        it.groupId == "org.deeplearning4j" && it.artifactId == "deeplearning4j-ui"
+    }
 
 private fun Repository.convertToAmperRepository(sourceCodeLocation: SourceCode.LocationWithId?): ResultWithDiagnostics<AmperRepository?> {
     if (value == MAVEN_LOCAL_NAME) {
