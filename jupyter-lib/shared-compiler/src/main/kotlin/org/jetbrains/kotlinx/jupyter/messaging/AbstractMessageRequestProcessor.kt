@@ -11,6 +11,7 @@ abstract class AbstractMessageRequestProcessor(
         when (val content = incomingMessage.content) {
             is InterruptRequest -> processInterruptRequest(content)
             is ShutdownRequest -> processShutdownRequest(content)
+            is ThreadDumpRequest -> processThreadDumpRequest(content)
             else -> processUnknownControlMessage(content)
         }
     }
@@ -72,6 +73,8 @@ abstract class AbstractMessageRequestProcessor(
     protected abstract fun processShutdownRequest(content: ShutdownRequest)
 
     protected abstract fun processInterruptRequest(content: InterruptRequest)
+
+    protected abstract fun processThreadDumpRequest(content: ThreadDumpRequest)
 
     protected abstract fun processUnknownControlMessage(content: MessageContent)
 

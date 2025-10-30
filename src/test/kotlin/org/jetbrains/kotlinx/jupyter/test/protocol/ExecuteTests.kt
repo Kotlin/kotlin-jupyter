@@ -46,6 +46,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
 import org.jetbrains.kotlinx.jupyter.messaging.ProvidedCommMessages
 import org.jetbrains.kotlinx.jupyter.messaging.StatusMessage
 import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
+import org.jetbrains.kotlinx.jupyter.messaging.ThreadDumpRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
@@ -110,6 +111,17 @@ abstract class ExecuteTests(
 
     private val replCompilerMode get() = kernelConfig.ownParams.replCompilerMode
 
+    // Thread dump watchdog encapsulated in a helper class
+    private val threadDumpWatchdog: ThreadDumpWatchdog =
+        ThreadDumpWatchdog(
+            requestThreadDump = { filePath ->
+                controlSocket.sendMessage(
+                    MessageType.THREAD_DUMP_REQUEST,
+                    ThreadDumpRequest(filePath.absolutePath),
+                )
+            },
+        )
+
     override fun beforeEach() {
         try {
             val now = TimeSource.Monotonic.markNow()
@@ -122,6 +134,7 @@ abstract class ExecuteTests(
                 }
             }
             if (mutableSockets == null) error("Could not connect to kernel server")
+            threadDumpWatchdog.start(currentTestDisplayName)
         } catch (e: Throwable) {
             afterEach()
             throw e
@@ -129,6 +142,7 @@ abstract class ExecuteTests(
     }
 
     override fun afterEach() {
+        threadDumpWatchdog.stop()
         mutableSockets?.let {
             mutableSockets = null
             it.close()

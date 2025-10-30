@@ -71,6 +71,8 @@ enum class MessageType(
     INTERRUPT_REQUEST(InterruptRequest::class),
     INTERRUPT_REPLY(InterruptReply::class),
 
+    THREAD_DUMP_REQUEST(ThreadDumpRequest::class),
+
     DEBUG_REQUEST(DebugRequest::class),
     DEBUG_REPLY(DebugReply::class),
 
@@ -367,6 +369,11 @@ class InterruptRequest : MessageContent
 
 @Serializable
 class InterruptReply : OkReplyContent()
+
+@Serializable
+class ThreadDumpRequest(
+    val filePath: String,
+) : MessageContent
 
 // See https://jupyter-client.readthedocs.io/en/latest/messaging.html#debug-request
 @Serializable
