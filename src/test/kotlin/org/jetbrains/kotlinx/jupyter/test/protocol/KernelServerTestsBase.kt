@@ -47,12 +47,16 @@ abstract class KernelServerTestsBase(
 
     private val executor = if (runServerInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
 
+    // Current JUnit test display name to be used by subclasses (e.g., for diagnostics file naming)
+    protected lateinit var currentTestDisplayName: String
+
     open fun beforeEach() {}
 
     open fun afterEach() {}
 
     @BeforeEach
     fun setupServer(testInfo: TestInfo) {
+        currentTestDisplayName = testInfo.displayName
         executor.setUp(testInfo, kernelConfig)
         beforeEach()
     }

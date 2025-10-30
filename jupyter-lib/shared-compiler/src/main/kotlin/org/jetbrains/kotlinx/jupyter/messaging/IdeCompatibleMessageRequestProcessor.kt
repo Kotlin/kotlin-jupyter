@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
+import org.jetbrains.kotlinx.jupyter.debug.dumpThreadsToFile
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
@@ -27,6 +28,7 @@ import org.jetbrains.kotlinx.jupyter.streams.CapturingOutputStream
 import org.jetbrains.kotlinx.jupyter.streams.DisabledStdinInputStream
 import org.jetbrains.kotlinx.jupyter.streams.StdinInputStream
 import org.jetbrains.kotlinx.jupyter.streams.StreamSubstitutionManager
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
@@ -256,6 +258,10 @@ open class IdeCompatibleMessageRequestProcessor(
         socketManager.control.sendMessage(
             messageFactory.makeReplyMessage(MessageType.INTERRUPT_REPLY, content = incomingMessage.content),
         )
+    }
+
+    override fun processThreadDumpRequest(content: ThreadDumpRequest) {
+        dumpThreadsToFile(File(content.filePath))
     }
 
     override fun processInputReply(content: InputReply) {
