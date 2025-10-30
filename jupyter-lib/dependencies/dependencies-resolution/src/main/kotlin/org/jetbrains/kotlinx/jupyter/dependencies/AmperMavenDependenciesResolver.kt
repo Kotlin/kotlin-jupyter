@@ -103,7 +103,8 @@ class AmperMavenDependenciesResolver(
         val result =
             doAmperResolve(
                 resolutionContext = createResolutionContext(),
-                artifactsWithLocations = requestedArtifacts.values,
+                currentArtifactsWithLocations = artifactRequests,
+                allArtifactsWithLocations = requestedArtifacts.values,
                 resolveSources = resolveSources,
                 dependencyCollector = dependencyCollector,
             )
@@ -134,28 +135,38 @@ class AmperMavenDependenciesResolver(
 
 private suspend fun doAmperResolve(
     resolutionContext: Context,
-    artifactsWithLocations: Collection<ArtifactRequest>,
+    currentArtifactsWithLocations: Collection<ArtifactRequest>,
+    allArtifactsWithLocations: Collection<ArtifactRequest>,
     resolveSources: Boolean,
     dependencyCollector: DependencyCollector,
 ): ResultWithDiagnostics<Unit> {
     val firstArtifactWithLocation =
-        artifactsWithLocations.firstOrNull()
+        currentArtifactsWithLocations.firstOrNull()
             ?: return Unit.asSuccess()
 
     try {
-        val artifactIds =
-            artifactsWithLocations.map {
-                it.artifact.toMavenArtifact()!!
+        val currentArtifactStrings =
+            currentArtifactsWithLocations
+                .map { it.artifact }
+                .toSet()
+
+        val currentArtifactCoordinates = mutableSetOf<MavenCoordinates>()
+
+        val childrenNodes =
+            allArtifactsWithLocations.map {
+                val artifactString = it.artifact
+                val artifactCoordinates = artifactString.toMavenArtifact()!!
+                if (artifactString in currentArtifactStrings) {
+                    currentArtifactCoordinates.add(artifactCoordinates)
+                }
+                resolutionContext.toMavenDependencyNode(artifactCoordinates)
             }
 
         val root =
             RootDependencyNodeWithContext(
                 templateContext = resolutionContext,
                 rootCacheEntryKey = RootCacheEntryKey.FromChildren,
-                children =
-                    artifactIds.map {
-                        resolutionContext.toMavenDependencyNode(it)
-                    },
+                children = childrenNodes,
             )
 
         val resolvedGraph =
@@ -164,28 +175,35 @@ private suspend fun doAmperResolve(
                 downloadSources = resolveSources,
             )
 
-        for (node in resolvedGraph.distinctBfsSequence()) {
-            if (node is MavenDependencyNode) {
-                val dependency = node.dependency
-                if (dependency.state != ResolutionState.RESOLVED) {
-                    throw AmperDependencyResolutionException(
-                        "Dependency '${dependency.coordinates}' was not resolved",
-                    )
-                }
+        val nodeSequence =
+            resolvedGraph.children
+                .asSequence()
+                .filterIsInstance<MavenDependencyNode>()
+                .filter { it.dependency.coordinates in currentArtifactCoordinates }
+                .flatMap { it.distinctBfsSequence() }
+                .filterIsInstance<MavenDependencyNode>()
+                .distinct()
 
-                for (file in dependency.files(withSources = resolveSources)) {
-                    val path = file.path ?: continue
-                    if (!path.exists()) continue
+        for (node in nodeSequence) {
+            val dependency = node.dependency
+            if (dependency.state != ResolutionState.RESOLVED) {
+                throw AmperDependencyResolutionException(
+                    "Dependency '${dependency.coordinates}' was not resolved",
+                )
+            }
 
-                    when {
-                        file.isDocumentation -> {
-                            if (!path.name.endsWith("-javadoc.jar")) {
-                                dependencyCollector.addSource(dependency.coordinates, path.toFile())
-                            }
+            for (file in dependency.files(withSources = resolveSources)) {
+                val path = file.path ?: continue
+                if (!path.exists()) continue
+
+                when {
+                    file.isDocumentation -> {
+                        if (!path.name.endsWith("-javadoc.jar")) {
+                            dependencyCollector.addSource(dependency.coordinates, path.toFile())
                         }
-                        else -> {
-                            dependencyCollector.addBinary(dependency.coordinates, path.toFile())
-                        }
+                    }
+                    else -> {
+                        dependencyCollector.addBinary(dependency.coordinates, path.toFile())
                     }
                 }
             }
