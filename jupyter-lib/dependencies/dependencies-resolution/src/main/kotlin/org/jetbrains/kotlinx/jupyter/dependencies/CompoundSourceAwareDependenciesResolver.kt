@@ -54,7 +54,7 @@ class CompoundSourceAwareDependenciesResolver(
         return when {
             success -> repositoryAdded.asSuccess(reports)
             reports.isEmpty() ->
-                makeResolveFailureResult(
+                makeResolutionFailureResult(
                     "No dependency resolver found that recognizes the repository coordinates '$repository'",
                     sourceCodeLocation,
                 )
