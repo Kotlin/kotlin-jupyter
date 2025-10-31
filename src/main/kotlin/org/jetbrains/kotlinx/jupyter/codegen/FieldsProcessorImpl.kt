@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.FieldInfo
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.TEMP_PROPERTY_PREFIX
+import org.jetbrains.kotlinx.jupyter.api.name
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
 import org.jetbrains.kotlinx.jupyter.exceptions.throwLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.ContextUpdater
@@ -80,6 +81,9 @@ private fun FieldHandler.acceptsEx(
     return if (this is FieldHandlerEx) {
         this.accepts(value, fieldInfo)
     } else {
+        // In K2, we need to filter out the $res<X> field manually
+        if (fieldInfo.name.startsWith($$"$res")) return false
+        // In K1, we can do this by checking for the existence of the Kotlin property
         val property = fieldInfo.kotlinProperty ?: return false
         accepts(value, property)
     }
