@@ -7,23 +7,23 @@ import kotlin.script.experimental.api.SourceCode
 /**
  * Creates a failure result from a single diagnostic [message].
  */
-fun makeResolveFailureResult(
+fun makeResolutionFailureResult(
     message: String,
     location: SourceCode.LocationWithId? = null,
-) = makeResolveFailureResult(listOf(message), location)
+) = makeResolutionFailureResult(listOf(message), location)
 
 /**
  * Creates a failure result from multiple diagnostic [messages].
  */
-fun makeResolveFailureResult(
+fun makeResolutionFailureResult(
     messages: Iterable<String>,
     location: SourceCode.LocationWithId? = null,
-) = makeResolveFailureResult(messages, location, null)
+) = makeResolutionFailureResult(messages, location, null)
 
 /**
  * Creates a failure result from multiple diagnostic [messages] and optional [throwable].
  */
-fun makeResolveFailureResult(
+fun makeResolutionFailureResult(
     messages: Iterable<String>,
     location: SourceCode.LocationWithId?,
     throwable: Throwable?,

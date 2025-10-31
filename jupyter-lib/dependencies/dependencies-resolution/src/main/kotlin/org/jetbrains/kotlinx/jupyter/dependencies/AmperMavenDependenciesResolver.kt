@@ -197,7 +197,13 @@ private suspend fun doAmperResolve(
 
             for (file in dependency.files(withSources = resolveSources)) {
                 val path = file.path ?: continue
-                if (!path.exists()) continue
+                if (!path.exists()) {
+                    if (file.isDocumentation) continue
+                    throw AmperDependencyResolutionException(
+                        "File '$path' for dependency '${dependency.coordinates}' " +
+                            "was returned by resolution, but does not exist on the filesystem",
+                    )
+                }
 
                 when {
                     file.isDocumentation -> {
@@ -214,7 +220,7 @@ private suspend fun doAmperResolve(
 
         return Unit.asSuccess()
     } catch (e: AmperDependencyResolutionException) {
-        return makeAmperResolveFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
+        return makeAmperResolutionFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
     }
 }
 
@@ -270,7 +276,7 @@ private fun tryResolveEnvironmentVariable(
  * Creates a failure result from an [exception], extracting a concise message from the primary cause
  * (preferring [AmperDependencyResolutionException] if present).
  */
-fun makeAmperResolveFailureResult(
+private fun makeAmperResolutionFailureResult(
     exception: Throwable,
     location: SourceCode.LocationWithId?,
 ): ResultWithDiagnostics.Failure {
@@ -286,7 +292,7 @@ fun makeAmperResolveFailureResult(
             }
         }
 
-    return makeResolveFailureResult(listOf(message), location, exception)
+    return makeResolutionFailureResult(listOf(message), location, exception)
 }
 
 /**

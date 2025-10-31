@@ -45,7 +45,7 @@ class FileSystemSourceAwareDependenciesResolver(
 
         val repoDir =
             repository.toFilePath()
-                ?: return makeResolveFailureResult(
+                ?: return makeResolutionFailureResult(
                     "Invalid repository location: '${repository.value}'",
                     sourceCodeLocation,
                 )
@@ -74,7 +74,7 @@ class FileSystemSourceAwareDependenciesResolver(
             val (artifactCoordinates, sourceCodeLocation) = artifactWithLocation
 
             if (!acceptsArtifact(artifactCoordinates)) {
-                return makeResolveFailureResult("Path is invalid", sourceCodeLocation)
+                return makeResolutionFailureResult("Path is invalid", sourceCodeLocation)
             }
 
             for (repo in localRepos) {
@@ -95,7 +95,7 @@ class FileSystemSourceAwareDependenciesResolver(
         } else {
             // join all messages and report failure at the last seen location if available
             val lastLocation = artifactRequests.lastOrNull()?.sourceCodeLocation
-            makeResolveFailureResult(messages, lastLocation)
+            makeResolutionFailureResult(messages, lastLocation)
         }
     }
 
