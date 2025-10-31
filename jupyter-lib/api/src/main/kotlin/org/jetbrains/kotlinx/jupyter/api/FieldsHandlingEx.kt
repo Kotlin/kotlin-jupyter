@@ -12,7 +12,7 @@ class FieldInfo(
 val FieldInfo.name: VariableName get() = kotlinProperty?.name ?: javaField.name
 val FieldInfo.isCellResult: Boolean get() {
     val k1CellResult = (kotlinProperty == null && name.startsWith($$"$res"))
-    val k2CellResult = (name == $$$"$$result")
+    val k2CellResult = (kotlinProperty != null && name.startsWith($$"$res"))
     return k1CellResult || k2CellResult
 }
 

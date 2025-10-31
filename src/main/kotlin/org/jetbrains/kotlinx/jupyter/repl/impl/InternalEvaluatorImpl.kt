@@ -219,7 +219,7 @@ internal class InternalEvaluatorImpl(
 
         val fields = kClass.declaredMemberProperties.filterNot {
             // K2 Result fields are stored as normal properties unlike K1, where they did not.
-            it.name == $$$"$$result"
+            it.name.startsWith($$"$res")
         }
         return mutableMapOf<String, VariableStateImpl>().apply {
             for (property in fields) {
