@@ -27,8 +27,9 @@ open class JupyterScriptDependenciesResolverImpl(
         CompoundSourceAwareDependenciesResolver(
             FileSystemSourceAwareDependenciesResolver(),
             AmperMavenDependenciesResolver(
-                // TODO: replace with org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
-                // a bit later to preserve compatibility with older IDEs in embedded mode
+                // TODO: switch to org.jetbrains.kotlix.jupyter.common.kernelMavenCacheDir
+                // once the new kernel version is embedded into all supported IDE releases.
+                // This ensures old IDEs can still work with the current kernel until the switch.
                 cachePath =
                     File(System.getProperty("user.home"))
                         .resolve(".jupyter_kotlin")

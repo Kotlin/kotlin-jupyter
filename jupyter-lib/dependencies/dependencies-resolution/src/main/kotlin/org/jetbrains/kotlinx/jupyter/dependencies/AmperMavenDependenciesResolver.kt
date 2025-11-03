@@ -233,6 +233,11 @@ private fun String.toRepositoryUrlOrNull(): URL? =
 
 private fun String.toMavenArtifact(): MavenCoordinates? {
     val dependencyParts = split(":")
+
+    /**
+     * 5-th part is an extension (i.e. jar, pom, etc.)
+     * It's fine when it's present, but we just ignore it for now.
+     */
     if (dependencyParts.size !in 3..5) {
         return null
     }

@@ -18,13 +18,13 @@ class AmperResolverTests {
     private val resolver = AmperMavenDependenciesResolver(kernelMavenCacheDir.toPath())
 
     @Test
-    fun `resolve SparkMlLib`() {
+    fun `resolve standard heavy-weight dependency - SparkMlLib`() {
         val files = resolver.doResolve("org.apache.spark:spark-mllib_2.11:2.4.4")
         files.size shouldBeGreaterThanOrEqual 200
     }
 
     @Test
-    fun `resolve koog`() {
+    fun `resolve KMP dependency - koog`() {
         val files = resolver.doResolve("ai.koog:koog-agents:0.5.0")
         files.shouldForAny { it.name.startsWith("agents-core-jvm") }
         files.size shouldBeGreaterThanOrEqual 100

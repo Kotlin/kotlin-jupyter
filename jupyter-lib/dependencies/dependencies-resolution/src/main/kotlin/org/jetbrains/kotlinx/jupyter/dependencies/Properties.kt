@@ -13,7 +13,7 @@ internal fun String.parseIniConfig() =
     lineSequence()
         .map { it.split('=') }
         .filter { it.count() == 2 }
-        .associate { it[0] to it[1] }
+        .associate { it[0].trim() to it[1].trim() }
 
 internal fun readResourceAsIniFile(
     fileName: String,

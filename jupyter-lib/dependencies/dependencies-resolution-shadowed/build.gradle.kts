@@ -30,6 +30,7 @@ dependencies {
 
 /**
  * When changing the list, please also adjust the shadowing logic
+ * (shadowJar task down below)
  */
 val expectedArtifacts =
     listOf(
@@ -101,7 +102,6 @@ tasks.shadowJar {
         attributes["Implementation-Version"] = project.version
     }
     relocatePackages {
-        +"io.ktor"
         +"io.opentelemetry"
         +"kotlinx.io"
         +"nl.adaptivity.xmlutil"
