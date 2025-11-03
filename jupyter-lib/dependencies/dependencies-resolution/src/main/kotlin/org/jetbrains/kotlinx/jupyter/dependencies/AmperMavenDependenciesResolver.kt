@@ -232,27 +232,15 @@ private fun String.toRepositoryUrlOrNull(): URL? =
     }
 
 private fun String.toMavenArtifact(): MavenCoordinates? {
-    val dependencyParts = split(":")
-
-    /**
-     * 5-th part is an extension (i.e. jar, pom, etc.)
-     * It's fine when it's present, but we just ignore it for now.
-     */
-    if (dependencyParts.size !in 3..5) {
-        return null
+    val gradleMavenCoordinates = parseGradleCoordinatesString(this) ?: return null
+    return with(gradleMavenCoordinates) {
+        MavenCoordinates(
+            groupId = groupId,
+            artifactId = artifactId,
+            version = version,
+            classifier = classifier,
+        )
     }
-
-    val groupId = dependencyParts[0]
-    val artifactId = dependencyParts[1]
-    val version = dependencyParts[2]
-    val classifier = dependencyParts.getOrNull(3)
-
-    return MavenCoordinates(
-        groupId,
-        artifactId,
-        version,
-        classifier,
-    )
 }
 
 private fun tryResolveEnvironmentVariable(
