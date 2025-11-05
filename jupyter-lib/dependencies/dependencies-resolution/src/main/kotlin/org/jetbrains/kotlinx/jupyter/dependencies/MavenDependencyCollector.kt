@@ -17,8 +17,11 @@ private enum class DependencyType {
  * Persistent storage for resolved dependencies.
  * Allows specifying a resolution strategy for version conflicts and
  * retrieval of resolved artifacts.
+ *
+ * On each call to [getSnapshot] we clear the list of artifacts added since the previous snapshot.
+ * But we keep the storage of resolved dependencies for the whole lifetime of the instance.
  */
-class DependencyCollector(
+class MavenDependencyCollector(
     /**
      * Strategy used to decide how to handle multiple versions of the same dependency.
      */

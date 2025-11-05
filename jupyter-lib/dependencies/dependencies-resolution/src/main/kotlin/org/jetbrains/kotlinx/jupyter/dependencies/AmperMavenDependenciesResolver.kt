@@ -44,7 +44,7 @@ class AmperMavenDependenciesResolver(
     private val repos = TreeSet(amperRepositoryComparator)
 
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
-    private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)
+    private val dependencyCollector = MavenDependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
     /**
      * Returns true if the repository URL looks valid for Maven resolution.
@@ -108,11 +108,20 @@ class AmperMavenDependenciesResolver(
             platforms = setOf(ResolutionPlatform.JVM)
             repositories = repos.toList()
             cache = getDefaultFileCacheBuilder(mavenCachePath)
+
+            // This option makes resolution faster,
+            // but it also makes it less reliable - if the jar was changed
+            // locally, it won't be re-resolved. We're OK with it for now
             verifyChecksumsLocally = false
+
+            // Incremental cache is used to cache whole resolution trees
+            // (not only resolved artifacts).
+            // It also makes resolution faster.
             incrementalCache =
                 IncrementalCache(
-                    incrementalCachePath,
-                    amperVersion,
+                    stateRoot = incrementalCachePath,
+                    // When the Amper is updated, the incremental cache should be invalidated
+                    codeVersion = amperVersion,
                 )
         }
 }
@@ -122,7 +131,7 @@ private suspend fun doAmperResolve(
     currentArtifactsWithLocations: Collection<ArtifactRequest>,
     allArtifactsWithLocations: Collection<ArtifactRequest>,
     resolveSources: Boolean,
-    dependencyCollector: DependencyCollector,
+    dependencyCollector: MavenDependencyCollector,
 ): ResultWithDiagnostics<Unit> {
     val firstArtifactWithLocation =
         currentArtifactsWithLocations.firstOrNull()

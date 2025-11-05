@@ -100,21 +100,21 @@ class CompoundSourceAwareDependenciesResolver(
                 }
             }
 
-            if (!resolved) {
-                hadErrors = true
-                if (!hadAttempt) {
-                    // No resolver accepted this artifact at all
-                    reports.add(
-                        ScriptDiagnostic(
-                            code = ScriptDiagnostic.unspecifiedError,
-                            message = "No suitable dependency resolver found for artifact '$artifact'",
-                            severity = ScriptDiagnostic.Severity.ERROR,
-                            locationWithId = sourceCodeLocation,
-                            exception = null,
-                        ),
-                    )
-                }
-            }
+            if (resolved) continue
+
+            hadErrors = true
+            if (hadAttempt) continue
+
+            // No resolver accepted this artifact at all
+            reports.add(
+                ScriptDiagnostic(
+                    code = ScriptDiagnostic.unspecifiedError,
+                    message = "No suitable dependency resolver found for artifact '$artifact'",
+                    severity = ScriptDiagnostic.Severity.ERROR,
+                    locationWithId = sourceCodeLocation,
+                    exception = null,
+                ),
+            )
         }
 
         return if (hadErrors) {
