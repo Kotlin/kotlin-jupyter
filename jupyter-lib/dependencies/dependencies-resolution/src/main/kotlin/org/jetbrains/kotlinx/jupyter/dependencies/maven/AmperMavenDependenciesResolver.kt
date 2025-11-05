@@ -1,15 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.dependencies.maven
 
-import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionException
 import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.MavenCoordinates
-import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
-import org.jetbrains.amper.dependency.resolution.ResolutionState
-import org.jetbrains.amper.dependency.resolution.Resolver
-import org.jetbrains.amper.dependency.resolution.RootCacheEntryKey
-import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
@@ -17,18 +10,16 @@ import org.jetbrains.kotlinx.jupyter.dependencies.api.MAVEN_LOCAL_NAME
 import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
 import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
 import org.jetbrains.kotlinx.jupyter.dependencies.api.SourceAwareDependenciesResolver
-import org.jetbrains.kotlinx.jupyter.dependencies.maven.artifacts.parseGradleCoordinatesString
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.artifacts.toMavenArtifact
 import org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection.MavenDependencyCollector
 import org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection.OldestWinsVersionConflictResolutionStrategy
 import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.amperRepositoryComparator
 import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.convertToAmperRepository
 import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.toRepositoryUrlOrNull
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.resolution.doAmperResolve
 import org.jetbrains.kotlinx.jupyter.dependencies.util.dependencyResolutionProperties
-import org.jetbrains.kotlinx.jupyter.dependencies.util.makeResolutionFailureResult
 import java.nio.file.Path
 import java.util.TreeSet
-import kotlin.io.path.exists
-import kotlin.io.path.name
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
@@ -132,139 +123,3 @@ class AmperMavenDependenciesResolver(
                 )
         }
 }
-
-private suspend fun doAmperResolve(
-    resolutionContext: Context,
-    currentArtifactsWithLocations: Collection<ArtifactRequest>,
-    allArtifactsWithLocations: Collection<ArtifactRequest>,
-    resolveSources: Boolean,
-    dependencyCollector: MavenDependencyCollector,
-): ResultWithDiagnostics<Unit> {
-    val firstArtifactWithLocation =
-        currentArtifactsWithLocations.firstOrNull()
-            ?: return Unit.asSuccess()
-
-    try {
-        val currentArtifactStrings =
-            currentArtifactsWithLocations
-                .map { it.artifact }
-                .toSet()
-
-        val currentArtifactCoordinates = mutableSetOf<MavenCoordinates>()
-
-        val childrenNodes =
-            allArtifactsWithLocations.map {
-                val artifactString = it.artifact
-                val artifactCoordinates = artifactString.toMavenArtifact()!!
-                if (artifactString in currentArtifactStrings) {
-                    currentArtifactCoordinates.add(artifactCoordinates)
-                }
-                resolutionContext.toMavenDependencyNode(artifactCoordinates)
-            }
-
-        val root =
-            RootDependencyNodeWithContext(
-                templateContext = resolutionContext,
-                rootCacheEntryKey = RootCacheEntryKey.FromChildren,
-                children = childrenNodes,
-            )
-
-        val resolvedGraph =
-            Resolver().resolveDependencies(
-                root,
-                downloadSources = resolveSources,
-            )
-
-        val nodeSequence =
-            resolvedGraph.children
-                .asSequence()
-                .filterIsInstance<MavenDependencyNode>()
-                .filter { it.dependency.coordinates in currentArtifactCoordinates }
-                .flatMap { it.distinctBfsSequence() }
-                .filterIsInstance<MavenDependencyNode>()
-                .distinct()
-
-        for (node in nodeSequence) {
-            val dependency = node.dependency
-            if (dependency.state != ResolutionState.RESOLVED) {
-                if (shouldIgnoreUnresolvedDependencyForRequest(currentArtifactCoordinates)) {
-                    continue
-                }
-                throw AmperDependencyResolutionException(
-                    "Dependency '${dependency.coordinates}' was not resolved",
-                )
-            }
-
-            for (file in dependency.files(withSources = resolveSources)) {
-                val path = file.path ?: continue
-                if (!path.exists()) {
-                    if (file.isDocumentation) continue
-                    throw AmperDependencyResolutionException(
-                        "File '$path' for dependency '${dependency.coordinates}' " +
-                            "was returned by resolution, but does not exist on the filesystem",
-                    )
-                }
-
-                when {
-                    file.isDocumentation -> {
-                        if (!path.name.endsWith("-javadoc.jar")) {
-                            dependencyCollector.addSource(dependency.coordinates, path.toFile())
-                        }
-                    }
-                    else -> {
-                        dependencyCollector.addBinary(dependency.coordinates, path.toFile())
-                    }
-                }
-            }
-        }
-
-        return Unit.asSuccess()
-    } catch (e: AmperDependencyResolutionException) {
-        return makeAmperResolutionFailureResult(e, firstArtifactWithLocation.sourceCodeLocation)
-    }
-}
-
-private fun String.toMavenArtifact(): MavenCoordinates? {
-    val gradleMavenCoordinates = parseGradleCoordinatesString(this) ?: return null
-    return with(gradleMavenCoordinates) {
-        MavenCoordinates(
-            groupId = groupId,
-            artifactId = artifactId,
-            version = version,
-            classifier = classifier,
-        )
-    }
-}
-
-/**
- * Creates a failure result from an [exception], extracting a concise message from the primary cause
- * (preferring [AmperDependencyResolutionException] if present).
- */
-private fun makeAmperResolutionFailureResult(
-    exception: Throwable,
-    location: SourceCode.LocationWithId?,
-): ResultWithDiagnostics.Failure {
-    val allCauses = generateSequence(exception) { e: Throwable -> e.cause }.toList()
-    val primaryCause = allCauses.firstOrNull { it is AmperDependencyResolutionException } ?: exception
-
-    val message =
-        buildString {
-            append(primaryCause::class.simpleName)
-            if (primaryCause.message != null) {
-                append(": ")
-                append(primaryCause.message)
-            }
-        }
-
-    return makeResolutionFailureResult(listOf(message), location, exception)
-}
-
-/**
- * It's a workaround for https://youtrack.jetbrains.com/issue/AMPER-923/
- * deeplearning4j-ui has a transitive but excluded dependency on `org.webjars.npm:coreui__coreui-plugin-npm-postinstall`
- * which is in fact non-existent. So we just ignore it.
- */
-private fun shouldIgnoreUnresolvedDependencyForRequest(request: Collection<MavenCoordinates>): Boolean =
-    request.any {
-        it.groupId == "org.deeplearning4j" && it.artifactId == "deeplearning4j-ui"
-    }
