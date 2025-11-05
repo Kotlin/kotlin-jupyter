@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.dependencies.test
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import org.jetbrains.kotlinx.jupyter.dependencies.parseGradleCoordinatesString
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.artifacts.parseGradleCoordinatesString
 import org.junit.jupiter.api.Test
 
 class GradleMavenCoordinatesParsingTests {

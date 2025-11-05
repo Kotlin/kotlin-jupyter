@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection
 
 /**
  * Allows adding a version only when no versions are present yet for a given dependency

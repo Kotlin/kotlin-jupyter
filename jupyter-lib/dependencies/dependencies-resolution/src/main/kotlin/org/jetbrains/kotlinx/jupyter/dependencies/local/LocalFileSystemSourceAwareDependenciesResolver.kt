@@ -1,5 +1,10 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.local
 
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
+import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
+import org.jetbrains.kotlinx.jupyter.dependencies.api.SourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.util.makeResolutionFailureResult
 import java.io.File
 import java.net.URL
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -11,7 +16,7 @@ import kotlin.script.experimental.api.asSuccess
  * so the IDE thinks it's unused
  */
 @Suppress("unused")
-class FileSystemSourceAwareDependenciesResolver(
+class LocalFileSystemSourceAwareDependenciesResolver(
     vararg paths: File,
 ) : SourceAwareDependenciesResolver {
     private fun String.toRepositoryFileOrNull(): File? = File(this).takeIf { it.exists() && it.isDirectory }

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.api
 
 /**
  * Describes a dependency repository.

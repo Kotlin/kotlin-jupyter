@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.util
 
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic

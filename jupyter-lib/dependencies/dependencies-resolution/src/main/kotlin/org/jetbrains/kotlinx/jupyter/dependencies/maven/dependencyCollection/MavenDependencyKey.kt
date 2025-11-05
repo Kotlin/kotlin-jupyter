@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection
 
 /**
  * Key that identifies a Maven dependency without its version.

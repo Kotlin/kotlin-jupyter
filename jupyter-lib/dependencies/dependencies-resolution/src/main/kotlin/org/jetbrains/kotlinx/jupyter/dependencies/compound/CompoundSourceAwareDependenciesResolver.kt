@@ -1,5 +1,10 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.compound
 
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
+import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
+import org.jetbrains.kotlinx.jupyter.dependencies.api.SourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.util.makeResolutionFailureResult
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -40,13 +45,13 @@ class CompoundSourceAwareDependenciesResolver(
 
         for (resolver in resolvers) {
             if (resolver.acceptsRepository(repository)) {
-                when (val resolveResult = resolver.addRepository(repository, sourceCodeLocation)) {
+                when (val wasRepositoryAdded = resolver.addRepository(repository, sourceCodeLocation)) {
                     is ResultWithDiagnostics.Success -> {
                         success = true
-                        repositoryAdded = repositoryAdded || resolveResult.value
-                        reports.addAll(resolveResult.reports)
+                        repositoryAdded = repositoryAdded || wasRepositoryAdded.value
+                        reports.addAll(wasRepositoryAdded.reports)
                     }
-                    is ResultWithDiagnostics.Failure -> reports.addAll(resolveResult.reports)
+                    is ResultWithDiagnostics.Failure -> reports.addAll(wasRepositoryAdded.reports)
                 }
             }
         }

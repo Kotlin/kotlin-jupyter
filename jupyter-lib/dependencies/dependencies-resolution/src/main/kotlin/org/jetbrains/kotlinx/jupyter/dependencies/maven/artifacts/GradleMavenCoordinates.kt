@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.maven.artifacts
 
 data class GradleMavenCoordinates(
     val groupId: String,

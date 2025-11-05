@@ -1,6 +1,7 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection
 
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
 import java.io.File
 import java.util.EnumMap
 import kotlin.collections.getOrPut

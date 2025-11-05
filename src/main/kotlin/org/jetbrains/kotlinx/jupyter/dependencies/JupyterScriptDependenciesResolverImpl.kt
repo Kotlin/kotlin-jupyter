@@ -5,6 +5,14 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
+import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
+import org.jetbrains.kotlinx.jupyter.dependencies.api.SourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.compound.CompoundSourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.local.LocalFileSystemSourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.AmperMavenDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.CENTRAL_REPO
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import java.io.File
@@ -25,7 +33,7 @@ open class JupyterScriptDependenciesResolverImpl(
 
     private val resolver: SourceAwareDependenciesResolver =
         CompoundSourceAwareDependenciesResolver(
-            FileSystemSourceAwareDependenciesResolver(),
+            LocalFileSystemSourceAwareDependenciesResolver(),
             AmperMavenDependenciesResolver(
                 // TODO: switch to org.jetbrains.kotlix.jupyter.common.kernelMavenCacheDir
                 // once the new kernel version is embedded into all supported IDE releases.

@@ -4,10 +4,10 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlinx.jupyter.dependencies.ArtifactRequest
-import org.jetbrains.kotlinx.jupyter.dependencies.FileSystemSourceAwareDependenciesResolver
-import org.jetbrains.kotlinx.jupyter.dependencies.Repository
-import org.jetbrains.kotlinx.jupyter.dependencies.ResolvedArtifacts
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
+import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
+import org.jetbrains.kotlinx.jupyter.dependencies.local.LocalFileSystemSourceAwareDependenciesResolver
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -18,7 +18,7 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 class FileSystemResolverTest {
     @TempDir
     private lateinit var temp: Path
-    private val resolver = FileSystemSourceAwareDependenciesResolver()
+    private val resolver = LocalFileSystemSourceAwareDependenciesResolver()
 
     @Test
     fun `accepts repository - existing directory and file URL`() {

@@ -5,10 +5,10 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
-import org.jetbrains.kotlinx.jupyter.dependencies.AmperMavenDependenciesResolver
-import org.jetbrains.kotlinx.jupyter.dependencies.ArtifactRequest
-import org.jetbrains.kotlinx.jupyter.dependencies.CENTRAL_REPO
-import org.jetbrains.kotlinx.jupyter.dependencies.SourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
+import org.jetbrains.kotlinx.jupyter.dependencies.api.SourceAwareDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.AmperMavenDependenciesResolver
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.CENTRAL_REPO
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import java.io.File

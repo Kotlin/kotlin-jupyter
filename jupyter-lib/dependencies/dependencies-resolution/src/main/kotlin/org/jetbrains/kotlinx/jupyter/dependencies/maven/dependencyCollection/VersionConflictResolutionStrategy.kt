@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.maven.dependencyCollection
 
 /**
  * Strategy for deciding whether a file for a new version of a dependency should be

@@ -1,21 +1,21 @@
-package org.jetbrains.kotlinx.jupyter.dependencies
+package org.jetbrains.kotlinx.jupyter.dependencies.util
 
-private val dependencyResolutionProperties by lazy {
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.AmperMavenDependenciesResolver
+
+internal val dependencyResolutionProperties by lazy {
     readResourceAsIniFile(
         "dependencies-resolution.properties",
         AmperMavenDependenciesResolver::class.java.classLoader,
     )
 }
 
-val amperVersion: String by dependencyResolutionProperties
-
-internal fun String.parseIniConfig() =
+private fun String.parseIniConfig() =
     lineSequence()
         .map { it.split('=') }
         .filter { it.count() == 2 }
         .associate { it[0].trim() to it[1].trim() }
 
-internal fun readResourceAsIniFile(
+private fun readResourceAsIniFile(
     fileName: String,
     classLoader: ClassLoader,
 ) = classLoader

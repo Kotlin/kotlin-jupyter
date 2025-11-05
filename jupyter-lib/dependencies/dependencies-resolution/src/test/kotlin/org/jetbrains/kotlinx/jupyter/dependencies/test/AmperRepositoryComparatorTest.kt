@@ -6,8 +6,8 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.amper.dependency.resolution.MavenLocal
 import org.jetbrains.amper.dependency.resolution.MavenRepository
 import org.jetbrains.amper.dependency.resolution.Repository
-import org.jetbrains.kotlinx.jupyter.dependencies.CENTRAL_REPO
-import org.jetbrains.kotlinx.jupyter.dependencies.amperRepositoryComparator
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.CENTRAL_REPO
+import org.jetbrains.kotlinx.jupyter.dependencies.maven.repositories.amperRepositoryComparator
 import org.junit.jupiter.api.Test
 
 class AmperRepositoryComparatorTest {
