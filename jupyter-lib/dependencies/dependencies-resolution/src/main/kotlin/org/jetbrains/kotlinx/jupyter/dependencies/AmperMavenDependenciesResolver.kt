@@ -41,23 +41,7 @@ class AmperMavenDependenciesResolver(
     private val mavenCachePath = cachePath.resolve(".m2")
     private val incrementalCachePath = cachePath.resolve(".incrementalCache")
 
-    // Deprioritize Central repo, prioritize Maven Local, avoid duplicates
-    private val repos =
-        TreeSet<AmperRepository>(
-            compareBy { repo ->
-                when (repo) {
-                    is MavenRepository -> {
-                        when (repo.url) {
-                            CENTRAL_REPO.value -> 100
-                            else -> 1
-                        }
-                    }
-                    is MavenLocal -> {
-                        -100
-                    }
-                }
-            },
-        )
+    private val repos = TreeSet(amperRepositoryComparator)
 
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
     private val dependencyCollector = DependencyCollector(OldestWinsVersionConflictResolutionStrategy)

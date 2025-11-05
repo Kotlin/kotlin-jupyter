@@ -10,8 +10,16 @@ import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
 const val MAVEN_ARTIFACT_NAME_PREFIX = "kotlin-jupyter-"
 
 /**
- * Adds shadow publications to the provided PublicationsExtension. This is intended to create
- * specific publication configurations for binary and documentation artifacts.
+ * Helper function to create publications for shadowed configurations.
+ *
+ * It's expected that [project] has a `shadow` configuration
+ * (you configured shadowJar task for it)
+ *
+ * [docShadowJars] are additional jars that should be added to the publication
+ * apart from the main shadow jar designated by shadow configuration.
+ *
+ * Group id and version of the publication are inherited from the [PublicationsExtension]
+ * of [project] or its parent projects.
  */
 fun PublicationsExtension.addShadowPublications(
     project: Project,
@@ -31,6 +39,7 @@ fun PublicationsExtension.addShadowPublications(
 
     publication {
         publicationName.set(publicationNameBase)
+        this.artifactId.set(artifactId)
         this.description.set(description)
         composeOfTaskOutputs(docShadowJars)
     }

@@ -93,6 +93,11 @@ buildSettings {
     }
 }
 
+/**
+ * We need shadowing for the resolver dependency to make
+ * linkage errors of different kinds less possible, and the final jars
+ * layout of the kernel more predictable.
+ */
 tasks.shadowJar {
     archiveClassifier.set("")
     mergeServiceFiles()

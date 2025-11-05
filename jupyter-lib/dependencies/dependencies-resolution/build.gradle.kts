@@ -14,6 +14,7 @@ buildSettings {
     withCompilerArgs {
         jdkRelease(rootSettings.jvmTarget)
     }
+    withTests()
 }
 
 CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
