@@ -1198,4 +1198,14 @@ class ReplTests : AbstractSingleReplTest() {
             K2 -> res.shouldBeInstanceOf<EvalResultEx.Success>()
         }
     }
+
+    // In K2, the result field is accessible for subsequent snippets
+    @Test
+    fun accessResultClassOutput() {
+        eval("42").renderedValue shouldBe 42
+        when (repl.compilerMode) {
+            K1 -> eval($$"`$res0`").shouldBeInstanceOf<EvalResultEx.Success>()
+            K2 -> eval($$"`$res0`").renderedValue shouldBe 42
+        }
+    }
 }
