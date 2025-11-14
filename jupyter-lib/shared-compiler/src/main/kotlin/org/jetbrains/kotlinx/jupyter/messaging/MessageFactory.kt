@@ -28,6 +28,7 @@ fun MessageFactory.makeDefaultHeader(msgType: MessageType): MessageHeader = make
 fun MessageFactory.makeSimpleMessage(
     msgType: MessageType,
     content: MessageContent,
+    metadata: JsonElement? = null,
 ): Message =
     Message(
         id = messageId,
@@ -35,6 +36,7 @@ fun MessageFactory.makeSimpleMessage(
             MessageData(
                 header = makeDefaultHeader(msgType),
                 content = content,
+                metadata = metadata,
             ),
     )
 

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplInterruptedException
@@ -42,8 +43,15 @@ fun JupyterCommunicationFacility.doWrappedInBusyIdle(action: () -> Unit) {
 fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(
     msgType: MessageType,
     content: MessageContent,
+    metadata: JsonElement? = null,
 ) {
-    socketManager.iopub.sendMessage(messageFactory.makeSimpleMessage(msgType, content))
+    socketManager.iopub.sendMessage(
+        messageFactory.makeSimpleMessage(
+            msgType,
+            content,
+            metadata,
+        ),
+    )
 }
 
 fun JupyterCommunicationFacility.sendWrapped(message: Message) =
