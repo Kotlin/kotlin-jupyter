@@ -28,14 +28,16 @@ class CommManagerImpl(
     override fun openComm(
         target: String,
         data: JsonObject,
+        metadata: JsonObject,
     ): Comm {
         val id = UUID.randomUUID().toString()
         val newComm = registerNewComm(target, id)
 
         // send comm_open
         connection.sendSimpleMessageToIoPub(
-            MessageType.COMM_OPEN,
-            CommOpenMessage(newComm.id, newComm.target, data),
+            msgType = MessageType.COMM_OPEN,
+            content = CommOpenMessage(newComm.id, newComm.target, data),
+            metadata = metadata,
         )
 
         return newComm

@@ -26,6 +26,7 @@ interface CommManager {
     fun openComm(
         target: String,
         data: JsonObject = Json.EMPTY,
+        metadata: JsonObject = Json.EMPTY,
     ): Comm
 
     /**
