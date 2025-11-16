@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.paths.shouldBeAFile
@@ -533,7 +534,7 @@ abstract class ExecuteTests(
             import kotlinx.serialization.*
             import kotlinx.serialization.json.*
 
-            notebook.commManager.registerCommTarget("$targetName") { comm, openData ->
+            notebook.commManager.registerCommTarget("$targetName") { comm, openData, _, _ ->
                 comm.send(
                     JsonObject(
                         mapOf(
@@ -542,13 +543,15 @@ abstract class ExecuteTests(
                     )
                 )
 
-                comm.onMessage { d ->
+                comm.onMessage { d, _, buffers ->
                     comm.send(
                         JsonObject(
                             mapOf(
                                 "y" to JsonPrimitive("received: " + d["x"]!!.jsonPrimitive.content)
                             )
-                        )
+                        ),
+                        // Test buffers: just repeat them twice and send them back
+                        buffers = buffers + buffers
                     )
                 }
             }
@@ -563,7 +566,11 @@ abstract class ExecuteTests(
             c.data["xo"]!!.jsonPrimitive.content shouldBe commId
         }
 
-        // Thread.sleep(5000)
+        val outcomingBuffers =
+            listOf(
+                byteArrayOf(1, 2, 3),
+                byteArrayOf(42, 43),
+            )
 
         shellSocket.sendMessage(
             MessageType.COMM_MSG,
@@ -575,13 +582,17 @@ abstract class ExecuteTests(
                     ),
                 ),
             ),
+            buffers = outcomingBuffers,
         )
 
         wrapActionInBusyIdleStatusChange(iopubSocket = ioPubSocket) {
             ioPubSocket.receiveMessage().apply {
-                val c = content.shouldBeTypeOf<CommMsgMessage>()
-                c.commId shouldBe commId
-                c.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+                val messageContent = content.shouldBeTypeOf<CommMsgMessage>()
+                messageContent.commId shouldBe commId
+                messageContent.data["y"]!!.jsonPrimitive.content shouldBe "received: 4321"
+
+                buffers shouldHaveSize 4
+                buffers shouldBe outcomingBuffers + outcomingBuffers
             }
         }
     }

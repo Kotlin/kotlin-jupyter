@@ -44,12 +44,14 @@ fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(
     msgType: MessageType,
     content: MessageContent,
     metadata: JsonElement? = null,
+    buffers: List<ByteArray>? = null,
 ) {
     socketManager.iopub.sendMessage(
         messageFactory.makeSimpleMessage(
             msgType,
             content,
             metadata,
+            buffers,
         ),
     )
 }

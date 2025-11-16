@@ -1,15 +1,20 @@
 
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.api.type
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqString
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.recv
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.send
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -32,29 +37,31 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
 
     @Test
     fun testHeartbeat() {
-        with(connectClientSocket(JupyterZmqSocketInfo.HB)) {
-            tryFinally(
-                action = {
-                    zmqSocket.send("abc")
-                    val msg = zmqSocket.recvString()
-                    assertEquals("abc", msg)
-                },
-                finally = {
-                    close()
-                    context.term()
-                },
-            )
+        withSocketOfType(JupyterZmqSocketInfo.HB) {
+            zmqSocket.send(ZmqString.getBytes("abc"))
+            val msg = ZmqString.getString(zmqSocket.recv())
+            msg shouldBe "abc"
         }
     }
 
     @Test
-    fun testShell() {
-        with(connectClientSocket(JupyterZmqSocketInfo.CONTROL)) {
+    fun `test control socket`() {
+        withSocketOfType(JupyterZmqSocketInfo.CONTROL) {
+            sendMessage(MessageType.INTERRUPT_REQUEST, null)
+            val msg = receiveRawMessage()
+            msg.shouldNotBeNull()
+            msg.type shouldBe MessageType.INTERRUPT_REPLY.type
+        }
+    }
+
+    private fun withSocketOfType(
+        socketInfo: JupyterZmqSocketInfo,
+        action: JupyterZmqSocket.() -> Unit,
+    ) {
+        with(connectClientSocket(socketInfo)) {
             tryFinally(
                 action = {
-                    sendMessage(MessageType.INTERRUPT_REQUEST, null)
-                    val msg = receiveRawMessage()
-                    assertEquals(MessageType.INTERRUPT_REPLY.type, msg?.type)
+                    action()
                 },
                 finally = {
                     close()

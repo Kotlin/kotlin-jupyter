@@ -5,23 +5,19 @@ import java.io.Closeable
 
 interface ZmqSocketWithCancellation : Closeable {
     @Throws(InterruptedException::class)
-    fun recv(): ByteArray
+    fun recvMultipart(): Sequence<ByteArray>
 
-    @Throws(InterruptedException::class)
-    fun recvString(): String
-
-    fun sendMore(data: ByteArray): Boolean
-
-    fun sendMore(data: String): Boolean
-
-    fun send(data: ByteArray): Boolean
-
-    fun send(data: String): Boolean
+    fun sendMultipart(message: Sequence<ByteArray>)
 
     fun makeRelaxed()
 
     fun subscribe(topic: ByteArray): Boolean
 }
+
+@Throws(InterruptedException::class)
+fun ZmqSocketWithCancellation.recv(): ByteArray = recvMultipart().single()
+
+fun ZmqSocketWithCancellation.send(data: ByteArray) = sendMultipart(sequenceOf(data))
 
 interface JupyterZmqSocket :
     JupyterSendReceiveSocket,

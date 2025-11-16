@@ -29,6 +29,7 @@ fun MessageFactory.makeSimpleMessage(
     msgType: MessageType,
     content: MessageContent,
     metadata: JsonElement? = null,
+    buffers: List<ByteArray>? = null,
 ): Message =
     Message(
         id = messageId,
@@ -38,6 +39,7 @@ fun MessageFactory.makeSimpleMessage(
                 content = content,
                 metadata = metadata,
             ),
+        buffers = buffers ?: emptyList(),
     )
 
 fun MessageFactory.makeReplyMessage(

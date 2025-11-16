@@ -23,6 +23,13 @@ import kotlin.concurrent.withLock
 private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 private val emptyJsonObjectString = Json.EMPTY.toString()
 private val emptyJsonObjectStringBytes = emptyJsonObjectString.toByteArray()
+private val messagePartProperties =
+    listOf(
+        RawMessage::header,
+        RawMessage::parentHeader,
+        RawMessage::metadata,
+        RawMessage::content,
+    )
 
 class JupyterZmqSocketImpl(
     loggerFactory: KernelLoggerFactory,
@@ -57,19 +64,27 @@ class JupyterZmqSocketImpl(
     private fun doSendRawMessage(msg: RawMessage) {
         zmqSocket.assertNotCancelled()
 
-        msg.id.forEach { zmqSocket.sendMore(it) }
-        zmqSocket.sendMore(MESSAGE_DELIMITER)
+        zmqSocket.sendMultipart(
+            sequence {
+                for (idPart in msg.id) {
+                    yield(idPart)
+                }
+                yield(MESSAGE_DELIMITER)
 
-        val properties = listOf(RawMessage::header, RawMessage::parentHeader, RawMessage::metadata, RawMessage::content)
-        val signableMsg =
-            properties.map { prop ->
-                prop.get(msg)?.let { MessageFormat.encodeToString(it) }?.toByteArray() ?: emptyJsonObjectStringBytes
-            }
-        zmqSocket.sendMore(hmac(signableMsg))
-        for (i in 0 until (signableMsg.size - 1)) {
-            zmqSocket.sendMore(signableMsg[i])
-        }
-        zmqSocket.send(signableMsg.last())
+                val signableMessage =
+                    messagePartProperties.map { prop ->
+                        prop
+                            .get(msg)
+                            ?.let { MessageFormat.encodeToString(it) }
+                            ?.toByteArray()
+                            ?: emptyJsonObjectStringBytes
+                    }
+
+                yield(ZmqString.getBytes(hmac(signableMessage)))
+                yieldAll(signableMessage)
+                yieldAll(msg.buffers)
+            },
+        )
     }
 
     @Throws(InterruptedException::class)
@@ -90,14 +105,18 @@ class JupyterZmqSocketImpl(
     private fun doReceiveRawMessage(): RawMessage {
         zmqSocket.assertNotCancelled()
 
+        val parts = zmqSocket.recvMultipart()
+        val iter = parts.iterator()
+
         val ids =
-            listOf(zmqSocket.recv()) +
-                generateSequence { zmqSocket.recv() }.takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
-        val sig = zmqSocket.recvString().lowercase()
-        val header = zmqSocket.recv()
-        val parentHeader = zmqSocket.recv()
-        val metadata = zmqSocket.recv()
-        val content = zmqSocket.recv()
+            generateSequence { iter.next() }
+                .takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
+                .toList()
+        val sig = ZmqString.getString(iter.next()).lowercase()
+        val header = iter.next()
+        val parentHeader = iter.next()
+        val metadata = iter.next()
+        val content = iter.next()
         val calculatedSig = hmac(header, parentHeader, metadata, content)
 
         if (sig != calculatedSig) {
@@ -111,12 +130,18 @@ class JupyterZmqSocketImpl(
 
         fun JsonElement?.orEmptyObject() = this ?: Json.EMPTY
 
+        val buffers =
+            buildList {
+                iter.forEachRemaining { add(it) }
+            }
+
         return RawMessageImpl(
             ids,
             header.parseJson()!!.jsonObject,
             parentHeader.parseJson()?.jsonObject,
             metadata.parseJson()?.jsonObject,
             content.parseJson().orEmptyObject(),
+            buffers,
         )
     }
 

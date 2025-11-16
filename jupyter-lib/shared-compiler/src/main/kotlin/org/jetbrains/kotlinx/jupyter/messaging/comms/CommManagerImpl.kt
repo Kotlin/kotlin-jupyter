@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.messaging.comms
 
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.libraries.Comm
@@ -29,6 +30,7 @@ class CommManagerImpl(
         target: String,
         data: JsonObject,
         metadata: JsonObject,
+        buffers: List<ByteArray>?,
     ): Comm {
         val id = UUID.randomUUID().toString()
         val newComm = registerNewComm(target, id)
@@ -38,6 +40,7 @@ class CommManagerImpl(
             msgType = MessageType.COMM_OPEN,
             content = CommOpenMessage(newComm.id, newComm.target, data),
             metadata = metadata,
+            buffers = buffers,
         )
 
         return newComm
@@ -50,6 +53,8 @@ class CommManagerImpl(
         val target = content.targetName
         val id = content.commId
         val data = content.data
+        val metadata = message.data.metadata
+        val buffers = message.buffers
 
         val callback = commOpenCallbacks[target]
         if (callback == null) {
@@ -63,7 +68,7 @@ class CommManagerImpl(
 
         val newComm = registerNewComm(target, id)
         try {
-            callback(newComm, data)
+            callback.messageReceived(newComm, data, metadata, buffers)
         } catch (e: Throwable) {
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_CLOSE,
@@ -92,6 +97,7 @@ class CommManagerImpl(
     override fun closeComm(
         id: String,
         data: JsonObject,
+        metadata: JsonObject,
     ) {
         val comm = commIdToComm[id] ?: return
         comm.close(data, notifyClient = true)
@@ -123,12 +129,16 @@ class CommManagerImpl(
         message: Message,
         content: CommMsgMessage,
     ) {
-        commIdToComm[content.commId]?.messageReceived(content.data)
+        commIdToComm[content.commId]?.messageReceived(
+            data = content.data,
+            metadata = message.data.metadata,
+            buffers = message.buffers,
+        )
     }
 
     override fun registerCommTarget(
         target: String,
-        callback: (Comm, JsonObject) -> Unit,
+        callback: CommOpenCallback,
     ) {
         commOpenCallbacks[target] = callback
     }
@@ -151,11 +161,17 @@ class CommManagerImpl(
             }
         }
 
-        override fun send(data: JsonObject) {
+        override fun send(
+            data: JsonObject,
+            metadata: JsonElement?,
+            buffers: List<ByteArray>?,
+        ) {
             assertOpen()
             connection.sendSimpleMessageToIoPub(
                 MessageType.COMM_MSG,
                 CommMsgMessage(id, data),
+                metadata,
+                buffers,
             )
         }
 
@@ -181,6 +197,7 @@ class CommManagerImpl(
 
         override fun close(
             data: JsonObject,
+            metadata: JsonElement?,
             notifyClient: Boolean,
         ) {
             assertOpen()
@@ -189,22 +206,29 @@ class CommManagerImpl(
 
             removeComm(id)
 
-            onCloseCallbacks.forEach { it(data) }
+            for (callback in onCloseCallbacks) {
+                callback.messageReceived(data, metadata)
+            }
 
             if (notifyClient) {
                 connection.sendSimpleMessageToIoPub(
                     MessageType.COMM_CLOSE,
                     CommCloseMessage(id, data),
+                    metadata,
                 )
             }
         }
 
-        fun messageReceived(data: JsonObject) {
+        fun messageReceived(
+            data: JsonObject,
+            metadata: JsonElement?,
+            buffers: List<ByteArray>,
+        ) {
             if (closed) return
 
             connection.doWrappedInBusyIdle {
                 for (callback in onMessageCallbacks) {
-                    callback(data)
+                    callback.messageReceived(data, metadata, buffers)
                 }
             }
         }

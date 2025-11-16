@@ -16,11 +16,11 @@ interface CommHandler {
 
 fun ReplForJupyter.installCommHandler(commHandler: CommHandler) {
     val repl = this
-    notebook.commManager.registerCommTarget(commHandler.targetId) { comm, _ ->
+    notebook.commManager.registerCommTarget(commHandler.targetId) { comm, _, _, _ ->
         // handler.onReceive(comm, data, repl) // maybe send right away?
 
-        comm.onMessage {
-            commHandler.onReceive(comm, it, repl)
+        comm.onMessage { content, _, _ ->
+            commHandler.onReceive(comm, content, repl)
         }
     }
 }

@@ -11,14 +11,16 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.buildMessageDebugString
 import org.jetbrains.kotlinx.jupyter.protocol.data
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 data class Message(
-    val id: List<ByteArray> = listOf(),
+    val id: List<ByteArray> = emptyList(),
     val data: MessageData = MessageData(),
+    val buffers: List<ByteArray> = emptyList(),
 ) {
     val type: MessageType
         get() = data.header!!.type
@@ -27,21 +29,31 @@ data class Message(
         get() = data.content!!
 
     override fun toString(): String =
-        "msg[${id.joinToString { it.toString(charset = Charsets.UTF_8) }}] " +
-            MessageFormat.encodeToString(data)
+        buildMessageDebugString(
+            id,
+            MessageFormat.encodeToString(data),
+            buffers,
+        )
 }
 
-fun RawMessage.toMessage(): Message = Message(id, MessageFormat.decodeFromJsonElement(data))
+fun RawMessage.toMessage(): Message =
+    Message(
+        id = id,
+        data = MessageFormat.decodeFromJsonElement(data),
+        buffers = buffers,
+    )
 
 fun Message.toRawMessage(): RawMessage =
     makeRawMessage(
         id = id,
         dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
+        buffers = buffers,
     )
 
 fun makeRawMessage(
     id: List<ByteArray>,
     dataJson: JsonObject,
+    buffers: List<ByteArray> = emptyList(),
 ): RawMessage =
     RawMessageImpl(
         id = id,
@@ -49,6 +61,7 @@ fun makeRawMessage(
         parentHeader = dataJson["parent_header"] as? JsonObject,
         metadata = dataJson["metadata"] as? JsonObject,
         content = dataJson["content"]!!,
+        buffers = buffers,
     )
 
 fun makeReplyMessage(

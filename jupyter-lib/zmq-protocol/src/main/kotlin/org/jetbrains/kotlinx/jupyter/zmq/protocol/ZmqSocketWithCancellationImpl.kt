@@ -12,7 +12,24 @@ class ZmqSocketWithCancellationImpl(
     private val cancellationToken: ZMQ.CancellationToken = socket.createCancellationToken()
 
     @Throws(InterruptedException::class)
-    override fun recv(): ByteArray {
+    override fun recvMultipart(): Sequence<ByteArray> =
+        sequence {
+            do {
+                yield(recv())
+            } while (socket.hasReceiveMore())
+        }
+
+    override fun sendMultipart(message: Sequence<ByteArray>) {
+        val iterator = message.iterator()
+        while (iterator.hasNext()) {
+            val frame = iterator.next()
+            val flags = if (iterator.hasNext()) zmq.ZMQ.ZMQ_SNDMORE else 0
+            send(frame, flags)
+        }
+    }
+
+    @Throws(InterruptedException::class)
+    private fun recv(): ByteArray {
         val result = cancellableOperation { socket.recv(0, cancellationToken) }
 
         return result ?: throw ZMQException(
@@ -20,17 +37,6 @@ class ZmqSocketWithCancellationImpl(
             socket.errno(),
         )
     }
-
-    @Throws(InterruptedException::class)
-    override fun recvString() = String(recv(), ZMQ.CHARSET)
-
-    override fun sendMore(data: String): Boolean = sendMore(data.toByteArray(ZMQ.CHARSET))
-
-    override fun sendMore(data: ByteArray): Boolean = send(data, flags = zmq.ZMQ.ZMQ_SNDMORE)
-
-    override fun send(data: String): Boolean = send(data.toByteArray(ZMQ.CHARSET))
-
-    override fun send(data: ByteArray): Boolean = send(data, flags = 0)
 
     private fun send(
         data: ByteArray,
