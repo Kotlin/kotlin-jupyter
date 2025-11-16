@@ -1,15 +1,36 @@
 package org.jetbrains.kotlinx.jupyter.api.libraries
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 
-typealias CommOpenCallback = (Comm, JsonObject) -> Unit
-typealias CommMsgCallback = (JsonObject) -> Unit
-typealias CommCloseCallback = (JsonObject) -> Unit
+fun interface CommOpenCallback {
+    fun messageReceived(
+        comm: Comm,
+        data: JsonObject,
+        metadata: JsonElement?,
+        buffers: List<ByteArray>,
+    )
+}
+
+fun interface CommMsgCallback {
+    fun messageReceived(
+        data: JsonObject,
+        metadata: JsonElement?,
+        buffers: List<ByteArray>,
+    )
+}
+
+fun interface CommCloseCallback {
+    fun messageReceived(
+        data: JsonObject,
+        metadata: JsonElement?,
+    )
+}
 
 /**
  * Manages custom messages in the notebook, for more info see
@@ -27,6 +48,7 @@ interface CommManager {
         target: String,
         data: JsonObject = Json.EMPTY,
         metadata: JsonObject = Json.EMPTY,
+        buffers: List<ByteArray>? = null,
     ): Comm
 
     /**
@@ -38,6 +60,7 @@ interface CommManager {
     fun closeComm(
         id: String,
         data: JsonObject = Json.EMPTY,
+        metadata: JsonObject = Json.EMPTY,
     )
 
     /**
@@ -76,7 +99,11 @@ interface Comm {
     /**
      * Send JSON data to this comm. Effectively sends `comm_msg` message to frontend
      */
-    fun send(data: JsonObject)
+    fun send(
+        data: JsonObject,
+        metadata: JsonElement? = null,
+        buffers: List<ByteArray>? = null,
+    )
 
     /**
      * Add [action] callback for `comm_msg` requests. Doesn't override existing callbacks
@@ -95,6 +122,7 @@ interface Comm {
      */
     fun close(
         data: JsonObject = Json.EMPTY,
+        metadata: JsonElement? = null,
         notifyClient: Boolean = true,
     )
 
@@ -118,7 +146,7 @@ inline fun <reified T> Comm.sendData(data: T) {
 }
 
 inline fun <reified T> Comm.onData(crossinline action: (T) -> Unit): CommMsgCallback =
-    onMessage { json ->
-        val data = Json.decodeFromJsonElement<T>(json)
+    onMessage { data, _, _ ->
+        val data = Json.decodeFromJsonElement<T>(data)
         action(data)
     }

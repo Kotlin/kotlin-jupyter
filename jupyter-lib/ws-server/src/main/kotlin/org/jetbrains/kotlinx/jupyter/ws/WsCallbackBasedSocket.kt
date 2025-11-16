@@ -40,10 +40,11 @@ internal abstract class WsCallbackBasedSocket(
                 JsonObject(msg.data + (CHANNEL_FIELD_NAME to JsonPrimitive(channel.jupyterName))),
             )
         for (webSocket in getWebSockets()) {
-            if (msg.id.isEmpty()) {
+            val buffers = msg.buffers
+            if (buffers.isEmpty()) {
                 webSocket.send(msgDataJsonString)
             } else {
-                webSocket.send(messageWithBuffersToBytes(msgDataJsonString = msgDataJsonString, buffers = msg.id))
+                webSocket.send(messageWithBuffersToBytes(msgDataJsonString = msgDataJsonString, buffers = buffers))
             }
         }
     }

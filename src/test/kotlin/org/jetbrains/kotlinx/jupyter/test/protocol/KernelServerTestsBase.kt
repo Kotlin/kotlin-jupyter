@@ -70,8 +70,19 @@ abstract class KernelServerTestsBase(
     fun JupyterSendSocket.sendMessage(
         msgType: MessageType,
         content: MessageContent?,
+        buffers: List<ByteArray> = emptyList(),
     ) {
-        sendMessage(Message(id = messageId, MessageData(header = makeHeader(msgType, sessionId = sessionId), content = content)))
+        sendMessage(
+            Message(
+                id = messageId,
+                data =
+                    MessageData(
+                        header = makeHeader(msgType, sessionId = sessionId),
+                        content = content,
+                    ),
+                buffers = buffers,
+            ),
+        )
     }
 
     fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage()!!.toMessage()

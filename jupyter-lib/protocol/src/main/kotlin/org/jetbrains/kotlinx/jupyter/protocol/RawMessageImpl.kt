@@ -9,14 +9,39 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import java.util.Base64
 
 data class RawMessageImpl(
-    override val id: List<ByteArray> = listOf(),
+    override val id: List<ByteArray> = emptyList(),
     override val header: JsonObject,
     override val parentHeader: JsonObject?,
     override val metadata: JsonObject?,
     override val content: JsonElement,
+    override val buffers: List<ByteArray> = emptyList(),
 ) : RawMessage {
-    override fun toString(): String = "msg[${id.joinToString { Base64.getEncoder().encodeToString(it) }}] $data"
+    override fun toString(): String =
+        buildMessageDebugString(
+            id,
+            MessageFormat.encodeToString(data),
+            buffers,
+        )
 }
+
+fun buildMessageDebugString(
+    id: List<ByteArray>,
+    data: String,
+    buffers: List<ByteArray>,
+): String =
+    buildString {
+        append("[msg")
+        for (idPart in id) {
+            append(Base64.getEncoder().encodeToString(idPart))
+        }
+        append("] ")
+        append(data)
+        if (buffers.isNotEmpty()) {
+            append(" <contains ")
+            append(buffers.size)
+            append(" byte buffers>")
+        }
+    }
 
 val MessageFormat =
     Json {

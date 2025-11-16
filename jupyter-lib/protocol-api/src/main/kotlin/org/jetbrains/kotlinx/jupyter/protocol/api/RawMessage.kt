@@ -14,6 +14,7 @@ interface RawMessage {
     val parentHeader: JsonObject?
     val metadata: JsonObject?
     val content: JsonElement
+    val buffers: List<ByteArray>
 }
 
 val RawMessage.type: String?
