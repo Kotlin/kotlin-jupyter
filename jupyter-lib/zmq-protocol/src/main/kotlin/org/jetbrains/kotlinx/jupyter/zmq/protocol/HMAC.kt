@@ -24,8 +24,6 @@ class HMAC(
         data.forEach { mac.update(it) }
         return mac.doFinal().toHexString()
     }
-
-    operator fun invoke(vararg data: ByteArray): String = invoke(data.asIterable())
 }
 
 private fun ByteArray.toHexString(): String = joinToString("", transform = { "%02x".format(it) })

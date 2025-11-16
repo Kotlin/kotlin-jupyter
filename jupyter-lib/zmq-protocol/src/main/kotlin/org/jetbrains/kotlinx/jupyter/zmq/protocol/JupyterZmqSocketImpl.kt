@@ -66,17 +66,14 @@ class JupyterZmqSocketImpl(
 
         zmqSocket.sendMultipart(
             sequence {
-                for (idPart in msg.id) {
-                    yield(idPart)
-                }
+                yieldAll(msg.id)
                 yield(MESSAGE_DELIMITER)
 
                 val signableMessage =
                     messagePartProperties.map { prop ->
                         prop
                             .get(msg)
-                            ?.let { MessageFormat.encodeToString(it) }
-                            ?.toByteArray()
+                            ?.let { MessageFormat.encodeToString(it).toByteArray() }
                             ?: emptyJsonObjectStringBytes
                     }
 
@@ -105,19 +102,15 @@ class JupyterZmqSocketImpl(
     private fun doReceiveRawMessage(): RawMessage {
         zmqSocket.assertNotCancelled()
 
-        val parts = zmqSocket.recvMultipart()
-        val iter = parts.iterator()
+        val iter = zmqSocket.recvMultipart().iterator()
 
         val ids =
             generateSequence { iter.next() }
                 .takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
                 .toList()
         val sig = ZmqString.getString(iter.next()).lowercase()
-        val header = iter.next()
-        val parentHeader = iter.next()
-        val metadata = iter.next()
-        val content = iter.next()
-        val calculatedSig = hmac(header, parentHeader, metadata, content)
+        val blocks = messagePartProperties.map { iter.next() }
+        val calculatedSig = hmac(blocks)
 
         if (sig != calculatedSig) {
             throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
@@ -128,20 +121,20 @@ class JupyterZmqSocketImpl(
             return if (json is JsonObject && json.isEmpty()) null else json
         }
 
-        fun JsonElement?.orEmptyObject() = this ?: Json.EMPTY
-
         val buffers =
             buildList {
                 iter.forEachRemaining { add(it) }
             }
 
+        val blockJsons = blocks.map { it.parseJson()?.jsonObject }
+
         return RawMessageImpl(
-            ids,
-            header.parseJson()!!.jsonObject,
-            parentHeader.parseJson()?.jsonObject,
-            metadata.parseJson()?.jsonObject,
-            content.parseJson().orEmptyObject(),
-            buffers,
+            id = ids,
+            header = blockJsons[0] ?: error("There is no header in the message. Data was read: $blockJsons"),
+            parentHeader = blockJsons[1],
+            metadata = blockJsons[2],
+            content = blockJsons[3] ?: Json.EMPTY,
+            buffers = buffers,
         )
     }
 
