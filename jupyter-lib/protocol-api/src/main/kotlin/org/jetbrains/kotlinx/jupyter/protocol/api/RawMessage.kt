@@ -5,11 +5,23 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
+typealias ZmqIdentities = List<ByteArray>
+
 /**
  * Raw Jupyter message.
+ *
+ * This format reflects the format of the message described in Jupyter ZMQ wire protocol
+ * (see https://jupyter-client.readthedocs.io/en/stable/messaging.html#the-wire-protocol).
+ *
+ * [zmqIdentities] parameter is used to create replies to this message in ZMQ protocol:
+ * reply to this message should have the same [zmqIdentities].
+ * This interface is also used for communicating via websocket protocol.
+ * In this case, [zmqIdentities] should be just ignored.
+ *
+ * All other properties are applicable to each protocol and have the same format in each of them.
  */
 interface RawMessage {
-    val id: List<ByteArray>
+    val zmqIdentities: ZmqIdentities
     val header: JsonObject
     val parentHeader: JsonObject?
     val metadata: JsonObject?

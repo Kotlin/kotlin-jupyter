@@ -6,10 +6,11 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.ZmqIdentities
 import java.util.Base64
 
 data class RawMessageImpl(
-    override val id: List<ByteArray> = emptyList(),
+    override val zmqIdentities: ZmqIdentities = emptyList(),
     override val header: JsonObject,
     override val parentHeader: JsonObject?,
     override val metadata: JsonObject?,
@@ -18,20 +19,20 @@ data class RawMessageImpl(
 ) : RawMessage {
     override fun toString(): String =
         buildMessageDebugString(
-            id,
+            zmqIdentities,
             MessageFormat.encodeToString(data),
             buffers,
         )
 }
 
 fun buildMessageDebugString(
-    id: List<ByteArray>,
+    zmqIdentities: ZmqIdentities,
     data: String,
     buffers: List<ByteArray>,
 ): String =
     buildString {
-        append("[msg")
-        for (idPart in id) {
+        append("msg[")
+        for (idPart in zmqIdentities) {
             append(Base64.getEncoder().encodeToString(idPart))
         }
         append("] ")

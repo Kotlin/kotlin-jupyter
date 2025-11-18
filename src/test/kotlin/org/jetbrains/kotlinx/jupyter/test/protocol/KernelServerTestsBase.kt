@@ -43,7 +43,7 @@ abstract class KernelServerTestsBase(
         )
 
     private val sessionId = UUID.randomUUID().toString()
-    private val messageId = listOf(byteArrayOf(1))
+    private val zmqIdentities = listOf(byteArrayOf(1))
 
     private val executor = if (runServerInSeparateProcess) ProcessServerTestExecutor() else ThreadServerTestExecutor()
 
@@ -74,7 +74,7 @@ abstract class KernelServerTestsBase(
     ) {
         sendMessage(
             Message(
-                id = messageId,
+                zmqIdentities = zmqIdentities,
                 data =
                     MessageData(
                         header = makeHeader(msgType, sessionId = sessionId),

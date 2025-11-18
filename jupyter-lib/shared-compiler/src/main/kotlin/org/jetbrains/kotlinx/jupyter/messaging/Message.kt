@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.ZmqIdentities
 import org.jetbrains.kotlinx.jupyter.protocol.buildMessageDebugString
 import org.jetbrains.kotlinx.jupyter.protocol.data
 import java.time.ZonedDateTime
@@ -18,7 +19,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 data class Message(
-    val id: List<ByteArray> = emptyList(),
+    val zmqIdentities: ZmqIdentities = emptyList(),
     val data: MessageData = MessageData(),
     val buffers: List<ByteArray> = emptyList(),
 ) {
@@ -30,7 +31,7 @@ data class Message(
 
     override fun toString(): String =
         buildMessageDebugString(
-            id,
+            zmqIdentities,
             MessageFormat.encodeToString(data),
             buffers,
         )
@@ -38,25 +39,25 @@ data class Message(
 
 fun RawMessage.toMessage(): Message =
     Message(
-        id = id,
+        zmqIdentities = zmqIdentities,
         data = MessageFormat.decodeFromJsonElement(data),
         buffers = buffers,
     )
 
 fun Message.toRawMessage(): RawMessage =
     makeRawMessage(
-        id = id,
+        zmqIdentities = zmqIdentities,
         dataJson = MessageFormat.encodeToJsonElement<MessageData>(data).jsonObject,
         buffers = buffers,
     )
 
 fun makeRawMessage(
-    id: List<ByteArray>,
+    zmqIdentities: List<ByteArray>,
     dataJson: JsonObject,
     buffers: List<ByteArray> = emptyList(),
 ): RawMessage =
     RawMessageImpl(
-        id = id,
+        zmqIdentities = zmqIdentities,
         header = dataJson["header"]!!.jsonObject,
         parentHeader = dataJson["parent_header"] as? JsonObject,
         metadata = dataJson["metadata"] as? JsonObject,
@@ -72,14 +73,16 @@ fun makeReplyMessage(
     parentHeader: MessageHeader? = null,
     metadata: JsonElement? = null,
     content: MessageContent? = null,
+    buffers: List<ByteArray>? = null,
 ) = Message(
-    id = msg.id,
+    zmqIdentities = msg.zmqIdentities,
     MessageData(
         header = header ?: makeHeader(msgType = msgType, incomingMsg = msg, sessionId = sessionId),
         parentHeader = parentHeader ?: MessageFormat.decodeFromJsonElement<MessageHeader>(msg.header),
         metadata = metadata,
         content = content,
     ),
+    buffers = buffers ?: emptyList(),
 )
 
 fun makeHeader(
