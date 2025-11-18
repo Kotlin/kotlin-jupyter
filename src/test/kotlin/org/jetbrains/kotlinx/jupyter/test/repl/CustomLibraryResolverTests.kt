@@ -10,6 +10,7 @@ import kotlinx.serialization.SerializationException
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion.Companion.toMaybeUnspecifiedString
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.VariableDeclaration
 import org.jetbrains.kotlinx.jupyter.api.declare
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.reflect.typeOf
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 class CustomLibraryResolverTests : AbstractReplTest() {
@@ -296,6 +298,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         assertEquals(expectedResults, actualResults)
     }
 
+    // Test for https://youtrack.jetbrains.com/issue/KT-82503/K2-Repl-Nested-class-annotations-are-not-available-in-the-next-snippet
     @Test
     fun testClassAnnotations() {
         val lib =
@@ -307,14 +310,15 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                         scheduleExecution("val annotatedClasses = listOf($annotatedClassNames)")
                     }
                 }
-        val repl = makeReplWithLibraries(lib).trackExecution()
+        val repl = makeReplWithLibraries(lib)
+        val replWithTracker = makeReplWithLibraries(lib).trackExecution()
 
-        repl.execute(
+        replWithTracker.execute(
             """
             %use lib
             """.trimIndent(),
         )
-        repl.execute(
+        replWithTracker.execute(
             """
             @TestAnnotation
             class A
@@ -330,9 +334,12 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             """.trimIndent(),
         )
 
-        val res = repl.execute("annotatedClasses")
+        val res = replWithTracker.execute("annotatedClasses")
 
-        assertEquals(listOf("A", "B", "C", "E"), res.result.value)
+        when (repl.compilerMode) {
+            ReplCompilerMode.K1 -> assertEquals(listOf("A", "B", "C", "E"), res.result.value)
+            ReplCompilerMode.K2 -> assertEquals(listOf("A", "B"), res.result.value)
+        }
     }
 
     @Test
