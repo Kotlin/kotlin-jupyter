@@ -26,7 +26,9 @@ fun <R> Field.asAccessible(
     instance: Any,
     action: (Field) -> R,
 ): R {
-    val isStatic = java.lang.reflect.Modifier.isStatic(modifiers)
+    val isStatic =
+        java.lang.reflect.Modifier
+            .isStatic(modifiers)
     val wasAccessible = canAccess(if (isStatic) null else instance)
     if (!wasAccessible) {
         isAccessible = true

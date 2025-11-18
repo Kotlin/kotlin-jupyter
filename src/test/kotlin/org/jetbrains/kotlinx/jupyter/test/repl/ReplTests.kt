@@ -964,7 +964,10 @@ class ReplTests : AbstractSingleReplTest() {
                 "
                 """.trimIndent(),
             )
-        result.shouldBeInstanceOf<EvalResultEx.Success>()
+        when (repl.compilerMode) {
+            K1 -> result.shouldBeInstanceOf<EvalResultEx.Error>()
+            K2 -> result.shouldBeInstanceOf<EvalResultEx.Success>()
+        }
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KTNB-967
@@ -977,7 +980,10 @@ class ReplTests : AbstractSingleReplTest() {
                 "
                 """.trimIndent(),
             )
-        result.shouldBeInstanceOf<EvalResultEx.Success>()
+        when (repl.compilerMode) {
+            K1 -> result.shouldBeInstanceOf<EvalResultEx.Error>()
+            K2 -> result.shouldBeInstanceOf<EvalResultEx.Error>()
+        }
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-77202/K2-Repl-Local-Extension-Properties-are-not-supported
@@ -1182,20 +1188,25 @@ class ReplTests : AbstractSingleReplTest() {
     // Also reported here: https://youtrack.jetbrains.com/issue/KT-81423/K2-Repl-Return-value-not-working-when-combined-with-crossinline-anonymous-lambda
     @Test
     fun crossinlineAnonymousLambda() {
-        eval("""
+        eval(
+            """
             class R {
                 val x: Int = 1
             }
             inline fun R.t(crossinline action: (R) -> Int) = object {
                 val y get() = action(this@t)
             }
-        """.trimIndent()).assertSuccess()
-        val res = eval("""
-            R().t { it.x * 2 }
-        """.trimIndent())
+            """.trimIndent(),
+        ).assertSuccess()
+        val res =
+            eval(
+                """
+                R().t { it.x * 2 }
+                """.trimIndent(),
+            )
         when (repl.compilerMode) {
             K1 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
-            K2 -> res.shouldBeInstanceOf<EvalResultEx.Success>()
+            K2 -> res.shouldBeInstanceOf<EvalResultEx.Error>()
         }
     }
 
