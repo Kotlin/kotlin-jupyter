@@ -3,11 +3,12 @@ package org.jetbrains.kotlinx.jupyter.messaging
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.ZmqIdentities
 
 class MessageFactoryImpl : MessageFactory {
-    private var _messageId: List<ByteArray> = listOf(byteArrayOf(1))
-    override val messageId: List<ByteArray>
-        get() = _messageId
+    private var _zmqIdentities: ZmqIdentities = listOf(byteArrayOf(1))
+    override val zmqIdentities: ZmqIdentities
+        get() = _zmqIdentities
 
     private var _sessionId = ""
     override val sessionId: String
@@ -25,7 +26,7 @@ class MessageFactoryImpl : MessageFactory {
         val header = message.header
         header["session"]?.jsonPrimitive?.content?.let { _sessionId = it }
         header["username"]?.jsonPrimitive?.content?.let { _username = it }
-        _messageId = message.id
+        _zmqIdentities = message.zmqIdentities
     }
 
     override fun updateContextMessage(contextMessage: RawMessage?) {
@@ -39,6 +40,7 @@ class MessageFactoryImpl : MessageFactory {
         parentHeader: MessageHeader?,
         metadata: JsonElement?,
         content: MessageContent?,
+        buffers: List<ByteArray>?,
     ): Message? {
         val myContextMessage = contextMessage ?: return null
 
@@ -50,6 +52,7 @@ class MessageFactoryImpl : MessageFactory {
             parentHeader,
             metadata,
             content,
+            buffers,
         )
     }
 }

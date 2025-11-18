@@ -2,9 +2,10 @@ package org.jetbrains.kotlinx.jupyter.messaging
 
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
+import org.jetbrains.kotlinx.jupyter.protocol.api.ZmqIdentities
 
 interface MessageFactory {
-    val messageId: List<ByteArray>
+    val zmqIdentities: ZmqIdentities
     val sessionId: String
     val username: String
     val contextMessage: RawMessage?
@@ -20,6 +21,7 @@ interface MessageFactory {
         parentHeader: MessageHeader? = null,
         metadata: JsonElement? = null,
         content: MessageContent? = null,
+        buffers: List<ByteArray>? = null,
     ): Message?
 }
 
@@ -32,7 +34,7 @@ fun MessageFactory.makeSimpleMessage(
     buffers: List<ByteArray>? = null,
 ): Message =
     Message(
-        id = messageId,
+        zmqIdentities = zmqIdentities,
         data =
             MessageData(
                 header = makeDefaultHeader(msgType),
@@ -49,6 +51,7 @@ fun MessageFactory.makeReplyMessage(
     parentHeader: MessageHeader? = null,
     metadata: JsonElement? = null,
     content: MessageContent? = null,
+    buffers: List<ByteArray>? = null,
 ): Message =
     makeReplyMessageOrNull(
         msgType,
@@ -57,4 +60,5 @@ fun MessageFactory.makeReplyMessage(
         parentHeader,
         metadata,
         content,
+        buffers,
     ) ?: error("Context message is needed for reply")

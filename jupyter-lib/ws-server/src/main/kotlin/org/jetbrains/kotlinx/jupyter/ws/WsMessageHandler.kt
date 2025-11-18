@@ -68,7 +68,7 @@ internal class WsMessageHandler(
 
         val rawMessage =
             makeRawMessage(
-                id = emptyList(),
+                zmqIdentities = emptyList(),
                 dataJson = json,
                 buffers = byteBuffers,
             )

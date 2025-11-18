@@ -66,7 +66,7 @@ class JupyterZmqSocketImpl(
 
         zmqSocket.sendMultipart(
             sequence {
-                yieldAll(msg.id)
+                yieldAll(msg.zmqIdentities)
                 yield(MESSAGE_DELIMITER)
 
                 val signableMessage =
@@ -104,7 +104,7 @@ class JupyterZmqSocketImpl(
 
         val iter = zmqSocket.recvMultipart().iterator()
 
-        val ids =
+        val zmqIdentities =
             generateSequence { iter.next() }
                 .takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
                 .toList()
@@ -113,7 +113,7 @@ class JupyterZmqSocketImpl(
         val calculatedSig = hmac(blocks)
 
         if (sig != calculatedSig) {
-            throw SignatureException("Invalid signature: expected $calculatedSig, received $sig - $ids")
+            throw SignatureException("Invalid signature: expected $calculatedSig, received $sig for message $zmqIdentities")
         }
 
         fun ByteArray.parseJson(): JsonElement? {
@@ -129,7 +129,7 @@ class JupyterZmqSocketImpl(
         val blockJsons = blocks.map { it.parseJson()?.jsonObject }
 
         return RawMessageImpl(
-            id = ids,
+            zmqIdentities = zmqIdentities,
             header = blockJsons[0] ?: error("There is no header in the message. Data was read: $blockJsons"),
             parentHeader = blockJsons[1],
             metadata = blockJsons[2],
