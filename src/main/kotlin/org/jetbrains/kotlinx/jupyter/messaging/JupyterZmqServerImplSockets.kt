@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
 import org.zeromq.ZMQ
 import java.io.Closeable
 
@@ -23,6 +24,7 @@ internal class JupyterZmqServerImplSockets(
     private val logger = loggerFactory.getLogger(this::class)
     private val zmqContext: ZMQ.Context = ZMQ.context(1)
     private val hmac by lazy { jupyterParams.createHmac() }
+    private val identity: ByteArray = generateZmqIdentity()
 
     private val socketsToClose = mutableListOf<Closeable>()
     private val socketsToBind = mutableListOf<JupyterZmqSocket>()
@@ -61,6 +63,13 @@ internal class JupyterZmqServerImplSockets(
             .also { socketsToClose.add(it) }
 
     private fun createAndBindSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
-        createZmqSocket(loggerFactory, socketInfo, zmqContext, jupyterParams, JupyterSocketSide.SERVER, hmac)
-            .also { socketsToBind.add(it) }
+        createZmqSocket(
+            loggerFactory = loggerFactory,
+            socketInfo = socketInfo,
+            context = zmqContext,
+            configParams = jupyterParams,
+            side = JupyterSocketSide.SERVER,
+            hmac = hmac,
+            identity = identity,
+        ).also { socketsToBind.add(it) }
 }
