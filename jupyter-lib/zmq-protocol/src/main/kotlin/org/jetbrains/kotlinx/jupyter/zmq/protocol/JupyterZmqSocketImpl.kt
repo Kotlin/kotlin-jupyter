@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.LOCALHOST
+import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.security.SignatureException
@@ -57,8 +58,8 @@ class JupyterZmqSocketImpl(
     }
 
     override fun sendRawMessage(msg: RawMessage) {
-        logger.debug("[{}] snd>: {}", name, msg)
         doSendRawMessage(msg)
+        logger.debug("[{}] snd>: {}", name, msg)
     }
 
     private fun doSendRawMessage(msg: RawMessage) {
@@ -150,14 +151,18 @@ fun createZmqSocket(
     configParams: KernelJupyterParams,
     side: JupyterSocketSide,
     hmac: HMAC,
-    identity: ByteArray? = null,
+    identity: ByteArray,
 ): JupyterZmqSocket {
-    val zmqSocket = context.socket(socketInfo.zmqType(side))
-    zmqSocket.linger = 0
-
-    identity?.let {
-        zmqSocket.setIdentity(it)
-    }
+    val type = socketInfo.zmqType(side)
+    val zmqSocket =
+        context.socket(type).apply {
+            linger = 0
+            setIdentity(identity)
+            if (type == SocketType.ROUTER) {
+                setRouterHandover(true)
+                setRouterMandatory(true)
+            }
+        }
 
     return JupyterZmqSocketImpl(
         loggerFactory = loggerFactory,

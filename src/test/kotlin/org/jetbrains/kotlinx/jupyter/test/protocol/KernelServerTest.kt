@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqString
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.recv
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.send
 import org.junit.jupiter.api.Test
@@ -24,6 +25,7 @@ import org.zeromq.ZMQ
 class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true) {
     private val context: ZMQ.Context = ZMQ.context(1)
     private val hmac by lazy { kernelConfig.jupyterParams.createHmac() }
+    private val identity: ByteArray = generateZmqIdentity()
 
     private fun connectClientSocket(socketInfo: JupyterZmqSocketInfo) =
         createZmqSocket(
@@ -33,6 +35,7 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             kernelConfig.jupyterParams,
             JupyterSocketSide.CLIENT,
             hmac,
+            identity,
         ).apply { connect() }
 
     @Test

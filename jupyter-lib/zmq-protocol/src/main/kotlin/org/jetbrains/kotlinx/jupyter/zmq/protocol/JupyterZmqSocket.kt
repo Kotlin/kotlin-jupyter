@@ -9,8 +9,6 @@ interface ZmqSocketWithCancellation : Closeable {
 
     fun sendMultipart(message: Sequence<ByteArray>)
 
-    fun makeRelaxed()
-
     fun subscribe(topic: ByteArray): Boolean
 }
 

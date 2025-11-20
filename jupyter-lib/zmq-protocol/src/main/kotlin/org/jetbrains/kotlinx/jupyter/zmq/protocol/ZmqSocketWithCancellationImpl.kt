@@ -31,7 +31,6 @@ class ZmqSocketWithCancellationImpl(
     @Throws(InterruptedException::class)
     private fun recv(): ByteArray {
         val result = cancellableOperation { socket.recv(0, cancellationToken) }
-
         return result ?: throw ZMQException(
             "Unable to receive message",
             socket.errno(),
@@ -41,7 +40,15 @@ class ZmqSocketWithCancellationImpl(
     private fun send(
         data: ByteArray,
         flags: Int,
-    ): Boolean = cancellableOperation { socket.send(data, flags, cancellationToken) }
+    ) {
+        val isOk = cancellableOperation { socket.send(data, flags, cancellationToken) }
+        if (!isOk) {
+            throw ZMQException(
+                "Unable to send message",
+                socket.errno(),
+            )
+        }
+    }
 
     private inline fun <R> cancellableOperation(block: () -> R): R {
         assertNotCancelled()
@@ -58,10 +65,6 @@ class ZmqSocketWithCancellationImpl(
             }
             throw e
         }
-    }
-
-    override fun makeRelaxed() {
-        socket.base().setSocketOpt(zmq.ZMQ.ZMQ_REQ_RELAXED, true)
     }
 
     override fun subscribe(topic: ByteArray) = socket.subscribe(topic)

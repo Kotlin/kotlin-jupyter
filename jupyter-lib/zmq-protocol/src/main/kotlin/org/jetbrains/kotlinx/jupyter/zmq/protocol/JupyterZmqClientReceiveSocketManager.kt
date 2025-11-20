@@ -6,9 +6,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSockets
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
-import org.zeromq.SocketType
 import org.zeromq.ZMQ
-import java.util.UUID
 
 class JupyterZmqClientReceiveSocketManager(
     private val loggerFactory: KernelLoggerFactory,
@@ -29,7 +27,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
 ) : JupyterClientReceiveSockets {
     val context: ZMQ.Context = ZMQ.context(/* ioThreads = */ 1)
     private val hmac by lazy { configParams.createHmac() }
-    private val identity: ByteArray = UUID.randomUUID().toString().toByteArray(Charsets.UTF_8)
+    private val identity: ByteArray = generateZmqIdentity()
 
     override val shell: JupyterZmqSocket
     override val control: JupyterZmqSocket
@@ -48,12 +46,7 @@ class JupyterZmqClientReceiveSockets internal constructor(
                 identity,
             )
 
-        shell =
-            createSocket(JupyterZmqSocketInfo.SHELL).apply {
-                if (JupyterZmqSocketInfo.SHELL.zmqType(side) == SocketType.REQ) {
-                    zmqSocket.makeRelaxed()
-                }
-            }
+        shell = createSocket(JupyterZmqSocketInfo.SHELL)
         control = createSocket(JupyterZmqSocketInfo.CONTROL)
         ioPub = createSocket(JupyterZmqSocketInfo.IOPUB)
         stdin = createSocket(JupyterZmqSocketInfo.STDIN)
