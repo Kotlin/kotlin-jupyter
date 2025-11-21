@@ -7,6 +7,7 @@ import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import org.zeromq.ZMQException
 import zmq.ZError
+import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.Pipe
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ZmqSocketWithCancellationImpl(
     loggerFactory: KernelLoggerFactory,
     socketData: ZmqSocketData,
-) : ZmqSocketWithCancellation {
+) : Closeable {
     private val logger = loggerFactory.getLogger(this::class)
 
     private val name: String = socketData.name
@@ -88,15 +89,18 @@ class ZmqSocketWithCancellationImpl(
 
     @Synchronized
     internal fun connect(): Boolean {
-        val ok = networkSocket.connect(address)
+        var ok = true
+        if (socketType == SocketType.SUB) {
+            ok = ok && networkSocket.subscribe(byteArrayOf())
+        }
+        ok = ok && networkSocket.connect(address)
+
         start()
         logger.debug("[$name] connected to $address")
         return ok
     }
 
-    override fun subscribe(topic: ByteArray): Boolean = networkSocket.subscribe(topic)
-
-    override fun sendMultipart(message: Sequence<ByteArray>) {
+    internal fun sendMultipart(message: Sequence<ByteArray>) {
         assertNotCancelled()
         // 1) Put the message into the outgoing queue
         sendQueue.put(message.toList())
@@ -113,7 +117,7 @@ class ZmqSocketWithCancellationImpl(
         }
     }
 
-    override fun recvMultipart(): Sequence<ByteArray> {
+    internal fun recvMultipart(): Sequence<ByteArray> {
         assertNotCancelled()
         val frames = receiveQueue.take() // blocking read from app-facing queue
         return frames.asSequence()

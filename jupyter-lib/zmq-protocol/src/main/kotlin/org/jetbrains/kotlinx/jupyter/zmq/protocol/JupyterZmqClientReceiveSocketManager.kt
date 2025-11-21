@@ -53,9 +53,8 @@ class JupyterZmqClientReceiveSockets internal constructor(
 
         mergeExceptions {
             catchIndependently {
-                ioPub.zmqSocket.subscribe(byteArrayOf())
-                shell.connect()
                 ioPub.connect()
+                shell.connect()
                 stdin.connect()
                 control.connect()
             }
