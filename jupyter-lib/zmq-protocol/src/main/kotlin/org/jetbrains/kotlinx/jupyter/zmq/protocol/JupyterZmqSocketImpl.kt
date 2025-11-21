@@ -14,12 +14,9 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
 import org.jetbrains.kotlinx.jupyter.protocol.startup.LOCALHOST
-import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import java.io.Closeable
 import java.security.SignatureException
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 private val MESSAGE_DELIMITER: ByteArray = "<IDS|MSG>".map { it.code.toByte() }.toByteArray()
 private val emptyJsonObjectString = Json.EMPTY.toString()
@@ -34,37 +31,44 @@ private val messagePartProperties =
 
 class JupyterZmqSocketImpl(
     loggerFactory: KernelLoggerFactory,
-    val name: String,
-    socket: ZMQ.Socket,
-    private val address: String,
+    socketData: ZmqSocketData,
     private val hmac: HMAC,
 ) : Closeable,
     JupyterZmqSocket {
     private val logger = loggerFactory.getLogger(this::class)
-    private val lock = ReentrantLock()
+    private val name = socketData.name
 
-    override val zmqSocket = ZmqSocketWithCancellationImpl(socket)
+    override val zmqSocket =
+        ZmqSocketWithCancellationImpl(
+            loggerFactory,
+            socketData,
+        )
 
-    override fun bind(): Boolean {
-        val res = zmqSocket.bind(address)
-        logger.debug("[$name] listen: $address")
-        return res
-    }
+    override fun bind(): Boolean = zmqSocket.bind()
 
-    override fun connect(): Boolean {
-        val res = zmqSocket.connect(address)
-        logger.debug("[$name] connected: $address")
-        return res
-    }
+    override fun connect(): Boolean = zmqSocket.connect()
 
     override fun sendRawMessage(msg: RawMessage) {
         doSendRawMessage(msg)
         logger.debug("[{}] snd>: {}", name, msg)
     }
 
-    private fun doSendRawMessage(msg: RawMessage) {
-        zmqSocket.assertNotCancelled()
+    @Throws(InterruptedException::class)
+    override fun receiveRawMessage(): RawMessage? =
+        try {
+            val msg = doReceiveRawMessage()
+            logger.debug("[{}] >rcv: {}", name, msg)
+            msg
+        } catch (e: SignatureException) {
+            logger.error("[$name] ${e.message}")
+            null
+        }
 
+    override fun close() {
+        zmqSocket.close()
+    }
+
+    private fun doSendRawMessage(msg: RawMessage) {
         zmqSocket.sendMultipart(
             sequence {
                 yieldAll(msg.zmqIdentities)
@@ -86,23 +90,7 @@ class JupyterZmqSocketImpl(
     }
 
     @Throws(InterruptedException::class)
-    override fun receiveRawMessage(): RawMessage? =
-        try {
-            val msg =
-                lock.withLock {
-                    doReceiveRawMessage()
-                }
-            logger.debug("[{}] >rcv: {}", name, msg)
-            msg
-        } catch (e: SignatureException) {
-            logger.error("[$name] ${e.message}")
-            null
-        }
-
-    @Throws(InterruptedException::class)
     private fun doReceiveRawMessage(): RawMessage {
-        zmqSocket.assertNotCancelled()
-
         val iter = zmqSocket.recvMultipart().iterator()
 
         val zmqIdentities =
@@ -138,10 +126,6 @@ class JupyterZmqSocketImpl(
             buffers = buffers,
         )
     }
-
-    override fun close() {
-        zmqSocket.close()
-    }
 }
 
 fun createZmqSocket(
@@ -153,22 +137,18 @@ fun createZmqSocket(
     hmac: HMAC,
     identity: ByteArray,
 ): JupyterZmqSocket {
-    val type = socketInfo.zmqType(side)
-    val zmqSocket =
-        context.socket(type).apply {
-            linger = 0
-            setIdentity(identity)
-            if (type == SocketType.ROUTER) {
-                setRouterHandover(true)
-                setRouterMandatory(true)
-            }
-        }
+    val socketData =
+        ZmqSocketData(
+            name = socketInfo.name,
+            zmqContext = context,
+            socketType = socketInfo.zmqType(side),
+            socketIdentity = identity,
+            address = configParams.addressForZmqSocket(socketInfo, side),
+        )
 
     return JupyterZmqSocketImpl(
         loggerFactory = loggerFactory,
-        name = socketInfo.name,
-        socket = zmqSocket,
-        address = configParams.addressForZmqSocket(socketInfo, side),
+        socketData = socketData,
         hmac = hmac,
     )
 }

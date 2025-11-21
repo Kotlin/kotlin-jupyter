@@ -12,11 +12,6 @@ interface ZmqSocketWithCancellation : Closeable {
     fun subscribe(topic: ByteArray): Boolean
 }
 
-@Throws(InterruptedException::class)
-fun ZmqSocketWithCancellation.recv(): ByteArray = recvMultipart().single()
-
-fun ZmqSocketWithCancellation.send(data: ByteArray) = sendMultipart(sequenceOf(data))
-
 interface JupyterZmqSocket :
     JupyterSendReceiveSocket,
     Closeable {

@@ -14,8 +14,6 @@ import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqString
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.recv
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.send
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -41,8 +39,8 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
     @Test
     fun testHeartbeat() {
         withSocketOfType(JupyterZmqSocketInfo.HB) {
-            zmqSocket.send(ZmqString.getBytes("abc"))
-            val msg = ZmqString.getString(zmqSocket.recv())
+            zmqSocket.sendMultipart(sequenceOf(ZmqString.getBytes("abc")))
+            val msg = ZmqString.getString(zmqSocket.recvMultipart().single())
             msg shouldBe "abc"
         }
     }
