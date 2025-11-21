@@ -11,8 +11,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqKernelPorts
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.recv
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.send
 import org.slf4j.Logger
 import org.zeromq.ZMQException
 import zmq.ZError
@@ -50,7 +48,10 @@ class JupyterZmqServerRunner : JupyterServerRunner {
                 val hbThread =
                     thread(name = "JupyterZmqServerRunner.HB") {
                         socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
-                            sockets.heartbeat.let { it.zmqSocket.send(it.zmqSocket.recv()) }
+                            sockets.heartbeat.let {
+                                val socket = it.zmqSocket
+                                socket.sendMultipart(socket.recvMultipart())
+                            }
                         }
                     }
 
