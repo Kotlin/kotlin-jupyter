@@ -38,7 +38,7 @@ class JupyterZmqSocketImpl(
     private val logger = loggerFactory.getLogger(this::class)
     private val name = socketData.name
 
-    override val zmqSocket =
+    private val zmqSocket =
         ZmqSocketWithCancellationImpl(
             loggerFactory,
             socketData,
@@ -53,6 +53,10 @@ class JupyterZmqSocketImpl(
         logger.debug("[{}] snd>: {}", name, msg)
     }
 
+    override fun sendMultipart(message: Sequence<ByteArray>) {
+        zmqSocket.sendMultipart(message)
+    }
+
     @Throws(InterruptedException::class)
     override fun receiveRawMessage(): RawMessage? =
         try {
@@ -63,6 +67,8 @@ class JupyterZmqSocketImpl(
             logger.error("[$name] ${e.message}")
             null
         }
+
+    override fun recvMultipart(): Sequence<ByteArray> = zmqSocket.recvMultipart()
 
     override fun close() {
         zmqSocket.close()
