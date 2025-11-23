@@ -54,6 +54,7 @@ class JupyterZmqSocketImpl(
 
     override fun sendMultipart(message: List<ByteArray>) {
         zmqSocket.sendMultipart(message)
+        logger.debug("snd bytes>: {} frames", message.size)
     }
 
     @Throws(InterruptedException::class)
@@ -67,7 +68,10 @@ class JupyterZmqSocketImpl(
             null
         }
 
-    override fun receiveMultipart(): List<ByteArray> = zmqSocket.receiveMultipart()
+    override fun receiveMultipart(): List<ByteArray> =
+        zmqSocket.receiveMultipart().also {
+            logger.debug(">rcv bytes: {} frames", it.size)
+        }
 
     override fun close() {
         zmqSocket.close()
