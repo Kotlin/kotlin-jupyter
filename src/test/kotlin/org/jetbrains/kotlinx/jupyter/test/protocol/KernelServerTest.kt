@@ -8,12 +8,13 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.api.type
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqReceiveSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqString
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.zmqSendReceive
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -34,13 +35,14 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             JupyterSocketSide.CLIENT,
             hmac,
             identity,
-        ).apply { connect() }
+        ).zmqSendReceive()
+            .apply { connect() }
 
     @Test
     fun testHeartbeat() {
         withSocketOfType(JupyterZmqSocketInfo.HB) {
-            sendMultipart(listOf(ZmqString.getBytes("abc")))
-            val msg = ZmqString.getString(receiveMultipart().single())
+            sendBytes(listOf(ZmqString.getBytes("abc")))
+            val msg = ZmqString.getString(receiveBytes().single())
             msg shouldBe "abc"
         }
     }
@@ -57,7 +59,7 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
 
     private fun withSocketOfType(
         socketInfo: JupyterZmqSocketInfo,
-        action: JupyterZmqSocket.() -> Unit,
+        action: JupyterZmqReceiveSocket.() -> Unit,
     ) {
         with(connectClientSocket(socketInfo)) {
             tryFinally(

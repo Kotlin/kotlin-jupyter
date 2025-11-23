@@ -5,7 +5,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.catchAllIndependentlyAndMerge
 import org.zeromq.ZMQ
 import java.io.Closeable
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -16,7 +16,7 @@ import kotlin.concurrent.thread
  * - A single [routerThread] owns the real [networkSocket] (the one bound or connected to TCP/IPC/etc).
  * - Other threads never touch the network socket directly; they interact via:
  *   - A blocking queue [sendQueue] for outgoing messages
- *   - A blocking queue [receiveQueue] for incoming messages
+ *   - Callbacks for incoming messages are added via [onReceive]
  */
 internal class ZmqSocketWithCancellationImpl(
     loggerFactory: KernelLoggerFactory,
@@ -28,7 +28,7 @@ internal class ZmqSocketWithCancellationImpl(
 
     private val poller = socketData.zmqContext.poller(2)
     private val sendQueue = BlockingSignallingQueue<List<ByteArray>>(MESSAGE_QUEUE_CAPACITY)
-    private val receiveQueue = ArrayBlockingQueue<List<ByteArray>>(MESSAGE_QUEUE_CAPACITY)
+    private val receiveCallbacks: MutableList<(List<ByteArray>) -> Unit> = CopyOnWriteArrayList()
 
     private val started = AtomicBoolean(false)
     private val closed = AtomicBoolean(false)
@@ -37,24 +37,24 @@ internal class ZmqSocketWithCancellationImpl(
     private val routerThread: Thread =
         thread(
             start = false,
-            name = "${socketData.name}-router-thread",
+            name = "${socketData.name} router thread",
             block = ::processMessages,
         )
 
     @Synchronized
     internal fun bind(): Boolean {
-        val isBound = networkSocket.bind()
+        if (!networkSocket.bind()) return false
         start()
         logger.debug("listening on ${networkSocket.address}")
-        return isBound
+        return true
     }
 
     @Synchronized
     internal fun connect(): Boolean {
-        val isConnected = networkSocket.connect()
+        if (!networkSocket.connect()) return false
         start()
         logger.debug("connected to ${networkSocket.address}")
-        return isConnected
+        return true
     }
 
     internal fun sendMultipart(message: List<ByteArray>) {
@@ -62,21 +62,26 @@ internal class ZmqSocketWithCancellationImpl(
         sendQueue.put(message)
     }
 
-    internal fun receiveMultipart(): List<ByteArray> {
+    internal fun onReceive(callback: (List<ByteArray>) -> Unit) {
+        receiveCallbacks.add(callback)
+    }
+
+    internal fun join() {
         assertNotCancelled()
-        return receiveQueue.take()
+        routerThread.join()
     }
 
     @Synchronized
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
 
+        logger.debug("closing a socket")
         catchAllIndependentlyAndMerge(
             { networkSocket.close() },
             { sendQueue.close() },
             { poller.close() },
             { routerThread.interrupt() },
-            { receiveQueue.clear() },
+            { receiveCallbacks.clear() },
         )
     }
 
@@ -101,7 +106,7 @@ internal class ZmqSocketWithCancellationImpl(
                 if (poller.pollin(0)) {
                     val frames = networkSocket.receiveMultipart()
                     if (frames != null) {
-                        receiveQueue.put(frames)
+                        processMessage(frames)
                     }
                 }
 
@@ -114,6 +119,12 @@ internal class ZmqSocketWithCancellationImpl(
             }
         } catch (t: Throwable) {
             if (!closed.get()) logger.error("routerThread crashed", t)
+        }
+    }
+
+    private fun processMessage(message: List<ByteArray>) {
+        for (callback in receiveCallbacks) {
+            callback(message)
         }
     }
 

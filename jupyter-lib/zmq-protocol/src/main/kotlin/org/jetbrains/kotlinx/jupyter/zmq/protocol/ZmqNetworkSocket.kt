@@ -28,7 +28,11 @@ internal class ZmqNetworkSocket(
         val ok = socket.bind(address)
         if (socketType == SocketType.PUB) {
             // Classic slow-joiner workaround
-            Thread.sleep(500)
+            try {
+                Thread.sleep(500)
+            } catch (_: InterruptedException) {
+                return false
+            }
         }
         return ok
     }
