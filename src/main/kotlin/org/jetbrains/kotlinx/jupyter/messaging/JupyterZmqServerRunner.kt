@@ -49,7 +49,7 @@ class JupyterZmqServerRunner : JupyterServerRunner {
                     thread(name = "JupyterZmqServerRunner.HB") {
                         socketLoop(logger, "Heartbeat: Interrupted", mainThread) {
                             sockets.heartbeat.let {
-                                it.sendMultipart(it.recvMultipart())
+                                it.sendMultipart(it.receiveMultipart())
                             }
                         }
                     }

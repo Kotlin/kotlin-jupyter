@@ -15,4 +15,12 @@ interface KernelLoggerFactory {
 
 fun KernelLoggerFactory.getLogger(kClass: KClass<*>): Logger = getLogger(kClass.java)
 
+/**
+ * Creates logger with the qualified name of the given [kClass] followed by [name].
+ */
+fun KernelLoggerFactory.getLogger(
+    kClass: KClass<*>,
+    name: String,
+): Logger = getLogger(kClass.qualifiedName!! + " [" + name + "]")
+
 inline fun <reified T> KernelLoggerFactory.logger(): Logger = getLogger(T::class)
