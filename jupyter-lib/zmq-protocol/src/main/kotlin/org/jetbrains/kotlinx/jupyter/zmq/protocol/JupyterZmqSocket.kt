@@ -7,9 +7,9 @@ interface JupyterZmqSocket :
     JupyterSendReceiveSocket,
     Closeable {
     @Throws(InterruptedException::class)
-    fun recvMultipart(): Sequence<ByteArray>
+    fun receiveMultipart(): List<ByteArray>
 
-    fun sendMultipart(message: Sequence<ByteArray>)
+    fun sendMultipart(message: List<ByteArray>)
 
     // Used on the server side
     fun bind(): Boolean

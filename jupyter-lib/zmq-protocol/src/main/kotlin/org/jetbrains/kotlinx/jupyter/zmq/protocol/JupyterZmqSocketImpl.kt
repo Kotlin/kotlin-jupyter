@@ -35,8 +35,7 @@ class JupyterZmqSocketImpl(
     private val hmac: HMAC,
 ) : Closeable,
     JupyterZmqSocket {
-    private val logger = loggerFactory.getLogger(this::class)
-    private val name = socketData.name
+    private val logger = loggerFactory.getLogger(this::class, socketData.name)
 
     private val zmqSocket =
         ZmqSocketWithCancellationImpl(
@@ -50,10 +49,10 @@ class JupyterZmqSocketImpl(
 
     override fun sendRawMessage(msg: RawMessage) {
         doSendRawMessage(msg)
-        logger.debug("[{}] snd>: {}", name, msg)
+        logger.debug("snd>: {}", msg)
     }
 
-    override fun sendMultipart(message: Sequence<ByteArray>) {
+    override fun sendMultipart(message: List<ByteArray>) {
         zmqSocket.sendMultipart(message)
     }
 
@@ -61,14 +60,14 @@ class JupyterZmqSocketImpl(
     override fun receiveRawMessage(): RawMessage? =
         try {
             val msg = doReceiveRawMessage()
-            logger.debug("[{}] >rcv: {}", name, msg)
+            logger.debug(">rcv: {}", msg)
             msg
         } catch (e: SignatureException) {
-            logger.error("[$name] ${e.message}")
+            logger.error(e.message)
             null
         }
 
-    override fun recvMultipart(): Sequence<ByteArray> = zmqSocket.recvMultipart()
+    override fun receiveMultipart(): List<ByteArray> = zmqSocket.receiveMultipart()
 
     override fun close() {
         zmqSocket.close()
@@ -76,9 +75,9 @@ class JupyterZmqSocketImpl(
 
     private fun doSendRawMessage(msg: RawMessage) {
         zmqSocket.sendMultipart(
-            sequence {
-                yieldAll(msg.zmqIdentities)
-                yield(MESSAGE_DELIMITER)
+            buildList {
+                addAll(msg.zmqIdentities)
+                add(MESSAGE_DELIMITER)
 
                 val signableMessage =
                     messagePartProperties.map { prop ->
@@ -88,16 +87,16 @@ class JupyterZmqSocketImpl(
                             ?: emptyJsonObjectStringBytes
                     }
 
-                yield(ZmqString.getBytes(hmac(signableMessage)))
-                yieldAll(signableMessage)
-                yieldAll(msg.buffers)
+                add(ZmqString.getBytes(hmac(signableMessage)))
+                addAll(signableMessage)
+                addAll(msg.buffers)
             },
         )
     }
 
     @Throws(InterruptedException::class)
     private fun doReceiveRawMessage(): RawMessage {
-        val iter = zmqSocket.recvMultipart().iterator()
+        val iter = zmqSocket.receiveMultipart().iterator()
 
         val zmqIdentities =
             generateSequence { iter.next() }

@@ -10,3 +10,13 @@ class ZmqSocketData(
     val socketIdentity: ByteArray,
     val address: String,
 )
+
+fun ZmqSocketData.createSocket(): ZMQ.Socket =
+    zmqContext.socket(socketType).apply {
+        linger = 0
+        identity = socketIdentity
+        if (socketType == SocketType.ROUTER) {
+            setRouterHandover(true)
+            setRouterMandatory(true)
+        }
+    }

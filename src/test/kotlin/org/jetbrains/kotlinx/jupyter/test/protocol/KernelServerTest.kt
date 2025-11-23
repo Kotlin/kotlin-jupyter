@@ -39,8 +39,8 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
     @Test
     fun testHeartbeat() {
         withSocketOfType(JupyterZmqSocketInfo.HB) {
-            sendMultipart(sequenceOf(ZmqString.getBytes("abc")))
-            val msg = ZmqString.getString(recvMultipart().single())
+            sendMultipart(listOf(ZmqString.getBytes("abc")))
+            val msg = ZmqString.getString(receiveMultipart().single())
             msg shouldBe "abc"
         }
     }

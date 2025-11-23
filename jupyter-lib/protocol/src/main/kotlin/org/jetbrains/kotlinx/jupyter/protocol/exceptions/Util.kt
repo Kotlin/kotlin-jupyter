@@ -47,6 +47,14 @@ class ExceptionMerger {
     }
 }
 
+fun ExceptionMerger.catchAllIndependently(vararg actions: () -> Unit) {
+    for (action in actions) catchIndependently(action)
+}
+
+fun catchAllIndependentlyAndMerge(vararg actions: () -> Unit) {
+    mergeExceptions { catchAllIndependently(*actions) }
+}
+
 /**
  * Like try-finally block, but if both [action] and [finally] blocks throw exceptions,
  * the latter is added to the former as suppressed, instead of the former being ignored.
