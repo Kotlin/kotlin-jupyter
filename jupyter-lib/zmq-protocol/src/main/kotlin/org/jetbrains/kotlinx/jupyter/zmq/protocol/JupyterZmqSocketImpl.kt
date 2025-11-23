@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
@@ -47,65 +48,44 @@ class JupyterZmqSocketImpl(
 
     override fun connect(): Boolean = zmqSocket.connect()
 
+    override fun join() = zmqSocket.join()
+
     override fun sendRawMessage(msg: RawMessage) {
         doSendRawMessage(msg)
         logger.debug("snd>: {}", msg)
     }
 
-    override fun sendMultipart(message: List<ByteArray>) {
+    override fun sendBytes(message: List<ByteArray>) {
         zmqSocket.sendMultipart(message)
         logger.debug("snd bytes>: {} frames", message.size)
     }
 
-    @Throws(InterruptedException::class)
-    override fun receiveRawMessage(): RawMessage? =
-        try {
-            val msg = doReceiveRawMessage()
-            logger.debug(">rcv: {}", msg)
-            msg
-        } catch (e: SignatureException) {
-            logger.error(e.message)
-            null
+    override fun onRawMessage(callback: RawMessageCallback) {
+        onBytesReceived { bytes ->
+            // Generally, there is exactly one callback,
+            // so we won't do conversion multiple times
+            val rawMessage = convertToRawMessage(bytes)
+            if (rawMessage != null) {
+                logger.debug(">rcv: {}", rawMessage)
+                callback(rawMessage)
+            }
         }
-
-    override fun receiveMultipart(): List<ByteArray> =
-        zmqSocket.receiveMultipart().also {
-            logger.debug(">rcv bytes: {} frames", it.size)
-        }
-
-    override fun close() {
-        zmqSocket.close()
     }
 
-    private fun doSendRawMessage(msg: RawMessage) {
-        zmqSocket.sendMultipart(
-            buildList {
-                addAll(msg.zmqIdentities)
-                add(MESSAGE_DELIMITER)
-
-                val signableMessage =
-                    messagePartProperties.map { prop ->
-                        prop
-                            .get(msg)
-                            ?.let { MessageFormat.encodeToString(it).toByteArray() }
-                            ?: emptyJsonObjectStringBytes
-                    }
-
-                add(ZmqString.getBytes(hmac(signableMessage)))
-                addAll(signableMessage)
-                addAll(msg.buffers)
-            },
-        )
+    override fun onBytesReceived(callback: (List<ByteArray>) -> Unit) {
+        zmqSocket.onReceive(callback)
     }
 
-    @Throws(InterruptedException::class)
-    private fun doReceiveRawMessage(): RawMessage {
-        val iter = zmqSocket.receiveMultipart().iterator()
+    override fun convertToRawMessage(zmqMessage: List<ByteArray>): RawMessage? {
+        val iter = zmqMessage.iterator()
 
         val zmqIdentities =
-            generateSequence { iter.next() }
+            generateSequence { if (iter.hasNext()) iter.next() else null }
                 .takeWhile { !it.contentEquals(MESSAGE_DELIMITER) }
                 .toList()
+
+        if (!iter.hasNext()) return null
+
         val sig = ZmqString.getString(iter.next()).lowercase()
         val blocks = messagePartProperties.map { iter.next() }
         val calculatedSig = hmac(blocks)
@@ -135,6 +115,31 @@ class JupyterZmqSocketImpl(
             buffers = buffers,
         )
     }
+
+    override fun close() {
+        zmqSocket.close()
+    }
+
+    private fun doSendRawMessage(msg: RawMessage) {
+        zmqSocket.sendMultipart(
+            buildList {
+                addAll(msg.zmqIdentities)
+                add(MESSAGE_DELIMITER)
+
+                val signableMessage =
+                    messagePartProperties.map { prop ->
+                        prop
+                            .get(msg)
+                            ?.let { MessageFormat.encodeToString(it).toByteArray() }
+                            ?: emptyJsonObjectStringBytes
+                    }
+
+                add(ZmqString.getBytes(hmac(signableMessage)))
+                addAll(signableMessage)
+                addAll(msg.buffers)
+            },
+        )
+    }
 }
 
 fun createZmqSocket(
@@ -148,7 +153,7 @@ fun createZmqSocket(
 ): JupyterZmqSocket {
     val socketData =
         ZmqSocketData(
-            name = socketInfo.name,
+            name = socketInfo.name + " on " + side.name.lowercase(),
             zmqContext = context,
             socketType = socketInfo.zmqType(side),
             socketIdentity = identity,
