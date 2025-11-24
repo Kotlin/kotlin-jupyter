@@ -23,14 +23,14 @@ internal class BlockingSignallingQueue<T : Any>(
 ) : Closeable {
     private val queue: BlockingQueue<T> = ArrayBlockingQueue(capacity)
 
-    private val pipe: Pipe =
-        Pipe.open().apply {
-            sink().configureBlocking(false)
-            source().configureBlocking(false)
-        }
+    private val sink: Pipe.SinkChannel
+    val signaller: Pipe.SourceChannel
 
-    private val sink = pipe.sink()
-    val signaller: Pipe.SourceChannel = pipe.source()
+    init {
+        val pipe: Pipe = Pipe.open()
+        sink = pipe.sink().apply { configureBlocking(false) }
+        signaller = pipe.source().apply { configureBlocking(false) }
+    }
 
     fun put(item: T) {
         queue.put(item)
@@ -62,12 +62,7 @@ internal class BlockingSignallingQueue<T : Any>(
         }
 
         // Drain the outgoing queue and deliver everything
-        return sequence {
-            while (true) {
-                val item = queue.poll() ?: break
-                yield(item)
-            }
-        }
+        return generateSequence(queue::poll)
     }
 
     override fun close() {
