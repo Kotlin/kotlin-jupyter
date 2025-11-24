@@ -28,5 +28,6 @@ class JupyterZmqClientReceiveSockets internal constructor(
     override val ioPub = delegate.ioPub.zmqSendReceive()
     override val stdin = delegate.stdin.zmqSendReceive()
 
+    // Socket wrappers contain only byte arrays, so they don't need a specific cleanup
     override fun close() = delegate.close()
 }
