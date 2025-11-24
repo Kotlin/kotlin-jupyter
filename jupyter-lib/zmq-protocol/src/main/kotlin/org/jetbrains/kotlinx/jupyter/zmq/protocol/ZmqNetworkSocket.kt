@@ -25,7 +25,7 @@ internal class ZmqNetworkSocket(
     private val cancellationToken = socket.createCancellationToken()
 
     internal fun bind(): Boolean {
-        val ok = socket.bind(address)
+        if (!socket.bind(address)) return false
         if (socketType == SocketType.PUB) {
             // Classic slow-joiner workaround
             try {
@@ -34,7 +34,7 @@ internal class ZmqNetworkSocket(
                 return false
             }
         }
-        return ok
+        return true
     }
 
     internal fun connect(): Boolean {
