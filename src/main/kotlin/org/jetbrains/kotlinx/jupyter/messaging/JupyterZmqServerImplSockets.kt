@@ -38,8 +38,10 @@ internal class JupyterZmqServerImplSockets(
 
     fun bindAndJoinAll() {
         if (socketsToBind.any { !it.bind() }) return
-        for (socket in socketsToBind) {
-            socket.join()
+        try {
+            control.join()
+            heartbeat.join()
+        } catch (_: InterruptedException) {
         }
     }
 
