@@ -5,6 +5,7 @@ import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.Pipe
+import java.nio.channels.SelectableChannel
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 
@@ -23,23 +24,12 @@ internal class BlockingSignallingQueue<T : Any>(
 ) : Closeable {
     private val queue: BlockingQueue<T> = ArrayBlockingQueue(capacity)
 
-    private val sink: Pipe.SinkChannel
-    val signaller: Pipe.SourceChannel
-
-    init {
-        val pipe: Pipe = Pipe.open()
-        sink = pipe.sink().apply { configureBlocking(false) }
-        signaller = pipe.source().apply { configureBlocking(false) }
-    }
+    private val pipeSignaller = PipeSignaller()
+    val signaller: SelectableChannel get() = pipeSignaller.signaller
 
     fun put(item: T) {
         queue.put(item)
-        // best-effort non-blocking poke: if the pipe buffer is full, write may return 0 — it's fine
-        try {
-            sink.write(ByteBuffer.allocate(1))
-        } catch (_: ClosedChannelException) {
-            // being closed: ignore
-        }
+        pipeSignaller.signal()
     }
 
     /**
@@ -47,29 +37,65 @@ internal class BlockingSignallingQueue<T : Any>(
      * It returns all added items and removes them from the queue.
      */
     fun drainAll(): Sequence<T> {
-        // Drain the pipe (consume all pending signals)
-        val drainBuf = ByteBuffer.allocate(64)
+        pipeSignaller.drain()
+        return generateSequence(queue::poll)
+    }
+
+    override fun close() {
+        catchAllIndependentlyAndMerge(
+            pipeSignaller::close,
+            queue::clear,
+        )
+    }
+}
+
+private class PipeSignaller : Closeable {
+    private val sink: Pipe.SinkChannel
+    val signaller: Pipe.SourceChannel
+
+    private val signalMessage = ByteBuffer.allocate(1)
+    private val drainBuffer = ByteBuffer.allocate(64)
+
+    init {
+        val pipe: Pipe = Pipe.open()
+        sink = pipe.sink().apply { configureBlocking(false) }
+        signaller = pipe.source().apply { configureBlocking(false) }
+    }
+
+    /**
+     * Wakes up a [signaller], unblocking [java.nio.channels.Selector]s waiting for it
+     */
+    fun signal() {
+        // best-effort non-blocking poke: if the pipe buffer is full, write may return 0 — it's fine
+        try {
+            signalMessage.clear()
+            sink.write(signalMessage)
+        } catch (_: ClosedChannelException) {
+            // being closed: ignore
+        }
+    }
+
+    /**
+     * Consumes all pending signals. Should be called after unblocking the poller
+     */
+    fun drain() {
         while (true) {
-            drainBuf.clear()
+            drainBuffer.clear()
             val n =
                 try {
-                    signaller.read(drainBuf)
+                    signaller.read(drainBuffer)
                 } catch (_: Throwable) {
                     // if closed or any error — stop draining
                     break
                 }
             if (n <= 0) break
         }
-
-        // Drain the outgoing queue and deliver everything
-        return generateSequence(queue::poll)
     }
 
     override fun close() {
         catchAllIndependentlyAndMerge(
-            { signaller.close() },
-            { sink.close() },
-            { queue.clear() },
+            signaller::close,
+            sink::close,
         )
     }
 }
