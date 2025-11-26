@@ -4,21 +4,23 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.api.type
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
+import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqReceiveSocket
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.ZmqString
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.zmqSendReceive
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.zeromq.ZMQ
+import java.util.concurrent.CompletableFuture
 
 @Execution(ExecutionMode.SAME_THREAD)
 class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true) {
@@ -35,21 +37,22 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             JupyterSocketSide.CLIENT,
             hmac,
             identity,
-        ).zmqSendReceive()
-            .apply { connect() }
+        ).apply { connect() }
 
     @Test
     fun testHeartbeat() {
-        withSocketOfType(JupyterZmqSocketInfo.HB) {
+        withBytesSocket(JupyterZmqSocketInfo.HB) {
+            val replyFuture = CompletableFuture<String>()
+            onBytesReceived { replyFuture.complete(ZmqString.getString(it.single())) }
             sendBytes(listOf(ZmqString.getBytes("abc")))
-            val msg = ZmqString.getString(receiveBytes().single())
+            val msg = replyFuture.get()
             msg shouldBe "abc"
         }
     }
 
     @Test
     fun `test control socket`() {
-        withSocketOfType(JupyterZmqSocketInfo.CONTROL) {
+        withMessagesSocket(JupyterZmqSocketInfo.CONTROL) {
             sendMessage(MessageType.INTERRUPT_REQUEST, null)
             val msg = receiveRawMessage()
             msg.shouldNotBeNull()
@@ -57,9 +60,9 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
         }
     }
 
-    private fun withSocketOfType(
+    private fun withBytesSocket(
         socketInfo: JupyterZmqSocketInfo,
-        action: JupyterZmqReceiveSocket.() -> Unit,
+        action: JupyterZmqSocket.() -> Unit,
     ) {
         with(connectClientSocket(socketInfo)) {
             tryFinally(
@@ -73,4 +76,10 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             )
         }
     }
+
+    @Suppress("SameParameterValue")
+    private fun withMessagesSocket(
+        socketInfo: JupyterZmqSocketInfo,
+        action: JupyterSendReceiveSocket.() -> Unit,
+    ) = withBytesSocket(socketInfo) { sendReceive().action() }
 }

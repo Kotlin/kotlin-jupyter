@@ -1,17 +1,17 @@
 package org.jetbrains.kotlinx.jupyter.messaging
 
+import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqReceiveSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqSocketInfo
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createHmac
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createZmqSocket
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.generateZmqIdentity
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.zmqSendReceive
 import org.zeromq.ZMQ
 import java.io.Closeable
 
@@ -59,10 +59,10 @@ internal class JupyterZmqServerImplSockets(
             .also { socketsToClose.add(it) }
 
     @Suppress("SameParameterValue")
-    private fun createSendReceiveSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqReceiveSocket =
+    private fun createSendReceiveSocket(socketInfo: JupyterZmqSocketInfo): JupyterSendReceiveSocket =
         createAndBindSocket(socketInfo)
-            .zmqSendReceive()
             .also { socketsToClose.add(it) }
+            .sendReceive()
 
     private fun createAndBindSocket(socketInfo: JupyterZmqSocketInfo): JupyterZmqSocket =
         createZmqSocket(

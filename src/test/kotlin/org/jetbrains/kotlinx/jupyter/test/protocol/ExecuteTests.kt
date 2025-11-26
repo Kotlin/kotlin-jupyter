@@ -55,8 +55,9 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
-import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSocketManager
-import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientReceiveSockets
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSocketManager
+import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
+import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
@@ -65,9 +66,9 @@ import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
-import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientReceiveSocketManager
+import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientSocketManager
 import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
-import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqClientReceiveSocketManager
+import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqClientSocketManager
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createRandomZmqKernelPorts
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -78,6 +79,7 @@ import org.junit.jupiter.api.condition.EnabledForJreRange
 import org.junit.jupiter.api.condition.JRE
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import java.io.Closeable
 import java.io.File
 import java.net.ConnectException
 import java.net.URLClassLoader
@@ -99,7 +101,7 @@ fun JsonObject.string(key: String): String = (get(key) as JsonPrimitive).content
 @Timeout(100, unit = TimeUnit.SECONDS)
 @Execution(ExecutionMode.SAME_THREAD)
 abstract class ExecuteTests(
-    private val socketManager: JupyterClientReceiveSocketManager,
+    private val socketManager: JupyterClientSocketManager,
     generatePorts: () -> KernelPorts,
 ) : KernelServerTestsBase(runServerInSeparateProcess = true, generatePorts = generatePorts) {
     private var mutableSockets: JupyterClientReceiveSockets? = null
@@ -128,7 +130,7 @@ abstract class ExecuteTests(
             val now = TimeSource.Monotonic.markNow()
             while (now.elapsedNow() < CONNECT_RETRY_TIMEOUT_SECONDS.seconds) {
                 try {
-                    mutableSockets = socketManager.open(kernelConfig.jupyterParams)
+                    mutableSockets = JupyterClientReceiveSockets(socketManager.open(kernelConfig.jupyterParams))
                     break
                 } catch (_: ConnectException) {
                     Thread.sleep(500)
@@ -1004,14 +1006,27 @@ abstract class ExecuteTests(
 
 class ExecuteZmqTests :
     ExecuteTests(
-        socketManager = JupyterZmqClientReceiveSocketManager(testLoggerFactory),
+        socketManager = JupyterZmqClientSocketManager(testLoggerFactory),
         generatePorts = ::createRandomZmqKernelPorts,
     )
 
 class ExecuteWsTests :
     ExecuteTests(
-        socketManager = JupyterWsClientReceiveSocketManager(testLoggerFactory),
+        socketManager = JupyterWsClientSocketManager(testLoggerFactory),
         generatePorts = { WsKernelPorts(PortsGenerator.create(32768, 65536).randomPort()) },
     )
+
+private class JupyterClientReceiveSockets(
+    private val delegate: JupyterClientSockets,
+) : Closeable {
+    val shell: JupyterSendReceiveSocket = delegate.shell.sendReceive()
+    val control: JupyterSendSocket = delegate.control
+    val ioPub: JupyterReceiveSocket = delegate.ioPub.sendReceive()
+    val stdin: JupyterSendReceiveSocket = delegate.stdin.sendReceive()
+
+    override fun close() {
+        delegate.close()
+    }
+}
 
 private const val CONNECT_RETRY_TIMEOUT_SECONDS = 30
