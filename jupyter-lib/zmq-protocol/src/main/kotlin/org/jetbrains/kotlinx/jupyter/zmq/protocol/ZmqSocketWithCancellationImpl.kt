@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.zmq.protocol
 
+import org.jetbrains.kotlinx.jupyter.protocol.CallbackHandler
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.catchAllIndependentlyAndMerge
@@ -28,7 +29,7 @@ internal class ZmqSocketWithCancellationImpl(
 
     private val poller = socketData.zmqContext.poller(2)
     private val sendQueue = BlockingSignallingQueue<List<ByteArray>>(MESSAGE_QUEUE_CAPACITY)
-    private val receiveCallbacks: MutableList<(List<ByteArray>) -> Unit> = CopyOnWriteArrayList()
+    private val callbackHandler = CallbackHandler<List<ByteArray>>(logger)
 
     private val started = AtomicBoolean(false)
     private val closed = AtomicBoolean(false)
@@ -63,7 +64,7 @@ internal class ZmqSocketWithCancellationImpl(
     }
 
     internal fun onReceive(callback: (List<ByteArray>) -> Unit) {
-        receiveCallbacks.add(callback)
+        callbackHandler.addCallback(callback)
     }
 
     internal fun join() {
@@ -81,7 +82,7 @@ internal class ZmqSocketWithCancellationImpl(
             { sendQueue.close() },
             { poller.close() },
             { routerThread.interrupt() },
-            { receiveCallbacks.clear() },
+            { callbackHandler.close() },
         )
     }
 
@@ -123,9 +124,7 @@ internal class ZmqSocketWithCancellationImpl(
     }
 
     private fun processMessage(message: List<ByteArray>) {
-        for (callback in receiveCallbacks) {
-            callback(message)
-        }
+        callbackHandler.runCallbacks(message)
     }
 
     private fun assertNotCancelled() {

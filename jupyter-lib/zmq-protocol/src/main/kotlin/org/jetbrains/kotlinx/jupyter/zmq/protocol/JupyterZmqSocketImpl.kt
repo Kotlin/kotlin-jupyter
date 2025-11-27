@@ -6,7 +6,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSocketSide
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
-import org.jetbrains.kotlinx.jupyter.protocol.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.protocol.RawMessageImpl
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
@@ -60,7 +59,7 @@ class JupyterZmqSocketImpl(
         logger.debug("snd bytes>: {} frames", message.size)
     }
 
-    override fun onRawMessage(callback: RawMessageCallback) {
+    override fun onRawMessage(callback: (RawMessage) -> Unit) {
         onBytesReceived { bytes ->
             // Generally, there is exactly one callback,
             // so we won't do conversion multiple times
