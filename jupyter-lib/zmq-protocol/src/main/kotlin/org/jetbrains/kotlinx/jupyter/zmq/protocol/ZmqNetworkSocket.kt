@@ -44,28 +44,33 @@ internal class ZmqNetworkSocket(
         return socket.connect(address)
     }
 
-    internal fun receiveMultipart(): List<ByteArray>? {
-        val firstFrame: ByteArray =
-            try {
-                socket.recv(0, cancellationToken) ?: return null
-            } catch (e: ZMQException) {
-                if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) return null
-                throw e
-            }
+    fun receiveMultipart(): List<ByteArray>? {
+        val firstFrame: ByteArray = nullOnCancellation { socket.recv(0, cancellationToken) } ?: return null
 
         return buildList {
             add(firstFrame)
             while (socket.hasReceiveMore()) {
-                add(socket.recv(0, cancellationToken))
+                add(nullOnCancellation { socket.recv(0, cancellationToken) } ?: return null)
             }
         }
     }
 
     /** Send the entire multipart message to the given socket (all-or-nothing semantics). */
-    internal fun sendMultipart(frames: List<ByteArray>) {
-        for ((i, frame) in frames.withIndex()) {
-            val flags = if (i < frames.lastIndex) ZMQ.SNDMORE else 0
-            socket.send(frame, flags)
+    fun sendMultipart(frames: List<ByteArray>) {
+        nullOnCancellation {
+            for ((i, frame) in frames.withIndex()) {
+                val flags = if (i < frames.lastIndex) ZMQ.SNDMORE else 0
+                socket.send(frame, flags, cancellationToken)
+            }
+        }
+    }
+
+    private inline fun <T : Any> nullOnCancellation(block: () -> T): T? {
+        try {
+            return block()
+        } catch (e: ZMQException) {
+            if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) return null
+            throw e
         }
     }
 
