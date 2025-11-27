@@ -39,7 +39,7 @@ internal class ZmqSocketWithCancellationImpl(
         thread(
             start = false,
             name = "${socketData.name} router thread",
-            block = ::processMessages,
+            block = ::messageRouterLoop,
         )
 
     @Synchronized
@@ -87,7 +87,7 @@ internal class ZmqSocketWithCancellationImpl(
         routerThread.start()
     }
 
-    private fun processMessages() {
+    private fun messageRouterLoop() {
         // Register both the ZMQ socket and the SelectableChannel
         poller.register(networkSocket.socket, ZMQ.Poller.POLLIN)
         poller.register(sendQueue.signaller, ZMQ.Poller.POLLIN)
