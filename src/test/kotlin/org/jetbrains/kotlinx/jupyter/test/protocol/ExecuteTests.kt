@@ -12,7 +12,6 @@ import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonNull.content
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -51,7 +50,6 @@ import org.jetbrains.kotlinx.jupyter.messaging.StreamMessage
 import org.jetbrains.kotlinx.jupyter.messaging.ThreadDumpRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataRequest
 import org.jetbrains.kotlinx.jupyter.messaging.UpdateClientMetadataSuccessReply
-import org.jetbrains.kotlinx.jupyter.messaging.receiveMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
@@ -64,7 +62,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
-import org.jetbrains.kotlinx.jupyter.test.ReplComponentsProviderMock.replCompilerMode
 import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
