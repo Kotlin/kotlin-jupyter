@@ -1223,10 +1223,13 @@ class ReplTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
     @Test
     fun explicitPropertyVisibilityModifiers() {
-        val res0 = eval("""
-            public val x = 43
-            private val y = 44
-        """.trimIndent())
+        val res0 =
+            eval(
+                """
+                public val x = 43
+                private val y = 44
+                """.trimIndent(),
+            )
         res0.shouldBeInstanceOf<EvalResultEx.Success>()
         eval("x").renderedValue shouldBe 43
         eval("y").shouldBeInstanceOf<EvalResultEx.Error>()
