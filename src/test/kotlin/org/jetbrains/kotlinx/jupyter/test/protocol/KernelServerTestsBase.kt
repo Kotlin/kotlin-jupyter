@@ -81,7 +81,7 @@ abstract class KernelServerTestsBase(
         )
     }
 
-    fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage()!!.toMessage()
+    fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage().toMessage()
 
     fun receiveStatusReply(iopubSocket: JupyterReceiveSocket): StatusMessage {
         iopubSocket.receiveMessage().apply {

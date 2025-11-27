@@ -111,7 +111,7 @@ fun JupyterCommunicationFacility.getInput(
         messageFactory.makeReplyMessage(MessageType.INPUT_REQUEST, content = request),
     )
     val msg = stdinSocket.receiveMessage()
-    val content = msg?.data?.content as? InputReply
+    val content = msg.data.content as? InputReply
 
     return content?.value ?: throw UnsupportedOperationException("Unexpected input message $msg")
 }
