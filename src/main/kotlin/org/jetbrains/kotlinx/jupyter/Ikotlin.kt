@@ -28,6 +28,8 @@ import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.startup.getConfig
 import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelArgs
 import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelArgumentsBuilder
@@ -42,9 +44,13 @@ import org.jetbrains.kotlinx.jupyter.startup.JupyterServerRunner
 import org.jetbrains.kotlinx.jupyter.startup.KernelJupyterParamsSerializer
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParamsBuilder
+import org.jetbrains.kotlinx.jupyter.util.closeWithTimeout
 import org.slf4j.Logger
+import java.io.Closeable
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import kotlin.script.experimental.jvm.util.classpathFromClassloader
+import kotlin.time.Duration.Companion.seconds
 
 @PublishedApi
 internal val iKotlinClass = object : Any() {}.javaClass.enclosingClass
@@ -232,26 +238,57 @@ fun runServer(replSettings: DefaultReplSettings) {
             ?: error("No server runner found for ports $ports")
     logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
 
-    serverRunner.run(
-        jupyterParams = kernelConfig.jupyterParams,
-        loggerFactory = loggerFactory,
-        setup = { sockets ->
-            printClassPath(logger)
+    val interruptionFuture = CompletableFuture<Unit>()
+    val closeableResources = mutableListOf<Closeable>()
+    tryFinally(
+        action = {
+            serverRunner.start(
+                jupyterParams = kernelConfig.jupyterParams,
+                loggerFactory = loggerFactory,
+                setup = { sockets ->
+                    printClassPath(logger)
 
-            logger.info("Begin listening for events")
+                    logger.info("Begin listening for events")
 
-            val messageHandler = createMessageHandler(replSettings, sockets)
-            initializeKernelSession(messageHandler, replSettings)
+                    val messageHandler = createMessageHandler(replSettings, sockets)
+                    closeableResources.add(messageHandler)
+                    initializeKernelSession(messageHandler, replSettings)
 
-            sockets.control.onRawMessage {
-                messageHandler.handleMessage(JupyterSocketType.CONTROL, it)
+                    sockets.control.onRawMessage {
+                        try {
+                            messageHandler.handleMessage(JupyterSocketType.CONTROL, it)
+                        } catch (_: InterruptedException) {
+                            interruptionFuture.complete(Unit)
+                        }
+                    }
+
+                    sockets.shell.onRawMessage {
+                        try {
+                            messageHandler.handleMessage(JupyterSocketType.SHELL, it)
+                        } catch (_: InterruptedException) {
+                            interruptionFuture.complete(Unit)
+                        }
+                    }
+                },
+                registerCloseable = closeableResources::add,
+            )
+            try {
+                interruptionFuture.get()
+            } catch (_: InterruptedException) {
+                // ignore
             }
-
-            sockets.shell.onRawMessage {
-                messageHandler.handleMessage(JupyterSocketType.SHELL, it)
-            }
-
-            listOf(messageHandler)
+        },
+        finally = {
+            closeWithTimeout(
+                timeoutMs = 15.seconds.inWholeMilliseconds,
+                doClose = {
+                    mergeExceptions {
+                        for (closeable in closeableResources.asReversed()) {
+                            catchIndependently { closeable.close() }
+                        }
+                    }
+                },
+            )
         },
     )
 }
