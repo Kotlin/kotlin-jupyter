@@ -10,7 +10,7 @@ import java.io.Closeable
 /**
  * Simple wrapper around [ZMQ.Socket] that encapsulates cancellation and
  * socket type differences.
- * Use [bind] on server sockets and [connect] on client sockets.
+ * Use [tryBind] on server sockets and [tryConnect] on client sockets.
  *
  * This class is not thread-safe.
  * [receiveMultipart] and [sendMultipart] should not be called concurrently.
@@ -24,7 +24,7 @@ internal class ZmqNetworkSocket(
     val socket: ZMQ.Socket = socketData.createSocket()
     private val cancellationToken = socket.createCancellationToken()
 
-    internal fun bind(): Boolean {
+    fun tryBind(): Boolean {
         if (!socket.bind(address)) return false
         if (socketType == SocketType.PUB) {
             // Classic slow-joiner workaround
@@ -37,7 +37,7 @@ internal class ZmqNetworkSocket(
         return true
     }
 
-    internal fun connect(): Boolean {
+    fun tryConnect(): Boolean {
         if (socketType == SocketType.SUB) {
             if (!socket.subscribe(byteArrayOf())) return false
         }

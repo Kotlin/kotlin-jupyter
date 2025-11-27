@@ -43,16 +43,16 @@ internal class ZmqSocketWithCancellationImpl(
         )
 
     @Synchronized
-    internal fun bind(): Boolean {
-        if (!networkSocket.bind()) return false
+    fun tryBind(): Boolean {
+        if (!networkSocket.tryBind()) return false
         start()
         logger.debug("listening on ${networkSocket.address}")
         return true
     }
 
     @Synchronized
-    internal fun connect(): Boolean {
-        if (!networkSocket.connect()) return false
+    fun tryConnect(): Boolean {
+        if (!networkSocket.tryConnect()) return false
         start()
         logger.debug("connected to ${networkSocket.address}")
         return true
