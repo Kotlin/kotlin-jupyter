@@ -120,7 +120,4 @@ fun JupyterSendSocket.sendMessage(msg: Message) {
 }
 
 @Throws(InterruptedException::class)
-fun JupyterReceiveSocket.receiveMessage(): Message? {
-    val rawMessage = receiveRawMessage()
-    return rawMessage?.toMessage()
-}
+fun JupyterReceiveSocket.receiveMessage(): Message = receiveRawMessage().toMessage()

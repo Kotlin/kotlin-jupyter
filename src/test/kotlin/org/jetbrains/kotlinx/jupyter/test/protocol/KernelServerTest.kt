@@ -1,7 +1,6 @@
 
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
@@ -55,7 +54,6 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
         withMessagesSocket(JupyterZmqSocketInfo.CONTROL) {
             sendMessage(MessageType.INTERRUPT_REQUEST, null)
             val msg = receiveRawMessage()
-            msg.shouldNotBeNull()
             msg.type shouldBe MessageType.INTERRUPT_REPLY.type
         }
     }

@@ -8,13 +8,9 @@ interface JupyterSendSocket {
 }
 
 interface JupyterReceiveSocket {
-    /**
-     * Blocks until a message arrives.
-     * If an error occurs during the receipt of the message, null is returned and the error is logged.
-     * Returns null when an error occurs during the receipt of the message (the error will be logged).
-     */
+    /** Blocks until a message arrives. */
     @Throws(InterruptedException::class)
-    fun receiveRawMessage(): RawMessage?
+    fun receiveRawMessage(): RawMessage
 }
 
 interface JupyterSendReceiveSocket :
@@ -36,5 +32,5 @@ fun JupyterCallbackBasedSocket.sendReceive(messageBufferCapacity: Int = 256): Ju
             onRawMessage { receivableMessages.put(it) }
         }
 
-        override fun receiveRawMessage(): RawMessage? = receivableMessages.take()
+        override fun receiveRawMessage(): RawMessage = receivableMessages.take()
     }
