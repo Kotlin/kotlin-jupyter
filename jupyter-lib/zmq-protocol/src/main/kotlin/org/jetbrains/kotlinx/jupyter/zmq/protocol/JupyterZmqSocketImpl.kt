@@ -43,9 +43,9 @@ class JupyterZmqSocketImpl(
             socketData,
         )
 
-    override fun bind(): Boolean = zmqSocket.bind()
+    override fun tryBind(): Boolean = zmqSocket.tryBind()
 
-    override fun connect(): Boolean = zmqSocket.connect()
+    override fun tryConnect(): Boolean = zmqSocket.tryConnect()
 
     override fun join() = zmqSocket.join()
 

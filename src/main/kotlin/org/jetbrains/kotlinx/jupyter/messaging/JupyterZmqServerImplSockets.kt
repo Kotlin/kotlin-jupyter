@@ -37,7 +37,7 @@ internal class JupyterZmqServerImplSockets(
     override val iopub = createSocket(JupyterZmqSocketInfo.IOPUB)
 
     fun bindAndJoinAll() {
-        if (socketsToBind.any { !it.bind() }) return
+        if (socketsToBind.any { !it.tryBind() }) return
         try {
             control.join()
             heartbeat.join()

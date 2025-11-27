@@ -36,7 +36,16 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             JupyterSocketSide.CLIENT,
             hmac,
             identity,
-        ).apply { connect() }
+        ).apply {
+            val connected =
+                try {
+                    tryConnect()
+                } catch (e: Throwable) {
+                    close()
+                    throw e
+                }
+            if (!connected) error("Failed to connect to socket ${socketInfo.type}")
+        }
 
     @Test
     fun testHeartbeat() {

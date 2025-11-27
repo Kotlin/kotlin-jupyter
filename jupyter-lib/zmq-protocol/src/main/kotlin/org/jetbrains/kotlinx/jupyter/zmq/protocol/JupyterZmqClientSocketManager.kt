@@ -52,10 +52,14 @@ class JupyterZmqClientSockets internal constructor(
 
         mergeExceptions {
             catchIndependently {
-                ioPub.connect()
-                shell.connect()
-                stdin.connect()
-                control.connect()
+                val connectedSuccessfully =
+                    ioPub.tryConnect() &&
+                        shell.tryConnect() &&
+                        stdin.tryConnect() &&
+                        control.tryConnect()
+                if (!connectedSuccessfully) {
+                    error("Failed to connect to kernel")
+                }
             }
             if (failing) {
                 catchIndependently { close() }
