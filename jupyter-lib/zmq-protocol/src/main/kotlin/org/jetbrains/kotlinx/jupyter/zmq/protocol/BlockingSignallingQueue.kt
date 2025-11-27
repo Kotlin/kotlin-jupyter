@@ -14,7 +14,7 @@ import java.util.concurrent.BlockingQueue
  * used to signal a poller thread that new items are available.
  *
  * - [put] puts an item into the queue and signals it to [signaller]
- * - [signaller] is the [Pipe.SourceChannel] that a poller should register for POLLIN to listen for
+ * - [signaller] is the [SelectableChannel] that a poller should register for POLLIN to listen for
  *   signals about new items
  * - [drainAll] should be invoked by the poller when the pipe becomes readable; it drains the
  *   pipe and returns all pending items
@@ -34,7 +34,7 @@ internal class BlockingSignallingQueue<T : Any>(
 
     /**
      * Called by the poller thread when [signaller] is readable.
-     * It returns all added items and removes them from the queue.
+     * It returns a sequence of all added items, which are removed from the queue when as the sequence is iterated.
      */
     fun drainAll(): Sequence<T> {
         pipeSignaller.drain()
@@ -84,8 +84,8 @@ private class PipeSignaller : Closeable {
             val n =
                 try {
                     signaller.read(drainBuffer)
-                } catch (_: Throwable) {
-                    // if closed or any error — stop draining
+                } catch (_: ClosedChannelException) {
+                    // if closed — stop draining
                     break
                 }
             if (n <= 0) break
