@@ -43,19 +43,17 @@ internal class ZmqSocketWithCancellationImpl(
         )
 
     @Synchronized
-    fun tryBind(): Boolean {
-        if (!networkSocket.tryBind()) return false
+    fun bind() {
+        networkSocket.bind()
         start()
         logger.debug("listening on ${networkSocket.address}")
-        return true
     }
 
     @Synchronized
-    fun tryConnect(): Boolean {
-        if (!networkSocket.tryConnect()) return false
+    fun connect() {
+        networkSocket.connect()
         start()
         logger.debug("connected to ${networkSocket.address}")
-        return true
     }
 
     fun sendMultipart(message: List<ByteArray>) {

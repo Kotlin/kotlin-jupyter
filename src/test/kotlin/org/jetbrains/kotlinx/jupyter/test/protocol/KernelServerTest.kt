@@ -37,14 +37,12 @@ class KernelServerTest : KernelServerTestsBase(runServerInSeparateProcess = true
             hmac,
             identity,
         ).apply {
-            val connected =
-                try {
-                    tryConnect()
-                } catch (e: Throwable) {
-                    close()
-                    throw e
-                }
-            if (!connected) error("Failed to connect to socket ${socketInfo.type}")
+            try {
+                connect()
+            } catch (e: Throwable) {
+                close()
+                throw e
+            }
         }
 
     @Test
