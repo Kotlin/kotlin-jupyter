@@ -21,14 +21,15 @@ interface JupyterServerRunner {
     fun canRun(ports: KernelPorts): Boolean
 
     /**
-     * Opens sockets, runs [setup] and then runs the server, blocking the thread.
-     * The server is stopped when one of the callbacks (see [JupyterServerImplSockets]) throws [InterruptedException].
-     * Closable resources returned from [setup] are closed on shutdown.
+     * Opens sockets, runs [setup] and then starts the server, not blocking the thread.
+     * Closable resources passed into [registerCloseable] have to be closed on shutdown,
+     * in the reverse order of registration. Closing these resources should also stop the server.
      */
-    fun run(
+    fun start(
         jupyterParams: KernelJupyterParams,
         loggerFactory: KernelLoggerFactory,
-        setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
+        setup: (JupyterServerImplSockets) -> Unit,
+        registerCloseable: (Closeable) -> Unit,
     )
 
     companion object {

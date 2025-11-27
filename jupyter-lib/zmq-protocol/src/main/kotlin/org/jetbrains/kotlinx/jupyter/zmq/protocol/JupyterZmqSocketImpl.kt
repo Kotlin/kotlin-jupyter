@@ -47,8 +47,6 @@ class JupyterZmqSocketImpl(
 
     override fun tryConnect(): Boolean = zmqSocket.tryConnect()
 
-    override fun join() = zmqSocket.join()
-
     override fun sendRawMessage(msg: RawMessage) {
         doSendRawMessage(msg)
         logger.debug("snd>: {}", msg)

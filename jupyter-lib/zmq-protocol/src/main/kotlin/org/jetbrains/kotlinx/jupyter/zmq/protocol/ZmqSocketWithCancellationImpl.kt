@@ -6,7 +6,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.catchAllIndependentlyAndMerge
 import org.zeromq.ZMQ
 import java.io.Closeable
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -58,18 +58,13 @@ internal class ZmqSocketWithCancellationImpl(
         return true
     }
 
-    internal fun sendMultipart(message: List<ByteArray>) {
+    fun sendMultipart(message: List<ByteArray>) {
         assertNotCancelled()
         sendQueue.put(message)
     }
 
-    internal fun onReceive(callback: (List<ByteArray>) -> Unit) {
+    fun onReceive(callback: (List<ByteArray>) -> Unit) {
         callbackHandler.addCallback(callback)
-    }
-
-    internal fun join() {
-        assertNotCancelled()
-        routerThread.join()
     }
 
     @Synchronized
@@ -128,7 +123,7 @@ internal class ZmqSocketWithCancellationImpl(
     }
 
     private fun assertNotCancelled() {
-        if (closed.get()) throw InterruptedException()
+        if (closed.get()) throw CancellationException()
     }
 
     companion object {

@@ -15,8 +15,6 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
-import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
-import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.sendReceive
 import org.jetbrains.kotlinx.jupyter.protocol.startup.ANY_HOST_NAME
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelJupyterParams
@@ -49,10 +47,11 @@ class JupyterWsServerRunner : JupyterServerRunner {
 
     override fun canRun(ports: KernelPorts): Boolean = ports is WsKernelPorts
 
-    override fun run(
+    override fun start(
         jupyterParams: KernelJupyterParams,
         loggerFactory: KernelLoggerFactory,
-        setup: (JupyterServerImplSockets) -> Iterable<Closeable>,
+        setup: (JupyterServerImplSockets) -> Unit,
+        registerCloseable: (Closeable) -> Unit,
     ) {
         val socketsMap = EnumMap<JupyterSocketType, JupyterWsSocketHolder>(JupyterSocketType::class.java)
 
@@ -80,11 +79,13 @@ class JupyterWsServerRunner : JupyterServerRunner {
 
         fun createCallbackBasedSocketWrapper(type: JupyterSocketType): JupyterCallbackBasedSocket =
             WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+                registerCloseable(it)
                 socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = true)
             }
 
         fun createSendSocketWrapper(type: JupyterSocketType): JupyterSendSocket =
             WsCallbackBasedSocketQueued(loggerFactory, wsServer::currentWebSockets, channel = type).also {
+                registerCloseable(it)
                 socketsMap[type] = JupyterWsSocketHolder(it, processIncomingMessages = false)
             }
 
@@ -102,41 +103,28 @@ class JupyterWsServerRunner : JupyterServerRunner {
                 }
             }
 
-        val closeables = setup(sockets)
+        setup(sockets)
 
-        tryFinally(
-            action = {
-                val mainThread = Thread.currentThread()
-                val socketListenerThreads =
-                    socketsMap.values.mapNotNull {
-                        it
-                            .takeIf(JupyterWsSocketHolder::processIncomingMessages)
-                            ?.socket
-                            ?.startListening(mainListenerThread = mainThread)
-                    }
-                wsServer.run()
-                try {
-                    socketListenerThreads.forEach {
-                        it.join()
-                    }
-                } catch (_: InterruptedException) {
-                    socketListenerThreads.forEach {
-                        it.interrupt()
-                    }
-                }
-            },
-            finally = {
-                mergeExceptions {
-                    for (socket in socketsMap.values) {
-                        catchIndependently { socket.socket.close() }
-                    }
-                    for (closeable in closeables) {
-                        catchIndependently { closeable.close() }
-                    }
-                    catchIndependently { wsServer.stop() }
-                }
-            },
-        )
+        val mainThread = Thread.currentThread()
+        val socketListenerThreads =
+            socketsMap.values.mapNotNull {
+                it
+                    .takeIf(JupyterWsSocketHolder::processIncomingMessages)
+                    ?.socket
+                    ?.startListening(mainListenerThread = mainThread)
+            }
+        wsServer.run()
+        try {
+            socketListenerThreads.forEach {
+                it.join()
+            }
+        } catch (_: InterruptedException) {
+            socketListenerThreads.forEach {
+                it.interrupt()
+            }
+        }
+
+        registerCloseable { wsServer.stop() }
     }
 
     private class JupyterWsSocketHolder(

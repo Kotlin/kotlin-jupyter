@@ -36,14 +36,7 @@ internal class JupyterZmqServerImplSockets(
     // (see ZmqSocketWithCancellationImpl.bind implementation)
     override val iopub = createSocket(JupyterZmqSocketInfo.IOPUB)
 
-    fun bindAndJoinAll() {
-        if (socketsToBind.any { !it.tryBind() }) return
-        try {
-            control.join()
-            heartbeat.join()
-        } catch (_: InterruptedException) {
-        }
-    }
+    fun tryBindAll(): Boolean = socketsToBind.all { it.tryBind() }
 
     override fun close() {
         mergeExceptions {
