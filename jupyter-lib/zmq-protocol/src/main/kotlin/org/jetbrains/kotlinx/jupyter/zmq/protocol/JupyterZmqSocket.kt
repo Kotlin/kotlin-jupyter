@@ -27,8 +27,8 @@ interface JupyterZmqSocket :
      * All message callbacks should be registered before calling this method,
      * otherwise there is a risk of missing messages
      */
-    fun tryBind(): Boolean
+    fun bind()
 
     // Used on the client side
-    fun tryConnect(): Boolean
+    fun connect()
 }

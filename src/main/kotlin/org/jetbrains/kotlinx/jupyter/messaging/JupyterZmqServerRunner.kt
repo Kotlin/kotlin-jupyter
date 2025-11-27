@@ -29,8 +29,6 @@ class JupyterZmqServerRunner : JupyterServerRunner {
             hb.onBytesReceived(hb::sendBytes)
         }
 
-        if (!sockets.tryBindAll()) {
-            error("Could not bind all sockets")
-        }
+        sockets.bindAll()
     }
 }
