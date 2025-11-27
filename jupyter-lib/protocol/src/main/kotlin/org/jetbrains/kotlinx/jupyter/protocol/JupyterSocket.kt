@@ -18,7 +18,7 @@ interface JupyterSendReceiveSocket :
     JupyterReceiveSocket
 
 interface JupyterCallbackBasedSocket : JupyterSendSocket {
-    fun onRawMessage(callback: RawMessageCallback)
+    fun onRawMessage(callback: (RawMessage) -> Unit)
 }
 
 /**

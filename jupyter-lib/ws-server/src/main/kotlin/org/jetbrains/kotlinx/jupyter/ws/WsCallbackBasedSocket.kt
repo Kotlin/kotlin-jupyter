@@ -6,7 +6,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.java_websocket.WebSocket
 import org.jetbrains.kotlinx.jupyter.protocol.CallbackHandler
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterCallbackBasedSocket
-import org.jetbrains.kotlinx.jupyter.protocol.RawMessageCallback
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
@@ -30,7 +29,7 @@ internal abstract class WsCallbackBasedSocket(
 ) : JupyterCallbackBasedSocket,
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)
-    protected val callbacks = CallbackHandler(logger)
+    protected val callbacks = CallbackHandler<RawMessage>(logger)
 
     abstract fun messageReceived(msg: RawMessage)
 
@@ -89,7 +88,7 @@ internal abstract class WsCallbackBasedSocket(
         return resultBuffer
     }
 
-    override fun onRawMessage(callback: RawMessageCallback) = callbacks.addCallback(callback)
+    override fun onRawMessage(callback: (RawMessage) -> Unit) = callbacks.addCallback(callback)
 
     override fun close() {
         callbacks.close()
