@@ -72,14 +72,16 @@ internal class ZmqNetworkSocket(
         }
     }
 
-    private inline fun <T : Any> nullOnCancellation(block: () -> T): T? {
+    private inline fun <T : Any> nullOnCancellation(block: () -> T): T? =
         try {
-            return block()
+            block()
         } catch (e: ZMQException) {
-            if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) return null
-            throw e
+            if (e.errorCode == ZMQ.Error.EINTR.code || e.errorCode == ZError.ECANCELED) {
+                null
+            } else {
+                throw e
+            }
         }
-    }
 
     @Synchronized
     override fun close() {
