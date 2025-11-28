@@ -4,6 +4,10 @@ import java.lang.reflect.Field
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaField
 
+// Prefix used by Compiler when generating the property holding the result of a snippet.
+// It will start at 0, so `$res0` for the first snippet.
+const val RESULT_FIELD_PREFIX = $$"$res"
+
 class FieldInfo(
     val kotlinProperty: KProperty<*>?,
     val javaField: Field,
@@ -11,8 +15,8 @@ class FieldInfo(
 
 val FieldInfo.name: VariableName get() = kotlinProperty?.name ?: javaField.name
 val FieldInfo.isCellResult: Boolean get() {
-    val k1CellResult = (kotlinProperty == null && name.startsWith($$"$res"))
-    val k2CellResult = (kotlinProperty != null && name.startsWith($$"$res"))
+    val k1CellResult = (kotlinProperty == null && name.startsWith(RESULT_FIELD_PREFIX))
+    val k2CellResult = (kotlinProperty != null && name.startsWith(RESULT_FIELD_PREFIX))
     return k1CellResult || k2CellResult
 }
 

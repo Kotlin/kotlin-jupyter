@@ -6,6 +6,7 @@ import jupyter.kotlin.Repository
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.configuration.configureDefaultRepl
 import org.jetbrains.kotlin.scripting.resolve.skipExtensionsResolutionForImplicitsExceptInnermost
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
+import org.jetbrains.kotlinx.jupyter.api.RESULT_FIELD_PREFIX
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
@@ -88,7 +89,7 @@ fun getCompilationConfiguration(
             }
         }
         repl {
-            resultFieldPrefix("\$res")
+            resultFieldPrefix(RESULT_FIELD_PREFIX)
             // In K2, we need this because the snippet number tracked internally
             // in the compiler is not propagating correct to FirExtension
             // Without it, we cannot read return values correctly which makes TypeConverts fails.

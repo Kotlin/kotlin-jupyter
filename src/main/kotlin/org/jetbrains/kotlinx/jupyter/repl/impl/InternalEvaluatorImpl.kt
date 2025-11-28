@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KTypeProvider
+import org.jetbrains.kotlinx.jupyter.api.RESULT_FIELD_PREFIX
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
@@ -220,7 +221,7 @@ internal class InternalEvaluatorImpl(
         val fields =
             kClass.declaredMemberProperties.filterNot {
                 // K2 Result fields are stored as normal properties unlike K1, where they did not.
-                it.name.startsWith($$"$res")
+                it.name.startsWith(RESULT_FIELD_PREFIX)
             }
         return mutableMapOf<String, VariableStateImpl>().apply {
             for (property in fields) {
