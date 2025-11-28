@@ -29,8 +29,8 @@ val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
 
 kotlin {
     compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3)
         freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         this.jvmTarget.set(JvmTarget.fromTarget(myJvmTarget))
     }

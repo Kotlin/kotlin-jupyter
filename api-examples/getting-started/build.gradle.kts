@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
 plugins {
     kotlin("jvm")
     kotlin("jupyter.api")
@@ -16,8 +16,8 @@ tasks.processJupyterApiResources {
 
 kotlin {
     compilerOptions {
-        apiVersion.set(KOTLIN_2_2)
-        languageVersion.set(KOTLIN_2_2)
+        apiVersion.set(KOTLIN_2_3)
+        languageVersion.set(KOTLIN_2_3)
     }
 }
 
