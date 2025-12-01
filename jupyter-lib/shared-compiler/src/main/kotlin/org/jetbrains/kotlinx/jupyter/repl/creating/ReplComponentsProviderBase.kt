@@ -113,7 +113,7 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
             resolutionInfoProvider,
             libraryInfoCache,
             libraryDescriptorsManager.homeLibrariesDir(homeDir),
-            runtimeProperties.currentBranch,
+            libraryDescriptorsManager.defaultBranch,
         )
 
     override fun provideLibrariesProcessor(): LibrariesProcessor =
