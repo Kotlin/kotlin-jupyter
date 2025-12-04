@@ -2,10 +2,10 @@ package org.jetbrains.kotlinx.jupyter.dependencies.maven.resolution
 
 import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionException
 import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.DependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.ResolutionState
+import org.jetbrains.amper.dependency.resolution.ResolvedGraph
 import org.jetbrains.amper.dependency.resolution.Resolver
 import org.jetbrains.amper.dependency.resolution.RootCacheEntryKey
 import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
@@ -76,7 +76,7 @@ private suspend fun resolveDependencies(
     allArtifactsWithLocations: Collection<ArtifactRequest>,
     resolutionContext: Context,
     resolveSources: Boolean,
-): DependencyNode {
+): ResolvedGraph {
     val currentArtifactStrings =
         currentArtifactsWithLocations
             .map { it.artifact }
@@ -116,12 +116,12 @@ private suspend fun resolveDependencies(
  */
 private fun collectResolvedArtifacts(
     dependencyCollector: MavenDependencyCollector,
-    resolvedGraph: DependencyNode,
+    resolvedGraph: ResolvedGraph,
     currentArtifactCoordinates: Collection<MavenCoordinates>,
     resolveSources: Boolean,
 ) {
     val nodeSequence =
-        resolvedGraph.children
+        resolvedGraph.root.children
             .asSequence()
             .filterIsInstance<MavenDependencyNode>()
             .filter { it.dependency.coordinates in currentArtifactCoordinates }

@@ -15,7 +15,7 @@ kotlinxSerialization = "1.9.0"
 json5k = "0.3.0"
 kotlinxCoroutines = "1.10.2"
 jupyterNotebooksParser = "0.2.0-dev-10"
-amper = "0.9.0-dev-3383"
+amper = "0.10.0-dev-3524"
 
 ktlintGradle = "12.3.0"
 ktlint = "1.7.1"
