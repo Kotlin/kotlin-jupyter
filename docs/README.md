@@ -258,7 +258,7 @@ To update the Kotlin Kernel for notebooks in Datalore:
 
 ## Use the Kotlin Kernel for notebooks
 
-See how to use the Kotlin Kernel for Jupyter notebooks with the Kotlin Notebook plugin, Jupyter clients, and Datalore.
+See how to use the Kotlin Kernel for Jupyter notebooks with the Kotlin Notebook plugin, Jupyter clients, and Datalore. 
 
 ### Use the Kotlin Notebook
 
