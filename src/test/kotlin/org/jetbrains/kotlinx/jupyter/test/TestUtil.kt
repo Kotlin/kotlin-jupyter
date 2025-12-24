@@ -59,8 +59,9 @@ import org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.parseLibraryDescriptors
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
-import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
+import org.jetbrains.kotlinx.jupyter.messaging.comms.server.ServerCommCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
@@ -381,7 +382,7 @@ object NotebookMock : Notebook {
         get() = StandaloneKernelRunMode
 
     override val commManager: CommManager
-        get() = CommManagerImpl(CommunicationFacilityMock)
+        get() = CommManagerImpl(ServerCommCommunicationFacility(CommunicationFacilityMock))
 
     override fun prompt(
         prompt: String,

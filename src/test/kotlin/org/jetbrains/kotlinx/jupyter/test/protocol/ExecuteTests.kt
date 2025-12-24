@@ -14,6 +14,7 @@ import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
@@ -53,6 +54,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSocketManager
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSockets
@@ -419,7 +421,7 @@ abstract class ExecuteTests(
                         }
                         K2 -> {
                             // `$$eval`-method does not have correct Kotlin metadata, so we fall back to pure Java reflection.
-                            assertNotNull(loadedClass.java.declaredMethods.firstOrNull { it.name == "\$\$eval" })
+                            assertNotNull(loadedClass.java.declaredMethods.firstOrNull { it.name == $$$"$$eval" })
                         }
                     }
 
@@ -460,7 +462,7 @@ abstract class ExecuteTests(
         val res2 = doExecute("42", executeReplyChecker = { checkCounter(it, 2) })
         val res3 =
             doExecute(
-                " \"\${Out[1]} \${Out[2]}\" ",
+                $$" \"${Out[1]} ${Out[2]}\" ",
                 storeHistory = false,
                 executeReplyChecker = { checkCounter(it, 3) },
             )
@@ -529,7 +531,10 @@ abstract class ExecuteTests(
     @Test
     fun testComms() {
         val targetName = "my_comm"
-        val commId = "xyz"
+        val commManager =
+            CommManagerImpl(
+                ClientCommCommunicationFacility(shellSocket),
+            )
 
         val registerCode =
             """
@@ -560,8 +565,8 @@ abstract class ExecuteTests(
             """.trimIndent()
         doExecute(registerCode, false)
 
-        shellSocket.sendMessage(MessageType.COMM_OPEN, CommOpenMessage(commId, targetName))
-
+        val clientComm = commManager.openComm(targetName)
+        val commId = clientComm.id
         ioPubSocket.receiveMessage().apply {
             val c = content.shouldBeTypeOf<CommMsgMessage>()
             c.commId shouldBe commId
@@ -574,16 +579,9 @@ abstract class ExecuteTests(
                 byteArrayOf(42, 43),
             )
 
-        shellSocket.sendMessage(
-            MessageType.COMM_MSG,
-            CommMsgMessage(
-                commId,
-                JsonObject(
-                    mapOf(
-                        "x" to JsonPrimitive("4321"),
-                    ),
-                ),
-            ),
+        clientComm.send(
+            buildJsonObject { put("x", JsonPrimitive("4321")) },
+            metadata = null,
             buffers = outcomingBuffers,
         )
 
@@ -715,7 +713,7 @@ abstract class ExecuteTests(
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                     K2 -> {
-                        content.traceback shouldContain "\tat Line_0_jupyter.\$\$eval(Line_0.jupyter.kts:2) at Cell In[1], line 2"
+                        content.traceback shouldContain $$$"\tat Line_0_jupyter.$$eval(Line_0.jupyter.kts:2) at Cell In[1], line 2"
                         content.traceback.last() shouldBe "at Cell In[1], line 2"
                     }
                 }

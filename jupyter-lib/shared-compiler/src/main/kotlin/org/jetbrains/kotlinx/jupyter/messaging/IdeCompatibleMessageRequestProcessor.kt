@@ -13,13 +13,13 @@ import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.config.notebookLanguageInfo
 import org.jetbrains.kotlinx.jupyter.execution.ExecutionResult
 import org.jetbrains.kotlinx.jupyter.execution.JupyterExecutor
-import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.JUPYTER_PROTOCOL_VERSION
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.repl.EvalRequestData
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
@@ -117,19 +117,35 @@ open class IdeCompatibleMessageRequestProcessor(
 
     override fun processCommMsg(content: CommMsgMessage) {
         executor.runExecution("Execution of comm_msg request for ${content.commId}") {
-            commManager.processCommMessage(incomingMessage, content)
+            commManager.processCommMessage(
+                content.commId,
+                content.data,
+                incomingMessage.data.metadata,
+                incomingMessage.buffers,
+            )
         }
     }
 
     override fun processCommClose(content: CommCloseMessage) {
         executor.runExecution("Execution of comm_close request for ${content.commId}") {
-            commManager.processCommClose(incomingMessage, content)
+            commManager.processCommClose(
+                content.commId,
+                content.data,
+                incomingMessage.data.metadata,
+                incomingMessage.buffers,
+            )
         }
     }
 
     override fun processCommOpen(content: CommOpenMessage) {
         executor.runExecution("Execution of comm_open request for ${content.commId} of target ${content.targetName}") {
-            commManager.processCommOpen(incomingMessage, content)
+            commManager.processCommOpen(
+                content.commId,
+                content.targetName,
+                content.data,
+                incomingMessage.data.metadata,
+                incomingMessage.buffers,
+            )
                 ?: throw ReplException("Cannot open comm for ${content.commId} of target ${content.targetName}")
         }
     }
