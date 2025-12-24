@@ -21,13 +21,15 @@ import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProvider
 import org.jetbrains.kotlinx.jupyter.messaging.MessageFactoryProviderImpl
 import org.jetbrains.kotlinx.jupyter.messaging.MessageHandlerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
-import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
-import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerInternal
+import org.jetbrains.kotlinx.jupyter.messaging.comms.server.ServerCommCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.makeHeader
 import org.jetbrains.kotlinx.jupyter.messaging.toRawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerSockets
 import org.jetbrains.kotlinx.jupyter.protocol.api.JupyterSocketType
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerInternal
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.mergeExceptions
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.startup.getConfig
@@ -182,7 +184,8 @@ internal fun createMessageHandler(
 
     val executor: JupyterExecutor = JupyterExecutorImpl(loggerFactory)
 
-    val commManager: CommManagerInternal = CommManagerImpl(communicationFacility)
+    val commCommunicationFacility: CommCommunicationFacility = ServerCommCommunicationFacility(communicationFacility)
+    val commManager: CommManagerInternal = CommManagerImpl(commCommunicationFacility)
     val replProvider =
         DefaultReplComponentsProvider(
             replSettings,

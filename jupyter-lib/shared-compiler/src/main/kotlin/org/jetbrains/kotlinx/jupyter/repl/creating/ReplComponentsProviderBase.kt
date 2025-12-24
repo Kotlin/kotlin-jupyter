@@ -36,9 +36,10 @@ import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.CommHandler
-import org.jetbrains.kotlinx.jupyter.messaging.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.messaging.comms.DebugPortCommHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.server.ServerCommCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptionsImpl
@@ -88,7 +89,10 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
 
     override fun provideLibrariesScanner(): LibrariesScanner = LibrariesScanner(loggerFactory)
 
-    override fun provideCommManager(): CommManager = CommManagerImpl(communicationFacility)
+    override fun provideCommManager(): CommManager =
+        CommManagerImpl(
+            ServerCommCommunicationFacility(communicationFacility),
+        )
 
     override fun provideCommHandlers(): List<CommHandler> =
         listOf(

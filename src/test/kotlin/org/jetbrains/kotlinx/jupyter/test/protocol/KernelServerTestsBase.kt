@@ -2,6 +2,11 @@ package org.jetbrains.kotlinx.jupyter.test.protocol
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.messaging.CommCloseMessage
+import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
+import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
 import org.jetbrains.kotlinx.jupyter.messaging.MessageContent
@@ -13,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
 import org.jetbrains.kotlinx.jupyter.test.classpath
@@ -70,6 +76,7 @@ abstract class KernelServerTestsBase(
     fun JupyterSendSocket.sendMessage(
         msgType: MessageType,
         content: MessageContent?,
+        metadata: JsonElement? = null,
         buffers: List<ByteArray> = emptyList(),
     ) {
         sendMessage(
@@ -79,6 +86,7 @@ abstract class KernelServerTestsBase(
                     MessageData(
                         header = makeHeader(msgType, sessionId = sessionId),
                         content = content,
+                        metadata = metadata,
                     ),
                 buffers = buffers,
             ),
@@ -100,5 +108,56 @@ abstract class KernelServerTestsBase(
         receiveStatusReply(iopubSocket).status shouldBe KernelStatus.BUSY
         action()
         receiveStatusReply(iopubSocket).status shouldBe KernelStatus.IDLE
+    }
+
+    protected inner class ClientCommCommunicationFacility(
+        private val shellSocket: JupyterSendSocket,
+    ) : CommCommunicationFacility {
+        override fun sendCommOpen(
+            commId: String,
+            targetName: String,
+            data: JsonObject,
+            metadata: JsonElement?,
+            buffers: List<ByteArray>,
+        ) {
+            shellSocket.sendMessage(
+                MessageType.COMM_OPEN,
+                CommOpenMessage(commId, targetName, data),
+                metadata,
+                buffers,
+            )
+        }
+
+        override fun sendCommMessage(
+            commId: String,
+            data: JsonObject,
+            metadata: JsonElement?,
+            buffers: List<ByteArray>,
+        ) {
+            shellSocket.sendMessage(
+                MessageType.COMM_MSG,
+                CommMsgMessage(commId, data),
+                metadata,
+                buffers,
+            )
+        }
+
+        override fun sendCommClose(
+            commId: String,
+            data: JsonObject,
+            metadata: JsonElement?,
+            buffers: List<ByteArray>,
+        ) {
+            shellSocket.sendMessage(
+                MessageType.COMM_CLOSE,
+                CommCloseMessage(commId, data),
+                metadata,
+                buffers,
+            )
+        }
+
+        override fun processCallbacks(action: () -> Unit) {
+            action()
+        }
     }
 }
