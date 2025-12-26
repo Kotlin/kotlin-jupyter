@@ -5,6 +5,7 @@ import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
+import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
@@ -14,6 +15,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.messaging.CommunicationFacilityMock
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.NoOpDisplayHandler
+import org.jetbrains.kotlinx.jupyter.messaging.comms.server.ServerCommCommunicationFacility
+import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.repl.MavenRepositoryCoordinates
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
@@ -32,6 +35,7 @@ fun createRepl(
     kernelRunMode: KernelRunMode = StandaloneKernelRunMode,
     displayHandler: DisplayHandler = NoOpDisplayHandler,
     communicationFacility: JupyterCommunicationFacility = CommunicationFacilityMock,
+    commManager: CommManager = CommManagerImpl(ServerCommCommunicationFacility(communicationFacility)),
     debugPort: Int? = null,
     inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
@@ -58,6 +62,8 @@ fun createRepl(
             override fun provideDisplayHandler() = displayHandler
 
             override fun provideCommunicationFacility(): JupyterCommunicationFacility = communicationFacility
+
+            override fun provideCommManager(): CommManager = commManager
 
             override fun provideDebugPort(): Int? = debugPort
 
