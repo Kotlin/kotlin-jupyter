@@ -50,7 +50,12 @@ class RootSettingsExtension(
     val prGithubUser by project.prop<String>("jupyter.github.user")
     val prGithubToken by project.prop<String>("jupyter.github.token")
 
+    // Used when building Python packages. When `true`, all Python dependencies will be installed
+    // locally. If `false`, it is assumed that the dependencies are already installed.
     val isLocalBuild by project.prop("build.isLocal", false)
+    // Used to determine version string for Maven packages.
+    // If `false`, will add a `-SNAPSHOT` suffix. If `true`, will use the version as is.
+    val isMavenReleaseBuild by project.prop("build.isMavenRelease", false)
 
     val jvmTargetForSnippets by project.prop<String?>()
 
@@ -96,7 +101,7 @@ class RootSettingsExtension(
 
     val isOnProtectedBranch: Boolean = project.isProtectedBranch()
     val pyPackageVersion: String = detectVersion()
-    val mavenVersion: String = pyPackageVersion.toMavenVersion()
+    val mavenVersion: String = pyPackageVersion.toMavenVersion(isMavenReleaseBuild)
 
     val readmeFile: File = project.rootDir.resolve("docs").resolve("README.md")
     val readmeStubFile: File = project.rootDir.resolve("docs").resolve("README-STUB.md")
@@ -191,14 +196,17 @@ class RootSettingsExtension(
         )
     }
 
-    private fun String.toMavenVersion(): String {
+    private fun String.toMavenVersion(isRelease: Boolean): String {
         val match = BUILD_NUMBER_REGEX.find(this)!!
         val base = match.groups["base"]!!.value
         val counter = match.groups["counter"]!!.value
         val devCounter = match.groups["devCounter"]?.value
         val devAddition = if (devCounter == null) "" else "-$devCounter"
-
-        return "$base-$counter$devAddition"
+        val snapshot = when (isRelease) {
+            true -> ""
+            false -> "-SNAPSHOT"
+        }
+        return "$base-$counter$devAddition$snapshot"
     }
 
     private fun detectVersion(): String {
