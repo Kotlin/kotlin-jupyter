@@ -6,12 +6,13 @@ package org.jetbrains.kotlinx.jupyter.api
  */
 class KotlinKernelVersion private constructor(
     private val components: List<Int>,
+    val snapshot: Boolean = false,
 ) : Comparable<KotlinKernelVersion> {
-    val major: Int get() = components[0]
-    val minor: Int get() = components[1]
-    val micro: Int get() = components[2]
-    val build: Int? get() = components.getOrNull(3)
-    val dev: Int? get() = components.getOrNull(4)
+    val major: Int = components[0]
+    val minor: Int = components[1]
+    val micro: Int = components[2]
+    val build: Int? = components.getOrNull(3)
+    val dev: Int? = components.getOrNull(4)
 
     override fun compareTo(other: KotlinKernelVersion): Int {
         for (i in 0 until maxSize(components, other.components)) {
@@ -41,6 +42,13 @@ class KotlinKernelVersion private constructor(
                     append(dev)
                 }
             }
+            if (snapshot) {
+                // PEP440 does not support `-SNAPSHOT` suffix the same way as Maven does.
+                // To get as close as possible, we use a Local Version Identifier to signal
+                // the same thing. In both cases, a SNAPSHOT version cannot be published
+                // to the official repositories (Maven Central and PyPi).
+                append("+SNAPSHOT")
+            }
         }
 
     fun toMavenVersion() =
@@ -53,6 +61,9 @@ class KotlinKernelVersion private constructor(
                     append(DEV_SEP)
                     append(dev)
                 }
+            }
+            if (snapshot) {
+                append("-SNAPSHOT")
             }
         }
 
@@ -86,8 +97,13 @@ class KotlinKernelVersion private constructor(
 
         fun KotlinKernelVersion?.toMaybeUnspecifiedString() = this?.toString() ?: "unspecified"
 
+        /**
+         * Parse a Python version string into a [KotlinKernelVersion].
+         * Returns `null` if the string is not a valid version string.
+         */
         fun from(string: String): KotlinKernelVersion? {
-            val components = string.split(SEP)
+            val isSnapshot = string.endsWith("+SNAPSHOT")
+            val components = string.removeSuffix("+SNAPSHOT").split(SEP)
             if (components.size < 3 || components.size > 5) return null
 
             val intComponents = mutableListOf<Int>()
@@ -106,11 +122,16 @@ class KotlinKernelVersion private constructor(
             }
 
             if (!validateComponents(intComponents)) return null
-            return KotlinKernelVersion(intComponents)
+            return KotlinKernelVersion(intComponents, isSnapshot)
         }
 
+        /**
+         * Parse a Maven version string into a [KotlinKernelVersion].
+         * Returns `null` if the string is not a valid version string.
+         */
         fun fromMavenVersion(string: String): KotlinKernelVersion? {
-            val components = string.split(SEP)
+            val isSnapshot = string.endsWith("-SNAPSHOT")
+            val components = string.removeSuffix("-SNAPSHOT").split(SEP)
             if (components.size != 3) return null
 
             val intComponents = mutableListOf<Int>()
@@ -125,15 +146,19 @@ class KotlinKernelVersion private constructor(
             }
 
             if (!validateComponents(intComponents)) return null
-            return KotlinKernelVersion(intComponents)
+            return KotlinKernelVersion(intComponents, isSnapshot)
         }
 
+        /**
+         * Creates a [KotlinKernelVersion] from its individual components.
+         */
         fun from(
             major: Int,
             minor: Int,
             micro: Int,
             build: Int? = null,
             dev: Int? = null,
+            snapshot: Boolean = false,
         ): KotlinKernelVersion? {
             val components =
                 mutableListOf<Int>().apply {
@@ -149,7 +174,7 @@ class KotlinKernelVersion private constructor(
                 }
 
             if (!validateComponents(components)) return null
-            return KotlinKernelVersion(components)
+            return KotlinKernelVersion(components, snapshot)
         }
 
         private fun validateComponents(components: List<Int>): Boolean = components.size in 3..5 && components.all { it >= 0 }

@@ -71,14 +71,28 @@ class ConfigTest {
         val fullVersion = KotlinKernelVersion.from(major, minor, micro, build, dev)
         assertEquals("0.8.12.100500.dev2", fullVersion.toString())
 
+        val fullSnapshotVersion = KotlinKernelVersion.from(major, minor, micro, build, dev, snapshot = true)
+        assertEquals("0.8.12.100500.dev2+SNAPSHOT", fullSnapshotVersion.toString())
+        assertEquals("0.8.12-100500-2-SNAPSHOT", fullSnapshotVersion?.toMavenVersion())
+
         val releaseVersion = KotlinKernelVersion.from("0.8.12")
         val stableVersion = KotlinKernelVersion.from("0.8.12.100500")
         val devVersion = KotlinKernelVersion.from("0.8.12.100500.dev2")
+        val snapshotVersion = KotlinKernelVersion.from("0.8.12.100500.dev2+SNAPSHOT")
+        val snapshotVersionMaven = KotlinKernelVersion.fromMavenVersion("0.8.12-SNAPSHOT")
+        val snapshotVersionPython = KotlinKernelVersion.from("0.8.12+SNAPSHOT")
 
         assertNotNull(fullVersion)
         assertNotNull(releaseVersion)
         assertNotNull(stableVersion)
         assertNotNull(devVersion)
+        assertNotNull(snapshotVersion)
+        assertNotNull(snapshotVersionMaven)
+        assertNotNull(snapshotVersionPython)
+
+        assertTrue(snapshotVersion.snapshot)
+        assertTrue(snapshotVersionMaven.snapshot)
+        assertTrue(snapshotVersionPython.snapshot)
 
         for (ver in listOf(fullVersion, releaseVersion, stableVersion, devVersion)) {
             assertEquals(major, ver.major)
