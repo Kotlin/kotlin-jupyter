@@ -53,9 +53,11 @@ class RootSettingsExtension(
     // Used when building Python packages. When `true`, all Python dependencies will be installed
     // locally. If `false`, it is assumed that the dependencies are already installed.
     val isLocalBuild by project.prop("build.isLocal", false)
-    // Used to determine version string for Maven packages.
-    // If `false`, will add a `-SNAPSHOT` suffix. If `true`, will use the version as is.
-    val isMavenReleaseBuild by project.prop("build.isMavenRelease", false)
+    // Used to determine the version string for Maven Python and packages.
+    // If `false`, the version is assumed to be unstable, and we add the `-SNAPSHOT` suffix
+    // for Maven versions and the `+SNAPSHOT` local identifier suffix for Python versions.
+    // If `true`, the version string is used as-is.
+    val isRelease by project.prop("build.isRelease", false)
 
     val jvmTargetForSnippets by project.prop<String?>()
 
@@ -100,8 +102,8 @@ class RootSettingsExtension(
     }
 
     val isOnProtectedBranch: Boolean = project.isProtectedBranch()
-    val pyPackageVersion: String = detectVersion()
-    val mavenVersion: String = pyPackageVersion.toMavenVersion(isMavenReleaseBuild)
+    val pyPackageVersion: String = detectPythonVersion(isRelease)
+    val mavenVersion: String = pyPackageVersion.toMavenVersion()
 
     val readmeFile: File = project.rootDir.resolve("docs").resolve("README.md")
     val readmeStubFile: File = project.rootDir.resolve("docs").resolve("README-STUB.md")
@@ -196,20 +198,20 @@ class RootSettingsExtension(
         )
     }
 
-    private fun String.toMavenVersion(isRelease: Boolean): String {
-        val match = BUILD_NUMBER_REGEX.find(this)!!
+    private fun String.toMavenVersion(): String {
+        val match = PYTHON_BUILD_NUMBER_REGEX.find(this)!!
         val base = match.groups["base"]!!.value
         val counter = match.groups["counter"]!!.value
         val devCounter = match.groups["devCounter"]?.value
         val devAddition = if (devCounter == null) "" else "-$devCounter"
-        val snapshot = when (isRelease) {
-            true -> ""
-            false -> "-SNAPSHOT"
+        val snapshot = when (match.groups["snapshot"]?.value == "+SNAPSHOT") {
+            false -> ""
+            true -> "-SNAPSHOT"
         }
         return "$base-$counter$devAddition$snapshot"
     }
 
-    private fun detectVersion(): String {
+    private fun detectPythonVersion(isRelease: Boolean): String {
         val buildCounter by project.prop("build.counter", "100500")
         val buildNumber by project.prop("build.number", "")
         val devCounterOrNull by project.prop<String?>("build.devCounter")
@@ -218,9 +220,15 @@ class RootSettingsExtension(
 
         val devAddition = if (isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
 
-        val defaultBuildNumber = "$baseVersion.$buildCounter$devAddition"
+        val defaultBuildNumber = "$baseVersion.$buildCounter$devAddition".let { versionString ->
+            if (!isRelease) {
+                "$versionString+SNAPSHOT"
+            } else {
+                versionString
+            }
+        }
 
-        return if (buildNumber.matches(BUILD_NUMBER_REGEX)) {
+        return if (buildNumber.matches(PYTHON_BUILD_NUMBER_REGEX)) {
             buildNumber
         } else {
             defaultBuildNumber
@@ -233,6 +241,6 @@ class RootSettingsExtension(
             return RootSettingsExtension(project)
         }
 
-        private val BUILD_NUMBER_REGEX = Regex("""(?<base>\d+\.\d+\.\d+)\.(?<counter>\d+)(\.dev(?<devCounter>\d+))?""")
+        private val PYTHON_BUILD_NUMBER_REGEX = Regex("""(?<base>\d+\.\d+\.\d+)\.(?<counter>\d+)(\.dev(?<devCounter>\d+))?(?<snapshot>\+SNAPSHOT)?""")
     }
 }
