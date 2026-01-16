@@ -2,8 +2,11 @@ package org.jetbrains.kotlinx.jupyter.protocol.comms
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 interface CommCommunicationFacility {
+    val contextMessage: RawMessage?
+
     fun sendCommOpen(
         commId: String,
         targetName: String,
