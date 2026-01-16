@@ -9,11 +9,15 @@ import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.doWrappedInBusyIdle
 import org.jetbrains.kotlinx.jupyter.messaging.sendSimpleMessageToIoPub
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.comms.CommCommunicationFacility
 
 class ServerCommCommunicationFacility(
     private val communicationFacility: JupyterCommunicationFacility,
 ) : CommCommunicationFacility {
+    override val contextMessage: RawMessage?
+        get() = communicationFacility.messageFactory.contextMessage
+
     override fun sendCommOpen(
         commId: String,
         targetName: String,

@@ -7,6 +7,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 fun interface CommOpenCallback {
     fun messageReceived(
@@ -37,6 +38,13 @@ fun interface CommCloseCallback {
  * https://jupyter-client.readthedocs.io/en/latest/messaging.html#custom-messages
  */
 interface CommManager {
+    /**
+     * If the cell is currently executing, contains the message that triggered the execution
+     * (generally, of type `execute_request`).
+     * Otherwise, `null`.
+     */
+    val contextMessage: RawMessage?
+
     /**
      * Creates a comm with a given target, generates unique ID for it. Sends comm_open request to frontend
      *

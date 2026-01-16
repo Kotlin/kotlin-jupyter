@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.sendMessage
 import org.jetbrains.kotlinx.jupyter.messaging.toMessage
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.comms.CommCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.protocol.startup.KernelPorts
 import org.jetbrains.kotlinx.jupyter.startup.createKotlinKernelConfig
@@ -109,6 +110,8 @@ abstract class KernelServerTestsBase(
     protected inner class ClientCommCommunicationFacility(
         private val shellSocket: JupyterSendSocket,
     ) : CommCommunicationFacility {
+        override val contextMessage: RawMessage? get() = null
+
         override fun sendCommOpen(
             commId: String,
             targetName: String,

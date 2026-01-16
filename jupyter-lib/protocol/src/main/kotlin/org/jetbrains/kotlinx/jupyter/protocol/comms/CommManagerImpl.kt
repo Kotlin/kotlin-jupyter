@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.Comm
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommCloseCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommMsgCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommOpenCallback
+import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -17,6 +18,8 @@ class CommManagerImpl(
     private val commOpenCallbacks = ConcurrentHashMap<String, CommOpenCallback>()
     private val commTargetToIds = ConcurrentHashMap<String, CopyOnWriteArrayList<String>>()
     private val commIdToComm = ConcurrentHashMap<String, CommImpl>()
+
+    override val contextMessage: RawMessage? get() = connection.contextMessage
 
     override fun openComm(
         target: String,

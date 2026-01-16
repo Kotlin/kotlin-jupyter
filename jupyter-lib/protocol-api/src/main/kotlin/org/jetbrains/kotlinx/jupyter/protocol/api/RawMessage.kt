@@ -36,6 +36,8 @@ val RawMessage.type: String?
         return type.content
     }
 
+val RawMessage.id: String? get() = header["msg_id"]?.jsonPrimitive?.content
+
 val RawMessage.sessionId: String? get() = header["session"]?.jsonPrimitive?.content
 val RawMessage.username: String? get() = header["username"]?.jsonPrimitive?.content
 typealias RawMessageAction = (RawMessage) -> Unit
