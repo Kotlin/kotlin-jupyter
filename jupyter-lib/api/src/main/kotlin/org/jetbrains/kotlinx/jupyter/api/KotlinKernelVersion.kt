@@ -1,12 +1,15 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+private const val MAVEN_SNAPSHOT_SUFFIX = "-SNAPSHOT"
+private const val PYPI_SNAPSHOT_SUFFIX = "+SNAPSHOT"
+
 /**
  * Kotlin kernel version, with full specification, [Comparable] implementation and
  * serialization/deserialization
  */
 class KotlinKernelVersion private constructor(
     private val components: List<Int>,
-    val snapshot: Boolean = false,
+    val isSnapshot: Boolean = false,
 ) : Comparable<KotlinKernelVersion> {
     val major: Int = components[0]
     val minor: Int = components[1]
@@ -42,12 +45,12 @@ class KotlinKernelVersion private constructor(
                     append(dev)
                 }
             }
-            if (snapshot) {
+            if (isSnapshot) {
                 // PEP440 does not support `-SNAPSHOT` suffix the same way as Maven does.
                 // To get as close as possible, we use a Local Version Identifier to signal
                 // the same thing. In both cases, a SNAPSHOT version cannot be published
                 // to the official repositories (Maven Central and PyPi).
-                append("+SNAPSHOT")
+                append(PYPI_SNAPSHOT_SUFFIX)
             }
         }
 
@@ -62,8 +65,8 @@ class KotlinKernelVersion private constructor(
                     append(dev)
                 }
             }
-            if (snapshot) {
-                append("-SNAPSHOT")
+            if (isSnapshot) {
+                append(MAVEN_SNAPSHOT_SUFFIX)
             }
         }
 
@@ -102,9 +105,8 @@ class KotlinKernelVersion private constructor(
          * Returns `null` if the string is not a valid version string.
          */
         fun from(string: String): KotlinKernelVersion? {
-            val isSnapshot = string.endsWith("+SNAPSHOT")
-            val components = string.removeSuffix("+SNAPSHOT").split(SEP)
-            if (components.size < 3 || components.size > 5) return null
+            val (components, isSnapshot) = parseVersionComponents(string, PYPI_SNAPSHOT_SUFFIX)
+            if (components.size !in 3..5) return null
 
             val intComponents = mutableListOf<Int>()
             for (i in 0..2) {
@@ -130,8 +132,7 @@ class KotlinKernelVersion private constructor(
          * Returns `null` if the string is not a valid version string.
          */
         fun fromMavenVersion(string: String): KotlinKernelVersion? {
-            val isSnapshot = string.endsWith("-SNAPSHOT")
-            val components = string.removeSuffix("-SNAPSHOT").split(SEP)
+            val (components, isSnapshot) = parseVersionComponents(string, MAVEN_SNAPSHOT_SUFFIX)
             if (components.size != 3) return null
 
             val intComponents = mutableListOf<Int>()
@@ -158,7 +159,7 @@ class KotlinKernelVersion private constructor(
             micro: Int,
             build: Int? = null,
             dev: Int? = null,
-            snapshot: Boolean = false,
+            isSnapshot: Boolean = false,
         ): KotlinKernelVersion? {
             val components =
                 mutableListOf<Int>().apply {
@@ -174,7 +175,7 @@ class KotlinKernelVersion private constructor(
                 }
 
             if (!validateComponents(components)) return null
-            return KotlinKernelVersion(components, snapshot)
+            return KotlinKernelVersion(components, isSnapshot)
         }
 
         private fun validateComponents(components: List<Int>): Boolean = components.size in 3..5 && components.all { it >= 0 }
@@ -183,5 +184,19 @@ class KotlinKernelVersion private constructor(
             a: Collection<*>,
             b: Collection<*>,
         ): Int = if (a.size > b.size) a.size else b.size
+
+        private data class VersionComponents(
+            val components: List<String>,
+            val isSnapshot: Boolean,
+        )
+
+        private fun parseVersionComponents(
+            version: String,
+            snapshotSuffix: String,
+        ): VersionComponents {
+            val isSnapshot = version.endsWith(snapshotSuffix)
+            val components = version.removeSuffix(snapshotSuffix).split(SEP)
+            return VersionComponents(components, isSnapshot)
+        }
     }
 }

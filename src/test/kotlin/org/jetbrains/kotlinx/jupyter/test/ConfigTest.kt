@@ -1,17 +1,19 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldHaveLength
 import jupyter.kotlin.JavaRuntime
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.iKotlinClass
 import org.jetbrains.kotlinx.jupyter.protocol.api.logger
 import org.jetbrains.kotlinx.jupyter.startup.MAIN_CLASS_NAME
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.assertNotNull
 
 class ConfigTest {
     @Test
@@ -32,13 +34,13 @@ class ConfigTest {
         val developersRegex = developers.joinToString("|", "(", ")") + "/.*"
 
         if (!branch.matches(Regex("$pullRegex|$mergeRegex|$developersRegex"))) {
-            assertEquals(-1, branch.indexOf('/'), "Branch name should be simple")
+            branch.indexOf('/').shouldBe(-1)
         }
 
-        assertTrue(branch.isNotBlank(), "Branch name shouldn't be blank")
+        branch.isNotBlank().shouldBeTrue()
 
         val commit = defaultRuntimeProperties.currentSha
-        assertEquals(40, commit.length)
+        commit.shouldHaveLength(40)
     }
 
     @Test
@@ -46,7 +48,7 @@ class ConfigTest {
         val version = defaultRuntimeProperties.version
         LOG.debug("Runtime version is: {}", version)
 
-        assertNotNull(version)
+        version.shouldNotBeNull()
     }
 
     @Test
@@ -54,7 +56,7 @@ class ConfigTest {
         val minExpectedVersion = 11
         val maxExpectedVersion = 21
 
-        assertTrue(JavaRuntime.javaVersion.versionInteger >= minExpectedVersion)
+        (JavaRuntime.javaVersion.versionInteger >= minExpectedVersion).shouldBeTrue()
         JavaRuntime.assertVersion { it >= minExpectedVersion }
         JavaRuntime.assertVersionAtLeast(minExpectedVersion)
         JavaRuntime.assertVersionInRange(minExpectedVersion, maxExpectedVersion)
@@ -69,11 +71,11 @@ class ConfigTest {
         val dev = 2
 
         val fullVersion = KotlinKernelVersion.from(major, minor, micro, build, dev)
-        assertEquals("0.8.12.100500.dev2", fullVersion.toString())
+        fullVersion.toString() shouldBe "0.8.12.100500.dev2"
 
-        val fullSnapshotVersion = KotlinKernelVersion.from(major, minor, micro, build, dev, snapshot = true)
-        assertEquals("0.8.12.100500.dev2+SNAPSHOT", fullSnapshotVersion.toString())
-        assertEquals("0.8.12-100500-2-SNAPSHOT", fullSnapshotVersion?.toMavenVersion())
+        val fullSnapshotVersion = KotlinKernelVersion.from(major, minor, micro, build, dev, isSnapshot = true)
+        fullSnapshotVersion.toString() shouldBe "0.8.12.100500.dev2+SNAPSHOT"
+        fullSnapshotVersion?.toMavenVersion() shouldBe "0.8.12-100500-2-SNAPSHOT"
 
         val releaseVersion = KotlinKernelVersion.from("0.8.12")
         val stableVersion = KotlinKernelVersion.from("0.8.12.100500")
@@ -82,42 +84,45 @@ class ConfigTest {
         val snapshotVersionMaven = KotlinKernelVersion.fromMavenVersion("0.8.12-SNAPSHOT")
         val snapshotVersionPython = KotlinKernelVersion.from("0.8.12+SNAPSHOT")
 
-        assertNotNull(fullVersion)
-        assertNotNull(releaseVersion)
-        assertNotNull(stableVersion)
-        assertNotNull(devVersion)
-        assertNotNull(snapshotVersion)
-        assertNotNull(snapshotVersionMaven)
-        assertNotNull(snapshotVersionPython)
+        fullVersion.shouldNotBeNull()
+        releaseVersion.shouldNotBeNull()
+        stableVersion.shouldNotBeNull()
+        devVersion.shouldNotBeNull()
+        snapshotVersion.shouldNotBeNull()
+        snapshotVersionMaven.shouldNotBeNull()
+        snapshotVersionPython.shouldNotBeNull()
 
-        assertTrue(snapshotVersion.snapshot)
-        assertTrue(snapshotVersionMaven.snapshot)
-        assertTrue(snapshotVersionPython.snapshot)
+        snapshotVersion.isSnapshot.shouldBeTrue()
+        snapshotVersionMaven.isSnapshot.shouldBeTrue()
+        snapshotVersionPython.isSnapshot.shouldBeTrue()
 
         for (ver in listOf(fullVersion, releaseVersion, stableVersion, devVersion)) {
-            assertEquals(major, ver.major)
-            assertEquals(minor, ver.minor)
-            assertEquals(micro, ver.micro)
+            ver.shouldNotBeNull()
+            ver.major shouldBe major
+            ver.minor shouldBe minor
+            ver.micro shouldBe micro
         }
 
         for (ver in listOf(fullVersion, stableVersion, devVersion)) {
-            assertEquals(build, ver.build)
+            ver.shouldNotBeNull()
+            ver.build shouldBe build
         }
-        assertNull(releaseVersion.build)
+        releaseVersion.build.shouldBeNull()
 
         for (ver in listOf(fullVersion, devVersion)) {
-            assertEquals(dev, ver.dev)
+            ver.dev shouldBe dev
         }
-        assertNull(releaseVersion.dev)
-        assertNull(stableVersion.dev)
+        releaseVersion.dev.shouldBeNull()
+        stableVersion.dev.shouldBeNull()
 
-        assertTrue(releaseVersion < stableVersion)
-        assertTrue(stableVersion < devVersion)
-        assertEquals(fullVersion, devVersion)
-        assertTrue(KotlinKernelVersion.from("5.0.2")!! > KotlinKernelVersion.from("5.0.1.999")!!)
+        releaseVersion shouldBeLessThan stableVersion
+        stableVersion shouldBeLessThan devVersion
+        fullVersion shouldBe devVersion
+        KotlinKernelVersion.from("5.0.2")!! shouldBeGreaterThan
+            KotlinKernelVersion.from("5.0.1.999")!!
 
-        assertNull(KotlinKernelVersion.from("0.-1.2"))
-        assertNull(KotlinKernelVersion.from("5.1.2.3.4"))
+        KotlinKernelVersion.from("0.-1.2").shouldBeNull()
+        KotlinKernelVersion.from("5.1.2.3.4").shouldBeNull()
     }
 
     @Test
