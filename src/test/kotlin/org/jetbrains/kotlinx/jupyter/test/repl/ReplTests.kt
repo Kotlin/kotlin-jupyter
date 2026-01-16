@@ -1210,7 +1210,8 @@ class ReplTests : AbstractSingleReplTest() {
         }
     }
 
-    // In K2, the result field is accessible for subsequent snippets
+    // In K2, the result field is accessible for later snippets.
+    // See also https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
     @Test
     fun accessResultClassOutput() {
         eval("42").renderedValue shouldBe 42
@@ -1233,5 +1234,38 @@ class ReplTests : AbstractSingleReplTest() {
         res0.shouldBeInstanceOf<EvalResultEx.Success>()
         eval("x").renderedValue shouldBe 43
         eval("y").shouldBeInstanceOf<EvalResultEx.Error>()
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77764/K2-Repl-Calling-a-function-that-references-a-function-below-it-fails-to-compile
+    @Test
+    fun callForwardDeclaredFunction() {
+        val res =
+            eval(
+                """
+                fun function(): String {
+                    return functionBelow()
+                }
+                fun functionBelow(): String {
+                    return "BOOM"
+                }
+                function()
+                """.trimIndent(),
+            )
+        res.renderedValue shouldBe "BOOM"
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-77476/Types-from-previous-snippets-take-precedence-over-imports
+    @Test
+    fun testResolvingImports() {
+        eval("import kotlin.random.Random").assertSuccess()
+        eval("data class Random(val name: String)").assertSuccess()
+        val res =
+            eval(
+                """
+                import kotlin.random.Random
+                Random.nextFloat()
+                """.trimIndent(),
+            )
+        res.shouldBeInstanceOf<EvalResultEx.Error>()
     }
 }
