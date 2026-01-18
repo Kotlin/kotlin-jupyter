@@ -24,12 +24,23 @@ class KotlinKernelVersion private constructor(
             val compareRes = thisC.compareTo(otherC)
             if (compareRes != 0) return compareRes
         }
-        return 0
+        return when {
+            isSnapshot && !other.isSnapshot -> -1
+            !isSnapshot && other.isSnapshot -> 1
+            else -> 0
+        }
     }
 
-    override fun equals(other: Any?): Boolean = other is KotlinKernelVersion && components == other.components
+    override fun equals(other: Any?): Boolean =
+        other is KotlinKernelVersion &&
+            components == other.components &&
+            isSnapshot == other.isSnapshot
 
-    override fun hashCode(): Int = components.hashCode()
+    override fun hashCode(): Int {
+        var result = components.hashCode()
+        result = 31 * result + isSnapshot.hashCode()
+        return result
+    }
 
     override fun toString() = toPyPiVersion()
 
