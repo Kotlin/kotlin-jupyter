@@ -118,6 +118,20 @@ class ConfigTest {
         releaseVersion shouldBeLessThan stableVersion
         stableVersion shouldBeLessThan devVersion
         fullVersion shouldBe devVersion
+        snapshotVersion shouldBeLessThan devVersion
+        snapshotVersionMaven shouldBeLessThan releaseVersion
+        snapshotVersionPython shouldBeLessThan releaseVersion
+
+        KotlinKernelVersion.from("0.12.0.1+SNAPSHOT")!! shouldBeLessThan
+            KotlinKernelVersion.from("0.12.0.1")!!
+
+        val snapshotFromPyPiVersion = KotlinKernelVersion.from("0.12.0+SNAPSHOT")!!
+        snapshotFromPyPiVersion shouldBeLessThan KotlinKernelVersion.from("0.12.0")!!
+
+        val snapshotFromMavenVersion = KotlinKernelVersion.fromMavenVersion("0.12.0-SNAPSHOT")!!
+        snapshotFromPyPiVersion shouldBe snapshotFromMavenVersion
+        snapshotFromPyPiVersion.hashCode() shouldBe snapshotFromMavenVersion.hashCode()
+
         KotlinKernelVersion.from("5.0.2")!! shouldBeGreaterThan
             KotlinKernelVersion.from("5.0.1.999")!!
 
@@ -148,6 +162,8 @@ class ConfigTest {
                 "0.8.0-1-1",
                 "0.8.0-42",
                 "0.10.3.1.dev1",
+                "0.12.0",
+                "0.12.0-SNAPSHOT",
             ).sortedWith(KotlinKernelVersion.STRING_VERSION_COMPARATOR)
 
         sortedVersions shouldBe
@@ -161,6 +177,8 @@ class ConfigTest {
                 "0.10.4.2",
                 "0.11.0-2",
                 "0.11.0-42",
+                "0.12.0-SNAPSHOT",
+                "0.12.0",
                 "0.12.0-1",
             )
     }
