@@ -8,7 +8,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
 import org.jetbrains.kotlinx.jupyter.messaging.JupyterCommunicationFacility
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.doWrappedInBusyIdle
-import org.jetbrains.kotlinx.jupyter.messaging.sendSimpleMessageToIoPub
+import org.jetbrains.kotlinx.jupyter.messaging.sendReplyMessageToIoPub
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 import org.jetbrains.kotlinx.jupyter.protocol.comms.CommCommunicationFacility
 
@@ -25,7 +25,7 @@ class ServerCommCommunicationFacility(
         metadata: JsonElement?,
         buffers: List<ByteArray>,
     ) {
-        communicationFacility.sendSimpleMessageToIoPub(
+        communicationFacility.sendReplyMessageToIoPub(
             msgType = MessageType.COMM_OPEN,
             content = CommOpenMessage(commId, targetName, data),
             metadata = metadata,
@@ -39,7 +39,7 @@ class ServerCommCommunicationFacility(
         metadata: JsonElement?,
         buffers: List<ByteArray>,
     ) {
-        communicationFacility.sendSimpleMessageToIoPub(
+        communicationFacility.sendReplyMessageToIoPub(
             msgType = MessageType.COMM_MSG,
             content = CommMsgMessage(commId, data),
             metadata = metadata,
@@ -53,7 +53,7 @@ class ServerCommCommunicationFacility(
         metadata: JsonElement?,
         buffers: List<ByteArray>,
     ) {
-        communicationFacility.sendSimpleMessageToIoPub(
+        communicationFacility.sendReplyMessageToIoPub(
             msgType = MessageType.COMM_CLOSE,
             content = CommCloseMessage(commId, data),
             metadata = metadata,
