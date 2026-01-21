@@ -40,20 +40,26 @@ fun JupyterCommunicationFacility.doWrappedInBusyIdle(action: () -> Unit) {
     )
 }
 
-fun JupyterCommunicationFacility.sendSimpleMessageToIoPub(
+fun JupyterCommunicationFacility.sendReplyMessageToIoPub(
     msgType: MessageType,
     content: MessageContent,
     metadata: JsonElement? = null,
     buffers: List<ByteArray>? = null,
 ) {
-    socketManager.iopub.sendMessage(
-        messageFactory.makeSimpleMessage(
-            msgType,
-            content,
-            metadata,
-            buffers,
-        ),
-    )
+    val message =
+        messageFactory.makeReplyMessageOrNull(
+            msgType = msgType,
+            content = content,
+            metadata = metadata,
+            buffers = buffers,
+        ) ?: messageFactory.makeSimpleMessage(
+            msgType = msgType,
+            content = content,
+            metadata = metadata,
+            buffers = buffers,
+        )
+
+    socketManager.iopub.sendMessage(message)
 }
 
 fun JupyterCommunicationFacility.sendWrapped(message: Message) =
