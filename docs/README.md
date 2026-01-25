@@ -538,7 +538,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [biokotlin](https://github.com/maize-genetics/BioKotlin) - BioKotlin aims to be a high-performance bioinformatics library that brings the power and speed of compiled programming languages to scripting and big data environments.
  - [combinatoricskt](https://github.com/shiguruikai/combinatoricskt) - A combinatorics library for Kotlin
  - [coroutines](https://github.com/Kotlin/kotlinx.coroutines) - Asynchronous programming and reactive streams support
- - [database](https://github.com/Kotlin/kotlin-jupyter-database) - Database Connection Helper Functions
+ - [database](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/database) - Database Connection Helper Functions
  - [dataframe](https://github.com/Kotlin/dataframe) - Kotlin framework for structured data processing
  - [datetime](https://github.com/Kotlin/kotlinx-datetime) - Kotlin date/time library
  - [deeplearning4j](https://github.com/eclipse/deeplearning4j) - Deep learning library for the JVM
@@ -564,7 +564,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [kravis](https://github.com/holgerbrandl/kravis) - Kotlin grammar for data visualization
  - [ksl](https://github.com/rossetti/KSL) - KSL - Kotlin Simulation Library for Monte Carlo and Discrete-Event Simulation
  - [kt-math](https://github.com/gciatto/kt-math) - Kotlin multi-platform port of java.math.*
- - [ktor-client](https://github.com/Kotlin/kotlin-jupyter-http-util) - Asynchronous HTTP client
+ - [ktor-client](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/http-util) - Asynchronous HTTP client
  - [langchain4j](https://github.com/langchain4j/langchain4j) - LangChain is a framework for building applications powered by LLMs, enabling easy integration of models, data, and external tools
  - [lets-plot](https://github.com/JetBrains/lets-plot-kotlin) - Kotlin API for Lets-Plot: multiplatform plotting library based on Grammar of Graphics
  - [lets-plot-gt](https://github.com/JetBrains/lets-plot-kotlin) - Lets-Plot visualisation for GeoTools toolkit
@@ -579,7 +579,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [rdkit](https://www.rdkit.org/) - Open-Source Cheminformatics Software
  - [reflection](https://kotlinlang.org/docs/reflection.html) - Imports for Kotlin Reflection
  - [roboquant](https://roboquant.org) - Algorithmic trading platform written in Kotlin
- - [serialization](https://github.com/Kotlin/kotlin-jupyter-http-util) - Deserialize JSON content using kotlinx.serialization and automatically generate classes for it
+ - [serialization](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/http-util) - Deserialize JSON content using kotlinx.serialization and automatically generate classes for it
  - [smile](https://github.com/haifengl/smile) - Statistical Machine Intelligence and Learning Engine
  - [spark](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark: unified analytics engine for large-scale data processing
  - [spark-streaming](https://github.com/JetBrains/kotlin-spark-api) - Kotlin API for Apache Spark Streaming: scalable, high-throughput, fault-tolerant stream processing of live data streams
@@ -587,6 +587,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [spring-ai-ollama](https://github.com/spring-projects/spring-ai) - Spring AI is a specialized application framework designed specifically for AI engineering, providing seamless integration with local models powered by Ollama.
  - [spring-ai-openai](https://github.com/spring-projects/spring-ai) - Spring AI is a application framework designed specifically for AI engineering, offering seamless integration with OpenAI models.
  - [webtau](https://github.com/testingisdocumenting/webtau) - WebTau end-to-end testing across layers
+ - [widgets](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/widgets) - Kotlin API for ipywidgets frontend
 
 ### Rich output
 
