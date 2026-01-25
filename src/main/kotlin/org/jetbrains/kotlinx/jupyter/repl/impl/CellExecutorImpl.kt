@@ -257,7 +257,7 @@ internal class CellExecutorImpl(
             try {
                 doAddLibraries(libraries)
             } finally {
-                for (lib in libraries) {
+                repeat(libraries.size) {
                     stackFrame.libraries.removeLast()
                 }
             }
@@ -296,11 +296,11 @@ internal class CellExecutorImpl(
         override fun acceptsIntegrationTypeName(typeName: String): Boolean? =
             stackFrame
                 .traverseStack()
-                .mapNotNull { frame ->
+                .firstNotNullOfOrNull { frame ->
                     frame.libraries
                         .mapNotNull { library -> library.integrationTypeNameRules.accepts(typeName) }
                         .lastOrNull()
-                }.firstOrNull()
+                }
 
         override fun execute(code: Code) =
             executor
@@ -323,6 +323,10 @@ internal class CellExecutorImpl(
             id: String?,
         ) {
             sharedContext.displayHandler.handleUpdate(value, this, id)
+        }
+
+        override fun clearOutput(wait: Boolean) {
+            sharedContext.displayHandler.handleClearOutput(wait)
         }
 
         override fun scheduleExecution(execution: ExecutionCallback<*>) {

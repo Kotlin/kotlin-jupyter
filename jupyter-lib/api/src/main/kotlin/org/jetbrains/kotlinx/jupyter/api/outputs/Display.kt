@@ -27,3 +27,14 @@ fun Notebook.updateDisplay(
 ) {
     executionHost!!.updateDisplay(value, id)
 }
+
+/**
+ * Clears the output that is visible on the frontend.
+ *
+ * @param wait Wait to clear the output until a new output is available.
+ * If true, it clears the existing output immediately before the new output is displayed.
+ * Useful for creating simple animations with minimal flickering.
+ */
+fun Notebook.clearOutput(wait: Boolean = false) {
+    executionHost!!.clearOutput(wait)
+}

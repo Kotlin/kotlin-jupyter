@@ -23,4 +23,14 @@ interface DisplayHandler {
         host: ExecutionHost,
         id: String? = null,
     )
+
+    /**
+     * Handles clearing the output
+     *
+     * @param wait Wait to clear the output until a new output is available.
+     * If true, it clears the existing output immediately before the new output is displayed.
+     * Useful for creating simple animations with minimal flickering.
+     */
+    fun handleClearOutput(wait: Boolean) {
+    }
 }

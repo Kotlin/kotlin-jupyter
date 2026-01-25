@@ -23,6 +23,7 @@ import org.jetbrains.kotlinx.jupyter.api.SessionOptions
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
+import org.jetbrains.kotlinx.jupyter.messaging.ClearOutputMessage
 import org.jetbrains.kotlinx.jupyter.messaging.CommMsgMessage
 import org.jetbrains.kotlinx.jupyter.messaging.CommOpenMessage
 import org.jetbrains.kotlinx.jupyter.messaging.DisplayDataMessage
@@ -291,6 +292,8 @@ abstract class ExecuteTests(
 
     private fun JupyterReceiveSocket.receiveUpdateDisplayDataResponse(): DisplayDataMessage =
         receiveMessageOfType(MessageType.UPDATE_DISPLAY_DATA)
+
+    private fun JupyterReceiveSocket.receiveClearOutputResponse(): ClearOutputMessage = receiveMessageOfType(MessageType.CLEAR_OUTPUT)
 
     @Test
     fun testExecute() {
@@ -697,6 +700,20 @@ abstract class ExecuteTests(
             ioPubChecker = { iopubSocket ->
                 // In case of an error, this would return STREAM
                 iopubSocket.receiveUpdateDisplayDataResponse()
+            },
+        )
+    }
+
+    @Test
+    fun testClearOutput() {
+        doExecute(
+            """
+            notebook.clearOutput(true)
+            """.trimIndent(),
+            hasResult = false,
+            ioPubChecker = { iopubSocket ->
+                val content = iopubSocket.receiveClearOutputResponse()
+                content.wait shouldBe true
             },
         )
     }

@@ -56,6 +56,11 @@ class AnimateTests : AbstractSingleReplTest() {
                     super.handleUpdate(value, host, id)
                     myHandler.handleUpdate(value, host, id)
                 }
+
+                override fun handleClearOutput(wait: Boolean) {
+                    super.handleClearOutput(wait)
+                    myHandler.handleClearOutput(wait)
+                }
             }
         }
 
@@ -135,7 +140,9 @@ class AnimateTests : AbstractSingleReplTest() {
             host: ExecutionHost,
             id: String?,
         ) {
-            handlers.forEach { it.handleDisplay(value, host, id) }
+            for (displayHandler in handlers) {
+                displayHandler.handleDisplay(value, host, id)
+            }
         }
 
         override fun handleUpdate(
@@ -143,7 +150,15 @@ class AnimateTests : AbstractSingleReplTest() {
             host: ExecutionHost,
             id: String?,
         ) {
-            handlers.forEach { it.handleUpdate(value, host, id) }
+            for (displayHandler in handlers) {
+                displayHandler.handleUpdate(value, host, id)
+            }
+        }
+
+        override fun handleClearOutput(wait: Boolean) {
+            for (displayHandler in handlers) {
+                displayHandler.handleClearOutput(wait)
+            }
         }
 
         fun addHandler(handler: DisplayHandler) {
