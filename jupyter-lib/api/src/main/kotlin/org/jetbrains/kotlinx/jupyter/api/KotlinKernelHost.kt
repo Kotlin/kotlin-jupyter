@@ -36,6 +36,15 @@ interface KotlinKernelHost : ExecutionHost {
     )
 
     /**
+     * Clears the output that is visible on the frontend.
+     *
+     * @param wait Wait to clear the output until a new output is available.
+     * If true, it clears the existing output immediately before the new output is displayed.
+     * Useful for creating simple animations with minimal flickering.
+     */
+    fun clearOutput(wait: Boolean = false)
+
+    /**
      * Schedules execution of the given [execution] after execution of the current cell has completed.
      */
     fun scheduleExecution(execution: ExecutionCallback<*>)

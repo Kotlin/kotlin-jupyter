@@ -60,6 +60,14 @@ class SocketDisplayHandler(
         sendMessage(MessageType.UPDATE_DISPLAY_DATA, response)
     }
 
+    override fun handleClearOutput(wait: Boolean) {
+        val content = ClearOutputMessage(wait)
+        val message =
+            communicationFacility.messageFactory
+                .makeReplyMessage(MessageType.CLEAR_OUTPUT, content = content)
+        socket.sendMessage(message)
+    }
+
     private fun createResponse(json: JsonObject): DisplayDataMessage {
         val content =
             DisplayDataMessage(
