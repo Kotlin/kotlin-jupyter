@@ -249,12 +249,17 @@ open class TestDisplayHandler(
 open class TestDisplayHandlerWithRendering(
     private val notebook: MutableNotebook,
 ) : DisplayHandler {
+    override fun render(
+        value: Any,
+        host: ExecutionHost,
+    ) = renderValue(notebook, host, value)
+
     override fun handleDisplay(
         value: Any,
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value)?.withIdIfNotNull(id) ?: return
+        val display = render(value, host)?.withIdIfNotNull(id) ?: return
         notebook.currentCell?.addDisplay(display)
     }
 
@@ -263,7 +268,7 @@ open class TestDisplayHandlerWithRendering(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value) ?: return
+        val display = render(value, host) ?: return
         val container = notebook.displays
         container.update(id, display)
         container.getById(id).distinctBy { it.cell.id }.forEach {

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
 import io.kotest.matchers.shouldBe
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
@@ -134,6 +135,11 @@ class AnimateTests : AbstractSingleReplTest() {
 
     private class CompositeDisplayHandler : DisplayHandler {
         private val handlers = mutableListOf<DisplayHandler>()
+
+        override fun render(
+            value: Any,
+            host: ExecutionHost,
+        ): DisplayResult? = handlers.firstNotNullOfOrNull { it.render(value, host) }
 
         override fun handleDisplay(
             value: Any,

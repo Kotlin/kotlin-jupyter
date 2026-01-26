@@ -1,11 +1,20 @@
 package org.jetbrains.kotlinx.jupyter.api.outputs
 
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 
 /**
  * The `DisplayHandler` interface defines methods for handling the display and update of values within the notebook.
  */
 interface DisplayHandler {
+    /**
+     * Renders the [value] using the given [host]
+     */
+    fun render(
+        value: Any,
+        host: ExecutionHost,
+    ): DisplayResult? = null
+
     /**
      * Handles the display of a value
      */

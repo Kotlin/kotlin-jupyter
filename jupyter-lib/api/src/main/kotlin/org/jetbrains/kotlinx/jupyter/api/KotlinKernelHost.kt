@@ -12,15 +12,6 @@ interface KotlinKernelHost : ExecutionHost {
     /**
      * Try to display the given value. It is only displayed if it's an instance of [Renderable]
      * or may be converted to it
-     *
-     * Left for binary compatibility
-     */
-    @Deprecated("Use full version instead", ReplaceWith("display(value, null)"))
-    fun display(value: Any) = display(value, null)
-
-    /**
-     * Try to display the given value. It is only displayed if it's an instance of [Renderable]
-     * or may be converted to it
      */
     fun display(
         value: Any,
@@ -34,6 +25,11 @@ interface KotlinKernelHost : ExecutionHost {
         value: Any,
         id: String? = null,
     )
+
+    /**
+     * Renders the given [value] using the current execution host
+     */
+    fun render(value: Any): DisplayResult?
 
     /**
      * Clears the output that is visible on the frontend.

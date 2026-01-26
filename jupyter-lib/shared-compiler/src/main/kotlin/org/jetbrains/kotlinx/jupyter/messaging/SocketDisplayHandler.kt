@@ -25,12 +25,17 @@ class SocketDisplayHandler(
         socket.sendMessage(message)
     }
 
+    override fun render(
+        value: Any,
+        host: ExecutionHost,
+    ) = renderValue(notebook, host, value)
+
     override fun handleDisplay(
         value: Any,
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value)?.withIdIfNotNull(id) ?: return
+        val display = render(value, host)?.withIdIfNotNull(id) ?: return
         val json = display.toJson(Json.EMPTY, null)
 
         notebook.currentCell?.addDisplay(display)
@@ -44,7 +49,7 @@ class SocketDisplayHandler(
         host: ExecutionHost,
         id: String?,
     ) {
-        val display = renderValue(notebook, host, value) ?: return
+        val display = render(value, host) ?: return
         val json = display.toJson(Json.EMPTY, id)
         if (id == null || !json.containsDisplayId(id)) {
             throw RuntimeException("`update_display_data` response should provide an id of data being updated")

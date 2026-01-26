@@ -93,9 +93,6 @@ interface DisplayResult : Renderable {
         overrideId: String? = null,
     ): JsonObject
 
-    @Deprecated("Use full version instead", ReplaceWith("toJson(additionalMetadata, null)"))
-    fun toJson(additionalMetadata: JsonObject = Json.EMPTY): JsonObject = toJson(additionalMetadata, null)
-
     /**
      * Renders display result, generally should return `this`
      */

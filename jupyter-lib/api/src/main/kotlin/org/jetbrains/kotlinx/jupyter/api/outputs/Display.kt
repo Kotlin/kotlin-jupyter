@@ -1,6 +1,17 @@
 package org.jetbrains.kotlinx.jupyter.api.outputs
 
+import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.Notebook
+
+/**
+ * Renders the given value using the notebook's execution host rendering mechanism, if available.
+ *
+ * @param value The value to be rendered.
+ * @return A [DisplayResult] representing the rendered output,
+ * or `null` if rendering is not supported or if [value] is [Unit].
+ * Note: if the [value] is null, the method may still return a non-null [DisplayResult].
+ */
+fun Notebook.render(value: Any): DisplayResult? = executionHost?.render(value)
 
 /**
  * Displays the given value in the notebook.
