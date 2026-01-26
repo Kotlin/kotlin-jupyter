@@ -29,7 +29,7 @@ interface KotlinKernelHost : ExecutionHost {
     /**
      * Renders the given [value] using the current execution host
      */
-    fun render(value: Any): DisplayResult?
+    fun render(value: Any?): DisplayResult?
 
     /**
      * Clears the output that is visible on the frontend.

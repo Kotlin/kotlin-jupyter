@@ -137,7 +137,7 @@ class AnimateTests : AbstractSingleReplTest() {
         private val handlers = mutableListOf<DisplayHandler>()
 
         override fun render(
-            value: Any,
+            value: Any?,
             host: ExecutionHost,
         ): DisplayResult? = handlers.firstNotNullOfOrNull { it.render(value, host) }
 
