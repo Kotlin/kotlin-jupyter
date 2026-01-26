@@ -26,7 +26,7 @@ class SocketDisplayHandler(
     }
 
     override fun render(
-        value: Any,
+        value: Any?,
         host: ExecutionHost,
     ) = renderValue(notebook, host, value)
 

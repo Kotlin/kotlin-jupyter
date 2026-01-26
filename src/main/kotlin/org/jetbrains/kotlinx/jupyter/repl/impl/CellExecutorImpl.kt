@@ -325,7 +325,7 @@ internal class CellExecutorImpl(
             sharedContext.displayHandler.handleUpdate(value, this, id)
         }
 
-        override fun render(value: Any) = sharedContext.displayHandler.render(value, this)
+        override fun render(value: Any?) = sharedContext.displayHandler.render(value, this)
 
         override fun clearOutput(wait: Boolean) {
             sharedContext.displayHandler.handleClearOutput(wait)

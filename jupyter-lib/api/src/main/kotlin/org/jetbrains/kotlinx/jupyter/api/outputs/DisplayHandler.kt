@@ -11,7 +11,7 @@ interface DisplayHandler {
      * Renders the [value] using the given [host]
      */
     fun render(
-        value: Any,
+        value: Any?,
         host: ExecutionHost,
     ): DisplayResult? = null
 

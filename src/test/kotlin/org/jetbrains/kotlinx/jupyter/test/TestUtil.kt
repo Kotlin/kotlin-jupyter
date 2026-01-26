@@ -250,7 +250,7 @@ open class TestDisplayHandlerWithRendering(
     private val notebook: MutableNotebook,
 ) : DisplayHandler {
     override fun render(
-        value: Any,
+        value: Any?,
         host: ExecutionHost,
     ) = renderValue(notebook, host, value)
 

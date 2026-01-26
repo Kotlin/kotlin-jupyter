@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.Notebook
  * or `null` if rendering is not supported or if [value] is [Unit].
  * Note: if the [value] is null, the method may still return a non-null [DisplayResult].
  */
-fun Notebook.render(value: Any): DisplayResult? = executionHost?.render(value)
+fun Notebook.render(value: Any?): DisplayResult? = executionHost?.render(value)
 
 /**
  * Displays the given value in the notebook.
