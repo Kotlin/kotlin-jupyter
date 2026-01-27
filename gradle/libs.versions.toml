@@ -43,7 +43,7 @@ xmlgraphicsBatikCodec = "1.19"
 xmlgraphicsCommons = "2.11"
 graphvizJava = "0.18.1"
 
-springBoot = "3.5.7"
+springBoot = "3.5.10"
 springDependencyManagement = "1.1.7"
 
 [libraries]
