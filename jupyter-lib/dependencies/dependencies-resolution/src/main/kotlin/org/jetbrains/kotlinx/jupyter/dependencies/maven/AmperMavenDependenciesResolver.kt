@@ -44,6 +44,8 @@ class AmperMavenDependenciesResolver(
     private val requestedArtifacts = mutableMapOf<String, ArtifactRequest>()
     private val dependencyCollector = MavenDependencyCollector(OldestWinsVersionConflictResolutionStrategy)
 
+    var forceCacheRefresh: Boolean = false
+
     /**
      * Returns true if the repository URL looks valid for Maven resolution.
      */
@@ -88,6 +90,7 @@ class AmperMavenDependenciesResolver(
                 currentArtifactsWithLocations = artifactRequests,
                 allArtifactsWithLocations = requestedArtifacts.values,
                 resolveSources = resolveSources,
+                forceCacheRefresh = forceCacheRefresh,
                 dependencyCollector = dependencyCollector,
             )
         return when (result) {

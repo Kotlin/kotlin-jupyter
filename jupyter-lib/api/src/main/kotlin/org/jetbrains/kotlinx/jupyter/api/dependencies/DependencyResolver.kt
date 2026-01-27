@@ -7,7 +7,7 @@ package org.jetbrains.kotlinx.jupyter.api.dependencies
  */
 interface DependencyResolver {
     var resolveSources: Boolean
-    var resolveMpp: Boolean
+    var forceCacheRefresh: Boolean
 
     fun addRepositories(repositories: List<RepositoryDescription>)
 

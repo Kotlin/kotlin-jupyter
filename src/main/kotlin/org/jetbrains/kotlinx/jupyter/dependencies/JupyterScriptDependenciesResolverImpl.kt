@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.RepositoryDescription
 import org.jetbrains.kotlinx.jupyter.api.dependencies.ResolutionResult
+import org.jetbrains.kotlinx.jupyter.common.kernelMavenCacheDir
 import org.jetbrains.kotlinx.jupyter.dependencies.api.ArtifactRequest
 import org.jetbrains.kotlinx.jupyter.dependencies.api.Repository
 import org.jetbrains.kotlinx.jupyter.dependencies.api.ResolvedArtifacts
@@ -31,27 +32,22 @@ open class JupyterScriptDependenciesResolverImpl(
 ) : JupyterScriptDependenciesResolver {
     private val logger = loggerFactory.getLogger(JupyterScriptDependenciesResolverImpl::class.java)
 
+    private val amperResolver =
+        AmperMavenDependenciesResolver(
+            cachePath = kernelMavenCacheDir.toPath(),
+        )
+
     private val resolver: SourceAwareDependenciesResolver =
         CompoundSourceAwareDependenciesResolver(
             LocalFileSystemSourceAwareDependenciesResolver(),
-            AmperMavenDependenciesResolver(
-                // TODO: switch to org.jetbrains.kotlix.jupyter.common.kernelMavenCacheDir
-                // once the new kernel version is embedded into all supported IDE releases.
-                // This ensures old IDEs can still work with the current kernel until the switch.
-                cachePath =
-                    File(System.getProperty("user.home"))
-                        .resolve(".jupyter_kotlin")
-                        .resolve("maven_repository")
-                        .toPath(),
-            ),
+            amperResolver,
         )
 
     private val repositories = arrayListOf<Repository>()
 
     override var resolveSources: Boolean by resolveSourcesOption
-    override var resolveMpp: Boolean
-        get() = true
-        set(_) {}
+
+    override var forceCacheRefresh: Boolean by amperResolver::forceCacheRefresh
 
     init {
         mavenRepositories.forEach { addRepository(Repository(it.coordinates)) }

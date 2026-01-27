@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.dependencies.maven.resolution
 
 import org.jetbrains.amper.dependency.resolution.AmperDependencyResolutionException
 import org.jetbrains.amper.dependency.resolution.Context
+import org.jetbrains.amper.dependency.resolution.IncrementalCacheUsage
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.ResolutionState
@@ -35,6 +36,7 @@ internal suspend fun doAmperResolve(
     currentArtifactsWithLocations: Collection<ArtifactRequest>,
     allArtifactsWithLocations: Collection<ArtifactRequest>,
     resolveSources: Boolean,
+    forceCacheRefresh: Boolean,
     dependencyCollector: MavenDependencyCollector,
 ): ResultWithDiagnostics<Unit> {
     val firstArtifactWithLocation =
@@ -50,6 +52,7 @@ internal suspend fun doAmperResolve(
                 allArtifactsWithLocations,
                 resolutionContext,
                 resolveSources,
+                forceCacheRefresh,
             )
         collectResolvedArtifacts(dependencyCollector, resolvedGraph, currentArtifactCoordinates, resolveSources)
 
@@ -76,6 +79,7 @@ private suspend fun resolveDependencies(
     allArtifactsWithLocations: Collection<ArtifactRequest>,
     resolutionContext: Context,
     resolveSources: Boolean,
+    forceCacheRefresh: Boolean,
 ): ResolvedGraph {
     val currentArtifactStrings =
         currentArtifactsWithLocations
@@ -99,9 +103,17 @@ private suspend fun resolveDependencies(
             children = childrenNodes,
         )
 
+    val incrementalCacheUsage =
+        if (forceCacheRefresh) {
+            IncrementalCacheUsage.REFRESH_AND_USE
+        } else {
+            IncrementalCacheUsage.USE
+        }
+
     return Resolver().resolveDependencies(
         root,
         downloadSources = resolveSources,
+        incrementalCacheUsage = incrementalCacheUsage,
     )
 }
 
