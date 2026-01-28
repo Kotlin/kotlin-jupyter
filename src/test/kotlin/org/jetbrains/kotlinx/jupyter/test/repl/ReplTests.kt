@@ -40,6 +40,7 @@ import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
@@ -1264,6 +1265,18 @@ class ReplTests : AbstractSingleReplTest() {
                 """
                 import kotlin.random.Random
                 Random.nextFloat()
+                """.trimIndent(),
+            )
+        res.shouldBeInstanceOf<EvalResultEx.Error>()
+    }
+
+    // Test for https://youtrack.jetbrains.com/issue/KT-76441/IllegalStateException-null-DefinitelyNotNullType-for-T-exception-while-analyzing-expression
+    @Test
+    fun testDefinitelyNotNullType() {
+        val res =
+            eval(
+                """
+                public fun <T : Comparable<T & Any>?> tempNotebook(list: List<T>): T = TODO()
                 """.trimIndent(),
             )
         res.shouldBeInstanceOf<EvalResultEx.Error>()
