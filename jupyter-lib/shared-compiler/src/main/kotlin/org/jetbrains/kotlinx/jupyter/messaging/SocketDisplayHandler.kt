@@ -41,6 +41,7 @@ class SocketDisplayHandler(
         notebook.currentCell?.addDisplay(display)
 
         val response: DisplayDataMessage = createResponse(json)
+        flushStandardStreams()
         sendMessage(MessageType.DISPLAY_DATA, response)
     }
 
@@ -81,5 +82,16 @@ class SocketDisplayHandler(
                 json["transient"],
             )
         return content
+    }
+
+    /**
+     * Flushing of the system streams will automatically
+     * send stream messages to the frontend.
+     * We need to do it before sending display messages to ensure
+     * correct messages order.
+     */
+    private fun flushStandardStreams() {
+        System.out.flush()
+        System.err.flush()
     }
 }
