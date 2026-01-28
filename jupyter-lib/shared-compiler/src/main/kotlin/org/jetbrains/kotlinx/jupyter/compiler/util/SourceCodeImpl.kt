@@ -7,5 +7,5 @@ class SourceCodeImpl(
     override val text: String,
 ) : SourceCode {
     override val name: String = "Line_$number"
-    override val locationId: String = "location_$number"
+    override val locationId: String = "location_$number.kts"
 }

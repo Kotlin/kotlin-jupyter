@@ -52,7 +52,6 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
             refineConfiguration {
                 val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
                 handlers.forEach { beforeCompiling(it.handler) }
-
                 beforeCompiling(::updateConfig)
             }
         }
@@ -87,6 +86,8 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
         callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
     ) {
         refinementCallbacks.add { context ->
+            // In K2, each snippet is sent here twice (for unknown reasons). We ignore the variant we cannot use.
+            if (context.script !is KtFileScriptSource) return@add context.compilationConfiguration.asSuccess()
             val ktFile = (context.script as KtFileScriptSource).ktFile
 
             val withImport =
