@@ -1,9 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test.protocol
 
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -16,6 +19,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
@@ -72,8 +76,6 @@ import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientSocketManager
 import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqClientSocketManager
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createRandomZmqKernelPorts
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -93,8 +95,6 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -164,19 +164,19 @@ abstract class ExecuteTests(
             }
 
             var msg = shellSocket.receiveMessage()
-            assertEquals(MessageType.EXECUTE_REPLY, msg.type)
+            msg.type shouldBe MessageType.EXECUTE_REPLY
             executeReplyChecker(msg)
 
             return withReceivingStatusMessages {
                 msg = ioPubSocket.receiveMessage()
-                assertEquals(MessageType.EXECUTE_INPUT, msg.type)
+                msg.type shouldBe MessageType.EXECUTE_INPUT
 
                 ioPubChecker(ioPubSocket)
 
                 if (hasResult) {
                     msg = ioPubSocket.receiveMessage()
                     val content = msg.content as ExecuteResult
-                    assertEquals(MessageType.EXECUTE_RESULT, msg.type)
+                    msg.type shouldBe MessageType.EXECUTE_RESULT
                     content.data
                 } else {
                     null
@@ -195,7 +195,7 @@ abstract class ExecuteTests(
             allowStdin = false,
             ioPubChecker = {
                 val msg = it.receiveMessage()
-                assertEquals(MessageType.ERROR, msg.type)
+                msg.type shouldBe MessageType.ERROR
                 assertStartsWith("Input from stdin is unsupported by the client", (msg.content as ExecuteErrorReply).value)
             },
         )
@@ -206,7 +206,7 @@ abstract class ExecuteTests(
             shellSocket.sendMessage(MessageType.IS_COMPLETE_REQUEST, content = IsCompleteRequest(code))
 
             val responseMsg = shellSocket.receiveMessage()
-            assertEquals(MessageType.IS_COMPLETE_REPLY, responseMsg.type)
+            responseMsg.type shouldBe MessageType.IS_COMPLETE_REPLY
 
             val content = responseMsg.content as IsCompleteReply
             return content.status
@@ -264,7 +264,7 @@ abstract class ExecuteTests(
 
     private inline fun <reified T : Any> JupyterReceiveSocket.receiveMessageOfType(messageType: MessageType): T {
         val msg = receiveMessage()
-        assertEquals(messageType, msg.type)
+        msg.type shouldBe messageType
         val content = msg.content
         content.shouldBeTypeOf<T>()
         return content
@@ -284,7 +284,7 @@ abstract class ExecuteTests(
     @Test
     fun testExecute() {
         val res = doExecute("2+2") as JsonObject
-        assertEquals("4", res.string(MimeTypes.PLAIN_TEXT))
+        res.string(MimeTypes.PLAIN_TEXT) shouldBe "4"
     }
 
     @Test
@@ -300,13 +300,13 @@ abstract class ExecuteTests(
         fun checker(ioPub: JupyterReceiveSocket) {
             for (i in 1..5) {
                 val msg = ioPub.receiveMessage()
-                assertEquals(MessageType.STREAM, msg.type)
-                assertEquals(i.toString(), (msg.content as StreamMessage).text)
+                msg.type shouldBe MessageType.STREAM
+                (msg.content as StreamMessage).text shouldBe i.toString()
             }
         }
 
         val res = doExecute(code, false, ::checker)
-        assertNull(res)
+        res.shouldBeNull()
     }
 
     @Test
@@ -324,12 +324,12 @@ abstract class ExecuteTests(
         fun checker(ioPub: JupyterReceiveSocket) {
             for (el in expected) {
                 val msgText = ioPub.receiveStreamResponse()
-                assertEquals(el, msgText)
+                msgText shouldBe el
             }
         }
 
         val res = doExecute(code, false, ::checker)
-        assertNull(res)
+        res.shouldBeNull()
     }
 
     @Test
@@ -351,7 +351,32 @@ abstract class ExecuteTests(
         }
 
         val res = doExecute(code, false, ::checker)
-        assertNull(res)
+        res.shouldBeNull()
+    }
+
+    @Test
+    fun testFlushStandardStreamsBeforeDisplay() {
+        val code =
+            $$"""
+            for (i in 1..3) {
+                print(i)
+                DISPLAY(HTML("<p>hello $i</p>"))
+            }
+            """.trimIndent()
+
+        fun checker(ioPub: JupyterReceiveSocket) {
+            for (i in 1..3) {
+                val streamMsg = ioPub.receiveMessageOfType<StreamMessage>(MessageType.STREAM)
+                streamMsg.text shouldBe "$i"
+
+                val displayMsg = ioPub.receiveDisplayDataResponse()
+                val data = displayMsg.data?.jsonObject.shouldNotBeNull()
+                val htmlData = data[MimeTypes.HTML]?.jsonPrimitive.shouldNotBeNull()
+                htmlData.content shouldBe "<p>hello $i</p>"
+            }
+        }
+
+        doExecute(code, false, ::checker)
     }
 
     @Test
@@ -385,13 +410,13 @@ abstract class ExecuteTests(
                 hasResult = false,
                 executeReplyChecker = { message ->
                     val metadata = message.data.metadata
-                    assertTrue(metadata is JsonObject)
+                    metadata.shouldBeTypeOf<JsonObject>()
                     val snippetMetadata =
                         MessageFormat.decodeFromJsonElement<EvaluatedSnippetMetadata?>(
                             metadata["eval_metadata"] ?: JsonNull,
                         )
                     val compiledData = snippetMetadata?.compiledData
-                    assertNotNull(compiledData)
+                    compiledData.shouldNotBeNull()
 
                     val deserializer = CompiledScriptsSerializer()
                     val dir = Files.createTempDirectory("kotlin-jupyter-exec-test")
@@ -404,7 +429,7 @@ abstract class ExecuteTests(
                     val classLoader = URLClassLoader(arrayOf(classesDir.toUri().toURL()), ClassLoader.getSystemClassLoader())
                     val loadedClass = classLoader.loadClass(kClassName).kotlin
 
-                    assertNotNull(loadedClass.memberProperties.find { it.name == "xyz" })
+                    loadedClass.memberProperties.find { it.name == "xyz" }.shouldNotBeNull()
 
                     when (replCompilerMode) {
                         K1 -> {
@@ -424,7 +449,9 @@ abstract class ExecuteTests(
                         }
                         K2 -> {
                             // `$$eval`-method does not have correct Kotlin metadata, so we fall back to pure Java reflection.
-                            assertNotNull(loadedClass.java.declaredMethods.firstOrNull { it.name == $$$"$$eval" })
+                            loadedClass.java.declaredMethods
+                                .firstOrNull { it.name == $$$"$$eval" }
+                                .shouldNotBeNull()
                         }
                     }
 
@@ -433,7 +460,7 @@ abstract class ExecuteTests(
                     sourceFile.readText().trim() shouldBe "val xyz = 42"
                 },
             )
-        assertNull(res)
+        res.shouldBeNull()
     }
 
     @Test
@@ -447,7 +474,7 @@ abstract class ExecuteTests(
             false,
             ioPubChecker = {
                 val msgText = it.receiveErrorResponse()
-                assertTrue("The problem is found in one of the loaded libraries" in msgText)
+                msgText shouldContain "The problem is found in one of the loaded libraries"
             },
         )
     }
@@ -459,7 +486,7 @@ abstract class ExecuteTests(
             expectedCounter: Int,
         ) {
             val data = message.data.content as ExecuteSuccessReply
-            assertEquals(ExecutionCount(expectedCounter), data.executionCount)
+            data.executionCount shouldBe ExecutionCount(expectedCounter)
         }
         val res1 = doExecute("41", executeReplyChecker = { checkCounter(it, 1) })
         val res2 = doExecute("42", executeReplyChecker = { checkCounter(it, 2) })
@@ -476,10 +503,10 @@ abstract class ExecuteTests(
                 executeReplyChecker = { checkCounter(it, 3) },
             )
 
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "41"), res1)
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "42"), res2)
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "41 42"), res3)
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "null"), res4)
+        res1 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "41")
+        res2 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "42")
+        res3 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "41 42")
+        res4 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "null")
     }
 
     @Test
@@ -518,11 +545,11 @@ abstract class ExecuteTests(
         val file = File.createTempFile("kotlin-jupyter-logger-appender-test", ".txt")
         doExecute("%logHandler add f1 --file ${file.absolutePath}", false)
         val result1 = doExecute("2 + 2")
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "4"), result1)
+        result1 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "4")
 
         doExecute("%logHandler remove f1", false)
         val result2 = doExecute("3 + 4")
-        assertEquals(jsonObject(MimeTypes.PLAIN_TEXT to "7"), result2)
+        result2 shouldBe jsonObject(MimeTypes.PLAIN_TEXT to "7")
 
         val logText = file.readText()
         logText.shouldContain("2 + 2")
@@ -933,7 +960,7 @@ abstract class ExecuteTests(
         val metadata = MessageFormat.decodeFromJsonElement<KernelInfoReplyMetadata>(metadataObject)
 
         with(metadata.state) {
-            assertTrue { newClasspath.any { "kotlin-jupyter-ktor-client" in it } }
+            newClasspath.any { "kotlin-jupyter-ktor-client" in it }.shouldBeTrue()
             newImports shouldContain "org.jetbrains.kotlinx.jupyter.serialization.UntypedAny"
             newImports shouldContain "java.util.concurrent.ConcurrentHashMap"
 
@@ -970,7 +997,7 @@ abstract class ExecuteTests(
 
             while (true) {
                 val msg = ioPub.receiveMessage()
-                assertEquals(MessageType.STREAM, msg.type)
+                msg.type shouldBe MessageType.STREAM
                 actualText.append((msg.content as StreamMessage).text)
                 assertStartsWith(actualText, expectedText)
                 if (actualText.contentEquals(expectedText)) break
@@ -978,7 +1005,7 @@ abstract class ExecuteTests(
         }
 
         val res = doExecute(code, false, ::checker)
-        assertNull(res)
+        res.shouldBeNull()
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-76508/K2-Repl-Annotations-on-property-accessors-are-not-resolved
@@ -994,7 +1021,7 @@ abstract class ExecuteTests(
         when (replCompilerMode) {
             K1 -> {
                 val res = doExecute(code) as JsonObject
-                assertEquals("Hello", res.string(MimeTypes.PLAIN_TEXT))
+                res.string(MimeTypes.PLAIN_TEXT) shouldBe "Hello"
             }
             K2 -> {
                 // This should be fixed by KT-76508
