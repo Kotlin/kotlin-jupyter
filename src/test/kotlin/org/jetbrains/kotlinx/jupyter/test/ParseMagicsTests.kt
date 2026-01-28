@@ -1,5 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
@@ -20,12 +25,8 @@ import org.jetbrains.kotlinx.jupyter.repl.ExecutedCodeLogging
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplOptions
 import org.jetbrains.kotlinx.jupyter.util.toSourceCodePositionWithNewAbsolute
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private typealias MagicsAndCodeIntervals = Pair<List<CodeInterval>, List<CodeInterval>>
 
@@ -37,103 +38,102 @@ class ParseArgumentsTests {
     @Test
     fun test1() {
         val (ref, args) = parseReferenceWithArgs(" lib ")
-        assertEquals("lib", ref.name)
-        assertEquals(0, args.count())
+        ref.name shouldBe "lib"
+        args.count() shouldBe 0
     }
 
     @Test
     fun test2() {
         val (ref, args) = parseReferenceWithArgs("lib(arg1)")
-        assertEquals("lib", ref.name)
-        assertEquals(1, args.count())
-        assertEquals("arg1", args[0].value)
-        assertEquals("", args[0].name)
+        ref.name shouldBe "lib"
+        args.count() shouldBe 1
+        args[0].value shouldBe "arg1"
+        args[0].name shouldBe ""
     }
 
     @Test
     fun test3() {
         val (ref, args) = parseReferenceWithArgs("lib (arg1 = 1.2, arg2 = val2)")
-        assertEquals("lib", ref.name)
-        assertEquals(2, args.count())
-        assertEquals("arg1", args[0].name)
-        assertEquals("1.2", args[0].value)
-        assertEquals("arg2", args[1].name)
-        assertEquals("val2", args[1].value)
+        ref.name shouldBe "lib"
+        args.count() shouldBe 2
+        args[0].name shouldBe "arg1"
+        args[0].value shouldBe "1.2"
+        args[1].name shouldBe "arg2"
+        args[1].value shouldBe "val2"
     }
 
     @Test
     fun test4() {
         val (ref, args) = parseReferenceWithArgs("""lets-plot(api="[1.0,)")""")
-        assertEquals("lets-plot", ref.name)
-        assertEquals(1, args.count())
-        assertEquals("api", args[0].name)
-        assertEquals("[1.0,)", args[0].value)
+        ref.name shouldBe "lets-plot"
+        args.count() shouldBe 1
+        args[0].name shouldBe "api"
+        args[0].value shouldBe "[1.0,)"
     }
 
     @Test
     fun test5() {
         val (ref, args) = parseReferenceWithArgs("""lets-plot(api = "[1.0,)"   , lib=1.5.3 )""")
-        assertEquals("lets-plot", ref.name)
-        assertEquals(2, args.count())
-        assertEquals("api", args[0].name)
-        assertEquals("[1.0,)", args[0].value)
-        assertEquals("lib", args[1].name)
-        assertEquals("1.5.3", args[1].value)
+        ref.name shouldBe "lets-plot"
+        args.count() shouldBe 2
+        args[0].name shouldBe "api"
+        args[0].value shouldBe "[1.0,)"
+        args[1].name shouldBe "lib"
+        args[1].value shouldBe "1.5.3"
     }
 
     @Test
     fun test6() {
         val (ref, args) = parseReferenceWithArgs("""spark(my.api.version = 1.0   , lib-x=foo )""")
-        assertEquals("spark", ref.name)
-        assertEquals(2, args.count())
-        assertEquals("my.api.version", args[0].name)
-        assertEquals("1.0", args[0].value)
-        assertEquals("lib-x", args[1].name)
-        assertEquals("foo", args[1].value)
+        ref.name shouldBe "spark"
+        args.count() shouldBe 2
+        args[0].name shouldBe "my.api.version"
+        args[0].value shouldBe "1.0"
+        args[1].name shouldBe "lib-x"
+        args[1].value shouldBe "foo"
     }
 
     @Test
     fun testInfo1() {
         val requestUrl = "https://raw.githubusercontent.com/Kotlin/kotlin-jupyter/master/libraries/default.json"
         val (ref, args) = parseReferenceWithArgs("lib_name@url[$requestUrl]")
-        assertEquals("lib_name", ref.name)
+        ref.name shouldBe "lib_name"
 
         val info = ref.info
-        assertTrue(info is AbstractLibraryResolutionInfo.ByURL)
-        assertEquals(requestUrl, info.url.toString())
-        assertEquals(0, args.size)
+        info.shouldBeTypeOf<AbstractLibraryResolutionInfo.ByURL>()
+        info.url.toString() shouldBe requestUrl
+        args.size shouldBe 0
     }
 
     @Test
     fun testInfo2() {
         val file = File("libraries/default.json").toString()
         val (ref, args) = parseReferenceWithArgs("@file[$file](param=val)")
-        assertEquals("", ref.name)
-
+        ref.name shouldBe ""
         val info = ref.info
-        assertTrue(info is AbstractLibraryResolutionInfo.ByFile)
-        assertEquals(file, info.file.toString())
-        assertEquals(1, args.size)
-        assertEquals("param", args[0].name)
-        assertEquals("val", args[0].value)
+        info.shouldBeTypeOf<AbstractLibraryResolutionInfo.ByFile>()
+        info.file.toString() shouldBe file
+        args.size shouldBe 1
+        args[0].name shouldBe "param"
+        args[0].value shouldBe "val"
     }
 
     @Test
     fun testInfo3() {
         val (ref, args) = parseReferenceWithArgs("krangl@ref[0.8.2.5]")
-        assertEquals("krangl", ref.name)
+        ref.name shouldBe "krangl"
 
         val info = ref.info
-        assertTrue(info is AbstractLibraryResolutionInfo.ByGitRef)
-        assertEquals(40, info.sha.length, "Expected commit SHA, but was `${info.sha}`")
-        assertEquals(0, args.size)
+        info.shouldBeTypeOf<AbstractLibraryResolutionInfo.ByGitRef>()
+        info.sha.length shouldBe 40
+        args.size shouldBe 0
     }
 
     @Test
     fun testInfo4() {
         val (ref, _) = parseReferenceWithArgs("krangl@0.8.2.5")
-        assertEquals("krangl", ref.name)
-        assertTrue(ref.info is AbstractLibraryResolutionInfo.Default)
+        ref.name shouldBe "krangl"
+        ref.info.shouldBeTypeOf<AbstractLibraryResolutionInfo.Default>()
     }
 }
 
@@ -179,7 +179,7 @@ class ParseMagicsTests {
 
         val processor = MagicsProcessor(magicsHandler)
         with(processor.processMagics(code, tryIgnoreErrors = true)) {
-            assertEquals(expectedProcessedCode, this.code)
+            this.code shouldBe expectedProcessedCode
             librariesChecker(libraries.getDefinitions(NotebookMock))
         }
     }
@@ -207,14 +207,14 @@ class ParseMagicsTests {
     @Test
     fun `single magic`() {
         test("%use dataframe", "") { libs ->
-            assertEquals(1, libs.size)
+            libs.size shouldBe 1
         }
     }
 
     @Test
     fun `trailing newlines should be left`() {
         test("\n%use dataframe\n\n", "\n\n\n") { libs ->
-            assertEquals(1, libs.size)
+            libs.size shouldBe 1
         }
     }
 
@@ -238,10 +238,10 @@ class ParseMagicsTests {
             
             """.trimIndent(),
         ) { libs ->
-            assertEquals(2, libs.size)
+            libs.size shouldBe 2
         }
 
-        assertTrue(options.trackClasspath)
+        options.trackClasspath.shouldBeTrue()
 
         test(
             """
@@ -250,7 +250,7 @@ class ParseMagicsTests {
             "",
         )
 
-        assertFalse(options.trackClasspath)
+        options.trackClasspath.shouldBeFalse()
     }
 
     @Test
@@ -273,10 +273,10 @@ class ParseMagicsTests {
             
             """.trimIndent(),
         ) { libs ->
-            assertEquals(1, libs.size)
+            libs.size shouldBe 1
         }
 
-        assertEquals(ExecutedCodeLogging.GENERATED, options.executedCodeLogging)
+        options.executedCodeLogging shouldBe ExecutedCodeLogging.GENERATED
     }
 
     @Test
@@ -298,7 +298,7 @@ class ParseMagicsTests {
             """.trimIndent()
 
         test(sourceText, resultText) { libs ->
-            assertEquals(1, libs.size)
+            libs.size shouldBe 1
         }
 
         val source = SourceCodeImpl(1, sourceText)
@@ -306,7 +306,7 @@ class ParseMagicsTests {
         val cursor = sourceText.indexOf("lets-plot")
 
         val actualPos = cursor.toSourceCodePositionWithNewAbsolute(source, result)
-        assertNull(actualPos)
+        actualPos.shouldBeNull()
     }
 
     @Test
@@ -324,8 +324,8 @@ class ParseMagicsTests {
                 true,
             )
 
-        assertEquals(3, magicsIntervals.size)
-        assertEquals(2, codeIntervals.size)
+        magicsIntervals.size shouldBe 3
+        codeIntervals.size shouldBe 2
     }
 
     @Test
@@ -343,18 +343,16 @@ class ParseMagicsTests {
 
         val (magicsIntervals, codeIntervals) = intervals(text, true)
 
-        assertEquals(3, magicsIntervals.size)
-        assertEquals(2, codeIntervals.size)
+        magicsIntervals.size shouldBe 3
+        codeIntervals.size shouldBe 2
 
         val parsedMagics = getParsedText(text, magicsIntervals)
-        assertEquals(
+        parsedMagics shouldBe
             """
             #%% some cell description
             % some magic
             %some another magic
-            """.trimIndent(),
-            parsedMagics,
-        )
+            """.trimIndent()
     }
 
     @Test
@@ -372,8 +370,8 @@ class ParseMagicsTests {
                 false,
             )
 
-        assertEquals(2, magicsIntervals.size)
-        assertEquals(2, codeIntervals.size)
+        magicsIntervals.size shouldBe 2
+        codeIntervals.size shouldBe 2
     }
 
     @Test
@@ -384,7 +382,7 @@ class ParseMagicsTests {
                 false,
             )
 
-        assertEquals(1, magicsIntervals.size)
-        assertEquals(0, codeIntervals.size)
+        magicsIntervals.size shouldBe 1
+        codeIntervals.size shouldBe 0
     }
 }

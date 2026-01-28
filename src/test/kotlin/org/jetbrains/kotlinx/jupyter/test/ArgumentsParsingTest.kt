@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldBeSameSizeAs
 import io.kotest.matchers.collections.shouldContainExactly
@@ -9,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.parseCommandLine
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParamsBuilder
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
@@ -167,7 +167,7 @@ class ArgumentsParsingTest {
     @Test
     fun `should throw exception for missing config file`() {
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw when config file is missing") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine("-debugPort=5005")
             }
         exception.message shouldBe "config file is not provided"
@@ -177,7 +177,7 @@ class ArgumentsParsingTest {
     fun `should throw exception for non-existent config file`() {
         val nonExistentFile = "/non/existent/file.json"
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw for non-existent config file") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine(nonExistentFile)
             }
         exception.message shouldBe "invalid config file $nonExistentFile"
@@ -189,7 +189,7 @@ class ArgumentsParsingTest {
     ) {
         val configFile = createConfigFile(tempDir)
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw for unrecognized argument") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine("-unknownArg=value", configFile.absolutePath)
             }
         exception.message shouldBe "Unrecognized argument: -unknownArg=value"
@@ -201,7 +201,7 @@ class ArgumentsParsingTest {
     ) {
         val configFile = createConfigFile(tempDir)
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw for invalid debug port") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine("-debugPort=not-a-number", configFile.absolutePath)
             }
         exception.message shouldBe "Argument should be integer: not-a-number"
@@ -213,7 +213,7 @@ class ArgumentsParsingTest {
     ) {
         val configFile = createConfigFile(tempDir)
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw for invalid REPL compiler mode") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine("-replCompilerMode=INVALID_MODE", configFile.absolutePath)
             }
         exception.message shouldBe "Invalid replCompilerMode: INVALID_MODE"
@@ -286,7 +286,7 @@ class ArgumentsParsingTest {
         val configFile = createConfigFile(tempDir)
 
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw when setting extra compiler args twice") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine(
                     "-extraCompilerArgs=arg1,arg2",
                     "-extraCompilerArgs=arg3,arg4",
@@ -305,7 +305,7 @@ class ArgumentsParsingTest {
         val configFile2 = createConfigFile(tempDir, "config2.json")
 
         val exception =
-            assertThrows<IllegalArgumentException>("Should throw when setting config file twice") {
+            shouldThrow<IllegalArgumentException> {
                 parseCommandLine(configFile1.absolutePath, configFile2.absolutePath)
             }
 

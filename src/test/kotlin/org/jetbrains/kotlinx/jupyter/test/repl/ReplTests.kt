@@ -38,9 +38,9 @@ import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.repl.ListErrorsResult
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
-import org.jetbrains.kotlinx.jupyter.test.assertSuccess
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
+import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
 import org.jetbrains.kotlinx.jupyter.withPath
@@ -381,7 +381,7 @@ class ReplTests : AbstractSingleReplTest() {
             }
             K2 -> {
                 // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
-                assert(result.errors.toList().isEmpty())
+                result.errors.toList().shouldBeEmpty()
             }
         }
     }
@@ -436,7 +436,7 @@ class ReplTests : AbstractSingleReplTest() {
             }
             K2 -> {
                 // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
-                assert(result.errors.toList().isEmpty())
+                result.errors.toList().shouldBeEmpty()
             }
         }
     }
@@ -1197,7 +1197,7 @@ class ReplTests : AbstractSingleReplTest() {
                 val y get() = action(this@t)
             }
             """.trimIndent(),
-        ).assertSuccess()
+        ).shouldBeSuccess()
         val res =
             eval(
                 """
@@ -1257,8 +1257,8 @@ class ReplTests : AbstractSingleReplTest() {
     // Test for https://youtrack.jetbrains.com/issue/KT-77476/Types-from-previous-snippets-take-precedence-over-imports
     @Test
     fun testResolvingImports() {
-        eval("import kotlin.random.Random").assertSuccess()
-        eval("data class Random(val name: String)").assertSuccess()
+        eval("import kotlin.random.Random").shouldBeSuccess()
+        eval("data class Random(val name: String)").shouldBeSuccess()
         val res =
             eval(
                 """

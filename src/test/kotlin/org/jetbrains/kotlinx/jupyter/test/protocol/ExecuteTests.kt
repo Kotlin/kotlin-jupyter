@@ -70,7 +70,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
-import org.jetbrains.kotlinx.jupyter.test.assertStartsWith
+import org.jetbrains.kotlinx.jupyter.test.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
 import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientSocketManager
@@ -210,7 +210,7 @@ abstract class ExecuteTests(
             ioPubChecker = {
                 val msg = it.receiveMessage()
                 msg.type shouldBe MessageType.ERROR
-                assertStartsWith("Input from stdin is unsupported by the client", (msg.content as ExecuteErrorReply).value)
+                shouldStartWith("Input from stdin is unsupported by the client", (msg.content as ExecuteErrorReply).value)
             },
         )
     }
@@ -1009,7 +1009,7 @@ abstract class ExecuteTests(
                 val msg = ioPub.receiveMessage()
                 msg.type shouldBe MessageType.STREAM
                 actualText.append((msg.content as StreamMessage).text)
-                assertStartsWith(actualText, expectedText)
+                shouldStartWith(actualText, expectedText)
                 if (actualText.contentEquals(expectedText)) break
             }
         }

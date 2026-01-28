@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeBlank
@@ -22,7 +23,6 @@ import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -31,8 +31,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode
 import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithStandardResolverTests : AbstractSingleReplTest() {
@@ -78,7 +76,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
                 """.trimIndent(),
             )
-        assertEquals("John Smith", res.renderedValue)
+        res.renderedValue shouldBe "John Smith"
         urlClassLoadersCount() shouldBe 2
 
         eval("val x = 2 + 2")
@@ -90,13 +88,13 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val infoProvider = repl.resolutionInfoProvider
 
         val initialDefaultResolutionInfo = infoProvider.fallback
-        Assertions.assertTrue(initialDefaultResolutionInfo is AbstractLibraryResolutionInfo.ByClasspath)
+        initialDefaultResolutionInfo.shouldBeInstanceOf<AbstractLibraryResolutionInfo.ByClasspath>()
 
         eval("%useLatestDescriptors")
-        Assertions.assertTrue(infoProvider.fallback is AbstractLibraryResolutionInfo.ByGitRef)
+        infoProvider.fallback.shouldBeInstanceOf<AbstractLibraryResolutionInfo.ByGitRef>()
 
         eval("%useLatestDescriptors off")
-        Assertions.assertTrue(infoProvider.fallback === initialDefaultResolutionInfo)
+        infoProvider.fallback shouldBe initialDefaultResolutionInfo
     }
 
     @Test
@@ -112,7 +110,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 x
                 """.trimIndent(),
             )
-        assertEquals(42, res1.renderedValue)
+        res1.renderedValue shouldBe 42
 
         val res2 =
             eval(
@@ -121,10 +119,10 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 y
                 """.trimIndent(),
             )
-        assertEquals(43, res2.renderedValue)
+        res2.renderedValue shouldBe 43
 
         val res3 = eval("%use lets-plot@$libsCommit")
-        assertEquals(1, displays.count())
+        displays.count() shouldBe 1
         res3.renderedValue.shouldBeUnit()
         displays.clear()
 
@@ -135,7 +133,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 z
                 """.trimIndent(),
             )
-        assertEquals(44, res4.renderedValue)
+        res4.renderedValue shouldBe 44
     }
 
     @Test
@@ -147,7 +145,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 1
                 """.trimIndent(),
             ).renderedValue
-        assertEquals(1, res)
+        res shouldBe 1
     }
 
     @Test
@@ -192,7 +190,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 """.trimIndent(),
             )
 
-        assertEquals(25, result.renderedValue)
+        result.renderedValue shouldBe 25
         file.delete()
     }
 
@@ -362,14 +360,14 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     fun testTwoLibrariesInUse() {
         val code = "%use lets-plot, krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b"
         eval(code)
-        assertEquals(2, displays.count())
+        displays.count() shouldBe 2
     }
 
     @Test
     fun testKranglImportInfixFun() {
         eval("""%use krangl@2fcf74dfbbe382f1803d1ab9e4739439e1f5671b, lets-plot""")
         val res = eval(""" "a" to {it["a"]} """)
-        assertNotNull(res.renderedValue)
+        res.renderedValue.shouldNotBeNull()
     }
 
     @Test
@@ -382,7 +380,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 df.head().rows.first().let { it["name"].toString() + " " + it["surname"].toString() }
                 """.trimIndent(),
             )
-        assertEquals("John Smith", res.renderedValue)
+        res.renderedValue shouldBe "John Smith"
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-76009/K2-Repl-Kotlin-specific-imports-does-not-work-if-dependency-is-added-to-the-classpath-after-1st-snippet

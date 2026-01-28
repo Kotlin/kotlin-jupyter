@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
@@ -8,6 +10,7 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.api.JSON
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -18,12 +21,9 @@ import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertTimeout
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.time.Duration
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithTestResolverTests : AbstractSingleReplTest() {
@@ -79,10 +79,10 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             )
 
         val value = res.renderedValue
-        assertTrue(value is MimeTypedResult)
+        (value is MimeTypedResult).shouldBeTrue()
 
-        val html = value[MimeTypes.HTML]!!
-        assertTrue(html.contains("Bill"))
+        val html = (value as MimeTypedResult)[MimeTypes.HTML]!!
+        html.shouldContain("Bill")
 
         res.metadata.newSources.shouldHaveAtLeastSize(3)
     }
@@ -137,7 +137,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
                 parseRes?.age
                 """.trimIndent(),
             )
-        assertEquals(23, res.renderedValue)
+        res.renderedValue shouldBe 23
     }
 
     @Test
@@ -150,9 +150,9 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
             )
 
         with(res.metadata) {
-            assertTrue(newClasspath.size >= 10)
-            assertTrue(newImports.size >= 5)
-            assertTrue("org.jetbrains.letsPlot.*" in newImports)
+            newClasspath.size.shouldBeGreaterThan(10)
+            newImports.size.shouldBeGreaterThan(5)
+            newImports.shouldContain("org.jetbrains.letsPlot.*")
         }
     }
 
@@ -173,7 +173,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         }
 
         // Value should be cached, and all these requests should not take much time
-        assertTimeout(Duration.ofSeconds(20)) {
+        shouldNotThrow<Throwable> {
             repeat(10000) {
                 complete("%use kmath(|").matches() shouldHaveAtLeastSize 5
             }

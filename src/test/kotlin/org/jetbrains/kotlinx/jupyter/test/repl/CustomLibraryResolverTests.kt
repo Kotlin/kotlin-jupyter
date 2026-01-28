@@ -1,7 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.receivers.TempAnnotation
@@ -28,15 +32,9 @@ import org.jetbrains.kotlinx.jupyter.test.evalRendered
 import org.jetbrains.kotlinx.jupyter.test.evalRenderedError
 import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.reflect.typeOf
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNull
 
 class CustomLibraryResolverTests : AbstractReplTest() {
     @Test
@@ -162,11 +160,11 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         replWithResolver.evalRaw("%use mylib, mylib2")
         val results = replWithResolver.evalOnShutdown()
 
-        assertEquals(4, results.size)
-        assertEquals(42, results[0].resultValue)
-        assertNull(results[1].resultValue)
-        assertEquals(43, results[2].resultValue)
-        assertEquals(100, results[3].resultValue)
+        results.size shouldBe 4
+        results[0].resultValue shouldBe 42
+        results[1].resultValue.shouldBeNull()
+        results[2].resultValue shouldBe 43
+        results[3].resultValue shouldBe 100
     }
 
     @Test
@@ -217,8 +215,8 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val exception = replWithResolver.evalError<ReplPreprocessingException>("%use mylib")
 
         val message = exception.message!!
-        Assertions.assertTrue(message.contains(minRequiredVersion))
-        Assertions.assertTrue(message.contains(kernelVersion))
+        message shouldContain minRequiredVersion
+        message shouldContain kernelVersion
     }
 
     annotation class TestAnnotation
@@ -291,11 +289,11 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 "5",
             )
 
-        assertEquals(expectedCodes, repl.executedCodes)
+        repl.executedCodes shouldBe expectedCodes
 
         val expectedResults = (1..5).toList()
         val actualResults = repl.results.filter { it != null && it != Unit }.map { it as Int }
-        assertEquals(expectedResults, actualResults)
+        actualResults shouldBe expectedResults
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KT-82503/K2-Repl-Nested-class-annotations-are-not-available-in-the-next-snippet
@@ -337,8 +335,8 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         val res = replWithTracker.execute("annotatedClasses")
 
         when (repl.compilerMode) {
-            ReplCompilerMode.K1 -> assertEquals(listOf("A", "B", "C", "E"), res.result.value)
-            ReplCompilerMode.K2 -> assertEquals(listOf("A", "B"), res.result.value)
+            ReplCompilerMode.K1 -> res.result.value shouldBe listOf("A", "B", "C", "E")
+            ReplCompilerMode.K2 -> res.result.value shouldBe listOf("A", "B")
         }
     }
 
@@ -374,7 +372,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 """.trimIndent(),
             )
 
-        assertEquals(1, res.result.value)
+        res.result.value shouldBe 1
 
         val expected =
             listOf(
@@ -384,13 +382,13 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 "val b = a",
                 "b",
             )
-        assertEquals(expected, repl.executedCodes)
+        repl.executedCodes shouldBe expected
     }
 
     @Test
     fun testIncorrectDescriptors() {
         val ex1 =
-            assertThrows<ReplException> {
+            shouldThrow<ReplException> {
                 parseLibraryDescriptor(
                     """
                     {
@@ -400,7 +398,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             }
         ex1.cause.shouldBeInstanceOf<SerializationException>()
 
-        assertDoesNotThrow {
+        shouldNotThrow<Throwable> {
             parseLibraryDescriptor("{}")
         }
     }
@@ -409,46 +407,46 @@ class CustomLibraryResolverTests : AbstractReplTest() {
     fun testLibraryWithResourcesDescriptorParsing() {
         val descriptor = parseLibraryDescriptor(File("src/test/testData/lib-with-resources.json").readText())
         val resources = descriptor.resources
-        assertEquals(1, resources.size)
+        resources.size shouldBe 1
 
         val jsResource = resources.single()
-        assertEquals(ResourceType.JS, jsResource.type)
+        jsResource.type shouldBe ResourceType.JS
         val bundles = jsResource.bundles
-        assertEquals(2, bundles.size)
-        assertEquals(1, bundles[0].locations.size)
-        assertEquals(1, bundles[1].locations.size)
+        bundles.size shouldBe 2
+        bundles[0].locations.size shouldBe 1
+        bundles[1].locations.size shouldBe 1
     }
 
     @Test
     fun testLibraryWithIncorrectImport() {
         val e =
-            assertThrows<ReplLibraryException> {
+            shouldThrow<ReplLibraryException> {
                 makeReplEnablingSingleLibrary(
                     library {
                         import("ru.incorrect")
                     },
                 )
             }
-        assertEquals(LibraryProblemPart.PREBUILT, e.part)
+        e.part shouldBe LibraryProblemPart.PREBUILT
     }
 
     @Test
     fun testLibraryWithIncorrectDependency() {
         val e =
-            assertThrows<ReplLibraryException> {
+            shouldThrow<ReplLibraryException> {
                 makeReplEnablingSingleLibrary(
                     library {
                         dependencies("org.foo:bar:42")
                     },
                 )
             }
-        assertEquals(LibraryProblemPart.PREBUILT, e.part)
+        e.part shouldBe LibraryProblemPart.PREBUILT
     }
 
     @Test
     fun testLibraryWithIncorrectInitCode() {
         val e =
-            assertThrows<ReplLibraryException> {
+            shouldThrow<ReplLibraryException> {
                 makeReplEnablingSingleLibrary(
                     library {
                         onLoaded {
@@ -457,7 +455,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                     },
                 )
             }
-        assertEquals(LibraryProblemPart.INIT, e.part)
+        e.part shouldBe LibraryProblemPart.INIT
     }
 
     @Test
@@ -472,10 +470,10 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             )
 
         val e =
-            assertThrows<ReplLibraryException> {
+            shouldThrow<ReplLibraryException> {
                 repl.evalRaw("7")
             }
-        assertEquals(LibraryProblemPart.BEFORE_CELL_CALLBACKS, e.part)
+        e.part shouldBe LibraryProblemPart.BEFORE_CELL_CALLBACKS
     }
 
     @Test
@@ -546,8 +544,8 @@ class CustomLibraryResolverTests : AbstractReplTest() {
                 """.trimIndent(),
             )
 
-        assertEquals(42, result)
-        assertEquals(listOf(1, 2), mutProp)
+        result shouldBe 42
+        mutProp shouldBe listOf(1, 2)
     }
 
     @Test
@@ -575,14 +573,12 @@ class CustomLibraryResolverTests : AbstractReplTest() {
             """.trimIndent(),
         )
 
-        assertEquals(
+        repl.notebook.variablesReport shouldBe
             """
             Visible vars: 
             ${'\t'}x1 : 22
             ${'\t'}a : 42
             
-            """.trimIndent(),
-            repl.notebook.variablesReport,
-        )
+            """.trimIndent()
     }
 }

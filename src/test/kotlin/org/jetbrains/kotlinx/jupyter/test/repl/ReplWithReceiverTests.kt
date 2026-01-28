@@ -1,12 +1,12 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.matchers.shouldBe
 import jupyter.kotlin.receivers.ConstReceiver
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.evalRaw
 import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.test.assertEquals
 
 class ReplWithReceiverTests : AbstractReplTest() {
     @Test
@@ -27,6 +27,6 @@ class ReplWithReceiverTests : AbstractReplTest() {
                 scriptReceivers = listOf(ConstReceiver(value)),
             )
         val res = repl.evalRaw("value")
-        assertEquals(value, res)
+        res shouldBe value
     }
 }

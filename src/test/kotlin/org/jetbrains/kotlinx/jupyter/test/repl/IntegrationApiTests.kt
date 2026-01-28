@@ -36,12 +36,9 @@ import org.jetbrains.kotlinx.jupyter.test.library
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.jetbrains.kotlinx.jupyter.test.testRepositories
 import org.jetbrains.kotlinx.jupyter.test.toLibraries
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.test.assertNull
 
 class IntegrationApiTests {
     private val httpUtil = createLibraryHttpUtil(testLoggerFactory)
@@ -97,26 +94,23 @@ class IntegrationApiTests {
             val l = listOf(1,2,3)
             """.trimIndent()
         repl.evalRaw(code1)
-        assertEquals(3, repl.evalRaw("l.value2"))
+        repl.evalRaw("l.value2") shouldBe 3
 
         // create list 'q' of the same size 3
         repl.evalRaw("val q = l.asReversed()")
-        assertEquals(1, repl.evalRaw("q.value2"))
+        repl.evalRaw("q.value2") shouldBe 1
 
         // check that 'l' and 'q' have the same types
-        assertEquals(
-            3,
-            repl.evalRaw(
-                """var a = l
+        repl.evalRaw(
+            """var a = l
                 a = q
                 a.value0
-                """.trimMargin(),
-            ),
-        )
+            """.trimMargin(),
+        ) shouldBe 3
 
         // create a list of size 6
         repl.evalRaw("val w = l + a")
-        assertEquals(3, repl.evalRendered("w.value3"))
+        repl.evalRendered("w.value3") shouldBe 3
 
         // check that 'value3' is not available for list 'l'
         repl.evalError<ReplCompilerException>("l.value3")
@@ -124,7 +118,7 @@ class IntegrationApiTests {
         repl.evalRaw("val e: List<Int>? = w.take(5)")
         val res = repl.evalRendered("e")
 
-        assertEquals("TypedIntList5", res!!.javaClass.simpleName)
+        res!!.javaClass.simpleName shouldBe "TypedIntList5"
     }
 
     @Test
@@ -140,9 +134,9 @@ class IntegrationApiTests {
 
         repl.execute("%use mylib\n1")
 
-        assertEquals(2, repl.executedCodes.size)
-        assertEquals(1, repl.results[0])
-        assertEquals(2, repl.results[1])
+        repl.executedCodes.size shouldBe 2
+        repl.results[0] shouldBe 1
+        repl.results[1] shouldBe 2
     }
 
     @Test
@@ -252,7 +246,7 @@ class IntegrationApiTests {
         val json = result.render(repl.notebook).toJson(Json.EMPTY, null)
         val jsonData = json["data"] as JsonObject
         val htmlString = jsonData[MimeTypes.HTML] as JsonPrimitive
-        kotlin.test.assertEquals("""<span style="color:red">red</span>""", htmlString.content)
+        htmlString.content shouldBe """<span style="color:red">red</span>"""
     }
 
     @Test
@@ -289,8 +283,8 @@ class IntegrationApiTests {
             """.trimIndent(),
         )
 
-        assertEquals("1. 420", repl.evalRendered("42.1"))
-        assertEquals("2. 150", repl.evalRendered("15"))
+        repl.evalRendered("42.1") shouldBe "1. 420"
+        repl.evalRendered("15") shouldBe "2. 150"
     }
 
     @Test
@@ -309,7 +303,7 @@ class IntegrationApiTests {
         )
 
         val result = repl.evalRendered("B(A())")
-        assertEquals("iB: iA", result)
+        result shouldBe "iB: iA"
     }
 
     @Test
@@ -324,7 +318,7 @@ class IntegrationApiTests {
         )
 
         val result = repl.evalRaw("\"abab\"")
-        assertEquals("axax", result)
+        result shouldBe "axax"
     }
 
     @Test
@@ -408,14 +402,12 @@ class IntegrationApiTests {
 
         repl.evalRaw("42")
         val res =
-            assertDoesNotThrow {
-                repl.evalRendered(
-                    """
-                    "42"
-                    """.trimIndent(),
-                )
-            }
-        assertNull(res)
+            repl.evalRendered(
+                """
+                "42"
+                """.trimIndent(),
+            )
+        res.shouldBeNull()
     }
 
     @Test

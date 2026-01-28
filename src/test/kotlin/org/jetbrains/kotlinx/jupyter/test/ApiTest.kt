@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.test
 
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeOneOf
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -15,10 +16,6 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ApiTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
@@ -39,20 +36,22 @@ class ApiTest : AbstractSingleReplTest() {
             """.trimIndent(),
         )
         val res1 = jEval(4, "notebook.getCell(2)?.result")
-        assertEquals(6, res1.rawValue)
+        res1.rawValue shouldBe 6
         val res2 = jEval(5, "notebook.getResult(2)")
-        assertEquals(6, res2.rawValue)
+        res2.rawValue shouldBe 6
     }
 
     @Test
     fun compilerVersion() {
         val jCompiler =
             getSimpleCompiler(
-                ScriptCompilationConfiguration(),
-                ScriptEvaluationConfiguration(),
+                kotlin.script.experimental.api
+                    .ScriptCompilationConfiguration(),
+                kotlin.script.experimental.api
+                    .ScriptEvaluationConfiguration(),
             )
         val version = jCompiler.version
-        assertTrue(version.major >= 0)
+        version.major.shouldBeGreaterThanOrEqual(0)
     }
 
     @Test
@@ -83,7 +82,7 @@ class ApiTest : AbstractSingleReplTest() {
             )
         val htmlText = eval("notebook.variablesReportAsHTML").renderedValue
         htmlText.shouldBeTypeOf<MimeTypedResult>()
-        assertEquals(
+        htmlText.values.first() shouldBe
             """
             <style>
             table.$VARIABLES_TABLE_STYLE_CLASS, .$VARIABLES_TABLE_STYLE_CLASS th, .$VARIABLES_TABLE_STYLE_CLASS td {
@@ -113,10 +112,8 @@ class ApiTest : AbstractSingleReplTest() {
             </tr>
             </table>
             
-            """.trimIndent(),
-            htmlText.values.first(),
-        )
-        assertEquals(varsUpdate, repl.notebook.variablesState.mapToStringValues())
+            """.trimIndent()
+        repl.notebook.variablesState.mapToStringValues() shouldBe varsUpdate
     }
 
     @Test

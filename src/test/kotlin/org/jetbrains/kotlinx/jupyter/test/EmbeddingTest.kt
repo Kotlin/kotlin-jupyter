@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.api.ExactRendererTypeHandler
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
@@ -16,8 +18,6 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SomeSingleton {
     companion object {
@@ -116,12 +116,12 @@ class EmbedReplTest : AbstractSingleReplTest() {
     @Test
     fun testSharedStaticVariables() {
         var res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
-        assertEquals(false, res.renderedValue)
+        res.renderedValue shouldBe false
 
         SomeSingleton.initialized = true
 
         res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
-        assertEquals(true, res.renderedValue)
+        res.renderedValue shouldBe true
     }
 
     // Test for https://youtrack.jetbrains.com/issue/KTNB-978/K2-Repl-Some-custom-class-names-crash-the-compiler
@@ -130,7 +130,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
         eval("class Point(val x: Int, val y: Int)")
         eval("val p = Point(1,1)")
         val res = eval("p.x")
-        assertEquals(1, res.renderedValue)
+        res.renderedValue shouldBe 1
     }
 
     @Test
@@ -202,11 +202,11 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
             eval(
                 "USE(org.jetbrains.kotlinx.jupyter.test.testLibraryDefinition2)",
             )
-        assertTrue(res.renderedValue is Unit)
-        assertEquals(1, displayHandler.list.size)
+        (res.renderedValue is Unit).shouldBeTrue()
+        displayHandler.list.size shouldBe 1
         val typedResult = displayHandler.list[0] as MimeTypedResult
         val content = typedResult[MimeTypes.HTML]!!
-        assertTrue(content.contains("""id="kotlin_out_0""""))
-        assertTrue(content.contains("""function test_fun(x)"""))
+        content shouldContain """id="kotlin_out_0""""
+        content shouldContain """function test_fun(x)"""
     }
 }

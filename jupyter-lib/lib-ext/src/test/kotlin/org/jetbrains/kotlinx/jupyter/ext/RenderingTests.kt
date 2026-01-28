@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.ext
 
 import io.kotest.matchers.collections.shouldBeSameSizeAs
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.graphs.GraphNode
 import org.jetbrains.kotlinx.jupyter.ext.graph.structure.Graph
@@ -14,8 +15,6 @@ import java.io.FileOutputStream
 import java.io.StringWriter
 import java.io.Writer
 import javax.imageio.ImageIO
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class RenderingTests {
     @Test
@@ -32,7 +31,7 @@ class RenderingTests {
         val svgFile = objectsDir.resolve("svg_ex.svg")
         val svg1 = Image(svgFile, true)
 
-        assertHtmlEquals(
+        shouldHaveHtmlEquals(
             "test1.html",
             asserter = AlmostEqualsMultilineComparator(1)::compare,
         ) {
@@ -67,12 +66,12 @@ class RenderingTests {
     @Disabled
     fun testGraphVisualization() {
         val html1 = Graph.of(GraphNode.fromClass<StringWriter>()).toHTML()
-        assertTrue(html1.length > 1000)
+        html1.length.shouldBeGreaterThan(1000)
         val html2 = Graph.of(GraphNode.fromClassLoader<RenderingTests>()).toHTML()
-        assertTrue(html2.length > 1000)
+        html2.length.shouldBeGreaterThan(1000)
     }
 
-    private fun assertHtmlEquals(
+    private fun shouldHaveHtmlEquals(
         @Suppress("SameParameterValue") fileName: String,
         asserter: (String, String) -> Unit = { expected, actual -> actual shouldBe expected },
         contentWriteAction: Writer.() -> Unit,
@@ -106,7 +105,7 @@ class RenderingTests {
 
             val diverged = expectedLines.zip(actualLines).count { it.first != it.second }
             if (diverged > mayDiverge) {
-                assertEquals(expected, actual, "Texts diverge more than in $mayDiverge lines (in $diverged, actually)")
+                actual shouldBe expected
             }
         }
     }

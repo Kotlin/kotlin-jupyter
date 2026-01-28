@@ -1,9 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.streams.CapturingOutputStream
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.OutputStream
@@ -41,7 +40,7 @@ class CapturingStreamTests {
     fun testMaxOutputSizeError() {
         val s = getStream(maxOutputSize = 3)
         s.write("java".toByteArray())
-        assertArrayEquals("jav".toByteArray(), s.contents)
+        s.contents shouldBe "jav".toByteArray()
     }
 
     @Test
@@ -50,11 +49,11 @@ class CapturingStreamTests {
 
         val s1 = getStream(captureOutput = false)
         s1.write(contents)
-        assertEquals(0, s1.contents.size)
+        s1.contents.size shouldBe 0
 
         val s2 = getStream(captureOutput = true)
         s2.write(contents)
-        assertArrayEquals(contents, s2.contents)
+        s2.contents shouldBe contents
     }
 
     @Test
@@ -65,13 +64,13 @@ class CapturingStreamTests {
         val i = AtomicInteger()
         val s =
             getStream(maxBufferSize = 3) {
-                assertEquals(expected[i.getAndIncrement()], it)
+                it shouldBe expected[i.getAndIncrement()]
             }
 
         s.write(contents)
         s.flush()
 
-        assertEquals(expected.size, i.get())
+        i.get() shouldBe expected.size
     }
 
     @Test
@@ -82,13 +81,13 @@ class CapturingStreamTests {
         val i = AtomicInteger()
         val s =
             getStream(maxBufferSize = 9, maxBufferNewlineSize = 6) {
-                assertEquals(expected[i.getAndIncrement()], it)
+                it shouldBe expected[i.getAndIncrement()]
             }
 
         s.write(contents)
         s.flush()
 
-        assertEquals(expected.size, i.get())
+        i.get() shouldBe expected.size
     }
 
     @Test
@@ -102,7 +101,7 @@ class CapturingStreamTests {
         val s =
             getStream(maxBufferLifeTimeMs = 2 * timeDelta) {
                 synchronized(this) {
-                    assertEquals(expected[i++], it)
+                    it shouldBe expected[i++]
                 }
             }
 
@@ -115,6 +114,6 @@ class CapturingStreamTests {
         s.flush()
         s.close()
 
-        assertEquals(expected.size, i)
+        i shouldBe expected.size
     }
 }

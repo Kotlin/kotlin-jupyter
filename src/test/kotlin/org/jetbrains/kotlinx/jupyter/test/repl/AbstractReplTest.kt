@@ -20,10 +20,10 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
 import org.jetbrains.kotlinx.jupyter.repl.embedded.DefaultInMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.test.assertSuccess
 import org.jetbrains.kotlinx.jupyter.test.classPathEntry
 import org.jetbrains.kotlinx.jupyter.test.classpath
 import org.jetbrains.kotlinx.jupyter.test.evalEx
+import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.jetbrains.kotlinx.jupyter.test.standardResolverRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.test.testLibraryResolver
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
@@ -161,7 +161,7 @@ abstract class AbstractReplTest {
                 args.joinToString(", ", "(", ")") { "${it.name}=${it.value}" }
             }
         val result = repl.evalEx("%use mylib$paramList")
-        result.assertSuccess()
+        result.shouldBeSuccess()
         return repl
     }
 

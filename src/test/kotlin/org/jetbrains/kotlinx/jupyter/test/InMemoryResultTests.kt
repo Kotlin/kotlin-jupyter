@@ -1,7 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.test
 
+import io.kotest.assertions.fail
 import io.kotest.matchers.maps.shouldContainKey
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.json.Json
@@ -12,8 +15,6 @@ import org.jetbrains.kotlinx.jupyter.api.InMemoryMimeTypes
 import org.jetbrains.kotlinx.jupyter.api.takeScreenshot
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.ResourceLock
@@ -25,7 +26,6 @@ import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JPanel
 import kotlin.reflect.KClass
-import kotlin.test.DefaultAsserter.fail
 
 /**
  * Class responsible for testing how in-memory results are handled by the embedded kernel.
@@ -97,7 +97,7 @@ class InMemoryResultTests : AbstractSingleReplTest() {
     @ResourceLock(SCREEN_LOCK)
     fun testScreenshotWithNoSize() {
         val panel = JPanel()
-        assertNull(panel.takeScreenshot())
+        panel.takeScreenshot().shouldBeNull()
     }
 
     @Test
@@ -110,7 +110,7 @@ class InMemoryResultTests : AbstractSingleReplTest() {
         frame.contentPane.add(button)
         frame.isVisible = true
         val screenshot = frame.takeScreenshot()
-        assertNotEmptyImage(screenshot)
+        shouldNotBeEmpty(screenshot)
     }
 
     @Test
@@ -123,7 +123,7 @@ class InMemoryResultTests : AbstractSingleReplTest() {
         dialog.contentPane.add(button)
         dialog.isVisible = true
         val screenshot = dialog.takeScreenshot()
-        assertNotEmptyImage(screenshot)
+        shouldNotBeEmpty(screenshot)
     }
 
     @Test
@@ -135,7 +135,7 @@ class InMemoryResultTests : AbstractSingleReplTest() {
         button.size = Dimension(100, 50)
         panel.add(button)
         val screenshot = panel.takeScreenshot()
-        assertNotEmptyImage(screenshot)
+        shouldNotBeEmpty(screenshot)
     }
 
     private fun doInMemoryTest(
@@ -160,12 +160,12 @@ class InMemoryResultTests : AbstractSingleReplTest() {
     // Check if a screenshot actually contains anything useful.
     // We assume "useful" means an image with width/length > 0 and doesn't only consist of
     // one color.
-    private fun assertNotEmptyImage(image: BufferedImage?) {
+    private fun shouldNotBeEmpty(image: BufferedImage?) {
         if (image == null) {
             fail("`null` image was returned")
         }
-        assertNotEquals(0, image.width)
-        assertNotEquals(0, image.height)
+        image.width shouldNotBe 0
+        image.height shouldNotBe 0
         val topLeftColor = image.getRGB(0, 0)
         for (x in 0 until image.width) {
             for (y in 0 until image.height) {

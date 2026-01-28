@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.ints.shouldBeInRange
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -57,9 +59,9 @@ class ConfigTest {
         val maxExpectedVersion = 21
 
         (JavaRuntime.javaVersion.versionInteger >= minExpectedVersion).shouldBeTrue()
-        JavaRuntime.assertVersion { it >= minExpectedVersion }
-        JavaRuntime.assertVersionAtLeast(minExpectedVersion)
-        JavaRuntime.assertVersionInRange(minExpectedVersion, maxExpectedVersion)
+        JavaRuntime.javaVersion.versionInteger.shouldBeGreaterThanOrEqual(minExpectedVersion)
+        JavaRuntime.javaVersion.versionInteger.shouldBeGreaterThanOrEqual(minExpectedVersion)
+        JavaRuntime.javaVersion.versionInteger.shouldBeInRange(minExpectedVersion..maxExpectedVersion)
     }
 
     @Test

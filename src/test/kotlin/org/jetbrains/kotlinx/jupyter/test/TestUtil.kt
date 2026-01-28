@@ -139,7 +139,7 @@ val KERNEL_LIBRARIES =
 
 fun Any?.shouldBeUnit() = this shouldBe Unit
 
-fun assertStartsWith(
+fun shouldStartWith(
     expectedPrefix: CharSequence,
     actual: String,
 ) {
@@ -447,7 +447,7 @@ val EvalResultEx.displayValue get(): Any? {
     return this.displayValue
 }
 
-fun EvalResultEx.assertSuccess() {
+fun EvalResultEx.shouldBeSuccess() {
     when (this) {
         is EvalResultEx.AbstractError -> throw error
         is EvalResultEx.Interrupted -> throw InterruptedException()

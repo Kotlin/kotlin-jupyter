@@ -74,7 +74,7 @@ class ResourcesTaskTests {
             .build()
     }
 
-    private fun assertLibrariesJsonContents(
+    private fun shouldHaveLibrariesJsonContents(
         expected: LibrariesScanResult,
         type: String = "",
     ) {
@@ -100,7 +100,7 @@ class ResourcesTaskTests {
         )
         runResourcesTask()
 
-        assertLibrariesJsonContents(
+        shouldHaveLibrariesJsonContents(
             LibrariesScanResult(
                 producers = listOf("test.Producer1", "test.Producer2").map(::LibrariesProducerDeclaration),
                 definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration),
@@ -117,7 +117,7 @@ class ResourcesTaskTests {
         )
         runResourcesTask()
 
-        assertLibrariesJsonContents(
+        shouldHaveLibrariesJsonContents(
             LibrariesScanResult(
                 definitions = listOf("test.Definition1").map(::LibrariesDefinitionDeclaration),
             ),
@@ -135,7 +135,7 @@ class ResourcesTaskTests {
             """.trimIndent(),
         )
         runResourcesTask()
-        assertLibrariesJsonContents(
+        shouldHaveLibrariesJsonContents(
             LibrariesScanResult(
                 definitions = listOf("test.Definition3").map(::LibrariesDefinitionDeclaration),
                 producers = listOf("test.Producer3").map(::LibrariesProducerDeclaration),
@@ -162,7 +162,7 @@ class ResourcesTaskTests {
             """.trimIndent(),
         )
         runResourcesTask()
-        assertLibrariesJsonContents(
+        shouldHaveLibrariesJsonContents(
             LibrariesScanResult(
                 descriptors =
                     listOf(descriptorText).map { jsonText ->
