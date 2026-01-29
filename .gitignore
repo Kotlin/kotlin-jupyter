@@ -1,5 +1,6 @@
 # IDEA folder except one project dictionary
 /.idea/*
+!/.idea/misc.xml
 !/.idea/dictionaries
 /.idea/dictionaries/*
 !/.idea/dictionaries/ProjectDictionary.xml
