@@ -296,7 +296,7 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         actualResults shouldBe expectedResults
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-82503/K2-Repl-Nested-class-annotations-are-not-available-in-the-next-snippet
+    // Test for KT-82503
     @Test
     fun testClassAnnotations() {
         val lib =

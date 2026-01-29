@@ -383,7 +383,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "John Smith"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-76009/K2-Repl-Kotlin-specific-imports-does-not-work-if-dependency-is-added-to-the-classpath-after-1st-snippet
+    // Test for KT-76009
     @Test
     fun testKotlinImportsAfterFirstSnippet() {
         evalSuccess("1")

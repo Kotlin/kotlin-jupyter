@@ -68,15 +68,15 @@ val testLibraryDefinition1 =
             listOf(
                 SubtypeRendererTypeHandler(
                     TestSum::class,
-                    ResultHandlerCodeExecution("\$it.a + \$it.b"),
+                    ResultHandlerCodeExecution($$"$it.a + $it.b"),
                 ),
                 ExactRendererTypeHandler(
                     TestFunList::class.qualifiedName!!,
-                    ResultHandlerCodeExecution("\$it.render()"),
+                    ResultHandlerCodeExecution($$"$it.render()"),
                 ),
                 ExactRendererTypeHandler(
                     TestQuad::class.qualifiedName!!,
-                    ResultHandlerCodeExecution("\$it.c * `\$it`.c"),
+                    ResultHandlerCodeExecution($$"$it.c * `$it`.c"),
                 ),
             )
     }
@@ -124,7 +124,7 @@ class EmbedReplTest : AbstractSingleReplTest() {
         res.renderedValue shouldBe true
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KTNB-978/K2-Repl-Some-custom-class-names-crash-the-compiler
+    // Test for KTNB-978
     @Test
     fun testCustomClasses() {
         eval("class Point(val x: Int, val y: Int)")

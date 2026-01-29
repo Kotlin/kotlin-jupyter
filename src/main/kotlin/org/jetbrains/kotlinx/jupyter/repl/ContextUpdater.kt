@@ -77,7 +77,7 @@ class ContextUpdater(
         for (line in lines) {
             // `.kotlinProperty doesn't work correctly due to the metadata in snippets
             // not working correctly in K2.
-            // See https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
+            // See KT-75580
             // So we attempt to find both of them at this point.
             val kotlinProperties = line::class.declaredMemberProperties.toList()
             val javaFields = line.javaClass.declaredFields

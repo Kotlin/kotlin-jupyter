@@ -34,7 +34,7 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs.addAll(listOf(
             "-opt-in=kotlin.RequiresOptIn",
             // Fix for https://jakewharton.com/kotlins-jdk-release-compatibility-flag/
-            // See https://youtrack.jetbrains.com/issue/KT-49746/Support-Xjdk-release-in-gradle-toolchain#focus=Comments-27-9473530.0-0
+            // See KT-49746
             "-Xjdk-release=$myJvmTarget",
         ))
         jvmTarget.set(JvmTarget.fromTarget(myJvmTarget))

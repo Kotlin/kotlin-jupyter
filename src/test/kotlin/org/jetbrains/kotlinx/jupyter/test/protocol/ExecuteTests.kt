@@ -834,7 +834,7 @@ abstract class ExecuteTests(
     // - If no visible user code can be found, only the request count is displayed but no line number.
     @Test
     fun testExceptionInGeneratedCodeShouldNotReferenceLine() {
-        // Waiting for https://youtrack.jetbrains.com/issue/KT-75580/K2-Repl-Cannot-access-snippet-properties-using-Kotlin-reflection
+        // Waiting for KT-75580
         val code =
             """
             %use ktor-client
@@ -1018,7 +1018,7 @@ abstract class ExecuteTests(
         res.shouldBeNull()
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-76508/K2-Repl-Annotations-on-property-accessors-are-not-resolved
+    // Test for KT-76508
     @Test
     fun testPropertyAnnotations() {
         val code =

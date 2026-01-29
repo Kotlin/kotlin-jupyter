@@ -40,7 +40,6 @@ import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
-import org.jetbrains.kotlinx.jupyter.test.shouldBeInstanceOf
 import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.jetbrains.kotlinx.jupyter.test.withTempDirectories
 import org.jetbrains.kotlinx.jupyter.util.MultiDelegatingClassLoader
@@ -69,7 +68,7 @@ class ReplTests : AbstractSingleReplTest() {
     fun testPropertiesGeneration() {
         // Note, this test should actually fail with ReplEvalRuntimeException, but 'cause of eval/compile
         // histories are out of sync, it fails with another exception. This test shows the wrong behavior and
-        // should be fixed after fixing https://youtrack.jetbrains.com/issue/KT-36397
+        // should be fixed after fixing KT-36397
 
         // In fact, this shouldn't compile, but because of bug in compiler it fails in runtime
         evalError<ReplCompilerException>(
@@ -163,7 +162,7 @@ class ReplTests : AbstractSingleReplTest() {
                 res.renderedValue shouldBe 1
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 errorsRes.errors.toList().shouldBeEmpty()
             }
         }
@@ -252,7 +251,7 @@ class ReplTests : AbstractSingleReplTest() {
                 result.getOrFail().sortedMatches() shouldBe arrayListOf("foobar", "foobaz")
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.getOrFail().sortedMatches().shouldBeEmpty()
             }
         }
@@ -288,7 +287,7 @@ class ReplTests : AbstractSingleReplTest() {
                 result.getOrFail().sortedMatches() shouldBe arrayListOf("c_meth_z(", "c_prop_x", "c_prop_y", "c_zzz")
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.getOrFail().sortedMatches().shouldBeEmpty()
             }
         }
@@ -304,7 +303,7 @@ class ReplTests : AbstractSingleReplTest() {
                 result.getOrFail().sortedMatches() shouldBe arrayListOf("xyz = ")
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.getOrFail().sortedMatches() shouldBe arrayListOf()
             }
         }
@@ -331,7 +330,7 @@ class ReplTests : AbstractSingleReplTest() {
                         }.shouldBeTrue()
                 }
                 K2 -> {
-                    // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                    // Wait for KTNB-916
                     result.getOrFail().sortedMatches() shouldBe arrayListOf()
                 }
             }
@@ -381,7 +380,7 @@ class ReplTests : AbstractSingleReplTest() {
                     )
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.errors.toList().shouldBeEmpty()
             }
         }
@@ -436,7 +435,7 @@ class ReplTests : AbstractSingleReplTest() {
                     )
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.errors.toList().shouldBeEmpty()
             }
         }
@@ -460,7 +459,7 @@ class ReplTests : AbstractSingleReplTest() {
                 result.sortedMatches() shouldBe arrayListOf("foobar")
             }
             K2 -> {
-                // Wait for https://youtrack.jetbrains.com/issue/KTNB-916/K2-Repl-Add-support-for-Completion-and-Analysis
+                // Wait for KTNB-916
                 result.sortedMatches().shouldBeEmpty()
             }
         }
@@ -892,7 +891,7 @@ class ReplTests : AbstractSingleReplTest() {
         )
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-75946/K2-Repl-Using-a-type-alias-as-property-type-crashes-the-compiler
+    // Test for KT-75946
     @Test
     fun testTypeAlias() {
         eval("typealias MyStr = String")
@@ -930,7 +929,7 @@ class ReplTests : AbstractSingleReplTest() {
         res2.renderedValue shouldBe "Hello"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-75947/K2-Repl-Destructing-crashes-the-compiler
+    // Test for KT-75947
     @Test
     fun testDestructuring() {
         val res =
@@ -943,7 +942,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "John42"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KTNB-965
+    // Test for KTNB-965
     @Test
     fun testSmartCastKT965() {
         val result =
@@ -971,7 +970,7 @@ class ReplTests : AbstractSingleReplTest() {
         }
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KTNB-967
+    // Test for KTNB-967
     @Test
     fun testGenericIntersectionInType() {
         val result =
@@ -987,7 +986,7 @@ class ReplTests : AbstractSingleReplTest() {
         }
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77202/K2-Repl-Local-Extension-Properties-are-not-supported
+    // Test for KT-77202
     @Test
     fun testExtensionProperties() {
         val res =
@@ -1002,7 +1001,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "Hello"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77470/K2-Repl-Lazy-Properties-crash-code-generation
+    // Test for KT-77470
     @Test
     fun testLazyProperties() {
         val res =
@@ -1029,7 +1028,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("counter").renderedValue shouldBe 1
     }
 
-    // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work
+    // Test for KT-78755
     @Test
     fun `properties redeclaration should work`() {
         eval("val a = 1")
@@ -1038,7 +1037,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("a").renderedValue shouldBe 2
     }
 
-    // Test for https://youtrack.jetbrains.com/projects/KT/issues/KT-78755/K2-Repl-Redeclaring-variables-does-not-work
+    // Test for KT-78755
     @Test
     fun `functions redeclaration should work`() {
         eval("fun f() = 1")
@@ -1056,7 +1055,7 @@ class ReplTests : AbstractSingleReplTest() {
             """.trimIndent(),
         )
 
-        // Doesn't work in K2, see https://youtrack.jetbrains.com/projects/KT/issues/KT-80019/K2-REPL-Specifying-a-package-directive-leads-to-a-compiler-exception
+        // Doesn't work in K2, see KT-80019
         val res =
             eval(
                 """
@@ -1101,7 +1100,7 @@ class ReplTests : AbstractSingleReplTest() {
         }
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77754/K2-Repl-Custom-getter-on-read-only-property-returns-default-value
+    // Test for KT-77754
     @Test
     fun customGetterReturnCorrectValue() {
         val res =
@@ -1115,7 +1114,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe 42
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77757/K2-Repl-get-setJvmName-annotation-does-not-work-on-properties
+    // Test for KT-77757
     @Test
     fun jvmOverrideOnGettersAndSetters() {
         val res =
@@ -1141,7 +1140,7 @@ class ReplTests : AbstractSingleReplTest() {
         res1.renderedValue shouldBe 142
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77764/K2-Repl-Calling-a-function-that-references-a-function-below-it-fails-to-compile
+    // Test for KT-77764
     @Test
     fun callFunctionDeclaredLater() {
         val res =
@@ -1159,7 +1158,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "BOOM"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77761/K2-Repl-Inline-functions-are-not-supported
+    // Test for KT-77761
     @Test
     fun inlineFunction() {
         val res =
@@ -1186,7 +1185,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     // Test for https://github.com/Kotlin/kotlin-jupyter/issues/368
-    // Also reported here: https://youtrack.jetbrains.com/issue/KT-81423/K2-Repl-Return-value-not-working-when-combined-with-crossinline-anonymous-lambda
+    // Also reported here: KT-81423
     @Test
     fun crossinlineAnonymousLambda() {
         eval(
@@ -1212,7 +1211,7 @@ class ReplTests : AbstractSingleReplTest() {
     }
 
     // In K2, the result field is accessible for later snippets.
-    // See also https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+    // See also KT-76172
     @Test
     fun accessResultClassOutput() {
         eval("42").renderedValue shouldBe 42
@@ -1222,7 +1221,7 @@ class ReplTests : AbstractSingleReplTest() {
         }
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77752/K2-Repl-Property-visibility-modifiers-does-not-work
+    // Test for KT-77752
     @Test
     fun explicitPropertyVisibilityModifiers() {
         val res0 =
@@ -1237,7 +1236,7 @@ class ReplTests : AbstractSingleReplTest() {
         eval("y").shouldBeInstanceOf<EvalResultEx.Error>()
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77764/K2-Repl-Calling-a-function-that-references-a-function-below-it-fails-to-compile
+    // Test for KT-77764
     @Test
     fun callForwardDeclaredFunction() {
         val res =
@@ -1255,7 +1254,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.renderedValue shouldBe "BOOM"
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-77476/Types-from-previous-snippets-take-precedence-over-imports
+    // Test for KT-77476
     @Test
     fun testResolvingImports() {
         eval("import kotlin.random.Random").shouldBeSuccess()
@@ -1270,7 +1269,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.shouldBeInstanceOf<EvalResultEx.Error>()
     }
 
-    // Test for https://youtrack.jetbrains.com/issue/KT-76441/IllegalStateException-null-DefinitelyNotNullType-for-T-exception-while-analyzing-expression
+    // Test for KT-76441
     @Test
     fun testDefinitelyNotNullType() {
         val res =

@@ -189,7 +189,7 @@ internal class InternalEvaluatorImpl(
                             compilingOptions.cellId.toExecutionCount(),
                             code.lines().size,
                         )
-                    // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                    // Work-around for KT-74685
                     val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
                     throw ReplCompilerException(code, updatedDiagnostics, metadata = metadata)
                 }

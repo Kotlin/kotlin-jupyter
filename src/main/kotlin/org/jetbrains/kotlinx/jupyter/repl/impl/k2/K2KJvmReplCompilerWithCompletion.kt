@@ -42,7 +42,7 @@ import kotlin.script.experimental.util.LinkedSnippet
  */
 class K2KJvmReplCompilerWithCompletion(
     private val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
-    private val compilerConfiguration: ScriptCompilationConfiguration = ScriptCompilationConfiguration(),
+    compilerConfiguration: ScriptCompilationConfiguration = ScriptCompilationConfiguration(),
 ) : ReplCompiler<KJvmCompiledScript>,
     ScriptCompiler,
     ReplCompleter,
@@ -89,7 +89,7 @@ class K2KJvmReplCompilerWithCompletion(
         cursor: SourceCode.Position,
         configuration: ScriptCompilationConfiguration,
     ): ResultWithDiagnostics<ReplCompletionResult> {
-        // TODO https://youtrack.jetbrains.com/issue/KTNB-916
+        // TODO KTNB-916
         //  Until KTNB-916 is implemented, we just return empty completion results here.
         return ResultWithDiagnostics.Success(emptySequence(), emptyList())
     }
@@ -99,7 +99,7 @@ class K2KJvmReplCompilerWithCompletion(
         cursor: SourceCode.Position,
         configuration: ScriptCompilationConfiguration,
     ): ResultWithDiagnostics<ReplAnalyzerResult> {
-        // TODO https://youtrack.jetbrains.com/issue/KTNB-916
+        // TODO KTNB-916
         //  Until KTNB-916 is implemented, we just return empty analysis results here.
         return ReplAnalyzerResult {}.asSuccess()
     }

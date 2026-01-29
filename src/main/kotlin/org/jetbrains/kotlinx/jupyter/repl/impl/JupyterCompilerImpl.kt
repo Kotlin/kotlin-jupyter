@@ -129,7 +129,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                     // It might be required for the new result value handling,
                     // if so, we need to track an always incrementing number
                     // on our end, which will be quite annoying.
-                    // See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+                    // See KT-76172
                     // currentLineId(LineId(options.cellId.value, 0, 0))
                 }
             }
@@ -147,7 +147,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                         options.cellId.toExecutionCount(),
                         snippet.text.lines().size,
                     )
-                // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                // Work-around for KT-74685
                 val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
                 throw ReplCompilerException(snippet.text, updatedDiagnostics, metadata = metadata)
             }
@@ -155,7 +155,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                 // TODO "resultField" is null because in K2 the return value is no longer stored
                 //  in a variable. This is breaking FieldHandler integration. We need to find a way
                 //  to reference previous cells outputs using code so we cal do something like `val x = notebook.outputs
-                //  See https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+                //  See KT-76172
                 val result = resultWithDiagnostics.value
                 val compiledScript = result.get()
 
@@ -176,7 +176,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
 
                 when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
                     is ResultWithDiagnostics.Failure -> {
-                        // Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+                        // Work-around for KT-74685
                         val updatedDiagnostics = kClassWithDiagnostics.removeDuplicates()
                         throw ReplCompilerException(snippet.text, updatedDiagnostics)
                     }

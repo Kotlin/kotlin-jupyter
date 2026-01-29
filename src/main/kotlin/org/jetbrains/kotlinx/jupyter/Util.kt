@@ -1,7 +1,5 @@
 package org.jetbrains.kotlinx.jupyter
 
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.api.arrayRenderer
 import org.jetbrains.kotlinx.jupyter.api.bufferedImageRenderer
 import org.jetbrains.kotlinx.jupyter.api.swingJComponentInMemoryRenderer
@@ -206,20 +204,6 @@ class LibraryDescriptorsByResolutionProvider(
     }
 }
 
-fun JsonElement.resolvePath(path: List<String>): JsonElement? {
-    var cur: JsonElement? = this
-    for (fragment in path) {
-        val sub = cur
-        if (sub is JsonObject) {
-            cur = sub[fragment]
-        } else {
-            return null
-        }
-    }
-
-    return cur
-}
-
 data class MutablePair<T1, T2>(
     var first: T1,
     var second: T2,
@@ -229,7 +213,7 @@ fun Any.closeIfPossible() {
     if (this is Closeable) close()
 }
 
-// Work-around for https://youtrack.jetbrains.com/issue/KT-74685/K2-Repl-Diagnostics-being-reported-twice
+// Work-around for KT-74685
 // We go through all reports and combine reports with the same text and location
 fun ResultWithDiagnostics.Failure.removeDuplicates(): ResultWithDiagnostics.Failure {
     val noDuplicateList = LinkedHashSet<ScriptDiagnostic>(reports)

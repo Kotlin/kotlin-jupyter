@@ -94,7 +94,7 @@ fun getCompilationConfiguration(
             // in the compiler is not propagating correct to FirExtension
             // Without it, we cannot read return values correctly which makes TypeConverts fails.
             // In K1 it overrides, the $resX value which fails a lot of tests
-            // Hopefully this will be fixed by https://youtrack.jetbrains.com/issue/KT-76172/K2-Repl-Snippet-classes-do-not-store-result-values
+            // Hopefully this will be fixed by KT-76172
             // currentLineId(LineId(0, 0, 0))
         }
         fileExtension.put("jupyter.kts")
