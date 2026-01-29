@@ -51,6 +51,7 @@ projectStructure {
         project("test-kit-test")
         project("ws-server")
         project("zmq-protocol")
+        project("zmq-server")
     }
 }
 
