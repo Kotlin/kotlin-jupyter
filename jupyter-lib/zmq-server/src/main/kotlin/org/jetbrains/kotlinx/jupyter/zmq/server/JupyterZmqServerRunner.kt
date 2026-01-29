@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.messaging
+package org.jetbrains.kotlinx.jupyter.zmq.server
 
 import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterServerImplSockets

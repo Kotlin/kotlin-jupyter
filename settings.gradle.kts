@@ -39,6 +39,7 @@ libSubproject("test-kit")
 libSubproject("test-kit-test")
 libSubproject("ws-server")
 libSubproject("zmq-protocol")
+libSubproject("zmq-server")
 exampleSubproject("getting-started")
 
 fun libSubproject(name: String) = subproject(name, "jupyter-lib/")
