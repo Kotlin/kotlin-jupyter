@@ -10,10 +10,12 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.paths.shouldBeAFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeTypeOf
 import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.UserHandlesProvider
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -24,6 +26,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
 import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.api.SessionOptions
+import org.jetbrains.kotlinx.jupyter.api.libraries.Comm
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.logging.LogbackLoggingManager
@@ -47,6 +50,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoReplyMetadata
 import org.jetbrains.kotlinx.jupyter.messaging.KernelInfoRequest
 import org.jetbrains.kotlinx.jupyter.messaging.KernelStatus
 import org.jetbrains.kotlinx.jupyter.messaging.Message
+import org.jetbrains.kotlinx.jupyter.messaging.MessageHeader
 import org.jetbrains.kotlinx.jupyter.messaging.MessageStatus
 import org.jetbrains.kotlinx.jupyter.messaging.MessageType
 import org.jetbrains.kotlinx.jupyter.messaging.OpenDebugPortReply
@@ -59,6 +63,7 @@ import org.jetbrains.kotlinx.jupyter.protocol.JupyterReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendReceiveSocket
 import org.jetbrains.kotlinx.jupyter.protocol.JupyterSendSocket
 import org.jetbrains.kotlinx.jupyter.protocol.MessageFormat
+import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.protocol.comms.CommManagerImpl
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.messaging.JupyterClientSocketManager
@@ -145,18 +150,19 @@ abstract class ExecuteTests(
         code: String,
         hasResult: Boolean = true,
         ioPubChecker: (JupyterReceiveSocket) -> Unit = {},
-        executeRequestSent: () -> Unit = {},
+        executeRequestSent: (Message) -> Unit = {},
         executeReplyChecker: (Message) -> Unit = {},
         inputs: List<String> = emptyList(),
         allowStdin: Boolean = true,
         storeHistory: Boolean = true,
     ): Any? {
         try {
-            sockets.shell.sendMessage(
-                MessageType.EXECUTE_REQUEST,
-                content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory),
-            )
-            executeRequestSent()
+            val executeRequest =
+                sockets.shell.sendMessage(
+                    MessageType.EXECUTE_REQUEST,
+                    content = ExecuteRequest(code, allowStdin = allowStdin, storeHistory = storeHistory),
+                )
+            executeRequestSent(executeRequest)
             inputs.forEach {
                 val request = stdinSocket.receiveMessage()
                 request.content.shouldBeTypeOf<InputRequest>()
@@ -561,7 +567,7 @@ abstract class ExecuteTests(
     @Test
     fun testComms() {
         val targetName = "my_comm"
-        val commManager =
+        val clientCommManager =
             CommManagerImpl(
                 ClientCommCommunicationFacility(shellSocket),
             )
@@ -593,9 +599,59 @@ abstract class ExecuteTests(
                 }
             }
             """.trimIndent()
-        doExecute(registerCode, false)
 
-        val clientComm = commManager.openComm(targetName)
+        // First, we register the target on the client side
+        var clientReceivedComm: Comm? = null
+        var clientReceivedData: JsonObject? = null
+        clientCommManager.registerCommTarget(targetName) { comm, data, _, _ ->
+            clientReceivedComm = comm
+            clientReceivedData = data
+        }
+
+        // We also register the same target on the server side
+        doExecute(registerCode, hasResult = false)
+
+        val openCommCode =
+            """
+            notebook.commManager.openComm("$targetName")
+            """.trimIndent()
+
+        var executeRequestHeader: MessageHeader? = null
+
+        // We now open comm on the server side. Frontend should handle this request
+        val openedServerComm =
+            doExecute(
+                openCommCode,
+                hasResult = true,
+                ioPubChecker = { ioPub ->
+                    val msg = ioPub.receiveMessage()
+                    val c = msg.content.shouldBeTypeOf<CommOpenMessage>()
+                    c.targetName shouldBe targetName
+
+                    // It's important that parent header is set correctly for the comm open message
+                    msg.data.parentHeader shouldBe executeRequestHeader
+
+                    // Dispatch COMM_OPEN to the client comm manager so its callback is invoked
+                    clientCommManager.processCommOpen(
+                        c.commId,
+                        c.targetName,
+                        c.data,
+                        msg.data.metadata,
+                        msg.buffers,
+                    )
+                },
+                executeRequestSent = {
+                    executeRequestHeader = it.data.header
+                },
+            )
+
+        val openedServerCommJson = openedServerComm.shouldBeTypeOf<JsonObject>()
+        openedServerCommJson[MimeTypes.PLAIN_TEXT]!!.jsonPrimitive.content.shouldNotBeBlank()
+        clientReceivedComm.shouldNotBeNull().target shouldBe targetName
+        clientReceivedData shouldBe Json.EMPTY
+
+        // Now we open comm on the client side. Server handles it.
+        val clientComm = clientCommManager.openComm(targetName)
         val commId = clientComm.id
         ioPubSocket.receiveMessage().apply {
             val c = content.shouldBeTypeOf<CommMsgMessage>()
@@ -609,6 +665,7 @@ abstract class ExecuteTests(
                 byteArrayOf(42, 43),
             )
 
+        // Finally, we check that sever-side callbacks for comm messages work
         clientComm.send(
             buildJsonObject { put("x", JsonPrimitive("4321")) },
             metadata = null,
