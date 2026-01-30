@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ResourcePathType
 import org.jetbrains.kotlinx.jupyter.api.libraries.ResourceType
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
 

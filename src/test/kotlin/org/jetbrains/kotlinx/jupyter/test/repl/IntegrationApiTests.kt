@@ -25,8 +25,8 @@ import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
 import org.jetbrains.kotlinx.jupyter.protocol.api.EMPTY
 import org.jetbrains.kotlinx.jupyter.repl.ReplForJupyter
 import org.jetbrains.kotlinx.jupyter.repl.creating.createRepl
-import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.classpath
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.evalError
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.evalInterrupted

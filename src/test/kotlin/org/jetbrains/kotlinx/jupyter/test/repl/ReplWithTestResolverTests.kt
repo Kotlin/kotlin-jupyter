@@ -15,7 +15,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.api.JSON
 import org.jetbrains.kotlinx.jupyter.api.MimeTypedResult
 import org.jetbrains.kotlinx.jupyter.api.MimeTypes
-import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandler
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.displayValue
 import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
@@ -23,7 +23,6 @@ import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
-import java.time.Duration
 
 @Execution(ExecutionMode.SAME_THREAD)
 class ReplWithTestResolverTests : AbstractSingleReplTest() {

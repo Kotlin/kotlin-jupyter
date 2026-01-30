@@ -4,7 +4,8 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.DisplayResult
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
+import org.jetbrains.kotlinx.jupyter.test.display.AbstractTestDisplayHandler
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.shouldBeText
 import org.junit.jupiter.api.Test
 
@@ -17,7 +18,7 @@ class AnimateTests : AbstractSingleReplTest() {
     private val myHandler =
         CompositeDisplayHandler().apply {
             addHandler(
-                object : DisplayHandler {
+                object : AbstractTestDisplayHandler() {
                     override fun handleDisplay(
                         value: Any,
                         host: ExecutionHost,
@@ -107,29 +108,13 @@ class AnimateTests : AbstractSingleReplTest() {
 
     private class UpdateAsserter(
         val asserter: (value: Any, id: String?) -> Unit,
-    ) : DisplayHandlerBase() {
+    ) : AbstractTestDisplayHandler() {
         override fun handleUpdate(
             value: Any,
             host: ExecutionHost,
             id: String?,
         ) {
             asserter(value, id)
-        }
-    }
-
-    private open class DisplayHandlerBase : DisplayHandler {
-        override fun handleDisplay(
-            value: Any,
-            host: ExecutionHost,
-            id: String?,
-        ) {
-        }
-
-        override fun handleUpdate(
-            value: Any,
-            host: ExecutionHost,
-            id: String?,
-        ) {
         }
     }
 

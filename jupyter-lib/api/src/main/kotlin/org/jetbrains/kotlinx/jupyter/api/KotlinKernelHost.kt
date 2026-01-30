@@ -28,6 +28,11 @@ interface KotlinKernelHost : ExecutionHost {
 
     /**
      * Renders the given [value] using the current execution host
+     *
+     * @param value The value to be rendered.
+     * @return A [DisplayResult] representing the rendered output,
+     * or `null` if rendering is not supported or if [value] is [Unit].
+     * Note: if the [value] is null, the method may still return a non-null [DisplayResult].
      */
     fun render(value: Any?): DisplayResult?
 

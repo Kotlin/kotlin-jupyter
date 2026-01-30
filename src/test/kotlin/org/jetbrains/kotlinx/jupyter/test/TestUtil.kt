@@ -38,15 +38,12 @@ import org.jetbrains.kotlinx.jupyter.api.dependencies.DependencyManager
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorScheme
 import org.jetbrains.kotlinx.jupyter.api.libraries.ColorSchemeChangedCallback
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
-import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryReference
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryResolutionRequest
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
-import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
-import org.jetbrains.kotlinx.jupyter.api.withIdIfNotNull
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
@@ -71,9 +68,8 @@ import org.jetbrains.kotlinx.jupyter.repl.creating.ReplComponentsProviderBase
 import org.jetbrains.kotlinx.jupyter.repl.notebook.DisplayResultWrapper
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableCodeCell
 import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableDisplayResultWithCell
-import org.jetbrains.kotlinx.jupyter.repl.notebook.MutableNotebook
-import org.jetbrains.kotlinx.jupyter.repl.renderValue
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.util.asCommonFactory
 import java.io.File
 import java.nio.file.Path
@@ -223,57 +219,6 @@ class InMemoryLibraryResolver(
         definition: LibraryDefinition,
     ) {
         definitionsCache[reference] = definition
-    }
-}
-
-open class TestDisplayHandler(
-    val list: MutableList<Any> = mutableListOf(),
-) : DisplayHandler {
-    override fun handleDisplay(
-        value: Any,
-        host: ExecutionHost,
-        id: String?,
-    ) {
-        list.add(value)
-    }
-
-    override fun handleUpdate(
-        value: Any,
-        host: ExecutionHost,
-        id: String?,
-    ) {
-        TODO("Not yet implemented")
-    }
-}
-
-open class TestDisplayHandlerWithRendering(
-    private val notebook: MutableNotebook,
-) : DisplayHandler {
-    override fun render(
-        value: Any?,
-        host: ExecutionHost,
-    ) = renderValue(notebook, host, value)
-
-    override fun handleDisplay(
-        value: Any,
-        host: ExecutionHost,
-        id: String?,
-    ) {
-        val display = render(value, host)?.withIdIfNotNull(id) ?: return
-        notebook.currentCell?.addDisplay(display)
-    }
-
-    override fun handleUpdate(
-        value: Any,
-        host: ExecutionHost,
-        id: String?,
-    ) {
-        val display = render(value, host) ?: return
-        val container = notebook.displays
-        container.update(id, display)
-        container.getById(id).distinctBy { it.cell.id }.forEach {
-            it.cell.displays.update(id, display)
-        }
     }
 }
 
