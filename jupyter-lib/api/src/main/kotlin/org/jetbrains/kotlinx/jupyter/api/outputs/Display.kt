@@ -47,5 +47,5 @@ fun Notebook.updateDisplay(
  * Useful for creating simple animations with minimal flickering.
  */
 fun Notebook.clearOutput(wait: Boolean = false) {
-    executionHost!!.clearOutput(wait)
+    executionHost!!.clearOutput(wait = wait)
 }
