@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.createRenderer
 import org.jetbrains.kotlinx.jupyter.api.libraries.createLibrary
-import org.jetbrains.kotlinx.jupyter.test.TestDisplayHandlerWithRendering
+import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandlerWithRendering
 import org.jetbrains.kotlinx.jupyter.test.evalEx
 import org.jetbrains.kotlinx.jupyter.test.rawValue
 import org.jetbrains.kotlinx.jupyter.test.renderedValue

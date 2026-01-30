@@ -8,12 +8,18 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
  */
 interface DisplayHandler {
     /**
-     * Renders the [value] using the given [host]
+     * Renders the [value] using the given [host].
+     *
+     * @param value The value to be rendered.
+     * @param host The execution host
+     * @return A [DisplayResult] representing the rendered output,
+     * or `null` if rendering is not supported or if [value] is [Unit].
+     * Note: if the [value] is null, the method may still return a non-null [DisplayResult].
      */
     fun render(
         value: Any?,
         host: ExecutionHost,
-    ): DisplayResult? = null
+    ): DisplayResult?
 
     /**
      * Handles the display of a value
@@ -40,6 +46,5 @@ interface DisplayHandler {
      * If true, it clears the existing output immediately before the new output is displayed.
      * Useful for creating simple animations with minimal flickering.
      */
-    fun handleClearOutput(wait: Boolean) {
-    }
+    fun handleClearOutput(wait: Boolean)
 }
