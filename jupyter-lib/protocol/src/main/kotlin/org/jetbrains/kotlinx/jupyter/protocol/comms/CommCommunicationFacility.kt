@@ -5,6 +5,13 @@ import kotlinx.serialization.json.JsonObject
 import org.jetbrains.kotlinx.jupyter.protocol.api.RawMessage
 
 interface CommCommunicationFacility {
+    /**
+     * If the cell is currently executing, contains the message that triggered the execution
+     * (generally, of type `execute_request`).
+     * Otherwise, `null`.
+     *
+     * Might be useful for i.e., output widget implementation
+     */
     val contextMessage: RawMessage?
 
     fun sendCommOpen(
