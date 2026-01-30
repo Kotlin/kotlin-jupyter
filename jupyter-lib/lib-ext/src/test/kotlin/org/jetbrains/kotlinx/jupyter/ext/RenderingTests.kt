@@ -45,25 +45,6 @@ class RenderingTests {
     }
 
     @Test
-    fun testLatex() {
-        val latex =
-            """
-            \[
-             \lim_{x\to 0}{\frac{e^x-1}{2x}}
-             \overset{\left[\frac{0}{0}\right]}{\underset{\mathrm{H}}{=}}
-             \lim_{x\to 0}{\frac{e^x}{2}}={\frac{1}{2}}
-            \]
-            """.trimIndent()
-
-        LATEX(latex)
-
-        // Rendered image is platform-dependent, skip this assertion
-        // assertHtmlEquals("test2.html") {
-        //     appendLine(img.toHTML())
-        // }
-    }
-
-    @Test
     @Disabled
     fun testGraphVisualization() {
         val html1 = Graph.of(GraphNode.fromClass<StringWriter>()).toHTML()

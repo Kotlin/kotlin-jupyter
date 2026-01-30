@@ -18,11 +18,6 @@ dependencies {
         excludeKotlinDependencies("stdlib-jdk8")
     }
 
-    implementation(libs.ext.jlatex)
-    implementation(libs.ext.xmlgraphics.fop)
-    implementation(libs.ext.xmlgraphics.batikCodec)
-    implementation(libs.ext.xmlgraphics.commons)
-
     implementation(libs.ext.graphviz)
 }
 

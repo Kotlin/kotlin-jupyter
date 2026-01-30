@@ -382,6 +382,9 @@ fun JSON(
     expanded: Boolean = true,
 ) = JSON(Json.parseToJsonElement(jsonText), isolated, expanded)
 
+@Suppress("FunctionName")
+fun LATEX(latex: String): MimeTypedResult = MIME(MimeTypes.LATEX to latex)
+
 fun mimeResult(vararg mimeToData: Pair<String, String>): MimeTypedResult = MimeTypedResult(mapOf(*mimeToData))
 
 fun textResult(text: String): MimeTypedResult = mimeResult(MimeTypes.PLAIN_TEXT to text)
@@ -513,6 +516,7 @@ object MimeTypes {
     const val HTML = "text/html"
     const val PLAIN_TEXT = "text/plain"
     const val MARKDOWN = "text/markdown"
+    const val LATEX = "text/latex"
     const val JSON = "application/json"
 
     const val PNG = "image/png"
