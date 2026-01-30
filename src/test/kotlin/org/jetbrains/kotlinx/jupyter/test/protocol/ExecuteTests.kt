@@ -792,7 +792,7 @@ abstract class ExecuteTests(
     fun testClearOutput() {
         doExecute(
             """
-            notebook.clearOutput(true)
+            notebook.clearOutput(wait = true)
             """.trimIndent(),
             hasResult = false,
             ioPubChecker = { iopubSocket ->
