@@ -37,7 +37,6 @@ zeromq = "0.6.0"
 gson = "2.13.1"
 javaWebSocket = "1.6.0"
 
-jlatexmath = "1.0.7"
 xmlgraphicsFop = "2.11"
 xmlgraphicsBatikCodec = "1.19"
 xmlgraphicsCommons = "2.11"
@@ -126,12 +125,6 @@ spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-aut
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "springBoot" }
 
 # Different libraries
-ext-jlatex = { module = "org.scilab.forge:jlatexmath", version.ref = "jlatexmath" }
-
-ext-xmlgraphics-fop = { module = "org.apache.xmlgraphics:fop", version.ref = "xmlgraphicsFop" }
-ext-xmlgraphics-batikCodec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "xmlgraphicsBatikCodec" }
-ext-xmlgraphics-commons = { module = "org.apache.xmlgraphics:xmlgraphics-commons", version.ref = "xmlgraphicsCommons" }
-
 ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava" }
 
 # Gradle Plugins
