@@ -79,20 +79,19 @@ abstract class KernelServerTestsBase(
         content: MessageContent?,
         metadata: JsonElement? = null,
         buffers: List<ByteArray> = emptyList(),
-    ) {
-        sendMessage(
-            Message(
-                zmqIdentities = zmqIdentities,
-                data =
-                    MessageData(
-                        header = makeHeader(msgType, sessionId = sessionId),
-                        content = content,
-                        metadata = metadata,
-                    ),
-                buffers = buffers,
-            ),
-        )
-    }
+    ): Message =
+        Message(
+            zmqIdentities = zmqIdentities,
+            data =
+                MessageData(
+                    header = makeHeader(msgType, sessionId = sessionId),
+                    content = content,
+                    metadata = metadata,
+                ),
+            buffers = buffers,
+        ).also {
+            sendMessage(it)
+        }
 
     fun JupyterReceiveSocket.receiveMessage() = receiveRawMessage().toMessage()
 
