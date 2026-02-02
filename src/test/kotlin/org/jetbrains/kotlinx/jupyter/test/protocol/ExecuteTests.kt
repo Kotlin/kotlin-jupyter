@@ -77,12 +77,12 @@ import org.jetbrains.kotlinx.jupyter.repl.EvaluatedSnippetMetadata
 import org.jetbrains.kotlinx.jupyter.test.NotebookMock
 import org.jetbrains.kotlinx.jupyter.test.shouldStartWith
 import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
+import org.jetbrains.kotlinx.jupyter.test.util.DisabledFlakyTest
 import org.jetbrains.kotlinx.jupyter.util.jsonObject
 import org.jetbrains.kotlinx.jupyter.ws.JupyterWsClientSocketManager
 import org.jetbrains.kotlinx.jupyter.ws.WsKernelPorts
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.JupyterZmqClientSocketManager
 import org.jetbrains.kotlinx.jupyter.zmq.protocol.createRandomZmqKernelPorts
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.condition.EnabledForJreRange
@@ -759,7 +759,7 @@ abstract class ExecuteTests(
     }
 
     @Test
-    @Disabled
+    @DisabledFlakyTest
     fun testBigDataFrame() {
         doExecute(
             """

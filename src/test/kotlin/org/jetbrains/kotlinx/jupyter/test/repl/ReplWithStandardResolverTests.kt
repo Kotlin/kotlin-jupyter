@@ -23,7 +23,7 @@ import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.renderedValue
 import org.jetbrains.kotlinx.jupyter.test.shouldBeUnit
 import org.jetbrains.kotlinx.jupyter.test.testDataDir
-import org.junit.jupiter.api.Disabled
+import org.jetbrains.kotlinx.jupyter.test.util.DisabledHeavyTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.parallel.Execution
@@ -211,7 +211,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
     }
 
     @Test
-    @Disabled
+    @DisabledHeavyTest
     fun kotlinSpark() {
         eval(
             """

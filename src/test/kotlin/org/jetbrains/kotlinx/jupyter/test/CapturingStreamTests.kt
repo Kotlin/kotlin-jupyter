@@ -3,7 +3,7 @@ package org.jetbrains.kotlinx.jupyter.test
 import io.kotest.matchers.shouldBe
 import org.jetbrains.kotlinx.jupyter.repl.OutputConfig
 import org.jetbrains.kotlinx.jupyter.streams.CapturingOutputStream
-import org.junit.jupiter.api.Disabled
+import org.jetbrains.kotlinx.jupyter.test.util.DisabledFlakyTest
 import org.junit.jupiter.api.Test
 import java.io.OutputStream
 import java.io.PrintStream
@@ -91,7 +91,7 @@ class CapturingStreamTests {
     }
 
     @Test
-    @Disabled("This test is flaky, enable after fix")
+    @DisabledFlakyTest
     fun testMaxBufferLifeTime() {
         val strings = arrayOf("11", "22", "33", "44", "55", "66")
         val expected = arrayOf("1122", "3344", "5566")

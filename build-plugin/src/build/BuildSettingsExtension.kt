@@ -19,6 +19,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 class BuildSettingsExtension(private val project: Project) {
+    private val propagatedSystemProperties = listOf(
+        "tests.all.libraries",
+        "tests.flaky",
+        "tests.heavy",
+    )
+
     fun withTests(configure: Test.() -> Unit = {}) {
         val deps = project.defaultVersionCatalog.dependencies
 
@@ -36,6 +42,7 @@ class BuildSettingsExtension(private val project: Project) {
             }
             maxHeapSize = "4000m"
             useJavaLauncherOfVersion(project.defaultVersionCatalog.versions.jvmForTests)
+            propagateSystemProperties()
             configure()
         }
     }
@@ -100,6 +107,13 @@ class BuildSettingsExtension(private val project: Project) {
         project.tasks.withType<JavaCompile> {
             sourceCompatibility = target
             targetCompatibility = target
+        }
+    }
+
+    private fun Test.propagateSystemProperties() {
+        for (propertyName in propagatedSystemProperties) {
+            val propertyValue = project.findProperty(propertyName) ?: continue
+            systemProperty(propertyName, propertyValue)
         }
     }
 

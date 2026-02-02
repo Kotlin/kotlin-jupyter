@@ -2,8 +2,9 @@ package org.jetbrains.kotlinx.jupyter.test.repl
 
 import jupyter.kotlin.providers.SessionOptionsProvider
 import org.jetbrains.kotlinx.jupyter.test.KERNEL_LIBRARIES
+import org.jetbrains.kotlinx.jupyter.test.repl.AllLibrariesTest.Companion.disabled
 import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import org.junit.jupiter.params.ParameterizedInvocationConstants.ARGUMENTS_PLACEHOLDER
@@ -18,7 +19,7 @@ import kotlin.io.path.nameWithoutExtension
  * are resolved successfully
  */
 @Execution(ExecutionMode.SAME_THREAD)
-@Disabled
+@EnabledIfSystemProperty(named = "tests.all.libraries", matches = "true")
 class AllLibrariesTest : AbstractSingleReplTest() {
     override val repl = makeReplWithStandardResolver()
 
