@@ -15,5 +15,5 @@ val ReplCompilerMode.Companion.DEFAULT get() = replCompilerModeFromEnvironment ?
 
 private val replCompilerModeFromEnvironment by lazy {
     val envValue = System.getenv("KOTLIN_JUPYTER_REPL_COMPILER_MODE") ?: return@lazy null
-    ReplCompilerMode.values().find { it.name.equals(envValue, ignoreCase = true) }
+    ReplCompilerMode.entries.find { it.name.equals(envValue, ignoreCase = true) }
 }
