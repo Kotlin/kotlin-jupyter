@@ -139,22 +139,26 @@ internal class KernelBuildConfigurator(private val project: Project) {
             "Stable" to { it.stable }
         )
 
-        infixToSpec.forEach { (infix, taskSpecGetter) ->
-            val tasksList = mutableListOf<String>()
-            listOf(settings.condaTaskSpecs, settings.pyPiTaskSpecs).forEach { taskSpec ->
-                tasksList.add(taskSpecGetter(taskSpec).taskName)
-            }
-
-            if (infix == "Dev") {
-                tasksList.add("publishToPluginPortal")
-                tasksList.add("publishToSonatypeAndRelease")
-                tasksList.add("publishDocs")
+        for ((infix, taskSpecGetter) in infixToSpec) {
+            val tasksList = buildList {
+                for (taskSpec in listOf(settings.condaTaskSpecs, settings.pyPiTaskSpecs)) {
+                    add(taskSpecGetter(taskSpec).taskName)
+                }
             }
 
             project.tasks.register("aggregate${infix}Upload") {
                 group = DISTRIBUTION_GROUP
                 dependsOn(tasksList)
             }
+        }
+
+        project.tasks.register("aggregateMavenUpload") {
+            group = DISTRIBUTION_GROUP
+            dependsOn(
+                "publishToPluginPortal",
+                "publishToSonatypeAndRelease",
+                "publishDocs",
+            )
         }
     }
 
