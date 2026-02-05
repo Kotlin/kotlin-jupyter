@@ -17,6 +17,5 @@ fun ZmqSocketData.createSocket(): ZMQ.Socket =
         identity = socketIdentity
         if (socketType == SocketType.ROUTER) {
             setRouterHandover(true)
-            setRouterMandatory(true)
         }
     }
