@@ -572,6 +572,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
+ - [notekit](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/notekit) - Programmatic access to work with the current Kotlin notebook
  - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
  - [openai-java](https://github.com/openai/openai-java) - OpenAI official Java API
  - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
