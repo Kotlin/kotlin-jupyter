@@ -99,7 +99,12 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                         }
                     }
                 }
-            val collectedData = getScriptCollectedData(ktFile, withImport, ktFile.project, lastClassLoader)
+            val collectedData =
+                getScriptCollectedData(
+                    scriptFile = ktFile,
+                    compilationConfiguration = withImport,
+                    contextClassLoader = lastClassLoader,
+                )
 
             withImport.refineOnAnnotations(context.script, collectedData)
         }
