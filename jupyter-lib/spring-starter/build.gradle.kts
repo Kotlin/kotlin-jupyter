@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import build.CompilerRelocatedJarConfigurator
+import build.util.LibrariesJsonMergeTransformer
 import build.util.shadowOf
 import org.jetbrains.gradle.shadow.registerShadowJarTasksBy
 import org.jetbrains.kotlinx.publisher.composeOfTaskOutputs
@@ -91,6 +92,7 @@ val springKernelJar =
         withSources = true,
         binaryTaskConfigurator = {
             CompilerRelocatedJarConfigurator()
+            transform(LibrariesJsonMergeTransformer())
             manifest {
                 attributes["Implementation-Version"] = libs.versions.kotlin.get()
             }
@@ -98,7 +100,7 @@ val springKernelJar =
     )
 
 tasks.processJupyterApiResources {
-    libraryProducers = listOf("org.jetbrains.kotlinx.jupyter.spring.starter.SpringJupyterIntegration")
+    enabled = false
 }
 
 kotlinPublications {
