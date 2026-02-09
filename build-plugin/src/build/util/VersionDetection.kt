@@ -14,11 +14,12 @@ fun Project.getPropertyByCommand(
         return prop
     }
 
-    val execTask = providers.exec {
-        commandLine(*cmdArgs)
-        isIgnoreExitValue = true
-        workingDir?.let { this.workingDir = it }
-    }
+    val execTask =
+        providers.exec {
+            commandLine(*cmdArgs)
+            isIgnoreExitValue = true
+            workingDir?.let { this.workingDir = it }
+        }
 
     val result = execTask.result.get()
 
@@ -35,7 +36,7 @@ fun Project.getCurrentBranch(): String =
     project.getOrInitProperty("git.currentBranch") {
         getPropertyByCommand(
             "build.branch",
-            arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD")
+            arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
         )
     }
 
@@ -44,7 +45,7 @@ fun Project.getCurrentCommitSha(): String =
     project.getOrInitProperty("git.currentSha") {
         getPropertyByCommand(
             "build.commit_sha",
-            arrayOf("git", "rev-parse", "HEAD")
+            arrayOf("git", "rev-parse", "HEAD"),
         )
     }
 

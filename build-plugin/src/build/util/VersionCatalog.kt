@@ -13,13 +13,14 @@ class NamedVersionCatalogsExtension(
     private val project: Project,
     private val catalogName: String,
 ) {
-
-    private val catalog = run {
-        val catalogs = project.extensions.getByType<VersionCatalogsExtension>()
-        catalogs.named(catalogName)
-    }
+    private val catalog =
+        run {
+            val catalogs = project.extensions.getByType<VersionCatalogsExtension>()
+            catalogs.named(catalogName)
+        }
 
     val versions = Versions()
+
     inner class Versions {
         fun get(ref: String): String {
             return catalog.findVersion(ref).get().requiredVersion
@@ -27,6 +28,7 @@ class NamedVersionCatalogsExtension(
     }
 
     val dependencies = Dependencies()
+
     inner class Dependencies {
         fun get(name: String): Provider<MinimalExternalModuleDependency> {
             return catalog.findLibrary(name).get()
@@ -36,7 +38,11 @@ class NamedVersionCatalogsExtension(
 
 private fun versionCatalogExtensionName(name: String) = VERSION_CATALOG_EXTENSION_PREFIX + name.titleCaseFirstChar()
 
-fun Project.versionCatalog(name: String): NamedVersionCatalogsExtension = extensions.getOrCreate(versionCatalogExtensionName(name)) { NamedVersionCatalogsExtension(this, name) }
+fun Project.versionCatalog(name: String): NamedVersionCatalogsExtension =
+    extensions.getOrCreate(versionCatalogExtensionName(name)) {
+        NamedVersionCatalogsExtension(this, name)
+    }
+
 val Project.defaultVersionCatalog get(): NamedVersionCatalogsExtension = versionCatalog(DEFAULT_VERSION_CATALOG)
 
 val NamedVersionCatalogsExtension.Versions.exampleKernel get() = get("jupyterApi")

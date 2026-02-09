@@ -26,13 +26,15 @@ data class ProcessExecuteResult(
 fun ProcessExecuteResult.checkSuccess(messageFactory: () -> String? = { null }) {
     if (exitCode != 0) {
         val message = messageFactory() ?: "Process failed: ${commandLine.joinToString(" ")}"
-        error("""
+        error(
+            """
             $message: exit code $exitCode
             --- STANDARD OUTPUT ---
             $stdout
             --- STANDARD ERROR ---
             $stderr
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 }
 
@@ -41,15 +43,16 @@ fun Project.executeProcess(
     commandLine: List<String>,
     configure: ExecSpec.() -> Unit = {},
 ): ProcessExecuteResult {
-    val execTask = providers.exec {
-        this.workingDir = workingDir
-        this.commandLine = commandLine
+    val execTask =
+        providers.exec {
+            this.workingDir = workingDir
+            this.commandLine = commandLine
 
-        // Makes `exec` not to throw exceptions
-        this.isIgnoreExitValue = true
+            // Makes `exec` not to throw exceptions
+            this.isIgnoreExitValue = true
 
-        configure()
-    }
+            configure()
+        }
 
     val result = execTask.result.get()
 
@@ -69,28 +72,29 @@ fun Project.executeGitCommand(
     return executeProcess(
         workingDir ?: rootDir,
         listOf("git") + args,
-        configure
+        configure,
     )
 }
-
 
 fun Project.configureGit(
     email: String,
     userName: String,
 ) {
     executeGitCommand(
-        args = listOf(
-            "config",
-            "user.email",
-            email
-        )
+        args =
+            listOf(
+                "config",
+                "user.email",
+                email,
+            ),
     ).checkSuccess()
     executeGitCommand(
-        args = listOf(
-            "config",
-            "user.name",
-            userName
-        )
+        args =
+            listOf(
+                "config",
+                "user.name",
+                userName,
+            ),
     ).checkSuccess()
 }
 
@@ -114,17 +118,21 @@ fun Project.gitAddAll(workingDir: File? = null): ProcessExecuteResult {
 /**
  * Adds the given files to the Git index for commit.
  */
-fun Project.gitAdd(paths: List<String>, workingDir: File? = null): ProcessExecuteResult {
+fun Project.gitAdd(
+    paths: List<String>,
+    workingDir: File? = null,
+): ProcessExecuteResult {
     return executeGitCommand(
         workingDir = workingDir,
         args = listOf("add") + paths,
     )
 }
 
-
 sealed interface GitCommitResult {
     object Success : GitCommitResult
+
     object NoChanges : GitCommitResult
+
     data class Failure(val throwable: Throwable?) : GitCommitResult
 }
 
@@ -149,26 +157,28 @@ fun Project.gitCommit(
     }
 
     return try {
-        val result = executeGitCommand(
-            workingDir = workingDir,
-            args = buildList {
-                add("commit")
-                if (includedPaths != null) {
-                    addAll(includedPaths)
-                }
+        val result =
+            executeGitCommand(
+                workingDir = workingDir,
+                args =
+                    buildList {
+                        add("commit")
+                        if (includedPaths != null) {
+                            addAll(includedPaths)
+                        }
 
-                add("-m")
-                add(message)
-            },
-        )
+                        add("-m")
+                        add(message)
+                    },
+            )
         when {
             result.exitCode == 0 -> GitCommitResult.Success
             NOTHING_TO_COMMIT_REGEX.containsMatchIn(result.stdout) -> GitCommitResult.NoChanges
             else -> {
                 GitCommitResult.Failure(
                     RuntimeException(
-                        "Git commit failed:\nSTDERR:\n${result.stderr}\nSTDOUT:\n${result.stdout}"
-                    )
+                        "Git commit failed:\nSTDERR:\n${result.stderr}\nSTDOUT:\n${result.stdout}",
+                    ),
                 )
             }
         }
@@ -196,21 +206,23 @@ fun Project.gitPush(
     if (remoteUrl != null) {
         executeGitCommand(
             workingDir = workingDir,
-            args = listOf(
-                "remote",
-                "set-url",
-                remote,
-                remoteUrl,
-            )
+            args =
+                listOf(
+                    "remote",
+                    "set-url",
+                    remote,
+                    remoteUrl,
+                ),
         ).checkSuccess()
     }
 
     executeGitCommand(
         workingDir = workingDir,
-        args = listOf(
-            "push",
-            remote,
-            branch,
-        ),
+        args =
+            listOf(
+                "push",
+                remote,
+                branch,
+            ),
     ).checkSuccess()
 }

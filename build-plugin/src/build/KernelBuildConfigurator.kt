@@ -134,17 +134,19 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun registerAggregateUploadTasks() {
-        val infixToSpec = mapOf<String, (UploadTaskSpecs<*>) -> TaskSpec>(
-            "Dev" to { it.dev },
-            "Stable" to { it.stable }
-        )
+        val infixToSpec =
+            mapOf<String, (UploadTaskSpecs<*>) -> TaskSpec>(
+                "Dev" to { it.dev },
+                "Stable" to { it.stable },
+            )
 
         for ((infix, taskSpecGetter) in infixToSpec) {
-            val tasksList = buildList {
-                for (taskSpec in listOf(settings.condaTaskSpecs, settings.pyPiTaskSpecs)) {
-                    add(taskSpecGetter(taskSpec).taskName)
+            val tasksList =
+                buildList {
+                    for (taskSpec in listOf(settings.condaTaskSpecs, settings.pyPiTaskSpecs)) {
+                        add(taskSpecGetter(taskSpec).taskName)
+                    }
                 }
-            }
 
             project.tasks.register("aggregate${infix}Upload") {
                 group = DISTRIBUTION_GROUP
@@ -181,12 +183,13 @@ internal class KernelBuildConfigurator(private val project: Project) {
     }
 
     private fun configureJarTasks() {
-        val jarTask = project.tasks.named(JAR_TASK, Jar::class.java) {
-            manifest {
-                attributes["Main-Class"] = settings.mainClassFQN
-                attributes["Implementation-Version"] = project.version
+        val jarTask =
+            project.tasks.named(JAR_TASK, Jar::class.java) {
+                manifest {
+                    attributes["Main-Class"] = settings.mainClassFQN
+                    attributes["Implementation-Version"] = project.version
+                }
             }
-        }
 
         project.tasks.named(SHADOW_JAR_TASK, ShadowJar::class.java) {
             archiveBaseName.set(settings.packageName)

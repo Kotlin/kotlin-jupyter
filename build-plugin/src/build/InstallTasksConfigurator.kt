@@ -38,7 +38,11 @@ class InstallTasksConfigurator(
         }
     }
 
-    fun registerInstallTasks(local: Boolean, specPath: File, mainInstallPath: File) {
+    fun registerInstallTasks(
+        local: Boolean,
+        specPath: File,
+        mainInstallPath: File,
+    ) {
         val groupName = if (local) LOCAL_INSTALL_GROUP else DISTRIBUTION_GROUP
         val cleanDirTask = project.tasks.named(makeTaskName(settings.cleanInstallDirTaskPrefix, local))
         val shadowJar = project.tasks.named(SHADOW_JAR_TASK)
@@ -78,7 +82,7 @@ class InstallTasksConfigurator(
         cleanDir: TaskProvider<*>,
         shadowJar: TaskProvider<*>,
         specPath: File,
-        mainInstallPath: File
+        mainInstallPath: File,
     ): String {
         val taskName = makeTaskName("create${debugStr(debug)}Specs", local)
         project.tasks.register(taskName) {
@@ -98,9 +102,9 @@ class InstallTasksConfigurator(
                         "mainJar" to kernelFile.name,
                         "mainClass" to settings.mainClassFQN,
                         "classPath" to libsCp,
-                        "debuggerPort" to if (debug) settings.debuggerPort else ""
+                        "debuggerPort" to if (debug) settings.debuggerPort else "",
                     ),
-                    mainInstallPath.jarArgsFile
+                    mainInstallPath.jarArgsFile,
                 )
                 makeKernelSpec(specPath, local)
             }
@@ -108,7 +112,12 @@ class InstallTasksConfigurator(
         return taskName
     }
 
-    private fun registerMainInstallTask(debug: Boolean, local: Boolean, group: String, specsTaskName: String) {
+    private fun registerMainInstallTask(
+        debug: Boolean,
+        local: Boolean,
+        group: String,
+        specsTaskName: String,
+    ) {
         project.tasks.register(mainInstallTaskName(debug, local)) {
             this.group = group
             dependsOn(
@@ -122,8 +131,12 @@ class InstallTasksConfigurator(
         }
     }
 
-    private fun makeKernelSpec(installPath: File, localInstall: Boolean) {
+    private fun makeKernelSpec(
+        installPath: File,
+        localInstall: Boolean,
+    ) {
         val firstArg = if (localInstall) installPath.resolve(settings.localRunPy).toString() else "-m"
+
         fun execPythonArgs(vararg args: String) = listOf("python", firstArg, *args)
 
         val argv = execPythonArgs(settings.runKotlinKernelModule, "{connection_file}")
@@ -135,11 +148,12 @@ class InstallTasksConfigurator(
                 "language" to "kotlin",
                 "interrupt_mode" to "message",
                 "argv" to argv,
-                "metadata" to mapOf(
-                    "jar_path_detect_command" to jarsPathDetectorArgv,
-                ),
+                "metadata" to
+                    mapOf(
+                        "jar_path_detect_command" to jarsPathDetectorArgv,
+                    ),
             ),
-            installPath.resolve(settings.kernelFile)
+            installPath.resolve(settings.kernelFile),
         )
 
         project.copy {

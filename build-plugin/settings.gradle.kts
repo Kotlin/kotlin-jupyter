@@ -8,9 +8,10 @@ pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        val sharedProps = java.util.Properties().apply {
-            load(File(rootDir.parent, "shared.properties").inputStream())
-        }
+        val sharedProps =
+            java.util.Properties().apply {
+                load(File(rootDir.parent, "shared.properties").inputStream())
+            }
         sharedProps.getProperty("shared.repositories").split(',').forEach {
             maven(it)
         }
@@ -25,9 +26,10 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    val sharedProps = java.util.Properties().apply {
-        load(File(rootDir.parent, "shared.properties").inputStream())
-    }
+    val sharedProps =
+        java.util.Properties().apply {
+            load(File(rootDir.parent, "shared.properties").inputStream())
+        }
     versionCatalogs {
         create("libs") {
             from(files("../gradle/libs.versions.toml"))
@@ -49,7 +51,10 @@ includeBuild("plugin-versions-plugin")
 
 subproject("common-dependencies", "")
 
-fun subproject(name: String, parentPath: String) {
+fun subproject(
+    name: String,
+    parentPath: String,
+) {
     include(name)
     project(":$name").projectDir = file("$parentPath$name")
 }

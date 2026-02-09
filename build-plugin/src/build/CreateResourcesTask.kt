@@ -21,9 +21,10 @@ abstract class CreateResourcesTask : DefaultTask() {
     private var jarPath: String? = null
 
     @get:OutputDirectory
-    val outputResourceDir: Property<File> = project.objects.property<File>().apply {
-        set(project.provider { project.getBuildDirectory().resolve(this@CreateResourcesTask.name + "Resources") })
-    }
+    val outputResourceDir: Property<File> =
+        project.objects.property<File>().apply {
+            set(project.provider { project.getBuildDirectory().resolve(this@CreateResourcesTask.name + "Resources") })
+        }
 
     @TaskAction
     fun createResources() {
@@ -31,9 +32,10 @@ abstract class CreateResourcesTask : DefaultTask() {
         dir.deleteRecursively()
 
         librariesDir?.let { libDir ->
-            val libsList = libDir.list { _, fileName ->
-                fileName.endsWith(".json")
-            }?.toList().orEmpty()
+            val libsList =
+                libDir.list { _, fileName ->
+                    fileName.endsWith(".json")
+                }?.toList().orEmpty()
             libsList.forEach {
                 addResource("$jarPath/$it", libDir.resolve(it).readText())
             }
@@ -49,7 +51,10 @@ abstract class CreateResourcesTask : DefaultTask() {
         }
     }
 
-    private fun addResource(subPath: String, text: String) {
+    private fun addResource(
+        subPath: String,
+        text: String,
+    ) {
         resources[subPath] = text
     }
 
@@ -60,22 +65,34 @@ abstract class CreateResourcesTask : DefaultTask() {
         }
     }
 
-    fun addSingleValueFile(subPath: String, value: String) {
+    fun addSingleValueFile(
+        subPath: String,
+        value: String,
+    ) {
         addResource(subPath, value)
         setInputProperties(mapOf("value" to value))
     }
 
-    fun addPropertiesFile(subPath: String, values: Map<String, String>) {
+    fun addPropertiesFile(
+        subPath: String,
+        values: Map<String, String>,
+    ) {
         inputs.property("__filename__", subPath)
         addResource(subPath, values.entries.joinToString("") { "${it.key}=${it.value}\n" })
         setInputProperties(values)
     }
 
-    fun addPropertiesFile(subPath: String, values: List<Pair<String, String>>) {
+    fun addPropertiesFile(
+        subPath: String,
+        values: List<Pair<String, String>>,
+    ) {
         addPropertiesFile(subPath, values.associate { it })
     }
 
-    fun addLibrariesFromDir(dir: File, jarPath: String = "jupyterLibraries") {
+    fun addLibrariesFromDir(
+        dir: File,
+        jarPath: String = "jupyterLibraries",
+    ) {
         this.librariesDir = dir
         this.jarPath = jarPath
         outputs.upToDateWhen { false }

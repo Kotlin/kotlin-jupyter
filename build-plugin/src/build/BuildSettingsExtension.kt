@@ -19,11 +19,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 class BuildSettingsExtension(private val project: Project) {
-    private val propagatedSystemProperties = listOf(
-        "tests.all.libraries",
-        "tests.flaky",
-        "tests.heavy",
-    )
+    private val propagatedSystemProperties =
+        listOf(
+            "tests.all.libraries",
+            "tests.flaky",
+            "tests.heavy",
+        )
 
     fun withTests(configure: Test.() -> Unit = {}) {
         val deps = project.defaultVersionCatalog.dependencies
@@ -52,7 +53,6 @@ class BuildSettingsExtension(private val project: Project) {
         withApiVersion(level)
     }
 
-
     fun withLanguageVersion(version: String) {
         val kotlinVersion = KotlinVersion.fromVersion(version)
         project.tasks.withType<KotlinCompile> {
@@ -75,14 +75,19 @@ class BuildSettingsExtension(private val project: Project) {
         private val args: MutableList<String> = mutableListOf()
 
         fun add(arg: String) = args.add(arg)
+
         fun build(): List<String> = args
 
         fun skipPrereleaseCheck() = args.add("-Xskip-prerelease-check")
+
         fun requiresOptIn() = args.add("-opt-in=kotlin.RequiresOptIn")
+
         fun allowResultReturnType() = args.add("-Xallow-result-return-type")
+
         fun jdkRelease(release: String) = args.add("-Xjdk-release=$release")
 
         fun samConversions(type: String) = args.add("-Xsam-conversions=$type")
+
         fun samConversionsClass() = samConversions("class")
 
         fun contextSensitiveResolution() = args.add("-Xcontext-sensitive-resolution")
@@ -119,6 +124,7 @@ class BuildSettingsExtension(private val project: Project) {
 
     companion object : SingleInstanceExtensionCompanion<BuildSettingsExtension> {
         override val name = "buildSettings"
+
         override fun createInstance(project: Project): BuildSettingsExtension {
             return BuildSettingsExtension(project)
         }

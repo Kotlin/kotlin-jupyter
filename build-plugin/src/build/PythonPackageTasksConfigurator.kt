@@ -44,16 +44,17 @@ class PythonPackageTasksConfigurator(
                 }
 
                 doLast {
-                    val execTask = project.providers.exec {
-                        commandLine(
-                            settings.anacondaUploadScript.absolutePath,
-                            taskSpec.credentials.username,
-                            taskSpec.credentials.password,
-                            artifactPath.absolutePath.toString(),
-                            taskSpec.username,
-                        )
-                        isIgnoreExitValue = true
-                    }
+                    val execTask =
+                        project.providers.exec {
+                            commandLine(
+                                settings.anacondaUploadScript.absolutePath,
+                                taskSpec.credentials.username,
+                                taskSpec.credentials.password,
+                                artifactPath.absolutePath.toString(),
+                                taskSpec.username,
+                            )
+                            isIgnoreExitValue = true
+                        }
                     if (execTask.result.get().exitValue != 0) {
                         val standardOutput = execTask.standardOutput.asText.get()
                         throw RuntimeException("Unable to publish conda package:\n$standardOutput")
@@ -79,7 +80,7 @@ class PythonPackageTasksConfigurator(
                 settings.setupPy,
                 "bdist_wheel",
                 "--dist-dir",
-                packageSettings.dir
+                packageSettings.dir,
             )
             workingDir(settings.distribBuildDir)
 
@@ -113,7 +114,7 @@ class PythonPackageTasksConfigurator(
                     "-u", taskSpec.username,
                     "-p", taskSpec.password,
                     "--repository-url", taskSpec.repoURL,
-                    packageSettings.fileName
+                    packageSettings.fileName,
                 )
             }
         }

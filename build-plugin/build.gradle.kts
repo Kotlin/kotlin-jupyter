@@ -31,12 +31,14 @@ val myJvmTargetInt = myJvmTarget.substringAfter('.').toInt()
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        freeCompilerArgs.addAll(listOf(
-            "-opt-in=kotlin.RequiresOptIn",
-            // Fix for https://jakewharton.com/kotlins-jdk-release-compatibility-flag/
-            // See KT-49746
-            "-Xjdk-release=$myJvmTarget",
-        ))
+        freeCompilerArgs.addAll(
+            listOf(
+                "-opt-in=kotlin.RequiresOptIn",
+                // Fix for https://jakewharton.com/kotlins-jdk-release-compatibility-flag/
+                // See KT-49746
+                "-Xjdk-release=$myJvmTarget",
+            ),
+        )
         jvmTarget.set(JvmTarget.fromTarget(myJvmTarget))
     }
 }

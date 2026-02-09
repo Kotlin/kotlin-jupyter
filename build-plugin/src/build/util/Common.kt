@@ -12,14 +12,19 @@ import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
+import java.util.Optional
 
-val BUILD_LIBRARIES = LibraryDescriptorsManager.getInstance(
-    SimpleHttpClient,
-    LoggerFactory::getLogger,
-)
+val BUILD_LIBRARIES =
+    LibraryDescriptorsManager.getInstance(
+        SimpleHttpClient,
+        LoggerFactory::getLogger,
+    )
 
-fun makeTaskName(prefix: String, local: Boolean) = prefix + (if (local) "Local" else "Distrib")
+fun makeTaskName(
+    prefix: String,
+    local: Boolean,
+) = prefix + (if (local) "Local" else "Distrib")
 
 fun makeDirs(dir: File) {
     if (!dir.exists()) {
@@ -27,9 +32,15 @@ fun makeDirs(dir: File) {
     }
 }
 
-fun getSubDir(dir: Path, vararg subDir: String): Path = subDir.fold(dir, Path::resolve)
+fun getSubDir(
+    dir: Path,
+    vararg subDir: String,
+): Path = subDir.fold(dir, Path::resolve)
 
-fun writeJson(json: Map<String, Any>, path: File) {
+fun writeJson(
+    json: Map<String, Any>,
+    path: File,
+) {
     val str = JsonOutput.prettyPrint(JsonOutput.toJson(json))
     path.writeText(str, Charsets.UTF_8)
 }
@@ -47,11 +58,12 @@ fun readProperties(propertiesFile: File): Map<String, String> =
         .filter { it.size == 2 }
         .map { it[0] to it[1] }.toMap()
 
-val Any.booleanValueOrNull get() = when (this) {
-    "true", true -> true
-    "false", false -> false
-    else -> null
-}
+val Any.booleanValueOrNull get() =
+    when (this) {
+        "true", true -> true
+        "false", false -> false
+        else -> null
+    }
 
 val Any.booleanValue get() = booleanValueOrNull ?: throw IllegalArgumentException("Cannot cast $this to boolean")
 
@@ -74,7 +86,7 @@ fun ModuleDependency.excludeStandardKotlinDependencies() {
         "stdlib",
         "stdlib-common",
         "kotlin-stdlib-jdk7",
-        "kotlin-stdlib-jdk8"
+        "kotlin-stdlib-jdk8",
     )
 }
 
@@ -84,7 +96,10 @@ fun <T> Optional<T>.getOrNull(): T? {
     return result
 }
 
-inline fun <reified T : Any> ExtensionContainer.getOrCreate(name: String, initializer: () -> T): T {
+inline fun <reified T : Any> ExtensionContainer.getOrCreate(
+    name: String,
+    initializer: () -> T,
+): T {
     return (findByName(name) as? T) ?: initializer().also { ext -> add(name, ext) }
 }
 

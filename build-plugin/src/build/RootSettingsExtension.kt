@@ -23,7 +23,7 @@ import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
 import java.io.File
 
 class RootSettingsExtension(
-    val project: Project
+    val project: Project,
 ) {
     val httpClient = SimpleHttpClient
 
@@ -53,6 +53,7 @@ class RootSettingsExtension(
     // Used when building Python packages. When `true`, all Python dependencies will be installed
     // locally. If `false`, it is assumed that the dependencies are already installed.
     val isLocalBuild by project.prop("build.isLocal", false)
+
     // Used to determine the version string for Maven Python and packages.
     // If `false`, the version is assumed to be unstable, and we add the `-SNAPSHOT` suffix
     // for Maven versions and the `+SNAPSHOT` local identifier suffix for Python versions.
@@ -67,39 +68,41 @@ class RootSettingsExtension(
 
     val versionsCompatFileName: String = "versionsCompat.txt"
     val compatibilityTableFileName: String = "docs/compatibility.md"
-    val compatibilityAttributes: List<CompatibilityAttribute> = run{
-        val projectVersions = project.defaultVersionCatalog.versions
-        listOf(
-            CompatibilityAttribute("pythonPackageVersion", "Kernel version") {
-                pyPackageVersion
-            },
-            CompatibilityAttribute("mavenVersion", "Maven artifacts version") {
-                mavenVersion
-            },
-            CompatibilityAttribute("kotlinLibrariesVersion", "Kotlin scripting") {
-                projectVersions.devKotlin
-            },
-            CompatibilityAttribute("kotlinCompilerVersion", "Used Kotlin compiler") {
-                projectVersions.stableKotlin
-            },
-            CompatibilityAttribute("kotlinGradleLibrariesVersion", "Kotlin dependencies for Gradle plugin") {
-                projectVersions.gradleKotlin
-            },
-            CompatibilityAttribute("kotlinLanguageLevel", "Kotlin language level") {
-                kotlinLanguageLevel
-            },
-        )
-    }
-
-    val artifactsDir: File = run {
-        val artifactsPath by project.prop(default = "artifacts")
-        val artifactsDir = project.rootDir.resolve(artifactsPath)
-
-        if (isLocalBuild) {
-            project.delete(artifactsDir)
+    val compatibilityAttributes: List<CompatibilityAttribute> =
+        run {
+            val projectVersions = project.defaultVersionCatalog.versions
+            listOf(
+                CompatibilityAttribute("pythonPackageVersion", "Kernel version") {
+                    pyPackageVersion
+                },
+                CompatibilityAttribute("mavenVersion", "Maven artifacts version") {
+                    mavenVersion
+                },
+                CompatibilityAttribute("kotlinLibrariesVersion", "Kotlin scripting") {
+                    projectVersions.devKotlin
+                },
+                CompatibilityAttribute("kotlinCompilerVersion", "Used Kotlin compiler") {
+                    projectVersions.stableKotlin
+                },
+                CompatibilityAttribute("kotlinGradleLibrariesVersion", "Kotlin dependencies for Gradle plugin") {
+                    projectVersions.gradleKotlin
+                },
+                CompatibilityAttribute("kotlinLanguageLevel", "Kotlin language level") {
+                    kotlinLanguageLevel
+                },
+            )
         }
-        return@run artifactsDir
-    }
+
+    val artifactsDir: File =
+        run {
+            val artifactsPath by project.prop(default = "artifacts")
+            val artifactsDir = project.rootDir.resolve(artifactsPath)
+
+            if (isLocalBuild) {
+                project.delete(artifactsDir)
+            }
+            return@run artifactsDir
+        }
 
     val isOnProtectedBranch: Boolean = project.isProtectedBranch()
     val pyPackageVersion: String = detectPythonVersion(isRelease)
@@ -110,11 +113,15 @@ class RootSettingsExtension(
 
     val librariesDir: File = BUILD_LIBRARIES.localLibrariesDir
 
-    val localInstallDir: File = run {
-        val installPath = project.typedProperty<String?>("installPath")
-        if (installPath != null) project.file(installPath)
-        else project.file(System.getProperty("user.home").toString()).resolve(".ipython/kernels/kotlin")
-    }
+    val localInstallDir: File =
+        run {
+            val installPath = project.typedProperty<String?>("installPath")
+            if (installPath != null) {
+                project.file(installPath)
+            } else {
+                project.file(System.getProperty("user.home").toString()).resolve(".ipython/kernels/kotlin")
+            }
+        }
 
     val resourcesDir: File = project.file("resources")
     val distribBuildDir: File = project.getBuildDirectory().resolve("distrib-build")
@@ -157,18 +164,18 @@ class RootSettingsExtension(
         UploadTaskSpecs(
             DistributionPackageSettings(
                 "conda-package",
-                "$packageName-$pyPackageVersion-py_0.conda"
+                "$packageName-$pyPackageVersion-py_0.conda",
             ),
             "conda",
             CONDA_GROUP,
             CondaTaskSpec(
                 condaUserStable,
-                condaCredentials
+                condaCredentials,
             ),
             CondaTaskSpec(
                 condaUserDev,
-                condaCredentials
-            )
+                condaCredentials,
+            ),
         )
     }
 
@@ -181,20 +188,20 @@ class RootSettingsExtension(
         UploadTaskSpecs(
             DistributionPackageSettings(
                 "pip-package",
-                "${packageName.replace("-", "_")}-$pyPackageVersion-py3-none-any.whl"
+                "${packageName.replace("-", "_")}-$pyPackageVersion-py3-none-any.whl",
             ),
             "pyPi",
             PYPI_GROUP,
             PyPiTaskSpec(
                 "https://upload.pypi.org/legacy/",
                 stablePyPiUser,
-                stablePyPiPassword
+                stablePyPiPassword,
             ),
             PyPiTaskSpec(
                 "https://test.pypi.org/legacy/",
                 devPyPiUser,
-                devPyPiPassword
-            )
+                devPyPiPassword,
+            ),
         )
     }
 
@@ -204,10 +211,11 @@ class RootSettingsExtension(
         val counter = match.groups["counter"]!!.value
         val devCounter = match.groups["devCounter"]?.value
         val devAddition = if (devCounter == null) "" else "-$devCounter"
-        val snapshot = when (match.groups["snapshot"]?.value == "+SNAPSHOT") {
-            false -> ""
-            true -> "-SNAPSHOT"
-        }
+        val snapshot =
+            when (match.groups["snapshot"]?.value == "+SNAPSHOT") {
+                false -> ""
+                true -> "-SNAPSHOT"
+            }
         return "$base-$counter$devAddition$snapshot"
     }
 
@@ -220,13 +228,14 @@ class RootSettingsExtension(
 
         val devAddition = if (isOnProtectedBranch && devCounterOrNull == null) "" else ".dev$devCounter"
 
-        val defaultBuildNumber = "$baseVersion.$buildCounter$devAddition".let { versionString ->
-            if (!isRelease) {
-                "$versionString+SNAPSHOT"
-            } else {
-                versionString
+        val defaultBuildNumber =
+            "$baseVersion.$buildCounter$devAddition".let { versionString ->
+                if (!isRelease) {
+                    "$versionString+SNAPSHOT"
+                } else {
+                    versionString
+                }
             }
-        }
 
         return if (buildNumber.matches(PYTHON_BUILD_NUMBER_REGEX)) {
             buildNumber
@@ -237,10 +246,12 @@ class RootSettingsExtension(
 
     companion object : SingleInstanceExtensionCompanion<RootSettingsExtension> {
         override val name = "rootSettings"
+
         override fun createInstance(project: Project): RootSettingsExtension {
             return RootSettingsExtension(project)
         }
 
-        private val PYTHON_BUILD_NUMBER_REGEX = Regex("""(?<base>\d+\.\d+\.\d+)\.(?<counter>\d+)(\.dev(?<devCounter>\d+))?(?<snapshot>\+SNAPSHOT)?""")
+        private val PYTHON_BUILD_NUMBER_REGEX =
+            Regex("""(?<base>\d+\.\d+\.\d+)\.(?<counter>\d+)(\.dev(?<devCounter>\d+))?(?<snapshot>\+SNAPSHOT)?""")
     }
 }

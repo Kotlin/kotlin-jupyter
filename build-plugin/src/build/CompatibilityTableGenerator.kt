@@ -6,7 +6,10 @@ import build.util.configureGitRobotCommitter
 import build.util.getCurrentBranch
 import build.util.gitCommit
 import build.util.gitPush
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.gradle.api.Project
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.common.buildRequest
@@ -24,11 +27,12 @@ class CompatibilityTableGenerator(
     private val kernelTeamcity = TeamcityProject(INTERNAL_TEAMCITY_URL, "KDS_KotlinJupyter_Conda")
     private val unknownInfo = "—"
 
-    private val mdHeaderToTcProp = HashMap<String, String>().apply {
-        for (attr in settings.compatibilityAttributes) {
-            put(attr.mdDescription, attr.tcPropertyName)
+    private val mdHeaderToTcProp =
+        HashMap<String, String>().apply {
+            for (attr in settings.compatibilityAttributes) {
+                put(attr.mdDescription, attr.tcPropertyName)
+            }
         }
-    }
 
     fun registerTasks() {
         val mdFile = project.rootDir.resolve(settings.compatibilityTableFileName)
@@ -50,7 +54,7 @@ class CompatibilityTableGenerator(
             dependsOn(GENERATE_COMPAT_TABLE)
 
             doLast {
-                with(project.rootProject){
+                with(project.rootProject) {
                     configureGitRobotCommitter()
                     gitCommit("Update versions compatibility table")
                     gitPush(
@@ -65,63 +69,76 @@ class CompatibilityTableGenerator(
     private fun updateMdFile(mdFile: File) {
         val mdLines = mdFile.readLines()
         val headerSeparatorIndex = mdLines.indexOfFirst { it.startsWith("|:-") }
-        val dataLinesIndices = mutableListOf<Int>().apply {
-            for (i in (headerSeparatorIndex + 1) until mdLines.size) {
-                val line = mdLines[i]
-                if (line.startsWith("|")) {
-                    add(i)
+        val dataLinesIndices =
+            mutableListOf<Int>().apply {
+                for (i in (headerSeparatorIndex + 1) until mdLines.size) {
+                    val line = mdLines[i]
+                    if (line.startsWith("|")) {
+                        add(i)
+                    }
                 }
             }
-        }
 
-        val widths = mdLines[headerSeparatorIndex]
+        val widths =
+            mdLines[headerSeparatorIndex]
                 .split('|')
                 .filter { it.isNotBlank() }
                 .map { it.length }
 
-        val columns = mdLines[headerSeparatorIndex - 1]
+        val columns =
+            mdLines[headerSeparatorIndex - 1]
                 .split('|')
                 .filter { it.isNotBlank() }
                 .map { mdHeaderToTcProp[it.trim()] }
 
-        val existingVersions = HashMap<String, Pair<Int, List<String> > >().apply {
-            for (i in dataLinesIndices) {
-                val line = mdLines[i]
-                val versionLine = line.split('|').filter { it.isNotBlank() }.map { it.trim() }
-                put(versionLine[0], i to versionLine)
-            }
-        }
-
-        val newVersions = TreeMap<KotlinKernelVersion, List<String>>().apply {
-            val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds?locator=branch:(default:any),status:success,buildType:(id:${kernelTeamcity.projectId})"
-            val allBuildsResponse = settings.httpClient.httpRequest(
-                    buildRequest("GET", allBuildsUrl) {
-                        header("Accept", "application/json")
-                    }
-            )
-            val allBuildsJson = allBuildsResponse.jsonObject
-            val allBuilds = allBuildsJson["build"]!!.jsonArray
-            val buildIds = allBuilds.map { buildObject ->
-                buildObject.jsonObject["id"]!!.jsonPrimitive.int
-            }
-            for (buildId in buildIds) {
-                val artifactUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds/id:${buildId}/artifacts/content/teamcity-artifacts/${settings.versionsCompatFileName}"
-                val artifactResponse = settings.httpClient.httpRequest(
-                        buildRequest("GET", artifactUrl)
-                )
-                if (artifactResponse.status.successful) {
-                    val verMap = artifactResponse.text
-                            .lines()
-                            .filter { it.contains("=") }
-                            .associate { it.substringBefore("=") to it.substringAfter("=") }
-                    val verList = columns.map { tcProp ->
-                        verMap[tcProp] ?: unknownInfo
-                    }
-                    val pyVersion = verList[0]
-                    put(KotlinKernelVersion.from(pyVersion) ?: error("Can't parse version $pyVersion"), verList)
+        val existingVersions =
+            HashMap<String, Pair<Int, List<String>>>().apply {
+                for (i in dataLinesIndices) {
+                    val line = mdLines[i]
+                    val versionLine = line.split('|').filter { it.isNotBlank() }.map { it.trim() }
+                    put(versionLine[0], i to versionLine)
                 }
             }
-        }
+
+        val newVersions =
+            TreeMap<KotlinKernelVersion, List<String>>().apply {
+                val locator = "branch:(default:any),status:success,buildType:(id:${kernelTeamcity.projectId})"
+                val allBuildsUrl = "${kernelTeamcity.url}/guestAuth/app/rest/builds?locator=$locator"
+                val allBuildsResponse =
+                    settings.httpClient.httpRequest(
+                        buildRequest("GET", allBuildsUrl) {
+                            header("Accept", "application/json")
+                        },
+                    )
+                val allBuildsJson = allBuildsResponse.jsonObject
+                val allBuilds = allBuildsJson["build"]!!.jsonArray
+                val buildIds =
+                    allBuilds.map { buildObject ->
+                        buildObject.jsonObject["id"]!!.jsonPrimitive.int
+                    }
+                for (buildId in buildIds) {
+                    val artifactPath = "teamcity-artifacts/${settings.versionsCompatFileName}"
+                    val artifactUrl =
+                        "${kernelTeamcity.url}/guestAuth/app/rest/builds/id:$buildId/artifacts/content/$artifactPath"
+                    val artifactResponse =
+                        settings.httpClient.httpRequest(
+                            buildRequest("GET", artifactUrl),
+                        )
+                    if (artifactResponse.status.successful) {
+                        val verMap =
+                            artifactResponse.text
+                                .lines()
+                                .filter { it.contains("=") }
+                                .associate { it.substringBefore("=") to it.substringAfter("=") }
+                        val verList =
+                            columns.map { tcProp ->
+                                verMap[tcProp] ?: unknownInfo
+                            }
+                        val pyVersion = verList[0]
+                        put(KotlinKernelVersion.from(pyVersion) ?: error("Can't parse version $pyVersion"), verList)
+                    }
+                }
+            }
 
         var newLineNumCnt = (dataLinesIndices.lastOrNull() ?: headerSeparatorIndex) + 1
 
@@ -130,9 +147,10 @@ class CompatibilityTableGenerator(
             if (key in existingVersions) {
                 // update existing
                 val (index, oldRow) = existingVersions[key]!!
-                val newRow = row.indices.map { i ->
-                    if (row[i] == unknownInfo) oldRow[i] else row[i]
-                }
+                val newRow =
+                    row.indices.map { i ->
+                        if (row[i] == unknownInfo) oldRow[i] else row[i]
+                    }
                 existingVersions[key] = index to newRow
             } else {
                 // add new
@@ -144,25 +162,28 @@ class CompatibilityTableGenerator(
         val linesToUpdate = existingVersions.values.toMap()
         val newLinesCount = max(linesToUpdate.keys.maxOrNull() ?: 0, mdLines.lastIndex) + 2
 
-        val newLines = mutableListOf<String>().apply {
-            for (i in 0 until newLinesCount) {
-                if (i in linesToUpdate) {
-                    var j = -1
-                    add(linesToUpdate[i]!!.joinToString("|", "|", "|") {
-                        ++j
-                        val width = widths[j]
-                        val spacesCount = width - it.length
-                        if (spacesCount <= 0) {
-                            it
-                        } else {
-                            " " + it + " ".repeat(spacesCount - 1)
-                        }
-                    })
-                } else {
-                    add(mdLines.getOrNull(i).orEmpty())
+        val newLines =
+            mutableListOf<String>().apply {
+                for (i in 0 until newLinesCount) {
+                    if (i in linesToUpdate) {
+                        var j = -1
+                        add(
+                            linesToUpdate[i]!!.joinToString("|", "|", "|") {
+                                ++j
+                                val width = widths[j]
+                                val spacesCount = width - it.length
+                                if (spacesCount <= 0) {
+                                    it
+                                } else {
+                                    " " + it + " ".repeat(spacesCount - 1)
+                                }
+                            },
+                        )
+                    } else {
+                        add(mdLines.getOrNull(i).orEmpty())
+                    }
                 }
             }
-        }
 
         mdFile.writeText(newLines.joinToString("\n"))
     }

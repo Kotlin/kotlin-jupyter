@@ -11,14 +11,16 @@ import java.io.File
 
 abstract class UpdateLibrariesTask : DefaultTask() {
     @get:Input
-    val latestCommitHash: Property<String> = project.objects.property<String>().apply {
-        set(project.provider { BUILD_LIBRARIES.latestCommitOnDefaultBranch })
-    }
+    val latestCommitHash: Property<String> =
+        project.objects.property<String>().apply {
+            set(project.provider { BUILD_LIBRARIES.latestCommitOnDefaultBranch })
+        }
 
     @get:OutputDirectory
-    val librariesDir: Property<File> = project.objects.property<File>().apply {
-        set(BUILD_LIBRARIES.localLibrariesDir)
-    }
+    val librariesDir: Property<File> =
+        project.objects.property<File>().apply {
+            set(BUILD_LIBRARIES.localLibrariesDir)
+        }
 
     @TaskAction
     fun update() {

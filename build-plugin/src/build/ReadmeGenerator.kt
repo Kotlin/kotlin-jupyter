@@ -24,9 +24,10 @@ class ReadmeGenerator(
     private val project: Project,
     private val settings: RootSettingsExtension,
 ) {
-    private val kernelVersion = KotlinKernelVersion.fromMavenVersion(
-        project.defaultVersionCatalog.versions.exampleKernel
-    )!!
+    private val kernelVersion =
+        KotlinKernelVersion.fromMavenVersion(
+            project.defaultVersionCatalog.versions.exampleKernel,
+        )!!
 
     fun registerTasks(configuration: Task.() -> Unit) {
         fun Task.defineInputs() {
@@ -56,10 +57,11 @@ class ReadmeGenerator(
             doLast {
                 if (!project.isProtectedBranch()) return@doLast
                 project.configureGitRobotCommitter()
-                val commitResult = project.gitCommit(
-                    "Update README.md",
-                    includedPaths = listOf(settings.readmeFile.toRelativeString(project.rootDir))
-                )
+                val commitResult =
+                    project.gitCommit(
+                        "Update README.md",
+                        includedPaths = listOf(settings.readmeFile.toRelativeString(project.rootDir)),
+                    )
                 when (commitResult) {
                     is GitCommitResult.NoChanges -> {
                         // No changes => README wasn't updated, do nothing
@@ -112,14 +114,15 @@ class ReadmeGenerator(
         destination.writeText(result)
     }
 
-    private val processors: Map<String, () -> String> = mapOf(
-        "supported_libraries" to ::processSupportedLibraries,
-        "supported_commands" to ::processCommands,
-        "magics" to ::processMagics,
-        "kotlin_version" to ::processKotlinVersion,
-        "kernel_version" to ::processKernelVersion,
-        "repo_url" to ::processRepoUrl
-    )
+    private val processors: Map<String, () -> String> =
+        mapOf(
+            "supported_libraries" to ::processSupportedLibraries,
+            "supported_commands" to ::processCommands,
+            "magics" to ::processMagics,
+            "kotlin_version" to ::processKotlinVersion,
+            "kernel_version" to ::processKernelVersion,
+            "repo_url" to ::processRepoUrl,
+        )
 
     private fun processSupportedLibraries(): String {
         val libraryFiles =
@@ -127,14 +130,15 @@ class ReadmeGenerator(
 
         return libraryFiles.toList().associateTo(sortedMapOf()) { file ->
             val libraryName = file.nameWithoutExtension
-            val json = try{
-                JsonSlurper().parse(file) as Map<*, *>
-            } catch (e: JsonException) {
-                throw RuntimeException(
-                    "Failed to parse library file $file, text:\n${file.readText()}",
-                    e
-                )
-            }
+            val json =
+                try {
+                    JsonSlurper().parse(file) as Map<*, *>
+                } catch (e: JsonException) {
+                    throw RuntimeException(
+                        "Failed to parse library file $file, text:\n${file.readText()}",
+                        e,
+                    )
+                }
             val link = json["link"] as? String
             val description = json["description"] as? String
 
@@ -145,23 +149,27 @@ class ReadmeGenerator(
     }
 
     private fun processCommands(): String {
-        return ReplCommand.values().joinToString(
+        return ReplCommand.entries.joinToString(
             "\n",
-            tableHeader(listOf("Command", "Description"))
+            tableHeader(listOf("Command", "Description")),
         ) {
             tableRow(listOf("`:${it.nameForUser}`", it.desc))
         }
     }
 
     private fun processMagics(): String {
-        return ReplLineMagic.values().filter { it.visibleInHelp }.joinToString(
+        return ReplLineMagic.entries.filter { it.visibleInHelp }.joinToString(
             "\n",
-            tableHeader(listOf("Magic", "Description", "Usage example"))
+            tableHeader(listOf("Magic", "Description", "Usage example")),
         ) {
             val magicName = "`%${it.nameForUser}`"
             val description = it.desc
-            val usage = if (it.argumentsUsage == null) ""
-            else "`%${it.nameForUser} ${it.argumentsUsage}`"
+            val usage =
+                if (it.argumentsUsage == null) {
+                    ""
+                } else {
+                    "`%${it.nameForUser} ${it.argumentsUsage}`"
+                }
 
             tableRow(listOf(magicName, description, usage))
         }
@@ -180,14 +188,17 @@ class ReadmeGenerator(
     }
 
     private fun tableHeader(titles: List<String>): String {
+        val tableRow = tableRow(titles)
+        val headerText =
+            titles.joinToString("|", "|", "|") {
+                ":" + "-".repeat(it.length + 1)
+            }
         return """
             
-            ${tableRow(titles)}
-            ${titles.joinToString("|", "|", "|") {
-                ":" + "-".repeat(it.length + 1)
-            }}
+            $tableRow
+            $headerText
             
-        """.trimIndent()
+            """.trimIndent()
     }
 
     private fun tableRow(contents: List<String>): String {

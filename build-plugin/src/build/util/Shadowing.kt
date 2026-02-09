@@ -26,6 +26,7 @@ class RelocateDsl {
     var prefix: String = "ktnb."
 
     operator fun String.unaryPlus() = includes.add(this)
+
     operator fun String.unaryMinus() = excludes.add(this)
 }
 
@@ -71,7 +72,10 @@ class ContentTransformer(
         return element.relativePath.pathString == path
     }
 
-    override fun modifyOutputStream(os: ZipOutputStream, preserveFileTimestamps: Boolean) {
+    override fun modifyOutputStream(
+        os: ZipOutputStream,
+        preserveFileTimestamps: Boolean,
+    ) {
         val content = modifiedContent ?: return
 
         val entry = ZipEntry(path)
@@ -94,11 +98,13 @@ fun ContentModificationContext.transformPluginXmlContent(): String {
         return relocator.relocateClass(RelocateClassContext(fqn))
     }
 
-    val extensionPointLists = ideaPlugin.getElementsByTagName("extensionPoints")
-        .toElements()
-    for (extensionPointsNode in extensionPointLists) {
-        val extensionPoints = extensionPointsNode.getElementsByTagName("extensionPoint")
+    val extensionPointLists =
+        ideaPlugin.getElementsByTagName("extensionPoints")
             .toElements()
+    for (extensionPointsNode in extensionPointLists) {
+        val extensionPoints =
+            extensionPointsNode.getElementsByTagName("extensionPoint")
+                .toElements()
 
         for (extensionPoint in extensionPoints) {
             extensionPoint.transformAttributeValue("qualifiedName", ::relocateClass)
@@ -123,6 +129,9 @@ fun NodeList.toList(): List<Node> {
     return (0 until length).map { item(it) }
 }
 
-fun Element.transformAttributeValue(attributeName: String, transform: (String) -> String) {
+fun Element.transformAttributeValue(
+    attributeName: String,
+    transform: (String) -> String,
+) {
     setAttribute(attributeName, transform(getAttribute(attributeName)))
 }

@@ -1,6 +1,6 @@
 package build.util
 
-data class CompatibilityAttribute (
+data class CompatibilityAttribute(
     val tcPropertyName: String,
     val mdDescription: String,
     private val getValue: () -> String,

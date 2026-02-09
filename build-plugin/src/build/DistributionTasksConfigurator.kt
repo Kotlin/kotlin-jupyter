@@ -12,8 +12,9 @@ class DistributionTasksConfigurator(
     private val settings: RootSettingsExtension,
 ) {
     private fun removeTypeHintsIfNeeded(files: List<File>) {
-        if (!settings.removeTypeHints)
+        if (!settings.removeTypeHints) {
             return
+        }
 
         for (file in files) {
             val fileName = file.absolutePath
@@ -48,8 +49,9 @@ class DistributionTasksConfigurator(
             val pythonFiles = mutableListOf<File>()
             eachFile {
                 val absPath = settings.distribBuildDir.resolve(this.path).absoluteFile
-                if (this.path.endsWith(".py"))
+                if (this.path.endsWith(".py")) {
                     pythonFiles.add(absPath)
+                }
             }
 
             doLast {
@@ -68,7 +70,7 @@ class DistributionTasksConfigurator(
                 versionsCompatFilePath.writeText(
                     settings.compatibilityAttributes.joinToString("\n") { attr ->
                         "${attr.tcPropertyName}=${attr.value}"
-                    }
+                    },
                 )
                 project.copy {
                     from(versionFilePath, versionsCompatFilePath)

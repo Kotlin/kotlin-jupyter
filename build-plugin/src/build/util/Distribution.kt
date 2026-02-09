@@ -6,17 +6,17 @@ import org.gradle.api.tasks.InputFile
 import java.io.File
 
 open class TaskSpec(
-    var taskName: String = ""
+    var taskName: String = "",
 )
 
 class DistributionPackageSettings(val dir: String, val fileName: String)
 
-class UploadTaskSpecs <T : TaskSpec>(
+class UploadTaskSpecs<T : TaskSpec>(
     val packageSettings: DistributionPackageSettings,
     private val repoName: String,
     private val taskGroup: String,
     val stable: T,
-    val dev: T
+    val dev: T,
 ) {
     init {
         this.stable.taskName = taskName("Stable")
@@ -25,7 +25,10 @@ class UploadTaskSpecs <T : TaskSpec>(
 
     private fun taskName(type: String) = repoName + "Upload" + type
 
-    fun registerTasks(options: RootSettingsExtension, taskCreationAction: (T) -> Unit) {
+    fun registerTasks(
+        options: RootSettingsExtension,
+        taskCreationAction: (T) -> Unit,
+    ) {
         val project = options.project
         if (options.isOnProtectedBranch) {
             taskCreationAction(stable)
@@ -44,18 +47,18 @@ class UploadTaskSpecs <T : TaskSpec>(
 
 class CondaCredentials(
     val username: String,
-    val password: String
+    val password: String,
 )
 
 class CondaTaskSpec(
     val username: String,
-    val credentials: CondaCredentials
+    val credentials: CondaCredentials,
 ) : TaskSpec()
 
 class PyPiTaskSpec(
     val repoURL: String,
     val username: String,
-    val password: String
+    val password: String,
 ) : TaskSpec()
 
 abstract class PipInstallReq : Exec() {

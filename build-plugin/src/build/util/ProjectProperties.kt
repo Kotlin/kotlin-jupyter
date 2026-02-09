@@ -27,8 +27,11 @@ class ProjectPropertyDelegate<T>(
     private fun calculate(propertyName: String): T {
         val value: String? = project.typedProperty(propertyName)
         return if (value == null) {
-            default ?: if (isNullable) null as T
-            else throw BuildException("Property $propertyName is not set", null)
+            default ?: if (isNullable) {
+                null as T
+            } else {
+                throw BuildException("Property $propertyName is not set", null)
+            }
         } else {
             when (kClass) {
                 String::class -> value as T
@@ -40,7 +43,10 @@ class ProjectPropertyDelegate<T>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    operator fun getValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+    ): T {
         return if (externallySet) {
             externallyDefined as T
         } else {
@@ -55,7 +61,11 @@ class ProjectPropertyDelegate<T>(
         }
     }
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    operator fun setValue(
+        thisRef: Any?,
+        property: KProperty<*>,
+        value: T,
+    ) {
         externallySet = true
         externallyDefined = value
     }
@@ -63,12 +73,15 @@ class ProjectPropertyDelegate<T>(
 
 inline fun <reified T> Project.prop(
     projectPropertyName: String? = null,
-    default: T? = null
+    default: T? = null,
 ) = ProjectPropertyDelegate(this, typeOf<T>(), projectPropertyName, default)
 
 fun Project.stringPropOrEmpty(name: String) = rootProject.findProperty(name) as String? ?: ""
 
-fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
+fun <T> Project.getOrInitProperty(
+    name: String,
+    initializer: () -> T,
+): T {
     @Suppress("UNCHECKED_CAST")
     return (if (extra.has(name)) extra[name] as? T else null) ?: run {
         val value = initializer()
@@ -77,6 +90,9 @@ fun <T> Project.getOrInitProperty(name: String, initializer: () -> T): T {
     }
 }
 
-fun Project.getFlag(propertyName: String, default: Boolean = false): Boolean {
+fun Project.getFlag(
+    propertyName: String,
+    default: Boolean = false,
+): Boolean {
     return rootProject.findProperty(propertyName)?.booleanValueOrNull ?: default
 }

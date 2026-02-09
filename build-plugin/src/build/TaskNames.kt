@@ -44,7 +44,11 @@ val PREPARE_PACKAGE_TASK = mainInstallTaskName(debug = true, local = false)
 const val UPDATE_LIBRARIES_TASK = "updateLibraryDescriptors"
 
 fun debugStr(isDebug: Boolean) = if (isDebug) "Debug" else ""
-fun mainInstallTaskName(debug: Boolean, local: Boolean): String {
+
+fun mainInstallTaskName(
+    debug: Boolean,
+    local: Boolean,
+): String {
     val taskNamePrefix = if (local) "install" else "prepare"
     val taskNameMiddle = debugStr(debug)
     val taskNameSuffix = if (local) "" else "Package"

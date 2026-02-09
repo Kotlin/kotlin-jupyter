@@ -21,9 +21,10 @@ const val TEAMCITY_REQUEST_ENDPOINT = "guestAuth/app/rest/builds"
 fun Project.addAllBuildRepositories() {
     val kotlinVersion = rootProject.defaultVersionCatalog.versions.devKotlin
 
-    val sharedProps = java.util.Properties().apply {
-        load(File(rootDir, "shared.properties").inputStream())
-    }
+    val sharedProps =
+        java.util.Properties().apply {
+            load(File(rootDir, "shared.properties").inputStream())
+        }
 
     repositories {
         mavenCentral()

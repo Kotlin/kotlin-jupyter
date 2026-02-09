@@ -22,7 +22,6 @@ import org.jetbrains.kotlinx.jupyter.common.jsonObject
 import org.jetbrains.kotlinx.jupyter.common.successful
 import org.jetbrains.kotlinx.jupyter.common.withBasicAuth
 import org.jetbrains.kotlinx.jupyter.common.withJson
-import java.io.OutputStream
 
 class LibraryUpdateTasksConfigurator(
     private val project: Project,
@@ -61,7 +60,10 @@ class LibraryUpdateTasksConfigurator(
         project.tasks.register(PUSH_CHANGES_TASK) {
             dependsOn(UPDATE_LIBRARY_PARAM_TASK)
 
-            fun execGit(vararg args: String, configure: ExecSpec.() -> Unit = {}): ExecResult {
+            fun execGit(
+                vararg args: String,
+                configure: ExecSpec.() -> Unit = {},
+            ): ExecResult {
                 return project.providers.exec {
                     this.executable = "git"
                     this.args = args.asList()
@@ -75,11 +77,12 @@ class LibraryUpdateTasksConfigurator(
                 project.configureGitRobotCommitter()
                 project.gitCommit("[AUTO] Update library version", settings.librariesDir)
 
-                val currentBranch = project.getPropertyByCommand(
-                    "build.libraries.branch",
-                    arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
-                    settings.librariesDir,
-                )
+                val currentBranch =
+                    project.getPropertyByCommand(
+                        "build.libraries.branch",
+                        arrayOf("git", "rev-parse", "--abbrev-ref", "HEAD"),
+                        settings.librariesDir,
+                    )
                 execGit("push", "--force", "-u", settings.librariesRepoUrl, "$currentBranch:refs/heads/" + updateLibBranchName!!)
 
                 execGit("reset", "--hard", "HEAD~")
@@ -93,18 +96,20 @@ class LibraryUpdateTasksConfigurator(
                 val user = settings.prGithubUser
                 val password = settings.prGithubToken
                 val repoUserAndName = settings.librariesRepoUserAndName
+
                 fun githubRequest(
                     method: String,
                     request: String,
                     json: JsonElement,
                     onFailure: (Response) -> Unit,
                 ): ResponseWrapper {
-                    val response = settings.httpClient.httpRequest(
-                        buildRequest(method, "https://api.github.com/$request") {
-                            withJson(json)
-                            withBasicAuth(user, password)
-                        }
-                    )
+                    val response =
+                        settings.httpClient.httpRequest(
+                            buildRequest(method, "https://api.github.com/$request") {
+                                withJson(json)
+                                withBasicAuth(user, password)
+                            },
+                        )
                     println(response.text)
                     if (!response.status.successful) {
                         onFailure(response)
@@ -112,25 +117,28 @@ class LibraryUpdateTasksConfigurator(
                     return response
                 }
 
-                val prResponse = githubRequest(
-                    "POST", "repos/$repoUserAndName/pulls",
-                    Json.encodeToJsonElement(
-                        NewPrData(
-                            title = "Update `${settings.libName}` library to `${settings.libParamValue}`",
-                            head = updateLibBranchName!!,
-                            base = "master"
-                        )
-                    )
-                ) { response ->
-                    throw BuildException("Creating PR failed with code ${response.status.code}", null)
-                }
+                val prResponse =
+                    githubRequest(
+                        "POST",
+                        "repos/$repoUserAndName/pulls",
+                        Json.encodeToJsonElement(
+                            NewPrData(
+                                title = "Update `${settings.libName}` library to `${settings.libParamValue}`",
+                                head = updateLibBranchName!!,
+                                base = "master",
+                            ),
+                        ),
+                    ) { response ->
+                        throw BuildException("Creating PR failed with code ${response.status.code}", null)
+                    }
 
                 val prNumber = (prResponse.jsonObject["number"] as JsonPrimitive).int
                 githubRequest(
-                    "POST", "repos/$repoUserAndName/issues/$prNumber/labels",
+                    "POST",
+                    "repos/$repoUserAndName/issues/$prNumber/labels",
                     Json.encodeToJsonElement(
-                        SetLabelsData(listOf("no-changelog", "library-descriptors"))
-                    )
+                        SetLabelsData(listOf("no-changelog", "library-descriptors")),
+                    ),
                 ) { response ->
                     throw BuildException("Cannot setup labels for created PR: ${response.text}", null)
                 }
@@ -138,7 +146,11 @@ class LibraryUpdateTasksConfigurator(
         }
     }
 
-    private fun updateLibraryParam(libName: String, paramName: String, paramValue: String) {
+    private fun updateLibraryParam(
+        libName: String,
+        paramName: String,
+        paramValue: String,
+    ) {
         val libFile = project.file(settings.librariesDir).resolve(BUILD_LIBRARIES.descriptorFileName(libName))
         val libText = libFile.readText()
         val paramRegex = Regex("""^([ \t]*"$paramName"[ \t]*:[ \t]*")(.*)("[ \t]*,?)$""", RegexOption.MULTILINE)

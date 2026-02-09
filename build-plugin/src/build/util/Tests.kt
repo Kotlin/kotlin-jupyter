@@ -7,8 +7,8 @@ fun Test.useJavaLauncherOfVersion(version: String) {
     javaLauncher.set(
         project.javaToolchains.launcherFor {
             languageVersion.set(
-                JavaLanguageVersion.of(version)
+                JavaLanguageVersion.of(version),
             )
-        }
+        },
     )
 }
