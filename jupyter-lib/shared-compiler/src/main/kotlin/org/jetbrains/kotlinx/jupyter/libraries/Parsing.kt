@@ -25,7 +25,7 @@ fun parseLibraryDescriptors(
 ): Map<String, LibraryDescriptor> {
     val logger = loggerFactory.getLogger(LibraryDescriptor::class.java)
     return libJsons.mapValues {
-        logger.info("Parsing '${it.key}' descriptor")
+        logger.debug("Parsing '{}' descriptor", it.key)
         parseLibraryDescriptor(it.value)
     }
 }

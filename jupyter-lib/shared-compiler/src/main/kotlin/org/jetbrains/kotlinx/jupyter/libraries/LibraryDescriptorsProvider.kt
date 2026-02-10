@@ -30,7 +30,7 @@ open class ResourceLibraryDescriptorsProvider(
             .mapNotNull { descriptorFile ->
                 kernelClassLoader.getResource("$RESOURCES_LIBRARY_PATH/$descriptorFile")?.readText()?.let { text ->
                     val libraryName = descriptorFile.removeSuffix(".json")
-                    logger.info("Parsing library $libraryName from resources")
+                    logger.debug("Parsing library {} from resources", libraryName)
                     logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
                         libraryName to parseLibraryDescriptor(text)
                     }

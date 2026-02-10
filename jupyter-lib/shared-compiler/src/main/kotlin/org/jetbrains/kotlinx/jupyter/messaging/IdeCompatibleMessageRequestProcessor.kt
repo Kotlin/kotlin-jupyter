@@ -264,7 +264,7 @@ open class IdeCompatibleMessageRequestProcessor(
             // exitProcess would kill the entire process that embedded the kernel
             // Instead the controlThread will be interrupted,
             // which will then interrupt the mainThread and make kernelServer return
-            logger.info("Interrupting controlThread to trigger kernel shutdown")
+            logger.debug("Interrupting controlThread to trigger kernel shutdown")
             throw InterruptedException()
         }
     }

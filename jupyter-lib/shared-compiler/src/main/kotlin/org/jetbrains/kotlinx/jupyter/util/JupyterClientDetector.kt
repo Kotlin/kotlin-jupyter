@@ -18,7 +18,7 @@ class JupyterClientDetector(
         }
 
     private fun doDetect(): JupyterClientType {
-        logger.info("Detecting Jupyter client type")
+        logger.debug("Detecting Jupyter client type")
         val currentHandle = ProcessHandle.current()
         val ancestors = generateSequence(currentHandle) { it.parent().orElse(null) }.toList()
 
@@ -27,10 +27,10 @@ class JupyterClientDetector(
             val command = info.command().orElse("")
             val arguments = info.arguments().orElse(emptyArray()).toList()
 
-            logger.info("Inspecting process: $command ${arguments.joinToString(" ")}")
+            logger.debug("Inspecting process: $command ${arguments.joinToString(" ")}")
             val correctDetector = detectors.firstOrNull { it.isThisClient(command, arguments) } ?: continue
 
-            logger.info("Detected type is ${correctDetector.type}")
+            logger.debug("Detected type is {}", correctDetector.type)
             return correctDetector.type
         }
 

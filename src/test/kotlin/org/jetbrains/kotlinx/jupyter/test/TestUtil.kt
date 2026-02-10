@@ -172,7 +172,7 @@ fun readLibraries(basePath: String? = null): Map<String, String> {
         .listFiles()
         ?.filter(KERNEL_LIBRARIES::isLibraryDescriptor)
         ?.map {
-            logger.info("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
+            logger.debug("Loading '${it.nameWithoutExtension}' descriptor from '${it.canonicalPath}'")
             it.nameWithoutExtension to it.readText()
         }.orEmpty()
         .toMap()

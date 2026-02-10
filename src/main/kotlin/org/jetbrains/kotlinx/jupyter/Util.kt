@@ -181,7 +181,7 @@ class HomeDirLibraryDescriptorsProvider(
                 .toList()
                 .mapNotNull { file ->
                     val libraryName = file.nameWithoutExtension
-                    logger.info("Parsing descriptor for library '$libraryName'")
+                    logger.debug("Parsing descriptor for library '$libraryName'")
                     logger.catchAll(msg = "Parsing descriptor for library '$libraryName' failed") {
                         libraryName to parseLibraryDescriptor(file.readText())
                     }

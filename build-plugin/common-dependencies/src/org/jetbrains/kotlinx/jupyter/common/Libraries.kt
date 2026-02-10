@@ -147,7 +147,7 @@ private class LibraryDescriptorsManagerImpl(
             if (sinceTimestamp != null) {
                 url += "&since=$sinceTimestamp"
             }
-            logger.info("Checking for new commits to library descriptors at $url")
+            logger.debug("Checking for new commits to library descriptors at $url")
             val arr = getGithubHttpWithAuth(url).jsonArrayOrNull
             if (arr == null) {
                 logger.error("Request for the latest commit in libraries failed")
@@ -157,7 +157,7 @@ private class LibraryDescriptorsManagerImpl(
                 if (sinceTimestamp != null) {
                     getLatestCommitToLibraries(ref, null)
                 } else {
-                    logger.info("Didn't find any commits to libraries at $url")
+                    logger.debug("Didn't find any commits to libraries at $url")
                     null
                 }
             } else {
@@ -169,7 +169,7 @@ private class LibraryDescriptorsManagerImpl(
     }
 
     override fun downloadGlobalDescriptorOptions(ref: String): String? {
-        logger.info("Downloading global descriptor options")
+        logger.debug("Downloading global descriptor options")
         return try {
             downloadFileDirectly(OPTIONS_FILE, ref)
         } catch (e: Throwable) {
@@ -183,7 +183,7 @@ private class LibraryDescriptorsManagerImpl(
         name: String,
     ): String {
         val fileName = "$name.$DESCRIPTOR_EXTENSION"
-        logger.info("Downloading library descriptor $fileName")
+        logger.debug("Downloading library descriptor $fileName")
         return downloadFileDirectly(fileName, ref)
     }
 
@@ -192,7 +192,7 @@ private class LibraryDescriptorsManagerImpl(
         // libraries repo should have at least one of these files
         listOf(".properties", "LICENSE").any { fileName ->
             val url = buildRawContentApiDownloadUrl(fileName, ref)
-            logger.info("Checking ref existence directly at $url")
+            logger.debug("Checking ref existence directly at $url")
             val response = httpClient.getHttp(url)
             response.status.successful
         }
@@ -212,7 +212,7 @@ private class LibraryDescriptorsManagerImpl(
         localLibrariesDir.mkdirs()
 
         val url = buildGithubApiDownloadUrl("", ref)
-        logger.info("Requesting library descriptors at $url")
+        logger.debug("Requesting library descriptors at $url")
         val response = getGithubHttpWithAuth(url).jsonArray
 
         for (item in response) {
@@ -253,7 +253,7 @@ private class LibraryDescriptorsManagerImpl(
         ref: String,
     ): String {
         val url = buildRawContentApiDownloadUrl(filePath, ref)
-        logger.info("Directly downloading file from $url")
+        logger.debug("Directly downloading file from $url")
         val res = httpClient.getHttp(url)
         res.assertSuccessful()
         return res.text

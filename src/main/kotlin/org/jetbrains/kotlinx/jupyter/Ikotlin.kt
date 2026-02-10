@@ -69,7 +69,7 @@ internal fun printClassPath(logger: Logger) {
     val cp = classpathFromClassloader(cl)
 
     if (cp != null) {
-        logger.info("Current classpath: " + cp.joinToString())
+        logger.debug("Current classpath: " + cp.joinToString())
     }
 }
 
@@ -77,7 +77,7 @@ fun main(vararg args: String) {
     val loggerFactory = DefaultKernelLoggerFactory
     val logger = loggerFactory.getLogger(iKotlinClass)
     try {
-        logger.info("Kernel args: " + args.joinToString { it })
+        logger.debug("Kernel args: " + args.joinToString { it })
         val kernelArgs = parseCommandLine(*args)
         val kernelConfig = kernelArgs.getConfig(KernelJupyterParamsSerializer)
         val replSettings =
@@ -239,7 +239,11 @@ fun runServer(replSettings: DefaultReplSettings) {
         JupyterServerRunner.instances
             .find { it.canRun(ports) }
             ?: error("No server runner found for ports $ports")
-    logger.info("Starting server with config: $kernelConfig (using ${serverRunner.javaClass.simpleName} server runner)")
+    logger.debug(
+        "Starting server with config: {} (using {} server runner)",
+        kernelConfig,
+        serverRunner.javaClass.simpleName,
+    )
 
     val interruptionFuture = CompletableFuture<Unit>()
     val closeableResources = mutableListOf<Closeable>()
@@ -251,7 +255,7 @@ fun runServer(replSettings: DefaultReplSettings) {
                 setup = { sockets ->
                     printClassPath(logger)
 
-                    logger.info("Begin listening for events")
+                    logger.debug("Begin listening for events")
 
                     val messageHandler = createMessageHandler(replSettings, sockets)
                     closeableResources.add(messageHandler)

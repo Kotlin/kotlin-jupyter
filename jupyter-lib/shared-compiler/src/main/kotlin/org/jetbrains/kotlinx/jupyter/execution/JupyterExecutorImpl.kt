@@ -46,7 +46,7 @@ class JupyterExecutorImpl(
                     myThread.name = IDLE_EXECUTOR_NAME
                     executionInProgress.set(false)
                     if (Thread.interrupted()) {
-                        logger.info("Clearing interrupted status")
+                        logger.debug("Clearing interrupted status")
                     }
                 }
 
@@ -110,16 +110,16 @@ class JupyterExecutorImpl(
      */
     override fun interruptExecution() {
         // We interrupt only current execution and don't clear the queue, it's intended
-        logger.info("Stopping execution...")
+        logger.debug("Stopping execution...")
 
         if (executionInProgress.get()) {
             val execution = executorThread
             val executionName = execution.name
-            logger.info("Stopping $executionName...")
+            logger.debug("Stopping $executionName...")
 
             // We hope that user implemented isInterrupted checks on their side
             execution.interrupt()
-            logger.info("$executionName interrupted")
+            logger.debug("$executionName interrupted")
             Thread.sleep(100)
 
             if (execution.name == executionName) {

@@ -715,9 +715,13 @@ class ReplForJupyterImpl(
     }
 
     init {
-        logger.info("Starting kotlin REPL engine. Compiler version: ${KotlinCompilerVersion.VERSION} (${compilerMode.name})")
-        logger.info("Kernel version: ${runtimeProperties.version}")
-        logger.info("Classpath used in script: $scriptClasspath")
+        logger.debug(
+            "Starting kotlin REPL engine. Compiler version: {} ({})",
+            KotlinCompilerVersion.VERSION,
+            compilerMode.name,
+        )
+        logger.debug("Kernel version: {}", runtimeProperties.version)
+        logger.debug("Classpath used in script: {}", scriptClasspath)
     }
 
     override fun <T> withHost(

@@ -34,7 +34,7 @@ class ClassWriter(
         }
 
     init {
-        logger.info("Created ClassWriter with path <$outputDir>")
+        logger.debug("Created ClassWriter with path <{}>", outputDir)
     }
 
     fun writeClasses(
@@ -48,10 +48,12 @@ class ClassWriter(
                     writeClass(bytes, outputDir.resolve(name))
                 }
             }
-        } catch (e: ClassCastException) {
-            logger.info("Compiled line " + code.name + " has no in-memory modules")
-        } catch (e: NullPointerException) {
-            logger.info("Compiled line " + code.name + " has no in-memory modules")
+        } catch (e: Throwable) {
+            if (e is ClassCastException || e is NullPointerException) {
+                logger.info("Compiled line {} has no in-memory modules", code.name)
+            } else {
+                throw e
+            }
         }
     }
 

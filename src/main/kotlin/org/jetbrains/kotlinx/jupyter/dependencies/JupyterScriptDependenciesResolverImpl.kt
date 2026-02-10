@@ -111,7 +111,7 @@ open class JupyterScriptDependenciesResolverImpl(
     override fun addRepositories(repositories: List<RepositoryDescription>) {
         if (repositories.isEmpty()) return
         for (repositoryDescription in repositories) {
-            logger.info("Adding repository: ${repositoryDescription.value}")
+            logger.debug("Adding repository: {}", repositoryDescription.value)
             val repository =
                 Repository(
                     repositoryDescription.value,
@@ -192,7 +192,7 @@ open class JupyterScriptDependenciesResolverImpl(
     ) {
         if (dependencies.isEmpty()) return
 
-        logger.info("Resolving $dependencies")
+        logger.debug("Resolving {}", dependencies)
         doResolve(
             { resolveWithOptions(dependencies) },
             onBinaryResolved = onBinaryResolved,
@@ -221,8 +221,8 @@ open class JupyterScriptDependenciesResolverImpl(
             }
             is ResultWithDiagnostics.Success -> {
                 val resolvedArtifacts = result.value
-                logger.info("Resolved binaries: " + resolvedArtifacts.binaries.joinToString())
-                logger.info("Resolved sources: " + resolvedArtifacts.sources.joinToString())
+                logger.debug("Resolved binaries: {}", resolvedArtifacts.binaries.joinToString())
+                logger.debug("Resolved sources: {}", resolvedArtifacts.sources.joinToString())
                 onBinaryResolved(resolvedArtifacts.binaries)
                 onSourceResolved(resolvedArtifacts.sources)
             }
