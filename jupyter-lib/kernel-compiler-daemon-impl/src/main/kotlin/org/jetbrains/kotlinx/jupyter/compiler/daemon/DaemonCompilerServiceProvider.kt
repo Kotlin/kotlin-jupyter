@@ -7,8 +7,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 
 /**
  * Daemon-based compiler service provider.
- * This provider has higher priority (10) and is preferred in production
+ * This provider has lower priority (10) than in-process (100) and is preferred in production
  * to isolate compiler dependencies from the kernel process.
+ *
+ * The daemon process runs the actual compiler (from kernel-compiler-impl).
+ * This module only contains the client that communicates with the daemon.
  */
 class DaemonCompilerServiceProvider : CompilerServiceProvider {
     override val priority: Int = 10
@@ -16,12 +19,5 @@ class DaemonCompilerServiceProvider : CompilerServiceProvider {
     override fun createCompiler(
         params: CompilerParams,
         callbacks: KernelCallbacks,
-    ): CompilerService {
-        // TODO: Start daemon process and return DaemonCompilerClient
-        // For now, fall back to in-process compilation
-        throw UnsupportedOperationException(
-            "Daemon compiler not yet implemented. " +
-                "The in-process compiler (priority 100) will be used instead.",
-        )
-    }
+    ): CompilerService = DaemonCompilerClient(params, callbacks)
 }

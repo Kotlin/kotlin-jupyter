@@ -23,6 +23,13 @@ dependencies {
     // trove4j is a dependency of compiler-embeddable
     implementation(libs.jetbrains.trove4j)
 
+    // gRPC dependencies for daemon server implementation
+    implementation(libs.grpc.stub)
+    implementation(libs.grpc.protobuf)
+    implementation(libs.grpc.kotlin.stub)
+    implementation(libs.grpc.netty)
+    implementation(libs.protobuf.kotlin)
+
     // Test dependencies
     testImplementation(libs.kotlin.stable.test)
 }
@@ -33,4 +40,17 @@ buildSettings {
         skipPrereleaseCheck()
         jdkRelease(rootSettings.jvmTarget)
     }
+}
+
+// Task to create a fat jar for the compiler daemon
+tasks.register<Jar>("daemonJar") {
+    archiveClassifier.set("daemon")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes["Main-Class"] = "org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerDaemonMainKt"
+    }
+
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    from(sourceSets.main.get().output)
 }

@@ -1,15 +1,17 @@
 plugins {
     kotlin("jvm")
-    application
 }
+
+// This module contains the daemon LAUNCHER (client side) - NOT the daemon implementation.
+// The actual compiler implementation is in kernel-compiler-impl.
+// kernel-compiler-daemon-impl should NOT depend on kernel-compiler-impl.
 
 dependencies {
     api(projects.kernelCompilerApi)
-    api(projects.kernelCompilerImpl)
     api(projects.api)
     api(projects.commonDependencies)
 
-    // gRPC dependencies
+    // gRPC dependencies for client
     implementation(libs.grpc.netty)
     implementation(libs.grpc.protobuf)
     implementation(libs.grpc.stub)
@@ -29,21 +31,4 @@ buildSettings {
         skipPrereleaseCheck()
         jdkRelease(rootSettings.jvmTarget)
     }
-}
-
-application {
-    mainClass.set("org.jetbrains.kotlinx.jupyter.compiler.daemon.CompilerDaemonMainKt")
-}
-
-// Task to create a fat jar for the daemon
-tasks.register<Jar>("daemonJar") {
-    archiveClassifier.set("daemon")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    manifest {
-        attributes["Main-Class"] = "org.jetbrains.kotlinx.jupyter.compiler.daemon.CompilerDaemonMainKt"
-    }
-
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-    from(sourceSets.main.get().output)
 }

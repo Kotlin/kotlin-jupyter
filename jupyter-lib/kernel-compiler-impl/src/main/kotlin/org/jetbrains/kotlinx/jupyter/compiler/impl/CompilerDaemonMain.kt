@@ -1,9 +1,8 @@
-package org.jetbrains.kotlinx.jupyter.compiler.daemon
+package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import io.grpc.ManagedChannelBuilder
 import io.grpc.Server
 import io.grpc.ServerBuilder
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
 import java.util.concurrent.TimeUnit
 

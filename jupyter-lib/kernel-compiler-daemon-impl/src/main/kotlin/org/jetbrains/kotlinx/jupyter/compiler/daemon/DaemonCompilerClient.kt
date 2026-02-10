@@ -219,11 +219,12 @@ class DaemonCompilerClient(
 
     private fun findDaemonJar(): File {
         // Look for the daemon JAR in standard locations
+        // The daemon is built from kernel-compiler-impl module
         val possibleLocations =
             listOf(
-                File("jupyter-lib/kernel-compiler-daemon-impl/build/libs/kernel-compiler-daemon-impl-daemon.jar"),
-                File("../kernel-compiler-daemon-impl/build/libs/kernel-compiler-daemon-impl-daemon.jar"),
-                File("build/libs/kernel-compiler-daemon-impl-daemon.jar"),
+                File("jupyter-lib/kernel-compiler-impl/build/libs/kernel-compiler-impl-daemon.jar"),
+                File("../kernel-compiler-impl/build/libs/kernel-compiler-impl-daemon.jar"),
+                File("build/libs/kernel-compiler-impl-daemon.jar"),
             )
 
         for (location in possibleLocations) {

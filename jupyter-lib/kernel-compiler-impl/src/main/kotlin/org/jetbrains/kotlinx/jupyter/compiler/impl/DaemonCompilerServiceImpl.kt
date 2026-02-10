@@ -1,21 +1,18 @@
-package org.jetbrains.kotlinx.jupyter.compiler.daemon
+package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import com.google.protobuf.ByteString
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
-import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileResponse
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompiledClass
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompletionItem
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DependencyAnnotation
@@ -27,12 +24,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.JupyterCompilerServiceGrpcKt
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
@@ -44,11 +40,12 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
 /**
  * gRPC service implementation for the compiler daemon.
  * Implements the JupyterCompilerService defined in the proto file.
+ * This runs inside the daemon process.
  */
 class DaemonCompilerServiceImpl(
     private val callbackStub: KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineStub,
 ) : JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineImplBase() {
-    private var compiler: org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService? = null
+    private var compiler: CompilerService? = null
 
     override suspend fun initialize(request: InitializeRequest): InitializeResponse {
         val params =
@@ -58,9 +55,7 @@ class DaemonCompilerServiceImpl(
             )
 
         val callbacks = GrpcKernelCallbacks(callbackStub)
-        compiler =
-            org.jetbrains.kotlinx.jupyter.compiler.impl
-                .CompilerServiceImpl(params, callbacks)
+        compiler = CompilerServiceImpl(params, callbacks)
 
         return InitializeResponse
             .newBuilder()
