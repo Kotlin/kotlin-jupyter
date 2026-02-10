@@ -18,7 +18,7 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.asDiagnostics
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.foundAnnotations
+import kotlin.script.experimental.api.collectedAnnotations
 import kotlin.script.experimental.api.valueOr
 
 internal class FileAnnotationsProcessorImpl(
@@ -42,14 +42,15 @@ internal class FileAnnotationsProcessorImpl(
     ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val collected = mutableListOf<Annotation>()
         var config = context.compilationConfiguration
-        val foundAnnotations = context.collectedData?.get(ScriptCollectedData.foundAnnotations)
+        val collectedAnnotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)
 
-        foundAnnotations?.forEach {
-            if (collected.isEmpty() || collected[0].annotationClass == it.annotationClass) {
-                collected.add(it)
+        collectedAnnotations?.forEach { scriptAnnotation ->
+            val annotation = scriptAnnotation.annotation
+            if (collected.isEmpty() || collected[0].annotationClass == annotation.annotationClass) {
+                collected.add(annotation)
             } else {
                 config = processCollected(collected, host, context, config).valueOr { return it }
-                collected.add(it)
+                collected.add(annotation)
             }
         }
         val result = processCollected(collected, host, context, config)
