@@ -4,8 +4,8 @@ springJvmTarget = "17"
 jvmForTests = "17"
 jvmForGradlePluginTests = "17"
 kotlin = "2.4.0-dev-6891"
-stableKotlin = "2.4.0-dev-6891"
-gradleKotlin = "2.4.0-dev-6891"
+stableKotlin = "2.3.10-RC"
+gradleKotlin = "2.3.10-RC"
 kotlinDsl = "6.2.0"
 shadowJar = "9.1.0"
 ant = "1.10.13"
@@ -45,13 +45,14 @@ graphvizJava = "0.18.1"
 springBoot = "3.5.10"
 springDependencyManagement = "1.1.7"
 
+# kotlinx.rpc
+kotlinxRpc = "0.10.2"
+
 [libraries]
 
 # Dev Kotlin dependencies
 kotlin-dev-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-dev-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-kotlin-dev-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlin-dev-stdlibCommon = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-common", version.ref = "kotlin" }
 
 kotlin-dev-compilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompiler = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler", version.ref = "kotlin" }
@@ -85,6 +86,7 @@ amper-dependencyResolver = { group = "org.jetbrains.amper", name = "dependency-r
 
 # Serialization runtime
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "kotlinxSerialization" }
 # JSON5 support for serialization
 serialization-json5 = { group = "io.github.xn32", name = "json5k", version.ref = "json5k" }
 
@@ -127,6 +129,12 @@ spring-boot-configuration-processor = { module = "org.springframework.boot:sprin
 # Different libraries
 ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava" }
 
+# kotlinx.rpc
+kotlinx-rpc-krpc-core = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-core", version.ref = "kotlinxRpc" }
+kotlinx-rpc-krpc-client = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-client", version.ref = "kotlinxRpc" }
+kotlinx-rpc-krpc-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server", version.ref = "kotlinxRpc" }
+kotlinx-rpc-krpc-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-cbor", version.ref = "kotlinxRpc" }
+
 # Gradle Plugins
 
 # kotlin("jvm")
@@ -168,6 +176,7 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 shadow = { id = "com.gradleup.shadow" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm" }
 publisher = { id = "org.jetbrains.kotlin.libs.publisher" }
+kotlinx-rpc = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinxRpc" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

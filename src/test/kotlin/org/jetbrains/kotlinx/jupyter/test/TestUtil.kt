@@ -100,7 +100,7 @@ val classpath =
         "api",
         "protocol-api",
         "slf4j-api",
-        "shared-compiler",
+        "intellij-dependencies-shared",
         "kotlin-stdlib",
         "kotlin-reflect",
         "kotlin-script-runtime",

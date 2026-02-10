@@ -34,6 +34,7 @@ class ReplFactoryBase(
                 inMemoryReplResultsHolder,
                 replCompilerMode,
                 extraCompilerArguments,
+                compilerServiceSpiClassloader,
             )
         }
 }

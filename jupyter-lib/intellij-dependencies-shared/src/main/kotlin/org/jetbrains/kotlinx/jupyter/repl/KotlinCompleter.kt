@@ -1,0 +1,56 @@
+package org.jetbrains.kotlinx.jupyter.repl
+
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
+import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.util.toSourceCodePositionWithNewAbsolute
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
+
+class KotlinCompleter {
+    fun complete(
+        completeFunction: CompleteFunction,
+        code: String,
+        preprocessedCode: String,
+        snippetId: Int,
+        cursor: Int,
+    ): CompletionResult =
+        try {
+            val codeLine = SourceCodeImpl(snippetId, code)
+            val preprocessedCodeLine = SourceCodeImpl(snippetId, preprocessedCode)
+            val codePos = cursor.toSourceCodePositionWithNewAbsolute(codeLine, preprocessedCodeLine)
+            val completionVariants =
+                codePos?.let { runBlocking { completeFunction.complete(preprocessedCode, codePos, snippetId) } }
+
+            completionVariants?.let { completionList ->
+                getResult(code, cursor, completionList)
+            } ?: CompletionResult.Empty(code, cursor)
+        } catch (e: Exception) {
+            CompletionResult.Error(e.javaClass.simpleName, e.message ?: "", e.stackTrace.map { it.toString() })
+        }
+
+    companion object {
+        fun getResult(
+            code: String,
+            cursor: Int,
+            completions: List<SourceCodeCompletionVariant>,
+        ): CompletionResult.Success {
+            val bounds = getTokenBounds(code, cursor)
+            return CompletionResult.Success(completions.map { it.text }, bounds, completions, code, cursor)
+        }
+
+        private fun getTokenBounds(
+            buf: String,
+            cursor: Int,
+        ): CodeInterval {
+            require(cursor <= buf.length) { "Position $cursor does not exist in code snippet <$buf>" }
+
+            val startSubstring = buf.substring(0, cursor)
+
+            val filter = { c: Char -> !c.isLetterOrDigit() && c != '_' }
+
+            val start = startSubstring.indexOfLast(filter) + 1
+
+            return CodeInterval(start, cursor)
+        }
+    }
+}

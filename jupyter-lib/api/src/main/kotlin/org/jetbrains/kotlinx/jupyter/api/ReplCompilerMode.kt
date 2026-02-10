@@ -1,8 +1,11 @@
 package org.jetbrains.kotlinx.jupyter.api
 
+import kotlinx.serialization.Serializable
+
 /**
  * This is used to represent whether the underlying REPL is running in either K1 or K2 mode.
  */
+@Serializable
 enum class ReplCompilerMode {
     K1,
     K2,

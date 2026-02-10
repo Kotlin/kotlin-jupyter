@@ -7,6 +7,7 @@ import build.util.MAVEN_ARTIFACT_NAME_PREFIX
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.shadowOf
+import build.util.testImplementation
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
@@ -61,14 +62,16 @@ repositories {
 
 @Suppress("ktlint:standard:chain-method-continuation")
 dependencies {
-    implementation(libs.kotlin.dev.stdlib)
+    implementation(libs.kotlin.stable.stdlib)
 
     // Dependency on module with compiler.
-    api(projects.sharedCompiler)
+    api(projects.intellijDependenciesShared)
+    api(projects.intellijCompilerDependencies)
     api(projects.zmqServer)
+    api(projects.kernelCompilerApi)
 
     // Standard dependencies
-    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.stable.reflect)
     implementation(libs.jetbrains.annotations)
     implementation(libs.coroutines.core)
 
@@ -76,8 +79,6 @@ dependencies {
     addSharedEmbeddedDependenciesTo(configurations.implementation.get())
     implementation(libs.kotlin.dev.scriptingCommon)
     implementation(libs.kotlin.dev.scriptingJvm)
-    // Dependency of `libs.kotlin.dev.compilerEmbeddable`
-    implementation(libs.jetbrains.trove4j)
 
     // Logging
     implementation(libs.logging.slf4j.api)
@@ -101,6 +102,10 @@ dependencies {
 
     testImplementation(projects.wsServer)
     testImplementation(libs.java.websocket)
+    testImplementation(libs.kotlin.dev.compilerEmbeddable)
+
+    // do NOT include this in embeddedKernel
+    implementation(projects.kernelCompilerImpl)
 
     deploy(projects.lib)
     deploy(projects.api)
@@ -115,20 +120,36 @@ dependencies {
         excludeStandardKotlinDependencies()
     }
     ideScriptClasspathShadowed(projects.protocolApi) { isTransitive = false }
-    ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
-    ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
+    ideScriptClasspathShadowed(libs.kotlin.stable.stdlib)
 
     scriptClasspathShadowed.extendsFrom(deploy)
     scriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
     }
-    scriptClasspathShadowed(libs.kotlin.dev.stdlib)
+    scriptClasspathShadowed(libs.kotlin.stable.stdlib)
 
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
     // Required for running inside the IDE Process in IntelliJ
     embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
+
+    embeddableKernel(projects.kernelCompilerApi) { isTransitive = false }
+    embeddableKernel(libs.java.websocket) { isTransitive = false }
+    embeddableKernel(libs.kotlinx.rpc.krpc.client) { excludeCommonKotlinDependencies() }
+    embeddableKernel(libs.kotlinx.rpc.krpc.server) { excludeCommonKotlinDependencies() }
+    embeddableKernel(libs.kotlinx.rpc.krpc.serialization.cbor) { excludeCommonKotlinDependencies() }
+    embeddableKernel(projects.kernelCompilerDaemonApi) { isTransitive = false }
+    embeddableKernel(projects.kernelCompilerDaemonClient) { isTransitive = false }
+    testImplementation(projects.kernelCompilerDaemonClient)
+
     addSharedEmbeddedDependenciesTo(embeddableKernel)
+}
+
+fun ExternalModuleDependency.excludeCommonKotlinDependencies() {
+    excludeStandardKotlinDependencies()
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-cbor")
 }
 
 /**
@@ -140,12 +161,7 @@ dependencies {
 private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Configuration) {
     val configurationName = configuration.name
     for (dependency in listOf(
-        libs.kotlin.dev.compilerEmbeddable,
-        libs.kotlin.dev.scriptingCompilerImplEmbeddable,
         libs.kotlin.dev.scriptingCompilerEmbeddable,
-        libs.kotlin.dev.scriptingIdeServices,
-        // Embedded version of serialization plugin for notebook code
-        libs.serialization.dev.embeddedPlugin,
     )) {
         addConfiguredDependencyTo(this, configurationName, dependency) {
             isTransitive = false
@@ -207,6 +223,16 @@ tasks {
         group = PUBLISHING_GROUP
 
         dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
+    }
+
+    val copyLogbackConfig =
+        register<Copy>("copyLogbackConfig") {
+            from(rootDir.resolve("logback.xml"))
+            into(layout.buildDirectory.dir("resources/main"))
+        }
+
+    processResources {
+        dependsOn(copyLogbackConfig)
     }
 
     CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {

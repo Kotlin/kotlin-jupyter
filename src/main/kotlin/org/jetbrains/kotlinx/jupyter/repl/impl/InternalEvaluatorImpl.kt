@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.VariablesUsagesPerCellWatcher
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
 import org.jetbrains.kotlinx.jupyter.api.KTypeProvider
 import org.jetbrains.kotlinx.jupyter.api.RESULT_FIELD_PREFIX
@@ -11,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
@@ -33,11 +35,13 @@ import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.util.LinkedSnippet
 
 internal class InternalEvaluatorImpl(
     private val repl: ReplForJupyterImpl,
     private val loggerFactory: KernelLoggerFactory,
-    val compiler: JupyterCompiler,
+    private val compile: (id: Int, String, JupyterCompilingOptions) -> CompilationResult,
+    private val evaluationHelper: JupyterScriptEvaluationHelper,
     private val evaluator: KernelReplEvaluator,
     private val contextUpdater: ContextUpdater,
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
@@ -91,9 +95,9 @@ internal class InternalEvaluatorImpl(
 
     override var serializeScriptData: Boolean by serializeScriptDataProperty
 
-    override val lastKClass get() = compiler.lastKClass
+    override val lastKClass get() = evaluationHelper.lastKClass
 
-    override val lastClassLoader get() = compiler.lastClassLoader
+    override val lastClassLoader get() = evaluationHelper.lastClassLoader
 
     override val variablesHolder = mutableMapOf<String, VariableState>()
 
@@ -118,15 +122,17 @@ internal class InternalEvaluatorImpl(
             if (executionLogging == ExecutedCodeLogging.ALL) {
                 println("Executing:\n$code")
             }
-            val id = compiler.nextCounter()
+            val id = repl.nextCounter()
 
             evaluatorWorkflowListener?.internalIdGenerated(id)
 
+            val compilationResult = compile(id, code, compilingOptions)
+            repl.processCompilationResult(compilationResult)
+            val linkedSnippet = compilationResult.linkedSnippet
             val codeLine = SourceCodeImpl(id, code)
-
-            val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
+            val evalConfig = evaluationHelper.createEvaluationConfiguration(codeLine, linkedSnippet)
             evaluatorWorkflowListener?.compilationFinished()
-            val compiledScript = compileResult.get()
+            val compiledScript = linkedSnippet.get()
             scriptFqnToExecutionCountTracker[compiledScript.scriptClassFQName] =
                 CellErrorMetaData(
                     compilingOptions.cellId.toExecutionCount(),
@@ -135,7 +141,7 @@ internal class InternalEvaluatorImpl(
             withClassWriter {
                 writeClasses(codeLine, compiledScript)
             }
-            val resultWithDiagnostics = runBlocking { evaluator.eval(compileResult, evalConfig) }
+            val resultWithDiagnostics = runBlocking { evaluator.eval(linkedSnippet, evalConfig) }
             contextUpdater.update()
 
             when (resultWithDiagnostics) {
@@ -255,3 +261,12 @@ internal class InternalEvaluatorImpl(
         updateVariablesState(lastExecutionCellId)
     }
 }
+
+/**
+ * Result of compilation that includes the compiled script along with collected metadata.
+ */
+data class CompilationResult(
+    val linkedSnippet: LinkedSnippet<KJvmCompiledScript>,
+    val imports: List<String>,
+    val declarations: List<DeclarationInfo>,
+)

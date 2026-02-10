@@ -1,0 +1,51 @@
+plugins {
+    kotlin("jvm")
+}
+
+dependencies {
+    api(projects.kernelCompilerApi)
+    api(projects.api)
+    api(projects.intellijCompilerDependencies) // For getCompilationConfiguration
+    api(projects.protocolApi) // For KernelLoggerFactory
+
+    // Coroutines for async operations
+    implementation(libs.coroutines.core)
+
+    // Logging
+    implementation(libs.logging.slf4j.api)
+
+    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.dev.stdlib)
+
+    // Kotlin scripting dependencies for actual compilation
+    implementation(libs.kotlin.dev.compilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCommon)
+    implementation(libs.kotlin.dev.scriptingJvm)
+    implementation(libs.kotlin.dev.scriptRuntime)
+    implementation(libs.kotlin.dev.scriptingIdeServices)
+
+    // scripting compiler scans classpath for compiler plugins, so we need this here
+    runtimeOnly(libs.serialization.dev.embeddedPlugin)
+
+    // trove4j is a dependency of compiler-embeddable
+    implementation(libs.jetbrains.trove4j)
+
+    // Test dependencies
+    testImplementation(libs.kotlin.stable.test)
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
+}
+
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
+        jdkRelease(rootSettings.jvmTarget)
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
