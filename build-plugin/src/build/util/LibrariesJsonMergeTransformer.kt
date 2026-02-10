@@ -18,9 +18,12 @@ import org.gradle.api.file.FileTreeElement
  */
 class LibrariesJsonMergeTransformer : ResourceTransformer {
     private val path: String = "META-INF/kotlin-jupyter-libraries/libraries.json"
-    private val definitions = mutableListOf<JsonElement>()
-    private val producers = mutableListOf<JsonElement>()
-    private val descriptors = mutableListOf<JsonElement>()
+    private val elements =
+        listOf(
+            "definitions",
+            "producers",
+            "descriptors",
+        ).associateWith { mutableListOf<JsonElement>() }
 
     override fun getName(): String = "Libraries JSON Merge Transformer for $path"
 
@@ -34,12 +37,13 @@ class LibrariesJsonMergeTransformer : ResourceTransformer {
         val content = context.inputStream.reader().use { it.readText() }
         val json = Json.parseToJsonElement(content).jsonObject
 
-        json["definitions"]?.jsonArray?.let { definitions.addAll(it) }
-        json["producers"]?.jsonArray?.let { producers.addAll(it) }
-        json["descriptors"]?.jsonArray?.let { descriptors.addAll(it) }
+        for ((key, list) in elements) {
+            val keyElements = json[key]?.jsonArray ?: continue
+            list.addAll(keyElements)
+        }
     }
 
-    override fun hasTransformedResource(): Boolean = definitions.isNotEmpty() || producers.isNotEmpty() || descriptors.isNotEmpty()
+    override fun hasTransformedResource(): Boolean = elements.any { it.value.isNotEmpty() }
 
     override fun modifyOutputStream(
         os: ZipOutputStream,
@@ -49,9 +53,13 @@ class LibrariesJsonMergeTransformer : ResourceTransformer {
 
         val mergedJson =
             buildJsonObject {
-                putJsonArray("definitions") { definitions.distinct().forEach { add(it) } }
-                putJsonArray("producers") { producers.distinct().forEach { add(it) } }
-                putJsonArray("descriptors") { descriptors.distinct().forEach { add(it) } }
+                for ((key, list) in elements) {
+                    putJsonArray(key) {
+                        for (element in list.distinct()) {
+                            add(element)
+                        }
+                    }
+                }
             }
 
         val entry = ZipEntry(path)
