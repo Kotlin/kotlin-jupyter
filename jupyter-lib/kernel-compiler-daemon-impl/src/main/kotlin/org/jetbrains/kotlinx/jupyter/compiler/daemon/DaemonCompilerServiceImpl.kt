@@ -1,0 +1,274 @@
+package org.jetbrains.kotlinx.jupyter.compiler.daemon
+
+import com.google.protobuf.ByteString
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
+import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
+import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
+import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
+import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompiledClass
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.CompletionItem
+import org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationType
+import org.jetbrains.kotlinx.jupyter.compiler.proto.DependencyAnnotation
+import org.jetbrains.kotlinx.jupyter.compiler.proto.Diagnostic
+import org.jetbrains.kotlinx.jupyter.compiler.proto.DiagnosticSeverity
+import org.jetbrains.kotlinx.jupyter.compiler.proto.InitializeRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.InitializeResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.JupyterCompilerServiceGrpcKt
+import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdateClasspathRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdateClasspathResponse
+import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
+import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
+
+/**
+ * gRPC service implementation for the compiler daemon.
+ * Implements the JupyterCompilerService defined in the proto file.
+ */
+class DaemonCompilerServiceImpl(
+    private val callbackStub: KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineStub,
+) : JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineImplBase() {
+    private var compiler: org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService? = null
+
+    override suspend fun initialize(request: InitializeRequest): InitializeResponse {
+        val params =
+            CompilerParams(
+                scriptClasspath = request.classpathEntriesList,
+                jvmTarget = request.jvmTarget,
+            )
+
+        val callbacks = GrpcKernelCallbacks(callbackStub)
+        compiler =
+            org.jetbrains.kotlinx.jupyter.compiler.impl
+                .CompilerServiceImpl(params, callbacks)
+
+        return InitializeResponse
+            .newBuilder()
+            .setSuccess(true)
+            .build()
+    }
+
+    override suspend fun compile(request: CompileRequest): CompileResponse {
+        val currentCompiler =
+            compiler ?: return CompileResponse
+                .newBuilder()
+                .setSuccess(false)
+                .addDiagnostics(
+                    Diagnostic
+                        .newBuilder()
+                        .setSeverity(DiagnosticSeverity.ERROR)
+                        .setMessage("Compiler not initialized")
+                        .build(),
+                ).build()
+
+        return when (
+            val result =
+                currentCompiler.compile(
+                    snippetId = request.snippetId,
+                    code = request.code,
+                    cellId = request.cellId,
+                )
+        ) {
+            is CompileResult.Success ->
+                CompileResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
+                    .setSerializedEvalConfig(ByteString.copyFrom(result.serializedEvalConfig))
+                    .build()
+
+            is CompileResult.Failure ->
+                CompileResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .addAllDiagnostics(result.diagnostics.map { it.toProto() })
+                    .build()
+        }
+    }
+
+    override suspend fun updateClasspath(request: UpdateClasspathRequest): UpdateClasspathResponse {
+        compiler?.updateClasspath(request.classpathEntriesList)
+
+        return UpdateClasspathResponse
+            .newBuilder()
+            .setSuccess(true)
+            .build()
+    }
+
+    override suspend fun checkComplete(request: CheckCompleteRequest): CheckCompleteResponse {
+        val currentCompiler =
+            compiler ?: return CheckCompleteResponse
+                .newBuilder()
+                .setIsComplete(false)
+                .build()
+
+        val result = currentCompiler.checkComplete(request.code)
+
+        return CheckCompleteResponse
+            .newBuilder()
+            .setIsComplete(result.isComplete)
+            .build()
+    }
+
+    override suspend fun listErrors(request: ListErrorsRequest): ListErrorsResponse {
+        val currentCompiler = compiler ?: return ListErrorsResponse.newBuilder().build()
+
+        val diagnostics = currentCompiler.listErrors(request.code)
+
+        return ListErrorsResponse
+            .newBuilder()
+            .addAllDiagnostics(diagnostics.map { it.toProto() })
+            .build()
+    }
+
+    override suspend fun complete(request: CompleteRequest): CompleteResponse {
+        val currentCompiler =
+            compiler ?: return CompleteResponse
+                .newBuilder()
+                .setCursorStart(request.cursor)
+                .setCursorEnd(request.cursor)
+                .build()
+
+        val result = currentCompiler.complete(request.code, request.cursor)
+
+        return CompleteResponse
+            .newBuilder()
+            .addAllItems(
+                result.items.map { item ->
+                    CompletionItem
+                        .newBuilder()
+                        .setText(item.text)
+                        .setDisplayText(item.displayText)
+                        .apply {
+                            item.icon?.let { setIcon(it) }
+                            item.tail?.let { setTail(it) }
+                        }.build()
+                },
+            ).setCursorStart(result.cursorStart)
+            .setCursorEnd(result.cursorEnd)
+            .build()
+    }
+
+    override suspend fun shutdown(request: ShutdownRequest): ShutdownResponse {
+        compiler?.shutdown()
+        compiler = null
+
+        return ShutdownResponse
+            .newBuilder()
+            .setSuccess(true)
+            .build()
+    }
+}
+
+/**
+ * Implements KernelCallbacks by making gRPC calls back to the kernel.
+ */
+private class GrpcKernelCallbacks(
+    private val stub: KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineStub,
+) : KernelCallbacks {
+    override suspend fun reportImports(imports: List<String>) {
+        val request =
+            ReportImportsRequest
+                .newBuilder()
+                .addAllImports(imports)
+                .build()
+        stub.reportImports(request)
+    }
+
+    override suspend fun reportDeclarations(declarations: List<DeclarationInfo>) {
+        val request =
+            ReportDeclarationsRequest
+                .newBuilder()
+                .addAllDeclarations(declarations.map { it.toProto() })
+                .build()
+        stub.reportDeclarations(request)
+    }
+
+    override suspend fun resolveDependencies(annotations: List<ApiDependencyAnnotation>): DependencyResolutionResult {
+        val request =
+            ResolveDependenciesRequest
+                .newBuilder()
+                .addAllAnnotations(annotations.map { it.toProto() })
+                .build()
+        val response = stub.resolveDependencies(request)
+
+        return if (response.success) {
+            DependencyResolutionResult.Success(response.classpathEntriesList)
+        } else {
+            DependencyResolutionResult.Failure(response.errorMessage)
+        }
+    }
+}
+
+// Extension functions to convert between API and proto types
+
+private fun ApiDiagnostic.toProto(): Diagnostic =
+    Diagnostic
+        .newBuilder()
+        .setSeverity(
+            when (severity) {
+                ApiDiagnostic.Severity.ERROR -> DiagnosticSeverity.ERROR
+                ApiDiagnostic.Severity.WARNING -> DiagnosticSeverity.WARNING
+                ApiDiagnostic.Severity.INFO -> DiagnosticSeverity.INFO
+            },
+        ).setMessage(message)
+        .apply {
+            if (line != null && column != null) {
+                setLocation(
+                    SourceLocation
+                        .newBuilder()
+                        .setLine(line!!)
+                        .setColumn(column!!)
+                        .build(),
+                )
+            }
+        }.build()
+
+private fun DeclarationInfo.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationInfo =
+    org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationInfo
+        .newBuilder()
+        .setName(name ?: "")
+        .setType(
+            when (kind) {
+                DeclarationKind.FUNCTION -> DeclarationType.FUNCTION
+                DeclarationKind.CLASS -> DeclarationType.CLASS
+                DeclarationKind.OBJECT -> DeclarationType.OBJECT
+                DeclarationKind.PROPERTY -> DeclarationType.PROPERTY
+                else -> DeclarationType.UNKNOWN
+            },
+        ).build()
+
+private fun ApiDependencyAnnotation.toProto(): DependencyAnnotation =
+    DependencyAnnotation
+        .newBuilder()
+        .setType(
+            when (this) {
+                is ApiDependencyAnnotation.DependsOn -> AnnotationType.DEPENDS_ON
+                is ApiDependencyAnnotation.Repository -> AnnotationType.REPOSITORY
+            },
+        ).setValue(
+            when (this) {
+                is ApiDependencyAnnotation.DependsOn -> value
+                is ApiDependencyAnnotation.Repository -> url
+            },
+        ).build()

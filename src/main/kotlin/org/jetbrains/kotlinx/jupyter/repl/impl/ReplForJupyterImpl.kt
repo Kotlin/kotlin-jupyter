@@ -43,9 +43,13 @@ import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceAdapter
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.config.addBaseClass
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -328,6 +332,32 @@ class ReplForJupyterImpl(
         }
     }
 
+    // New RPC-based compiler service for out-of-process compilation
+    private val compilerService by lazy {
+        val callbacks = KernelCallbacksImpl(
+            dependencyResolver = dependencyManager.resolver,
+            onImportsReported = { imports ->
+                // TODO: Wire to import tracking when fully integrated
+            },
+            onDeclarationsReported = { declarations ->
+                // TODO: Wire to declaration tracking when fully integrated
+            },
+        )
+        val params = CompilerParams(
+            scriptClasspath = currentClasspath,
+            jvmTarget = runtimeProperties.jvmTargetForSnippets,
+        )
+        CompilerServiceFactory.createCompilerService(params, callbacks)
+    }
+
+    // Adapter that wraps CompilerService to provide JupyterCompiler interface
+    // This is ready to be used but not yet enabled by default
+    // To enable, replace jupyterCompiler with compilerAdapter in internalEvaluator construction
+    private val compilerAdapter by lazy {
+        val classLoader = notebook.intermediateClassLoader ?: Thread.currentThread().contextClassLoader
+        CompilerServiceAdapter(compilerService, classLoader)
+    }
+
     private val evaluator: KernelReplEvaluator by lazy {
         when (compilerMode) {
             ReplCompilerMode.K1 -> BasicJvmReplEvaluator()
@@ -354,7 +384,7 @@ class ReplForJupyterImpl(
         InternalEvaluatorImpl(
             this,
             loggerFactory,
-            jupyterCompiler,
+            jupyterCompiler,  // TODO: Replace with compilerAdapter when ready
             evaluator,
             contextUpdater,
             internalVariablesMarkersProcessor,

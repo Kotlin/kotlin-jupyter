@@ -45,6 +45,12 @@ graphvizJava = "0.18.1"
 springBoot = "3.5.10"
 springDependencyManagement = "1.1.7"
 
+# gRPC and Protobuf
+grpc = "1.68.1"
+grpcKotlin = "1.4.1"
+protobuf = "4.28.3"
+protobufPlugin = "0.9.4"
+
 [libraries]
 
 # Dev Kotlin dependencies
@@ -126,6 +132,14 @@ spring-boot-configuration-processor = { module = "org.springframework.boot:sprin
 
 # Different libraries
 ext-graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphvizJava" }
+
+# gRPC and Protobuf
+grpc-netty = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
+protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 
 # Gradle Plugins
 

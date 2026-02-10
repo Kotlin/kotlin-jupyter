@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package org.jetbrains.kotlinx.jupyter.compiler.proto;
+
+option java_multiple_files = true;
+option java_package = "org.jetbrains.kotlinx.jupyter.compiler.proto";
+
+// Main compiler service (daemon implements this)
+service JupyterCompilerService {
+    rpc Initialize(InitializeRequest) returns (InitializeResponse);
+    rpc Compile(CompileRequest) returns (CompileResponse);
+    rpc UpdateClasspath(UpdateClasspathRequest) returns (UpdateClasspathResponse);
+    rpc CheckComplete(CheckCompleteRequest) returns (CheckCompleteResponse);
+    rpc ListErrors(ListErrorsRequest) returns (ListErrorsResponse);
+    rpc Complete(CompleteRequest) returns (CompleteResponse);
+    rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+// Kernel callback service (kernel implements this)
+service KernelCallbackService {
+    rpc ReportImports(ReportImportsRequest) returns (ReportImportsResponse);
+    rpc ReportDeclarations(ReportDeclarationsRequest) returns (ReportDeclarationsResponse);
+    rpc ResolveDependencies(ResolveDependenciesRequest) returns (ResolveDependenciesResponse);
+}
+
+message InitializeRequest {
+    repeated string classpath_entries = 1;
+    string jvm_target = 2;
+}
+
+message InitializeResponse {
+    bool success = 1;
+}
+
+message CompileRequest {
+    int32 snippet_id = 1;
+    string code = 2;
+    int32 cell_id = 3;
+}
+
+message CompiledClass {
+    string class_name = 1;
+    bytes class_bytes = 2;
+}
+
+enum DiagnosticSeverity {
+    ERROR = 0;
+    WARNING = 1;
+    INFO = 2;
+}
+
+message SourceLocation {
+    int32 line = 1;
+    int32 column = 2;
+}
+
+message Diagnostic {
+    DiagnosticSeverity severity = 1;
+    string message = 2;
+    SourceLocation location = 3;
+}
+
+message CompileResponse {
+    bool success = 1;
+    // On success: Java-serialized LinkedSnippet<KJvmCompiledScript> and ScriptEvaluationConfiguration
+    bytes serialized_compiled_snippet = 2;
+    bytes serialized_eval_config = 3;
+    // On failure:
+    repeated Diagnostic diagnostics = 4;
+}
+
+message UpdateClasspathRequest {
+    repeated string classpath_entries = 1;
+}
+
+message UpdateClasspathResponse {
+    bool success = 1;
+}
+
+message CheckCompleteRequest {
+    string code = 1;
+}
+
+message CheckCompleteResponse {
+    bool is_complete = 1;
+}
+
+message ListErrorsRequest {
+    string code = 1;
+}
+
+message ListErrorsResponse {
+    repeated Diagnostic diagnostics = 1;
+}
+
+message CompleteRequest {
+    string code = 1;
+    int32 cursor = 2;
+}
+
+message CompletionItem {
+    string text = 1;
+    string display_text = 2;
+    string icon = 3;
+    string tail = 4;
+}
+
+message CompleteResponse {
+    repeated CompletionItem items = 1;
+    int32 cursor_start = 2;
+    int32 cursor_end = 3;
+}
+
+message ShutdownRequest {}
+message ShutdownResponse {
+    bool success = 1;
+}
+
+message ReportImportsRequest {
+    repeated string imports = 1;
+}
+
+message ReportImportsResponse {}
+
+enum DeclarationType {
+    FUNCTION = 0;
+    CLASS = 1;
+    PROPERTY = 2;
+    OBJECT = 3;
+    UNKNOWN = 4;
+}
+
+message DeclarationInfo {
+    string name = 1;
+    DeclarationType type = 2;
+}
+
+message ReportDeclarationsRequest {
+    repeated DeclarationInfo declarations = 1;
+}
+
+message ReportDeclarationsResponse {}
+
+enum AnnotationType {
+    DEPENDS_ON = 0;
+    REPOSITORY = 1;
+}
+
+message DependencyAnnotation {
+    AnnotationType type = 1;
+    string value = 2;
+}
+
+message ResolveDependenciesRequest {
+    repeated DependencyAnnotation annotations = 1;
+}
+
+message ResolveDependenciesResponse {
+    bool success = 1;
+    repeated string classpath_entries = 2;
+    string error_message = 3;
+}

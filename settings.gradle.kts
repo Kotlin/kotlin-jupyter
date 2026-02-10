@@ -43,6 +43,10 @@ projectStructure {
         }
         project("kotlin-jupyter-api-gradle-plugin")
         project("shared-compiler")
+        project("intellij-compiler-dependencies")
+        project("kernel-compiler-api")
+        project("kernel-compiler-impl")
+        project("kernel-compiler-daemon-impl")
         project("spring-starter")
         project("lib-ext")
         project("protocol")

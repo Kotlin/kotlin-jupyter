@@ -66,6 +66,7 @@ dependencies {
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
     api(projects.zmqServer)
+    api(projects.kernelCompilerApi)
 
     // Standard dependencies
     implementation(libs.kotlin.dev.reflect)
@@ -101,6 +102,10 @@ dependencies {
 
     testImplementation(projects.wsServer)
     testImplementation(libs.java.websocket)
+
+    // Add compiler implementations for SPI testing
+    testRuntimeOnly(projects.kernelCompilerImpl)
+    testRuntimeOnly(projects.kernelCompilerDaemonImpl)
 
     deploy(projects.lib)
     deploy(projects.api)

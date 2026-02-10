@@ -1,0 +1,2 @@
+# Daemon compiler not yet implemented - using in-process compiler
+# org.jetbrains.kotlinx.jupyter.compiler.daemon.DaemonCompilerServiceProvider

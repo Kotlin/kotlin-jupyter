@@ -1,0 +1,36 @@
+plugins {
+    kotlin("jvm")
+}
+
+dependencies {
+    api(projects.kernelCompilerApi)
+    api(projects.api)
+    api(projects.commonDependencies)
+    api(projects.sharedCompiler)
+
+    // Coroutines for async operations
+    implementation(libs.coroutines.core)
+
+    // Kotlin scripting dependencies for actual compilation
+    implementation(libs.kotlin.dev.compilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCompilerEmbeddable)
+    implementation(libs.kotlin.dev.scriptingCommon)
+    implementation(libs.kotlin.dev.scriptingJvm)
+    implementation(libs.kotlin.dev.scriptRuntime)
+    implementation(libs.kotlin.dev.reflect)
+
+    // trove4j is a dependency of compiler-embeddable
+    implementation(libs.jetbrains.trove4j)
+
+    // Test dependencies
+    testImplementation(libs.kotlin.stable.test)
+}
+
+buildSettings {
+    withLanguageLevel(rootSettings.kotlinLanguageLevel)
+    withCompilerArgs {
+        skipPrereleaseCheck()
+        jdkRelease(rootSettings.jvmTarget)
+    }
+}
