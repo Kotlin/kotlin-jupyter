@@ -218,26 +218,21 @@ class DaemonCompilerClient(
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 
     private fun findDaemonJar(): File {
-        // Look for the daemon JAR in standard locations
-        // The daemon is built from kernel-compiler-impl module using shadowJar task
-        // The jar name includes version, so we search for files matching the pattern
-        val possibleDirectories =
-            listOf(
-                File("jupyter-lib/kernel-compiler-impl/build/libs"),
-                File("../kernel-compiler-impl/build/libs"),
-                File("build/libs"),
-            )
+        // Extract the daemon JAR from resources (it's packaged with this module)
+        val resourceStream = javaClass.getResourceAsStream("/compiler-daemon.jar")
+            ?: throw RuntimeException("Could not find compiler-daemon.jar in resources. Please rebuild the project.")
 
-        for (dir in possibleDirectories) {
-            if (dir.exists() && dir.isDirectory) {
-                val daemonJar = dir.listFiles()?.find { it.name.contains("-daemon") && it.name.endsWith(".jar") }
-                if (daemonJar != null) {
-                    return daemonJar
-                }
+        // Create a temporary file to hold the daemon JAR
+        val tempFile = File.createTempFile("compiler-daemon-", ".jar")
+        tempFile.deleteOnExit()
+
+        resourceStream.use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
             }
         }
 
-        throw RuntimeException("Could not find compiler daemon JAR. Please build the project first using ':kernel-compiler-impl:shadowJar'.")
+        return tempFile
     }
 }
 

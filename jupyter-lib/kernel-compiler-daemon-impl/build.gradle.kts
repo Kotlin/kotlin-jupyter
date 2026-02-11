@@ -32,3 +32,15 @@ buildSettings {
         jdkRelease(rootSettings.jvmTarget)
     }
 }
+
+// Copy the daemon fat jar from kernel-compiler-impl into this module's resources
+val copyDaemonJar by tasks.registering(Copy::class) {
+    dependsOn(":kernel-compiler-impl:shadowJar")
+    from(project(":kernel-compiler-impl").tasks.named("shadowJar"))
+    into(layout.buildDirectory.dir("resources/main"))
+    rename { "compiler-daemon.jar" }
+}
+
+tasks.named("processResources") {
+    dependsOn(copyDaemonJar)
+}
