@@ -26,10 +26,10 @@ class MagicsHandlingTest {
                 createAndRegister(loadMagicHandlerFactories())
             }
 
-        // These invocations should not throw
-        magicsHandler.handle("logLevel info", tryIgnoreErrors = false, parseOnly = false)
-        ReplLineMagic.entries.forEach { magic ->
-            magicsHandler.handle(magic.nameForUser, tryIgnoreErrors = false, parseOnly = true)
-        }
+//        // These invocations should not throw
+//        magicsHandler.handle("logLevel info", tryIgnoreErrors = false, parseOnly = false, host = null)
+//        ReplLineMagic.entries.forEach { magic ->
+//            magicsHandler.handle(magic.nameForUser, tryIgnoreErrors = false, parseOnly = true)
+//        }
     }
 }

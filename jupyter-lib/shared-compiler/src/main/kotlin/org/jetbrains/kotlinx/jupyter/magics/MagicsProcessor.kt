@@ -19,13 +19,14 @@ class MagicsProcessor(
     KernelInternalObject {
     fun processMagics(
         code: String,
+        host: KotlinKernelHost,
         parseOnly: Boolean = false,
         tryIgnoreErrors: Boolean = false,
     ): CodePreprocessor.Result {
         val magics = magicsIntervals(code)
 
         for (magicRange in magics) {
-            processSingleMagic(code, handler, magicRange, parseOnly, tryIgnoreErrors)
+            processSingleMagic(code, handler, magicRange, host, parseOnly, tryIgnoreErrors)
         }
         return CodePreprocessor.Result(getCleanCode(code, magics), handler.getLibraries())
     }
@@ -33,5 +34,5 @@ class MagicsProcessor(
     override fun process(
         code: String,
         host: KotlinKernelHost,
-    ): CodePreprocessor.Result = processMagics(code)
+    ): CodePreprocessor.Result = processMagics(code, host)
 }

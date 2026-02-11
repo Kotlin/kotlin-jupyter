@@ -139,12 +139,14 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
             ?: Slf4jLoggingManager
 
     override fun provideMagicsHandler(): LibrariesAwareMagicsHandler {
+        // TODO We need kernel host here
         val context =
             createDefaultMagicHandlerContext(
                 librariesProcessor,
                 libraryInfoSwitcher,
                 replOptions,
                 loggingManager,
+                notebook,
             )
 
         return CompositeMagicsHandler(context).apply {

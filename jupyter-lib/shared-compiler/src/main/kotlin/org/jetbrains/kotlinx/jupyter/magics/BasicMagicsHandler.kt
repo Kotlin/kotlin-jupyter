@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.types.choice
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.common.ReplLineMagic
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.magics.contexts.CommandHandlingMagicHandlerContext
@@ -52,6 +53,7 @@ abstract class BasicMagicsHandler(
         magicText: String,
         tryIgnoreErrors: Boolean,
         parseOnly: Boolean,
+        host: KotlinKernelHost,
     ) {
         try {
             val parts = magicText.split(' ', limit = 2)
@@ -71,6 +73,7 @@ abstract class BasicMagicsHandler(
             commandHandlingContext.arg = arg
             commandHandlingContext.tryIgnoreErrors = tryIgnoreErrors
             commandHandlingContext.parseOnly = parseOnly
+            commandHandlingContext.host = host
 
             if (magic != null) {
                 handle(magic)

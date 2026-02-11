@@ -16,6 +16,7 @@ class BasicMagicHandlerFactoryProvider : MagicHandlerFactoryProvider {
             LibrariesMagicsHandler,
             ReplOptionsMagicsHandler,
             LogLevelMagicsHandler,
+            IncludeNotebookMagicsHandler,
         )
 }
 

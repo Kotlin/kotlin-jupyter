@@ -55,6 +55,9 @@ dependencies {
             "stdlib-common",
         )
     }
+
+    // Jupyter notebooks parser for %includeNotebook magic
+    implementation(libs.jupyterNotebooksParser)
 }
 
 buildSettings {

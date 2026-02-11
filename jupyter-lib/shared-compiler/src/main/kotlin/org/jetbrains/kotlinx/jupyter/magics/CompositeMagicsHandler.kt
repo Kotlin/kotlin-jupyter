@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplPreprocessingException
 import org.jetbrains.kotlinx.jupyter.magics.contexts.LibrariesMagicHandlerContext
@@ -33,11 +34,12 @@ class CompositeMagicsHandler(
         magicText: String,
         tryIgnoreErrors: Boolean,
         parseOnly: Boolean,
+        host: KotlinKernelHost,
     ) {
         // Try each handler in order
         for (handler in handlers) {
             try {
-                handler.handle(magicText, tryIgnoreErrors, parseOnly)
+                handler.handle(magicText, tryIgnoreErrors, parseOnly, host)
                 return
             } catch (_: UnhandledMagicException) {
                 // This handler doesn't support this magic, try the next one

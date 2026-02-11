@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import kotlin.script.experimental.jvm.util.determineSep
 
@@ -61,12 +62,13 @@ open class AbstractMagicsProcessor(
             code: String,
             handler: MagicsHandler,
             codeInterval: CodeInterval,
+            host: KotlinKernelHost,
             parseOnly: Boolean = false,
             tryIgnoreErrors: Boolean = false,
         ) {
             if (code[codeInterval.from] != MAGICS_SIGN) return
             val magicText = code.substring(codeInterval.from + 1, codeInterval.to).trim()
-            handler.handle(magicText, tryIgnoreErrors, parseOnly)
+            handler.handle(magicText, tryIgnoreErrors, parseOnly, host)
         }
     }
 }

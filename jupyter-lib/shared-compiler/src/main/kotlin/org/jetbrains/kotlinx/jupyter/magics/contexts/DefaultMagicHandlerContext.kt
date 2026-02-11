@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics.contexts
 
+import org.jetbrains.kotlinx.jupyter.api.Notebook
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.ResolutionInfoSwitcher
@@ -16,11 +17,20 @@ fun createDefaultMagicHandlerContext(
     libraryResolutionInfoSwitcher: ResolutionInfoSwitcher<DefaultInfoSwitch>,
     replOptions: ReplOptions,
     loggingManager: LoggingManager,
-) = CompositeMagicHandlerContext(
-    listOf(
-        LibrariesMagicHandlerContext(librariesProcessor, libraryResolutionInfoSwitcher),
-        ReplOptionsMagicHandlerContext(replOptions),
-        LoggingMagicHandlerContext(loggingManager),
-        CommandHandlingMagicHandlerContext(),
-    ),
-)
+    notebook: Notebook? = null,
+): CompositeMagicHandlerContext {
+    val contexts =
+        mutableListOf(
+            LibrariesMagicHandlerContext(librariesProcessor, libraryResolutionInfoSwitcher),
+            ReplOptionsMagicHandlerContext(replOptions),
+            LoggingMagicHandlerContext(loggingManager),
+            CommandHandlingMagicHandlerContext(),
+        )
+
+    // Only add NotebookMagicHandlerContext if a notebook is provided
+    if (notebook != null) {
+        contexts.add(NotebookMagicHandlerContext(notebook))
+    }
+
+    return CompositeMagicHandlerContext(contexts)
+}

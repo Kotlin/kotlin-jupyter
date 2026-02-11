@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+
 /**
  * Interface for handling magic commands.
  * Magic handlers process special commands prefixed with '%' in Jupyter notebooks.
@@ -16,5 +18,6 @@ interface MagicsHandler {
         magicText: String,
         tryIgnoreErrors: Boolean,
         parseOnly: Boolean,
+        host: KotlinKernelHost,
     )
 }

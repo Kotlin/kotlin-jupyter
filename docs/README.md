@@ -452,6 +452,7 @@ You can use the following line magics in your notebooks using the Kotlin Kernel:
 | `%useLatestDescriptors` | Sets the latest versions of available library descriptors instead of bundled descriptors (used by default). Note that bundled descriptors are preferred because the current kernel version might not support the latest descriptors. For better notebook stability, use bundled descriptors. | `%useLatestDescriptors [on/off]` |
 | `%output` | Configures the output capturing settings. | `%output --max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400` |
 | `%logLevel` | Sets logging level. | `%logLevel [off/error/warn/info/debug]` |
+| `%includeNotebook` | Includes and executes all cells from another notebook as hidden code. | `%includeNotebook <path>` |
 
 > **Note:** For more information, see [Line magics](magics.md).
 
@@ -572,6 +573,7 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [londogard-nlp-toolkit](https://github.com/londogard/londogard-nlp-toolkit) - A Natural Language Processing (NLP) toolkit for Kotlin on the JVM
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
+ - [notekit](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/notekit) - Programmatic access to work with the current Kotlin notebook
  - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
  - [openai-java](https://github.com/openai/openai-java) - OpenAI official Java API
  - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.magics
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinitionProducer
 
 object NoopMagicsHandler : LibrariesAwareMagicsHandler {
@@ -7,6 +8,7 @@ object NoopMagicsHandler : LibrariesAwareMagicsHandler {
         magicText: String,
         tryIgnoreErrors: Boolean,
         parseOnly: Boolean,
+        host: KotlinKernelHost,
     ) {
     }
 

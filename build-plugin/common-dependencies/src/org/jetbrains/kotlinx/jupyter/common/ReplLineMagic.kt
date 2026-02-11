@@ -44,6 +44,7 @@ enum class ReplLineMagic(
     OUTPUT("Configures the output capturing settings.", "--max-cell-size=1000 --no-stdout --max-time=100 --max-buffer=400"),
     LOG_LEVEL("Sets logging level.", "[off/error/warn/info/debug]"),
     LOG_HANDLER("Manages logging handlers.", "[list / remove <name> / add <name> --<type> [... typeArgs]]", visibleInHelp = false),
+    INCLUDE_NOTEBOOK("Includes and executes all cells from another notebook as hidden code.", "<path>"),
     ;
 
     val nameForUser = getNameForUser(name)

@@ -1,5 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.magics.contexts
 
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+
 /**
  * Context interface for basic command handling functionality.
  * Provides access to command arguments and flags.
@@ -19,6 +21,8 @@ class CommandHandlingMagicHandlerContext : MagicHandlerContext {
      * Flag indicating whether to only parse the command without executing it.
      */
     var parseOnly: Boolean = false
+
+    var host: KotlinKernelHost? = null
 
     /**
      * Splits the current argument into a list of arguments.
