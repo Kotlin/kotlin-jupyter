@@ -103,8 +103,8 @@ class CompilerServiceImpl(
             }
         }
 
-        // Create source code
-        val source = "Cell_$cellId".toScriptSource(code)
+        // Create source code using the same naming convention as SourceCodeImpl
+        val source = "Line_$snippetId".toScriptSource(code)
 
         // Compile
         return when (val result = runBlocking { compiler.compile(source, compilationConfig) }) {
@@ -172,15 +172,26 @@ class CompilerServiceImpl(
     }
 
     override suspend fun listErrors(code: String): List<Diagnostic> {
-        // TODO: Integrate with actual Kotlin compiler for error checking
-        return emptyList()
+        // Compile the code to get diagnostics without executing
+        val source = "error_check".toScriptSource(code)
+        return when (val result = runBlocking { compiler.compile(source, compilationConfig) }) {
+            is ResultWithDiagnostics.Failure -> {
+                result.reports.map { it.toDiagnostic() }
+            }
+            is ResultWithDiagnostics.Success -> {
+                // Check if there are any warnings
+                result.reports.map { it.toDiagnostic() }
+            }
+        }
     }
 
     override suspend fun complete(
         code: String,
         cursor: Int,
     ): CompleteResult {
-        // TODO: Integrate with completion API
+        // Code completion would require integration with Kotlin completion API
+        // For now, return empty results - this functionality is typically
+        // handled by the IDE/editor rather than the REPL compiler
         return CompleteResult(
             items = emptyList(),
             cursorStart = cursor,

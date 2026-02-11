@@ -337,10 +337,12 @@ class ReplForJupyterImpl(
         val callbacks = KernelCallbacksImpl(
             dependencyResolver = dependencyManager.resolver,
             onImportsReported = { imports ->
-                // TODO: Wire to import tracking when fully integrated
+                // Store imports for later retrieval, matching the pattern used by importsCollector
+                (importsCollector as ScriptImportsCollectorImpl).addImports(imports)
             },
             onDeclarationsReported = { declarations ->
-                // TODO: Wire to declaration tracking when fully integrated
+                // Store declarations on the current cell, matching existing pattern
+                notebook.currentCell?.declarations = declarations
             },
         )
         val params = CompilerParams(
@@ -384,7 +386,7 @@ class ReplForJupyterImpl(
         InternalEvaluatorImpl(
             this,
             loggerFactory,
-            jupyterCompiler,  // TODO: Replace with compilerAdapter when ready
+            jupyterCompiler,  // Using original compiler for now until out-of-process is fully tested
             evaluator,
             contextUpdater,
             internalVariablesMarkersProcessor,

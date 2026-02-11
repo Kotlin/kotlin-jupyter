@@ -20,4 +20,11 @@ class ScriptImportsCollectorImpl : ScriptImportsCollector {
         addedImports.clear()
         return res
     }
+
+    /**
+     * Manually add imports (used by out-of-process compiler).
+     */
+    fun addImports(imports: List<String>) {
+        addedImports.addAll(imports)
+    }
 }
