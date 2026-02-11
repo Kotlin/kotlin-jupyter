@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    alias(libs.plugins.shadow)
 }
 
 dependencies {
@@ -43,14 +44,11 @@ buildSettings {
 }
 
 // Task to create a fat jar for the compiler daemon
-tasks.register<Jar>("daemonJar") {
+tasks.shadowJar {
     archiveClassifier.set("daemon")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
+    mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
         attributes["Main-Class"] = "org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerDaemonMainKt"
     }
-
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-    from(sourceSets.main.get().output)
 }

@@ -219,21 +219,25 @@ class DaemonCompilerClient(
 
     private fun findDaemonJar(): File {
         // Look for the daemon JAR in standard locations
-        // The daemon is built from kernel-compiler-impl module
-        val possibleLocations =
+        // The daemon is built from kernel-compiler-impl module using shadowJar task
+        // The jar name includes version, so we search for files matching the pattern
+        val possibleDirectories =
             listOf(
-                File("jupyter-lib/kernel-compiler-impl/build/libs/kernel-compiler-impl-daemon.jar"),
-                File("../kernel-compiler-impl/build/libs/kernel-compiler-impl-daemon.jar"),
-                File("build/libs/kernel-compiler-impl-daemon.jar"),
+                File("jupyter-lib/kernel-compiler-impl/build/libs"),
+                File("../kernel-compiler-impl/build/libs"),
+                File("build/libs"),
             )
 
-        for (location in possibleLocations) {
-            if (location.exists()) {
-                return location
+        for (dir in possibleDirectories) {
+            if (dir.exists() && dir.isDirectory) {
+                val daemonJar = dir.listFiles()?.find { it.name.contains("-daemon") && it.name.endsWith(".jar") }
+                if (daemonJar != null) {
+                    return daemonJar
+                }
             }
         }
 
-        throw RuntimeException("Could not find compiler daemon JAR. Please build the project first.")
+        throw RuntimeException("Could not find compiler daemon JAR. Please build the project first using ':kernel-compiler-impl:shadowJar'.")
     }
 }
 
