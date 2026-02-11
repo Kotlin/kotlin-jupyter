@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.compiler.JupyterCompilingOptions
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration

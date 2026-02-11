@@ -23,6 +23,7 @@ dependencies {
     api(projects.lib) { isTransitive = false }
     api(projects.commonDependencies) { isTransitive = false }
     api(projects.protocol) { isTransitive = false }
+    api(projects.intellijCompilerDependencies) { isTransitive = false } // For CellId, JupyterCompilingOptions, jupyterOptions, getCompilationConfiguration
 
     // Standard dependencies
     compileOnly(libs.kotlin.stable.stdlib)

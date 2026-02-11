@@ -16,8 +16,8 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CodeExecution
 import org.jetbrains.kotlinx.jupyter.api.libraries.KernelRepository
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
-import org.jetbrains.kotlinx.jupyter.config.CellId
-import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.compiler.CellId
+import org.jetbrains.kotlinx.jupyter.compiler.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.currentKotlinVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
