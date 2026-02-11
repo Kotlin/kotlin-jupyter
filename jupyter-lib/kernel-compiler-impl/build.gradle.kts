@@ -6,8 +6,6 @@ plugins {
 dependencies {
     api(projects.kernelCompilerApi)
     api(projects.api)
-    api(projects.commonDependencies)
-    api(projects.sharedCompiler)
 
     // Coroutines for async operations
     implementation(libs.coroutines.core)
