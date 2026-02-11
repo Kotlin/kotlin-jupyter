@@ -5,11 +5,9 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
-import org.jetbrains.kotlinx.jupyter.compiler.api.CheckCompleteResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
-import org.jetbrains.kotlinx.jupyter.compiler.api.CompleteResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
@@ -27,12 +25,10 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
 import kotlin.script.experimental.jvm.updateClasspath
-import kotlin.script.experimental.util.LinkedSnippet
 
 /**
  * In-process implementation of CompilerService.
@@ -152,55 +148,10 @@ class CompilerServiceImpl(
         return baos.toByteArray()
     }
 
-    override suspend fun updateClasspath(classpathEntries: List<String>) {
+    private fun updateClasspath(classpathEntries: List<String>) {
         currentClasspath.addAll(classpathEntries)
         // Recreate compilation config with updated classpath
         compilationConfig = createCompilationConfig()
-    }
-
-    override suspend fun checkComplete(code: String): CheckCompleteResult {
-        val trimmed = code.trim()
-        val isIncomplete =
-            trimmed.endsWith("{") ||
-                trimmed.endsWith("(") ||
-                trimmed.endsWith(",") ||
-                trimmed.endsWith("=") ||
-                (trimmed.count { it == '{' } > trimmed.count { it == '}' }) ||
-                (trimmed.count { it == '(' } > trimmed.count { it == ')' })
-
-        return CheckCompleteResult(isComplete = !isIncomplete)
-    }
-
-    override suspend fun listErrors(code: String): List<Diagnostic> {
-        // Compile the code to get diagnostics without executing
-        val source = "error_check".toScriptSource(code)
-        return when (val result = runBlocking { compiler.compile(source, compilationConfig) }) {
-            is ResultWithDiagnostics.Failure -> {
-                result.reports.map { it.toDiagnostic() }
-            }
-            is ResultWithDiagnostics.Success -> {
-                // Check if there are any warnings
-                result.reports.map { it.toDiagnostic() }
-            }
-        }
-    }
-
-    override suspend fun complete(
-        code: String,
-        cursor: Int,
-    ): CompleteResult {
-        // Code completion would require integration with Kotlin completion API
-        // For now, return empty results - this functionality is typically
-        // handled by the IDE/editor rather than the REPL compiler
-        return CompleteResult(
-            items = emptyList(),
-            cursorStart = cursor,
-            cursorEnd = cursor,
-        )
-    }
-
-    override suspend fun shutdown() {
-        // No cleanup needed for in-process compiler
     }
 
     private fun extractImports(code: String): List<String> {

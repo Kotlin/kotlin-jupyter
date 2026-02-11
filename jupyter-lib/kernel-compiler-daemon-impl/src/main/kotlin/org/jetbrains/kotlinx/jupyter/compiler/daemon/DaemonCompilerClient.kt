@@ -7,35 +7,26 @@ import io.grpc.ServerBuilder
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
-import org.jetbrains.kotlinx.jupyter.compiler.api.CheckCompleteResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
-import org.jetbrains.kotlinx.jupyter.compiler.api.CompleteResult
-import org.jetbrains.kotlinx.jupyter.compiler.api.CompletionItem
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DiagnosticSeverity
 import org.jetbrains.kotlinx.jupyter.compiler.proto.InitializeRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.JupyterCompilerServiceGrpcKt
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdateClasspathRequest
 import java.io.File
 import java.net.ServerSocket
-import java.util.concurrent.TimeUnit
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
 
@@ -143,77 +134,6 @@ class DaemonCompilerClient(
         }
     }
 
-    override suspend fun updateClasspath(classpathEntries: List<String>) {
-        val request =
-            UpdateClasspathRequest
-                .newBuilder()
-                .addAllClasspathEntries(classpathEntries)
-                .build()
-
-        stub!!.updateClasspath(request)
-    }
-
-    override suspend fun checkComplete(code: String): CheckCompleteResult {
-        val request =
-            CheckCompleteRequest
-                .newBuilder()
-                .setCode(code)
-                .build()
-
-        val response = stub!!.checkComplete(request)
-
-        return CheckCompleteResult(isComplete = response.isComplete)
-    }
-
-    override suspend fun listErrors(code: String): List<ApiDiagnostic> {
-        val request =
-            ListErrorsRequest
-                .newBuilder()
-                .setCode(code)
-                .build()
-
-        val response = stub!!.listErrors(request)
-
-        return response.diagnosticsList.map { it.fromProto() }
-    }
-
-    override suspend fun complete(
-        code: String,
-        cursor: Int,
-    ): CompleteResult {
-        val request =
-            CompleteRequest
-                .newBuilder()
-                .setCode(code)
-                .setCursor(cursor)
-                .build()
-
-        val response = stub!!.complete(request)
-
-        return CompleteResult(
-            items =
-                response.itemsList.map { item ->
-                    CompletionItem(
-                        text = item.text,
-                        displayText = item.displayText,
-                        icon = item.icon.takeIf { it.isNotEmpty() },
-                        tail = item.tail.takeIf { it.isNotEmpty() },
-                    )
-                },
-            cursorStart = response.cursorStart,
-            cursorEnd = response.cursorEnd,
-        )
-    }
-
-    override suspend fun shutdown() {
-        val request = ShutdownRequest.newBuilder().build()
-        stub?.shutdown(request)
-
-        channel?.shutdown()?.awaitTermination(5, TimeUnit.SECONDS)
-        callbackServer?.shutdown()?.awaitTermination(5, TimeUnit.SECONDS)
-        daemonProcess?.destroy()
-        daemonProcess?.waitFor(5, TimeUnit.SECONDS)
-    }
 
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 

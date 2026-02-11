@@ -9,11 +9,6 @@ option java_package = "org.jetbrains.kotlinx.jupyter.compiler.proto";
 service JupyterCompilerService {
     rpc Initialize(InitializeRequest) returns (InitializeResponse);
     rpc Compile(CompileRequest) returns (CompileResponse);
-    rpc UpdateClasspath(UpdateClasspathRequest) returns (UpdateClasspathResponse);
-    rpc CheckComplete(CheckCompleteRequest) returns (CheckCompleteResponse);
-    rpc ListErrors(ListErrorsRequest) returns (ListErrorsResponse);
-    rpc Complete(CompleteRequest) returns (CompleteResponse);
-    rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
 }
 
 // Kernel callback service (kernel implements this)
@@ -69,52 +64,6 @@ message CompileResponse {
     repeated Diagnostic diagnostics = 4;
 }
 
-message UpdateClasspathRequest {
-    repeated string classpath_entries = 1;
-}
-
-message UpdateClasspathResponse {
-    bool success = 1;
-}
-
-message CheckCompleteRequest {
-    string code = 1;
-}
-
-message CheckCompleteResponse {
-    bool is_complete = 1;
-}
-
-message ListErrorsRequest {
-    string code = 1;
-}
-
-message ListErrorsResponse {
-    repeated Diagnostic diagnostics = 1;
-}
-
-message CompleteRequest {
-    string code = 1;
-    int32 cursor = 2;
-}
-
-message CompletionItem {
-    string text = 1;
-    string display_text = 2;
-    string icon = 3;
-    string tail = 4;
-}
-
-message CompleteResponse {
-    repeated CompletionItem items = 1;
-    int32 cursor_start = 2;
-    int32 cursor_end = 3;
-}
-
-message ShutdownRequest {}
-message ShutdownResponse {
-    bool success = 1;
-}
 
 message ReportImportsRequest {
     repeated string imports = 1;

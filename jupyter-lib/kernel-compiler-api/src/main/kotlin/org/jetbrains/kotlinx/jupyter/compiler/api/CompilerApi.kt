@@ -48,31 +48,6 @@ data class Diagnostic(
     enum class Severity { ERROR, WARNING, INFO }
 }
 
-/**
- * Result of code completeness check.
- */
-data class CheckCompleteResult(
-    val isComplete: Boolean,
-)
-
-/**
- * Completion item.
- */
-data class CompletionItem(
-    val text: String,
-    val displayText: String,
-    val icon: String? = null,
-    val tail: String? = null,
-)
-
-/**
- * Result of code completion.
- */
-data class CompleteResult(
-    val items: List<CompletionItem>,
-    val cursorStart: Int,
-    val cursorEnd: Int,
-)
 
 /**
  * Dependency annotation from notebook code.
@@ -113,19 +88,6 @@ interface CompilerService {
         code: String,
         cellId: Int,
     ): CompileResult
-
-    suspend fun updateClasspath(classpathEntries: List<String>)
-
-    suspend fun checkComplete(code: String): CheckCompleteResult
-
-    suspend fun listErrors(code: String): List<Diagnostic>
-
-    suspend fun complete(
-        code: String,
-        cursor: Int,
-    ): CompleteResult
-
-    suspend fun shutdown()
 }
 
 /**

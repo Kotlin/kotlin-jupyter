@@ -9,11 +9,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileResponse
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompletionItem
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.proto.Diagnostic
@@ -22,18 +19,10 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.InitializeRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.InitializeResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.JupyterCompilerServiceGrpcKt
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.ShutdownResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
-import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdateClasspathRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdateClasspathResponse
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
 
@@ -101,78 +90,6 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun updateClasspath(request: UpdateClasspathRequest): UpdateClasspathResponse {
-        compiler?.updateClasspath(request.classpathEntriesList)
-
-        return UpdateClasspathResponse
-            .newBuilder()
-            .setSuccess(true)
-            .build()
-    }
-
-    override suspend fun checkComplete(request: CheckCompleteRequest): CheckCompleteResponse {
-        val currentCompiler =
-            compiler ?: return CheckCompleteResponse
-                .newBuilder()
-                .setIsComplete(false)
-                .build()
-
-        val result = currentCompiler.checkComplete(request.code)
-
-        return CheckCompleteResponse
-            .newBuilder()
-            .setIsComplete(result.isComplete)
-            .build()
-    }
-
-    override suspend fun listErrors(request: ListErrorsRequest): ListErrorsResponse {
-        val currentCompiler = compiler ?: return ListErrorsResponse.newBuilder().build()
-
-        val diagnostics = currentCompiler.listErrors(request.code)
-
-        return ListErrorsResponse
-            .newBuilder()
-            .addAllDiagnostics(diagnostics.map { it.toProto() })
-            .build()
-    }
-
-    override suspend fun complete(request: CompleteRequest): CompleteResponse {
-        val currentCompiler =
-            compiler ?: return CompleteResponse
-                .newBuilder()
-                .setCursorStart(request.cursor)
-                .setCursorEnd(request.cursor)
-                .build()
-
-        val result = currentCompiler.complete(request.code, request.cursor)
-
-        return CompleteResponse
-            .newBuilder()
-            .addAllItems(
-                result.items.map { item ->
-                    CompletionItem
-                        .newBuilder()
-                        .setText(item.text)
-                        .setDisplayText(item.displayText)
-                        .apply {
-                            item.icon?.let { setIcon(it) }
-                            item.tail?.let { setTail(it) }
-                        }.build()
-                },
-            ).setCursorStart(result.cursorStart)
-            .setCursorEnd(result.cursorEnd)
-            .build()
-    }
-
-    override suspend fun shutdown(request: ShutdownRequest): ShutdownResponse {
-        compiler?.shutdown()
-        compiler = null
-
-        return ShutdownResponse
-            .newBuilder()
-            .setSuccess(true)
-            .build()
-    }
 }
 
 /**
