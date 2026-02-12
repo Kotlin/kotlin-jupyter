@@ -82,7 +82,6 @@ class DaemonCompilerServiceImpl(
                     .newBuilder()
                     .setSuccess(true)
                     .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
-                    .setSerializedEvalConfig(ByteString.copyFrom(result.serializedEvalConfig))
                     .build()
 
             is CompileResult.Failure ->

@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
+import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
@@ -18,9 +19,15 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCode.Location
 import kotlin.script.experimental.api.SourceCode.Position
+import kotlin.script.experimental.api.with
+import kotlin.script.experimental.jvm.baseClassLoader
+import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
+import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.lastSnippetClassLoader
 
 /**
  * Adapter that wraps CompilerService to implement JupyterCompiler interface.
@@ -84,12 +91,33 @@ internal class CompilerServiceAdapter(
 
         return when (compileResult) {
             is CompileResult.Success -> {
-                val deserialized = CompileResultDeserializer.deserialize(compileResult)
-                val compiledScript = deserialized.linkedSnippet.get()
+                val linkedSnippet = CompileResultDeserializer.deserialize(compileResult)
+                val compiledScript = linkedSnippet.get()
+
+                // Create evaluation configuration similar to JupyterCompilerImpl
+                val basicEvalConfig = ScriptEvaluationConfiguration {
+                    jvm {
+                        baseClassLoader(this@CompilerServiceAdapter.baseClassLoader)
+                    }
+                }
+
+                val configWithClassloader = basicEvalConfig.with {
+                    jvm {
+                        lastSnippetClassLoader(lastClassLoader)
+                        baseClassLoader(this@CompilerServiceAdapter.baseClassLoader.parent)
+                    }
+                }
+
+                val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
+                val newEvaluationConfiguration = configWithClassloader.with {
+                    jvm {
+                        actualClassLoader(classLoader)
+                    }
+                }
 
                 // Get the class and track it
                 val kClassResult = runBlocking {
-                    compiledScript.getClass(deserialized.evalConfig)
+                    compiledScript.getClass(newEvaluationConfiguration)
                 }
 
                 when (kClassResult) {
@@ -107,7 +135,7 @@ internal class CompilerServiceAdapter(
                     }
                 }
 
-                JupyterCompiler.Result(deserialized.linkedSnippet, deserialized.evalConfig)
+                JupyterCompiler.Result(linkedSnippet, newEvaluationConfiguration)
             }
             is CompileResult.Failure -> {
                 val metadata = CellErrorMetaData(

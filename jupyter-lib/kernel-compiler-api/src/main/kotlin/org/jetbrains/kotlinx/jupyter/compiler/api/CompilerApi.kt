@@ -5,29 +5,25 @@ import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 
 /**
  * Result of compilation.
- * Contains serialized LinkedSnippet<KJvmCompiledScript> and ScriptEvaluationConfiguration
- * which can be deserialized on the kernel side.
+ * Contains serialized LinkedSnippet<KJvmCompiledScript> which can be deserialized on the kernel side.
  */
 sealed class CompileResult {
     /**
      * Successful compilation.
      * @param serializedCompiledSnippet Java-serialized LinkedSnippet<KJvmCompiledScript>
-     * @param serializedEvalConfig Java-serialized ScriptEvaluationConfiguration
      */
     data class Success(
         val serializedCompiledSnippet: ByteArray,
-        val serializedEvalConfig: ByteArray,
     ) : CompileResult() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
             other as Success
-            return serializedCompiledSnippet.contentEquals(other.serializedCompiledSnippet) &&
-                serializedEvalConfig.contentEquals(other.serializedEvalConfig)
+            return serializedCompiledSnippet.contentEquals(other.serializedCompiledSnippet)
         }
 
         override fun hashCode(): Int {
-            return 31 * serializedCompiledSnippet.contentHashCode() + serializedEvalConfig.contentHashCode()
+            return serializedCompiledSnippet.contentHashCode()
         }
     }
 

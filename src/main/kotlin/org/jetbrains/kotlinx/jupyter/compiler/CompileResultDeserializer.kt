@@ -3,7 +3,6 @@ package org.jetbrains.kotlinx.jupyter.compiler
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -12,18 +11,16 @@ import kotlin.script.experimental.util.LinkedSnippet
  */
 object CompileResultDeserializer {
     /**
-     * Deserialize a successful compile result into LinkedSnippet and ScriptEvaluationConfiguration.
+     * Deserialize a successful compile result into LinkedSnippet.
      *
      * @param result The successful compilation result containing serialized data
-     * @return Pair of LinkedSnippet and ScriptEvaluationConfiguration
+     * @return LinkedSnippet
      * @throws IllegalArgumentException if the result is not a success
      * @throws ClassNotFoundException if deserialization fails due to missing classes
      * @throws java.io.IOException if deserialization fails due to IO errors
      */
-    fun deserialize(result: CompileResult.Success): DeserializedCompileResult {
-        val linkedSnippet = deserializeObject<LinkedSnippet<KJvmCompiledScript>>(result.serializedCompiledSnippet)
-        val evalConfig = deserializeObject<ScriptEvaluationConfiguration>(result.serializedEvalConfig)
-        return DeserializedCompileResult(linkedSnippet, evalConfig)
+    fun deserialize(result: CompileResult.Success): LinkedSnippet<KJvmCompiledScript> {
+        return deserializeObject(result.serializedCompiledSnippet)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -35,11 +32,3 @@ object CompileResultDeserializer {
         }
     }
 }
-
-/**
- * Deserialized compilation result.
- */
-data class DeserializedCompileResult(
-    val linkedSnippet: LinkedSnippet<KJvmCompiledScript>,
-    val evalConfig: ScriptEvaluationConfiguration,
-)

@@ -183,20 +183,11 @@ class CompilerServiceImpl(
                 }
                 lastClassLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
 
-                // Create updated evaluation configuration
-                val newEvalConfig = configWithClassloader.with {
-                    jvm {
-                        baseClassLoader(lastClassLoader)
-                    }
-                }
-
                 // Serialize using Java serialization
                 val serializedSnippet = serializeObject(linkedSnippet)
-                val serializedEvalConfig = serializeObject(newEvalConfig)
 
                 CompileResult.Success(
                     serializedCompiledSnippet = serializedSnippet,
-                    serializedEvalConfig = serializedEvalConfig,
                 )
             }
         }

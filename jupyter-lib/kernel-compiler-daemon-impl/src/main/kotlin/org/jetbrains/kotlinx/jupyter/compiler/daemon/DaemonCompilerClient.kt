@@ -130,7 +130,6 @@ class DaemonCompilerClient(
         return if (response.success) {
             CompileResult.Success(
                 serializedCompiledSnippet = response.serializedCompiledSnippet.toByteArray(),
-                serializedEvalConfig = response.serializedEvalConfig.toByteArray(),
             )
         } else {
             CompileResult.Failure(response.diagnosticsList.map { it.fromProto() })
