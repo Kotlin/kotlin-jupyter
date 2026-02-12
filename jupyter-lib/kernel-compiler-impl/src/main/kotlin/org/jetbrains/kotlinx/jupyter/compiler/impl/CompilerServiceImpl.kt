@@ -37,6 +37,15 @@ import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
+import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 
 /**
  * In-process implementation of CompilerService.
@@ -52,9 +61,11 @@ class CompilerServiceImpl(
     private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget)
 
     // Script data collectors for imports and declarations
+    private val importsCollector = ImportsCollector(callbacks)
+    private val declarationsCollector = DeclarationsCollector(callbacks)
     private val scriptDataCollectors: List<ScriptDataCollector> = listOf(
-        ImportsCollector(),
-        DeclarationsCollector(),
+        importsCollector,
+        declarationsCollector,
     )
 
     private val compiler: KJvmReplCompilerBase<ReplCodeAnalyzerBase> by lazy {
@@ -114,8 +125,7 @@ class CompilerServiceImpl(
 
         // Handle CompilerArgs annotations
         if (compilerArgsAnnotations.isNotEmpty()) {
-            val result = compilerArgsConfigurator.configure(config, compilerArgsAnnotations)
-            when (result) {
+            when (val result = compilerArgsConfigurator.configure(config, compilerArgsAnnotations)) {
                 is ResultWithDiagnostics.Success -> config = result.value
                 is ResultWithDiagnostics.Failure -> return result
             }
@@ -156,7 +166,7 @@ class CompilerServiceImpl(
         val source = "Line_$snippetId".toScriptSource(code)
 
         // Compile
-        return when (val result = runBlocking { compiler.compile(source, compilationConfig) }) {
+        return when (val result = compiler.compile(source, compilationConfig)) {
             is ResultWithDiagnostics.Failure -> {
                 CompileResult.Failure(
                     result.reports.map { it.toDiagnostic() },
@@ -228,22 +238,66 @@ private class SimpleReplCompiler(
 ) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]!!)
 
 /**
- * Collector for imports (currently no-op as imports are extracted separately).
+ * Collector for imports that reports them via callbacks.
  */
-private class ImportsCollector : ScriptDataCollector {
+private class ImportsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
-        // No-op: imports are reported via callbacks separately
+        val source = scriptInfo.source
+        if (source !is KtFileScriptSource) return
+
+        val imports = source.ktFile.importDirectives.mapNotNull {
+            it.importPath?.pathStr
+        }
+
+        if (imports.isNotEmpty()) {
+            runBlocking {
+                callbacks.reportImports(imports)
+            }
+        }
     }
 }
 
 /**
- * Collector for declarations (currently no-op as declarations are extracted separately).
+ * Collector for declarations that reports them via callbacks.
  */
-private class DeclarationsCollector : ScriptDataCollector {
+private class DeclarationsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
-        // No-op: declarations are reported via callbacks separately
+        if (!scriptInfo.isUserScript) return
+        val source = scriptInfo.source
+        if (source !is KtFileScriptSource) return
+
+        val fileDeclarations = source.ktFile.declarations
+        val scriptDeclaration = fileDeclarations.getOrNull(0) as? KtScript ?: return
+
+        val declarations = scriptDeclaration.declarations.map { declaration ->
+            val kind = when (declaration) {
+                is KtClass -> DeclarationKind.CLASS
+                is KtObjectDeclaration -> DeclarationKind.OBJECT
+                is KtProperty -> DeclarationKind.PROPERTY
+                is KtFunction -> DeclarationKind.FUNCTION
+                is KtScriptInitializer -> DeclarationKind.SCRIPT_INITIALIZER
+                else -> DeclarationKind.UNKNOWN
+            }
+
+            SimpleDeclarationInfo(
+                name = declaration.name,
+                kind = kind,
+            )
+        }
+
+        runBlocking {
+            callbacks.reportDeclarations(declarations)
+        }
     }
 }
+
+/**
+ * Simple implementation of DeclarationInfo.
+ */
+private data class SimpleDeclarationInfo(
+    override val name: String?,
+    override val kind: DeclarationKind,
+) : DeclarationInfo
 
 /**
  * Dummy logger factory for daemon-side compilation.
