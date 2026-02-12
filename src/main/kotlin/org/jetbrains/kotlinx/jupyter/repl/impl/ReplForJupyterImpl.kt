@@ -49,10 +49,9 @@ import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
-import org.jetbrains.kotlinx.jupyter.compiler.addBaseClass
-import org.jetbrains.kotlinx.jupyter.compiler.getCompilationConfiguration
+import org.jetbrains.kotlinx.jupyter.config.addBaseClass
+import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
-import org.jetbrains.kotlinx.jupyter.compiler.CellId
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.toCellId
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties

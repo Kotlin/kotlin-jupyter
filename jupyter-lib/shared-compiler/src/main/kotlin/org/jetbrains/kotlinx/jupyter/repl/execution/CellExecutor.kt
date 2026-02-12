@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.jupyter.repl.execution
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.libraries.ExecutionHost
-import org.jetbrains.kotlinx.jupyter.compiler.CellId
+import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.repl.result.InternalEvalResult
 
 /**

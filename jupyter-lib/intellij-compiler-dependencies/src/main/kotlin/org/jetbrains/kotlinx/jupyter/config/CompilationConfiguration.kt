@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.compiler
+package org.jetbrains.kotlinx.jupyter.config
 
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
@@ -9,6 +9,8 @@ import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.RESULT_FIELD_PREFIX
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K2
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import java.io.File
 import kotlin.script.experimental.api.KotlinType

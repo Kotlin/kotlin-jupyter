@@ -16,7 +16,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
-import org.jetbrains.kotlinx.jupyter.compiler.getCompilationConfiguration
+import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream

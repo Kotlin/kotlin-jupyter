@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
 import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
-import org.jetbrains.kotlinx.jupyter.compiler.JupyterCompilingOptions
-import org.jetbrains.kotlinx.jupyter.compiler.jupyterOptions
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
+import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException

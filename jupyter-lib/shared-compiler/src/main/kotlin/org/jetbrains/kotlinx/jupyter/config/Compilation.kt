@@ -1,6 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.config
 
-import org.jetbrains.kotlinx.jupyter.compiler.CellId
+import org.jetbrains.kotlinx.jupyter.config.CellId
 import org.jetbrains.kotlinx.jupyter.messaging.ExecutionCount
 
 // Extension function to convert CellId to ExecutionCount

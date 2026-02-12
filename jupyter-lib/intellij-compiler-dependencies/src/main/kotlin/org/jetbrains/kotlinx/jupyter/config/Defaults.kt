@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.compiler
+package org.jetbrains.kotlinx.jupyter.config
 
 private val dateTimeImports =
     listOf(
