@@ -226,7 +226,7 @@ class ReplForJupyterImpl(
     private val compilerConfiguration: ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath,
-            scriptReceivers,
+            scriptReceivers.map { it.javaClass.canonicalName },
             compilerArgsConfigurator,
             scriptDataCollectors = listOf(importsCollector, declarationsCollector),
             replCompilerMode = compilerMode,
@@ -349,6 +349,7 @@ class ReplForJupyterImpl(
         val params = CompilerParams(
             scriptClasspath = currentClasspath,
             jvmTarget = runtimeProperties.jvmTargetForSnippets,
+            scriptReceiverCanonicalNames = scriptReceivers.map { it.javaClass.canonicalName },
         )
         CompilerServiceFactory.createCompilerService(params, callbacks)
     }

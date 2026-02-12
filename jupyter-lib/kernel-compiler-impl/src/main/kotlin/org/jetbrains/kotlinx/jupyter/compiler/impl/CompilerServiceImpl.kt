@@ -66,7 +66,7 @@ class CompilerServiceImpl(
     private fun createCompilationConfig(): ScriptCompilationConfiguration =
         getCompilationConfiguration(
             scriptClasspath = currentClasspath,
-            scriptReceivers = emptyList(), // No implicit receivers in daemon
+            scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
             compilerArgsConfigurator = compilerArgsConfigurator,
             scriptDataCollectors = scriptDataCollectors,
             replCompilerMode = ReplCompilerMode.DEFAULT,

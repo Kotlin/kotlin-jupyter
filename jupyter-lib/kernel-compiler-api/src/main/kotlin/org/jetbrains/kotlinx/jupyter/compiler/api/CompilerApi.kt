@@ -129,4 +129,5 @@ interface CompilerServiceProvider {
 data class CompilerParams(
     val scriptClasspath: List<String>,
     val jvmTarget: String,
+    val scriptReceiverCanonicalNames: List<String> = emptyList(),
 )

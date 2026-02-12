@@ -21,6 +21,7 @@ service KernelCallbackService {
 message InitializeRequest {
     repeated string classpath_entries = 1;
     string jvm_target = 2;
+    repeated string script_receiver_canonical_names = 3;
 }
 
 message InitializeResponse {

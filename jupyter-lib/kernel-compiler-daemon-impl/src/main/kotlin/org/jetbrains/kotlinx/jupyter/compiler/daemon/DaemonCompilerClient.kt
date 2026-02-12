@@ -98,6 +98,7 @@ class DaemonCompilerClient(
                     .newBuilder()
                     .addAllClasspathEntries(params.scriptClasspath)
                     .setJvmTarget(params.jvmTarget)
+                    .addAllScriptReceiverCanonicalNames(params.scriptReceiverCanonicalNames)
                     .build()
 
             val response = stub!!.initialize(request)

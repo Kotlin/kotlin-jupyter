@@ -75,7 +75,7 @@ val ScriptCompilationConfigurationKeys.jupyterOptions by PropertiesCollection.ke
 // Also called from IDEA
 fun getCompilationConfiguration(
     scriptClasspath: List<File> = emptyList(),
-    scriptReceivers: List<Any> = emptyList(),
+    scriptReceiverCanonicalNames: List<String> = emptyList(),
     compilerArgsConfigurator: CompilerArgsConfigurator,
     scriptingClassGetter: GetScriptingClassByClassLoader = JvmGetScriptingClass(),
     scriptDataCollectors: List<ScriptDataCollector> = emptyList(),
@@ -115,7 +115,7 @@ fun getCompilationConfiguration(
             updateClasspath(scriptClasspath)
         }
 
-        val receiversTypes = scriptReceivers.map { KotlinType(it.javaClass.canonicalName) }
+        val receiversTypes = scriptReceiverCanonicalNames.map { KotlinType(it) }
         implicitReceivers(receiversTypes)
         skipExtensionsResolutionForImplicitsExceptInnermost(receiversTypes)
 
