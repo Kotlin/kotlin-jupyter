@@ -6,9 +6,14 @@ plugins {
 dependencies {
     api(projects.kernelCompilerApi)
     api(projects.api)
+    api(projects.intellijCompilerDependencies) // For getCompilationConfiguration
+    api(projects.protocolApi) // For KernelLoggerFactory
 
     // Coroutines for async operations
     implementation(libs.coroutines.core)
+
+    // Logging
+    implementation(libs.logging.slf4j.api)
 
     // Kotlin scripting dependencies for actual compilation
     implementation(libs.kotlin.dev.compilerEmbeddable)

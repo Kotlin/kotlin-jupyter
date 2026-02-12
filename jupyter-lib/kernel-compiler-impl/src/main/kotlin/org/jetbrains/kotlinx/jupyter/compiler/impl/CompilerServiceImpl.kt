@@ -3,8 +3,13 @@ package org.jetbrains.kotlinx.jupyter.compiler.impl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
@@ -12,6 +17,9 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.compiler.getCompilationConfiguration
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.slf4j.Logger
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
@@ -21,10 +29,8 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.with
-import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
@@ -38,23 +44,34 @@ class CompilerServiceImpl(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
 ) : CompilerService {
-    private val currentClasspath: MutableList<String> = params.scriptClasspath.toMutableList()
+    private val currentClasspath: MutableList<File> = params.scriptClasspath.map { File(it) }.toMutableList()
     private var lastClassLoader: ClassLoader = Thread.currentThread().contextClassLoader
 
+    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget)
+
+    // Script data collectors for imports and declarations
+    private val scriptDataCollectors: List<ScriptDataCollector> = listOf(
+        ImportsCollector(),
+        DeclarationsCollector(),
+    )
+
     private val compiler: KJvmReplCompilerBase<ReplCodeAnalyzerBase> by lazy {
-        SimpleReplCompiler(defaultJvmScriptingHostConfiguration)
+        SimpleReplCompiler(compilationConfig)
     }
 
+    // Use getCompilationConfiguration the same way as ReplForJupyterImpl
     private var compilationConfig: ScriptCompilationConfiguration = createCompilationConfig()
     private var evaluationConfig: ScriptEvaluationConfiguration = createEvaluationConfig()
 
     private fun createCompilationConfig(): ScriptCompilationConfiguration =
-        ScriptCompilationConfiguration {
-            hostConfiguration(defaultJvmScriptingHostConfiguration)
-            jvm {
-                updateClasspath(currentClasspath.map { File(it) })
-            }
-        }
+        getCompilationConfiguration(
+            scriptClasspath = currentClasspath,
+            scriptReceivers = emptyList(), // No implicit receivers in daemon
+            compilerArgsConfigurator = compilerArgsConfigurator,
+            scriptDataCollectors = scriptDataCollectors,
+            replCompilerMode = ReplCompilerMode.DEFAULT,
+            loggerFactory = DummyLoggerFactory,
+        )
 
     private fun createEvaluationConfig(): ScriptEvaluationConfiguration =
         ScriptEvaluationConfiguration {
@@ -149,7 +166,7 @@ class CompilerServiceImpl(
     }
 
     private fun updateClasspath(classpathEntries: List<String>) {
-        currentClasspath.addAll(classpathEntries)
+        currentClasspath.addAll(classpathEntries.map { File(it) })
         // Recreate compilation config with updated classpath
         compilationConfig = createCompilationConfig()
     }
@@ -242,8 +259,8 @@ class CompilerServiceImpl(
  * Simple REPL compiler using Kotlin scripting APIs.
  */
 private class SimpleReplCompiler(
-    hostConfiguration: ScriptingHostConfiguration,
-) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)
+    compilationConfiguration: ScriptCompilationConfiguration,
+) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]!!)
 
 /**
  * Simple implementation of DeclarationInfo for extracted declarations.
@@ -252,3 +269,93 @@ private data class SimpleDeclarationInfo(
     override val name: String?,
     override val kind: DeclarationKind,
 ) : DeclarationInfo
+
+/**
+ * Collector for imports (currently no-op as imports are extracted separately).
+ */
+private class ImportsCollector : ScriptDataCollector {
+    override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
+        // No-op: imports are reported via callbacks separately
+    }
+}
+
+/**
+ * Collector for declarations (currently no-op as declarations are extracted separately).
+ */
+private class DeclarationsCollector : ScriptDataCollector {
+    override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
+        // No-op: declarations are reported via callbacks separately
+    }
+}
+
+/**
+ * Dummy logger factory for daemon-side compilation.
+ */
+private object DummyLoggerFactory : KernelLoggerFactory {
+    private val dummyLogger = object : Logger {
+        override fun getName() = "DummyLogger"
+        override fun isTraceEnabled() = false
+        override fun isTraceEnabled(marker: org.slf4j.Marker?) = false
+        override fun trace(msg: String?) {}
+        override fun trace(format: String?, arg: Any?) {}
+        override fun trace(format: String?, arg1: Any?, arg2: Any?) {}
+        override fun trace(format: String?, vararg arguments: Any?) {}
+        override fun trace(msg: String?, t: Throwable?) {}
+        override fun trace(marker: org.slf4j.Marker?, msg: String?) {}
+        override fun trace(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
+        override fun trace(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
+        override fun trace(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
+        override fun trace(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
+        override fun isDebugEnabled() = false
+        override fun isDebugEnabled(marker: org.slf4j.Marker?) = false
+        override fun debug(msg: String?) {}
+        override fun debug(format: String?, arg: Any?) {}
+        override fun debug(format: String?, arg1: Any?, arg2: Any?) {}
+        override fun debug(format: String?, vararg arguments: Any?) {}
+        override fun debug(msg: String?, t: Throwable?) {}
+        override fun debug(marker: org.slf4j.Marker?, msg: String?) {}
+        override fun debug(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
+        override fun debug(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
+        override fun debug(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
+        override fun debug(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
+        override fun isInfoEnabled() = false
+        override fun isInfoEnabled(marker: org.slf4j.Marker?) = false
+        override fun info(msg: String?) {}
+        override fun info(format: String?, arg: Any?) {}
+        override fun info(format: String?, arg1: Any?, arg2: Any?) {}
+        override fun info(format: String?, vararg arguments: Any?) {}
+        override fun info(msg: String?, t: Throwable?) {}
+        override fun info(marker: org.slf4j.Marker?, msg: String?) {}
+        override fun info(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
+        override fun info(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
+        override fun info(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
+        override fun info(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
+        override fun isWarnEnabled() = false
+        override fun isWarnEnabled(marker: org.slf4j.Marker?) = false
+        override fun warn(msg: String?) {}
+        override fun warn(format: String?, arg: Any?) {}
+        override fun warn(format: String?, vararg arguments: Any?) {}
+        override fun warn(format: String?, arg1: Any?, arg2: Any?) {}
+        override fun warn(msg: String?, t: Throwable?) {}
+        override fun warn(marker: org.slf4j.Marker?, msg: String?) {}
+        override fun warn(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
+        override fun warn(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
+        override fun warn(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
+        override fun warn(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
+        override fun isErrorEnabled() = false
+        override fun isErrorEnabled(marker: org.slf4j.Marker?) = false
+        override fun error(msg: String?) {}
+        override fun error(format: String?, arg: Any?) {}
+        override fun error(format: String?, arg1: Any?, arg2: Any?) {}
+        override fun error(format: String?, vararg arguments: Any?) {}
+        override fun error(msg: String?, t: Throwable?) {}
+        override fun error(marker: org.slf4j.Marker?, msg: String?) {}
+        override fun error(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
+        override fun error(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
+        override fun error(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
+        override fun error(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
+    }
+
+    override fun getLogger(name: String) = dummyLogger
+    override fun getLogger(clazz: Class<*>) = dummyLogger
+}
