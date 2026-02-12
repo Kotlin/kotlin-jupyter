@@ -4,8 +4,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlinx.jupyter.api.DEFAULT
-import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
-import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
@@ -24,17 +22,21 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.collectedAnnotations
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
-import kotlin.script.experimental.jvm.updateClasspath
 
 /**
  * In-process implementation of CompilerService.
@@ -71,7 +73,11 @@ class CompilerServiceImpl(
             scriptDataCollectors = scriptDataCollectors,
             replCompilerMode = ReplCompilerMode.DEFAULT,
             loggerFactory = DummyLoggerFactory,
-        )
+        ).with {
+            refineConfiguration {
+                onAnnotations(jupyter.kotlin.DependsOn::class, jupyter.kotlin.Repository::class, jupyter.kotlin.CompilerArgs::class, handler = ::onAnnotationsHandler)
+            }
+        }
 
     private fun createEvaluationConfig(): ScriptEvaluationConfiguration =
         ScriptEvaluationConfiguration {
@@ -80,42 +86,72 @@ class CompilerServiceImpl(
             }
         }
 
+    private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
+        val annotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf { it.isNotEmpty() }
+            ?: return context.compilationConfiguration.asSuccess()
+
+        var config = context.compilationConfiguration
+        val dependencyAnnotations = mutableListOf<DependencyAnnotation>()
+        val compilerArgsAnnotations = mutableListOf<Annotation>()
+
+        // Group annotations by type
+        for (annotationData in annotations) {
+            val annotation = annotationData.annotation
+            when (annotation::class) {
+                jupyter.kotlin.DependsOn::class -> {
+                    val dependsOn = annotation as jupyter.kotlin.DependsOn
+                    dependencyAnnotations.add(DependencyAnnotation.DependsOn(dependsOn.value))
+                }
+                jupyter.kotlin.Repository::class -> {
+                    val repository = annotation as jupyter.kotlin.Repository
+                    dependencyAnnotations.add(DependencyAnnotation.Repository(repository.value))
+                }
+                jupyter.kotlin.CompilerArgs::class -> {
+                    compilerArgsAnnotations.add(annotation)
+                }
+            }
+        }
+
+        // Handle CompilerArgs annotations
+        if (compilerArgsAnnotations.isNotEmpty()) {
+            val result = compilerArgsConfigurator.configure(config, compilerArgsAnnotations)
+            when (result) {
+                is ResultWithDiagnostics.Success -> config = result.value
+                is ResultWithDiagnostics.Failure -> return result
+            }
+        }
+
+        // Handle dependency annotations
+        if (dependencyAnnotations.isNotEmpty()) {
+            runBlocking {
+                when (val resolution = callbacks.resolveDependencies(dependencyAnnotations)) {
+                    is DependencyResolutionResult.Success -> {
+                        updateClasspath(resolution.classpathEntries)
+                    }
+                    is DependencyResolutionResult.Failure -> {
+                        // Return failure - will be caught during compilation
+                        return@runBlocking ResultWithDiagnostics.Failure(
+                            listOf(
+                                ScriptDiagnostic(
+                                    ScriptDiagnostic.unspecifiedError,
+                                    "Dependency resolution failed: ${resolution.message}",
+                                    severity = ScriptDiagnostic.Severity.ERROR,
+                                ),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+
+        return config.asSuccess()
+    }
+
     override suspend fun compile(
         snippetId: Int,
         code: String,
         cellId: Int,
     ): CompileResult {
-        // Report imports and declarations
-        val imports = extractImports(code)
-        if (imports.isNotEmpty()) {
-            callbacks.reportImports(imports)
-        }
-
-        val declarations = extractDeclarations(code)
-        if (declarations.isNotEmpty()) {
-            callbacks.reportDeclarations(declarations)
-        }
-
-        // Handle dependency annotations
-        val dependencyAnnotations = extractDependencyAnnotations(code)
-        if (dependencyAnnotations.isNotEmpty()) {
-            when (val resolution = callbacks.resolveDependencies(dependencyAnnotations)) {
-                is DependencyResolutionResult.Success -> {
-                    updateClasspath(resolution.classpathEntries)
-                }
-                is DependencyResolutionResult.Failure -> {
-                    return CompileResult.Failure(
-                        listOf(
-                            Diagnostic(
-                                Diagnostic.Severity.ERROR,
-                                "Dependency resolution failed: ${resolution.message}",
-                            ),
-                        ),
-                    )
-                }
-            }
-        }
-
         // Create source code using the same naming convention as SourceCodeImpl
         val source = "Line_$snippetId".toScriptSource(code)
 
@@ -171,77 +207,6 @@ class CompilerServiceImpl(
         compilationConfig = createCompilationConfig()
     }
 
-    private fun extractImports(code: String): List<String> {
-        val importRegex = Regex("""^\s*import\s+(.+)""", RegexOption.MULTILINE)
-        return importRegex.findAll(code).map { it.groupValues[1].trim() }.toList()
-    }
-
-    private fun extractDeclarations(code: String): List<DeclarationInfo> {
-        val declarations = mutableListOf<DeclarationInfo>()
-
-        // Extract functions
-        val functionRegex = Regex("""^\s*fun\s+(\w+)""", RegexOption.MULTILINE)
-        functionRegex.findAll(code).forEach { match ->
-            declarations.add(
-                SimpleDeclarationInfo(
-                    name = match.groupValues[1],
-                    kind = DeclarationKind.FUNCTION,
-                ),
-            )
-        }
-
-        // Extract classes
-        val classRegex = Regex("""^\s*(class|interface)\s+(\w+)""", RegexOption.MULTILINE)
-        classRegex.findAll(code).forEach { match ->
-            declarations.add(
-                SimpleDeclarationInfo(
-                    name = match.groupValues[2],
-                    kind = DeclarationKind.CLASS,
-                ),
-            )
-        }
-
-        // Extract objects
-        val objectRegex = Regex("""^\s*object\s+(\w+)""", RegexOption.MULTILINE)
-        objectRegex.findAll(code).forEach { match ->
-            declarations.add(
-                SimpleDeclarationInfo(
-                    name = match.groupValues[1],
-                    kind = DeclarationKind.OBJECT,
-                ),
-            )
-        }
-
-        // Extract properties
-        val propertyRegex = Regex("""^\s*(val|var)\s+(\w+)""", RegexOption.MULTILINE)
-        propertyRegex.findAll(code).forEach { match ->
-            declarations.add(
-                SimpleDeclarationInfo(
-                    name = match.groupValues[2],
-                    kind = DeclarationKind.PROPERTY,
-                ),
-            )
-        }
-
-        return declarations
-    }
-
-    private fun extractDependencyAnnotations(code: String): List<DependencyAnnotation> {
-        val annotations = mutableListOf<DependencyAnnotation>()
-
-        val dependsOnRegex = Regex("""@DependsOn\s*\(\s*"([^"]+)"\s*\)""")
-        dependsOnRegex.findAll(code).forEach { match ->
-            annotations.add(DependencyAnnotation.DependsOn(match.groupValues[1]))
-        }
-
-        val repositoryRegex = Regex("""@Repository\s*\(\s*"([^"]+)"\s*\)""")
-        repositoryRegex.findAll(code).forEach { match ->
-            annotations.add(DependencyAnnotation.Repository(match.groupValues[1]))
-        }
-
-        return annotations
-    }
-
     private fun ScriptDiagnostic.toDiagnostic(): Diagnostic =
         Diagnostic(
             severity = when (this.severity) {
@@ -261,14 +226,6 @@ class CompilerServiceImpl(
 private class SimpleReplCompiler(
     compilationConfiguration: ScriptCompilationConfiguration,
 ) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]!!)
-
-/**
- * Simple implementation of DeclarationInfo for extracted declarations.
- */
-private data class SimpleDeclarationInfo(
-    override val name: String?,
-    override val kind: DeclarationKind,
-) : DeclarationInfo
 
 /**
  * Collector for imports (currently no-op as imports are extracted separately).
