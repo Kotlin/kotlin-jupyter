@@ -136,6 +136,17 @@ class DaemonCompilerClient(
         }
     }
 
+    override suspend fun addClasspathEntries(classpathEntries: List<String>) {
+        val request = org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesRequest
+            .newBuilder()
+            .addAllClasspathEntries(classpathEntries)
+            .build()
+
+        val response = stub!!.addClasspathEntries(request)
+        if (!response.success) {
+            throw RuntimeException("Failed to add classpath entries to compiler daemon")
+        }
+    }
 
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 

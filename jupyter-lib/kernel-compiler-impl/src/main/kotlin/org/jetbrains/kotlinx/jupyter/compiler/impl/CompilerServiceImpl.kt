@@ -3,8 +3,6 @@ package org.jetbrains.kotlinx.jupyter.compiler.impl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
-import org.jetbrains.kotlinx.jupyter.api.DEFAULT
-import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
@@ -199,6 +197,10 @@ class CompilerServiceImpl(
             oos.writeObject(obj)
         }
         return baos.toByteArray()
+    }
+
+    override suspend fun addClasspathEntries(classpathEntries: List<String>) {
+        updateClasspath(classpathEntries)
     }
 
     private fun updateClasspath(classpathEntries: List<String>) {

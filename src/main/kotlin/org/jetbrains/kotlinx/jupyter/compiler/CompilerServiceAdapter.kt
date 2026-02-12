@@ -13,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -61,10 +62,11 @@ internal class CompilerServiceAdapter(
     override val version: KotlinKernelVersion
         get() = currentKernelVersion
 
-    override fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
-        // CompilerService manages its own compilation configuration
-        // This is a no-op for the adapter, as config updates would need to be sent via RPC
-        // In the future, this could be implemented by sending configuration updates to the CompilerService
+    override fun addClasspathEntries(classpathEntries: List<File>) {
+        // Send classpath update to the CompilerService via RPC
+        runBlocking {
+            compilerService.addClasspathEntries(classpathEntries.map { it.absolutePath })
+        }
     }
 
     override fun updateCompilationConfigOnAnnotation(

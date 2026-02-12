@@ -84,6 +84,8 @@ interface CompilerService {
         code: String,
         cellId: Int,
     ): CompileResult
+
+    suspend fun addClasspathEntries(classpathEntries: List<String>)
 }
 
 /**

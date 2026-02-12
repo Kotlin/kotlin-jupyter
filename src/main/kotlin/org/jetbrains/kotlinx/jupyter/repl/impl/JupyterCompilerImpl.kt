@@ -35,6 +35,7 @@ import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
 
 internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
@@ -76,9 +77,13 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
 
     override fun nextCounter() = executionCounter.getAndIncrement()
 
-    override fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
+    override fun addClasspathEntries(classpathEntries: List<java.io.File>) {
         refinementCallbacks.add { context ->
-            context.compilationConfiguration.with(body).asSuccess()
+            context.compilationConfiguration.with {
+                jvm {
+                    updateClasspath(classpathEntries)
+                }
+            }.asSuccess()
         }
     }
 

@@ -323,10 +323,8 @@ class ReplForJupyterImpl(
                 )
             }
         }.apply {
-            updateCompilationConfig {
-                dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
-                    updateClasspath(classpath)
-                }
+            dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
+                addClasspathEntries(classpath)
             }
         }
     }

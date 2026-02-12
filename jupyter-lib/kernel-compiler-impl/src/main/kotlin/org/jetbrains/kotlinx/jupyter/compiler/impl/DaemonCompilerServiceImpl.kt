@@ -10,6 +10,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileResponse
@@ -91,6 +93,17 @@ class DaemonCompilerServiceImpl(
                     .addAllDiagnostics(result.diagnostics.map { it.toProto() })
                     .build()
         }
+    }
+
+    override suspend fun addClasspathEntries(request: AddClasspathEntriesRequest): AddClasspathEntriesResponse {
+        val currentCompiler = compiler
+        if (currentCompiler != null) {
+            currentCompiler.addClasspathEntries(request.classpathEntriesList)
+        }
+        return AddClasspathEntriesResponse
+            .newBuilder()
+            .setSuccess(currentCompiler != null)
+            .build()
     }
 
 }

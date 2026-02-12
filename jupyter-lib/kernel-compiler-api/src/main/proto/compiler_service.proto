@@ -9,6 +9,7 @@ option java_package = "org.jetbrains.kotlinx.jupyter.compiler.proto";
 service JupyterCompilerService {
     rpc Initialize(InitializeRequest) returns (InitializeResponse);
     rpc Compile(CompileRequest) returns (CompileResponse);
+    rpc AddClasspathEntries(AddClasspathEntriesRequest) returns (AddClasspathEntriesResponse);
 }
 
 // Kernel callback service (kernel implements this)
@@ -68,6 +69,14 @@ message CompileResponse {
     bytes serialized_compiled_snippet = 2;
     // On failure:
     repeated Diagnostic diagnostics = 3;
+}
+
+message AddClasspathEntriesRequest {
+    repeated string classpath_entries = 1;
+}
+
+message AddClasspathEntriesResponse {
+    bool success = 1;
 }
 
 
