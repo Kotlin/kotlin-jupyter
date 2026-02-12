@@ -35,12 +35,14 @@ import kotlin.script.experimental.jvm.lastSnippetClassLoader
  */
 internal class CompilerServiceAdapter(
     private val compilerService: CompilerService,
-    private val baseClassLoader: ClassLoader,
+    private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
 
-    private var _lastClassLoader: ClassLoader = baseClassLoader
+    private val _lastClassLoader: ClassLoader
+        get() = classes.lastOrNull()?.java?.classLoader
+            ?: basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
 
     override val numberOfSnippets: Int
         get() = classes.size
@@ -95,16 +97,10 @@ internal class CompilerServiceAdapter(
                 val compiledScript = linkedSnippet.get()
 
                 // Create evaluation configuration similar to JupyterCompilerImpl
-                val basicEvalConfig = ScriptEvaluationConfiguration {
-                    jvm {
-                        baseClassLoader(this@CompilerServiceAdapter.baseClassLoader)
-                    }
-                }
-
-                val configWithClassloader = basicEvalConfig.with {
+                val configWithClassloader = basicEvaluationConfiguration.with {
                     jvm {
                         lastSnippetClassLoader(lastClassLoader)
-                        baseClassLoader(this@CompilerServiceAdapter.baseClassLoader.parent)
+                        baseClassLoader(_lastClassLoader.parent)
                     }
                 }
 
@@ -124,7 +120,6 @@ internal class CompilerServiceAdapter(
                     is ResultWithDiagnostics.Success -> {
                         val kClass = kClassResult.value
                         classes.add(kClass)
-                        _lastClassLoader = kClass.java.classLoader
                     }
                     is ResultWithDiagnostics.Failure -> {
                         val metadata = CellErrorMetaData(

@@ -357,8 +357,7 @@ class ReplForJupyterImpl(
     // This is ready to be used but not yet enabled by default
     // To enable, replace jupyterCompiler with compilerAdapter in internalEvaluator construction
     private val compilerAdapter by lazy {
-        val classLoader = notebook.intermediateClassLoader ?: Thread.currentThread().contextClassLoader
-        CompilerServiceAdapter(compilerService, classLoader)
+        CompilerServiceAdapter(compilerService, evaluatorConfiguration)
     }
 
     private val evaluator: KernelReplEvaluator by lazy {
