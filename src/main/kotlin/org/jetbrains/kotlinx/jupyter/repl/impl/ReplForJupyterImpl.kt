@@ -132,7 +132,6 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
 
 typealias KernelReplEvaluator = ReplEvaluator<CompiledSnippet, KJvmEvaluatedSnippet>
 
@@ -422,7 +421,6 @@ class ReplForJupyterImpl(
             ScriptDependencyAnnotationHandlerImpl(dependencyManager.resolver),
             compilerArgsConfigurator,
             jupyterCompiler,
-            hostProvider,
         )
 
     private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(hostProvider)

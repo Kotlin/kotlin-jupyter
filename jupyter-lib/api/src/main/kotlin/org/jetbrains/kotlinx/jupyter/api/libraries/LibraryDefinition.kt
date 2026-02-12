@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -107,12 +106,6 @@ interface LibraryDefinition {
      * List of type annotations used by the annotation processor
      */
     val classAnnotations: List<ClassAnnotationHandler>
-        get() = emptyList()
-
-    /**
-     * List of file annotation handlers
-     */
-    val fileAnnotations: List<FileAnnotationHandler>
         get() = emptyList()
 
     /**

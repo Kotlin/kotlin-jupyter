@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.compiler
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
@@ -17,8 +16,6 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
@@ -67,15 +64,6 @@ internal class CompilerServiceAdapter(
         runBlocking {
             compilerService.addClasspathEntries(classpathEntries.map { it.absolutePath })
         }
-    }
-
-    override fun updateCompilationConfigOnAnnotation(
-        handler: FileAnnotationHandler,
-        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
-    ) {
-        // CompilerService manages its own annotation handling
-        // This is a no-op for the adapter
-        // In the future, this could be implemented by registering handlers with the CompilerService
     }
 
     /**

@@ -340,50 +340,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         }
     }
 
-    @Test
-    fun testFileAnnotations() {
-        val lib =
-            "lib" to
-                library {
-                    import<TempAnnotation>()
-                    onFileAnnotation<TempAnnotation> {
-                        scheduleExecution("val b = a")
-                    }
-                }
-        val repl = makeReplWithLibraries(lib).trackExecution()
-
-        repl.execute("1")
-
-        repl.execute(
-            """
-            %use lib
-            """.trimIndent(),
-        )
-        repl.execute(
-            """
-            @file:TempAnnotation
-            val a = 1
-            """.trimIndent(),
-        )
-        val res =
-            repl.execute(
-                """
-                b
-                """.trimIndent(),
-            )
-
-        res.result.value shouldBe 1
-
-        val expected =
-            listOf(
-                "1",
-                "import jupyter.kotlin.receivers.TempAnnotation",
-                "@file:TempAnnotation\nval a = 1",
-                "val b = a",
-                "b",
-            )
-        repl.executedCodes shouldBe expected
-    }
 
     @Test
     fun testIncorrectDescriptors() {

@@ -9,8 +9,6 @@ import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
 import org.jetbrains.kotlinx.jupyter.api.FieldValue
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
@@ -59,8 +57,6 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
         private val converters = mutableListOf<FieldHandler>()
 
         private val classAnnotations = mutableListOf<ClassAnnotationHandler>()
-
-        private val fileAnnotations = mutableListOf<FileAnnotationHandler>()
 
         private val resources = mutableListOf<LibraryResource>()
 
@@ -115,10 +111,6 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
 
         fun addClassAnnotationHandler(handler: ClassAnnotationHandler) {
             classAnnotations.add(handler)
-        }
-
-        fun addFileAnnotationHanlder(handler: FileAnnotationHandler) {
-            fileAnnotations.add(handler)
         }
 
         fun addCodePreprocessor(preprocessor: CodePreprocessor) {
@@ -264,10 +256,6 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
             addClassAnnotationHandler(ClassAnnotationHandler(T::class, callback))
         }
 
-        inline fun <reified T : Annotation> onFileAnnotation(noinline callback: FileAnnotationCallback) {
-            addFileAnnotationHanlder(FileAnnotationHandler(T::class, callback))
-        }
-
         fun preprocessCodeWithLibraries(callback: KotlinKernelHost.(Code) -> CodePreprocessor.Result) {
             addCodePreprocessor(
                 object : CodePreprocessor {
@@ -360,7 +348,6 @@ abstract class JupyterIntegration : LibraryDefinitionProducer {
                 it.afterCellExecution = afterCellExecution
                 it.shutdown = shutdownCallbacks
                 it.classAnnotations = classAnnotations
-                it.fileAnnotations = fileAnnotations
                 it.resources = resources
                 it.codePreprocessors = codePreprocessors
                 it.internalVariablesMarkers = internalVariablesMarkers

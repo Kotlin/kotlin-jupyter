@@ -3,14 +3,9 @@ package org.jetbrains.kotlinx.jupyter.codegen
 import jupyter.kotlin.CompilerArgs
 import jupyter.kotlin.DependsOn
 import jupyter.kotlin.Repository
-import jupyter.kotlin.providers.KotlinKernelHostProvider
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationCallback
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandler
-import org.jetbrains.kotlinx.jupyter.exceptions.LibraryProblemPart
-import org.jetbrains.kotlinx.jupyter.exceptions.rethrowAsLibraryException
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData
@@ -25,16 +20,7 @@ internal class FileAnnotationsProcessorImpl(
     val dependencyAnnotationsHandler: ScriptDependencyAnnotationHandler,
     val compilerArgsConfigurator: CompilerArgsConfigurator,
     val compiler: JupyterCompiler,
-    val kernelHostProvider: KotlinKernelHostProvider,
 ) : FileAnnotationsProcessor {
-    private val handlers = mutableMapOf<String, FileAnnotationCallback>()
-
-    override fun register(handler: FileAnnotationHandler) {
-        handlers[handler.annotation.qualifiedName!!] = handler.callback
-        compiler.updateCompilationConfigOnAnnotation(handler) { context ->
-            process(context, kernelHostProvider.host!!)
-        }
-    }
 
     override fun process(
         context: ScriptConfigurationRefinementContext,
@@ -73,15 +59,7 @@ internal class FileAnnotationsProcessorImpl(
                         collected,
                     )
                 CompilerArgs::class -> compilerArgsConfigurator.configure(conf, collected)
-                else -> {
-                    val handler = handlers[clazz.qualifiedName]
-                    if (handler != null) {
-                        rethrowAsLibraryException(LibraryProblemPart.FILE_ANNOTATIONS) {
-                            handler.invoke(host, collected)
-                        }
-                    }
-                    conf.asSuccess()
-                }
+                else -> conf.asSuccess()
             }
         } catch (e: Throwable) {
             ResultWithDiagnostics.Failure(e.asDiagnostics(path = context.script.locationId))

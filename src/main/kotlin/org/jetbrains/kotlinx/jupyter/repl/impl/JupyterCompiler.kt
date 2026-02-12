@@ -1,13 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import java.io.File
 import kotlin.reflect.KClass
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
@@ -33,11 +29,6 @@ internal interface JupyterCompiler {
     fun nextCounter(): Int
 
     fun addClasspathEntries(classpathEntries: List<File>)
-
-    fun updateCompilationConfigOnAnnotation(
-        handler: FileAnnotationHandler,
-        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
-    )
 
     fun compileSync(
         snippet: SourceCode,
