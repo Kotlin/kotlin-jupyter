@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
@@ -16,8 +17,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.compiler.getCompilationConfiguration
-import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
-import org.slf4j.Logger
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
@@ -83,7 +82,7 @@ class CompilerServiceImpl(
             compilerArgsConfigurator = compilerArgsConfigurator,
             scriptDataCollectors = scriptDataCollectors,
             replCompilerMode = ReplCompilerMode.DEFAULT,
-            loggerFactory = DummyLoggerFactory,
+            loggerFactory = DefaultKernelLoggerFactory,
         ).with {
             refineConfiguration {
                 onAnnotations(jupyter.kotlin.DependsOn::class, jupyter.kotlin.Repository::class, jupyter.kotlin.CompilerArgs::class, handler = ::onAnnotationsHandler)
@@ -298,75 +297,3 @@ private data class SimpleDeclarationInfo(
     override val name: String?,
     override val kind: DeclarationKind,
 ) : DeclarationInfo
-
-/**
- * Dummy logger factory for daemon-side compilation.
- */
-private object DummyLoggerFactory : KernelLoggerFactory {
-    private val dummyLogger = object : Logger {
-        override fun getName() = "DummyLogger"
-        override fun isTraceEnabled() = false
-        override fun isTraceEnabled(marker: org.slf4j.Marker?) = false
-        override fun trace(msg: String?) {}
-        override fun trace(format: String?, arg: Any?) {}
-        override fun trace(format: String?, arg1: Any?, arg2: Any?) {}
-        override fun trace(format: String?, vararg arguments: Any?) {}
-        override fun trace(msg: String?, t: Throwable?) {}
-        override fun trace(marker: org.slf4j.Marker?, msg: String?) {}
-        override fun trace(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
-        override fun trace(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
-        override fun trace(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
-        override fun trace(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
-        override fun isDebugEnabled() = false
-        override fun isDebugEnabled(marker: org.slf4j.Marker?) = false
-        override fun debug(msg: String?) {}
-        override fun debug(format: String?, arg: Any?) {}
-        override fun debug(format: String?, arg1: Any?, arg2: Any?) {}
-        override fun debug(format: String?, vararg arguments: Any?) {}
-        override fun debug(msg: String?, t: Throwable?) {}
-        override fun debug(marker: org.slf4j.Marker?, msg: String?) {}
-        override fun debug(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
-        override fun debug(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
-        override fun debug(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
-        override fun debug(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
-        override fun isInfoEnabled() = false
-        override fun isInfoEnabled(marker: org.slf4j.Marker?) = false
-        override fun info(msg: String?) {}
-        override fun info(format: String?, arg: Any?) {}
-        override fun info(format: String?, arg1: Any?, arg2: Any?) {}
-        override fun info(format: String?, vararg arguments: Any?) {}
-        override fun info(msg: String?, t: Throwable?) {}
-        override fun info(marker: org.slf4j.Marker?, msg: String?) {}
-        override fun info(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
-        override fun info(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
-        override fun info(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
-        override fun info(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
-        override fun isWarnEnabled() = false
-        override fun isWarnEnabled(marker: org.slf4j.Marker?) = false
-        override fun warn(msg: String?) {}
-        override fun warn(format: String?, arg: Any?) {}
-        override fun warn(format: String?, vararg arguments: Any?) {}
-        override fun warn(format: String?, arg1: Any?, arg2: Any?) {}
-        override fun warn(msg: String?, t: Throwable?) {}
-        override fun warn(marker: org.slf4j.Marker?, msg: String?) {}
-        override fun warn(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
-        override fun warn(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
-        override fun warn(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
-        override fun warn(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
-        override fun isErrorEnabled() = false
-        override fun isErrorEnabled(marker: org.slf4j.Marker?) = false
-        override fun error(msg: String?) {}
-        override fun error(format: String?, arg: Any?) {}
-        override fun error(format: String?, arg1: Any?, arg2: Any?) {}
-        override fun error(format: String?, vararg arguments: Any?) {}
-        override fun error(msg: String?, t: Throwable?) {}
-        override fun error(marker: org.slf4j.Marker?, msg: String?) {}
-        override fun error(marker: org.slf4j.Marker?, format: String?, arg: Any?) {}
-        override fun error(marker: org.slf4j.Marker?, format: String?, arg1: Any?, arg2: Any?) {}
-        override fun error(marker: org.slf4j.Marker?, format: String?, vararg argArray: Any?) {}
-        override fun error(marker: org.slf4j.Marker?, msg: String?, t: Throwable?) {}
-    }
-
-    override fun getLogger(name: String) = dummyLogger
-    override fun getLogger(clazz: Class<*>) = dummyLogger
-}
