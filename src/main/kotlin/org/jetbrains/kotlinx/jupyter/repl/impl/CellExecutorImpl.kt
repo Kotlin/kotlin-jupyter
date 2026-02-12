@@ -190,7 +190,6 @@ internal class CellExecutorImpl(
                 library.throwableRenderers.forEach(sharedContext.throwableRenderersProcessor::register)
                 library.converters.forEach(sharedContext.fieldsProcessor::register)
                 library.classAnnotations.forEach(sharedContext.classAnnotationsProcessor::register)
-                library.fileAnnotations.forEach(sharedContext.fileAnnotationsProcessor::register)
                 library.interruptionCallbacks.forEach(sharedContext.interruptionCallbacksProcessor::register)
                 library.colorSchemeChangedCallbacks.forEach(sharedContext.colorSchemeChangeCallbacksProcessor::register)
                 sharedContext.afterCellExecutionsProcessor.registerAll(library.afterCellExecution)

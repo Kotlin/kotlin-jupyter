@@ -30,7 +30,6 @@ import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
@@ -387,12 +386,11 @@ class ReplForJupyterImpl(
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
-    private val fileAnnotationsProcessor: FileAnnotationsProcessor =
+    private val fileAnnotationsProcessor: FileAnnotationsProcessorImpl =
         FileAnnotationsProcessorImpl(
             ScriptDependencyAnnotationHandlerImpl(dependencyManager.resolver),
             compilerArgsConfigurator,
             jupyterCompiler,
-            hostProvider,
         )
 
     private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(hostProvider)
@@ -409,7 +407,6 @@ class ReplForJupyterImpl(
         SharedReplContext(
             loggerFactory,
             classAnnotationsProcessor,
-            fileAnnotationsProcessor,
             fieldsProcessor,
             renderersProcessor,
             textRenderersProcessor,

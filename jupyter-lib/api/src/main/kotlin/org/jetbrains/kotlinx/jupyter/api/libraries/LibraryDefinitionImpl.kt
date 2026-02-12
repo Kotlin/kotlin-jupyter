@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.ClassAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.CodePreprocessor
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.FieldHandler
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.InternalVariablesMarker
 import org.jetbrains.kotlinx.jupyter.api.InterruptionCallback
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
@@ -33,7 +32,6 @@ class LibraryDefinitionImpl private constructor() : LibraryDefinition {
     override var throwableRenderers: List<ThrowableRenderer> = emptyList()
     override var converters: List<FieldHandler> = emptyList()
     override var classAnnotations: List<ClassAnnotationHandler> = emptyList()
-    override var fileAnnotations: List<FileAnnotationHandler> = emptyList()
     override var resources: List<LibraryResource> = emptyList()
     override var codePreprocessors: List<CodePreprocessor> = emptyList()
     override var internalVariablesMarkers: List<InternalVariablesMarker> = emptyList()

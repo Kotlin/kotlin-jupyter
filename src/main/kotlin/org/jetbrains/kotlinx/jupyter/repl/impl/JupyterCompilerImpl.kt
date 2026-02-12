@@ -1,9 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.repl.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
-import org.jetbrains.kotlinx.jupyter.api.FileAnnotationHandler
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
@@ -15,7 +12,6 @@ import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
-import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -23,10 +19,8 @@ import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
-import kotlin.script.experimental.api.refineOnAnnotations
 import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
@@ -78,35 +72,6 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
     override fun updateCompilationConfig(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
         refinementCallbacks.add { context ->
             context.compilationConfiguration.with(body).asSuccess()
-        }
-    }
-
-    override fun updateCompilationConfigOnAnnotation(
-        handler: FileAnnotationHandler,
-        callback: (ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>,
-    ) {
-        refinementCallbacks.add { context ->
-            // In K2, each snippet is sent here twice (for unknown reasons). We ignore the variant we cannot use.
-            if (context.script !is KtFileScriptSource) return@add context.compilationConfiguration.asSuccess()
-            val ktFile = (context.script as KtFileScriptSource).ktFile
-
-            val withImport =
-                context.compilationConfiguration.with {
-                    defaultImports(handler.annotation.java.name)
-                    refineConfiguration {
-                        onAnnotations(KotlinType(handler.annotation.qualifiedName!!)) {
-                            callback(it)
-                        }
-                    }
-                }
-            val collectedData =
-                getScriptCollectedData(
-                    scriptFile = ktFile,
-                    compilationConfiguration = withImport,
-                    contextClassLoader = lastClassLoader,
-                )
-
-            withImport.refineOnAnnotations(context.script, collectedData)
         }
     }
 
