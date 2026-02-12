@@ -18,10 +18,16 @@ service KernelCallbackService {
     rpc ResolveDependencies(ResolveDependenciesRequest) returns (ResolveDependenciesResponse);
 }
 
+enum ReplCompilerMode {
+    K1 = 0;
+    K2 = 1;
+}
+
 message InitializeRequest {
     repeated string classpath_entries = 1;
     string jvm_target = 2;
     repeated string script_receiver_canonical_names = 3;
+    ReplCompilerMode repl_compiler_mode = 4;
 }
 
 message InitializeResponse {

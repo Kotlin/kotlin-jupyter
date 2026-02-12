@@ -1,8 +1,10 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import com.google.protobuf.ByteString
+import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
@@ -42,6 +44,7 @@ class DaemonCompilerServiceImpl(
                 scriptClasspath = request.classpathEntriesList,
                 jvmTarget = request.jvmTarget,
                 scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
+                replCompilerMode = request.replCompilerMode.toApi(),
             )
 
         val callbacks = GrpcKernelCallbacks(callbackStub)
@@ -185,3 +188,10 @@ private fun ApiDependencyAnnotation.toProto(): DependencyAnnotation =
                 is ApiDependencyAnnotation.Repository -> url
             },
         ).build()
+
+private fun org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.toApi(): ReplCompilerMode =
+    when (this) {
+        org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K1 -> ReplCompilerMode.K1
+        org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K2 -> ReplCompilerMode.K2
+        org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.UNRECOGNIZED -> ReplCompilerMode.DEFAULT
+    }

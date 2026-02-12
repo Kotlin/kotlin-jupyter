@@ -349,6 +349,7 @@ class ReplForJupyterImpl(
             scriptClasspath = currentClasspath,
             jvmTarget = runtimeProperties.jvmTargetForSnippets,
             scriptReceiverCanonicalNames = scriptReceivers.map { it.javaClass.canonicalName },
+            replCompilerMode = compilerMode,
         )
         CompilerServiceFactory.createCompilerService(params, callbacks)
     }

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
-import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 
 /**
  * Result of compilation.
@@ -130,4 +130,5 @@ data class CompilerParams(
     val scriptClasspath: List<String>,
     val jvmTarget: String,
     val scriptReceiverCanonicalNames: List<String> = emptyList(),
+    val replCompilerMode: ReplCompilerMode = ReplCompilerMode.K1,
 )

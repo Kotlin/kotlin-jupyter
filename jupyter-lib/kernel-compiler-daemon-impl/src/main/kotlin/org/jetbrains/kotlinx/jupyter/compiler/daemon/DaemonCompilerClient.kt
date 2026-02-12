@@ -7,6 +7,7 @@ import io.grpc.ServerBuilder
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
@@ -99,6 +100,7 @@ class DaemonCompilerClient(
                     .addAllClasspathEntries(params.scriptClasspath)
                     .setJvmTarget(params.jvmTarget)
                     .addAllScriptReceiverCanonicalNames(params.scriptReceiverCanonicalNames)
+                    .setReplCompilerMode(params.replCompilerMode.toProto())
                     .build()
 
             val response = stub!!.initialize(request)
@@ -228,6 +230,12 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.DependencyAnnotation.fr
         AnnotationType.DEPENDS_ON -> ApiDependencyAnnotation.DependsOn(value)
         AnnotationType.REPOSITORY -> ApiDependencyAnnotation.Repository(value)
         else -> ApiDependencyAnnotation.DependsOn(value) // Default
+    }
+
+private fun ReplCompilerMode.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode =
+    when (this) {
+        ReplCompilerMode.K1 -> org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K1
+        ReplCompilerMode.K2 -> org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K2
     }
 
 /**

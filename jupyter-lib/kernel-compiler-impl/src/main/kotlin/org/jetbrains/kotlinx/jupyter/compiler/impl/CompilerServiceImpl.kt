@@ -81,7 +81,7 @@ class CompilerServiceImpl(
             scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
             compilerArgsConfigurator = compilerArgsConfigurator,
             scriptDataCollectors = scriptDataCollectors,
-            replCompilerMode = ReplCompilerMode.DEFAULT,
+            replCompilerMode = params.replCompilerMode,
             loggerFactory = DefaultKernelLoggerFactory,
         ).with {
             refineConfiguration {
