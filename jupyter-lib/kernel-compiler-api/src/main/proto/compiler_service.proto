@@ -101,6 +101,7 @@ enum DeclarationType {
     PROPERTY = 2;
     OBJECT = 3;
     UNKNOWN = 4;
+    SCRIPT_INITIALIZER = 5;
 }
 
 message DeclarationInfo {

@@ -220,7 +220,7 @@ private fun Diagnostic.fromProto(): ScriptDiagnostic =
             DiagnosticSeverity.WARNING -> ScriptDiagnostic.Severity.WARNING
             DiagnosticSeverity.INFO -> ScriptDiagnostic.Severity.INFO
             DiagnosticSeverity.DEBUG -> ScriptDiagnostic.Severity.DEBUG
-            DiagnosticSeverity.UNRECOGNIZED -> ScriptDiagnostic.Severity.INFO
+            DiagnosticSeverity.UNRECOGNIZED -> error("Unrecognized DiagnosticSeverity: $severity")
         },
         sourcePath = sourcePath.takeIf { it.isNotEmpty() },
         location = if (hasLocation()) {
@@ -246,7 +246,9 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationInfo.fromPro
                 DeclarationType.CLASS -> DeclarationKind.CLASS
                 DeclarationType.OBJECT -> DeclarationKind.OBJECT
                 DeclarationType.PROPERTY -> DeclarationKind.PROPERTY
-                else -> DeclarationKind.UNKNOWN
+                DeclarationType.SCRIPT_INITIALIZER -> DeclarationKind.SCRIPT_INITIALIZER
+                DeclarationType.UNKNOWN -> DeclarationKind.UNKNOWN
+                DeclarationType.UNRECOGNIZED -> error("Unrecognized DeclarationType: $type")
             },
     )
 
@@ -254,7 +256,7 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.DependencyAnnotation.fr
     when (type) {
         AnnotationType.DEPENDS_ON -> ApiDependencyAnnotation.DependsOn(value)
         AnnotationType.REPOSITORY -> ApiDependencyAnnotation.Repository(value)
-        else -> ApiDependencyAnnotation.DependsOn(value) // Default
+        AnnotationType.UNRECOGNIZED -> error("Unrecognized AnnotationType: $type")
     }
 
 private fun ReplCompilerMode.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode =

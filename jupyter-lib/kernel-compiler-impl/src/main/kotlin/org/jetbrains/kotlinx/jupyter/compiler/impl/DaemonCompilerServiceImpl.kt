@@ -204,7 +204,8 @@ private fun DeclarationInfo.toProto(): org.jetbrains.kotlinx.jupyter.compiler.pr
                 DeclarationKind.CLASS -> DeclarationType.CLASS
                 DeclarationKind.OBJECT -> DeclarationType.OBJECT
                 DeclarationKind.PROPERTY -> DeclarationType.PROPERTY
-                else -> DeclarationType.UNKNOWN
+                DeclarationKind.SCRIPT_INITIALIZER -> DeclarationType.SCRIPT_INITIALIZER
+                DeclarationKind.UNKNOWN -> DeclarationType.UNKNOWN
             },
         ).build()
 
@@ -227,5 +228,5 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.toApi(
     when (this) {
         org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K1 -> ReplCompilerMode.K1
         org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K2 -> ReplCompilerMode.K2
-        org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.UNRECOGNIZED -> ReplCompilerMode.DEFAULT
+        org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.UNRECOGNIZED -> error("Unrecognized ReplCompilerMode: $this")
     }
