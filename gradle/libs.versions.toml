@@ -46,7 +46,7 @@ springBoot = "3.5.10"
 springDependencyManagement = "1.1.7"
 
 # gRPC and Protobuf
-grpc = "1.68.1"
+grpc = "1.79.0"
 grpcKotlin = "1.4.1"
 protobuf = "4.28.3"
 protobufPlugin = "0.9.4"
@@ -138,8 +138,11 @@ grpc-netty = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
+grpc-protoc-gen-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
+grpc-protoc-gen-kotlin = { module = "io.grpc:protoc-gen-grpc-kotlin", version.ref = "grpcKotlin" }
 protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 
 # Gradle Plugins
 
@@ -182,6 +185,7 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 shadow = { id = "com.gradleup.shadow" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm" }
 publisher = { id = "org.jetbrains.kotlin.libs.publisher" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
 
 [bundles]
 http4k = [ "http4k-core", "http4k-clientApache" ]

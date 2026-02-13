@@ -3,7 +3,7 @@ import com.google.protobuf.gradle.id
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("com.google.protobuf") version "0.9.4"
+    alias(libs.plugins.protobuf)
 }
 
 dependencies {
@@ -37,14 +37,14 @@ buildSettings {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.28.3"
+        artifact = libs.protobuf.protoc.get().toString()
     }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.68.1"
+            artifact = libs.grpc.protoc.gen.java.get().toString()
         }
         id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.1:jdk8@jar"
+            artifact = "${libs.grpc.protoc.gen.kotlin.get()}:jdk8@jar"
         }
     }
     generateProtoTasks {
