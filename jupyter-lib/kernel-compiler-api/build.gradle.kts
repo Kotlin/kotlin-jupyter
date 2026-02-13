@@ -11,6 +11,9 @@ dependencies {
     api(projects.api)
     api(projects.commonDependencies)
 
+    // Kotlin scripting for ScriptDiagnostic
+    api(libs.kotlin.dev.scriptingCommon)
+
     // Serialization for API data classes
     api(libs.serialization.json)
 

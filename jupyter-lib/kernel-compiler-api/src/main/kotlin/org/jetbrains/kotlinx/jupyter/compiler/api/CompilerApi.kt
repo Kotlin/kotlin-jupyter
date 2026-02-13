@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import kotlin.script.experimental.api.ScriptDiagnostic
 
 /**
  * Result of compilation.
@@ -28,20 +29,8 @@ sealed class CompileResult {
     }
 
     data class Failure(
-        val diagnostics: List<Diagnostic>,
+        val diagnostics: List<ScriptDiagnostic>,
     ) : CompileResult()
-}
-
-/**
- * Diagnostic message from compilation.
- */
-data class Diagnostic(
-    val severity: Severity,
-    val message: String,
-    val line: Int? = null,
-    val column: Int? = null,
-) {
-    enum class Severity { ERROR, WARNING, INFO }
 }
 
 

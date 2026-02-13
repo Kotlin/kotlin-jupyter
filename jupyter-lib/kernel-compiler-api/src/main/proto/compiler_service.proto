@@ -47,20 +47,29 @@ message CompiledClass {
 }
 
 enum DiagnosticSeverity {
-    ERROR = 0;
-    WARNING = 1;
-    INFO = 2;
+    FATAL = 0;
+    ERROR = 1;
+    WARNING = 2;
+    INFO = 3;
+    DEBUG = 4;
+}
+
+message SourcePosition {
+    int32 line = 1;
+    int32 col = 2;
 }
 
 message SourceLocation {
-    int32 line = 1;
-    int32 column = 2;
+    SourcePosition start = 1;
+    SourcePosition end = 2;  // optional
 }
 
 message Diagnostic {
-    DiagnosticSeverity severity = 1;
+    int32 code = 1;
     string message = 2;
-    SourceLocation location = 3;
+    DiagnosticSeverity severity = 3;
+    string source_path = 4;  // optional
+    SourceLocation location = 5;  // optional
 }
 
 message CompileResponse {

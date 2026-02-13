@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
-import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
@@ -16,11 +15,8 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.api.SourceCode.Location
-import kotlin.script.experimental.api.SourceCode.Position
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
@@ -127,30 +123,9 @@ internal class CompilerServiceAdapter(
                     options.cellId.toExecutionCount(),
                     snippet.text.lines().size,
                 )
-                // Convert diagnostics to ResultWithDiagnostics.Failure format
-                val scriptDiagnostics = compileResult.diagnostics.map { it.toScriptDiagnostic() }
-                val failure = ResultWithDiagnostics.Failure(scriptDiagnostics)
+                val failure = ResultWithDiagnostics.Failure(compileResult.diagnostics)
                 throw ReplCompilerException(snippet.text, failure, metadata = metadata)
             }
         }
-    }
-
-    private fun Diagnostic.toScriptDiagnostic(): ScriptDiagnostic {
-        val severity = when (this.severity) {
-            Diagnostic.Severity.ERROR -> ScriptDiagnostic.Severity.ERROR
-            Diagnostic.Severity.WARNING -> ScriptDiagnostic.Severity.WARNING
-            Diagnostic.Severity.INFO -> ScriptDiagnostic.Severity.INFO
-        }
-        val location = if (line != null && column != null) {
-            Location(Position(line!!, column!!), null)
-        } else {
-            null
-        }
-        return ScriptDiagnostic(
-            ScriptDiagnostic.unspecifiedError,
-            message,
-            severity,
-            location = location,
-        )
     }
 }

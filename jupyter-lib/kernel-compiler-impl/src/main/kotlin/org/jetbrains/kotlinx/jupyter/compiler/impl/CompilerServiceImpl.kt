@@ -12,7 +12,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
-import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import java.io.ByteArrayOutputStream
@@ -165,9 +164,7 @@ class CompilerServiceImpl(
         // Compile
         return when (val result = compiler.compile(source, compilationConfig)) {
             is ResultWithDiagnostics.Failure -> {
-                CompileResult.Failure(
-                    result.reports.map { it.toDiagnostic() },
-                )
+                CompileResult.Failure(result.reports)
             }
             is ResultWithDiagnostics.Success -> {
                 val linkedSnippet = result.value
@@ -208,18 +205,6 @@ class CompilerServiceImpl(
         // Recreate compilation config with updated classpath
         compilationConfig = createCompilationConfig()
     }
-
-    private fun ScriptDiagnostic.toDiagnostic(): Diagnostic =
-        Diagnostic(
-            severity = when (this.severity) {
-                ScriptDiagnostic.Severity.FATAL, ScriptDiagnostic.Severity.ERROR -> Diagnostic.Severity.ERROR
-                ScriptDiagnostic.Severity.WARNING -> Diagnostic.Severity.WARNING
-                else -> Diagnostic.Severity.INFO
-            },
-            message = this.message,
-            line = this.location?.start?.line,
-            column = this.location?.start?.col,
-        )
 }
 
 /**

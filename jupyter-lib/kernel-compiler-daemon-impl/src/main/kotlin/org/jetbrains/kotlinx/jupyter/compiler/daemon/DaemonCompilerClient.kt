@@ -28,8 +28,9 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
 import java.io.File
 import java.net.ServerSocket
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
-import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
 
 /**
  * Client that communicates with the compiler daemon via gRPC.
@@ -209,17 +210,31 @@ private class KernelCallbackServiceImpl(
 
 // Extension functions to convert from proto to API types
 
-private fun Diagnostic.fromProto(): ApiDiagnostic =
-    ApiDiagnostic(
-        severity =
-            when (severity) {
-                DiagnosticSeverity.ERROR -> ApiDiagnostic.Severity.ERROR
-                DiagnosticSeverity.WARNING -> ApiDiagnostic.Severity.WARNING
-                else -> ApiDiagnostic.Severity.INFO
-            },
+private fun Diagnostic.fromProto(): ScriptDiagnostic =
+    ScriptDiagnostic(
+        code = code,
         message = message,
-        line = if (hasLocation()) location.line else null,
-        column = if (hasLocation()) location.column else null,
+        severity = when (severity) {
+            DiagnosticSeverity.FATAL -> ScriptDiagnostic.Severity.FATAL
+            DiagnosticSeverity.ERROR -> ScriptDiagnostic.Severity.ERROR
+            DiagnosticSeverity.WARNING -> ScriptDiagnostic.Severity.WARNING
+            DiagnosticSeverity.INFO -> ScriptDiagnostic.Severity.INFO
+            DiagnosticSeverity.DEBUG -> ScriptDiagnostic.Severity.DEBUG
+            DiagnosticSeverity.UNRECOGNIZED -> ScriptDiagnostic.Severity.INFO
+        },
+        sourcePath = sourcePath.takeIf { it.isNotEmpty() },
+        location = if (hasLocation()) {
+            SourceCode.Location(
+                start = SourceCode.Position(location.start.line, location.start.col),
+                end = if (location.hasEnd()) {
+                    SourceCode.Position(location.end.line, location.end.col)
+                } else {
+                    null
+                },
+            )
+        } else {
+            null
+        },
     )
 
 private fun org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationInfo.fromProto(): DeclarationInfo =

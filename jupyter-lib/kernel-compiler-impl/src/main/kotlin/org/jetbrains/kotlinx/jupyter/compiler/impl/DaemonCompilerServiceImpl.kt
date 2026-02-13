@@ -27,8 +27,9 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
+import org.jetbrains.kotlinx.jupyter.compiler.proto.SourcePosition
+import kotlin.script.experimental.api.ScriptDiagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
-import org.jetbrains.kotlinx.jupyter.compiler.api.Diagnostic as ApiDiagnostic
 
 /**
  * gRPC service implementation for the compiler daemon.
@@ -150,23 +151,44 @@ private class GrpcKernelCallbacks(
 
 // Extension functions to convert between API and proto types
 
-private fun ApiDiagnostic.toProto(): Diagnostic =
+private fun ScriptDiagnostic.toProto(): Diagnostic =
     Diagnostic
         .newBuilder()
+        .setCode(code)
+        .setMessage(message)
         .setSeverity(
             when (severity) {
-                ApiDiagnostic.Severity.ERROR -> DiagnosticSeverity.ERROR
-                ApiDiagnostic.Severity.WARNING -> DiagnosticSeverity.WARNING
-                ApiDiagnostic.Severity.INFO -> DiagnosticSeverity.INFO
+                ScriptDiagnostic.Severity.FATAL -> DiagnosticSeverity.FATAL
+                ScriptDiagnostic.Severity.ERROR -> DiagnosticSeverity.ERROR
+                ScriptDiagnostic.Severity.WARNING -> DiagnosticSeverity.WARNING
+                ScriptDiagnostic.Severity.INFO -> DiagnosticSeverity.INFO
+                ScriptDiagnostic.Severity.DEBUG -> DiagnosticSeverity.DEBUG
             },
-        ).setMessage(message)
+        )
         .apply {
-            if (line != null && column != null) {
+            this@toProto.sourcePath?.let { setSourcePath(it) }
+            this@toProto.location?.let { loc ->
                 setLocation(
                     SourceLocation
                         .newBuilder()
-                        .setLine(line!!)
-                        .setColumn(column!!)
+                        .setStart(
+                            SourcePosition
+                                .newBuilder()
+                                .setLine(loc.start.line)
+                                .setCol(loc.start.col)
+                                .build(),
+                        )
+                        .apply {
+                            loc.end?.let { end ->
+                                setEnd(
+                                    SourcePosition
+                                        .newBuilder()
+                                        .setLine(end.line)
+                                        .setCol(end.col)
+                                        .build(),
+                                )
+                            }
+                        }
                         .build(),
                 )
             }
