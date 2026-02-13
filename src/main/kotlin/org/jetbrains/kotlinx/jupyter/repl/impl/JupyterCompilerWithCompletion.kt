@@ -3,10 +3,10 @@ package org.jetbrains.kotlinx.jupyter.repl.impl
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
+import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
 import org.jetbrains.kotlinx.jupyter.repl.impl.k1.K1JupyterCompilerWithCompletionImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.k2.K2JupyterCompilerWithCompletionImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.k2.K2KJvmReplCompilerWithCompletion
-import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -14,7 +14,7 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 internal interface JupyterCompilerWithCompletion : JupyterCompiler {
-    val completer: ReplCompleter
+    val complete: CompleteFunction
 
     fun checkComplete(code: Code): CheckCompletenessResult
 

@@ -7,10 +7,10 @@ import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
+import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerImpl
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import kotlin.script.experimental.api.ReplAnalyzerResult
-import kotlin.script.experimental.api.ReplCompleter
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -32,8 +32,9 @@ internal class K1JupyterCompilerWithCompletionImpl(
     evaluationConfig: ScriptEvaluationConfiguration,
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
     JupyterCompilerWithCompletion {
-    override val completer: ReplCompleter
-        get() = compiler
+    override val complete: CompleteFunction = { code, cursor ->
+        compiler.complete(code, cursor, compilationConfig)
+    }
 
     override fun checkComplete(code: Code): CheckCompletenessResult {
         val result = analyze(code)

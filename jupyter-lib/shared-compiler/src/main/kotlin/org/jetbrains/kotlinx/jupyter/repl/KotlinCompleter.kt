@@ -4,15 +4,17 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.util.toSourceCodePositionWithNewAbsolute
-import kotlin.script.experimental.api.ReplCompleter
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ReplCompletionResult
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.api.valueOrNull
 
+typealias CompleteFunction = suspend (SourceCode, SourceCode.Position) -> ResultWithDiagnostics<ReplCompletionResult>
+
 class KotlinCompleter {
     fun complete(
-        compiler: ReplCompleter,
-        configuration: ScriptCompilationConfiguration,
+        completeFunction: CompleteFunction,
         code: String,
         preprocessedCode: String,
         id: Int,
@@ -23,7 +25,7 @@ class KotlinCompleter {
             val preprocessedCodeLine = SourceCodeImpl(id, preprocessedCode)
             val codePos = cursor.toSourceCodePositionWithNewAbsolute(codeLine, preprocessedCodeLine)
             val completionResult =
-                codePos?.let { runBlocking { compiler.complete(preprocessedCodeLine, codePos, configuration) } }
+                codePos?.let { runBlocking { completeFunction(preprocessedCodeLine, codePos) } }
 
             completionResult?.valueOrNull()?.toList()?.let { completionList ->
                 getResult(code, cursor, completionList)

@@ -671,8 +671,7 @@ class ReplForJupyterImpl(
         }
 
         return completer.complete(
-            jupyterCompiler.completer,
-            compilerConfiguration,
+            jupyterCompiler.complete,
             args.code,
             preprocessed.code,
             jupyterCompiler.nextCounter(),
