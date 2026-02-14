@@ -107,6 +107,27 @@ class DaemonCompilerServiceImpl(
             .build()
     }
 
+    override suspend fun complete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse {
+        val currentCompiler = compiler
+        if (currentCompiler == null) {
+            return org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                .newBuilder()
+                .build()
+        }
+
+        val position = request.position.fromProto()
+        val result = currentCompiler.complete(
+            request.code,
+            request.id,
+            position,
+        )
+
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+            .newBuilder()
+            .addAllCompletions(result.map { it.toProto() })
+            .build()
+    }
+
 }
 
 /**
@@ -230,3 +251,18 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.toApi(
         org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K2 -> ReplCompilerMode.K2
         org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.UNRECOGNIZED -> error("Unrecognized ReplCompilerMode: $this")
     }
+
+private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodePosition.fromProto(): kotlin.script.experimental.api.SourceCode.Position =
+    kotlin.script.experimental.api.SourceCode.Position(line, col, absolutePos)
+
+private fun kotlin.script.experimental.api.SourceCodeCompletionVariant.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant =
+    org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant
+        .newBuilder()
+        .setText(text)
+        .setDisplayText(displayText)
+        .setTail(tail)
+        .setIcon(icon)
+        .apply {
+            this@toProto.deprecationLevel?.let { setDeprecationLevel(it.toString()) }
+        }
+        .build()

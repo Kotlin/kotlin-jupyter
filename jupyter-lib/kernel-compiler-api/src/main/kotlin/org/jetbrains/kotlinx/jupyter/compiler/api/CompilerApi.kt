@@ -3,6 +3,8 @@ package org.jetbrains.kotlinx.jupyter.compiler.api
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
 
 /**
  * Result of compilation.
@@ -23,16 +25,13 @@ sealed class CompileResult {
             return serializedCompiledSnippet.contentEquals(other.serializedCompiledSnippet)
         }
 
-        override fun hashCode(): Int {
-            return serializedCompiledSnippet.contentHashCode()
-        }
+        override fun hashCode() = serializedCompiledSnippet.contentHashCode()
     }
 
     data class Failure(
         val diagnostics: List<ScriptDiagnostic>,
     ) : CompileResult()
 }
-
 
 /**
  * Dependency annotation from notebook code.
@@ -75,6 +74,12 @@ interface CompilerService {
     ): CompileResult
 
     suspend fun addClasspathEntries(classpathEntries: List<String>)
+
+    suspend fun complete(
+        code: String,
+        id: Int,
+        position: SourceCode.Position,
+    ): List<SourceCodeCompletionVariant>
 }
 
 /**

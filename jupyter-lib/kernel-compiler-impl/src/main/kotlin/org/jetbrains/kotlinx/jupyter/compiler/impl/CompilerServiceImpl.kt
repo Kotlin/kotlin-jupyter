@@ -1,8 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.scripting.compiler.plugin.impl.KJvmReplCompilerBase
-import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
+import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
@@ -42,6 +41,10 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
+import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
+import kotlin.script.experimental.api.valueOrNull
 
 /**
  * In-process implementation of CompilerService.
@@ -64,8 +67,8 @@ class CompilerServiceImpl(
         declarationsCollector,
     )
 
-    private val compiler: KJvmReplCompilerBase<ReplCodeAnalyzerBase> by lazy {
-        SimpleReplCompiler(compilationConfig)
+    private val compiler: KJvmReplCompilerWithIdeServices by lazy {
+        KJvmReplCompilerWithIdeServices(compilationConfig[ScriptCompilationConfiguration.hostConfiguration]!!)
     }
 
     // Use getCompilationConfiguration the same way as ReplForJupyterImpl
@@ -200,19 +203,23 @@ class CompilerServiceImpl(
         updateClasspath(classpathEntries)
     }
 
+    override suspend fun complete(
+        code: String,
+        id: Int,
+        position: SourceCode.Position,
+    ): List<SourceCodeCompletionVariant> {
+        val sourceCode = SourceCodeImpl(id, code)
+
+        return compiler.complete(sourceCode, position, compilationConfig)
+            .valueOrNull()?.toList().orEmpty()
+    }
+
     private fun updateClasspath(classpathEntries: List<String>) {
         currentClasspath.addAll(classpathEntries.map { File(it) })
         // Recreate compilation config with updated classpath
         compilationConfig = createCompilationConfig()
     }
 }
-
-/**
- * Simple REPL compiler using Kotlin scripting APIs.
- */
-private class SimpleReplCompiler(
-    compilationConfiguration: ScriptCompilationConfiguration,
-) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]!!)
 
 /**
  * Collector for imports that reports them via callbacks.

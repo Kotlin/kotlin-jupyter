@@ -10,6 +10,7 @@ service JupyterCompilerService {
     rpc Initialize(InitializeRequest) returns (InitializeResponse);
     rpc Compile(CompileRequest) returns (CompileResponse);
     rpc AddClasspathEntries(AddClasspathEntriesRequest) returns (AddClasspathEntriesResponse);
+    rpc Complete(CompleteRequest) returns (CompleteResponse);
 }
 
 // Kernel callback service (kernel implements this)
@@ -88,6 +89,29 @@ message AddClasspathEntriesResponse {
     bool success = 1;
 }
 
+message SourceCodePosition {
+    int32 line = 1;
+    int32 col = 2;
+    int32 absolute_pos = 3;
+}
+
+message CompleteRequest {
+    string code = 1;
+    int32 id = 2;
+    SourceCodePosition position = 3;
+}
+
+message SourceCodeCompletionVariant {
+    string text = 1;
+    string display_text = 2;
+    string tail = 3;
+    string icon = 4;  // optional
+    string deprecation_level = 5;  // optional
+}
+
+message CompleteResponse {
+    repeated SourceCodeCompletionVariant completions = 1;
+}
 
 message ReportImportsRequest {
     repeated string imports = 1;

@@ -30,6 +30,7 @@ import java.io.File
 import java.net.ServerSocket
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 
 /**
@@ -149,6 +150,24 @@ class DaemonCompilerClient(
         }
     }
 
+    override suspend fun complete(
+        code: String,
+        id: Int,
+        position: SourceCode.Position,
+    ): List<SourceCodeCompletionVariant> {
+        val request =
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest
+                .newBuilder()
+                .setCode(code)
+                .setId(id)
+                .setPosition(position.toProto())
+                .build()
+
+        val response = stub!!.complete(request)
+
+        return response.completionsList.map { it.fromProto() }
+    }
+
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 
     private fun findDaemonJar(): File {
@@ -264,6 +283,25 @@ private fun ReplCompilerMode.toProto(): org.jetbrains.kotlinx.jupyter.compiler.p
         ReplCompilerMode.K1 -> org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K1
         ReplCompilerMode.K2 -> org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.K2
     }
+
+private fun SourceCode.Position.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodePosition =
+    org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodePosition
+        .newBuilder()
+        .setLine(line)
+        .setCol(col)
+        .setAbsolutePos(absolutePos ?: 0)
+        .build()
+
+private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant.fromProto(): SourceCodeCompletionVariant =
+    SourceCodeCompletionVariant(
+        text = text,
+        displayText = if (displayText.isEmpty()) text else displayText,
+        tail = tail,
+        icon = icon,
+        deprecationLevel = deprecationLevel.ifEmpty { null }?.let {
+            DeprecationLevel.valueOf(it)
+        },
+    )
 
 /**
  * Simple implementation of DeclarationInfo for proto conversion.
