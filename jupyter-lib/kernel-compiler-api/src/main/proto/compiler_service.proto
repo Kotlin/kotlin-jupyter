@@ -62,15 +62,15 @@ message SourcePosition {
 
 message SourceLocation {
     SourcePosition start = 1;
-    SourcePosition end = 2;  // optional
+    optional SourcePosition end = 2;
 }
 
 message Diagnostic {
     int32 code = 1;
     string message = 2;
     DiagnosticSeverity severity = 3;
-    string source_path = 4;  // optional
-    SourceLocation location = 5;  // optional
+    optional string source_path = 4;
+    optional SourceLocation location = 5;
 }
 
 message CompileResponse {
@@ -105,8 +105,8 @@ message SourceCodeCompletionVariant {
     string text = 1;
     string display_text = 2;
     string tail = 3;
-    string icon = 4;  // optional
-    string deprecation_level = 5;  // optional
+    string icon = 4;
+    optional string deprecation_level = 5;
 }
 
 message CompleteResponse {
@@ -156,5 +156,5 @@ message ResolveDependenciesRequest {
 message ResolveDependenciesResponse {
     bool success = 1;
     repeated string classpath_entries = 2;
-    string error_message = 3;
+    optional string error_message = 3;
 }

@@ -241,7 +241,7 @@ private fun Diagnostic.fromProto(): ScriptDiagnostic =
             DiagnosticSeverity.DEBUG -> ScriptDiagnostic.Severity.DEBUG
             DiagnosticSeverity.UNRECOGNIZED -> error("Unrecognized DiagnosticSeverity: $severity")
         },
-        sourcePath = sourcePath.takeIf { it.isNotEmpty() },
+        sourcePath = if (hasSourcePath()) sourcePath else null,
         location = if (hasLocation()) {
             SourceCode.Location(
                 start = SourceCode.Position(location.start.line, location.start.col),
@@ -295,11 +295,13 @@ private fun SourceCode.Position.toProto(): org.jetbrains.kotlinx.jupyter.compile
 private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant.fromProto(): SourceCodeCompletionVariant =
     SourceCodeCompletionVariant(
         text = text,
-        displayText = if (displayText.isEmpty()) text else displayText,
+        displayText = displayText,
         tail = tail,
         icon = icon,
-        deprecationLevel = deprecationLevel.ifEmpty { null }?.let {
-            DeprecationLevel.valueOf(it)
+        deprecationLevel = if (hasDeprecationLevel()) {
+            DeprecationLevel.valueOf(deprecationLevel)
+        } else {
+            null
         },
     )
 
