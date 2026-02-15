@@ -307,26 +307,26 @@ class ReplForJupyterImpl(
             implicitReceivers(ScriptTemplateWithDisplayHelpers(this@ReplForJupyterImpl))
         }
 
-    private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
-        when (compilerMode) {
-            ReplCompilerMode.K1 -> {
-                JupyterCompilerWithCompletion.createK1Compiler(
-                    compilerConfiguration,
-                    evaluatorConfiguration,
-                )
-            }
-            ReplCompilerMode.K2 -> {
-                JupyterCompilerWithCompletion.createK2Compiler(
-                    compilerConfiguration,
-                    evaluatorConfiguration,
-                )
-            }
-        }.apply {
-            dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
-                addClasspathEntries(classpath)
-            }
-        }
-    }
+    // private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
+    //     when (compilerMode) {
+    //         ReplCompilerMode.K1 -> {
+    //             JupyterCompilerWithCompletion.createK1Compiler(
+    //                 compilerConfiguration,
+    //                 evaluatorConfiguration,
+    //             )
+    //         }
+    //         ReplCompilerMode.K2 -> {
+    //             JupyterCompilerWithCompletion.createK2Compiler(
+    //                 compilerConfiguration,
+    //                 evaluatorConfiguration,
+    //             )
+    //         }
+    //     }.apply {
+    //         dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
+    //             addClasspathEntries(classpath)
+    //         }
+    //     }
+    // }
 
     // New RPC-based compiler service for out-of-process compilation
     private val compilerService by lazy {
@@ -353,7 +353,7 @@ class ReplForJupyterImpl(
     // Adapter that wraps CompilerService to provide JupyterCompiler interface
     // This is ready to be used but not yet enabled by default
     // To enable, replace jupyterCompiler with compilerAdapter in internalEvaluator construction
-    private val compilerAdapter by lazy {
+    private val jupyterCompiler by lazy {
         CompilerServiceAdapter(compilerService, evaluatorConfiguration)
     }
 
