@@ -87,6 +87,8 @@ interface CompilerService {
     ): List<ScriptDiagnostic>
 
     suspend fun checkComplete(code: String): Boolean
+
+    suspend fun getClasspath(): List<String>
 }
 
 /**

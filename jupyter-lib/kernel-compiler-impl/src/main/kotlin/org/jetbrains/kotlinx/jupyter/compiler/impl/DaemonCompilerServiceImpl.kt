@@ -161,6 +161,22 @@ class DaemonCompilerServiceImpl(
             .build()
     }
 
+    override suspend fun getClasspath(request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse {
+        val currentCompiler = compiler
+        if (currentCompiler == null) {
+            return org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                .newBuilder()
+                .build()
+        }
+
+        val classpath = currentCompiler.getClasspath()
+
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+            .newBuilder()
+            .addAllClasspathEntries(classpath)
+            .build()
+    }
+
 }
 
 /**

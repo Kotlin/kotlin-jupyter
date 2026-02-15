@@ -47,7 +47,9 @@ import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 /**
@@ -235,6 +237,17 @@ class CompilerServiceImpl(
         val diagnostics = result[ReplAnalyzerResult.analysisDiagnostics]!!
         return diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
     }
+
+    override suspend fun getClasspath(): List<String> {
+        return compilationConfig.classpath.map { it.absolutePath }
+    }
+
+    private val ScriptCompilationConfiguration.classpath: List<File>
+        get() =
+            this[ScriptCompilationConfiguration.dependencies]
+                ?.filterIsInstance<JvmDependency>()
+                ?.flatMap { it.classpath }
+                .orEmpty()
 
     private fun updateClasspath(classpathEntries: List<String>) {
         currentClasspath.addAll(classpathEntries.map { File(it) })

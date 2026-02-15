@@ -196,6 +196,17 @@ class DaemonCompilerClient(
         return response.isComplete
     }
 
+    override suspend fun getClasspath(): List<String> {
+        val request =
+            org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest
+                .newBuilder()
+                .build()
+
+        val response = stub!!.getClasspath(request)
+
+        return response.classpathEntriesList
+    }
+
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 
     private fun findDaemonJar(): File {
