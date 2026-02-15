@@ -168,6 +168,22 @@ class DaemonCompilerClient(
         return response.completionsList.map { it.fromProto() }
     }
 
+    override suspend fun listErrors(
+        code: String,
+        id: Int,
+    ): List<ScriptDiagnostic> {
+        val request =
+            org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest
+                .newBuilder()
+                .setCode(code)
+                .setId(id)
+                .build()
+
+        val response = stub!!.listErrors(request)
+
+        return response.diagnosticsList.map { it.fromProto() }
+    }
+
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 
     private fun findDaemonJar(): File {

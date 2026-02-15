@@ -128,6 +128,22 @@ class DaemonCompilerServiceImpl(
             .build()
     }
 
+    override suspend fun listErrors(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse {
+        val currentCompiler = compiler
+        if (currentCompiler == null) {
+            return org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                .newBuilder()
+                .build()
+        }
+
+        val diagnostics = currentCompiler.listErrors(request.code, request.id)
+
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+            .newBuilder()
+            .addAllDiagnostics(diagnostics.map { it.toProto() })
+            .build()
+    }
+
 }
 
 /**

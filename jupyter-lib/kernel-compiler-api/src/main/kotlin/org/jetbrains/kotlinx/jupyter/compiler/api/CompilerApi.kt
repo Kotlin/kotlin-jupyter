@@ -80,6 +80,11 @@ interface CompilerService {
         id: Int,
         position: SourceCode.Position,
     ): List<SourceCodeCompletionVariant>
+
+    suspend fun listErrors(
+        code: String,
+        id: Int,
+    ): List<ScriptDiagnostic>
 }
 
 /**

@@ -42,9 +42,13 @@ import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
+import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 /**
  * In-process implementation of CompilerService.
@@ -212,6 +216,16 @@ class CompilerServiceImpl(
 
         return compiler.complete(sourceCode, position, compilationConfig)
             .valueOrNull()?.toList().orEmpty()
+    }
+
+    override suspend fun listErrors(
+        code: String,
+        id: Int,
+    ): List<ScriptDiagnostic> {
+        val sourceCode = SourceCodeImpl(id, code)
+        val position = 0.toSourceCodePosition(sourceCode)
+        val result = compiler.analyze(sourceCode, position, compilationConfig).valueOrThrow()
+        return result[ReplAnalyzerResult.analysisDiagnostics]!!.toList()
     }
 
     private fun updateClasspath(classpathEntries: List<String>) {
