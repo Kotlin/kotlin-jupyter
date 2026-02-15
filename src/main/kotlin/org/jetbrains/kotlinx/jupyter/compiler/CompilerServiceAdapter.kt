@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.compiler
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
@@ -10,13 +11,18 @@ import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
+import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
+import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
 import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
+import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
@@ -24,13 +30,13 @@ import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.lastSnippetClassLoader
 
 /**
- * Adapter that wraps CompilerService to implement JupyterCompiler interface.
+ * Adapter that wraps CompilerService to implement JupyterCompilerWithCompletion interface.
  * This allows using the new RPC-based compiler service with the existing evaluation pipeline.
  */
 internal class CompilerServiceAdapter(
     private val compilerService: CompilerService,
     private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
-) : JupyterCompiler {
+) : JupyterCompilerWithCompletion {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
 
@@ -127,5 +133,28 @@ internal class CompilerServiceAdapter(
                 throw ReplCompilerException(snippet.text, failure, metadata = metadata)
             }
         }
+    }
+
+    override val complete: CompleteFunction = { code, position ->
+        val id = executionCounter.get()
+        val completions = runBlocking {
+            compilerService.complete(code.text, id, position)
+        }
+        completions.asSequence().asSuccess()
+    }
+
+    override fun checkComplete(code: Code): CheckCompletenessResult {
+        val isComplete = runBlocking {
+            compilerService.checkComplete(code)
+        }
+        return CheckCompletenessResult(isComplete)
+    }
+
+    override fun listErrors(code: Code): Sequence<ScriptDiagnostic> {
+        val id = executionCounter.get()
+        val diagnostics = runBlocking {
+            compilerService.listErrors(code, id)
+        }
+        return diagnostics.asSequence()
     }
 }
