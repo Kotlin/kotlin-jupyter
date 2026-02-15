@@ -184,6 +184,18 @@ class DaemonCompilerClient(
         return response.diagnosticsList.map { it.fromProto() }
     }
 
+    override suspend fun checkComplete(code: String): Boolean {
+        val request =
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
+                .newBuilder()
+                .setCode(code)
+                .build()
+
+        val response = stub!!.checkComplete(request)
+
+        return response.isComplete
+    }
+
     private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
 
     private fun findDaemonJar(): File {

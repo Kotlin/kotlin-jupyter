@@ -12,6 +12,7 @@ service JupyterCompilerService {
     rpc AddClasspathEntries(AddClasspathEntriesRequest) returns (AddClasspathEntriesResponse);
     rpc Complete(CompleteRequest) returns (CompleteResponse);
     rpc ListErrors(ListErrorsRequest) returns (ListErrorsResponse);
+    rpc CheckComplete(CheckCompleteRequest) returns (CheckCompleteResponse);
 }
 
 // Kernel callback service (kernel implements this)
@@ -121,6 +122,14 @@ message ListErrorsRequest {
 
 message ListErrorsResponse {
     repeated Diagnostic diagnostics = 1;
+}
+
+message CheckCompleteRequest {
+    string code = 1;
+}
+
+message CheckCompleteResponse {
+    bool is_complete = 1;
 }
 
 message ReportImportsRequest {

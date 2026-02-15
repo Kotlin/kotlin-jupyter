@@ -144,6 +144,23 @@ class DaemonCompilerServiceImpl(
             .build()
     }
 
+    override suspend fun checkComplete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse {
+        val currentCompiler = compiler
+        if (currentCompiler == null) {
+            return org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                .newBuilder()
+                .setIsComplete(false)
+                .build()
+        }
+
+        val isComplete = currentCompiler.checkComplete(request.code)
+
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+            .newBuilder()
+            .setIsComplete(isComplete)
+            .build()
+    }
+
 }
 
 /**

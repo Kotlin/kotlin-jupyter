@@ -228,6 +228,14 @@ class CompilerServiceImpl(
         return result[ReplAnalyzerResult.analysisDiagnostics]!!.toList()
     }
 
+    override suspend fun checkComplete(code: String): Boolean {
+        val sourceCode = code.toScriptSource()
+        val position = 0.toSourceCodePosition(sourceCode)
+        val result = compiler.analyze(sourceCode, position, compilationConfig).valueOrThrow()
+        val diagnostics = result[ReplAnalyzerResult.analysisDiagnostics]!!
+        return diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
+    }
+
     private fun updateClasspath(classpathEntries: List<String>) {
         currentClasspath.addAll(classpathEntries.map { File(it) })
         // Recreate compilation config with updated classpath
