@@ -74,6 +74,7 @@ import org.jetbrains.kotlinx.jupyter.messaging.comms.installCommHandler
 import org.jetbrains.kotlinx.jupyter.messaging.comms.requireUniqueTargets
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.api.getLogger
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.catchAllIndependentlyAndMerge
 import org.jetbrains.kotlinx.jupyter.registerDefaultRenderers
 import org.jetbrains.kotlinx.jupyter.repl.BaseKernelHost
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
@@ -161,7 +162,8 @@ class ReplForJupyterImpl(
             httpClient,
         )
 
-    private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor = InternalVariablesMarkersProcessorImpl()
+    private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor =
+        InternalVariablesMarkersProcessorImpl()
 
     private val ctx = KotlinContext()
 
@@ -232,7 +234,7 @@ class ReplForJupyterImpl(
             },
         )
         val params = CompilerParams(
-            scriptClasspath = currentClasspath,
+            scriptClasspath = scriptClasspath.map { it.canonicalPath },
             jvmTarget = runtimeProperties.jvmTargetForSnippets,
             scriptReceiverCanonicalNames = scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
             replCompilerMode = compilerMode,
@@ -251,28 +253,30 @@ class ReplForJupyterImpl(
     override val currentClasspath get() = dependencyManager.currentBinaryClasspath.map { it.canonicalPath }
     private val evaluatedSnippetsMetadata = mutableListOf<InternalMetadata>()
 
-    private val allEvaluatedSnippetsMetadata: InternalMetadata get() {
-        val allCompiledData =
-            buildScriptsData {
-                for (metadata in evaluatedSnippetsMetadata) {
-                    addData(metadata.compiledData)
+    private val allEvaluatedSnippetsMetadata: InternalMetadata
+        get() {
+            val allCompiledData =
+                buildScriptsData {
+                    for (metadata in evaluatedSnippetsMetadata) {
+                        addData(metadata.compiledData)
+                    }
                 }
-            }
-        val allImports = evaluatedSnippetsMetadata.flatMap { it.newImports }
+            val allImports = evaluatedSnippetsMetadata.flatMap { it.newImports }
 
-        return InternalMetadataImpl(
-            allCompiledData,
-            allImports,
-        )
-    }
+            return InternalMetadataImpl(
+                allCompiledData,
+                allImports,
+            )
+        }
 
-    override val currentSessionState: EvaluatedSnippetMetadata get() {
-        return EvaluatedSnippetMetadata(
-            dependencyManager.currentBinaryClasspath.map { it.canonicalPath },
-            dependencyManager.currentSourcesClasspath.map { it.canonicalPath },
-            allEvaluatedSnippetsMetadata,
-        )
-    }
+    override val currentSessionState: EvaluatedSnippetMetadata
+        get() {
+            return EvaluatedSnippetMetadata(
+                dependencyManager.currentBinaryClasspath.map { it.canonicalPath },
+                dependencyManager.currentSourcesClasspath.map { it.canonicalPath },
+                allEvaluatedSnippetsMetadata,
+            )
+        }
 
     private val evaluatorConfiguration =
         ScriptEvaluationConfiguration {
@@ -386,9 +390,11 @@ class ReplForJupyterImpl(
             jupyterCompiler,
         )
 
-    private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor = InterruptionCallbacksProcessorImpl(hostProvider)
+    private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor =
+        InterruptionCallbacksProcessorImpl(hostProvider)
 
-    private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor = ColorSchemeChangeCallbacksProcessorImpl()
+    private val colorSchemeChangeCallbacksProcessor: ColorSchemeChangeCallbacksProcessor =
+        ColorSchemeChangeCallbacksProcessorImpl()
 
     private val beforeCellExecutionsProcessor = BeforeCellExecutionsProcessor()
     private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor(loggerFactory)
@@ -470,6 +476,7 @@ class ReplForJupyterImpl(
                     getMetadata(),
                 )
             }
+
             is InternalReplResult.Error -> {
                 val error = result.error
 
@@ -720,6 +727,9 @@ class ReplForJupyterImpl(
     }
 
     override fun close() {
-        notebook.closeIfPossible()
+        catchAllIndependentlyAndMerge(
+            { compilerService.closeIfPossible() },
+            { notebook.closeIfPossible() },
+        )
     }
 }

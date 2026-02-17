@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
@@ -26,8 +27,10 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
+import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
+import org.jetbrains.kotlinx.jupyter.protocol.startup.create
+import java.io.Closeable
 import java.io.File
-import java.net.ServerSocket
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
@@ -39,17 +42,23 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDep
 class DaemonCompilerClient(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
-) : org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService {
+) : CompilerService, Closeable {
     private var channel: ManagedChannel? = null
     private var stub: JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub? = null
     private var callbackServer: Server? = null
     private var daemonProcess: Process? = null
 
-    private val daemonPort: Int = findAvailablePort()
-    private val callbackPort: Int = findAvailablePort()
+    private val portsGenerator = PortsGenerator.create(32768, 65536)
+
+    private val daemonPort: Int = portsGenerator.randomPort()
+    private val callbackPort: Int = portsGenerator.randomPort()
 
     init {
         startDaemon()
+        // Register shutdown hook to ensure daemon is killed when JVM exits
+        Runtime.getRuntime().addShutdownHook(Thread {
+            close()
+        })
     }
 
     private fun startDaemon() {
@@ -71,6 +80,7 @@ class DaemonCompilerClient(
         val processBuilder =
             ProcessBuilder(
                 System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:1044",
                 "-jar",
                 daemonJar.absolutePath,
                 daemonPort.toString(),
@@ -207,8 +217,6 @@ class DaemonCompilerClient(
         return response.classpathEntriesList
     }
 
-    private fun findAvailablePort(): Int = ServerSocket(0).use { it.localPort }
-
     private fun findDaemonJar(): File {
         // Extract the daemon JAR from resources (it's packaged with this module)
         val resourceStream = javaClass.getResourceAsStream("/compiler-daemon.jar")
@@ -225,6 +233,38 @@ class DaemonCompilerClient(
         }
 
         return tempFile
+    }
+
+    /**
+     * Closes the daemon client, shutting down the daemon process and all connections.
+     * This method is idempotent and safe to call multiple times.
+     */
+    override fun close() {
+        try {
+            // Shutdown gRPC channel
+            channel?.shutdown()
+            channel?.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)
+            channel = null
+            stub = null
+
+            // Shutdown callback server
+            callbackServer?.shutdown()
+            callbackServer?.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)
+            callbackServer = null
+
+            // Kill daemon process
+            daemonProcess?.destroy()
+            // Wait up to 5 seconds for graceful shutdown
+            if (daemonProcess?.waitFor(5, java.util.concurrent.TimeUnit.SECONDS) == false) {
+                // Force kill if still running
+                daemonProcess?.destroyForcibly()
+            }
+            daemonProcess = null
+
+            println("Compiler daemon shut down successfully")
+        } catch (e: Exception) {
+            println("Error during daemon shutdown: ${e.message}")
+        }
     }
 }
 
