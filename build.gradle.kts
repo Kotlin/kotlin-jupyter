@@ -104,7 +104,6 @@ dependencies {
     testImplementation(libs.java.websocket)
 
     // Add compiler implementations for SPI testing
-    testRuntimeOnly(projects.kernelCompilerImpl)
     testRuntimeOnly(projects.kernelCompilerDaemonImpl)
 
     deploy(projects.lib)
