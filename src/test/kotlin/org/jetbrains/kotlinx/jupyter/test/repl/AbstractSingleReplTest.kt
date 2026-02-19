@@ -1,5 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.test.repl
 
+import io.kotest.assertions.fail
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.closeIfPossible
@@ -30,7 +31,12 @@ abstract class AbstractSingleReplTest : AbstractReplTest() {
         return result.error.shouldBeTypeOf<T>()
     }
 
-    protected fun evalSuccess(code: Code) = eval(code).shouldBeTypeOf<EvalResultEx.Success>()
+    protected fun evalSuccess(code: Code): EvalResultEx.Success {
+        when (val result = eval(code)) {
+            is EvalResultEx.Success -> return result
+            else -> fail("Expected success result, got $result")
+        }
+    }
 
     protected fun completeOrFail(
         code: Code,
