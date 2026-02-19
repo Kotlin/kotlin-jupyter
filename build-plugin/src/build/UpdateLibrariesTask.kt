@@ -24,6 +24,11 @@ abstract class UpdateLibrariesTask : DefaultTask() {
 
     @TaskAction
     fun update() {
+        if (System.getenv("TEAMCITY_VERSION") != null) {
+            // We copy library directory manually on TC
+            logger.lifecycle("Skipping $name on TeamCity")
+            return
+        }
         val latestSha = latestCommitHash.get()
         if (BUILD_LIBRARIES.checkIfRefUpToDate(latestSha)) return
         BUILD_LIBRARIES.downloadLibraries(latestSha)
