@@ -37,6 +37,7 @@ message InitializeRequest {
 
 message InitializeResponse {
     bool success = 1;
+    optional string error_message = 2;
 }
 
 message CompileRequest {
@@ -90,6 +91,7 @@ message AddClasspathEntriesRequest {
 
 message AddClasspathEntriesResponse {
     bool success = 1;
+    optional string error_message = 2;
 }
 
 message SourceCodePosition {
@@ -113,7 +115,9 @@ message SourceCodeCompletionVariant {
 }
 
 message CompleteResponse {
-    repeated SourceCodeCompletionVariant completions = 1;
+    bool success = 1;
+    repeated SourceCodeCompletionVariant completions = 2;
+    optional string error_message = 3;
 }
 
 message ListErrorsRequest {
@@ -122,7 +126,9 @@ message ListErrorsRequest {
 }
 
 message ListErrorsResponse {
-    repeated Diagnostic diagnostics = 1;
+    bool success = 1;
+    repeated Diagnostic diagnostics = 2;
+    optional string error_message = 3;
 }
 
 message CheckCompleteRequest {
@@ -130,14 +136,18 @@ message CheckCompleteRequest {
 }
 
 message CheckCompleteResponse {
-    bool is_complete = 1;
+    bool success = 1;
+    bool is_complete = 2;
+    optional string error_message = 3;
 }
 
 message GetClasspathRequest {
 }
 
 message GetClasspathResponse {
-    repeated string classpath_entries = 1;
+    bool success = 1;
+    repeated string classpath_entries = 2;
+    optional string error_message = 3;
 }
 
 message ReportImportsRequest {

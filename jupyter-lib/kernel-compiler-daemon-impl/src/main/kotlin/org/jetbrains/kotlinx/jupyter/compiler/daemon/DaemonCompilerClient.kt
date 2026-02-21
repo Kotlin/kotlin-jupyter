@@ -117,7 +117,8 @@ class DaemonCompilerClient(
 
             val response = stub!!.initialize(request)
             if (!response.success) {
-                throw RuntimeException("Failed to initialize compiler daemon")
+                val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+                throw RuntimeException("Failed to initialize compiler daemon: $errorMsg")
             }
         }
 
@@ -156,7 +157,8 @@ class DaemonCompilerClient(
 
         val response = stub!!.addClasspathEntries(request)
         if (!response.success) {
-            throw RuntimeException("Failed to add classpath entries to compiler daemon")
+            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+            throw RuntimeException("Failed to add classpath entries to compiler daemon: $errorMsg")
         }
     }
 
@@ -175,6 +177,11 @@ class DaemonCompilerClient(
 
         val response = stub!!.complete(request)
 
+        if (!response.success) {
+            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+            throw RuntimeException("Code completion failed: $errorMsg")
+        }
+
         return response.completionsList.map { it.fromProto() }
     }
 
@@ -191,6 +198,11 @@ class DaemonCompilerClient(
 
         val response = stub!!.listErrors(request)
 
+        if (!response.success) {
+            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+            throw RuntimeException("Failed to list errors: $errorMsg")
+        }
+
         return response.diagnosticsList.map { it.fromProto() }
     }
 
@@ -203,6 +215,11 @@ class DaemonCompilerClient(
 
         val response = stub!!.checkComplete(request)
 
+        if (!response.success) {
+            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+            throw RuntimeException("Failed to check code completeness: $errorMsg")
+        }
+
         return response.isComplete
     }
 
@@ -213,6 +230,11 @@ class DaemonCompilerClient(
                 .build()
 
         val response = stub!!.getClasspath(request)
+
+        if (!response.success) {
+            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
+            throw RuntimeException("Failed to get classpath: $errorMsg")
+        }
 
         return response.classpathEntriesList
     }

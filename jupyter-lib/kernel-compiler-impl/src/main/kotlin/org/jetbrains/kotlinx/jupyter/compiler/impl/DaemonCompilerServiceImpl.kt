@@ -42,21 +42,31 @@ class DaemonCompilerServiceImpl(
     private var compiler: CompilerService? = null
 
     override suspend fun initialize(request: InitializeRequest): InitializeResponse {
-        val params =
-            CompilerParams(
-                scriptClasspath = request.classpathEntriesList,
-                jvmTarget = request.jvmTarget,
-                scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
-                replCompilerMode = request.replCompilerMode.toApi(),
-            )
+        return try {
+            val params =
+                CompilerParams(
+                    scriptClasspath = request.classpathEntriesList,
+                    jvmTarget = request.jvmTarget,
+                    scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
+                    replCompilerMode = request.replCompilerMode.toApi(),
+                )
 
-        val callbacks = GrpcKernelCallbacks(callbackStub)
-        compiler = CompilerServiceImpl(params, callbacks)
+            val callbacks = GrpcKernelCallbacks(callbackStub)
+            compiler = CompilerServiceImpl(params, callbacks)
 
-        return InitializeResponse
-            .newBuilder()
-            .setSuccess(true)
-            .build()
+            InitializeResponse
+                .newBuilder()
+                .setSuccess(true)
+                .build()
+        } catch (e: Exception) {
+            println("Error initializing compiler: ${e.message}")
+            e.printStackTrace()
+            InitializeResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Failed to initialize compiler: ${e.message}\n${e.stackTraceToString()}")
+                .build()
+        }
     }
 
     override suspend fun compile(request: CompileRequest): CompileResponse {
@@ -72,39 +82,67 @@ class DaemonCompilerServiceImpl(
                         .build(),
                 ).build()
 
-        return when (
-            val result =
-                currentCompiler.compile(
-                    snippetId = request.snippetId,
-                    code = request.code,
-                    cellId = request.cellId,
-                )
-        ) {
-            is CompileResult.Success ->
-                CompileResponse
-                    .newBuilder()
-                    .setSuccess(true)
-                    .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
-                    .build()
+        return try {
+            when (
+                val result =
+                    currentCompiler.compile(
+                        snippetId = request.snippetId,
+                        code = request.code,
+                        cellId = request.cellId,
+                    )
+            ) {
+                is CompileResult.Success ->
+                    CompileResponse
+                        .newBuilder()
+                        .setSuccess(true)
+                        .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
+                        .build()
 
-            is CompileResult.Failure ->
-                CompileResponse
-                    .newBuilder()
-                    .setSuccess(false)
-                    .addAllDiagnostics(result.diagnostics.map { it.toProto() })
-                    .build()
+                is CompileResult.Failure ->
+                    CompileResponse
+                        .newBuilder()
+                        .setSuccess(false)
+                        .addAllDiagnostics(result.diagnostics.map { it.toProto() })
+                        .build()
+            }
+        } catch (e: Exception) {
+            CompileResponse
+                .newBuilder()
+                .setSuccess(false)
+                .addDiagnostics(
+                    Diagnostic
+                        .newBuilder()
+                        .setSeverity(DiagnosticSeverity.ERROR)
+                        .setMessage("Compilation failed with exception: ${e.message}\n${e.stackTraceToString()}")
+                        .build(),
+                ).build()
         }
     }
 
     override suspend fun addClasspathEntries(request: AddClasspathEntriesRequest): AddClasspathEntriesResponse {
         val currentCompiler = compiler
-        if (currentCompiler != null) {
-            currentCompiler.addClasspathEntries(request.classpathEntriesList)
+        return try {
+            if (currentCompiler != null) {
+                currentCompiler.addClasspathEntries(request.classpathEntriesList)
+            }
+            AddClasspathEntriesResponse
+                .newBuilder()
+                .setSuccess(currentCompiler != null)
+                .apply {
+                    if (currentCompiler == null) {
+                        setErrorMessage("Compiler not initialized")
+                    }
+                }
+                .build()
+        } catch (e: Exception) {
+            println("Error adding classpath entries: ${e.message}")
+            e.printStackTrace()
+            AddClasspathEntriesResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Failed to add classpath entries: ${e.message}\n${e.stackTraceToString()}")
+                .build()
         }
-        return AddClasspathEntriesResponse
-            .newBuilder()
-            .setSuccess(currentCompiler != null)
-            .build()
     }
 
     override suspend fun complete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse {
@@ -112,20 +150,33 @@ class DaemonCompilerServiceImpl(
         if (currentCompiler == null) {
             return org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
                 .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        val position = request.position.fromProto()
-        val result = currentCompiler.complete(
-            request.code,
-            request.id,
-            position,
-        )
+        return try {
+            val position = request.position.fromProto()
+            val result = currentCompiler.complete(
+                request.code,
+                request.id,
+                position,
+            )
 
-        return org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
-            .newBuilder()
-            .addAllCompletions(result.map { it.toProto() })
-            .build()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                .newBuilder()
+                .setSuccess(true)
+                .addAllCompletions(result.map { it.toProto() })
+                .build()
+        } catch (e: Exception) {
+            println("Error during completion: ${e.message}")
+            e.printStackTrace()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Completion failed: ${e.message}\n${e.stackTraceToString()}")
+                .build()
+        }
     }
 
     override suspend fun listErrors(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse {
@@ -133,15 +184,28 @@ class DaemonCompilerServiceImpl(
         if (currentCompiler == null) {
             return org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
                 .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        val diagnostics = currentCompiler.listErrors(request.code, request.id)
+        return try {
+            val diagnostics = currentCompiler.listErrors(request.code, request.id)
 
-        return org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
-            .newBuilder()
-            .addAllDiagnostics(diagnostics.map { it.toProto() })
-            .build()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                .newBuilder()
+                .setSuccess(true)
+                .addAllDiagnostics(diagnostics.map { it.toProto() })
+                .build()
+        } catch (e: Exception) {
+            println("Error listing errors: ${e.message}")
+            e.printStackTrace()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Failed to list errors: ${e.message}\n${e.stackTraceToString()}")
+                .build()
+        }
     }
 
     override suspend fun checkComplete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse {
@@ -149,16 +213,30 @@ class DaemonCompilerServiceImpl(
         if (currentCompiler == null) {
             return org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
                 .newBuilder()
+                .setSuccess(false)
                 .setIsComplete(false)
+                .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        val isComplete = currentCompiler.checkComplete(request.code)
+        return try {
+            val isComplete = currentCompiler.checkComplete(request.code)
 
-        return org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
-            .newBuilder()
-            .setIsComplete(isComplete)
-            .build()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                .newBuilder()
+                .setSuccess(true)
+                .setIsComplete(isComplete)
+                .build()
+        } catch (e: Exception) {
+            println("Error checking completeness: ${e.message}")
+            e.printStackTrace()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setIsComplete(false)
+                .setErrorMessage("Failed to check completeness: ${e.message}\n${e.stackTraceToString()}")
+                .build()
+        }
     }
 
     override suspend fun getClasspath(request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse {
@@ -166,15 +244,28 @@ class DaemonCompilerServiceImpl(
         if (currentCompiler == null) {
             return org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
                 .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        val classpath = currentCompiler.getClasspath()
+        return try {
+            val classpath = currentCompiler.getClasspath()
 
-        return org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
-            .newBuilder()
-            .addAllClasspathEntries(classpath)
-            .build()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                .newBuilder()
+                .setSuccess(true)
+                .addAllClasspathEntries(classpath)
+                .build()
+        } catch (e: Exception) {
+            println("Error getting classpath: ${e.message}")
+            e.printStackTrace()
+            org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("Failed to get classpath: ${e.message}\n${e.stackTraceToString()}")
+                .build()
+        }
     }
 
 }
