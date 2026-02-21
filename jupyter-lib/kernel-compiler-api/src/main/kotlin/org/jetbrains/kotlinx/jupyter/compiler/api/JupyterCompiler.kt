@@ -1,4 +1,4 @@
-package org.jetbrains.kotlinx.jupyter.repl.impl
+package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
@@ -15,12 +15,8 @@ import kotlin.script.experimental.util.LinkedSnippet
  *
  * @see ReplCompiler
  */
-internal interface JupyterCompiler {
+interface JupyterCompiler {
     val version: KotlinKernelVersion
-    val numberOfSnippets: Int
-    val previousScriptsClasses: List<KClass<*>>
-    val lastKClass: KClass<*>
-    val lastClassLoader: ClassLoader
 
     /**
      * Increments and return the value of the next execution count.
@@ -33,10 +29,5 @@ internal interface JupyterCompiler {
     fun compileSync(
         snippet: SourceCode,
         options: JupyterCompilingOptions,
-    ): Result
-
-    data class Result(
-        val snippet: LinkedSnippet<KJvmCompiledScript>,
-        val newEvaluationConfiguration: ScriptEvaluationConfiguration,
-    )
+    ): LinkedSnippet<KJvmCompiledScript>
 }

@@ -321,7 +321,7 @@ class ReplForJupyterImpl(
     // }
 
     private val jupyterCompiler by lazy {
-        CompilerServiceAdapter(compilerService, evaluatorConfiguration)
+        CompilerServiceAdapter(compilerService)
     }
 
     private val evaluator: KernelReplEvaluator by lazy {
@@ -350,7 +350,8 @@ class ReplForJupyterImpl(
         InternalEvaluatorImpl(
             this,
             loggerFactory,
-            jupyterCompiler,  // Using original compiler for now until out-of-process is fully tested
+            jupyterCompiler,
+            JupyterScriptEvaluationHelper(evaluatorConfiguration),
             evaluator,
             contextUpdater,
             internalVariablesMarkersProcessor,

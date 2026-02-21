@@ -1,12 +1,5 @@
-import build.CreateResourcesTask
-import build.UPDATE_LIBRARIES_TASK
-import build.util.buildProperties
 import build.util.compileOnly
-import build.util.defaultVersionCatalog
-import build.util.devKotlin
 import build.util.excludeKotlinDependencies
-import build.util.getCurrentBranch
-import build.util.getCurrentCommitSha
 
 plugins {
     kotlin("libs.publisher")
@@ -24,6 +17,7 @@ dependencies {
     api(projects.commonDependencies) { isTransitive = false }
     api(projects.protocol) { isTransitive = false }
     api(projects.intellijCompilerDependencies) { isTransitive = false }
+    api(projects.kernelCompilerApi) { isTransitive = false }
 
     // Standard dependencies
     compileOnly(libs.kotlin.stable.stdlib)
@@ -65,25 +59,6 @@ buildSettings {
         jdkRelease(rootSettings.jvmTarget)
     }
     withTests()
-}
-
-CreateResourcesTask.register(project, "buildProperties", tasks.processResources) {
-    dependsOn(rootProject.tasks.named(UPDATE_LIBRARIES_TASK))
-
-    addPropertiesFile(
-        "kotlin-jupyter-compiler.properties",
-        buildProperties {
-            add("version" to rootSettings.pyPackageVersion)
-            add("kotlinVersion" to defaultVersionCatalog.versions.devKotlin)
-            add("currentBranch" to project.getCurrentBranch())
-            add("currentSha" to project.getCurrentCommitSha())
-            rootSettings.jvmTargetForSnippets?.let {
-                add("jvmTargetForSnippets" to it)
-            }
-        },
-    )
-
-    addLibrariesFromDir(rootSettings.librariesDir)
 }
 
 kotlinPublications {

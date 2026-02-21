@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.RESULT_FIELD_PREFIX
 import org.jetbrains.kotlinx.jupyter.api.VariableState
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptsSerializer
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompiler
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
@@ -39,6 +40,7 @@ internal class InternalEvaluatorImpl(
     private val repl: ReplForJupyterImpl,
     private val loggerFactory: KernelLoggerFactory,
     val compiler: JupyterCompiler,
+    private val evaluationHelper: JupyterScriptEvaluationHelper,
     private val evaluator: KernelReplEvaluator,
     private val contextUpdater: ContextUpdater,
     private val internalVariablesMarkersProcessor: InternalVariablesMarkersProcessor,
@@ -92,9 +94,9 @@ internal class InternalEvaluatorImpl(
 
     override var serializeScriptData: Boolean by serializeScriptDataProperty
 
-    override val lastKClass get() = compiler.lastKClass
+    override val lastKClass get() = evaluationHelper.lastKClass
 
-    override val lastClassLoader get() = compiler.lastClassLoader
+    override val lastClassLoader get() = evaluationHelper.lastClassLoader
 
     override val variablesHolder = mutableMapOf<String, VariableState>()
 
@@ -125,7 +127,8 @@ internal class InternalEvaluatorImpl(
 
             val codeLine = SourceCodeImpl(id, code)
 
-            val (compileResult, evalConfig) = compiler.compileSync(codeLine, compilingOptions)
+            val compileResult = compiler.compileSync(codeLine, compilingOptions)
+            val evalConfig = evaluationHelper.createEvaluationConfiguration(codeLine, compileResult)
             evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()
             scriptFqnToExecutionCountTracker[compiledScript.scriptClassFQName] =

@@ -5,7 +5,6 @@ import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
-import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
@@ -13,21 +12,15 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.with
-import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.lastSnippetClassLoader
+import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.util.LinkedSnippet
 
 /**
  * Adapter that wraps CompilerService to implement JupyterCompilerWithCompletion interface.
@@ -35,26 +28,8 @@ import kotlin.script.experimental.jvm.lastSnippetClassLoader
  */
 internal class CompilerServiceAdapter(
     private val compilerService: CompilerService,
-    private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
 ) : JupyterCompilerWithCompletion {
     private val executionCounter = AtomicInteger()
-    private val classes = mutableListOf<KClass<*>>()
-
-    private val _lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader
-            ?: basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
-
-    override val numberOfSnippets: Int
-        get() = classes.size
-
-    override val previousScriptsClasses: List<KClass<*>>
-        get() = classes
-
-    override val lastKClass: KClass<*>
-        get() = classes.last()
-
-    override val lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader ?: _lastClassLoader
 
     override fun nextCounter(): Int = executionCounter.getAndIncrement()
 
@@ -69,13 +44,12 @@ internal class CompilerServiceAdapter(
     }
 
     /**
-     * Compile code using the CompilerService and return the result in a format
-     * compatible with the existing evaluation pipeline.
+     * Compile code using the CompilerService and return the compiled LinkedSnippet.
      */
     override fun compileSync(
         snippet: SourceCode,
         options: JupyterCompilingOptions,
-    ): JupyterCompiler.Result {
+    ): LinkedSnippet<KJvmCompiledScript> {
         val snippetId = executionCounter.get()
         val cellId = options.cellId.value
 
@@ -85,44 +59,7 @@ internal class CompilerServiceAdapter(
 
         return when (compileResult) {
             is CompileResult.Success -> {
-                val linkedSnippet = CompileResultDeserializer.deserialize(compileResult)
-                val compiledScript = linkedSnippet.get()
-
-                // Create evaluation configuration similar to JupyterCompilerImpl
-                val configWithClassloader = basicEvaluationConfiguration.with {
-                    jvm {
-                        lastSnippetClassLoader(lastClassLoader)
-                        baseClassLoader(_lastClassLoader.parent)
-                    }
-                }
-
-                val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
-                val newEvaluationConfiguration = configWithClassloader.with {
-                    jvm {
-                        actualClassLoader(classLoader)
-                    }
-                }
-
-                // Get the class and track it
-                val kClassResult = runBlocking {
-                    compiledScript.getClass(newEvaluationConfiguration)
-                }
-
-                when (kClassResult) {
-                    is ResultWithDiagnostics.Success -> {
-                        val kClass = kClassResult.value
-                        classes.add(kClass)
-                    }
-                    is ResultWithDiagnostics.Failure -> {
-                        val metadata = CellErrorMetaData(
-                            options.cellId.toExecutionCount(),
-                            snippet.text.lines().size,
-                        )
-                        throw ReplCompilerException(snippet.text, kClassResult, metadata = metadata)
-                    }
-                }
-
-                JupyterCompiler.Result(linkedSnippet, newEvaluationConfiguration)
+                CompileResultDeserializer.deserialize(compileResult)
             }
             is CompileResult.Failure -> {
                 val metadata = CellErrorMetaData(

@@ -7,6 +7,7 @@ import build.util.MAVEN_ARTIFACT_NAME_PREFIX
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.shadowOf
+import build.util.testImplementation
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
@@ -105,6 +106,7 @@ dependencies {
 
     // Add compiler implementations for SPI testing
     testRuntimeOnly(projects.kernelCompilerDaemonImpl)
+    testImplementation(projects.kernelCompilerImpl)
 
     deploy(projects.lib)
     deploy(projects.api)

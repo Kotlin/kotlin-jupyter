@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlinx.jupyter.repl.impl.k2
+package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -40,7 +40,7 @@ import kotlin.script.experimental.util.LinkedSnippet
  *
  * Once done it should be move back to the Kotlin repository.
  */
-class K2KJvmReplCompilerWithCompletion(
+internal class K2KJvmReplCompilerWithCompletion(
     private val hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
     compilerConfiguration: ScriptCompilationConfiguration = ScriptCompilationConfiguration(),
 ) : ReplCompiler<KJvmCompiledScript>,

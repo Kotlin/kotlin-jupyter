@@ -16,6 +16,7 @@ import org.jetbrains.kotlinx.jupyter.repl.impl.getSimpleCompiler
 import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.junit.jupiter.api.Test
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
 
 class ApiTest : AbstractSingleReplTest() {
     override val repl = makeSimpleRepl()
@@ -45,10 +46,7 @@ class ApiTest : AbstractSingleReplTest() {
     fun compilerVersion() {
         val jCompiler =
             getSimpleCompiler(
-                kotlin.script.experimental.api
-                    .ScriptCompilationConfiguration(),
-                kotlin.script.experimental.api
-                    .ScriptEvaluationConfiguration(),
+                ScriptCompilationConfiguration(),
             )
         val version = jCompiler.version
         version.major.shouldBeGreaterThanOrEqual(0)

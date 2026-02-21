@@ -6,7 +6,7 @@ import jupyter.kotlin.Repository
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandler
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompiler
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration

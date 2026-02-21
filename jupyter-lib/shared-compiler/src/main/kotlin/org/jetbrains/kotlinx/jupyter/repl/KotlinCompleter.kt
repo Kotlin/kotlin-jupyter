@@ -4,13 +4,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.compiler.util.CodeInterval
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.util.toSourceCodePositionWithNewAbsolute
-import kotlin.script.experimental.api.ReplCompletionResult
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import kotlin.script.experimental.api.valueOrNull
-
-typealias CompleteFunction = suspend (SourceCode, SourceCode.Position) -> ResultWithDiagnostics<ReplCompletionResult>
 
 class KotlinCompleter {
     fun complete(

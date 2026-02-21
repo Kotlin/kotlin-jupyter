@@ -1,27 +1,25 @@
-package org.jetbrains.kotlinx.jupyter.repl.impl.k1
+package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.exceptions.ReplException
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.getErrors
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerImpl
-import org.jetbrains.kotlinx.jupyter.repl.impl.JupyterCompilerWithCompletion
 import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.analysisDiagnostics
 import kotlin.script.experimental.api.valueOr
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 /**
- * Currently just a copy of [org.jetbrains.kotlinx.jupyter.repl.impl.k2.K2JupyterCompilerWithCompletionImpl] with the only difference being the type-parameter
+ * Currently just a copy of [K2JupyterCompilerWithCompletionImpl] with the only difference being the type-parameter
  * of [compiler]. The reason is that we cannot create a unified type-abstraction for both of them right now, due to
  * [org.jetbrains.kotlinx.jupyter.repl.impl.k2.K2KJvmReplCompilerWithCompletion] being located in the Kotlin Kernel and [org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices]
  * being inside the compiler
@@ -29,8 +27,7 @@ import kotlin.script.experimental.jvm.util.toSourceCodePosition
 internal class K1JupyterCompilerWithCompletionImpl(
     compiler: KJvmReplCompilerWithIdeServices,
     compilationConfig: ScriptCompilationConfiguration,
-    evaluationConfig: ScriptEvaluationConfiguration,
-) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig, evaluationConfig),
+) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig),
     JupyterCompilerWithCompletion {
     override val complete: CompleteFunction = { code, cursor ->
         compiler.complete(code, cursor, compilationConfig)

@@ -1,8 +1,8 @@
-package org.jetbrains.kotlinx.jupyter.repl.impl
+package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
-import org.jetbrains.kotlinx.jupyter.compiler.util.actualClassLoader
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompiler
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
@@ -17,7 +17,6 @@ import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.refineConfiguration
@@ -25,17 +24,14 @@ import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
-import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
-import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.lastSnippetClassLoader
 import kotlin.script.experimental.jvm.updateClasspath
+import kotlin.script.experimental.util.LinkedSnippet
 
-internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
+open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     protected val compiler: CompilerT,
     initialCompilationConfig: ScriptCompilationConfiguration,
-    private val basicEvaluationConfiguration: ScriptEvaluationConfiguration,
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
     private val classes = mutableListOf<KClass<*>>()
@@ -53,21 +49,6 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
         }
 
     override val version: KotlinKernelVersion = currentKernelVersion
-
-    override val numberOfSnippets: Int
-        get() = classes.size
-
-    override val previousScriptsClasses: List<KClass<*>>
-        get() = classes
-
-    override val lastKClass: KClass<*>
-        get() = classes.last()
-
-    private val _lastClassLoader: ClassLoader
-        get() = basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
-
-    override val lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader ?: _lastClassLoader
 
     override fun nextCounter() = executionCounter.getAndIncrement()
 
@@ -114,7 +95,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
     override fun compileSync(
         snippet: SourceCode,
         options: JupyterCompilingOptions,
-    ): JupyterCompiler.Result {
+    ): LinkedSnippet<KJvmCompiledScript> {
         val compilationConfigWithJupyterOptions = getCompilationConfiguration(options)
         when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfigWithJupyterOptions) }) {
             is ResultWithDiagnostics.Failure -> {
@@ -132,36 +113,7 @@ internal open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScr
                 //  in a variable. This is breaking FieldHandler integration. We need to find a way
                 //  to reference previous cells outputs using code so we cal do something like `val x = notebook.outputs
                 //  See KT-76172
-                val result = resultWithDiagnostics.value
-                val compiledScript = result.get()
-
-                val configWithClassloader =
-                    basicEvaluationConfiguration.with {
-                        jvm {
-                            lastSnippetClassLoader(lastClassLoader)
-                            baseClassLoader(_lastClassLoader.parent)
-                        }
-                    }
-                val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
-                val newEvaluationConfiguration =
-                    configWithClassloader.with {
-                        jvm {
-                            actualClassLoader(classLoader)
-                        }
-                    }
-
-                when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(newEvaluationConfiguration) }) {
-                    is ResultWithDiagnostics.Failure -> {
-                        // Work-around for KT-74685
-                        val updatedDiagnostics = kClassWithDiagnostics.removeDuplicates()
-                        throw ReplCompilerException(snippet.text, updatedDiagnostics)
-                    }
-                    is ResultWithDiagnostics.Success -> {
-                        val kClass = kClassWithDiagnostics.value
-                        classes.add(kClass)
-                        return JupyterCompiler.Result(result, newEvaluationConfiguration)
-                    }
-                }
+                return resultWithDiagnostics.value
             }
         }
     }

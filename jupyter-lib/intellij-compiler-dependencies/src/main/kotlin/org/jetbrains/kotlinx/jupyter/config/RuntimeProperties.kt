@@ -6,7 +6,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.util.MAX_SUPPORTED_JVM_TARGET
 import org.jetbrains.kotlinx.jupyter.protocol.startup.parameters.KernelConfig
 import org.jetbrains.kotlinx.jupyter.repl.ReplRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.startup.parameters.KotlinKernelOwnParams
-import org.jetbrains.kotlinx.jupyter.streams.KernelStreams
 
 fun String.parseIniConfig() =
     lineSequence()
@@ -24,7 +23,7 @@ fun readResourceAsIniFile(
     ?.parseIniConfig()
     .orEmpty()
 
-val kernelClassLoader: ClassLoader = KernelStreams::class.java.classLoader
+val kernelClassLoader: ClassLoader = DefaultKernelLoggerFactory::class.java.classLoader
 
 val defaultRuntimeProperties by lazy {
     RuntimeKernelProperties(

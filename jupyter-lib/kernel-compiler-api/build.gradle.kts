@@ -10,9 +10,11 @@ dependencies {
     // API module for shared types
     api(projects.api)
     api(projects.commonDependencies)
+    // api(projects.intellijCompilerDependencies)
 
     // Kotlin scripting for ScriptDiagnostic
     api(libs.kotlin.dev.scriptingCommon)
+    api(libs.kotlin.dev.scriptingJvm)
 
     // Serialization for API data classes
     api(libs.serialization.json)

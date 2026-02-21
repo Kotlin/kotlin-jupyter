@@ -212,10 +212,3 @@ data class MutablePair<T1, T2>(
 fun Any.closeIfPossible() {
     if (this is Closeable) close()
 }
-
-// Work-around for KT-74685
-// We go through all reports and combine reports with the same text and location
-fun ResultWithDiagnostics.Failure.removeDuplicates(): ResultWithDiagnostics.Failure {
-    val noDuplicateList = LinkedHashSet<ScriptDiagnostic>(reports)
-    return ResultWithDiagnostics.Failure(noDuplicateList.toList())
-}
