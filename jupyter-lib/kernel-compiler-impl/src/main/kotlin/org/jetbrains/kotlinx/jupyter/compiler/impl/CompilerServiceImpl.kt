@@ -1,18 +1,31 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
+import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptDataCollector
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
+import org.jetbrains.kotlinx.jupyter.config.CellId
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
+import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
@@ -21,36 +34,15 @@ import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.asSuccess
-import kotlin.script.experimental.api.collectedAnnotations
-import kotlin.script.experimental.api.hostConfiguration
-import kotlin.script.experimental.api.refineConfiguration
-import kotlin.script.experimental.api.with
-import kotlin.script.experimental.host.toScriptSource
-import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.impl.getOrCreateActualClassloader
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.lastSnippetClassLoader
-import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtScriptInitializer
-import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
-import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
-import kotlin.script.experimental.api.ReplAnalyzerResult
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
-import kotlin.script.experimental.api.analysisDiagnostics
-import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.collectedAnnotations
 import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
 /**
  * In-process implementation of CompilerService.
@@ -61,7 +53,6 @@ class CompilerServiceImpl(
     private val callbacks: KernelCallbacks,
 ) : CompilerService {
     private val currentClasspath: MutableList<File> = params.scriptClasspath.map { File(it) }.toMutableList()
-    private var lastClassLoader: ClassLoader = Thread.currentThread().contextClassLoader
 
     private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget)
 
@@ -73,13 +64,23 @@ class CompilerServiceImpl(
         declarationsCollector,
     )
 
-    private val compiler: KJvmReplCompilerWithIdeServices by lazy {
-        KJvmReplCompilerWithIdeServices(compilationConfig[ScriptCompilationConfiguration.hostConfiguration]!!)
+    private val compiler: JupyterCompilerWithCompletion by lazy {
+        when (params.replCompilerMode) {
+            org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K1 -> {
+                JupyterCompilerFactory.createK1Compiler(
+                    compilationConfig,
+                )
+            }
+            org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode.K2 -> {
+                JupyterCompilerFactory.createK2Compiler(
+                    compilationConfig,
+                )
+            }
+        }
     }
 
     // Use getCompilationConfiguration the same way as ReplForJupyterImpl
     private var compilationConfig: ScriptCompilationConfiguration = createCompilationConfig()
-    private var evaluationConfig: ScriptEvaluationConfiguration = createEvaluationConfig()
 
     private fun createCompilationConfig(): ScriptCompilationConfiguration =
         getCompilationConfiguration(
@@ -92,13 +93,6 @@ class CompilerServiceImpl(
         ).with {
             refineConfiguration {
                 onAnnotations(jupyter.kotlin.DependsOn::class, jupyter.kotlin.Repository::class, jupyter.kotlin.CompilerArgs::class, handler = ::onAnnotationsHandler)
-            }
-        }
-
-    private fun createEvaluationConfig(): ScriptEvaluationConfiguration =
-        ScriptEvaluationConfiguration {
-            jvm {
-                baseClassLoader(lastClassLoader)
             }
         }
 
@@ -168,32 +162,26 @@ class CompilerServiceImpl(
         cellId: Int,
     ): CompileResult {
         // Create source code using the same naming convention as SourceCodeImpl
-        val source = "Line_$snippetId".toScriptSource(code)
+        val source = SourceCodeImpl(snippetId, code)
 
-        // Compile
-        return when (val result = compiler.compile(source, compilationConfig)) {
-            is ResultWithDiagnostics.Failure -> {
-                CompileResult.Failure(result.reports)
-            }
-            is ResultWithDiagnostics.Success -> {
-                val linkedSnippet = result.value
+        // Compile using JupyterCompiler
+        return try {
+            val linkedSnippet = compiler.compileSync(
+                source,
+                JupyterCompilingOptions(
+                    CellId(cellId),
+                    isUserCode = true,
+                ),
+            )
 
-                // Update classloader for next compilation
-                val compiledScript = linkedSnippet.get()
-                val configWithClassloader = evaluationConfig.with {
-                    jvm {
-                        lastSnippetClassLoader(lastClassLoader)
-                    }
-                }
-                lastClassLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
+            // Serialize using Java serialization
+            val serializedSnippet = serializeObject(linkedSnippet)
 
-                // Serialize using Java serialization
-                val serializedSnippet = serializeObject(linkedSnippet)
-
-                CompileResult.Success(
-                    serializedCompiledSnippet = serializedSnippet,
-                )
-            }
+            CompileResult.Success(
+                serializedCompiledSnippet = serializedSnippet,
+            )
+        } catch (e: ReplCompilerException) {
+            CompileResult.Failure(e.errorResult?.reports.orEmpty())
         }
     }
 
@@ -206,6 +194,7 @@ class CompilerServiceImpl(
     }
 
     override suspend fun addClasspathEntries(classpathEntries: List<String>) {
+        compiler.addClasspathEntries(classpathEntries.map { File(it) })
         updateClasspath(classpathEntries)
     }
 
@@ -216,7 +205,7 @@ class CompilerServiceImpl(
     ): List<SourceCodeCompletionVariant> {
         val sourceCode = SourceCodeImpl(id, code)
 
-        return compiler.complete(sourceCode, position, compilationConfig)
+        return compiler.complete(sourceCode, position)
             .valueOrNull()?.toList().orEmpty()
     }
 
@@ -224,18 +213,12 @@ class CompilerServiceImpl(
         code: String,
         id: Int,
     ): List<ScriptDiagnostic> {
-        val sourceCode = SourceCodeImpl(id, code)
-        val position = 0.toSourceCodePosition(sourceCode)
-        val result = compiler.analyze(sourceCode, position, compilationConfig).valueOrThrow()
-        return result[ReplAnalyzerResult.analysisDiagnostics]!!.toList()
+        return compiler.listErrors(code).toList()
     }
 
     override suspend fun checkComplete(code: String): Boolean {
-        val sourceCode = code.toScriptSource()
-        val position = 0.toSourceCodePosition(sourceCode)
-        val result = compiler.analyze(sourceCode, position, compilationConfig).valueOrThrow()
-        val diagnostics = result[ReplAnalyzerResult.analysisDiagnostics]!!
-        return diagnostics.none { it.code == ScriptDiagnostic.incompleteCode }
+        val result = compiler.checkComplete(code)
+        return result.isComplete
     }
 
     override suspend fun getClasspath(): List<String> {

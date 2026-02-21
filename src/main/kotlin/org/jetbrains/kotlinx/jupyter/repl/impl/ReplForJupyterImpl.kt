@@ -299,27 +299,6 @@ class ReplForJupyterImpl(
             implicitReceivers(ScriptTemplateWithDisplayHelpers(this@ReplForJupyterImpl))
         }
 
-    // private val jupyterCompiler: JupyterCompilerWithCompletion by lazy {
-    //     when (compilerMode) {
-    //         ReplCompilerMode.K1 -> {
-    //             JupyterCompilerWithCompletion.createK1Compiler(
-    //                 compilerConfiguration,
-    //                 evaluatorConfiguration,
-    //             )
-    //         }
-    //         ReplCompilerMode.K2 -> {
-    //             JupyterCompilerWithCompletion.createK2Compiler(
-    //                 compilerConfiguration,
-    //                 evaluatorConfiguration,
-    //             )
-    //         }
-    //     }.apply {
-    //         dependencyManager.recentlyAddedBinaryClasspath.takeIf { it.isNotEmpty() }?.let { classpath ->
-    //             addClasspathEntries(classpath)
-    //         }
-    //     }
-    // }
-
     private val jupyterCompiler by lazy {
         CompilerServiceAdapter(compilerService)
     }
