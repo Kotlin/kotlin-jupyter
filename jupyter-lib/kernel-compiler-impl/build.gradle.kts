@@ -37,6 +37,8 @@ dependencies {
 
     // Test dependencies
     testImplementation(libs.kotlin.stable.test)
+    testImplementation(libs.test.junit.api)
+    testRuntimeOnly(libs.test.junit.engine)
 }
 
 buildSettings {
@@ -45,6 +47,10 @@ buildSettings {
         skipPrereleaseCheck()
         jdkRelease(rootSettings.jvmTarget)
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 // Task to create a fat jar for the compiler daemon
