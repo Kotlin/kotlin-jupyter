@@ -1,11 +1,8 @@
-package org.jetbrains.kotlinx.jupyter.compiler
-
-import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
+package org.jetbrains.kotlinx.jupyter.compiler.api
 import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
-import kotlin.script.experimental.util.LinkedSnippetImpl
 
 /**
  * Utility for deserializing compilation results from the CompilerService.
@@ -24,13 +21,17 @@ object CompileResultDeserializer {
         // Deserialize the list of compiled scripts
         val scriptsList: List<KJvmCompiledScript> = deserializeObject(result.serializedCompiledSnippet)
 
-        // Convert list back to LinkedSnippet chain
-        var linkedSnippet: LinkedSnippetImpl<KJvmCompiledScript>? = null
-        for (script in scriptsList) {
-            linkedSnippet = LinkedSnippetImpl(script, linkedSnippet)
+        if (scriptsList.isEmpty()) {
+            throw IllegalStateException("Deserialized scripts list is empty")
         }
 
-        return linkedSnippet ?: throw IllegalStateException("Deserialized scripts list is empty")
+        // Convert list back to LinkedSnippet chain
+        return scriptsList.foldRight(null as LinkedSnippet<KJvmCompiledScript>?) { script, prev ->
+            object : LinkedSnippet<KJvmCompiledScript> {
+                override val previous: LinkedSnippet<KJvmCompiledScript>? = prev
+                override fun get(): KJvmCompiledScript = script
+            }
+        }!!
     }
 
     @Suppress("UNCHECKED_CAST")

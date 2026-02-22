@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResultDeserializer
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion

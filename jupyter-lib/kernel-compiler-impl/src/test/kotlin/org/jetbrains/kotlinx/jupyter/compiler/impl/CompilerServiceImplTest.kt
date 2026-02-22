@@ -7,9 +7,13 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResultDeserializer
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.util.LinkedSnippet
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -35,7 +39,7 @@ class CompilerServiceImplTest {
         .filter { it.contains("kotlin-stdlib") || it.contains("kotlin-reflect") }
 
     @Test
-    fun `should serialize compiled snippet successfully`() = runBlocking {
+    fun `should serialize compiled snippet successfully`() = runBlocking<Unit> {
         // Create compiler service with Kotlin stdlib in classpath
         val params = CompilerParams(
             scriptClasspath = kotlinStdlibClasspath,
@@ -69,10 +73,18 @@ class CompilerServiceImplTest {
         // Verify serialized data is not empty and has reasonable size
         assertTrue(result.serializedCompiledSnippet.isNotEmpty(), "Serialized snippet should not be empty")
         assertTrue(result.serializedCompiledSnippet.size > 100, "Serialized snippet should contain actual data")
+
+        // Test deserialization
+        val deserializedSnippet = CompileResultDeserializer.deserialize(result)
+        assertNotNull(deserializedSnippet, "Deserialized snippet should not be null")
+
+        // Verify the deserialized snippet contains a compiled script
+        val compiledScript: KJvmCompiledScript = deserializedSnippet.get()
+        assertNotNull(compiledScript, "Compiled script should not be null")
     }
 
     @Test
-    fun `should serialize snippet with multiple statements`() = runBlocking {
+    fun `should serialize snippet with multiple statements`() = runBlocking<Unit> {
         val params = CompilerParams(
             scriptClasspath = kotlinStdlibClasspath,
             jvmTarget = "11",
@@ -101,6 +113,11 @@ class CompilerServiceImplTest {
         // Verify serialization
         assertTrue(result.serializedCompiledSnippet.isNotEmpty())
         assertTrue(result.serializedCompiledSnippet.size > 100, "Should contain compiled data")
+
+        // Test deserialization works correctly
+        val deserializedSnippet = CompileResultDeserializer.deserialize(result)
+        assertNotNull(deserializedSnippet)
+        assertNotNull(deserializedSnippet.get())
     }
 
     @Test
@@ -130,7 +147,7 @@ class CompilerServiceImplTest {
     }
 
     @Test
-    fun `serialized snippets should be reusable across multiple compilations`() = runBlocking {
+    fun `serialized snippets should be reusable across multiple compilations`() = runBlocking<Unit> {
         val params = CompilerParams(
             scriptClasspath = kotlinStdlibClasspath,
             jvmTarget = "11",
@@ -161,5 +178,14 @@ class CompilerServiceImplTest {
         // Verify both snippets are serialized
         assertTrue(result1.serializedCompiledSnippet.isNotEmpty())
         assertTrue(result2.serializedCompiledSnippet.isNotEmpty())
+
+        // Test that both can be deserialized
+        val snippet1 = CompileResultDeserializer.deserialize(result1)
+        val snippet2 = CompileResultDeserializer.deserialize(result2)
+        assertNotNull(snippet1)
+        assertNotNull(snippet2)
+
+        // Verify snippet2 has a reference to snippet1 through the previous chain
+        assertNotNull(snippet2.previous, "Second snippet should reference the first")
     }
 }
