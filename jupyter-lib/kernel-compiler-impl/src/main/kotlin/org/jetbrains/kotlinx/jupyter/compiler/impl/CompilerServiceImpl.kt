@@ -43,6 +43,8 @@ import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.util.LinkedSnippet
 
 /**
  * In-process implementation of CompilerService.
@@ -174,8 +176,17 @@ class CompilerServiceImpl(
                 ),
             )
 
-            // Serialize using Java serialization
-            val serializedSnippet = serializeObject(linkedSnippet)
+            // Convert LinkedSnippet to a serializable list of compiled scripts
+            val scriptsList = mutableListOf<KJvmCompiledScript>()
+            var current: LinkedSnippet<KJvmCompiledScript>? = linkedSnippet
+            while (current != null) {
+                scriptsList.add(current.get())
+                current = current.previous
+            }
+            scriptsList.reverse() // Reverse to get original order
+
+            // Serialize the list using Java serialization
+            val serializedSnippet = serializeObject(scriptsList)
 
             CompileResult.Success(
                 serializedCompiledSnippet = serializedSnippet,

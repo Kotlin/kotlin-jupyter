@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
+import kotlin.script.experimental.util.LinkedSnippetImpl
 
 /**
  * Utility for deserializing compilation results from the CompilerService.
@@ -20,7 +21,16 @@ object CompileResultDeserializer {
      * @throws java.io.IOException if deserialization fails due to IO errors
      */
     fun deserialize(result: CompileResult.Success): LinkedSnippet<KJvmCompiledScript> {
-        return deserializeObject(result.serializedCompiledSnippet)
+        // Deserialize the list of compiled scripts
+        val scriptsList: List<KJvmCompiledScript> = deserializeObject(result.serializedCompiledSnippet)
+
+        // Convert list back to LinkedSnippet chain
+        var linkedSnippet: LinkedSnippetImpl<KJvmCompiledScript>? = null
+        for (script in scriptsList) {
+            linkedSnippet = LinkedSnippetImpl(script, linkedSnippet)
+        }
+
+        return linkedSnippet ?: throw IllegalStateException("Deserialized scripts list is empty")
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -9,25 +9,15 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
-import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
-import kotlin.script.experimental.util.LinkedSnippet
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import java.io.File
 import kotlin.test.assertTrue
 
 /**
  * Tests for CompilerServiceImpl, specifically testing compiled snippet serialization.
  *
- * NOTE: These tests currently fail with NotSerializableException because LinkedSnippet
- * and its contents are not serializable using Java serialization. This is a known issue
- * that needs to be addressed for the daemon compiler to work properly over gRPC.
- *
- * Possible solutions:
- * 1. Implement custom serialization for LinkedSnippet
- * 2. Extract only serializable data from LinkedSnippet before serialization
- * 3. Use a different serialization mechanism (Protobuf, custom binary format)
+ * These tests verify that compiled snippets can be serialized for transmission over gRPC.
+ * The implementation converts LinkedSnippet to a List before serialization to avoid
+ * issues with non-serializable references in the linked structure.
  */
 
 class CompilerServiceImplTest {
@@ -41,7 +31,7 @@ class CompilerServiceImplTest {
 
     // Get Kotlin stdlib from test classpath
     private val kotlinStdlibClasspath = System.getProperty("java.class.path")
-        .split(System.getProperty("path.separator"))
+        .split(File.pathSeparator)
         .filter { it.contains("kotlin-stdlib") || it.contains("kotlin-reflect") }
 
     @Test
@@ -75,7 +65,6 @@ class CompilerServiceImplTest {
 
         // Verify compilation succeeded
         assertTrue(result is CompileResult.Success, "Expected successful compilation")
-        result as CompileResult.Success
 
         // Verify serialized data is not empty and has reasonable size
         assertTrue(result.serializedCompiledSnippet.isNotEmpty(), "Serialized snippet should not be empty")
@@ -108,7 +97,6 @@ class CompilerServiceImplTest {
         )
 
         assertTrue(result is CompileResult.Success, "Expected successful compilation")
-        result as CompileResult.Success
 
         // Verify serialization
         assertTrue(result.serializedCompiledSnippet.isNotEmpty())
@@ -136,7 +124,6 @@ class CompilerServiceImplTest {
 
         // Verify compilation failed
         assertTrue(result is CompileResult.Failure, "Expected compilation failure")
-        result as CompileResult.Failure
 
         // Verify diagnostics are present
         assertTrue(result.diagnostics.isNotEmpty(), "Should have diagnostics")
@@ -170,11 +157,9 @@ class CompilerServiceImplTest {
             cellId = 4,
         )
         assertTrue(result2 is CompileResult.Success, "Second compilation should succeed with access to previous snippet")
-        result2 as CompileResult.Success
 
         // Verify both snippets are serialized
-        val success1 = result1 as CompileResult.Success
-        assertTrue(success1.serializedCompiledSnippet.isNotEmpty())
+        assertTrue(result1.serializedCompiledSnippet.isNotEmpty())
         assertTrue(result2.serializedCompiledSnippet.isNotEmpty())
     }
 }
