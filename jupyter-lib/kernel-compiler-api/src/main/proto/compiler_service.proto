@@ -81,6 +81,8 @@ message CompileResponse {
     bool success = 1;
     // On success: Java-serialized LinkedSnippet<KJvmCompiledScript>
     bytes serialized_compiled_snippet = 2;
+    // Hash codes for each KJvmCompiledScript in the list (in same order)
+    repeated int32 script_hash_codes = 4;
     // On failure:
     repeated Diagnostic diagnostics = 3;
 }

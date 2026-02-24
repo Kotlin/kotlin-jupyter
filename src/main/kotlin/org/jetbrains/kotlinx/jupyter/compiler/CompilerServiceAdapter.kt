@@ -32,6 +32,9 @@ internal class CompilerServiceAdapter(
 ) : JupyterCompilerWithCompletion {
     private val executionCounter = AtomicInteger()
 
+    // Cache of compiled scripts by their hash code (computed on daemon side)
+    private val scriptCache = mutableMapOf<Int, KJvmCompiledScript>()
+
     override fun nextCounter(): Int = executionCounter.getAndIncrement()
 
     override val version: KotlinKernelVersion
@@ -46,6 +49,7 @@ internal class CompilerServiceAdapter(
 
     /**
      * Compile code using the CompilerService and return the compiled LinkedSnippet.
+     * Uses a cache to avoid deserializing the same scripts multiple times.
      */
     override fun compileSync(
         snippet: SourceCode,
@@ -60,7 +64,8 @@ internal class CompilerServiceAdapter(
 
         return when (compileResult) {
             is CompileResult.Success -> {
-                CompileResultDeserializer.deserialize(compileResult)
+                // Deserialize and cache scripts using CompileResultDeserializer
+                CompileResultDeserializer.deserialize(compileResult, scriptCache)
             }
             is CompileResult.Failure -> {
                 val metadata = CellErrorMetaData(

@@ -14,18 +14,25 @@ sealed class CompileResult {
     /**
      * Successful compilation.
      * @param serializedCompiledSnippet Java-serialized LinkedSnippet<KJvmCompiledScript>
+     * @param scriptHashCodes Hash codes for each KJvmCompiledScript in the list (in same order)
      */
     data class Success(
         val serializedCompiledSnippet: ByteArray,
+        val scriptHashCodes: List<Int>,
     ) : CompileResult() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
             other as Success
-            return serializedCompiledSnippet.contentEquals(other.serializedCompiledSnippet)
+            return serializedCompiledSnippet.contentEquals(other.serializedCompiledSnippet) &&
+                scriptHashCodes == other.scriptHashCodes
         }
 
-        override fun hashCode() = serializedCompiledSnippet.contentHashCode()
+        override fun hashCode(): Int {
+            var result = serializedCompiledSnippet.contentHashCode()
+            result = 31 * result + scriptHashCodes.hashCode()
+            return result
+        }
     }
 
     data class Failure(

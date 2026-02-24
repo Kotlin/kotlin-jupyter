@@ -143,6 +143,7 @@ class DaemonCompilerClient(
         return if (response.success) {
             CompileResult.Success(
                 serializedCompiledSnippet = response.serializedCompiledSnippet.toByteArray(),
+                scriptHashCodes = response.scriptHashCodesList,
             )
         } else {
             CompileResult.Failure(response.diagnosticsList.map { it.fromProto() })

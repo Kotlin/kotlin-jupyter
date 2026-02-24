@@ -96,6 +96,7 @@ class DaemonCompilerServiceImpl(
                         .newBuilder()
                         .setSuccess(true)
                         .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
+                        .addAllScriptHashCodes(result.scriptHashCodes)
                         .build()
 
                 is CompileResult.Failure ->

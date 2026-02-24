@@ -185,11 +185,15 @@ class CompilerServiceImpl(
             }
             scriptsList.reverse() // Reverse to get original order
 
+            // Compute hash codes for each script
+            val hashCodes = scriptsList.map { it.hashCode() }
+
             // Serialize the list using Java serialization
             val serializedSnippet = serializeObject(scriptsList)
 
             CompileResult.Success(
                 serializedCompiledSnippet = serializedSnippet,
+                scriptHashCodes = hashCodes,
             )
         } catch (e: ReplCompilerException) {
             CompileResult.Failure(e.errorResult?.reports.orEmpty())
