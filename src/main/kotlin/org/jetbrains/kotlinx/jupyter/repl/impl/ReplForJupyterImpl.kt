@@ -232,6 +232,7 @@ class ReplForJupyterImpl(
                 // Store declarations on the current cell, matching existing pattern
                 notebook.currentCell?.declarations = declarations
             },
+            updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath} },
         )
         val params = CompilerParams(
             scriptClasspath = scriptClasspath.map { it.canonicalPath },

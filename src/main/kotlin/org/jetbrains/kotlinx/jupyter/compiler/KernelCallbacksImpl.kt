@@ -18,8 +18,9 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
  */
 internal class KernelCallbacksImpl(
     private val dependencyResolver: JupyterScriptDependenciesResolver,
-    private val onImportsReported: (List<String>) -> Unit = {},
-    private val onDeclarationsReported: (List<DeclarationInfo>) -> Unit = {},
+    private val onImportsReported: (List<String>) -> Unit,
+    private val onDeclarationsReported: (List<DeclarationInfo>) -> Unit,
+    private val updatedClasspath: () -> List<String>,
 ) : KernelCallbacks {
     override suspend fun reportImports(imports: List<String>) {
         onImportsReported(imports)
@@ -69,4 +70,6 @@ internal class KernelCallbacksImpl(
             }
         }
     }
+
+    override suspend fun updatedClasspath(): List<String> = updatedClasspath.invoke()
 }

@@ -108,6 +108,8 @@ interface KernelCallbacks {
     suspend fun reportDeclarations(declarations: List<DeclarationInfo>)
 
     suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult
+
+    suspend fun updatedClasspath(): List<String>
 }
 
 /**

@@ -27,6 +27,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathResponse
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.io.Closeable
@@ -324,6 +326,23 @@ private class KernelCallbackServiceImpl(
                     .setSuccess(false)
                     .setErrorMessage(result.message)
                     .build()
+        }
+    }
+
+    override suspend fun updatedClasspath(request: UpdatedClasspathRequest): UpdatedClasspathResponse {
+        return try {
+            val classpath = callbacks.updatedClasspath()
+            UpdatedClasspathResponse
+                .newBuilder()
+                .setSuccess(true)
+                .addAllClasspathEntries(classpath)
+                .build()
+        } catch (e: Exception) {
+            UpdatedClasspathResponse
+                .newBuilder()
+                .setSuccess(false)
+                .setErrorMessage(e.message ?: "Unknown error")
+                .build()
         }
     }
 }

@@ -27,6 +27,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourcePosition
 import kotlin.script.experimental.api.ScriptDiagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
@@ -308,6 +309,17 @@ private class GrpcKernelCallbacks(
         } else {
             DependencyResolutionResult.Failure(response.errorMessage)
         }
+    }
+
+    override suspend fun updatedClasspath(): List<String> {
+        val request = UpdatedClasspathRequest.newBuilder().build()
+        val response = stub.updatedClasspath(request)
+
+        if (!response.success) {
+            throw RuntimeException("Failed to get updated classpath: ${response.errorMessage}")
+        }
+
+        return response.classpathEntriesList
     }
 }
 

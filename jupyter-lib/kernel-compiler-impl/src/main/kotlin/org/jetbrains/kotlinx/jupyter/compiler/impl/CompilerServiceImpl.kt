@@ -44,6 +44,7 @@ import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.LinkedSnippet
 
 /**
@@ -95,6 +96,7 @@ class CompilerServiceImpl(
         ).with {
             refineConfiguration {
                 onAnnotations(jupyter.kotlin.DependsOn::class, jupyter.kotlin.Repository::class, jupyter.kotlin.CompilerArgs::class, handler = ::onAnnotationsHandler)
+                updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
             }
         }
 

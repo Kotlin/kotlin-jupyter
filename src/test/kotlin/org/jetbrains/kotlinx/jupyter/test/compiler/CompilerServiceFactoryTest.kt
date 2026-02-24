@@ -19,6 +19,7 @@ class CompilerServiceFactoryTest {
             override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
                 return DependencyResolutionResult.Success(emptyList())
             }
+            override suspend fun updatedClasspath(): List<String> = emptyList()
         }
 
         val params = CompilerParams(
@@ -43,6 +44,7 @@ class CompilerServiceFactoryTest {
             override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
                 return DependencyResolutionResult.Success(emptyList())
             }
+            override suspend fun updatedClasspath(): List<String> = emptyList()
         }
 
         val params = CompilerParams(

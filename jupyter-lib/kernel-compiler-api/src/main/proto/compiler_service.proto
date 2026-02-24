@@ -21,6 +21,7 @@ service KernelCallbackService {
     rpc ReportImports(ReportImportsRequest) returns (ReportImportsResponse);
     rpc ReportDeclarations(ReportDeclarationsRequest) returns (ReportDeclarationsResponse);
     rpc ResolveDependencies(ResolveDependenciesRequest) returns (ResolveDependenciesResponse);
+    rpc UpdatedClasspath(UpdatedClasspathRequest) returns (UpdatedClasspathResponse);
 }
 
 enum ReplCompilerMode {
@@ -193,6 +194,14 @@ message ResolveDependenciesRequest {
 }
 
 message ResolveDependenciesResponse {
+    bool success = 1;
+    repeated string classpath_entries = 2;
+    optional string error_message = 3;
+}
+
+message UpdatedClasspathRequest {}
+
+message UpdatedClasspathResponse {
     bool success = 1;
     repeated string classpath_entries = 2;
     optional string error_message = 3;
