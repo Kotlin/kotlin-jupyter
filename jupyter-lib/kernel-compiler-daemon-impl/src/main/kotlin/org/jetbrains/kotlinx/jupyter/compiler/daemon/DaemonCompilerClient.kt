@@ -80,7 +80,6 @@ class DaemonCompilerClient(
         val processBuilder =
             ProcessBuilder(
                 System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
-                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:1044",
                 "-jar",
                 daemonJar.absolutePath,
                 daemonPort.toString(),

@@ -66,6 +66,7 @@ dependencies {
 
     // Dependency on module with compiler.
     api(projects.sharedCompiler)
+    api(projects.intellijCompilerDependencies)
     api(projects.zmqServer)
     api(projects.kernelCompilerApi)
 
