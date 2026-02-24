@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
+import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.junit.jupiter.api.Test
 
 class ReplVarsTest : AbstractSingleReplTest() {
@@ -33,7 +34,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val y = 0
             val z = 47
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
 
         varState.mapToStringValues() shouldBe
             mutableMapOf(
@@ -52,7 +53,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testVarsEmptyState() {
-        val res = eval("3+2")
+        val res = eval("3+2").shouldBeSuccess()
         val strState = varState.mapToStringValues()
         varState.shouldBeEmpty()
         res.metadata.evaluatedVariablesState shouldBe strState
@@ -66,7 +67,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val y = "abc"
             val z = x
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
         varState.getValue("x") shouldBe 1
         varState.getStringValue("y") shouldBe "abc"
@@ -81,7 +82,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val y = "abc"
             val z = x
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         varState.shouldNotBeEmpty()
 
         eval(
@@ -91,7 +92,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = x
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
         varState.getValue("y") shouldBe 123
@@ -103,7 +104,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             y += 123
             """.trimIndent(),
             2,
-        )
+        ).shouldBeSuccess()
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
         varState.getStringValue("y") shouldBe "${123 * 2}"
@@ -118,7 +119,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val y = "abc"
             val z = x
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         varState.mapToStringValues() shouldBe mapOf("x" to "1", "y" to "abc", "z" to "1")
         varState.getValue("x") shouldBe 1
     }
@@ -131,7 +132,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val y = "abc"
             private val z = x
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         varState.shouldNotBeEmpty()
 
         eval(
@@ -141,7 +142,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val z = x
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "abc"
         varState.getValue("y") shouldBe 123
@@ -153,7 +154,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             y += x
             """.trimIndent(),
             2,
-        )
+        ).shouldBeSuccess()
         varState shouldHaveSize 3
         varState.getStringValue("x") shouldBe "1024"
         varState.getValue("y") shouldBe 123 + 1024
@@ -175,7 +176,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = "abcd"
             var f = 47
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         cellVars shouldContainValue setOf("z", "f", "x")
     }
 
@@ -186,7 +187,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = "abcd"
             var f = 47
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         cellVars.shouldNotBeEmpty()
 
         eval(
@@ -194,7 +195,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = 1
             f += f
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         cellVars shouldContainValue setOf("z", "f", "x")
     }
 
@@ -205,7 +206,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val x = 124
             private var f = "abcd"
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         cellVars.shouldNotBeEmpty()
 
         eval(
@@ -213,7 +214,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var z = 1
             z += x
             """.trimIndent(),
-        )
+        ).shouldBeSuccess()
         cellVars shouldContainValue setOf("z", "f", "x")
     }
 
@@ -225,7 +226,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = 47
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         firstCellVars shouldContain "x"
 
         eval(
@@ -234,7 +235,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             var f = "abcd"
             """.trimIndent(),
             2,
-        )
+        ).shouldBeSuccess()
         cellVars.shouldNotBeEmpty()
 
         firstCellVars.shouldBeEmpty()
@@ -249,7 +250,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var f = 47
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         firstCellVars shouldContain "x"
 
         eval(
@@ -258,7 +259,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private var f = "abcd"
             """.trimIndent(),
             2,
-        )
+        ).shouldBeSuccess()
         cellVars.shouldNotBeEmpty()
         firstCellVars.shouldBeEmpty()
         secondCellVars shouldBe setOf("x", "f")
@@ -276,7 +277,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             val z = setOf(1, 2, 4)
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         varState.getStringValue("l") shouldBe "ArrayList: [exception thrown: java.lang.StackOverflowError]"
         varState.getStringValue("m") shouldBe "SingletonMap: [exception thrown: java.lang.StackOverflowError]"
         varState.getStringValue("z") shouldBe "[1, 2, 4]"
@@ -291,7 +292,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             internal val z = 47
             """.trimIndent(),
             1,
-        )
+        ).shouldBeSuccess()
         firstCellVars shouldContain "x"
         firstCellVars shouldContain "z"
 
@@ -302,7 +303,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
             private val z = "abcd"
             """.trimIndent(),
             2,
-        )
+        ).shouldBeSuccess()
         cellVars.shouldNotBeEmpty()
         firstCellVars shouldBe setOf("f")
         secondCellVars shouldBe setOf("x", "f", "z")
@@ -310,11 +311,11 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     @Test
     fun testVariableModification() {
-        eval("var x = sqrt(25.0)", 1)
+        eval("var x = sqrt(25.0)", 1).shouldBeSuccess()
         varState.getStringValue("x") shouldBe "5.0"
         varState.getValue("x") shouldBe 5.0
 
-        eval("x = x * x", 2)
+        eval("x = x * x", 2).shouldBeSuccess()
         varState.getStringValue("x") shouldBe "25.0"
         varState.getValue("x") shouldBe 25.0
     }
