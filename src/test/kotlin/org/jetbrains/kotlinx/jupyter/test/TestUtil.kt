@@ -392,12 +392,10 @@ val EvalResultEx.displayValue get(): Any? {
     return this.displayValue
 }
 
-fun EvalResultEx.shouldBeSuccess() {
-    when (this) {
-        is EvalResultEx.AbstractError -> throw error
-        is EvalResultEx.Interrupted -> throw InterruptedException()
-        is EvalResultEx.Success -> {}
-    }
+fun EvalResultEx.shouldBeSuccess(): EvalResultEx.Success = when (this) {
+    is EvalResultEx.AbstractError -> throw error
+    is EvalResultEx.Interrupted -> throw InterruptedException()
+    is EvalResultEx.Success -> this
 }
 
 val MimeTypedResult.text get() = this[MimeTypes.PLAIN_TEXT] as String
