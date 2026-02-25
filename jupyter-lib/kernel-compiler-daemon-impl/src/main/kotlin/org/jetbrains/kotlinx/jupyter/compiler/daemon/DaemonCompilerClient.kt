@@ -114,6 +114,7 @@ class DaemonCompilerClient(
                     .setJvmTarget(params.jvmTarget)
                     .addAllScriptReceiverCanonicalNames(params.scriptReceiverCanonicalNames)
                     .setReplCompilerMode(params.replCompilerMode.toProto())
+                    .addAllExtraCompilerArguments(params.extraCompilerArguments)
                     .build()
 
             val response = stub!!.initialize(request)

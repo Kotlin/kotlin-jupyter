@@ -140,4 +140,5 @@ data class CompilerParams(
     val jvmTarget: String,
     val scriptReceiverCanonicalNames: List<String> = emptyList(),
     val replCompilerMode: ReplCompilerMode = ReplCompilerMode.K1,
+    val extraCompilerArguments: List<String> = emptyList(),
 )

@@ -225,6 +225,7 @@ class ReplForJupyterImpl(
             jvmTarget = runtimeProperties.jvmTargetForSnippets,
             scriptReceiverCanonicalNames = scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
             replCompilerMode = compilerMode,
+            extraCompilerArguments = extraCompilerArguments,
         )
         CompilerServiceFactory.createCompilerService(params, callbacks)
     }

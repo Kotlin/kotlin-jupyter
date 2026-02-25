@@ -33,6 +33,7 @@ message InitializeRequest {
     string jvm_target = 2;
     repeated string script_receiver_canonical_names = 3;
     ReplCompilerMode repl_compiler_mode = 4;
+    repeated string extra_compiler_arguments = 5;
 }
 
 message InitializeResponse {

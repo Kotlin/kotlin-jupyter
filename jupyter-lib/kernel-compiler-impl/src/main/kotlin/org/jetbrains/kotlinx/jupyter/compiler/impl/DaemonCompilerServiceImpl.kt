@@ -47,6 +47,7 @@ class DaemonCompilerServiceImpl(
                     jvmTarget = request.jvmTarget,
                     scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
                     replCompilerMode = request.replCompilerMode.toApi(),
+                    extraCompilerArguments = request.extraCompilerArgumentsList,
                 )
 
             val callbacks = GrpcKernelCallbacks(callbackStub)

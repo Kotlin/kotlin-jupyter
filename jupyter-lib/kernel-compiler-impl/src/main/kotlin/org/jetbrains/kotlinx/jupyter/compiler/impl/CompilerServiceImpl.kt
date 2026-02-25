@@ -60,7 +60,7 @@ class CompilerServiceImpl(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
 ) : CompilerService {
-    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget)
+    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments)
 
     // Script data collectors for imports and declarations
     private val importsCollector = ImportsCollector(callbacks)
