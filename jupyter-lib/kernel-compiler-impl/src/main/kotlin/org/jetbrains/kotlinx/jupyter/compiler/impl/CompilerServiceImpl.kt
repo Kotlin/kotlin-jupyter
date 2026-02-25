@@ -172,6 +172,7 @@ class CompilerServiceImpl(
         snippetId: Int,
         code: String,
         cellId: Int,
+        isUserCode: Boolean,
     ): CompileResult {
         // Create source code using the same naming convention as SourceCodeImpl
         val source = SourceCodeImpl(snippetId, code)
@@ -182,7 +183,7 @@ class CompilerServiceImpl(
                 source,
                 JupyterCompilingOptions(
                     CellId(cellId),
-                    isUserCode = true,
+                    isUserCode = isUserCode,
                 ),
             )
 

@@ -78,6 +78,7 @@ interface CompilerService {
         snippetId: Int,
         code: String,
         cellId: Int,
+        isUserCode: Boolean,
     ): CompileResult
 
     suspend fun complete(

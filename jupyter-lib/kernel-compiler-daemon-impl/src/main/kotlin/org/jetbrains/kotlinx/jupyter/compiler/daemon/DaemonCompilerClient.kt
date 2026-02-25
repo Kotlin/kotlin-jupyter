@@ -130,6 +130,7 @@ class DaemonCompilerClient(
         snippetId: Int,
         code: String,
         cellId: Int,
+        isUserCode: Boolean,
     ): CompileResult {
         val request =
             CompileRequest
@@ -137,6 +138,7 @@ class DaemonCompilerClient(
                 .setSnippetId(snippetId)
                 .setCode(code)
                 .setCellId(cellId)
+                .setIsUserCode(isUserCode)
                 .build()
 
         val response = stub!!.compile(request)

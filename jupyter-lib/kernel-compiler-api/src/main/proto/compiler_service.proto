@@ -44,6 +44,7 @@ message CompileRequest {
     int32 snippet_id = 1;
     string code = 2;
     int32 cell_id = 3;
+    bool is_user_code = 4;
 }
 
 message CompiledClass {

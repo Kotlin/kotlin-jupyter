@@ -52,7 +52,7 @@ internal class CompilerServiceAdapter(
         val cellId = options.cellId.value
 
         val compileResult = runBlocking {
-            compilerService.compile(snippetId, snippet.text, cellId)
+            compilerService.compile(snippetId, snippet.text, cellId, options.isUserCode)
         }
 
         return when (compileResult) {

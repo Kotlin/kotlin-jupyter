@@ -87,6 +87,7 @@ class DaemonCompilerServiceImpl(
                         snippetId = request.snippetId,
                         code = request.code,
                         cellId = request.cellId,
+                        isUserCode = request.isUserCode,
                     )
             ) {
                 is CompileResult.Success ->
