@@ -2,9 +2,6 @@ package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
-import java.io.File
-import kotlin.reflect.KClass
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
@@ -23,8 +20,6 @@ interface JupyterCompiler {
      * This value is used to uniquely identify each snippet handled by the compiler.
      */
     fun nextCounter(): Int
-
-    fun addClasspathEntries(classpathEntries: List<File>)
 
     fun compileSync(
         snippet: SourceCode,

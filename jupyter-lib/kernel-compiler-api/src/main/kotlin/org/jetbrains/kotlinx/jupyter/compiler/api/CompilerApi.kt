@@ -80,8 +80,6 @@ interface CompilerService {
         cellId: Int,
     ): CompileResult
 
-    suspend fun addClasspathEntries(classpathEntries: List<String>)
-
     suspend fun complete(
         code: String,
         id: Int,
@@ -119,8 +117,8 @@ interface KernelCallbacks {
 interface CompilerServiceProvider {
     /**
      * Priority for SPI loading. Higher priority providers are preferred.
-     * Test implementations should return higher priority (e.g., 100).
-     * Production daemon should return lower priority (e.g., 10).
+     * Test implementations should return a higher priority (e.g., 100).
+     * Production daemon should return a lower priority (e.g., 10).
      */
     val priority: Int
 

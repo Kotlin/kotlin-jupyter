@@ -151,19 +151,6 @@ class DaemonCompilerClient(
         }
     }
 
-    override suspend fun addClasspathEntries(classpathEntries: List<String>) {
-        val request = org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesRequest
-            .newBuilder()
-            .addAllClasspathEntries(classpathEntries)
-            .build()
-
-        val response = stub!!.addClasspathEntries(request)
-        if (!response.success) {
-            val errorMsg = if (response.hasErrorMessage()) response.errorMessage else "Unknown error"
-            throw RuntimeException("Failed to add classpath entries to compiler daemon: $errorMsg")
-        }
-    }
-
     override suspend fun complete(
         code: String,
         id: Int,
@@ -311,9 +298,7 @@ private class KernelCallbackServiceImpl(
 
     override suspend fun resolveDependencies(request: ResolveDependenciesRequest): ResolveDependenciesResponse {
         val annotations = request.annotationsList.map { it.fromProtoToApi() }
-        val result = callbacks.resolveDependencies(annotations)
-
-        return when (result) {
+        return when (val result = callbacks.resolveDependencies(annotations)) {
             is DependencyResolutionResult.Success ->
                 ResolveDependenciesResponse
                     .newBuilder()

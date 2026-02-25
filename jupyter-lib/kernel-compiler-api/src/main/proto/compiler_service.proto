@@ -9,7 +9,6 @@ option java_package = "org.jetbrains.kotlinx.jupyter.compiler.proto";
 service JupyterCompilerService {
     rpc Initialize(InitializeRequest) returns (InitializeResponse);
     rpc Compile(CompileRequest) returns (CompileResponse);
-    rpc AddClasspathEntries(AddClasspathEntriesRequest) returns (AddClasspathEntriesResponse);
     rpc Complete(CompleteRequest) returns (CompleteResponse);
     rpc ListErrors(ListErrorsRequest) returns (ListErrorsResponse);
     rpc CheckComplete(CheckCompleteRequest) returns (CheckCompleteResponse);
@@ -86,15 +85,6 @@ message CompileResponse {
     repeated int32 script_hash_codes = 4;
     // On failure:
     repeated Diagnostic diagnostics = 3;
-}
-
-message AddClasspathEntriesRequest {
-    repeated string classpath_entries = 1;
-}
-
-message AddClasspathEntriesResponse {
-    bool success = 1;
-    optional string error_message = 2;
 }
 
 message SourceCodePosition {

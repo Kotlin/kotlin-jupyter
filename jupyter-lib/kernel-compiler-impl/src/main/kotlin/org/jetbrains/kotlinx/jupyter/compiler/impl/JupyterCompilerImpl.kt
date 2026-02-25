@@ -12,21 +12,15 @@ import org.jetbrains.kotlinx.jupyter.removeDuplicates
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.refineConfiguration
 import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.repl
-import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.util.LinkedSnippet
 
 open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
@@ -34,48 +28,18 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     initialCompilationConfig: ScriptCompilationConfiguration,
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
-    private val classes = mutableListOf<KClass<*>>()
-
-    private val refinementCallbacks =
-        mutableListOf<(ScriptConfigurationRefinementContext) -> ResultWithDiagnostics<ScriptCompilationConfiguration>>()
 
     protected val compilationConfig: ScriptCompilationConfiguration =
         initialCompilationConfig.with {
             refineConfiguration {
                 val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
                 handlers.forEach { beforeCompiling(it.handler) }
-                beforeCompiling(::updateConfig)
             }
         }
 
     override val version: KotlinKernelVersion = currentKernelVersion
 
     override fun nextCounter() = executionCounter.getAndIncrement()
-
-    override fun addClasspathEntries(classpathEntries: List<java.io.File>) {
-        refinementCallbacks.add { context ->
-            context.compilationConfiguration.with {
-                jvm {
-                    updateClasspath(classpathEntries)
-                }
-            }.asSuccess()
-        }
-    }
-
-    private fun updateConfig(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
-        refinementCallbacks.fold(
-            context.compilationConfiguration.asSuccess(),
-        ) { config: ResultWithDiagnostics<ScriptCompilationConfiguration>, callback ->
-            config.valueOrNull()?.let { conf ->
-                callback(
-                    ScriptConfigurationRefinementContext(
-                        context.script,
-                        conf,
-                        context.collectedData,
-                    ),
-                )
-            } ?: config
-        }
 
     private val getCompilationConfiguration =
         createCachedFun { options: JupyterCompilingOptions ->

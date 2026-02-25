@@ -40,13 +40,6 @@ internal class CompilerServiceAdapter(
     override val version: KotlinKernelVersion
         get() = currentKernelVersion
 
-    override fun addClasspathEntries(classpathEntries: List<File>) {
-        // Send classpath update to the CompilerService via RPC
-        runBlocking {
-            compilerService.addClasspathEntries(classpathEntries.map { it.absolutePath })
-        }
-    }
-
     /**
      * Compile code using the CompilerService and return the compiled LinkedSnippet.
      * Uses a cache to avoid deserializing the same scripts multiple times.

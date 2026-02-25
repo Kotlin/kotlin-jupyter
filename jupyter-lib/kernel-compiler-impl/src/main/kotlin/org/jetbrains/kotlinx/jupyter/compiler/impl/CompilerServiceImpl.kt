@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
+import jupyter.kotlin.CompilerArgs
+import jupyter.kotlin.DependsOn
+import jupyter.kotlin.Repository
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
@@ -44,7 +47,9 @@ import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
+import kotlin.script.experimental.jvm.withUpdatedClasspath
 import kotlin.script.experimental.util.LinkedSnippet
 
 /**
@@ -82,23 +87,26 @@ class CompilerServiceImpl(
         }
     }
 
-    // Use getCompilationConfiguration the same way as ReplForJupyterImpl
-    private var compilationConfig: ScriptCompilationConfiguration = createCompilationConfig()
+    private val compilationConfig: ScriptCompilationConfiguration = getCompilationConfiguration(
+        scriptClasspath = currentClasspath,
+        scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
+        compilerArgsConfigurator = compilerArgsConfigurator,
+        scriptDataCollectors = scriptDataCollectors,
+        replCompilerMode = params.replCompilerMode,
+        loggerFactory = DefaultKernelLoggerFactory,
+    ).with {
+        refineConfiguration {
+            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
 
-    private fun createCompilationConfig(): ScriptCompilationConfiguration =
-        getCompilationConfiguration(
-            scriptClasspath = currentClasspath,
-            scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
-            compilerArgsConfigurator = compilerArgsConfigurator,
-            scriptDataCollectors = scriptDataCollectors,
-            replCompilerMode = params.replCompilerMode,
-            loggerFactory = DefaultKernelLoggerFactory,
-        ).with {
-            refineConfiguration {
-                onAnnotations(jupyter.kotlin.DependsOn::class, jupyter.kotlin.Repository::class, jupyter.kotlin.CompilerArgs::class, handler = ::onAnnotationsHandler)
-                updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
+            beforeCompiling { context ->
+                context.compilationConfiguration.with {
+                    jvm {
+                        updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
+                    }
+                }.asSuccess()
             }
         }
+    }
 
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         val annotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf { it.isNotEmpty() }
@@ -139,7 +147,7 @@ class CompilerServiceImpl(
             runBlocking {
                 when (val resolution = callbacks.resolveDependencies(dependencyAnnotations)) {
                     is DependencyResolutionResult.Success -> {
-                        updateClasspath(resolution.classpathEntries)
+                        config.withUpdatedClasspath(resolution.classpathEntries.map { File(it) })
                     }
                     is DependencyResolutionResult.Failure -> {
                         // Return failure - will be caught during compilation
@@ -210,11 +218,6 @@ class CompilerServiceImpl(
         return baos.toByteArray()
     }
 
-    override suspend fun addClasspathEntries(classpathEntries: List<String>) {
-        compiler.addClasspathEntries(classpathEntries.map { File(it) })
-        updateClasspath(classpathEntries)
-    }
-
     override suspend fun complete(
         code: String,
         id: Int,
@@ -249,11 +252,6 @@ class CompilerServiceImpl(
                 ?.flatMap { it.classpath }
                 .orEmpty()
 
-    private fun updateClasspath(classpathEntries: List<String>) {
-        currentClasspath.addAll(classpathEntries.map { File(it) })
-        // Recreate compilation config with updated classpath
-        compilationConfig = createCompilationConfig()
-    }
 }
 
 /**

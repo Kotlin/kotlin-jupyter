@@ -1,7 +1,6 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import com.google.protobuf.ByteString
-import org.jetbrains.kotlinx.jupyter.api.DEFAULT
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -10,8 +9,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
-import org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesRequest
-import org.jetbrains.kotlinx.jupyter.compiler.proto.AddClasspathEntriesResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.CompileResponse
@@ -118,32 +115,6 @@ class DaemonCompilerServiceImpl(
                         .setMessage("Compilation failed with exception: ${e.message}\n${e.stackTraceToString()}")
                         .build(),
                 ).build()
-        }
-    }
-
-    override suspend fun addClasspathEntries(request: AddClasspathEntriesRequest): AddClasspathEntriesResponse {
-        val currentCompiler = compiler
-        return try {
-            if (currentCompiler != null) {
-                currentCompiler.addClasspathEntries(request.classpathEntriesList)
-            }
-            AddClasspathEntriesResponse
-                .newBuilder()
-                .setSuccess(currentCompiler != null)
-                .apply {
-                    if (currentCompiler == null) {
-                        setErrorMessage("Compiler not initialized")
-                    }
-                }
-                .build()
-        } catch (e: Exception) {
-            println("Error adding classpath entries: ${e.message}")
-            e.printStackTrace()
-            AddClasspathEntriesResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Failed to add classpath entries: ${e.message}\n${e.stackTraceToString()}")
-                .build()
         }
     }
 
