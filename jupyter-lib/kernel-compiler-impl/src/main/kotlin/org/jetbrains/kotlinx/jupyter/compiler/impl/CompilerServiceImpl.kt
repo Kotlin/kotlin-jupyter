@@ -60,8 +60,6 @@ class CompilerServiceImpl(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
 ) : CompilerService {
-    private val currentClasspath: MutableList<File> = params.scriptClasspath.map { File(it) }.toMutableList()
-
     private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget)
 
     // Script data collectors for imports and declarations
@@ -88,7 +86,7 @@ class CompilerServiceImpl(
     }
 
     private val compilationConfig: ScriptCompilationConfiguration = getCompilationConfiguration(
-        scriptClasspath = currentClasspath,
+        scriptClasspath = params.scriptClasspath.map { File(it) },
         scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
         compilerArgsConfigurator = compilerArgsConfigurator,
         scriptDataCollectors = scriptDataCollectors,
@@ -123,27 +121,23 @@ class CompilerServiceImpl(
 
         var config = context.compilationConfiguration
         val dependencyAnnotations = mutableListOf<DependencyAnnotation>()
-        val compilerArgsAnnotations = mutableListOf<Annotation>()
+        val compilerArgsAnnotations = mutableListOf<CompilerArgs>()
 
         // Group annotations by type
         for (annotationData in annotations) {
-            val annotation = annotationData.annotation
-            when (annotation::class) {
-                jupyter.kotlin.DependsOn::class -> {
-                    val dependsOn = annotation as jupyter.kotlin.DependsOn
-                    dependencyAnnotations.add(DependencyAnnotation.DependsOn(dependsOn.value))
+            when (val annotation = annotationData.annotation) {
+                is DependsOn -> {
+                    dependencyAnnotations.add(DependencyAnnotation.DependsOn(annotation.value))
                 }
-                jupyter.kotlin.Repository::class -> {
-                    val repository = annotation as jupyter.kotlin.Repository
-                    dependencyAnnotations.add(DependencyAnnotation.Repository(repository.value))
+                is Repository -> {
+                    dependencyAnnotations.add(DependencyAnnotation.Repository(annotation.value))
                 }
-                jupyter.kotlin.CompilerArgs::class -> {
+                is CompilerArgs -> {
                     compilerArgsAnnotations.add(annotation)
                 }
             }
         }
 
-        // Handle CompilerArgs annotations
         if (compilerArgsAnnotations.isNotEmpty()) {
             when (val result = compilerArgsConfigurator.configure(config, compilerArgsAnnotations)) {
                 is ResultWithDiagnostics.Success -> config = result.value
@@ -151,30 +145,27 @@ class CompilerServiceImpl(
             }
         }
 
-        // Handle dependency annotations
-        if (dependencyAnnotations.isNotEmpty()) {
-            runBlocking {
-                when (val resolution = callbacks.resolveDependencies(dependencyAnnotations)) {
-                    is DependencyResolutionResult.Success -> {
-                        config.withUpdatedClasspath(resolution.classpathEntries.map { File(it) })
-                    }
-                    is DependencyResolutionResult.Failure -> {
-                        // Return failure - will be caught during compilation
-                        return@runBlocking ResultWithDiagnostics.Failure(
-                            listOf(
-                                ScriptDiagnostic(
-                                    ScriptDiagnostic.unspecifiedError,
-                                    "Dependency resolution failed: ${resolution.message}",
-                                    severity = ScriptDiagnostic.Severity.ERROR,
-                                ),
-                            ),
-                        )
-                    }
-                }
-            }
-        }
+        if (dependencyAnnotations.isEmpty()) return config.asSuccess()
 
-        return config.asSuccess()
+        return when (val resolution = runBlocking { callbacks.resolveDependencies(dependencyAnnotations) }) {
+           is DependencyResolutionResult.Success -> {
+               if (resolution.classpathEntries.isEmpty()) return config.asSuccess()
+
+               config.withUpdatedClasspath(resolution.classpathEntries.map { File(it) })
+                   .asSuccess()
+           }
+           is DependencyResolutionResult.Failure -> {
+               ResultWithDiagnostics.Failure(
+                   listOf(
+                       ScriptDiagnostic(
+                           ScriptDiagnostic.unspecifiedError,
+                           "Dependency resolution failed: ${resolution.message}",
+                           severity = ScriptDiagnostic.Severity.ERROR,
+                       ),
+                   ),
+               )
+           }
+       }
     }
 
     override suspend fun compile(
@@ -289,15 +280,11 @@ private class ImportsCollector(private val callbacks: KernelCallbacks) : ScriptD
  */
 private class DeclarationsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
-        println("!scriptInfo.isUserScript = ${!scriptInfo.isUserScript}")
         if (!scriptInfo.isUserScript) return
         val source = scriptInfo.source
-        println("source !is KtFileScriptSource = ${source !is KtFileScriptSource}")
         if (source !is KtFileScriptSource) return
 
         val fileDeclarations = source.ktFile.declarations
-        println("fileDeclarations.size = ${fileDeclarations.size}")
-        println("fileDeclarations.getOrNull(0) is KtScript = ${fileDeclarations.getOrNull(0) is KtScript}")
         val scriptDeclaration = fileDeclarations.getOrNull(0) as? KtScript ?: return
 
         val declarations = scriptDeclaration.declarations.map { declaration ->
@@ -317,7 +304,6 @@ private class DeclarationsCollector(private val callbacks: KernelCallbacks) : Sc
         }
 
         runBlocking {
-            println("declarations.size = ${declarations.size}")
             callbacks.reportDeclarations(declarations)
         }
     }
