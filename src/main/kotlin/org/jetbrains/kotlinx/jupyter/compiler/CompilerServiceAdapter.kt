@@ -14,7 +14,6 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.asSuccess
@@ -28,12 +27,8 @@ import kotlin.script.experimental.util.LinkedSnippet
 internal class CompilerServiceAdapter(
     private val compilerService: CompilerService,
 ) : JupyterCompilerWithCompletion {
-    private val executionCounter = AtomicInteger()
-
     // Cache of compiled scripts by their hash code (computed on daemon side)
     private val scriptCache = mutableMapOf<Int, KJvmCompiledScript>()
-
-    override fun nextCounter(): Int = executionCounter.getAndIncrement()
 
     override val version: KotlinKernelVersion
         get() = currentKernelVersion
@@ -69,25 +64,23 @@ internal class CompilerServiceAdapter(
         }
     }
 
-    override val complete: CompleteFunction = { code, position ->
-        val id = executionCounter.get()
+    override val complete: CompleteFunction = CompleteFunction { code, position, snippetId ->
         val completions = runBlocking {
-            compilerService.complete(code.text, id, position)
+            compilerService.complete(code, snippetId, position)
         }
         completions.asSequence().asSuccess()
     }
 
-    override fun checkComplete(code: Code): CheckCompletenessResult {
+    override fun checkComplete(code: Code, snippetId: Int): CheckCompletenessResult {
         val isComplete = runBlocking {
-            compilerService.checkComplete(code)
+            compilerService.checkComplete(code, snippetId)
         }
         return CheckCompletenessResult(isComplete)
     }
 
-    override fun listErrors(code: Code): Sequence<ScriptDiagnostic> {
-        val id = executionCounter.get()
+    override fun listErrors(code: Code, snippetId: Int): Sequence<ScriptDiagnostic> {
         val diagnostics = runBlocking {
-            compilerService.listErrors(code, id)
+            compilerService.listErrors(code, snippetId)
         }
         return diagnostics.asSequence()
     }

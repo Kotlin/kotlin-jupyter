@@ -14,12 +14,6 @@ import kotlin.script.experimental.util.LinkedSnippet
 interface JupyterCompiler {
     val version: KotlinKernelVersion
 
-    /**
-     * Increments and return the value of the next execution count.
-     * This value is used to uniquely identify each snippet handled by the compiler.
-     */
-    fun nextCounter(): Int
-
     fun compileSync(
         snippetId: Int,
         code: String,

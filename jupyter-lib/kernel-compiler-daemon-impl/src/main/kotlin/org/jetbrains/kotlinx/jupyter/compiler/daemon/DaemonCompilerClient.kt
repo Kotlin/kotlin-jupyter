@@ -198,11 +198,15 @@ class DaemonCompilerClient(
         return response.diagnosticsList.map { it.fromProto() }
     }
 
-    override suspend fun checkComplete(code: String): Boolean {
+    override suspend fun checkComplete(
+        code: String,
+        snippetId: Int,
+    ): Boolean {
         val request =
             org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest
                 .newBuilder()
                 .setCode(code)
+                .setSnippetId(snippetId)
                 .build()
 
         val response = stub!!.checkComplete(request)

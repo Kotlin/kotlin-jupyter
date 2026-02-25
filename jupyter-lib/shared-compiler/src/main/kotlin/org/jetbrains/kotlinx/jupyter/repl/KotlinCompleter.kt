@@ -12,15 +12,15 @@ class KotlinCompleter {
         completeFunction: CompleteFunction,
         code: String,
         preprocessedCode: String,
-        id: Int,
+        snippetId: Int,
         cursor: Int,
     ): CompletionResult =
         try {
-            val codeLine = SourceCodeImpl(id, code)
-            val preprocessedCodeLine = SourceCodeImpl(id, preprocessedCode)
+            val codeLine = SourceCodeImpl(snippetId, code)
+            val preprocessedCodeLine = SourceCodeImpl(snippetId, preprocessedCode)
             val codePos = cursor.toSourceCodePositionWithNewAbsolute(codeLine, preprocessedCodeLine)
             val completionResult =
-                codePos?.let { runBlocking { completeFunction(preprocessedCodeLine, codePos) } }
+                codePos?.let { runBlocking { completeFunction.complete(preprocessedCode, codePos, snippetId) } }
 
             completionResult?.valueOrNull()?.toList()?.let { completionList ->
                 getResult(code, cursor, completionList)

@@ -195,7 +195,7 @@ class DaemonCompilerServiceImpl(
         }
 
         return try {
-            val isComplete = currentCompiler.checkComplete(request.code)
+            val isComplete = currentCompiler.checkComplete(request.code, request.snippetId)
 
             org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
                 .newBuilder()

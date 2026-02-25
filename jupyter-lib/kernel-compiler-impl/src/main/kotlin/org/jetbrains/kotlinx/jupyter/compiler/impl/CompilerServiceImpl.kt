@@ -222,9 +222,7 @@ class CompilerServiceImpl(
         id: Int,
         position: SourceCode.Position,
     ): List<SourceCodeCompletionVariant> {
-        val sourceCode = SourceCodeImpl(id, code)
-
-        return compiler.complete(sourceCode, position)
+        return compiler.complete.complete(code, position, id)
             .valueOrNull()?.toList().orEmpty()
     }
 
@@ -232,11 +230,14 @@ class CompilerServiceImpl(
         code: String,
         id: Int,
     ): List<ScriptDiagnostic> {
-        return compiler.listErrors(code).toList()
+        return compiler.listErrors(code, id).toList()
     }
 
-    override suspend fun checkComplete(code: String): Boolean {
-        val result = compiler.checkComplete(code)
+    override suspend fun checkComplete(
+        code: String,
+        snippetId: Int,
+    ): Boolean {
+        val result = compiler.checkComplete(code, snippetId)
         return result.isComplete
     }
 

@@ -29,20 +29,21 @@ internal class K1JupyterCompilerWithCompletionImpl(
     compilationConfig: ScriptCompilationConfiguration,
 ) : JupyterCompilerImpl<KJvmReplCompilerWithIdeServices>(compiler, compilationConfig),
     JupyterCompilerWithCompletion {
-    override val complete: CompleteFunction = { code, cursor ->
-        compiler.complete(code, cursor, compilationConfig)
+    override val complete: CompleteFunction = CompleteFunction { code, cursor, snippetId ->
+        val sourceCode = SourceCodeImpl(snippetId, code)
+        compiler.complete(sourceCode, cursor, compilationConfig)
     }
 
-    override fun checkComplete(code: Code): CheckCompletenessResult {
-        val result = analyze(code)
+    override fun checkComplete(code: Code, snippetId: Int): CheckCompletenessResult {
+        val result = analyze(code, snippetId)
         val analysisResult = result.valueOr { throw ReplException(result.getErrors()) }
         val diagnostics = analysisResult[ReplAnalyzerResult.Companion.analysisDiagnostics]!!
         val isComplete = diagnostics.none { it.code == ScriptDiagnostic.Companion.incompleteCode }
         return CheckCompletenessResult(isComplete)
     }
 
-    private fun analyze(code: Code): ResultWithDiagnostics<ReplAnalyzerResult> {
-        val snippet = SourceCodeImpl(nextCounter(), code)
+    private fun analyze(code: Code, snippetId: Int): ResultWithDiagnostics<ReplAnalyzerResult> {
+        val snippet = SourceCodeImpl(snippetId, code)
 
         return runBlocking {
             compiler.analyze(
@@ -53,8 +54,8 @@ internal class K1JupyterCompilerWithCompletionImpl(
         }
     }
 
-    override fun listErrors(code: Code): Sequence<ScriptDiagnostic> {
-        val result = analyze(code).valueOrThrow()
+    override fun listErrors(code: Code, snippetId: Int): Sequence<ScriptDiagnostic> {
+        val result = analyze(code, snippetId).valueOrThrow()
 
         return result[ReplAnalyzerResult.Companion.analysisDiagnostics]!!
     }

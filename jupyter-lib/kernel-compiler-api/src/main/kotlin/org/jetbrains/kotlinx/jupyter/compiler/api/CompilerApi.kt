@@ -92,7 +92,10 @@ interface CompilerService {
         id: Int,
     ): List<ScriptDiagnostic>
 
-    suspend fun checkComplete(code: String): Boolean
+    suspend fun checkComplete(
+        code: String,
+        snippetId: Int,
+    ): Boolean
 
     suspend fun getClasspath(): List<String>
 }

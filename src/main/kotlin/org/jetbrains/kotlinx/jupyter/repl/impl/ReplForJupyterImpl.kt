@@ -105,6 +105,7 @@ import org.jetbrains.kotlinx.jupyter.repl.result.buildScriptsData
 import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.CompiledSnippet
 import kotlin.script.experimental.api.ReplEvaluator
@@ -149,6 +150,9 @@ class ReplForJupyterImpl(
     Closeable {
     private val logger = loggerFactory.getLogger(this::class)
     private val parseOutCellMagic = notebook.jupyterClientType == JupyterClientType.KOTLIN_NOTEBOOK
+    private val executionCounter = AtomicInteger()
+
+    fun nextCounter() = executionCounter.getAndIncrement()
 
     private val resourcesProcessor =
         LibraryResourcesProcessorImpl(
@@ -361,7 +365,7 @@ class ReplForJupyterImpl(
     private val afterCellExecutionsProcessor = AfterCellExecutionsProcessor(loggerFactory)
     private val shutdownExecutionsProcessor = ShutdownExecutionsProcessor(loggerFactory)
 
-    override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code)
+    override fun checkComplete(code: String) = jupyterCompiler.checkComplete(code, nextCounter())
 
     internal val sharedContext =
         SharedReplContext(
@@ -597,7 +601,7 @@ class ReplForJupyterImpl(
             jupyterCompiler.complete,
             args.code,
             preprocessed.code,
-            jupyterCompiler.nextCounter(),
+            nextCounter(),
             args.cursor,
         )
     }
@@ -613,7 +617,7 @@ class ReplForJupyterImpl(
         if (looksLikeReplCommand(args.code)) return reportCommandErrors(args.code)
 
         val preprocessingResult = errorsMagics.process(args.code)
-        val errorsList = preprocessingResult.diagnostics + jupyterCompiler.listErrors(preprocessingResult.code)
+        val errorsList = preprocessingResult.diagnostics + jupyterCompiler.listErrors(preprocessingResult.code, nextCounter())
 
         return ListErrorsResult(args.code, errorsList)
     }

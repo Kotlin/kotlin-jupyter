@@ -11,7 +11,6 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.removeDuplicates
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.util.createCachedFun
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -25,11 +24,7 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     protected val compiler: CompilerT,
     protected val compilationConfig: ScriptCompilationConfiguration,
 ) : JupyterCompiler {
-    private val executionCounter = AtomicInteger()
-
     override val version: KotlinKernelVersion = currentKernelVersion
-
-    override fun nextCounter() = executionCounter.getAndIncrement()
 
     private val getCompilationConfiguration =
         createCachedFun { options: JupyterCompilingOptions ->

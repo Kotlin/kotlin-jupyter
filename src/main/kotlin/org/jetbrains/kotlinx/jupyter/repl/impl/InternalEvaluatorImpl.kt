@@ -121,7 +121,7 @@ internal class InternalEvaluatorImpl(
             if (executionLogging == ExecutedCodeLogging.ALL) {
                 println("Executing:\n$code")
             }
-            val id = compiler.nextCounter()
+            val id = repl.nextCounter()
 
             evaluatorWorkflowListener?.internalIdGenerated(id)
 
