@@ -10,7 +10,6 @@ import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorWithPreventingRecursion
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
@@ -30,7 +29,6 @@ import org.jetbrains.kotlinx.jupyter.repl.execution.CellExecutor
 data class SharedReplContext(
     val loggerFactory: KernelLoggerFactory,
     val classAnnotationsProcessor: ClassAnnotationsProcessor,
-    val fileAnnotationsProcessor: FileAnnotationsProcessor,
     val fieldsProcessor: FieldsProcessorInternal,
     val renderersProcessor: ResultsRenderersProcessor,
     val textRenderersProcessor: TextRenderersProcessorWithPreventingRecursion,

@@ -24,7 +24,7 @@ interface CompilerArgsConfigurator {
     fun getArgs(): List<String>
 
     /**
-     * This method is called as part of the [org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor] and
+     * This method is called as part of the compile-time annotation processing and
      * is responsible for extracting any relevant compiler args from the list of [jupyter.kotlin.CompilerArgs]
      * annotations found in the notebook cell.
      *

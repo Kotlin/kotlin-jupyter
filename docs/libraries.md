@@ -157,7 +157,6 @@ Here's a list of the supported integration features. See interactive examples in
 | [Throwables renderers](#throwables-renderers)                                                                             | -                          | `throwableRenderers`          | `addThrowableRenderer()`<br>`renderThrowable<T>{}`                                                                             |
 | [Variables handling](#variables-handling)                                                                                 | -                          | `converters`                  | `addTypeConverter()`<br>`onVariable{}`<br>`updateVariable{}`<br>`onVariableByRuntimeType{}`<br>`updateVariableByRuntimeType{}` |
 | [Annotated classes handling](#annotated-classes-handling)                                                                 | -                          | `classAnnotations`            | `addClassAnnotationHandler()`<br>`onClassAnnotation<T>{}`                                                                      |
-| [File annotations handling](#file-annotations-handling)                                                                   | -                          | `fileAnnotations`             | `addFileAnnotationHanlder()`<br>`onFileAnnotation<T>{}`                                                                        |
 | [Code preprocessing](#code-preprocessing)                                                                                 | -                          | `codePreprocessors`           | `addCodePreprocessor()`<br>`preprocessCodeWithLibraries{}`<br>`preprocessCode{}`                                               |
 | [Library static resources loading](#library-static-resources-loading)                                                     | `resources`                | `resources`                   | `resource()`                                                                                                                   |
 | [Internal variables markers](#internal-variables-markers)                                                                 | -                          | `internalVariablesMarkers`    | `markVariableInternal()`                                                                                                       |
@@ -551,16 +550,15 @@ In the callback, you have access to the file annotation object and assigned anno
 
 #### JupyterIntegration API
 
-Here's an example of how to handle file annotations via the JupyterIntegration API:
+Here's an example of how to handle class annotations via the JupyterIntegration API:
 
 ```kotlin
-// Might have any retention, but files should be a valid target
+// Might have any retention, but classes should be a valid target
 annotation class MyAnnotation
 
 USE { 
-    onFileAnnotation<MyAnnotation> { 
-        val myAnno = it.first() as MyAnnotation
-        println("My annotation object: $myAnno") 
+    onClassAnnotation<MyAnnotation> { classes ->
+        println("Annotated classes: ${classes.joinToString { it.simpleName }}") 
     }
 }
 ```

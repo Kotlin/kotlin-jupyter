@@ -29,8 +29,6 @@ import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.ClassAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.FieldsProcessorInternal
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessor
-import org.jetbrains.kotlinx.jupyter.codegen.FileAnnotationsProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.RenderersProcessorImpl
 import org.jetbrains.kotlinx.jupyter.codegen.ResultsRenderersProcessor
 import org.jetbrains.kotlinx.jupyter.codegen.TextRenderersProcessorImpl
@@ -46,12 +44,10 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceAdapter
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
-import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.toCellId
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
-import org.jetbrains.kotlinx.jupyter.dependencies.ScriptDependencyAnnotationHandlerImpl
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
@@ -362,13 +358,6 @@ class ReplForJupyterImpl(
 
     private val classAnnotationsProcessor: ClassAnnotationsProcessor = ClassAnnotationsProcessorImpl()
 
-    private val fileAnnotationsProcessor: FileAnnotationsProcessor =
-        FileAnnotationsProcessorImpl(
-            ScriptDependencyAnnotationHandlerImpl(dependencyManager.resolver),
-            compilerArgsConfigurator,
-            jupyterCompiler,
-        )
-
     private val interruptionCallbacksProcessor: InterruptionCallbacksProcessor =
         InterruptionCallbacksProcessorImpl(hostProvider)
 
@@ -385,7 +374,6 @@ class ReplForJupyterImpl(
         SharedReplContext(
             loggerFactory,
             classAnnotationsProcessor,
-            fileAnnotationsProcessor,
             fieldsProcessor,
             renderersProcessor,
             textRenderersProcessor,
