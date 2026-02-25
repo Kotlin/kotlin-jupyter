@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.SourceCode
+import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
@@ -47,20 +47,22 @@ open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
         }
 
     override fun compileSync(
-        snippet: SourceCode,
+        snippetId: Int,
+        code: String,
         options: JupyterCompilingOptions,
     ): LinkedSnippet<KJvmCompiledScript> {
+        val snippet = SourceCodeImpl(snippetId, code)
         val compilationConfigWithJupyterOptions = getCompilationConfiguration(options)
         when (val resultWithDiagnostics = runBlocking { compiler.compile(snippet, compilationConfigWithJupyterOptions) }) {
             is ResultWithDiagnostics.Failure -> {
                 val metadata =
                     CellErrorMetaData(
                         options.cellId.toExecutionCount(),
-                        snippet.text.lines().size,
+                        code.lines().size,
                     )
                 // Work-around for KT-74685
                 val updatedDiagnostics = resultWithDiagnostics.removeDuplicates()
-                throw ReplCompilerException(snippet.text, updatedDiagnostics, metadata = metadata)
+                throw ReplCompilerException(code, updatedDiagnostics, metadata = metadata)
             }
             is ResultWithDiagnostics.Success -> {
                 // TODO "resultField" is null because in K2 the return value is no longer stored

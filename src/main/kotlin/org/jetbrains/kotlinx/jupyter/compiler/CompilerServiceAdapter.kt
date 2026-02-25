@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResultDeserializer
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
+import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.toExecutionCount
@@ -13,12 +14,9 @@ import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.repl.CellErrorMetaData
 import org.jetbrains.kotlinx.jupyter.repl.CheckCompletenessResult
 import org.jetbrains.kotlinx.jupyter.repl.CompleteFunction
-import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
-import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
@@ -45,14 +43,14 @@ internal class CompilerServiceAdapter(
      * Uses a cache to avoid deserializing the same scripts multiple times.
      */
     override fun compileSync(
-        snippet: SourceCode,
+        snippetId: Int,
+        code: String,
         options: JupyterCompilingOptions,
     ): LinkedSnippet<KJvmCompiledScript> {
-        val snippetId = executionCounter.get()
         val cellId = options.cellId.value
 
         val compileResult = runBlocking {
-            compilerService.compile(snippetId, snippet.text, cellId, options.isUserCode)
+            compilerService.compile(snippetId, code, cellId, options.isUserCode)
         }
 
         return when (compileResult) {
@@ -63,10 +61,10 @@ internal class CompilerServiceAdapter(
             is CompileResult.Failure -> {
                 val metadata = CellErrorMetaData(
                     options.cellId.toExecutionCount(),
-                    snippet.text.lines().size,
+                    code.lines().size,
                 )
                 val failure = ResultWithDiagnostics.Failure(compileResult.diagnostics)
-                throw ReplCompilerException(snippet.text, failure, metadata = metadata)
+                throw ReplCompilerException(code, failure, metadata = metadata)
             }
         }
     }

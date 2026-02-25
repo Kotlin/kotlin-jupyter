@@ -127,7 +127,7 @@ internal class InternalEvaluatorImpl(
 
             val codeLine = SourceCodeImpl(id, code)
 
-            val compileResult = compiler.compileSync(codeLine, compilingOptions)
+            val compileResult = compiler.compileSync(id, code, compilingOptions)
             val evalConfig = evaluationHelper.createEvaluationConfiguration(codeLine, compileResult)
             evaluatorWorkflowListener?.compilationFinished()
             val compiledScript = compileResult.get()

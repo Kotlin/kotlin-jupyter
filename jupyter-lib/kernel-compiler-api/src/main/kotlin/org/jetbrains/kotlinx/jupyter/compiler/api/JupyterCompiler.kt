@@ -2,7 +2,6 @@ package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
-import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -22,7 +21,8 @@ interface JupyterCompiler {
     fun nextCounter(): Int
 
     fun compileSync(
-        snippet: SourceCode,
+        snippetId: Int,
+        code: String,
         options: JupyterCompilingOptions,
     ): LinkedSnippet<KJvmCompiledScript>
 }

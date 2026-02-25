@@ -174,13 +174,11 @@ class CompilerServiceImpl(
         cellId: Int,
         isUserCode: Boolean,
     ): CompileResult {
-        // Create source code using the same naming convention as SourceCodeImpl
-        val source = SourceCodeImpl(snippetId, code)
-
         // Compile using JupyterCompiler
         return try {
             val linkedSnippet = compiler.compileSync(
-                source,
+                snippetId,
+                code,
                 JupyterCompilingOptions(
                     CellId(cellId),
                     isUserCode = isUserCode,
