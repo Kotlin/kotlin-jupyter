@@ -4,42 +4,37 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
+import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
+import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.util.concurrent.TimeUnit
 
 /**
  * Main entry point for the compiler daemon.
  *
- * Usage: CompilerDaemonMain <daemon-port> <kernel-callback-port>
+ * Usage: CompilerDaemonMain <kernel-callback-port>
  *
  * The daemon will:
  * 1. Connect to the kernel's callback service on kernel-callback-port
- * 2. Start its own gRPC server on daemon-port
- * 3. Wait for compilation requests from the kernel
+ * 2. Start its own gRPC server on a random available port (port 0)
+ * 3. Report the actual port back to the kernel via ReportDaemonPort callback
+ * 4. Wait for compilation requests from the kernel
  */
 fun main(args: Array<String>) {
-    if (args.size != 2) {
-        System.err.println("Usage: CompilerDaemonMain <daemon-port> <kernel-callback-port>")
+    if (args.size != 1) {
+        System.err.println("Usage: CompilerDaemonMain <kernel-callback-port>")
         System.exit(1)
     }
 
-    val daemonPort =
-        args[0].toIntOrNull() ?: run {
-            System.err.println("Invalid daemon port: ${args[0]}")
-            System.exit(1)
-            return
-        }
-
     val kernelCallbackPort =
-        args[1].toIntOrNull() ?: run {
-            System.err.println("Invalid kernel callback port: ${args[1]}")
+        args[0].toIntOrNull() ?: run {
+            System.err.println("Invalid kernel callback port: ${args[0]}")
             System.exit(1)
             return
         }
 
-    println("Starting compiler daemon on port $daemonPort")
     println("Connecting to kernel callback service on port $kernelCallbackPort")
 
-    val daemon = CompilerDaemon(daemonPort, kernelCallbackPort)
+    val daemon = CompilerDaemon(kernelCallbackPort)
     daemon.start()
     daemon.blockUntilShutdown()
 }
@@ -48,7 +43,6 @@ fun main(args: Array<String>) {
  * The compiler daemon that runs a gRPC server for compilation requests.
  */
 class CompilerDaemon(
-    private val port: Int,
     private val kernelCallbackPort: Int,
 ) {
     private var server: Server? = null
@@ -68,12 +62,23 @@ class CompilerDaemon(
 
         server =
             ServerBuilder
-                .forPort(port)
+                .forPort(PortsGenerator.create(32768, 65536).randomPort()) // Let OS pick an available port
                 .addService(compilerService)
                 .build()
                 .start()
 
-        println("Compiler daemon started on port $port")
+        val actualPort = server!!.port
+        println("Compiler daemon started on port $actualPort")
+
+        // Report the actual port back to the kernel
+        kotlinx.coroutines.runBlocking {
+            val request = org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest
+                .newBuilder()
+                .setPort(actualPort)
+                .build()
+            callbackStub.reportDaemonPort(request)
+            println("Reported port $actualPort to kernel")
+        }
 
         // Add shutdown hook
         Runtime.getRuntime().addShutdownHook(

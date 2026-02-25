@@ -52,8 +52,9 @@ class DaemonCompilerClient(
 
     private val portsGenerator = PortsGenerator.create(32768, 65536)
 
-    private val daemonPort: Int = portsGenerator.randomPort()
     private val callbackPort: Int = portsGenerator.randomPort()
+    @Volatile private var daemonPort: Int? = null
+    private val portLatch = java.util.concurrent.CountDownLatch(1)
 
     init {
         startDaemon()
@@ -63,9 +64,19 @@ class DaemonCompilerClient(
         })
     }
 
+    fun setDaemonPort(port: Int) {
+        daemonPort = port
+        portLatch.countDown()
+    }
+
+    private fun waitForDaemonPort(): Int {
+        portLatch.await(10, java.util.concurrent.TimeUnit.SECONDS)
+        return daemonPort ?: throw RuntimeException("Daemon did not report its port within timeout")
+    }
+
     private fun startDaemon() {
         // Start callback server for daemon to call back to kernel
-        val callbackService = KernelCallbackServiceImpl(callbacks)
+        val callbackService = KernelCallbackServiceImpl(callbacks, this)
         callbackServer =
             ServerBuilder
                 .forPort(callbackPort)
@@ -84,7 +95,6 @@ class DaemonCompilerClient(
                 System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
                 "-jar",
                 daemonJar.absolutePath,
-                daemonPort.toString(),
                 callbackPort.toString(),
             )
 
@@ -93,13 +103,14 @@ class DaemonCompilerClient(
 
         daemonProcess = processBuilder.start()
 
-        // Wait a bit for daemon to start
-        Thread.sleep(2000)
+        println("Waiting for daemon to report its port...")
+        val actualDaemonPort = waitForDaemonPort()
+        println("Daemon reported port: $actualDaemonPort")
 
         // Connect to daemon
         channel =
             ManagedChannelBuilder
-                .forAddress("localhost", daemonPort)
+                .forAddress("localhost", actualDaemonPort)
                 .usePlaintext()
                 .build()
 
@@ -291,7 +302,13 @@ class DaemonCompilerClient(
  */
 private class KernelCallbackServiceImpl(
     private val callbacks: KernelCallbacks,
+    private val daemonClient: DaemonCompilerClient,
 ) : KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineImplBase() {
+    override suspend fun reportDaemonPort(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse {
+        daemonClient.setDaemonPort(request.port)
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse.newBuilder().build()
+    }
+
     override suspend fun reportImports(request: ReportImportsRequest): ReportImportsResponse {
         callbacks.reportImports(request.importsList)
         return ReportImportsResponse.newBuilder().build()

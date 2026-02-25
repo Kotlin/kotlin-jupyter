@@ -17,6 +17,7 @@ service JupyterCompilerService {
 
 // Kernel callback service (kernel implements this)
 service KernelCallbackService {
+    rpc ReportDaemonPort(ReportDaemonPortRequest) returns (ReportDaemonPortResponse);
     rpc ReportImports(ReportImportsRequest) returns (ReportImportsResponse);
     rpc ReportDeclarations(ReportDeclarationsRequest) returns (ReportDeclarationsResponse);
     rpc ResolveDependencies(ResolveDependenciesRequest) returns (ResolveDependenciesResponse);
@@ -199,3 +200,9 @@ message UpdatedClasspathResponse {
     repeated string classpath_entries = 2;
     optional string error_message = 3;
 }
+
+message ReportDaemonPortRequest {
+    int32 port = 1;
+}
+
+message ReportDaemonPortResponse {}
