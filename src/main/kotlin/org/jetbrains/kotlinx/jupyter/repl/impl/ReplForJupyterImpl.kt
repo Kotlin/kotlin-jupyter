@@ -39,10 +39,8 @@ import org.jetbrains.kotlinx.jupyter.commands.reportCommandErrors
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.looksLikeReplCommand
-import org.jetbrains.kotlinx.jupyter.compiler.CompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceAdapter
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
-import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -162,12 +160,6 @@ class ReplForJupyterImpl(
         InternalVariablesMarkersProcessorImpl()
 
     private val ctx = KotlinContext()
-
-    private val compilerArgsConfigurator: CompilerArgsConfigurator =
-        DefaultCompilerArgsConfigurator(
-            runtimeProperties.jvmTargetForSnippets,
-            extraCompilerArguments,
-        )
 
     private val magics =
         MagicsProcessor(
