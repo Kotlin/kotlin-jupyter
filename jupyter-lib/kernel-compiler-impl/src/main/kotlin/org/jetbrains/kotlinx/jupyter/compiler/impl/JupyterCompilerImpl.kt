@@ -16,8 +16,6 @@ import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.api.refineConfiguration
-import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
@@ -25,17 +23,9 @@ import kotlin.script.experimental.util.LinkedSnippet
 
 open class JupyterCompilerImpl<CompilerT : ReplCompiler<KJvmCompiledScript>>(
     protected val compiler: CompilerT,
-    initialCompilationConfig: ScriptCompilationConfiguration,
+    protected val compilationConfig: ScriptCompilationConfiguration,
 ) : JupyterCompiler {
     private val executionCounter = AtomicInteger()
-
-    protected val compilationConfig: ScriptCompilationConfiguration =
-        initialCompilationConfig.with {
-            refineConfiguration {
-                val handlers = initialCompilationConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling].orEmpty()
-                handlers.forEach { beforeCompiling(it.handler) }
-            }
-        }
 
     override val version: KotlinKernelVersion = currentKernelVersion
 

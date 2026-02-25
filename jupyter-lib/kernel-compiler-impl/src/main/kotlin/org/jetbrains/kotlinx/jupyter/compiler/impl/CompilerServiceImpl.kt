@@ -43,11 +43,11 @@ import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.collectedAnnotations
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.refineConfiguration
+import kotlin.script.experimental.api.refineConfigurationBeforeCompiling
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
-import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 import kotlin.script.experimental.jvm.withUpdatedClasspath
 import kotlin.script.experimental.util.LinkedSnippet
@@ -94,16 +94,25 @@ class CompilerServiceImpl(
         scriptDataCollectors = scriptDataCollectors,
         replCompilerMode = params.replCompilerMode,
         loggerFactory = DefaultKernelLoggerFactory,
-    ).with {
-        refineConfiguration {
-            onAnnotations(DependsOn::class, Repository::class, CompilerArgs::class, handler = ::onAnnotationsHandler)
+    ).let { originalConfig ->
+        originalConfig.with {
+            refineConfiguration {
+                onAnnotations(
+                    DependsOn::class,
+                    Repository::class,
+                    CompilerArgs::class,
+                    handler = ::onAnnotationsHandler
+                )
 
-            beforeCompiling { context ->
-                context.compilationConfiguration.with {
-                    jvm {
+                originalConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling]?.forEach {
+                    beforeCompiling(it.handler)
+                }
+
+                beforeCompiling { context ->
+                    context.compilationConfiguration.with {
                         updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
-                    }
-                }.asSuccess()
+                    }.asSuccess()
+                }
             }
         }
     }
@@ -280,11 +289,15 @@ private class ImportsCollector(private val callbacks: KernelCallbacks) : ScriptD
  */
 private class DeclarationsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
+        println("!scriptInfo.isUserScript = ${!scriptInfo.isUserScript}")
         if (!scriptInfo.isUserScript) return
         val source = scriptInfo.source
+        println("source !is KtFileScriptSource = ${source !is KtFileScriptSource}")
         if (source !is KtFileScriptSource) return
 
         val fileDeclarations = source.ktFile.declarations
+        println("fileDeclarations.size = ${fileDeclarations.size}")
+        println("fileDeclarations.getOrNull(0) is KtScript = ${fileDeclarations.getOrNull(0) is KtScript}")
         val scriptDeclaration = fileDeclarations.getOrNull(0) as? KtScript ?: return
 
         val declarations = scriptDeclaration.declarations.map { declaration ->
@@ -304,6 +317,7 @@ private class DeclarationsCollector(private val callbacks: KernelCallbacks) : Sc
         }
 
         runBlocking {
+            println("declarations.size = ${declarations.size}")
             callbacks.reportDeclarations(declarations)
         }
     }

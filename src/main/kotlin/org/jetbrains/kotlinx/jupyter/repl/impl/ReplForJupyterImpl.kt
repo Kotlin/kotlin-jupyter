@@ -11,6 +11,7 @@ import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
 import org.jetbrains.kotlinx.jupyter.LibraryDescriptorsByResolutionProvider
 import org.jetbrains.kotlinx.jupyter.api.Code
+import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.ExecutionCallback
 import org.jetbrains.kotlinx.jupyter.api.JupyterClientType
 import org.jetbrains.kotlinx.jupyter.api.KernelRunMode
@@ -45,7 +46,6 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceAdapter
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
 import org.jetbrains.kotlinx.jupyter.compiler.DefaultCompilerArgsConfigurator
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
-import org.jetbrains.kotlinx.jupyter.compiler.ScriptDeclarationsCollectorInternal
 import org.jetbrains.kotlinx.jupyter.compiler.ScriptImportsCollector
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.config.catchAll
@@ -206,8 +206,8 @@ class ReplForJupyterImpl(
         )
 
     private val codePreprocessor = CompoundCodePreprocessor(magics)
-    private val importsCollector: ScriptImportsCollector = ScriptImportsCollectorImpl()
-    private val declarationsCollector: ScriptDeclarationsCollectorInternal = ScriptDeclarationsCollectorImpl()
+    private val importsCollector: ScriptImportsCollectorImpl = ScriptImportsCollectorImpl()
+    private var lastDeclarations: List<DeclarationInfo> = emptyList()
 
     override val fileExtension: String get() = "jupyter.kts" // TODO
 
@@ -225,12 +225,10 @@ class ReplForJupyterImpl(
         val callbacks = KernelCallbacksImpl(
             dependencyResolver = dependencyManager.resolver,
             onImportsReported = { imports ->
-                // Store imports for later retrieval, matching the pattern used by importsCollector
-                (importsCollector as ScriptImportsCollectorImpl).addImports(imports)
+                importsCollector.addImports(imports)
             },
             onDeclarationsReported = { declarations ->
-                // Store declarations on the current cell, matching existing pattern
-                notebook.currentCell?.declarations = declarations
+                lastDeclarations = declarations
             },
             updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath} },
         )
@@ -556,7 +554,7 @@ class ReplForJupyterImpl(
                         }
 
                         override fun compilationFinished() {
-                            cell.declarations = declarationsCollector.getLastSnippetDeclarations()
+                            cell.declarations = lastDeclarations
                         }
                     }
                 executor.execute(
