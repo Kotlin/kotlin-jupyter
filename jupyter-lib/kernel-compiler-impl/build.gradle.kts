@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.kotlin.dev.scriptRuntime)
     implementation(libs.kotlin.dev.reflect)
     implementation(libs.kotlin.dev.scriptingIdeServices)
+    runtimeOnly(libs.serialization.dev.embeddedPlugin)
 
     // trove4j is a dependency of compiler-embeddable
     implementation(libs.jetbrains.trove4j)
