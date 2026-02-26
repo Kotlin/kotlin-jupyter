@@ -24,9 +24,13 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourcePosition
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import java.util.concurrent.Executors
 import kotlin.script.experimental.api.ScriptDiagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 
@@ -41,9 +45,16 @@ class DaemonCompilerServiceImpl(
     private val logger = DefaultKernelLoggerFactory.getLogger(DaemonCompilerServiceImpl::class.java)
     
     private var compiler: CompilerService? = null
+    
+    // Single-threaded dispatcher for all compiler operations to work around KT-73200
+    // The Kotlin compiler has thread-safety issues when accessed from multiple threads
+    private val compilerDispatcher: CoroutineDispatcher = 
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "compiler-thread")
+        }.asCoroutineDispatcher()
 
-    override suspend fun initialize(request: InitializeRequest): InitializeResponse {
-        return try {
+    override suspend fun initialize(request: InitializeRequest): InitializeResponse = withContext(compilerDispatcher) {
+        try {
             val params =
                 CompilerParams(
                     scriptClasspath = request.classpathEntriesList,
@@ -70,9 +81,9 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun compile(request: CompileRequest): CompileResponse {
+    override suspend fun compile(request: CompileRequest): CompileResponse = withContext(compilerDispatcher) {
         val currentCompiler =
-            compiler ?: return CompileResponse
+            compiler ?: return@withContext CompileResponse
                 .newBuilder()
                 .setSuccess(false)
                 .addDiagnostics(
@@ -83,7 +94,7 @@ class DaemonCompilerServiceImpl(
                         .build(),
                 ).build()
 
-        return try {
+        try {
             when (
                 val result =
                     currentCompiler.compile(
@@ -122,17 +133,17 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun complete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse {
+    override suspend fun complete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse = withContext(compilerDispatcher) {
         val currentCompiler = compiler
         if (currentCompiler == null) {
-            return org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
                 .newBuilder()
                 .setSuccess(false)
                 .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        return try {
+        try {
             val position = request.position.fromProto()
             val result = currentCompiler.complete(
                 request.code,
@@ -155,17 +166,17 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun listErrors(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse {
+    override suspend fun listErrors(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse = withContext(compilerDispatcher) {
         val currentCompiler = compiler
         if (currentCompiler == null) {
-            return org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
                 .newBuilder()
                 .setSuccess(false)
                 .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        return try {
+        try {
             val diagnostics = currentCompiler.listErrors(request.code, request.id)
 
             org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
@@ -183,10 +194,10 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun checkComplete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse {
+    override suspend fun checkComplete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse = withContext(compilerDispatcher) {
         val currentCompiler = compiler
         if (currentCompiler == null) {
-            return org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
                 .newBuilder()
                 .setSuccess(false)
                 .setIsComplete(false)
@@ -194,7 +205,7 @@ class DaemonCompilerServiceImpl(
                 .build()
         }
 
-        return try {
+        try {
             val isComplete = currentCompiler.checkComplete(request.code, request.snippetId)
 
             org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
@@ -213,17 +224,17 @@ class DaemonCompilerServiceImpl(
         }
     }
 
-    override suspend fun getClasspath(request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse {
+    override suspend fun getClasspath(request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse = withContext(compilerDispatcher) {
         val currentCompiler = compiler
         if (currentCompiler == null) {
-            return org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
                 .newBuilder()
                 .setSuccess(false)
                 .setErrorMessage("Compiler not initialized")
                 .build()
         }
 
-        return try {
+        try {
             val classpath = currentCompiler.getClasspath()
 
             org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
