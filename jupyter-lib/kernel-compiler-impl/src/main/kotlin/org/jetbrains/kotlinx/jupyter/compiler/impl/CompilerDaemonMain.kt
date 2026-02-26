@@ -4,6 +4,7 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import org.jetbrains.kotlinx.jupyter.compiler.proto.KernelCallbackServiceGrpcKt
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.util.concurrent.TimeUnit
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeUnit
  * 3. Report the actual port back to the kernel via ReportDaemonPort callback
  * 4. Wait for compilation requests from the kernel
  */
+private val logger = DefaultKernelLoggerFactory.getLogger("CompilerDaemonMain")
+
 fun main(args: Array<String>) {
     if (args.size != 1) {
         System.err.println("Usage: CompilerDaemonMain <kernel-callback-port>")
@@ -32,7 +35,7 @@ fun main(args: Array<String>) {
             return
         }
 
-    println("Connecting to kernel callback service on port $kernelCallbackPort")
+    logger.debug("Connecting to kernel callback service on port {}", kernelCallbackPort)
 
     val daemon = CompilerDaemon(kernelCallbackPort)
     daemon.start()
@@ -45,6 +48,8 @@ fun main(args: Array<String>) {
 class CompilerDaemon(
     private val kernelCallbackPort: Int,
 ) {
+    private val logger = DefaultKernelLoggerFactory.getLogger(CompilerDaemon::class.java)
+    
     private var server: Server? = null
 
     fun start() {
@@ -68,7 +73,7 @@ class CompilerDaemon(
                 .start()
 
         val actualPort = server!!.port
-        println("Compiler daemon started on port $actualPort")
+        logger.debug("Compiler daemon started on port {}", actualPort)
 
         // Report the actual port back to the kernel
         kotlinx.coroutines.runBlocking {
@@ -77,15 +82,15 @@ class CompilerDaemon(
                 .setPort(actualPort)
                 .build()
             callbackStub.reportDaemonPort(request)
-            println("Reported port $actualPort to kernel")
+            logger.debug("Reported port {} to kernel", actualPort)
         }
 
         // Add shutdown hook
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                System.err.println("*** Shutting down gRPC server since JVM is shutting down")
+                logger.info("Shutting down gRPC server since JVM is shutting down")
                 this@CompilerDaemon.stop()
-                System.err.println("*** Server shut down")
+                logger.info("Server shut down")
             },
         )
     }

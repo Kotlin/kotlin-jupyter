@@ -26,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourcePosition
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import kotlin.script.experimental.api.ScriptDiagnostic
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 
@@ -37,6 +38,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDep
 class DaemonCompilerServiceImpl(
     private val callbackStub: KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineStub,
 ) : JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineImplBase() {
+    private val logger = DefaultKernelLoggerFactory.getLogger(DaemonCompilerServiceImpl::class.java)
+    
     private var compiler: CompilerService? = null
 
     override suspend fun initialize(request: InitializeRequest): InitializeResponse {
@@ -51,15 +54,14 @@ class DaemonCompilerServiceImpl(
                 )
 
             val callbacks = GrpcKernelCallbacks(callbackStub)
-            compiler = CompilerServiceImpl(params, callbacks)
+            compiler = CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
 
             InitializeResponse
                 .newBuilder()
                 .setSuccess(true)
                 .build()
         } catch (e: Exception) {
-            println("Error initializing compiler: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error initializing compiler", e)
             InitializeResponse
                 .newBuilder()
                 .setSuccess(false)
@@ -144,8 +146,7 @@ class DaemonCompilerServiceImpl(
                 .addAllCompletions(result.map { it.toProto() })
                 .build()
         } catch (e: Exception) {
-            println("Error during completion: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error during completion", e)
             org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
                 .newBuilder()
                 .setSuccess(false)
@@ -173,8 +174,7 @@ class DaemonCompilerServiceImpl(
                 .addAllDiagnostics(diagnostics.map { it.toProto() })
                 .build()
         } catch (e: Exception) {
-            println("Error listing errors: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error listing errors", e)
             org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
                 .newBuilder()
                 .setSuccess(false)
@@ -203,8 +203,7 @@ class DaemonCompilerServiceImpl(
                 .setIsComplete(isComplete)
                 .build()
         } catch (e: Exception) {
-            println("Error checking completeness: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error checking completeness", e)
             org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
                 .newBuilder()
                 .setSuccess(false)
@@ -233,8 +232,7 @@ class DaemonCompilerServiceImpl(
                 .addAllClasspathEntries(classpath)
                 .build()
         } catch (e: Exception) {
-            println("Error getting classpath: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error getting classpath", e)
             org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
                 .newBuilder()
                 .setSuccess(false)

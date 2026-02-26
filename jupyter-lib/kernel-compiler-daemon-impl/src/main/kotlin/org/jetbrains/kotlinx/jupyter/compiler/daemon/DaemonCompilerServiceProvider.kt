@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 /**
  * Daemon-based compiler service provider.
@@ -19,5 +20,6 @@ class DaemonCompilerServiceProvider : CompilerServiceProvider {
     override fun createCompiler(
         params: CompilerParams,
         callbacks: KernelCallbacks,
-    ): CompilerService = DaemonCompilerClient(params, callbacks)
+        loggerFactory: KernelLoggerFactory,
+    ): CompilerService = DaemonCompilerClient(params, callbacks, loggerFactory)
 }

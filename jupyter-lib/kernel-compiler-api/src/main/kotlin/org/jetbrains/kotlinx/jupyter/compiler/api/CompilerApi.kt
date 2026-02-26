@@ -2,6 +2,7 @@ package org.jetbrains.kotlinx.jupyter.compiler.api
 
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
@@ -132,6 +133,7 @@ interface CompilerServiceProvider {
     fun createCompiler(
         params: CompilerParams,
         callbacks: KernelCallbacks,
+        loggerFactory: KernelLoggerFactory,
     ): CompilerService
 }
 

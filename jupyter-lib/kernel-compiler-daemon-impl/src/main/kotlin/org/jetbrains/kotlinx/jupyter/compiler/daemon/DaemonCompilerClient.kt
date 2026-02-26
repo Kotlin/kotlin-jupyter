@@ -29,6 +29,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathResponse
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.io.Closeable
@@ -44,7 +45,10 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDep
 class DaemonCompilerClient(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
+    loggerFactory: KernelLoggerFactory,
 ) : CompilerService, Closeable {
+    private val logger = loggerFactory.getLogger(DaemonCompilerClient::class.java)
+    
     private var channel: ManagedChannel? = null
     private var stub: JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub? = null
     private var callbackServer: Server? = null
@@ -84,7 +88,7 @@ class DaemonCompilerClient(
                 .build()
                 .start()
 
-        println("Kernel callback server started on port $callbackPort")
+        logger.debug("Kernel callback server started on port {}", callbackPort)
 
         // Find the daemon JAR
         val daemonJar = findDaemonJar()
@@ -103,9 +107,9 @@ class DaemonCompilerClient(
 
         daemonProcess = processBuilder.start()
 
-        println("Waiting for daemon to report its port...")
+        logger.debug("Waiting for daemon to report its port...")
         val actualDaemonPort = waitForDaemonPort()
-        println("Daemon reported port: $actualDaemonPort")
+        logger.debug("Daemon reported port: {}", actualDaemonPort)
 
         // Connect to daemon
         channel =
@@ -135,7 +139,7 @@ class DaemonCompilerClient(
             }
         }
 
-        println("Compiler daemon initialized successfully")
+        logger.debug("Compiler daemon initialized successfully")
     }
 
     override suspend fun compile(
@@ -290,9 +294,9 @@ class DaemonCompilerClient(
             }
             daemonProcess = null
 
-            println("Compiler daemon shut down successfully")
+            logger.debug("Compiler daemon shut down successfully")
         } catch (e: Exception) {
-            println("Error during daemon shutdown: ${e.message}")
+            logger.warn("Error during daemon shutdown: {}", e.message, e)
         }
     }
 }

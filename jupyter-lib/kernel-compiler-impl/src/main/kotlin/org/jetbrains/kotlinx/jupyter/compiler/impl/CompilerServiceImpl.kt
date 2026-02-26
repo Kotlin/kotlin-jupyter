@@ -23,12 +23,11 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompilerWithCompletion
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.CellId
-import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
@@ -59,6 +58,7 @@ import kotlin.script.experimental.util.LinkedSnippet
 class CompilerServiceImpl(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
+    private val loggerFactory: KernelLoggerFactory,
 ) : CompilerService {
     private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments)
 
@@ -91,7 +91,7 @@ class CompilerServiceImpl(
         compilerArgsConfigurator = compilerArgsConfigurator,
         scriptDataCollectors = scriptDataCollectors,
         replCompilerMode = params.replCompilerMode,
-        loggerFactory = DefaultKernelLoggerFactory,
+        loggerFactory = loggerFactory,
     ).let { originalConfig ->
         originalConfig.with {
             refineConfiguration {

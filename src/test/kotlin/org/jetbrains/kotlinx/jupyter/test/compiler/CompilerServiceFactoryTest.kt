@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.test.testLoggerFactory
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -28,7 +29,7 @@ class CompilerServiceFactoryTest {
         )
 
         // Should not throw - at least one provider should be available
-        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks)
+        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory)
         assertNotNull(compilerService)
     }
 
@@ -52,7 +53,7 @@ class CompilerServiceFactoryTest {
             jvmTarget = "11",
         )
 
-        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks)
+        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory)
         assertNotNull(compilerService)
 
         // The in-process provider should be selected

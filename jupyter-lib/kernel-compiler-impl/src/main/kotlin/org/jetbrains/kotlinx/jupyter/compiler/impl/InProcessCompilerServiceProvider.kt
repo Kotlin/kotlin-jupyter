@@ -4,6 +4,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 /**
  * In-process compiler service provider.
@@ -16,7 +17,8 @@ class InProcessCompilerServiceProvider : CompilerServiceProvider {
     override fun createCompiler(
         params: CompilerParams,
         callbacks: KernelCallbacks,
+        loggerFactory: KernelLoggerFactory,
     ): CompilerService {
-        return CompilerServiceImpl(params, callbacks)
+        return CompilerServiceImpl(params, callbacks, loggerFactory)
     }
 }

@@ -231,7 +231,7 @@ class ReplForJupyterImpl(
             replCompilerMode = compilerMode,
             extraCompilerArguments = extraCompilerArguments,
         )
-        CompilerServiceFactory.createCompilerService(params, callbacks)
+        CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory)
     }
 
     init {
