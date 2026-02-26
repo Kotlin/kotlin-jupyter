@@ -33,6 +33,7 @@ class CompilerServiceImplTest {
         override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
             return DependencyResolutionResult.Success(emptyList())
         }
+        override suspend fun updatedClasspath(): List<String> = emptyList()
     }
 
     // Get Kotlin stdlib from test classpath
@@ -57,6 +58,7 @@ class CompilerServiceImplTest {
                 snippetId = 0,
                 code = code,
                 cellId = 0,
+                isUserCode = true,
             )
         } catch (e: Exception) {
             throw AssertionError("Compilation and serialization should succeed, but got: ${e.message}", e)
@@ -94,6 +96,7 @@ class CompilerServiceImplTest {
             snippetId = 1,
             code = code,
             cellId = 1,
+            isUserCode = true,
         )
 
         assertTrue(result is CompileResult.Success, "Expected successful compilation")
@@ -118,6 +121,7 @@ class CompilerServiceImplTest {
             snippetId = 2,
             code = code,
             cellId = 2,
+            isUserCode = true,
         )
 
         // Verify compilation failed
@@ -137,6 +141,7 @@ class CompilerServiceImplTest {
             snippetId = 3,
             code = code1,
             cellId = 3,
+            isUserCode = true,
         )
         assertTrue(result1 is CompileResult.Success)
 
@@ -146,6 +151,7 @@ class CompilerServiceImplTest {
             snippetId = 4,
             code = code2,
             cellId = 4,
+            isUserCode = true,
         )
         assertTrue(result2 is CompileResult.Success, "Second compilation should succeed with access to previous snippet")
 
@@ -173,6 +179,7 @@ class CompilerServiceImplTest {
             snippetId = 5,
             code = code,
             cellId = 5,
+            isUserCode = true,
         )
         assertTrue(result is CompileResult.Success)
 
