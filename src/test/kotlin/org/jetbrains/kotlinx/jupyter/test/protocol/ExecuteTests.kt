@@ -87,6 +87,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.condition.EnabledForJreRange
 import org.junit.jupiter.api.condition.JRE
+import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.io.Closeable
@@ -195,7 +196,8 @@ abstract class ExecuteTests(
 
                 if (hasResult) {
                     msg = ioPubSocket.receiveMessage()
-                    val content = msg.content as ExecuteResult
+                    val content = msg.content as? ExecuteResult
+                        ?: fail("Expected EXECUTE_RESULT, got $msg")
                     msg.type shouldBe MessageType.EXECUTE_RESULT
                     content.data
                 } else {
