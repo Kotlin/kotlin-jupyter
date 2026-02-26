@@ -14,6 +14,7 @@ dependencies {
 
     // Logging
     implementation(libs.logging.slf4j.api)
+    runtimeOnly(libs.logging.logback.classic)
 
     // Kotlin scripting dependencies for actual compilation
     implementation(libs.kotlin.dev.compilerEmbeddable)
