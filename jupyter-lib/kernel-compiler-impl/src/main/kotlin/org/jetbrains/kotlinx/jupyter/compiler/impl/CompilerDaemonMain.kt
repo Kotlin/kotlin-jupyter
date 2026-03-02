@@ -8,6 +8,8 @@ import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
+import kotlin.system.exitProcess
 
 /**
  * Main entry point for the compiler daemon.
@@ -100,6 +102,24 @@ class CompilerDaemon(
     }
 
     fun blockUntilShutdown() {
+        // Start a thread to monitor stdin - exit if stdin closes (parent process died)
+        thread(name = "stdin-monitor") {
+            try {
+                logger.debug("Started stdin monitor thread")
+                // Read from stdin indefinitely - blocks until stdin closes
+                while (System.`in`.read() != -1) {
+                    // Continue reading and discarding input
+                }
+                logger.info("stdin closed, parent process likely terminated - shutting down daemon")
+                stop()
+                exitProcess(0)
+            } catch (e: Exception) {
+                logger.error("Error in stdin monitor thread: {}", e.message, e)
+                stop()
+                exitProcess(1)
+            }
+        }
+
         server?.awaitTermination()
     }
 }
