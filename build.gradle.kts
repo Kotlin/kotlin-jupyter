@@ -68,6 +68,7 @@ dependencies {
     api(projects.intellijCompilerDependencies)
     api(projects.zmqServer)
     api(projects.kernelCompilerApi)
+    implementation(projects.kernelCompilerDaemonImpl)
 
     // Standard dependencies
     implementation(libs.kotlin.dev.reflect)
@@ -105,7 +106,6 @@ dependencies {
     testImplementation(libs.java.websocket)
 
     // Add compiler implementations for SPI testing
-    testRuntimeOnly(projects.kernelCompilerDaemonImpl)
     testImplementation(projects.kernelCompilerImpl)
 
     deploy(projects.lib)
