@@ -55,6 +55,15 @@ tasks.test {
     useJUnitPlatform()
 }
 
+val copyLogbackConfig = tasks.register<Copy>("copyLogbackConfig") {
+    from(rootDir.resolve("logback.xml"))
+    into(layout.buildDirectory.dir("resources/main"))
+}
+
+tasks.processResources {
+    dependsOn(copyLogbackConfig)
+}
+
 // Task to create a fat jar for the compiler daemon
 tasks.shadowJar {
     archiveClassifier.set("daemon")

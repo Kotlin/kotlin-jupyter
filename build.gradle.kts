@@ -7,7 +7,6 @@ import build.util.MAVEN_ARTIFACT_NAME_PREFIX
 import build.util.excludeStandardKotlinDependencies
 import build.util.getFlag
 import build.util.shadowOf
-import build.util.testImplementation
 import build.util.typedProperty
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.ComponentsXmlResourceTransformer
@@ -201,6 +200,15 @@ tasks {
         group = PUBLISHING_GROUP
 
         dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
+    }
+
+    val copyLogbackConfig = register<Copy>("copyLogbackConfig") {
+        from(rootDir.resolve("logback.xml"))
+        into(layout.buildDirectory.dir("resources/main"))
+    }
+
+    processResources {
+        dependsOn(copyLogbackConfig)
     }
 
     CreateResourcesTask.register(project, "addLibrariesToResources", processResources) {
