@@ -9,6 +9,7 @@ import build.util.getCurrentCommitSha
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
+    kotlin("libs.publisher")
 }
 
 dependencies {
@@ -51,4 +52,11 @@ CreateResourcesTask.register(project, "buildProperties", tasks.processResources)
     )
 
     addLibrariesFromDir(rootSettings.librariesDir)
+}
+
+kotlinPublications {
+    publication {
+        publicationName.set("intellij-compiler-dependencies")
+        description.set("Set of common dependencies between the kernel and REPL compiler (IDE compatible)")
+    }
 }

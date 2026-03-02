@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     alias(libs.plugins.protobuf)
+    kotlin("libs.publisher")
 }
 
 dependencies {
@@ -79,5 +80,12 @@ protobuf {
                 id("kotlin")
             }
         }
+    }
+}
+
+kotlinPublications {
+    publication {
+        publicationName.set("kernel-compiler-api")
+        description.set("Set of API for communication between the kernel and REPL compiler")
     }
 }

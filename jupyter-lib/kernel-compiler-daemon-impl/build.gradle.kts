@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    kotlin("libs.publisher")
 }
 
 // This module contains the daemon LAUNCHER (client side) - NOT the daemon implementation.
@@ -44,4 +45,11 @@ val copyDaemonJar by tasks.registering(Copy::class) {
 
 tasks.named("processResources") {
     dependsOn(copyDaemonJar)
+}
+
+kotlinPublications {
+    publication {
+        publicationName.set("kernel-compiler-daemon-impl")
+        description.set("Daemon-based implementation of the REPL compiler")
+    }
 }
