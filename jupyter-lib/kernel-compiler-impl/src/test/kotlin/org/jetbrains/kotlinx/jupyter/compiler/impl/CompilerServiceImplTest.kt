@@ -10,6 +10,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResultDeserializer
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
+import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
@@ -218,7 +219,6 @@ class CompilerServiceImplTest {
             replCompilerMode = ReplCompilerMode.K2,
         )
 
-        val compiler = CompilerServiceImpl(params, callbacks)
-        return compiler
+        return CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
     }
 }
