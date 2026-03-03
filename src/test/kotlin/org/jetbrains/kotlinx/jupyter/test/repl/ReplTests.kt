@@ -54,8 +54,10 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.SourceCode
 
-class ReplTests : AbstractSingleReplTest() {
-    override val repl = makeSimpleRepl()
+abstract class ReplTests(
+    compilerServiceType: CompilerServiceType,
+) : AbstractSingleReplTest(compilerServiceType) {
+    override fun createRepl() = makeSimpleRepl()
 
     @Test
     fun testRepl() {
@@ -1281,3 +1283,7 @@ class ReplTests : AbstractSingleReplTest() {
         res.shouldBeInstanceOf<EvalResultEx.Error>()
     }
 }
+
+class ReplInProcessTests : ReplTests(CompilerServiceType.IN_PROCESS)
+
+class ReplDaemonTests : ReplTests(CompilerServiceType.DAEMON)

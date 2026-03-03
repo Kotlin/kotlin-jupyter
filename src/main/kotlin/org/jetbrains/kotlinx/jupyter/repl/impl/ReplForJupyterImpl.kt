@@ -5,6 +5,7 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.KotlinKernelHostProvider
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
 import org.jetbrains.kotlinx.jupyter.HomeDirLibraryDescriptorsProvider
@@ -220,24 +221,25 @@ class ReplForJupyterImpl(
         )
     }
 
-    // New RPC-based compiler service for out-of-process compilation
-    private val compilerService by lazy {
-        val callbacks =
-            KernelCallbacksImpl(
-                dependencyResolver = dependencyManager.resolver,
-                updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath } },
-            )
-        val params =
-            CompilerParams(
-                scriptClasspath = scriptClasspath.map { it.canonicalPath },
-                jvmTarget = runtimeProperties.jvmTargetForSnippets,
-                scriptReceiverCanonicalNames =
-                    scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
-                replCompilerMode = compilerMode,
-                extraCompilerArguments = extraCompilerArguments,
-            )
-        CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
-    }
+    @TestOnly
+    internal val compilerService =
+        run {
+            val callbacks =
+                KernelCallbacksImpl(
+                    dependencyResolver = dependencyManager.resolver,
+                    updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath } },
+                )
+            val params =
+                CompilerParams(
+                    scriptClasspath = scriptClasspath.map { it.canonicalPath },
+                    jvmTarget = runtimeProperties.jvmTargetForSnippets,
+                    scriptReceiverCanonicalNames =
+                        scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
+                    replCompilerMode = compilerMode,
+                    extraCompilerArguments = extraCompilerArguments,
+                )
+            CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
+        }
 
     private val compilerData = runBlocking { compilerService.getCompilerData() }
 

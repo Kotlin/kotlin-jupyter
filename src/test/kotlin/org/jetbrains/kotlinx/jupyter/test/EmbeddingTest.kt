@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
+import org.jetbrains.kotlinx.jupyter.test.repl.CompilerServiceType
 import org.junit.jupiter.api.Test
 
 class SomeSingleton {
@@ -111,8 +112,10 @@ val testLibraryDefinition2 =
             )
     }
 
-class EmbedReplTest : AbstractSingleReplTest() {
-    override val repl = makeEmbeddedRepl()
+abstract class EmbedReplTest(
+    compilerServiceType: CompilerServiceType,
+) : AbstractSingleReplTest(compilerServiceType) {
+    override fun createRepl() = makeEmbeddedRepl()
 
     @Test
     fun testSharedStaticVariables() {
@@ -195,9 +198,12 @@ class EmbedReplTest : AbstractSingleReplTest() {
     }
 }
 
-class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
+abstract class EmbeddedTestWithHackedDisplayHandler(
+    compilerServiceType: CompilerServiceType,
+) : AbstractSingleReplTest(compilerServiceType) {
     private val displayHandler = TestDisplayHandler()
-    override val repl = makeEmbeddedRepl(displayHandler = displayHandler)
+
+    override fun createRepl() = makeEmbeddedRepl(displayHandler = displayHandler)
 
     @Test
     fun testJsResources() {
@@ -213,3 +219,11 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
         content shouldContain """function test_fun(x)"""
     }
 }
+
+class EmbedReplInProcessTest : EmbedReplTest(CompilerServiceType.IN_PROCESS)
+
+class EmbedReplDaemonTest : EmbedReplTest(CompilerServiceType.DAEMON)
+
+class EmbeddedTestWithHackedDisplayHandlerInProcessTest : EmbeddedTestWithHackedDisplayHandler(CompilerServiceType.IN_PROCESS)
+
+class EmbeddedTestWithHackedDisplayHandlerDaemonTest : EmbeddedTestWithHackedDisplayHandler(CompilerServiceType.DAEMON)

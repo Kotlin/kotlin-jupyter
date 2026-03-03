@@ -11,8 +11,10 @@ import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 
-class LibraryLoadingTest : AbstractSingleReplTest() {
-    override val repl = makeSimpleRepl()
+abstract class LibraryLoadingTest(
+    compilerServiceType: CompilerServiceType,
+) : AbstractSingleReplTest(compilerServiceType) {
+    override fun createRepl() = makeSimpleRepl()
 
     private val tempDir = createTempDirectory(this::class.simpleName)
 
@@ -79,3 +81,7 @@ class LibraryLoadingTest : AbstractSingleReplTest() {
         result shouldBe 4242
     }
 }
+
+class LibraryLoadingInProcessTest : LibraryLoadingTest(CompilerServiceType.IN_PROCESS)
+
+class LibraryLoadingDaemonTest : LibraryLoadingTest(CompilerServiceType.DAEMON)

@@ -7,15 +7,21 @@ import io.kotest.matchers.maps.shouldContainValue
 import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.maps.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
+import org.jetbrains.kotlinx.jupyter.compiler.daemon.client.DaemonCompilerClient
+import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
 import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.junit.jupiter.api.Test
 
-class ReplVarsTest : AbstractSingleReplTest() {
-    override val repl = makeSimpleRepl()
+abstract class ReplVarsTest(
+    compilerServiceType: CompilerServiceType,
+) : AbstractSingleReplTest(compilerServiceType) {
+    override fun createRepl() = makeSimpleRepl()
 
     private val varState get() = repl.notebook.variablesState
     private val cellVars get() = repl.notebook.cellVariables
@@ -24,6 +30,18 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     private val firstCellVars get() = cellVarsAt(0)
     private val secondCellVars get() = cellVarsAt(1)
+
+    @Test
+    fun testCompilerServiceSwitching() {
+        when (compilerServiceType) {
+            CompilerServiceType.IN_PROCESS -> {
+                (repl as ReplForJupyterImpl).compilerService.shouldBeTypeOf<CompilerServiceImpl>()
+            }
+            CompilerServiceType.DAEMON -> {
+                (repl as ReplForJupyterImpl).compilerService.shouldBeTypeOf<DaemonCompilerClient>()
+            }
+        }
+    }
 
     @Test
     fun testVarsStateConsistency() {
@@ -320,3 +338,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
         varState.getValue("x") shouldBe 25.0
     }
 }
+
+class ReplVarsInProcessTest : ReplVarsTest(CompilerServiceType.IN_PROCESS)
+
+class ReplVarsDaemonTest : ReplVarsTest(CompilerServiceType.DAEMON)
