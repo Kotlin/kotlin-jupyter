@@ -29,7 +29,7 @@ class CompilerServiceFactoryTest {
         )
 
         // Should not throw - at least one provider should be available
-        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory)
+        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory, javaClass.classLoader)
         assertNotNull(compilerService)
     }
 
@@ -53,7 +53,7 @@ class CompilerServiceFactoryTest {
             jvmTarget = "11",
         )
 
-        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory)
+        val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory, javaClass.classLoader)
         assertNotNull(compilerService)
 
         // The in-process provider should be selected
