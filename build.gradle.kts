@@ -133,6 +133,13 @@ dependencies {
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
     // Required for running inside the IDE Process in IntelliJ
     embeddableKernel(libs.kotlin.dev.scriptRuntime) { isTransitive = false }
+
+    embeddableKernel(projects.kernelCompilerDaemonImpl) { isTransitive = false }
+    embeddableKernel(projects.kernelCompilerApi) { isTransitive = false }
+    embeddableKernel(libs.protobuf.kotlin) { isTransitive = false }
+    embeddableKernel(libs.protobuf.java) { isTransitive = false }
+    implementation(projects.kernelCompilerDaemonImpl)
+
     addSharedEmbeddedDependenciesTo(embeddableKernel)
 }
 
@@ -151,20 +158,11 @@ private fun DependencyHandler.addSharedEmbeddedDependenciesTo(configuration: Con
         libs.kotlin.dev.scriptingIdeServices,
         // Embedded version of serialization plugin for notebook code
         libs.serialization.dev.embeddedPlugin,
-
-        // projects.kernelCompilerDaemonImpl dependencies
-        libs.grpc.netty,
-        libs.grpc.protobuf,
-        libs.grpc.stub,
-        libs.grpc.kotlin.stub,
-        libs.protobuf.kotlin,
     )) {
         addConfiguredDependencyTo(this, configurationName, dependency) {
             isTransitive = false
         }
     }
-
-    add(configurationName, projects.kernelCompilerDaemonImpl.also { it.isTransitive = false })
 
     for (dependency in listOf(
         shadowOf(projects.dependenciesResolutionShadowed),

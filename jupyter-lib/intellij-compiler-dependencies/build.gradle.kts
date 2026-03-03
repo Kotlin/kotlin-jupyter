@@ -14,7 +14,6 @@ plugins {
 
 dependencies {
     api(projects.api)
-    api(projects.kernelCompilerApi)
     api(projects.lib)
     api(projects.protocolApi) // For KernelLoggerFactory
     api(projects.protocol) // For KernelConfig
@@ -25,6 +24,7 @@ dependencies {
     compileOnly(libs.kotlin.dev.scriptingCompilerImplUnshaded) // For skipExtensionsResolutionForImplicitsExceptInnermost
     compileOnly(libs.kotlin.dev.scriptingCompiler) // For configureDefaultRepl
     compileOnly(libs.serialization.json) // For ReplCompilerException
+    compileOnly(libs.logging.slf4j.api) // For DefaultKernelLoggerFactory
 }
 
 buildSettings {
