@@ -5,6 +5,7 @@ import jupyter.kotlin.ScriptTemplateWithDisplayHelpers
 import jupyter.kotlin.providers.KotlinKernelHostProvider
 import jupyter.kotlin.providers.UserHandlesProvider
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlinx.jupyter.DebugUtilityProvider
@@ -213,8 +214,8 @@ class ReplForJupyterImpl(
         )
     }
 
-    // New RPC-based compiler service for out-of-process compilation
-    private val compilerService by lazy {
+    @TestOnly
+    internal val compilerService = run {
         val callbacks = KernelCallbacksImpl(
             dependencyResolver = dependencyManager.resolver,
             onImportsReported = { imports ->

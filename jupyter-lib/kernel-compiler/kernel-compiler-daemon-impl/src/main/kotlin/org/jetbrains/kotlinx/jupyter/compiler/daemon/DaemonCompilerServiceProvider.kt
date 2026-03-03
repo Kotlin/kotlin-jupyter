@@ -8,18 +8,19 @@ import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 
 /**
  * Daemon-based compiler service provider.
- * This provider has lower priority (10) than in-process (100) and is preferred in production
- * to isolate compiler dependencies from the kernel process.
- *
  * The daemon process runs the actual compiler (from kernel-compiler-impl).
  * This module only contains the client that communicates with the daemon.
  */
 class DaemonCompilerServiceProvider : CompilerServiceProvider {
-    override val priority: Int = 10
+    override val priority: Int = PRIORITY
 
     override fun createCompiler(
         params: CompilerParams,
         callbacks: KernelCallbacks,
         loggerFactory: KernelLoggerFactory,
     ): CompilerService = DaemonCompilerClient(params, callbacks, loggerFactory)
+
+    companion object {
+        const val PRIORITY = 10
+    }
 }

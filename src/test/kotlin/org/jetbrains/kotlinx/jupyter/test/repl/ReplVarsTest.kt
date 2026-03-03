@@ -7,15 +7,21 @@ import io.kotest.matchers.maps.shouldContainValue
 import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.maps.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import org.jetbrains.kotlinx.jupyter.api.VariableStateImpl
+import org.jetbrains.kotlinx.jupyter.compiler.daemon.DaemonCompilerClient
+import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
+import org.jetbrains.kotlinx.jupyter.repl.impl.ReplForJupyterImpl
 import org.jetbrains.kotlinx.jupyter.test.getStringValue
 import org.jetbrains.kotlinx.jupyter.test.getValue
 import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
 import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.junit.jupiter.api.Test
 
-class ReplVarsTest : AbstractSingleReplTest() {
-    override val repl = makeSimpleRepl()
+abstract class ReplVarsTest(
+    private val compilationMode: CompilationMode,
+) : AbstractSingleReplTest() {
+    override val repl = compilationMode.withMode { makeSimpleRepl() }
 
     private val varState get() = repl.notebook.variablesState
     private val cellVars get() = repl.notebook.cellVariables
@@ -24,6 +30,18 @@ class ReplVarsTest : AbstractSingleReplTest() {
 
     private val firstCellVars get() = cellVarsAt(0)
     private val secondCellVars get() = cellVarsAt(1)
+
+    @Test
+    fun testCompilationModeSwitching() {
+        when (compilationMode) {
+            CompilationMode.IN_PROCESS -> {
+                (repl as ReplForJupyterImpl).compilerService.shouldBeTypeOf<CompilerServiceImpl>()
+            }
+            CompilationMode.DAEMON -> {
+                (repl as ReplForJupyterImpl).compilerService.shouldBeTypeOf<DaemonCompilerClient>()
+            }
+        }
+    }
 
     @Test
     fun testVarsStateConsistency() {
@@ -320,3 +338,7 @@ class ReplVarsTest : AbstractSingleReplTest() {
         varState.getValue("x") shouldBe 25.0
     }
 }
+
+class ReplVarsInProcessTest : ReplVarsTest(CompilationMode.IN_PROCESS)
+
+class ReplVarsDaemonTest : ReplVarsTest(CompilationMode.DAEMON)
