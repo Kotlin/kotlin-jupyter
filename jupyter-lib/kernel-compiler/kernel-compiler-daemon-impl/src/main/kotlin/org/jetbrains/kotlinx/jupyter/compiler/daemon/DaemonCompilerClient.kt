@@ -1,9 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.compiler.daemon
 
 import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
 import io.grpc.Server
-import io.grpc.ServerBuilder
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
@@ -82,7 +82,7 @@ class DaemonCompilerClient(
         // Start callback server for daemon to call back to kernel
         val callbackService = KernelCallbackServiceImpl(callbacks, this)
         callbackServer =
-            ServerBuilder
+            NettyServerBuilder
                 .forPort(callbackPort)
                 .addService(callbackService)
                 .build()
@@ -113,7 +113,7 @@ class DaemonCompilerClient(
 
         // Connect to daemon
         channel =
-            ManagedChannelBuilder
+            NettyChannelBuilder
                 .forAddress("localhost", actualDaemonPort)
                 .usePlaintext()
                 .build()
