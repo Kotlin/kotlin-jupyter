@@ -42,7 +42,7 @@ projectStructure {
             project("dependencies-resolution-test")
         }
         project("kotlin-jupyter-api-gradle-plugin")
-        project("shared-compiler")
+        project("intellij-dependencies-shared")
         project("intellij-compiler-dependencies")
         folder("kernel-compiler") {
             project("kernel-compiler-api")

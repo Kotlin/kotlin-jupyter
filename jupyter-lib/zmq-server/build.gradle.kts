@@ -8,7 +8,7 @@ plugins {
 dependencies {
     api(projects.zmqProtocol)
     api(projects.protocol)
-    api(projects.sharedCompiler)
+    api(projects.intellijDependenciesShared)
 
     compileOnly(libs.kotlin.stable.stdlib)
     compileOnly(libs.serialization.json)

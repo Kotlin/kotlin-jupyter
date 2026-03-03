@@ -8,7 +8,7 @@ dependencies {
     // excluding it from transitive propagation
     compileOnly(libs.kotlin.stable.stdlib)
 
-    api(projects.sharedCompiler)
+    api(projects.intellijDependenciesShared)
     compileOnly(libs.serialization.json)
     compileOnly(libs.java.websocket)
 }

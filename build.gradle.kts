@@ -64,7 +64,7 @@ dependencies {
     implementation(libs.kotlin.dev.stdlib)
 
     // Dependency on module with compiler.
-    api(projects.sharedCompiler)
+    api(projects.intellijDependenciesShared)
     api(projects.intellijCompilerDependencies)
     api(projects.zmqServer)
     api(projects.kernelCompilerApi)

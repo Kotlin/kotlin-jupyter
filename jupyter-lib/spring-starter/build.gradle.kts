@@ -57,7 +57,7 @@ dependencies {
     springKernel(projects.protocolApi) { isTransitive = false }
     springKernel(projects.protocol) { isTransitive = false }
     springKernel(projects.commonDependencies) { isTransitive = false }
-    springKernel(projects.sharedCompiler) { isTransitive = false }
+    springKernel(projects.intellijDependenciesShared) { isTransitive = false }
     springKernel(projects.springStarter) { isTransitive = false }
     springKernel(shadowOf(projects.dependenciesResolutionShadowed))
 

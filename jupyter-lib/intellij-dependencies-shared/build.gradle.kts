@@ -63,7 +63,7 @@ buildSettings {
 
 kotlinPublications {
     publication {
-        publicationName.set("shared-compiler")
+        publicationName.set("intellij-dependencies-shared")
         description.set("Implementation of REPL compiler and preprocessor for Jupyter dialect of Kotlin (IDE-compatible)")
     }
 }

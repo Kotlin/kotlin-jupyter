@@ -806,7 +806,7 @@ A library descriptor is a `<libName>.json` file with the following fields:
 
 > **Note:** All fields of the library descriptor are optional.
 
-For the most relevant specification, see the [`org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor` class](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/shared-compiler/src/main/kotlin/org/jetbrains/kotlinx/jupyter/libraries/LibraryDescriptor.kt).
+For the most relevant specification, see the [`org.jetbrains.kotlinx.jupyter.libraries.LibraryDescriptor` class](https://github.com/Kotlin/kotlin-jupyter/blob/master/jupyter-lib/intellij-dependencies-shared/src/main/kotlin/org/jetbrains/kotlinx/jupyter/libraries/LibraryDescriptor.kt).
 
 The name of the library JSON file should have the `<name>.json` syntax, where `<name>` is the argument for the `%use` line magic.
 

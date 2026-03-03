@@ -683,7 +683,7 @@ To learn more, explore the available documentation:
 
 * [Docs site](https://ileasile.github.io/kotlin-jupyter-docs) with rendered KDoc comments from the codebase.
 * [Docs about integrating new libraries](libraries.md). If you are a library author, you may be interested in the `api` module in our project. There is
-  also a `lib` module that contains entities available from the Notebook cells, and a `shared-compiler` module for Jupyter REPL integration
+  also a `lib` module that contains entities available from the Notebook cells, and an `intellij-dependencies-shared` module for Jupyter REPL integration
   into a standalone application or IDEA plugin.
 * Explore the Kotlin Notebook docs to learn about [features](https://www.jetbrains.com/help/idea/kotlin-notebook.html), [use cases](https://kotlinlang.org/docs/kotlin-notebook-overview.html), and [tutorials](https://kotlinlang.org/docs/get-started-with-kotlin-notebooks.html).
 
