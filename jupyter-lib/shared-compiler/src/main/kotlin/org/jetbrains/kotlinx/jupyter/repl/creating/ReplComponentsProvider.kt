@@ -59,4 +59,5 @@ interface ReplComponentsProvider {
     val inMemoryReplResultsHolder: InMemoryReplResultsHolder
     val replCompilerMode: ReplCompilerMode
     val extraCompilerArguments: List<String>
+    val compilerServiceSpiClassloader: ClassLoader
 }

@@ -29,8 +29,9 @@ object CompilerServiceFactory {
         params: CompilerParams,
         callbacks: KernelCallbacks,
         loggerFactory: KernelLoggerFactory,
+        compilerServiceSpiClassloader: ClassLoader,
     ): CompilerService {
-        val providers = ServiceLoader.load(CompilerServiceProvider::class.java).toList()
+        val providers = ServiceLoader.load(CompilerServiceProvider::class.java, compilerServiceSpiClassloader).toList()
 
         if (providers.isEmpty()) {
             throw IllegalStateException(

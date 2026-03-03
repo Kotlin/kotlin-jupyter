@@ -88,4 +88,6 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     fun provideReplCompilerMode(): ReplCompilerMode
 
     fun provideExtraCompilerArguments(): List<String>
+
+    fun provideCompilerServiceSpiClassloader(): ClassLoader
 }

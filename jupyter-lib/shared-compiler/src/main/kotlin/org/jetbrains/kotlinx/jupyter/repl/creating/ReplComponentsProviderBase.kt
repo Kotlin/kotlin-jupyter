@@ -159,4 +159,6 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     override fun provideReplCompilerMode(): ReplCompilerMode = ReplCompilerMode.DEFAULT
 
     override fun provideExtraCompilerArguments(): List<String> = emptyList()
+
+    override fun provideCompilerServiceSpiClassloader(): ClassLoader = Thread.currentThread().contextClassLoader
 }

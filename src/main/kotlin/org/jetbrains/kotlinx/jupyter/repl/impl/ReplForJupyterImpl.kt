@@ -144,6 +144,7 @@ class ReplForJupyterImpl(
     inMemoryReplResultsHolder: InMemoryReplResultsHolder,
     override val compilerMode: ReplCompilerMode,
     extraCompilerArguments: List<String> = emptyList(),
+    private val compilerServiceSpiClassloader: ClassLoader,
 ) : ReplForJupyter,
     BaseKernelHost,
     UserHandlesProvider,
@@ -231,7 +232,7 @@ class ReplForJupyterImpl(
             replCompilerMode = compilerMode,
             extraCompilerArguments = extraCompilerArguments,
         )
-        CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory)
+        CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
     }
 
     init {
