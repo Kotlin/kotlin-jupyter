@@ -46,7 +46,7 @@ dependencies {
 
     implementation(projects.kotlinJupyterKernel)
     implementation(projects.wsServer)
-    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.stable.reflect)
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.autoconfigure)
 

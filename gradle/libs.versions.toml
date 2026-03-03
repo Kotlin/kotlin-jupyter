@@ -4,8 +4,8 @@ springJvmTarget = "17"
 jvmForTests = "17"
 jvmForGradlePluginTests = "17"
 kotlin = "2.4.0-dev-2124"
-stableKotlin = "2.4.0-dev-2124"
-gradleKotlin = "2.4.0-dev-2124"
+stableKotlin = "2.3.10-RC"
+gradleKotlin = "2.3.10-RC"
 kotlinDsl = "6.2.0"
 shadowJar = "9.1.0"
 ant = "1.10.13"
@@ -56,8 +56,6 @@ protobufPlugin = "0.9.4"
 # Dev Kotlin dependencies
 kotlin-dev-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-dev-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-kotlin-dev-stdlibJdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlin-dev-stdlibCommon = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-common", version.ref = "kotlin" }
 
 kotlin-dev-compilerEmbeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-dev-scriptingCompiler = { group = "org.jetbrains.kotlin", name = "kotlin-scripting-compiler", version.ref = "kotlin" }
@@ -141,7 +139,7 @@ grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKot
 grpc-protoc-gen-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
 grpc-protoc-gen-kotlin = { module = "io.grpc:protoc-gen-grpc-kotlin", version.ref = "grpcKotlin" }
 protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
-protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 
 # Gradle Plugins

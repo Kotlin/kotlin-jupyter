@@ -16,6 +16,9 @@ dependencies {
     implementation(libs.logging.slf4j.api)
     runtimeOnly(libs.logging.logback.classic)
 
+    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.dev.stdlib)
+
     // Kotlin scripting dependencies for actual compilation
     implementation(libs.kotlin.dev.compilerEmbeddable)
     implementation(libs.kotlin.dev.scriptingCompilerImplEmbeddable)
@@ -23,7 +26,6 @@ dependencies {
     implementation(libs.kotlin.dev.scriptingCommon)
     implementation(libs.kotlin.dev.scriptingJvm)
     implementation(libs.kotlin.dev.scriptRuntime)
-    implementation(libs.kotlin.dev.reflect)
     implementation(libs.kotlin.dev.scriptingIdeServices)
     runtimeOnly(libs.serialization.dev.embeddedPlugin)
 

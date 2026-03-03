@@ -61,7 +61,7 @@ repositories {
 
 @Suppress("ktlint:standard:chain-method-continuation")
 dependencies {
-    implementation(libs.kotlin.dev.stdlib)
+    implementation(libs.kotlin.stable.stdlib)
 
     // Dependency on module with compiler.
     api(projects.intellijDependenciesShared)
@@ -70,7 +70,7 @@ dependencies {
     api(projects.kernelCompilerApi)
 
     // Standard dependencies
-    implementation(libs.kotlin.dev.reflect)
+    implementation(libs.kotlin.stable.reflect)
     implementation(libs.jetbrains.annotations)
     implementation(libs.coroutines.core)
 
@@ -120,14 +120,13 @@ dependencies {
         excludeStandardKotlinDependencies()
     }
     ideScriptClasspathShadowed(projects.protocolApi) { isTransitive = false }
-    ideScriptClasspathShadowed(libs.kotlin.dev.stdlib)
-    ideScriptClasspathShadowed(libs.kotlin.dev.stdlibCommon)
+    ideScriptClasspathShadowed(libs.kotlin.stable.stdlib)
 
     scriptClasspathShadowed.extendsFrom(deploy)
     scriptClasspathShadowed(projects.commonDependencies) {
         excludeStandardKotlinDependencies()
     }
-    scriptClasspathShadowed(libs.kotlin.dev.stdlib)
+    scriptClasspathShadowed(libs.kotlin.stable.stdlib)
 
     // Embedded kernel artifact
     embeddableKernel(projects.kotlinJupyterKernel) { isTransitive = false }
@@ -136,8 +135,9 @@ dependencies {
 
     embeddableKernel(projects.kernelCompilerDaemonImpl) { isTransitive = false }
     embeddableKernel(projects.kernelCompilerApi) { isTransitive = false }
-    embeddableKernel(libs.protobuf.kotlin) { isTransitive = false }
-    embeddableKernel(libs.protobuf.java) { isTransitive = false }
+    embeddableKernel(libs.protobuf.kotlin) {
+        exclude(group = libs.protobuf.java.get().group, module = libs.protobuf.java.get().name)
+    }
     implementation(projects.kernelCompilerDaemonImpl)
 
     addSharedEmbeddedDependenciesTo(embeddableKernel)

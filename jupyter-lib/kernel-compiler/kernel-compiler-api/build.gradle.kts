@@ -40,34 +40,14 @@ buildSettings {
 
 protobuf {
     protoc {
-        artifact =
-            libs
-                .protobuf
-                .protoc
-                .get()
-                .toString()
+        artifact = libs.protobuf.protoc.get().toString()
     }
     plugins {
         id("grpc") {
-            artifact =
-                libs
-                    .grpc
-                    .protoc
-                    .gen
-                    .java
-                    .get()
-                    .toString()
+            artifact = libs.grpc.protoc.gen.java.get().toString()
         }
         id("grpckt") {
-            artifact =
-                "${
-                    libs
-                        .grpc
-                        .protoc
-                        .gen
-                        .kotlin
-                        .get()
-                }:jdk8@jar"
+            artifact = "${libs.grpc.protoc.gen.kotlin.get()}:jdk8@jar"
         }
     }
     generateProtoTasks {
