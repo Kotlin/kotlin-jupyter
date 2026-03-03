@@ -46,9 +46,9 @@ springBoot = "3.5.10"
 springDependencyManagement = "1.1.7"
 
 # gRPC and Protobuf
-grpc = "1.79.0"
+grpc = "1.73.0"
 grpcKotlin = "1.4.1"
-protobuf = "4.28.3"
+protobuf = "3.25.5"
 protobufPlugin = "0.9.4"
 
 [libraries]
