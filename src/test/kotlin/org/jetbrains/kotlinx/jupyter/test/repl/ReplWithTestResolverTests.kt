@@ -25,10 +25,10 @@ import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 
 @Execution(ExecutionMode.SAME_THREAD)
-class ReplWithTestResolverTests : AbstractSingleReplTest() {
+abstract class ReplWithTestResolverTests(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
     private val displays = mutableListOf<Any>()
     private val displayHandler = TestDisplayHandler(displays)
-    override val repl = makeReplWithTestResolver(displayHandler)
+    override fun createRepl() = makeReplWithTestResolver(displayHandler)
 
     @Test
     fun testLetsPlot() {
@@ -208,3 +208,7 @@ class ReplWithTestResolverTests : AbstractSingleReplTest() {
         html shouldStartWith "ArrayList[MatcherMatchResult("
     }
 }
+
+class ReplWithTestResolverInProcessTests : ReplWithTestResolverTests(CompilationMode.IN_PROCESS)
+
+class ReplWithTestResolverDaemonTests : ReplWithTestResolverTests(CompilationMode.DAEMON)

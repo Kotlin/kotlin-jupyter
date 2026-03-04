@@ -18,6 +18,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.libraryDefinition
 import org.jetbrains.kotlinx.jupyter.repl.CompletionResult
 import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
+import org.jetbrains.kotlinx.jupyter.test.repl.CompilationMode
 import org.junit.jupiter.api.Test
 
 class SomeSingleton {
@@ -111,8 +112,8 @@ val testLibraryDefinition2 =
             )
     }
 
-class EmbedReplTest : AbstractSingleReplTest() {
-    override val repl = makeEmbeddedRepl()
+abstract class EmbedReplTest(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+    override fun createRepl() = makeEmbeddedRepl()
 
     @Test
     fun testSharedStaticVariables() {
@@ -193,9 +194,11 @@ class EmbedReplTest : AbstractSingleReplTest() {
     }
 }
 
-class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
+abstract class EmbeddedTestWithHackedDisplayHandler(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     private val displayHandler = TestDisplayHandler()
-    override val repl = makeEmbeddedRepl(displayHandler = displayHandler)
+    override fun createRepl() = makeEmbeddedRepl(displayHandler = displayHandler)
 
     @Test
     fun testJsResources() {
@@ -211,3 +214,11 @@ class EmbeddedTestWithHackedDisplayHandler : AbstractSingleReplTest() {
         content shouldContain """function test_fun(x)"""
     }
 }
+
+class EmbedReplInProcessTest : EmbedReplTest(CompilationMode.IN_PROCESS)
+
+class EmbedReplDaemonTest : EmbedReplTest(CompilationMode.DAEMON)
+
+class EmbeddedTestWithHackedDisplayHandlerInProcessTest : EmbeddedTestWithHackedDisplayHandler(CompilationMode.IN_PROCESS)
+
+class EmbeddedTestWithHackedDisplayHandlerDaemonTest : EmbeddedTestWithHackedDisplayHandler(CompilationMode.DAEMON)

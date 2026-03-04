@@ -33,10 +33,12 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 @Execution(ExecutionMode.SAME_THREAD)
-class ReplWithStandardResolverTests : AbstractSingleReplTest() {
+abstract class ReplWithStandardResolverTests(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     private val displays = mutableListOf<Any>()
     private val handler = TestDisplayHandler(displays)
-    override val repl = makeReplWithStandardResolver { handler }
+    override fun createRepl() = makeReplWithStandardResolver { handler }
 
     @Test
     fun testResolverRepoOrder() {
@@ -408,3 +410,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         kandyConfig shouldBe true
     }
 }
+
+class ReplWithStandardResolverInProcessTests : ReplWithStandardResolverTests(CompilationMode.IN_PROCESS)
+
+class ReplWithStandardResolverDaemonTests : ReplWithStandardResolverTests(CompilationMode.DAEMON)

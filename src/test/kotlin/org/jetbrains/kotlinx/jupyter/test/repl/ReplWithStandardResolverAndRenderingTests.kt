@@ -14,10 +14,12 @@ import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 
 @Execution(ExecutionMode.SAME_THREAD)
-class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
+abstract class ReplWithStandardResolverAndRenderingTests(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     private val displays get() = repl.notebook.displays.getAll()
 
-    override val repl =
+    override fun createRepl() =
         makeReplWithStandardResolver { notebook ->
             TestDisplayHandlerWithRendering(notebook)
         }
@@ -79,3 +81,7 @@ class ReplWithStandardResolverAndRenderingTests : AbstractSingleReplTest() {
         displayResult.shouldBeText() shouldBe "42: hi from host.display"
     }
 }
+
+class ReplWithStandardResolverAndRenderingInProcessTests : ReplWithStandardResolverAndRenderingTests(CompilationMode.IN_PROCESS)
+
+class ReplWithStandardResolverAndRenderingDaemonTests : ReplWithStandardResolverAndRenderingTests(CompilationMode.DAEMON)

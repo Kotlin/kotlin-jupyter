@@ -11,8 +11,14 @@ import org.jetbrains.kotlinx.jupyter.repl.result.EvalResultEx
 import org.jetbrains.kotlinx.jupyter.test.getOrFail
 import org.junit.jupiter.api.AfterEach
 
-abstract class AbstractSingleReplTest : AbstractReplTest() {
-    protected abstract val repl: ReplForJupyter
+abstract class AbstractSingleReplTest(
+    protected val compilationMode: CompilationMode = CompilationMode.IN_PROCESS,
+) : AbstractReplTest() {
+    protected abstract fun createRepl(): ReplForJupyter
+
+    protected val repl: ReplForJupyter by lazy {
+        compilationMode.withMode { createRepl() }
+    }
 
     @AfterEach
     fun tearDown() {

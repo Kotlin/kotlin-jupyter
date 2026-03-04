@@ -18,10 +18,8 @@ import org.jetbrains.kotlinx.jupyter.test.mapToStringValues
 import org.jetbrains.kotlinx.jupyter.test.shouldBeSuccess
 import org.junit.jupiter.api.Test
 
-abstract class ReplVarsTest(
-    private val compilationMode: CompilationMode,
-) : AbstractSingleReplTest() {
-    override val repl = compilationMode.withMode { makeSimpleRepl() }
+abstract class ReplVarsTest(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+    override fun createRepl() = makeSimpleRepl()
 
     private val varState get() = repl.notebook.variablesState
     private val cellVars get() = repl.notebook.cellVariables
