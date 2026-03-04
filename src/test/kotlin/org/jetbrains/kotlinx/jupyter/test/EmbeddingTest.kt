@@ -119,6 +119,8 @@ abstract class EmbedReplTest(
 
     @Test
     fun testSharedStaticVariables() {
+        SomeSingleton.initialized = false
+
         var res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
         res.renderedValue shouldBe false
 
