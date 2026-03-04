@@ -61,7 +61,7 @@ class CompilerServiceImpl(
     private val loggerFactory: KernelLoggerFactory,
 ) : CompilerService {
     private val compilerArgsConfigurator: CompilerArgsConfigurator =
-        DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments)
+        DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments + "-no-stdlib")
 
     // Script data collectors for imports and declarations
     private val importsCollector = ImportsCollector(callbacks)
