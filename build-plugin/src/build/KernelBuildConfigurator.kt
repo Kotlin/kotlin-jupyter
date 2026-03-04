@@ -100,6 +100,11 @@ internal class KernelBuildConfigurator(private val project: Project) {
             extensions.configure<KtlintExtension> {
                 version.set(ktlintVersion)
                 enableExperimentalRules.set(true)
+                filter {
+                    exclude { fileTreeElement ->
+                        fileTreeElement.file.toPath().any { it.fileName.toString() == "generated" }
+                    }
+                }
             }
         }
     }
