@@ -104,8 +104,8 @@ dependencies {
     testImplementation(projects.wsServer)
     testImplementation(libs.java.websocket)
 
-    // Add compiler implementations for SPI testing
-    testImplementation(projects.kernelCompilerImpl)
+    // do NOT include this in embeddedKernel
+    implementation(projects.kernelCompilerImpl)
 
     deploy(projects.lib)
     deploy(projects.api)
