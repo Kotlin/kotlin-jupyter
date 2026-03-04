@@ -3,6 +3,7 @@ package org.jetbrains.kotlinx.jupyter.compiler.impl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlinx.jupyter.api.KotlinKernelVersion
 import org.jetbrains.kotlinx.jupyter.compiler.api.JupyterCompiler
+import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import org.jetbrains.kotlinx.jupyter.config.JupyterCompilingOptions
 import org.jetbrains.kotlinx.jupyter.config.currentKernelVersion
 import org.jetbrains.kotlinx.jupyter.config.jupyterOptions
@@ -14,7 +15,6 @@ import org.jetbrains.kotlinx.jupyter.util.createCachedFun
 import kotlin.script.experimental.api.ReplCompiler
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import org.jetbrains.kotlinx.jupyter.compiler.util.SourceCodeImpl
 import kotlin.script.experimental.api.repl
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript

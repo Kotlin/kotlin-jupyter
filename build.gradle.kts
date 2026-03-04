@@ -208,10 +208,11 @@ tasks {
         dependsOn(":kotlin-jupyter-api-gradle-plugin:publishPlugins")
     }
 
-    val copyLogbackConfig = register<Copy>("copyLogbackConfig") {
-        from(rootDir.resolve("logback.xml"))
-        into(layout.buildDirectory.dir("resources/main"))
-    }
+    val copyLogbackConfig =
+        register<Copy>("copyLogbackConfig") {
+            from(rootDir.resolve("logback.xml"))
+            into(layout.buildDirectory.dir("resources/main"))
+        }
 
     processResources {
         dependsOn(copyLogbackConfig)

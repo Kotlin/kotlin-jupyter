@@ -1,6 +1,9 @@
 package org.jetbrains.kotlinx.jupyter.compiler.impl
 
 import com.google.protobuf.ByteString
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlinx.jupyter.api.DeclarationInfo
 import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
@@ -24,14 +27,13 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDeclarationsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ReportImportsRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourceLocation
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.withContext
-import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.SourcePosition
+import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import java.util.concurrent.Executors
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCodeCompletionVariant
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation as ApiDependencyAnnotation
 
 /**
@@ -43,215 +45,230 @@ class DaemonCompilerServiceImpl(
     private val callbackStub: KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineStub,
 ) : JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineImplBase() {
     private val logger = DefaultKernelLoggerFactory.getLogger(DaemonCompilerServiceImpl::class.java)
-    
+
     private var compiler: CompilerService? = null
-    
+
     // Single-threaded dispatcher for all compiler operations to work around KT-73200
     // The Kotlin compiler has thread-safety issues when accessed from multiple threads
-    private val compilerDispatcher: CoroutineDispatcher = 
-        Executors.newSingleThreadExecutor { runnable ->
-            Thread(runnable, "compiler-thread")
-        }.asCoroutineDispatcher()
+    private val compilerDispatcher: CoroutineDispatcher =
+        Executors
+            .newSingleThreadExecutor { runnable ->
+                Thread(runnable, "compiler-thread")
+            }.asCoroutineDispatcher()
 
-    override suspend fun initialize(request: InitializeRequest): InitializeResponse = withContext(compilerDispatcher) {
-        try {
-            val params =
-                CompilerParams(
-                    scriptClasspath = request.classpathEntriesList,
-                    jvmTarget = request.jvmTarget,
-                    scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
-                    replCompilerMode = request.replCompilerMode.toApi(),
-                    extraCompilerArguments = request.extraCompilerArgumentsList,
-                )
-
-            val callbacks = GrpcKernelCallbacks(callbackStub)
-            compiler = CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
-
-            InitializeResponse
-                .newBuilder()
-                .setSuccess(true)
-                .build()
-        } catch (e: Exception) {
-            logger.error("Error initializing compiler", e)
-            InitializeResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Failed to initialize compiler: ${e.message}\n${e.stackTraceToString()}")
-                .build()
-        }
-    }
-
-    override suspend fun compile(request: CompileRequest): CompileResponse = withContext(compilerDispatcher) {
-        val currentCompiler =
-            compiler ?: return@withContext CompileResponse
-                .newBuilder()
-                .setSuccess(false)
-                .addDiagnostics(
-                    Diagnostic
-                        .newBuilder()
-                        .setSeverity(DiagnosticSeverity.ERROR)
-                        .setMessage("Compiler not initialized")
-                        .build(),
-                ).build()
-
-        try {
-            when (
-                val result =
-                    currentCompiler.compile(
-                        snippetId = request.snippetId,
-                        code = request.code,
-                        cellId = request.cellId,
-                        isUserCode = request.isUserCode,
+    override suspend fun initialize(request: InitializeRequest): InitializeResponse =
+        withContext(compilerDispatcher) {
+            try {
+                val params =
+                    CompilerParams(
+                        scriptClasspath = request.classpathEntriesList,
+                        jvmTarget = request.jvmTarget,
+                        scriptReceiverCanonicalNames = request.scriptReceiverCanonicalNamesList,
+                        replCompilerMode = request.replCompilerMode.toApi(),
+                        extraCompilerArguments = request.extraCompilerArgumentsList,
                     )
-            ) {
-                is CompileResult.Success ->
-                    CompileResponse
-                        .newBuilder()
-                        .setSuccess(true)
-                        .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
-                        .addAllScriptHashCodes(result.scriptHashCodes)
-                        .build()
 
-                is CompileResult.Failure ->
-                    CompileResponse
-                        .newBuilder()
-                        .setSuccess(false)
-                        .addAllDiagnostics(result.diagnostics.map { it.toProto() })
-                        .build()
+                val callbacks = GrpcKernelCallbacks(callbackStub)
+                compiler = CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
+
+                InitializeResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .build()
+            } catch (e: Exception) {
+                logger.error("Error initializing compiler", e)
+                InitializeResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Failed to initialize compiler: ${e.message}\n${e.stackTraceToString()}")
+                    .build()
             }
-        } catch (e: Exception) {
-            CompileResponse
-                .newBuilder()
-                .setSuccess(false)
-                .addDiagnostics(
-                    Diagnostic
-                        .newBuilder()
-                        .setSeverity(DiagnosticSeverity.ERROR)
-                        .setMessage("Compilation failed with exception: ${e.message}\n${e.stackTraceToString()}")
-                        .build(),
-                ).build()
-        }
-    }
-
-    override suspend fun complete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse = withContext(compilerDispatcher) {
-        val currentCompiler = compiler
-        if (currentCompiler == null) {
-            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Compiler not initialized")
-                .build()
         }
 
-        try {
-            val position = request.position.fromProto()
-            val result = currentCompiler.complete(
-                request.code,
-                request.id,
-                position,
-            )
+    override suspend fun compile(request: CompileRequest): CompileResponse =
+        withContext(compilerDispatcher) {
+            val currentCompiler =
+                compiler ?: return@withContext CompileResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .addDiagnostics(
+                        Diagnostic
+                            .newBuilder()
+                            .setSeverity(DiagnosticSeverity.ERROR)
+                            .setMessage("Compiler not initialized")
+                            .build(),
+                    ).build()
 
-            org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
-                .newBuilder()
-                .setSuccess(true)
-                .addAllCompletions(result.map { it.toProto() })
-                .build()
-        } catch (e: Exception) {
-            logger.error("Error during completion", e)
-            org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Completion failed: ${e.message}\n${e.stackTraceToString()}")
-                .build()
-        }
-    }
+            try {
+                when (
+                    val result =
+                        currentCompiler.compile(
+                            snippetId = request.snippetId,
+                            code = request.code,
+                            cellId = request.cellId,
+                            isUserCode = request.isUserCode,
+                        )
+                ) {
+                    is CompileResult.Success ->
+                        CompileResponse
+                            .newBuilder()
+                            .setSuccess(true)
+                            .setSerializedCompiledSnippet(ByteString.copyFrom(result.serializedCompiledSnippet))
+                            .addAllScriptHashCodes(result.scriptHashCodes)
+                            .build()
 
-    override suspend fun listErrors(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse = withContext(compilerDispatcher) {
-        val currentCompiler = compiler
-        if (currentCompiler == null) {
-            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Compiler not initialized")
-                .build()
-        }
-
-        try {
-            val diagnostics = currentCompiler.listErrors(request.code, request.id)
-
-            org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
-                .newBuilder()
-                .setSuccess(true)
-                .addAllDiagnostics(diagnostics.map { it.toProto() })
-                .build()
-        } catch (e: Exception) {
-            logger.error("Error listing errors", e)
-            org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Failed to list errors: ${e.message}\n${e.stackTraceToString()}")
-                .build()
-        }
-    }
-
-    override suspend fun checkComplete(request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse = withContext(compilerDispatcher) {
-        val currentCompiler = compiler
-        if (currentCompiler == null) {
-            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setIsComplete(false)
-                .setErrorMessage("Compiler not initialized")
-                .build()
+                    is CompileResult.Failure ->
+                        CompileResponse
+                            .newBuilder()
+                            .setSuccess(false)
+                            .addAllDiagnostics(result.diagnostics.map { it.toProto() })
+                            .build()
+                }
+            } catch (e: Exception) {
+                CompileResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .addDiagnostics(
+                        Diagnostic
+                            .newBuilder()
+                            .setSeverity(DiagnosticSeverity.ERROR)
+                            .setMessage("Compilation failed with exception: ${e.message}\n${e.stackTraceToString()}")
+                            .build(),
+                    ).build()
+            }
         }
 
-        try {
-            val isComplete = currentCompiler.checkComplete(request.code, request.snippetId)
+    override suspend fun complete(
+        request: org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteRequest,
+    ): org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse =
+        withContext(compilerDispatcher) {
+            val currentCompiler = compiler
+            if (currentCompiler == null) {
+                return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Compiler not initialized")
+                    .build()
+            }
 
-            org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
-                .newBuilder()
-                .setSuccess(true)
-                .setIsComplete(isComplete)
-                .build()
-        } catch (e: Exception) {
-            logger.error("Error checking completeness", e)
-            org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setIsComplete(false)
-                .setErrorMessage("Failed to check completeness: ${e.message}\n${e.stackTraceToString()}")
-                .build()
+            try {
+                val position = request.position.fromProto()
+                val result =
+                    currentCompiler.complete(
+                        request.code,
+                        request.id,
+                        position,
+                    )
+
+                org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .addAllCompletions(result.map { it.toProto() })
+                    .build()
+            } catch (e: Exception) {
+                logger.error("Error during completion", e)
+                org.jetbrains.kotlinx.jupyter.compiler.proto.CompleteResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Completion failed: ${e.message}\n${e.stackTraceToString()}")
+                    .build()
+            }
         }
-    }
 
-    override suspend fun getClasspath(request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse = withContext(compilerDispatcher) {
-        val currentCompiler = compiler
-        if (currentCompiler == null) {
-            return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Compiler not initialized")
-                .build()
+    override suspend fun listErrors(
+        request: org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsRequest,
+    ): org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse =
+        withContext(compilerDispatcher) {
+            val currentCompiler = compiler
+            if (currentCompiler == null) {
+                return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Compiler not initialized")
+                    .build()
+            }
+
+            try {
+                val diagnostics = currentCompiler.listErrors(request.code, request.id)
+
+                org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .addAllDiagnostics(diagnostics.map { it.toProto() })
+                    .build()
+            } catch (e: Exception) {
+                logger.error("Error listing errors", e)
+                org.jetbrains.kotlinx.jupyter.compiler.proto.ListErrorsResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Failed to list errors: ${e.message}\n${e.stackTraceToString()}")
+                    .build()
+            }
         }
 
-        try {
-            val classpath = currentCompiler.getClasspath()
+    override suspend fun checkComplete(
+        request: org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteRequest,
+    ): org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse =
+        withContext(compilerDispatcher) {
+            val currentCompiler = compiler
+            if (currentCompiler == null) {
+                return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setIsComplete(false)
+                    .setErrorMessage("Compiler not initialized")
+                    .build()
+            }
 
-            org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
-                .newBuilder()
-                .setSuccess(true)
-                .addAllClasspathEntries(classpath)
-                .build()
-        } catch (e: Exception) {
-            logger.error("Error getting classpath", e)
-            org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
-                .newBuilder()
-                .setSuccess(false)
-                .setErrorMessage("Failed to get classpath: ${e.message}\n${e.stackTraceToString()}")
-                .build()
+            try {
+                val isComplete = currentCompiler.checkComplete(request.code, request.snippetId)
+
+                org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .setIsComplete(isComplete)
+                    .build()
+            } catch (e: Exception) {
+                logger.error("Error checking completeness", e)
+                org.jetbrains.kotlinx.jupyter.compiler.proto.CheckCompleteResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setIsComplete(false)
+                    .setErrorMessage("Failed to check completeness: ${e.message}\n${e.stackTraceToString()}")
+                    .build()
+            }
         }
-    }
 
+    override suspend fun getClasspath(
+        request: org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathRequest,
+    ): org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse =
+        withContext(compilerDispatcher) {
+            val currentCompiler = compiler
+            if (currentCompiler == null) {
+                return@withContext org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Compiler not initialized")
+                    .build()
+            }
+
+            try {
+                val classpath = currentCompiler.getClasspath()
+
+                org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                    .newBuilder()
+                    .setSuccess(true)
+                    .addAllClasspathEntries(classpath)
+                    .build()
+            } catch (e: Exception) {
+                logger.error("Error getting classpath", e)
+                org.jetbrains.kotlinx.jupyter.compiler.proto.GetClasspathResponse
+                    .newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage("Failed to get classpath: ${e.message}\n${e.stackTraceToString()}")
+                    .build()
+            }
+        }
 }
 
 /**
@@ -320,8 +337,7 @@ private fun ScriptDiagnostic.toProto(): Diagnostic =
                 ScriptDiagnostic.Severity.INFO -> DiagnosticSeverity.INFO
                 ScriptDiagnostic.Severity.DEBUG -> DiagnosticSeverity.DEBUG
             },
-        )
-        .apply {
+        ).apply {
             this@toProto.sourcePath?.let { setSourcePath(it) }
             this@toProto.location?.let { loc ->
                 setLocation(
@@ -333,8 +349,7 @@ private fun ScriptDiagnostic.toProto(): Diagnostic =
                                 .setLine(loc.start.line)
                                 .setCol(loc.start.col)
                                 .build(),
-                        )
-                        .apply {
+                        ).apply {
                             loc.end?.let { end ->
                                 setEnd(
                                     SourcePosition
@@ -344,8 +359,7 @@ private fun ScriptDiagnostic.toProto(): Diagnostic =
                                         .build(),
                                 )
                             }
-                        }
-                        .build(),
+                        }.build(),
                 )
             }
         }.build()
@@ -387,10 +401,10 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.toApi(
         org.jetbrains.kotlinx.jupyter.compiler.proto.ReplCompilerMode.UNRECOGNIZED -> error("Unrecognized ReplCompilerMode: $this")
     }
 
-private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodePosition.fromProto(): kotlin.script.experimental.api.SourceCode.Position =
-    kotlin.script.experimental.api.SourceCode.Position(line, col, absolutePos)
+private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodePosition.fromProto(): SourceCode.Position =
+    SourceCode.Position(line, col, absolutePos)
 
-private fun kotlin.script.experimental.api.SourceCodeCompletionVariant.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant =
+private fun SourceCodeCompletionVariant.toProto(): org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant =
     org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVariant
         .newBuilder()
         .setText(text)
@@ -399,5 +413,4 @@ private fun kotlin.script.experimental.api.SourceCodeCompletionVariant.toProto()
         .setIcon(icon)
         .apply {
             this@toProto.deprecationLevel?.let { setDeprecationLevel(it.toString()) }
-        }
-        .build()
+        }.build()

@@ -60,15 +60,17 @@ class CompilerServiceImpl(
     private val callbacks: KernelCallbacks,
     private val loggerFactory: KernelLoggerFactory,
 ) : CompilerService {
-    private val compilerArgsConfigurator: CompilerArgsConfigurator = DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments)
+    private val compilerArgsConfigurator: CompilerArgsConfigurator =
+        DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments)
 
     // Script data collectors for imports and declarations
     private val importsCollector = ImportsCollector(callbacks)
     private val declarationsCollector = DeclarationsCollector(callbacks)
-    private val scriptDataCollectors: List<ScriptDataCollector> = listOf(
-        importsCollector,
-        declarationsCollector,
-    )
+    private val scriptDataCollectors: List<ScriptDataCollector> =
+        listOf(
+            importsCollector,
+            declarationsCollector,
+        )
 
     private val compiler: JupyterCompilerWithCompletion by lazy {
         when (params.replCompilerMode) {
@@ -85,39 +87,42 @@ class CompilerServiceImpl(
         }
     }
 
-    private val compilationConfig: ScriptCompilationConfiguration = getCompilationConfiguration(
-        scriptClasspath = params.scriptClasspath.map { File(it) },
-        scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
-        compilerArgsConfigurator = compilerArgsConfigurator,
-        scriptDataCollectors = scriptDataCollectors,
-        replCompilerMode = params.replCompilerMode,
-        loggerFactory = loggerFactory,
-    ).let { originalConfig ->
-        originalConfig.with {
-            refineConfiguration {
-                onAnnotations(
-                    DependsOn::class,
-                    Repository::class,
-                    CompilerArgs::class,
-                    handler = ::onAnnotationsHandler
-                )
+    private val compilationConfig: ScriptCompilationConfiguration =
+        getCompilationConfiguration(
+            scriptClasspath = params.scriptClasspath.map { File(it) },
+            scriptReceiverCanonicalNames = params.scriptReceiverCanonicalNames,
+            compilerArgsConfigurator = compilerArgsConfigurator,
+            scriptDataCollectors = scriptDataCollectors,
+            replCompilerMode = params.replCompilerMode,
+            loggerFactory = loggerFactory,
+        ).let { originalConfig ->
+            originalConfig.with {
+                refineConfiguration {
+                    onAnnotations(
+                        DependsOn::class,
+                        Repository::class,
+                        CompilerArgs::class,
+                        handler = ::onAnnotationsHandler,
+                    )
 
-                originalConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling]?.forEach {
-                    beforeCompiling(it.handler)
-                }
+                    originalConfig[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling]?.forEach {
+                        beforeCompiling(it.handler)
+                    }
 
-                beforeCompiling { context ->
-                    context.compilationConfiguration.with {
-                        updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
-                    }.asSuccess()
+                    beforeCompiling { context ->
+                        context.compilationConfiguration
+                            .with {
+                                updateClasspath(runBlocking { callbacks.updatedClasspath().map { File(it) } })
+                            }.asSuccess()
+                    }
                 }
             }
         }
-    }
 
     private fun onAnnotationsHandler(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        val annotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf { it.isNotEmpty() }
-            ?: return context.compilationConfiguration.asSuccess()
+        val annotations =
+            context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf { it.isNotEmpty() }
+                ?: return context.compilationConfiguration.asSuccess()
 
         var config = context.compilationConfiguration
         val dependencyAnnotations = mutableListOf<DependencyAnnotation>()
@@ -148,24 +153,25 @@ class CompilerServiceImpl(
         if (dependencyAnnotations.isEmpty()) return config.asSuccess()
 
         return when (val resolution = runBlocking { callbacks.resolveDependencies(dependencyAnnotations) }) {
-           is DependencyResolutionResult.Success -> {
-               if (resolution.classpathEntries.isEmpty()) return config.asSuccess()
+            is DependencyResolutionResult.Success -> {
+                if (resolution.classpathEntries.isEmpty()) return config.asSuccess()
 
-               config.withUpdatedClasspath(resolution.classpathEntries.map { File(it) })
-                   .asSuccess()
-           }
-           is DependencyResolutionResult.Failure -> {
-               ResultWithDiagnostics.Failure(
-                   listOf(
-                       ScriptDiagnostic(
-                           ScriptDiagnostic.unspecifiedError,
-                           "Dependency resolution failed: ${resolution.message}",
-                           severity = ScriptDiagnostic.Severity.ERROR,
-                       ),
-                   ),
-               )
-           }
-       }
+                config
+                    .withUpdatedClasspath(resolution.classpathEntries.map { File(it) })
+                    .asSuccess()
+            }
+            is DependencyResolutionResult.Failure -> {
+                ResultWithDiagnostics.Failure(
+                    listOf(
+                        ScriptDiagnostic(
+                            ScriptDiagnostic.unspecifiedError,
+                            "Dependency resolution failed: ${resolution.message}",
+                            severity = ScriptDiagnostic.Severity.ERROR,
+                        ),
+                    ),
+                )
+            }
+        }
     }
 
     override suspend fun compile(
@@ -176,14 +182,15 @@ class CompilerServiceImpl(
     ): CompileResult {
         // Compile using JupyterCompiler
         return try {
-            val linkedSnippet = compiler.compileSync(
-                snippetId,
-                code,
-                JupyterCompilingOptions(
-                    CellId(cellId),
-                    isUserCode = isUserCode,
-                ),
-            )
+            val linkedSnippet =
+                compiler.compileSync(
+                    snippetId,
+                    code,
+                    JupyterCompilingOptions(
+                        CellId(cellId),
+                        isUserCode = isUserCode,
+                    ),
+                )
 
             // Convert LinkedSnippet to a serializable list of compiled scripts
             val scriptsList = mutableListOf<KJvmCompiledScript>()
@@ -221,17 +228,17 @@ class CompilerServiceImpl(
         code: String,
         id: Int,
         position: SourceCode.Position,
-    ): List<SourceCodeCompletionVariant> {
-        return compiler.complete.complete(code, position, id)
-            .valueOrNull()?.toList().orEmpty()
-    }
+    ): List<SourceCodeCompletionVariant> =
+        compiler.complete
+            .complete(code, position, id)
+            .valueOrNull()
+            ?.toList()
+            .orEmpty()
 
     override suspend fun listErrors(
         code: String,
         id: Int,
-    ): List<ScriptDiagnostic> {
-        return compiler.listErrors(code, id).toList()
-    }
+    ): List<ScriptDiagnostic> = compiler.listErrors(code, id).toList()
 
     override suspend fun checkComplete(
         code: String,
@@ -241,9 +248,7 @@ class CompilerServiceImpl(
         return result.isComplete
     }
 
-    override suspend fun getClasspath(): List<String> {
-        return compilationConfig.classpath.map { it.absolutePath }
-    }
+    override suspend fun getClasspath(): List<String> = compilationConfig.classpath.map { it.absolutePath }
 
     private val ScriptCompilationConfiguration.classpath: List<File>
         get() =
@@ -251,20 +256,22 @@ class CompilerServiceImpl(
                 ?.filterIsInstance<JvmDependency>()
                 ?.flatMap { it.classpath }
                 .orEmpty()
-
 }
 
 /**
  * Collector for imports that reports them via callbacks.
  */
-private class ImportsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
+private class ImportsCollector(
+    private val callbacks: KernelCallbacks,
+) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
         val source = scriptInfo.source
         if (source !is KtFileScriptSource) return
 
-        val imports = source.ktFile.importDirectives.mapNotNull {
-            it.importPath?.pathStr
-        }
+        val imports =
+            source.ktFile.importDirectives.mapNotNull {
+                it.importPath?.pathStr
+            }
 
         if (imports.isNotEmpty()) {
             runBlocking {
@@ -277,7 +284,9 @@ private class ImportsCollector(private val callbacks: KernelCallbacks) : ScriptD
 /**
  * Collector for declarations that reports them via callbacks.
  */
-private class DeclarationsCollector(private val callbacks: KernelCallbacks) : ScriptDataCollector {
+private class DeclarationsCollector(
+    private val callbacks: KernelCallbacks,
+) : ScriptDataCollector {
     override fun collect(scriptInfo: ScriptDataCollector.ScriptInfo) {
         if (!scriptInfo.isUserScript) return
         val source = scriptInfo.source
@@ -286,21 +295,23 @@ private class DeclarationsCollector(private val callbacks: KernelCallbacks) : Sc
         val fileDeclarations = source.ktFile.declarations
         val scriptDeclaration = fileDeclarations.getOrNull(0) as? KtScript ?: return
 
-        val declarations = scriptDeclaration.declarations.map { declaration ->
-            val kind = when (declaration) {
-                is KtClass -> DeclarationKind.CLASS
-                is KtObjectDeclaration -> DeclarationKind.OBJECT
-                is KtProperty -> DeclarationKind.PROPERTY
-                is KtFunction -> DeclarationKind.FUNCTION
-                is KtScriptInitializer -> DeclarationKind.SCRIPT_INITIALIZER
-                else -> DeclarationKind.UNKNOWN
-            }
+        val declarations =
+            scriptDeclaration.declarations.map { declaration ->
+                val kind =
+                    when (declaration) {
+                        is KtClass -> DeclarationKind.CLASS
+                        is KtObjectDeclaration -> DeclarationKind.OBJECT
+                        is KtProperty -> DeclarationKind.PROPERTY
+                        is KtFunction -> DeclarationKind.FUNCTION
+                        is KtScriptInitializer -> DeclarationKind.SCRIPT_INITIALIZER
+                        else -> DeclarationKind.UNKNOWN
+                    }
 
-            SimpleDeclarationInfo(
-                name = declaration.name,
-                kind = kind,
-            )
-        }
+                SimpleDeclarationInfo(
+                    name = declaration.name,
+                    kind = kind,
+                )
+            }
 
         runBlocking {
             callbacks.reportDeclarations(declarations)

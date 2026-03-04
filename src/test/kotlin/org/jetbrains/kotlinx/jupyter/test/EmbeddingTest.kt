@@ -112,7 +112,9 @@ val testLibraryDefinition2 =
             )
     }
 
-abstract class EmbedReplTest(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+abstract class EmbedReplTest(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     override fun createRepl() = makeEmbeddedRepl()
 
     @Test
@@ -198,6 +200,7 @@ abstract class EmbeddedTestWithHackedDisplayHandler(
     compilationMode: CompilationMode,
 ) : AbstractSingleReplTest(compilationMode) {
     private val displayHandler = TestDisplayHandler()
+
     override fun createRepl() = makeEmbeddedRepl(displayHandler = displayHandler)
 
     @Test

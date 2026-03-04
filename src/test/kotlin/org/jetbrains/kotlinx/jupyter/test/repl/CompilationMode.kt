@@ -18,7 +18,9 @@ import org.jetbrains.kotlinx.jupyter.compiler.impl.InProcessCompilerServiceProvi
  * class MyDaemonTest : MyTest(CompilationMode.DAEMON)
  * ```
  */
-enum class CompilationMode(val priorityForInProcessMode: Int) {
+enum class CompilationMode(
+    val priorityForInProcessMode: Int,
+) {
     /**
      * In-process compilation mode. Compiler runs in the same JVM process.
      */
@@ -27,12 +29,11 @@ enum class CompilationMode(val priorityForInProcessMode: Int) {
     /**
      * Daemon-based compilation mode. Compiler runs in a separate daemon process.
      */
-    DAEMON(DaemonCompilerServiceProvider.PRIORITY - 1);
+    DAEMON(DaemonCompilerServiceProvider.PRIORITY - 1),
+    ;
 
     /**
      * Executes the given block with this compilation mode active for the current thread.
      */
-    inline fun <T> withMode(block: () -> T): T {
-        return InProcessCompilerServiceProvider.withPriority(priorityForInProcessMode, block)
-    }
+    inline fun <T> withMode(block: () -> T): T = InProcessCompilerServiceProvider.withPriority(priorityForInProcessMode, block)
 }

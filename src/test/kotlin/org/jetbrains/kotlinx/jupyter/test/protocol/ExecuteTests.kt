@@ -196,8 +196,9 @@ abstract class ExecuteTests(
 
                 if (hasResult) {
                     msg = ioPubSocket.receiveMessage()
-                    val content = msg.content as? ExecuteResult
-                        ?: fail("Expected EXECUTE_RESULT, got $msg")
+                    val content =
+                        msg.content as? ExecuteResult
+                            ?: fail("Expected EXECUTE_RESULT, got $msg")
                     msg.type shouldBe MessageType.EXECUTE_RESULT
                     content.data
                 } else {

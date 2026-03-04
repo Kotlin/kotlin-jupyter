@@ -40,8 +40,9 @@ object CompilerServiceFactory {
             )
         }
 
-        val selectedProvider = providers.maxByOrNull { it.priority }
-            ?: error("Failed to select provider from list: $providers")
+        val selectedProvider =
+            providers.maxByOrNull { it.priority }
+                ?: error("Failed to select provider from list: $providers")
 
         return selectedProvider.createCompiler(params, callbacks, loggerFactory)
     }

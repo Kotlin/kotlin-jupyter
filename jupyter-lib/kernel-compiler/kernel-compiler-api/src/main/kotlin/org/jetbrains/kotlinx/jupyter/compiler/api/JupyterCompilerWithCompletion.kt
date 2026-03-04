@@ -8,7 +8,13 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 interface JupyterCompilerWithCompletion : JupyterCompiler {
     val complete: CompleteFunction
 
-    fun checkComplete(code: Code, snippetId: Int): CheckCompletenessResult
+    fun checkComplete(
+        code: Code,
+        snippetId: Int,
+    ): CheckCompletenessResult
 
-    fun listErrors(code: Code, snippetId: Int): Sequence<ScriptDiagnostic>
+    fun listErrors(
+        code: Code,
+        snippetId: Int,
+    ): Sequence<ScriptDiagnostic>
 }

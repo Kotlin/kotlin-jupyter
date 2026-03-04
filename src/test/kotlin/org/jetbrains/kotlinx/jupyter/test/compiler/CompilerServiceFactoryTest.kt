@@ -14,19 +14,23 @@ import kotlin.test.assertTrue
 class CompilerServiceFactoryTest {
     @Test
     fun `should load CompilerServiceProvider via SPI`() {
-        val callbacks = object : KernelCallbacks {
-            override suspend fun reportImports(imports: List<String>) {}
-            override suspend fun reportDeclarations(declarations: List<DeclarationInfo>) {}
-            override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
-                return DependencyResolutionResult.Success(emptyList())
-            }
-            override suspend fun updatedClasspath(): List<String> = emptyList()
-        }
+        val callbacks =
+            object : KernelCallbacks {
+                override suspend fun reportImports(imports: List<String>) {}
 
-        val params = CompilerParams(
-            scriptClasspath = emptyList(),
-            jvmTarget = "11",
-        )
+                override suspend fun reportDeclarations(declarations: List<DeclarationInfo>) {}
+
+                override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult =
+                    DependencyResolutionResult.Success(emptyList())
+
+                override suspend fun updatedClasspath(): List<String> = emptyList()
+            }
+
+        val params =
+            CompilerParams(
+                scriptClasspath = emptyList(),
+                jvmTarget = "11",
+            )
 
         // Should not throw - at least one provider should be available
         val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory, javaClass.classLoader)
@@ -39,19 +43,23 @@ class CompilerServiceFactoryTest {
         // DaemonCompilerProvider has priority 10
         // The factory should select InProcessCompilerProvider
 
-        val callbacks = object : KernelCallbacks {
-            override suspend fun reportImports(imports: List<String>) {}
-            override suspend fun reportDeclarations(declarations: List<DeclarationInfo>) {}
-            override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
-                return DependencyResolutionResult.Success(emptyList())
-            }
-            override suspend fun updatedClasspath(): List<String> = emptyList()
-        }
+        val callbacks =
+            object : KernelCallbacks {
+                override suspend fun reportImports(imports: List<String>) {}
 
-        val params = CompilerParams(
-            scriptClasspath = emptyList(),
-            jvmTarget = "11",
-        )
+                override suspend fun reportDeclarations(declarations: List<DeclarationInfo>) {}
+
+                override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult =
+                    DependencyResolutionResult.Success(emptyList())
+
+                override suspend fun updatedClasspath(): List<String> = emptyList()
+            }
+
+        val params =
+            CompilerParams(
+                scriptClasspath = emptyList(),
+                jvmTarget = "11",
+            )
 
         val compilerService = CompilerServiceFactory.createCompilerService(params, callbacks, testLoggerFactory, javaClass.classLoader)
         assertNotNull(compilerService)

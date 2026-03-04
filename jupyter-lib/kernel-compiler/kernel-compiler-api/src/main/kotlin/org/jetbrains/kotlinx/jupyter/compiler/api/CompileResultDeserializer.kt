@@ -37,10 +37,12 @@ object CompileResultDeserializer {
         var snippet: LinkedSnippet<KJvmCompiledScript>? = null
         for ((index, hashCode) in result.scriptHashCodes.withIndex()) {
             val script = cache?.getOrPut(hashCode) { deserializedScripts[index] } ?: deserializedScripts[index]
-            snippet = object : LinkedSnippet<KJvmCompiledScript> {
-                override val previous: LinkedSnippet<KJvmCompiledScript>? = snippet
-                override fun get(): KJvmCompiledScript = script
-            }
+            snippet =
+                object : LinkedSnippet<KJvmCompiledScript> {
+                    override val previous: LinkedSnippet<KJvmCompiledScript>? = snippet
+
+                    override fun get(): KJvmCompiledScript = script
+                }
         }
         return snippet!! // since result.scriptHashCodes is not empty
     }

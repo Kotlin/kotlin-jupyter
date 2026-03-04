@@ -340,7 +340,6 @@ class CustomLibraryResolverTests : AbstractReplTest() {
         }
     }
 
-
     @Test
     fun testIncorrectDescriptors() {
         val ex1 =

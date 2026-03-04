@@ -54,7 +54,9 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.SourceCode
 
-abstract class ReplTests(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+abstract class ReplTests(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     override fun createRepl() = makeSimpleRepl()
 
     @Test

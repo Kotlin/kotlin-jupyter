@@ -26,14 +26,14 @@ class JupyterScriptEvaluationHelper(
 ) {
     private val classes = mutableListOf<KClass<*>>()
 
-    private val _baseClassLoader: ClassLoader
+    private val baseClassLoader: ClassLoader
         get() = basicEvaluationConfiguration[ScriptEvaluationConfiguration.jvm.baseClassLoader]!!
 
     val lastKClass: KClass<*>
         get() = classes.last()
 
     val lastClassLoader: ClassLoader
-        get() = classes.lastOrNull()?.java?.classLoader ?: _baseClassLoader
+        get() = classes.lastOrNull()?.java?.classLoader ?: baseClassLoader
 
     /**
      * Creates an evaluation configuration for the given compiled script.
@@ -52,17 +52,18 @@ class JupyterScriptEvaluationHelper(
             basicEvaluationConfiguration.with {
                 jvm {
                     lastSnippetClassLoader(lastClassLoader)
-                    baseClassLoader(_baseClassLoader.parent)
+                    baseClassLoader(this@JupyterScriptEvaluationHelper.baseClassLoader.parent)
                 }
             }
 
         val classLoader = compiledScript.getOrCreateActualClassloader(configWithClassloader)
 
-        val evalConfig = configWithClassloader.with {
-            jvm {
-                actualClassLoader(classLoader)
+        val evalConfig =
+            configWithClassloader.with {
+                jvm {
+                    actualClassLoader(classLoader)
+                }
             }
-        }
 
         when (val kClassWithDiagnostics = runBlocking { compiledScript.getClass(evalConfig) }) {
             is ResultWithDiagnostics.Failure -> {

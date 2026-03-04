@@ -31,22 +31,36 @@ object ScriptDiagnosticSerializer : KSerializer<ScriptDiagnostic> {
             code = -1, // placeholder value
             message = diagnosticJson.getValue("message").jsonPrimitive.content,
             severity = ScriptDiagnostic.Severity.valueOf(diagnosticJson.getValue("severity").jsonPrimitive.content),
-            location = diagnosticJson["loc"]?.jsonObject?.let {
-                SourceCode.Location(
-                    start = SourceCode.Position(
-                        line = it.getValue("start").jsonObject.getValue("line").jsonPrimitive.int,
-                        col = it.getValue("start").jsonObject.getValue("col").jsonPrimitive.int,
-                    ),
-                    end = it["end"]?.jsonObject?.let { end ->
-                        SourceCode.Position(
-                            line = end.getValue("line").jsonPrimitive.int,
-                            col = end.getValue("col").jsonPrimitive.int,
-                        )
-                    },
-                )
-            },
+            location =
+                diagnosticJson["loc"]?.jsonObject?.let {
+                    SourceCode.Location(
+                        start =
+                            SourceCode.Position(
+                                line =
+                                    it
+                                        .getValue("start")
+                                        .jsonObject
+                                        .getValue("line")
+                                        .jsonPrimitive.int,
+                                col =
+                                    it
+                                        .getValue("start")
+                                        .jsonObject
+                                        .getValue("col")
+                                        .jsonPrimitive.int,
+                            ),
+                        end =
+                            it["end"]?.jsonObject?.let { end ->
+                                SourceCode.Position(
+                                    line = end.getValue("line").jsonPrimitive.int,
+                                    col = end.getValue("col").jsonPrimitive.int,
+                                )
+                            },
+                    )
+                },
         )
     }
+
     /**
      * Serialization produces values only suitable for sending them to Jupyter Web. Some information is lost.
      */

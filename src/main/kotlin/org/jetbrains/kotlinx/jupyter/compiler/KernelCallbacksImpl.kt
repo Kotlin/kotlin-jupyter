@@ -30,9 +30,7 @@ internal class KernelCallbacksImpl(
         onDeclarationsReported(declarations)
     }
 
-    override suspend fun resolveDependencies(
-        annotations: List<DependencyAnnotation>,
-    ): DependencyResolutionResult {
+    override suspend fun resolveDependencies(annotations: List<DependencyAnnotation>): DependencyResolutionResult {
         if (annotations.isEmpty()) {
             return DependencyResolutionResult.Success(emptyList())
         }
@@ -43,9 +41,10 @@ internal class KernelCallbacksImpl(
 
         // Add repositories first
         if (repositories.isNotEmpty()) {
-            val repoDescriptions = repositories.map { repo ->
-                RepositoryDescription(repo.url, repo.username, repo.password)
-            }
+            val repoDescriptions =
+                repositories.map { repo ->
+                    RepositoryDescription(repo.url, repo.username, repo.password)
+                }
             dependencyResolver.addRepositories(repoDescriptions)
         }
 
@@ -55,9 +54,10 @@ internal class KernelCallbacksImpl(
         }
 
         // Convert to kernel's annotation format and resolve
-        val kernelAnnotations = dependencies.map { dep ->
-            jupyter.kotlin.DependsOn(dep.value)
-        }
+        val kernelAnnotations =
+            dependencies.map { dep ->
+                jupyter.kotlin.DependsOn(dep.value)
+            }
 
         return when (val result = dependencyResolver.resolveFromAnnotations(kernelAnnotations)) {
             is ResultWithDiagnostics.Success -> {

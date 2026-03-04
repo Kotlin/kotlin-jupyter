@@ -7,7 +7,7 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 object JupyterCompilerFactory {
-    fun createK2Compiler(compilationConfiguration: ScriptCompilationConfiguration, ): JupyterCompilerWithCompletion =
+    fun createK2Compiler(compilationConfiguration: ScriptCompilationConfiguration): JupyterCompilerWithCompletion =
         K2JupyterCompilerWithCompletionImpl(
             K2KJvmReplCompilerWithCompletion(
                 hostConfiguration =

@@ -44,9 +44,10 @@ internal class CompilerServiceAdapter(
     ): LinkedSnippet<KJvmCompiledScript> {
         val cellId = options.cellId.value
 
-        val compileResult = runBlocking {
-            compilerService.compile(snippetId, code, cellId, options.isUserCode)
-        }
+        val compileResult =
+            runBlocking {
+                compilerService.compile(snippetId, code, cellId, options.isUserCode)
+            }
 
         return when (compileResult) {
             is CompileResult.Success -> {
@@ -54,34 +55,45 @@ internal class CompilerServiceAdapter(
                 CompileResultDeserializer.deserialize(compileResult, scriptCache)
             }
             is CompileResult.Failure -> {
-                val metadata = CellErrorMetaData(
-                    options.cellId.toExecutionCount(),
-                    code.lines().size,
-                )
+                val metadata =
+                    CellErrorMetaData(
+                        options.cellId.toExecutionCount(),
+                        code.lines().size,
+                    )
                 val failure = ResultWithDiagnostics.Failure(compileResult.diagnostics)
                 throw ReplCompilerException(code, failure, metadata = metadata)
             }
         }
     }
 
-    override val complete: CompleteFunction = CompleteFunction { code, position, snippetId ->
-        val completions = runBlocking {
-            compilerService.complete(code, snippetId, position)
+    override val complete: CompleteFunction =
+        CompleteFunction { code, position, snippetId ->
+            val completions =
+                runBlocking {
+                    compilerService.complete(code, snippetId, position)
+                }
+            completions.asSequence().asSuccess()
         }
-        completions.asSequence().asSuccess()
-    }
 
-    override fun checkComplete(code: Code, snippetId: Int): CheckCompletenessResult {
-        val isComplete = runBlocking {
-            compilerService.checkComplete(code, snippetId)
-        }
+    override fun checkComplete(
+        code: Code,
+        snippetId: Int,
+    ): CheckCompletenessResult {
+        val isComplete =
+            runBlocking {
+                compilerService.checkComplete(code, snippetId)
+            }
         return CheckCompletenessResult(isComplete)
     }
 
-    override fun listErrors(code: Code, snippetId: Int): Sequence<ScriptDiagnostic> {
-        val diagnostics = runBlocking {
-            compilerService.listErrors(code, snippetId)
-        }
+    override fun listErrors(
+        code: Code,
+        snippetId: Int,
+    ): Sequence<ScriptDiagnostic> {
+        val diagnostics =
+            runBlocking {
+                compilerService.listErrors(code, snippetId)
+            }
         return diagnostics.asSequence()
     }
 }

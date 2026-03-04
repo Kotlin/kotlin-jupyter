@@ -45,8 +45,8 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.config.catchAll
-import org.jetbrains.kotlinx.jupyter.config.toCellId
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
+import org.jetbrains.kotlinx.jupyter.config.toCellId
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplEvalRuntimeException
 import org.jetbrains.kotlinx.jupyter.exceptions.isInterruptedException
 import org.jetbrains.kotlinx.jupyter.execution.ColorSchemeChangeCallbacksProcessor
@@ -215,26 +215,30 @@ class ReplForJupyterImpl(
     }
 
     @TestOnly
-    internal val compilerService = run {
-        val callbacks = KernelCallbacksImpl(
-            dependencyResolver = dependencyManager.resolver,
-            onImportsReported = { imports ->
-                importsCollector.addImports(imports)
-            },
-            onDeclarationsReported = { declarations ->
-                lastDeclarations = declarations
-            },
-            updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath} },
-        )
-        val params = CompilerParams(
-            scriptClasspath = scriptClasspath.map { it.canonicalPath },
-            jvmTarget = runtimeProperties.jvmTargetForSnippets,
-            scriptReceiverCanonicalNames = scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
-            replCompilerMode = compilerMode,
-            extraCompilerArguments = extraCompilerArguments,
-        )
-        CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
-    }
+    internal val compilerService =
+        run {
+            val callbacks =
+                KernelCallbacksImpl(
+                    dependencyResolver = dependencyManager.resolver,
+                    onImportsReported = { imports ->
+                        importsCollector.addImports(imports)
+                    },
+                    onDeclarationsReported = { declarations ->
+                        lastDeclarations = declarations
+                    },
+                    updatedClasspath = { dependencyManager.recentlyAddedBinaryClasspath.map { it.canonicalPath } },
+                )
+            val params =
+                CompilerParams(
+                    scriptClasspath = scriptClasspath.map { it.canonicalPath },
+                    jvmTarget = runtimeProperties.jvmTargetForSnippets,
+                    scriptReceiverCanonicalNames =
+                        scriptReceivers.map { it.javaClass.canonicalName } + ScriptTemplateWithDisplayHelpers::class.java.canonicalName,
+                    replCompilerMode = compilerMode,
+                    extraCompilerArguments = extraCompilerArguments,
+                )
+            CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
+        }
 
     init {
         dependencyManager.apply {

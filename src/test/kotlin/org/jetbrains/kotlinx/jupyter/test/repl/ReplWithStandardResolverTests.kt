@@ -38,6 +38,7 @@ abstract class ReplWithStandardResolverTests(
 ) : AbstractSingleReplTest(compilationMode) {
     private val displays = mutableListOf<Any>()
     private val handler = TestDisplayHandler(displays)
+
     override fun createRepl() = makeReplWithStandardResolver { handler }
 
     @Test

@@ -46,9 +46,10 @@ class DaemonCompilerClient(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
     loggerFactory: KernelLoggerFactory,
-) : CompilerService, Closeable {
+) : CompilerService,
+    Closeable {
     private val logger = loggerFactory.getLogger(DaemonCompilerClient::class.java)
-    
+
     private var channel: ManagedChannel? = null
     private var stub: JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub? = null
     private var callbackServer: Server? = null
@@ -57,15 +58,18 @@ class DaemonCompilerClient(
     private val portsGenerator = PortsGenerator.create(32768, 65536)
 
     private val callbackPort: Int = portsGenerator.randomPort()
+
     @Volatile private var daemonPort: Int? = null
     private val portLatch = java.util.concurrent.CountDownLatch(1)
 
     init {
         startDaemon()
         // Register shutdown hook to ensure daemon is killed when JVM exits
-        Runtime.getRuntime().addShutdownHook(Thread {
-            close()
-        })
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                close()
+            },
+        )
     }
 
     fun setDaemonPort(port: Int) {
@@ -252,8 +256,9 @@ class DaemonCompilerClient(
 
     private fun findDaemonJar(): File {
         // Extract the daemon JAR from resources (it's packaged with this module)
-        val resourceStream = javaClass.getResourceAsStream("/compiler-daemon.jar")
-            ?: throw RuntimeException("Could not find compiler-daemon.jar in resources. Please rebuild the project.")
+        val resourceStream =
+            javaClass.getResourceAsStream("/compiler-daemon.jar")
+                ?: throw RuntimeException("Could not find compiler-daemon.jar in resources. Please rebuild the project.")
 
         // Create a temporary file to hold the daemon JAR
         val tempFile = File.createTempFile("compiler-daemon-", ".jar")
@@ -308,9 +313,13 @@ private class KernelCallbackServiceImpl(
     private val callbacks: KernelCallbacks,
     private val daemonClient: DaemonCompilerClient,
 ) : KernelCallbackServiceGrpcKt.KernelCallbackServiceCoroutineImplBase() {
-    override suspend fun reportDaemonPort(request: org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest): org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse {
+    override suspend fun reportDaemonPort(
+        request: org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest,
+    ): org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse {
         daemonClient.setDaemonPort(request.port)
-        return org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse.newBuilder().build()
+        return org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortResponse
+            .newBuilder()
+            .build()
     }
 
     override suspend fun reportImports(request: ReportImportsRequest): ReportImportsResponse {
@@ -342,8 +351,8 @@ private class KernelCallbackServiceImpl(
         }
     }
 
-    override suspend fun updatedClasspath(request: UpdatedClasspathRequest): UpdatedClasspathResponse {
-        return try {
+    override suspend fun updatedClasspath(request: UpdatedClasspathRequest): UpdatedClasspathResponse =
+        try {
             val classpath = callbacks.updatedClasspath()
             UpdatedClasspathResponse
                 .newBuilder()
@@ -357,7 +366,6 @@ private class KernelCallbackServiceImpl(
                 .setErrorMessage(e.message ?: "Unknown error")
                 .build()
         }
-    }
 }
 
 // Extension functions to convert from proto to API types
@@ -366,27 +374,30 @@ private fun Diagnostic.fromProto(): ScriptDiagnostic =
     ScriptDiagnostic(
         code = code,
         message = message,
-        severity = when (severity) {
-            DiagnosticSeverity.FATAL -> ScriptDiagnostic.Severity.FATAL
-            DiagnosticSeverity.ERROR -> ScriptDiagnostic.Severity.ERROR
-            DiagnosticSeverity.WARNING -> ScriptDiagnostic.Severity.WARNING
-            DiagnosticSeverity.INFO -> ScriptDiagnostic.Severity.INFO
-            DiagnosticSeverity.DEBUG -> ScriptDiagnostic.Severity.DEBUG
-            DiagnosticSeverity.UNRECOGNIZED -> error("Unrecognized DiagnosticSeverity: $severity")
-        },
+        severity =
+            when (severity) {
+                DiagnosticSeverity.FATAL -> ScriptDiagnostic.Severity.FATAL
+                DiagnosticSeverity.ERROR -> ScriptDiagnostic.Severity.ERROR
+                DiagnosticSeverity.WARNING -> ScriptDiagnostic.Severity.WARNING
+                DiagnosticSeverity.INFO -> ScriptDiagnostic.Severity.INFO
+                DiagnosticSeverity.DEBUG -> ScriptDiagnostic.Severity.DEBUG
+                DiagnosticSeverity.UNRECOGNIZED -> error("Unrecognized DiagnosticSeverity: $severity")
+            },
         sourcePath = if (hasSourcePath()) sourcePath else null,
-        location = if (hasLocation()) {
-            SourceCode.Location(
-                start = SourceCode.Position(location.start.line, location.start.col),
-                end = if (location.hasEnd()) {
-                    SourceCode.Position(location.end.line, location.end.col)
-                } else {
-                    null
-                },
-            )
-        } else {
-            null
-        },
+        location =
+            if (hasLocation()) {
+                SourceCode.Location(
+                    start = SourceCode.Position(location.start.line, location.start.col),
+                    end =
+                        if (location.hasEnd()) {
+                            SourceCode.Position(location.end.line, location.end.col)
+                        } else {
+                            null
+                        },
+                )
+            } else {
+                null
+            },
     )
 
 private fun org.jetbrains.kotlinx.jupyter.compiler.proto.DeclarationInfo.fromProto(): DeclarationInfo =
@@ -431,11 +442,12 @@ private fun org.jetbrains.kotlinx.jupyter.compiler.proto.SourceCodeCompletionVar
         displayText = displayText,
         tail = tail,
         icon = icon,
-        deprecationLevel = if (hasDeprecationLevel()) {
-            DeprecationLevel.valueOf(deprecationLevel)
-        } else {
-            null
-        },
+        deprecationLevel =
+            if (hasDeprecationLevel()) {
+                DeprecationLevel.valueOf(deprecationLevel)
+            } else {
+                null
+            },
     )
 
 /**

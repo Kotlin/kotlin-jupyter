@@ -11,7 +11,9 @@ import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 
-abstract class LibraryLoadingTest(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+abstract class LibraryLoadingTest(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     override fun createRepl() = makeSimpleRepl()
 
     private val tempDir = createTempDirectory(this::class.simpleName)

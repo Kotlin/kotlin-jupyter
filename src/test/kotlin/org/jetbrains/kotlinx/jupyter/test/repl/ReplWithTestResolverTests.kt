@@ -25,9 +25,12 @@ import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 
 @Execution(ExecutionMode.SAME_THREAD)
-abstract class ReplWithTestResolverTests(compilationMode: CompilationMode) : AbstractSingleReplTest(compilationMode) {
+abstract class ReplWithTestResolverTests(
+    compilationMode: CompilationMode,
+) : AbstractSingleReplTest(compilationMode) {
     private val displays = mutableListOf<Any>()
     private val displayHandler = TestDisplayHandler(displays)
+
     override fun createRepl() = makeReplWithTestResolver(displayHandler)
 
     @Test

@@ -9,9 +9,7 @@ import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-internal fun getSimpleCompiler(
-    compilationConfiguration: ScriptCompilationConfiguration,
-): JupyterCompiler {
+internal fun getSimpleCompiler(compilationConfiguration: ScriptCompilationConfiguration): JupyterCompiler {
     class SimpleReplCompiler(
         hostConfiguration: ScriptingHostConfiguration,
     ) : KJvmReplCompilerBase<ReplCodeAnalyzerBase>(hostConfiguration)

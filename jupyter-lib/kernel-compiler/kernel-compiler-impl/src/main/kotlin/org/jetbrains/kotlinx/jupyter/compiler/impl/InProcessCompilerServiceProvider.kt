@@ -19,9 +19,7 @@ class InProcessCompilerServiceProvider : CompilerServiceProvider {
         params: CompilerParams,
         callbacks: KernelCallbacks,
         loggerFactory: KernelLoggerFactory,
-    ): CompilerService {
-        return CompilerServiceImpl(params, callbacks, loggerFactory)
-    }
+    ): CompilerService = CompilerServiceImpl(params, callbacks, loggerFactory)
 
     companion object {
         private val priorityOverride = ThreadLocal<Int?>()
@@ -42,7 +40,10 @@ class InProcessCompilerServiceProvider : CompilerServiceProvider {
         /**
          * Executes the given block with a temporary priority override.
          */
-        inline fun <T> withPriority(priority: Int, block: () -> T): T {
+        inline fun <T> withPriority(
+            priority: Int,
+            block: () -> T,
+        ): T {
             setPriority(priority)
             try {
                 return block()

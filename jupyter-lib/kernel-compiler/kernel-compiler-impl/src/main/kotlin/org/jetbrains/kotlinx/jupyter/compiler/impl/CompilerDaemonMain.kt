@@ -51,7 +51,7 @@ class CompilerDaemon(
     private val kernelCallbackPort: Int,
 ) {
     private val logger = DefaultKernelLoggerFactory.getLogger(CompilerDaemon::class.java)
-    
+
     private var server: Server? = null
 
     fun start() {
@@ -79,10 +79,11 @@ class CompilerDaemon(
 
         // Report the actual port back to the kernel
         kotlinx.coroutines.runBlocking {
-            val request = org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest
-                .newBuilder()
-                .setPort(actualPort)
-                .build()
+            val request =
+                org.jetbrains.kotlinx.jupyter.compiler.proto.ReportDaemonPortRequest
+                    .newBuilder()
+                    .setPort(actualPort)
+                    .build()
             callbackStub.reportDaemonPort(request)
             logger.debug("Reported port {} to kernel", actualPort)
         }
