@@ -76,3 +76,26 @@ inline fun <R> tryFinally(
     @Suppress("UNCHECKED_CAST")
     return result as R // if `result` wasn't assigned due to an exception or a non-local return, we wouldn't get here
 }
+
+/**
+ * Allows running some [action], and if any exception occurs, performing cleanup in [onErrorHandlers].
+ * This exception will be thrown anyway. Any exceptions occuring during [onErrorHandlers] are added as suppressed.
+ */
+inline fun <R> tryWithCleanup(
+    action: () -> R,
+    onErrorHandlers: List<() -> Unit>,
+): R {
+    var result: R? = null
+    mergeExceptions {
+        try {
+            result = action()
+        } catch (e: Throwable) {
+            addError(e)
+            for (onError in onErrorHandlers) {
+                catchIndependently(onError)
+            }
+        }
+    }
+    @Suppress("UNCHECKED_CAST")
+    return result as R // if `result` wasn't assigned due to an exception or a non-local return, we wouldn't get here
+}
