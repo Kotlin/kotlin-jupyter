@@ -42,7 +42,8 @@ abstract class DaemonCompilerClientBase(
     // Callback server for daemon to call back to kernel
     private val callbackPort: Int = PortsGenerator.create(32768, 65536).randomPort()
     private val callbackServer: Server =
-        NettyServerBuilder.forPort(callbackPort)
+        NettyServerBuilder
+            .forPort(callbackPort)
             .addService(
                 callbackServiceFactory.createCallbackService {
                     daemonPort = it
@@ -62,19 +63,20 @@ abstract class DaemonCompilerClientBase(
         logger.debug("Kernel callback server started on port {}", callbackPort)
     }
 
-    private val daemonProcess: Process = tryWithCleanup(
-        action = {
-            ProcessBuilder(
-                System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
-                "-jar",
-                extractDaemonJar().absolutePath,
-                callbackPort.toString(),
-            ).redirectErrorStream(true)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .start()
-        },
-        onErrorHandlers = closeHandlers,
-    )
+    private val daemonProcess: Process =
+        tryWithCleanup(
+            action = {
+                ProcessBuilder(
+                    System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+                    "-jar",
+                    extractDaemonJar().absolutePath,
+                    callbackPort.toString(),
+                ).redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                    .start()
+            },
+            onErrorHandlers = closeHandlers,
+        )
 
     init {
         closeHandlers.add {
@@ -85,20 +87,22 @@ abstract class DaemonCompilerClientBase(
         }
     }
 
-    protected val channel: ManagedChannel = tryWithCleanup(
-        action = {
-            logger.debug("Waiting for daemon to report its port...")
-            daemonPortLatch.await(10, TimeUnit.SECONDS)
-            val actualDaemonPort = daemonPort ?: throw RuntimeException("Daemon did not report its port within timeout")
-            logger.debug("Daemon reported port: {}", actualDaemonPort)
+    protected val channel: ManagedChannel =
+        tryWithCleanup(
+            action = {
+                logger.debug("Waiting for daemon to report its port...")
+                daemonPortLatch.await(10, TimeUnit.SECONDS)
+                val actualDaemonPort = daemonPort ?: throw RuntimeException("Daemon did not report its port within timeout")
+                logger.debug("Daemon reported port: {}", actualDaemonPort)
 
-            // Connect to daemon
-            NettyChannelBuilder.forAddress("localhost", actualDaemonPort)
-                .usePlaintext()
-                .build()
-        },
-        onErrorHandlers = closeHandlers,
-    )
+                // Connect to daemon
+                NettyChannelBuilder
+                    .forAddress("localhost", actualDaemonPort)
+                    .usePlaintext()
+                    .build()
+            },
+            onErrorHandlers = closeHandlers,
+        )
 
     init {
         closeHandlers.add {
@@ -124,7 +128,7 @@ abstract class DaemonCompilerClientBase(
             return
         }
         tryFinally(
-            action = { catchAllIndependentlyAndMerge(*closeHandlers.toTypedArray(),) },
+            action = { catchAllIndependentlyAndMerge(*closeHandlers.toTypedArray()) },
             finally = { isClosedLatch.countDown() },
         )
         logger.debug("Compiler daemon shut down successfully")

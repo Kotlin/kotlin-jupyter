@@ -38,8 +38,8 @@ class DaemonCompilerClient(
     callbacks: KernelCallbacks,
     loggerFactory: KernelLoggerFactory,
 ) : DaemonCompilerClientBase({
-    KernelCallbackServiceImpl(callbacks = callbacks, reportDaemonPort = it::reportDaemonPort)
-}, loggerFactory) {
+        KernelCallbackServiceImpl(callbacks = callbacks, reportDaemonPort = it::reportDaemonPort)
+    }, loggerFactory) {
     private val logger = loggerFactory.getLogger(DaemonCompilerClientBase::class.java)
 
     private val stub: JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub =
