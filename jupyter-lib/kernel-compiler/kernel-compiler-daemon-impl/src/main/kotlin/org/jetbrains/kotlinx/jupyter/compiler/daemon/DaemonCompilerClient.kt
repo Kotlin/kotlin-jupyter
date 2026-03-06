@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.DeclarationKind
 import org.jetbrains.kotlinx.jupyter.api.ReplCompilerMode
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompileResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyResolutionResult
 import org.jetbrains.kotlinx.jupyter.compiler.api.KernelCallbacks
 import org.jetbrains.kotlinx.jupyter.compiler.proto.AnnotationType
@@ -25,6 +26,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.proto.ResolveDependenciesResponse
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathRequest
 import org.jetbrains.kotlinx.jupyter.compiler.proto.UpdatedClasspathResponse
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import java.io.Closeable
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
@@ -37,13 +39,15 @@ class DaemonCompilerClient(
     params: CompilerParams,
     callbacks: KernelCallbacks,
     loggerFactory: KernelLoggerFactory,
-) : DaemonCompilerClientBase({
+) : CompilerService, Closeable {
+    private val processHandler = DaemonProcessHandler({
         KernelCallbackServiceImpl(callbacks = callbacks, reportDaemonPort = it::reportDaemonPort)
-    }, loggerFactory) {
-    private val logger = loggerFactory.getLogger(DaemonCompilerClientBase::class.java)
+    }, loggerFactory)
+
+    private val logger = loggerFactory.getLogger(DaemonCompilerClient::class.java)
 
     private val stub: JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub =
-        JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub(channel)
+        JupyterCompilerServiceGrpcKt.JupyterCompilerServiceCoroutineStub(processHandler.channel)
 
     init {
         // Initialize the compiler on the daemon
@@ -64,8 +68,10 @@ class DaemonCompilerClient(
             }
         }
         logger.debug("Compiler daemon initialized successfully")
-        // Register shutdown hook to ensure daemon is killed when JVM exits
-        Runtime.getRuntime().addShutdownHook(Thread(this::close))
+    }
+
+    override fun close() {
+        processHandler.close()
     }
 
     override suspend fun compile(

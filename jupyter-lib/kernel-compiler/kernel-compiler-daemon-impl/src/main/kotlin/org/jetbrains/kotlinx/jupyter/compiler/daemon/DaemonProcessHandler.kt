@@ -5,7 +5,6 @@ import io.grpc.ManagedChannel
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerService
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.catchAllIndependentlyAndMerge
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
@@ -27,12 +26,11 @@ fun interface CallbackServiceFactory {
 }
 
 /** Handles daemon process lifecycle, and exposes [channel] to communicate with it. */
-abstract class DaemonCompilerClientBase(
+class DaemonProcessHandler(
     callbackServiceFactory: CallbackServiceFactory,
     loggerFactory: KernelLoggerFactory,
-) : CompilerService,
-    Closeable {
-    private val logger = loggerFactory.getLogger(DaemonCompilerClientBase::class.java)
+) : Closeable {
+    private val logger = loggerFactory.getLogger(DaemonProcessHandler::class.java)
 
     @Volatile private var daemonPort: Int? = null
     private val daemonPortLatch = CountDownLatch(1)
@@ -87,7 +85,7 @@ abstract class DaemonCompilerClientBase(
         }
     }
 
-    protected val channel: ManagedChannel =
+    val channel: ManagedChannel =
         tryWithCleanup(
             action = {
                 logger.debug("Waiting for daemon to report its port...")
