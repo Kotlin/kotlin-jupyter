@@ -16,4 +16,5 @@
     <logger name="org.jetbrains.kotlin.org.apache" level="ERROR" />
     <logger name="httpclient" level="ERROR" />
     <logger name="org.jetbrains.kotlin.httpclient" level="ERROR" />
+    <logger name="io.grpc" level="ERROR" />
 </configuration>
