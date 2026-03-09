@@ -90,7 +90,7 @@ class DaemonProcessHandler(
             action = {
                 logger.debug("Waiting for daemon to report its port...")
                 daemonPortLatch.await(10, TimeUnit.SECONDS)
-                val actualDaemonPort = daemonPort ?: throw RuntimeException("Daemon did not report its port within timeout")
+                val actualDaemonPort = daemonPort ?: throw DaemonTimeoutException("Daemon did not report its port within timeout")
                 logger.debug("Daemon reported port: {}", actualDaemonPort)
 
                 // Connect to daemon

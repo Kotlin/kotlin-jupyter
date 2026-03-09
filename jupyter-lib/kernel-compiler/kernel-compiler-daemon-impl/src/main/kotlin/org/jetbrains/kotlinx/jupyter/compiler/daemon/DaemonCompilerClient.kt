@@ -39,10 +39,12 @@ class DaemonCompilerClient(
     params: CompilerParams,
     callbacks: KernelCallbacks,
     loggerFactory: KernelLoggerFactory,
-) : CompilerService, Closeable {
-    private val processHandler = DaemonProcessHandler({
-        KernelCallbackServiceImpl(callbacks = callbacks, reportDaemonPort = it::reportDaemonPort)
-    }, loggerFactory)
+) : CompilerService,
+    Closeable {
+    private val processHandler =
+        RetryingDaemonProcessHandler({
+            KernelCallbackServiceImpl(callbacks = callbacks, reportDaemonPort = it::reportDaemonPort)
+        }, loggerFactory)
 
     private val logger = loggerFactory.getLogger(DaemonCompilerClient::class.java)
 
