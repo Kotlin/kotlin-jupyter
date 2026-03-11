@@ -141,7 +141,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
         val res =
             eval(
                 """
-                %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.8/jep.json]
+                %use jep@url[https://github.com/hanslovsky/jepyter/releases/download/jepyter-0.1.17/jep.json]
                 1
                 """.trimIndent(),
             ).renderedValue
