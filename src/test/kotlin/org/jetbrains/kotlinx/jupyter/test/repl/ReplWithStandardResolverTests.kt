@@ -344,7 +344,7 @@ class ReplWithStandardResolverTests : AbstractSingleReplTest() {
                 %use kandy@d768defdeecace77d118db0f77455970eef4a800(0.4.0-dev-16)
                 """.trimIndent(),
             )
-        res.metadata.newSources.shouldHaveSize(84)
+        res.metadata.newSources.shouldHaveSize(85)
     }
 
     @Test
