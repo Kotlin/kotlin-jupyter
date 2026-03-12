@@ -20,11 +20,10 @@ import org.jetbrains.kotlinx.jupyter.test.display.TestDisplayHandler
 import org.jetbrains.kotlinx.jupyter.test.repl.AbstractSingleReplTest
 import org.jetbrains.kotlinx.jupyter.test.repl.CompilerServiceType
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentHashMap
 
-class SomeSingleton {
-    companion object {
-        var initialized: Boolean = false
-    }
+object SomeSingleton {
+    val set: MutableSet<String> = ConcurrentHashMap.newKeySet()
 }
 
 /**
@@ -119,14 +118,15 @@ abstract class EmbedReplTest(
 
     @Test
     fun testSharedStaticVariables() {
-        SomeSingleton.initialized = false
+        val threadName = Thread.currentThread().name
+        SomeSingleton.set.remove(threadName)
 
-        var res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
+        var res = eval("\"$threadName\" in org.jetbrains.kotlinx.jupyter.test.SomeSingleton.set")
         res.renderedValue shouldBe false
 
-        SomeSingleton.initialized = true
+        SomeSingleton.set.add(threadName)
 
-        res = eval("org.jetbrains.kotlinx.jupyter.test.SomeSingleton.initialized")
+        res = eval("\"$threadName\" in org.jetbrains.kotlinx.jupyter.test.SomeSingleton.set")
         res.renderedValue shouldBe true
     }
 
