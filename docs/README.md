@@ -547,7 +547,6 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [develocity-api-kotlin](https://github.com/gabrielfeo/develocity-api-kotlin) - A library to use the Develocity API in Kotlin scripts or projects
  - [exposed](https://github.com/JetBrains/Exposed) - Kotlin SQL framework
  - [fuel](https://github.com/kittinunf/fuel) - HTTP networking library
- - [gral](https://github.com/eseifert/gral) - Java library for displaying plots
  - [intellij-platform](https://plugins.jetbrains.com/docs/intellij/welcome.html) - The IntelliJ Platform integration to bridge Kotlin Notebook with the IntelliJ Platform SDK and the IntelliJ IDEA runtime for seamless code execution and interactive development
  - [jdsp](https://github.com/psambit9791/jDSP) - Java library for signal processing
  - [jupyter-js](https://github.com/yidafu/kotlin-jupyter-js) - Experimental `%javascript`/`%typescript`/`%jsx` line magic support
@@ -573,7 +572,6 @@ Here you can find all the supported libraries you can use in you Kotlin notebook
  - [multik](https://github.com/Kotlin/multik) - Multidimensional array library for Kotlin
  - [mysql](https://github.com/mysql/mysql-connector-j) - MySql JDBC Connector
  - [notekit](https://github.com/Kotlin/kotlin-notebook-integrations/tree/master/integrations/notekit) - Programmatic access to work with the current Kotlin notebook
- - [openai](https://openai.com/blog/chatgpt) - OpenAI API for Jupyter Notebooks
  - [openai-java](https://github.com/openai/openai-java) - OpenAI official Java API
  - [plotly](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for static plots.
  - [plotly-server](https://github.com/mipt-npm/plotly.kt) - [beta] Plotly.kt jupyter integration for dynamic plots.
