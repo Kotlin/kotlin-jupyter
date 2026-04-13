@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.daemon.fromRpc
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.toRpc
 import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import java.io.Closeable
 import java.util.concurrent.Executors
 
 /**
@@ -26,7 +27,8 @@ import java.util.concurrent.Executors
  */
 class DaemonCompilerServiceImpl(
     private val callbackService: KernelCallbackService,
-) : JupyterCompilerDaemonService {
+) : JupyterCompilerDaemonService,
+    Closeable {
     private var compiler: CompilerServiceImpl? = null
 
     // Single-threaded dispatcher for all compiler operations to work around KT-73200
@@ -109,6 +111,10 @@ class DaemonCompilerServiceImpl(
 
             currentCompiler.getClasspath()
         }
+
+    override fun close() {
+        compiler?.close()
+    }
 }
 
 /**

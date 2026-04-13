@@ -302,7 +302,7 @@ class ReplForJupyterImpl(
             implicitReceivers(ScriptTemplateWithDisplayHelpers(this@ReplForJupyterImpl))
         }
 
-    private val jupyterCompiler = CompiledScriptCache()
+    private val compiledScriptCache = CompiledScriptCache()
 
     private val evaluator: KernelReplEvaluator by lazy {
         when (compilerMode) {
@@ -340,7 +340,7 @@ class ReplForJupyterImpl(
                             isUserCode = compilingOptions.isUserCode,
                         )
                     }
-                jupyterCompiler.deserializeResult(code, compilingOptions.cellId, result)
+                compiledScriptCache.deserializeResult(code, compilingOptions.cellId, result)
             },
             JupyterScriptEvaluationHelper(evaluatorConfiguration),
             evaluator,
@@ -731,7 +731,6 @@ class ReplForJupyterImpl(
     override fun close() {
         catchAllIndependentlyAndMerge(
             { compilerService.closeIfPossible() },
-            { jupyterCompiler.closeIfPossible() },
             { notebook.closeIfPossible() },
         )
     }

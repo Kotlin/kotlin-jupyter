@@ -62,6 +62,7 @@ class CompilerDaemon(
 
     private var serverTransport: WebSocketServerKrpcTransport? = null
     private var clientTransport: WebSocketClientKrpcTransport? = null
+    private var compilerService: DaemonCompilerServiceImpl? = null
 
     @Volatile
     private var running = true
@@ -85,7 +86,7 @@ class CompilerDaemon(
         val serverPort = PortsGenerator.create(32768, 65536).randomPort()
         serverTransport = WebSocketServerKrpcTransport(serverPort)
 
-        val compilerService = DaemonCompilerServiceImpl(callbackService)
+        compilerService = DaemonCompilerServiceImpl(callbackService)
 
         val serverConfig =
             rpcServerConfig {
@@ -94,7 +95,7 @@ class CompilerDaemon(
 
         server =
             object : KrpcServer(serverConfig, serverTransport!!) {}.apply {
-                registerService<JupyterCompilerDaemonService> { compilerService }
+                registerService<JupyterCompilerDaemonService> { compilerService!! }
             }
 
         logger.debug("Compiler daemon started on port {}", serverPort)
@@ -117,6 +118,7 @@ class CompilerDaemon(
 
     private fun stop() {
         running = false
+        compilerService?.close()
         server?.close()
         serverTransport?.close()
         clientTransport?.close()

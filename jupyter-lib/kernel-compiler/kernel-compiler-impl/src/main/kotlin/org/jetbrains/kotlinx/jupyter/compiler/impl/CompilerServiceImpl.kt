@@ -31,6 +31,7 @@ import org.jetbrains.kotlinx.jupyter.config.getCompilationConfiguration
 import org.jetbrains.kotlinx.jupyter.exceptions.ReplCompilerException
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
 import java.io.ByteArrayOutputStream
+import java.io.Closeable
 import java.io.File
 import java.io.ObjectOutputStream
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -61,7 +62,8 @@ class CompilerServiceImpl(
     private val params: CompilerParams,
     private val callbacks: KernelCallbacks,
     private val loggerFactory: KernelLoggerFactory,
-) : CompilerService {
+) : CompilerService,
+    Closeable {
     private val compilerArgsConfigurator: CompilerArgsConfigurator =
         DefaultCompilerArgsConfigurator(params.jvmTarget, params.extraCompilerArguments + "-no-stdlib")
 
@@ -75,12 +77,15 @@ class CompilerServiceImpl(
             DeclarationsCollector { lastDeclarations = it },
         )
 
-    private val compiler: JupyterCompiler by lazy {
-        when (params.replCompilerMode) {
-            ReplCompilerMode.K1 -> JupyterCompilerFactory.createK1Compiler(compilationConfig)
-            ReplCompilerMode.K2 -> JupyterCompilerFactory.createK2Compiler(compilationConfig)
+    private val lazyCompiler =
+        lazy {
+            when (params.replCompilerMode) {
+                ReplCompilerMode.K1 -> JupyterCompilerFactory.createK1Compiler(compilationConfig)
+                ReplCompilerMode.K2 -> JupyterCompilerFactory.createK2Compiler(compilationConfig)
+            }
         }
-    }
+
+    private val compiler: JupyterCompiler by lazyCompiler
 
     private val compilationConfig: ScriptCompilationConfiguration =
         getCompilationConfiguration(
@@ -252,6 +257,12 @@ class CompilerServiceImpl(
     ): Boolean {
         val result = compiler.checkComplete(code, snippetId)
         return result.isComplete
+    }
+
+    override fun close() {
+        if (lazyCompiler.isInitialized()) {
+            (compiler as? Closeable)?.close()
+        }
     }
 
     override suspend fun getClasspath(): List<String> = compilationConfig.classpath.map { it.absolutePath }
