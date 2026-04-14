@@ -5,11 +5,14 @@ import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicReference
 
 class WebSocketServerKrpcTransport(
     port: Int,
 ) : WebSocketKrpcTransportBase() {
-    override var connection: WebSocket? = null
+    private val connectionAtomic = AtomicReference<WebSocket?>(null)
+
+    override val connection: WebSocket? get() = connectionAtomic.get()
 
     private val server =
         object : WebSocketServer(InetSocketAddress(port)) {
@@ -17,7 +20,9 @@ class WebSocketServerKrpcTransport(
                 conn: WebSocket,
                 handshake: ClientHandshake,
             ) {
-                connection = conn
+                // if we don't have a connection yet, set it
+                // otherwise, ignore the new connection
+                connectionAtomic.compareAndSet(null, conn)
             }
 
             override fun onClose(
@@ -26,7 +31,8 @@ class WebSocketServerKrpcTransport(
                 reason: String,
                 remote: Boolean,
             ) {
-                if (connection == conn) connection = null
+                // if the connection is the one we're tracking, clear it
+                connectionAtomic.compareAndSet(conn, null)
             }
 
             override fun onMessage(

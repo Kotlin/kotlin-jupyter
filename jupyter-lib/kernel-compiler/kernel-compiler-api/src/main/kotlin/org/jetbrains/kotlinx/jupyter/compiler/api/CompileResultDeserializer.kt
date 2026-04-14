@@ -10,14 +10,8 @@ import kotlin.script.experimental.util.LinkedSnippet
 object CompileResultDeserializer {
     /**
      * Deserialize a successful compile result into LinkedSnippet.
-     *
-     * @param result The successful compilation result containing serialized data and hash codes
-     * @param cache Optional cache to retrieve and store deserialized scripts by their hash code.
-     *              If provided, scripts already in the cache will be reused instead of deserializing.
-     * @return LinkedSnippet
-     * @throws IllegalArgumentException if the hash codes list size doesn't match the scripts list size
-     * @throws ClassNotFoundException if deserialization fails due to missing classes
-     * @throws java.io.IOException if deserialization fails due to IO errors
+     * Optional [cache] is used to retrieve and store deserialized scripts by their hash code.
+     * If provided, scripts already in the cache will be reused instead of deserializing.
      */
     fun deserialize(
         result: CompileResult.Success,

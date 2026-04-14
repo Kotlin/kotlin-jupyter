@@ -38,7 +38,12 @@ class DaemonProcessHandler(
 
     init {
         // Register shutdown hook to ensure daemon is killed when JVM exits
-        Runtime.getRuntime().addShutdownHook(Thread(this::close))
+        Runtime.getRuntime().addShutdownHook(
+            initHelper.initialize(
+                initialize = { Thread(this::close) },
+                close = { Runtime.getRuntime().removeShutdownHook(it) },
+            ),
+        )
     }
 
     init {
