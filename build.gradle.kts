@@ -104,8 +104,11 @@ dependencies {
     testImplementation(libs.java.websocket)
     testImplementation(libs.kotlin.dev.compilerEmbeddable)
 
-    // do NOT include this in embeddedKernel
-    implementation(projects.kernelCompilerImpl)
+    // in-process compiler implementation. do NOT include this in embeddedKernel
+    runtimeOnly(projects.kernelCompilerImpl)
+
+    // additionally, we depend on it to override compiler service type implementation to the in-process one in some tests
+    testImplementation(projects.kernelCompilerImpl)
 
     deploy(projects.lib)
     deploy(projects.api)

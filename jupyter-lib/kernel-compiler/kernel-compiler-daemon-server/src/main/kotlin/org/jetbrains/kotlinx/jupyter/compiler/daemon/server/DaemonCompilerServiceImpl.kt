@@ -1,7 +1,7 @@
 package org.jetbrains.kotlinx.jupyter.compiler.daemon.server
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
 import org.jetbrains.kotlinx.jupyter.compiler.api.DependencyAnnotation
@@ -17,6 +17,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.daemon.fromRpc
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.toRpc
 import org.jetbrains.kotlinx.jupyter.compiler.impl.CompilerServiceImpl
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.InitHelper
 import java.io.Closeable
 import java.util.concurrent.Executors
 
@@ -30,20 +31,36 @@ class DaemonCompilerServiceImpl(
 ) : JupyterCompilerDaemonService,
     Closeable {
     private var compiler: CompilerServiceImpl? = null
+    private val initializedCompiler: CompilerServiceImpl get() =
+        compiler ?: throw IllegalStateException("Compiler not initialized")
+
+    private val initHelper = InitHelper()
 
     // Single-threaded dispatcher for all compiler operations to work around KT-73200
     // The Kotlin compiler has thread-safety issues when accessed from multiple threads
-    private val compilerDispatcher: CoroutineDispatcher =
-        Executors
-            .newSingleThreadExecutor { runnable ->
-                Thread(runnable, "compiler-thread")
-            }.asCoroutineDispatcher()
+    private val compilerDispatcher =
+        initHelper.initialize {
+            Executors
+                .newSingleThreadExecutor { runnable ->
+                    Thread(runnable, "compiler-thread")
+                }.asCoroutineDispatcher()
+        }
 
     override suspend fun initialize(params: CompilerParams) =
         withContext(compilerDispatcher) {
             val callbacks = DaemonKernelCallbacks(callbackService)
-            compiler = CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
-            compiler!!.getCompilerData()
+            compiler =
+                initHelper.initialize(
+                    initialize = {
+                        CompilerServiceImpl(params, callbacks, DefaultKernelLoggerFactory)
+                    },
+                    close = { compiler ->
+                        runBlocking {
+                            withContext(compilerDispatcher) { compiler.close() }
+                        }
+                    },
+                )
+            initializedCompiler.getCompilerData()
         }
 
     override suspend fun compile(
@@ -53,11 +70,7 @@ class DaemonCompilerServiceImpl(
         isUserCode: Boolean,
     ): CompileResultRpc =
         withContext(compilerDispatcher) {
-            val currentCompiler =
-                compiler
-                    ?: throw IllegalStateException("Compiler not initialized")
-
-            currentCompiler
+            initializedCompiler
                 .compile(
                     snippetId = snippetId,
                     code = code,
@@ -72,11 +85,7 @@ class DaemonCompilerServiceImpl(
         position: SourcePositionRpc,
     ): List<SourceCodeCompletionVariantRpc> =
         withContext(compilerDispatcher) {
-            val currentCompiler =
-                compiler
-                    ?: throw IllegalStateException("Compiler not initialized")
-
-            currentCompiler.complete(code, id, position.fromRpc()).map { it.toRpc() }
+            initializedCompiler.complete(code, id, position.fromRpc()).map { it.toRpc() }
         }
 
     override suspend fun listErrors(
@@ -84,11 +93,7 @@ class DaemonCompilerServiceImpl(
         id: Int,
     ): List<ScriptDiagnosticRpc> =
         withContext(compilerDispatcher) {
-            val currentCompiler =
-                compiler
-                    ?: throw IllegalStateException("Compiler not initialized")
-
-            currentCompiler.listErrors(code, id).map { it.toRpc() }
+            initializedCompiler.listErrors(code, id).map { it.toRpc() }
         }
 
     override suspend fun checkComplete(
@@ -96,24 +101,16 @@ class DaemonCompilerServiceImpl(
         snippetId: Int,
     ): Boolean =
         withContext(compilerDispatcher) {
-            val currentCompiler =
-                compiler
-                    ?: throw IllegalStateException("Compiler not initialized")
-
-            currentCompiler.checkComplete(code, snippetId)
+            initializedCompiler.checkComplete(code, snippetId)
         }
 
     override suspend fun getClasspath(): List<String> =
         withContext(compilerDispatcher) {
-            val currentCompiler =
-                compiler
-                    ?: throw IllegalStateException("Compiler not initialized")
-
-            currentCompiler.getClasspath()
+            initializedCompiler.getClasspath()
         }
 
     override fun close() {
-        compiler?.close()
+        initHelper.closeAll()
     }
 }
 

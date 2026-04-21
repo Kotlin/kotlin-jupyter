@@ -34,7 +34,7 @@ class RetryingDaemonProcessHandler(
 
     init {
         var lastException: RuntimeException? = null
-        lateinit var createdClientTransport: WebSocketClientKrpcTransport
+        var createdClientTransport: WebSocketClientKrpcTransport? = null
         lateinit var attemptInitHelper: InitHelper
 
         for (attempt in 1..maxAttempts) {
@@ -79,6 +79,8 @@ class RetryingDaemonProcessHandler(
             }
         }
         clientTransport = createdClientTransport
+            ?: throw lastException
+                ?: throw IllegalStateException("Failed to create client transport after $maxAttempts attempts")
         initHelper = attemptInitHelper
     }
 
