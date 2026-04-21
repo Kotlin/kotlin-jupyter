@@ -1,6 +1,8 @@
 package org.jetbrains.kotlinx.jupyter.protocol.exceptions
 
 import java.io.Closeable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Runs all [ExceptionMerger.catchIndependently] blocks, even if there was an exception in one or more of them.
@@ -132,8 +134,32 @@ class InitHelper {
 
     fun closeAll(): Unit =
         mergeExceptions {
-            for (onError in closeHandlers.asReversed()) {
-                catchIndependently(onError)
+            while (closeHandlers.isNotEmpty()) {
+                catchIndependently(action = closeHandlers.removeLast())
             }
         }
+}
+
+/**
+ * Makes sure that the provided [close] function is run only once,
+ * and all the following calls to [IdempotentCloser.close] just wait for the completion of the initial call.
+ */
+class IdempotentCloser(
+    close: () -> Unit,
+) {
+    private val doClose = close
+
+    private val isClosedLatch = CountDownLatch(1) // 0 means closed
+    private val startedClosing = AtomicBoolean(false)
+
+    fun close() {
+        if (startedClosing.getAndSet(true)) {
+            isClosedLatch.await()
+            return
+        }
+        tryFinally(
+            action = { doClose() },
+            finally = { isClosedLatch.countDown() },
+        )
+    }
 }

@@ -7,15 +7,13 @@ import kotlinx.rpc.registerService
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.KernelCallbackService
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.transport.WebSocketServerKrpcTransport
 import org.jetbrains.kotlinx.jupyter.protocol.api.KernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.IdempotentCloser
 import org.jetbrains.kotlinx.jupyter.protocol.exceptions.InitHelper
-import org.jetbrains.kotlinx.jupyter.protocol.exceptions.tryFinally
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
 import java.io.Closeable
 import java.io.File
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 class DaemonTimeoutException(
@@ -96,24 +94,10 @@ class DaemonProcessHandler(
         )
     }
 
-    private val isClosedLatch = CountDownLatch(1)
-    private val startedClosing = AtomicBoolean(false)
+    private val closer = IdempotentCloser { initHelper.closeAll() }
 
-    /**
-     * Closes the daemon client, shutting down the daemon process and all connections.
-     * This method is idempotent and safe to call multiple times.
-     */
-    override fun close() {
-        if (startedClosing.getAndSet(true)) {
-            isClosedLatch.await()
-            return
-        }
-        tryFinally(
-            action = { initHelper.closeAll() },
-            finally = { isClosedLatch.countDown() },
-        )
-        logger.debug("Compiler daemon shut down successfully")
-    }
+    /** Closes the daemon client, shutting down the daemon process and all connections. */
+    override fun close() = closer.close()
 
     private fun extractDaemonJar(): File {
         // Extract the daemon JAR from resources (it's packaged with this module)

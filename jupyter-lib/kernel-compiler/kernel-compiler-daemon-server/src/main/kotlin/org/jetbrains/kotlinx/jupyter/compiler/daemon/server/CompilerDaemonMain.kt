@@ -14,10 +14,14 @@ import org.jetbrains.kotlinx.jupyter.compiler.daemon.KernelCallbackService
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.transport.WebSocketClientKrpcTransport
 import org.jetbrains.kotlinx.jupyter.compiler.daemon.transport.WebSocketServerKrpcTransport
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.IdempotentCloser
+import org.jetbrains.kotlinx.jupyter.protocol.exceptions.InitHelper
 import org.jetbrains.kotlinx.jupyter.protocol.startup.PortsGenerator
 import org.jetbrains.kotlinx.jupyter.protocol.startup.create
+import java.io.Closeable
 import java.net.URI
 import kotlin.concurrent.thread
+import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 /**
@@ -47,9 +51,10 @@ fun main(args: Array<String>) {
 
     logger.debug("Starting compiler daemon, connecting to kernel callback on port {}", kernelCallbackPort)
 
-    val daemon = CompilerDaemon(kernelCallbackPort)
-    daemon.start()
-    daemon.blockUntilShutdown()
+    CompilerDaemon(kernelCallbackPort).use {
+        it.start()
+        it.blockUntilShutdown()
+    }
 }
 
 /**
@@ -57,46 +62,62 @@ fun main(args: Array<String>) {
  */
 class CompilerDaemon(
     private val kernelCallbackPort: Int,
-) {
+) : Closeable {
     private val logger = DefaultKernelLoggerFactory.getLogger(CompilerDaemon::class.java)
 
-    private var serverTransport: WebSocketServerKrpcTransport? = null
-    private var clientTransport: WebSocketClientKrpcTransport? = null
-    private var compilerService: DaemonCompilerServiceImpl? = null
+    private var serverCoroutineContext: CoroutineContext? = null
 
-    @Volatile
-    private var running = true
-    private var server: KrpcServer? = null
+    private val initHelper = InitHelper()
+    private val closer = IdempotentCloser { initHelper.closeAll() }
+
+    override fun close(): Unit = closer.close()
 
     fun start() {
         // Create transport to kernel's callback service
         logger.info("Connecting to kernel callback on port: $kernelCallbackPort")
-        clientTransport = WebSocketClientKrpcTransport(URI("ws://localhost:$kernelCallbackPort"))
-
-        val clientConfig =
-            rpcClientConfig {
-                serialization { cbor() }
+        val clientTransport =
+            initHelper.initialize {
+                WebSocketClientKrpcTransport(URI("ws://localhost:$kernelCallbackPort"))
             }
 
         // Create client to call kernel callbacks
-        val callbackClient = object : InitializedKrpcClient(clientConfig, clientTransport!!) {}
-        val callbackService: KernelCallbackService = callbackClient.withService()
+        val callbackClient =
+            initHelper.initialize(
+                initialize = {
+                    val clientConfig =
+                        rpcClientConfig {
+                            serialization { cbor() }
+                        }
+
+                    object : InitializedKrpcClient(clientConfig, clientTransport) {}
+                },
+                close = { it.close() },
+            )
 
         // Create and start the compiler service server
         val serverPort = PortsGenerator.create(32768, 65536).randomPort()
-        serverTransport = WebSocketServerKrpcTransport(serverPort)
-
-        compilerService = DaemonCompilerServiceImpl(callbackService)
-
-        val serverConfig =
-            rpcServerConfig {
-                serialization { cbor() }
+        val serverTransport =
+            initHelper.initialize {
+                WebSocketServerKrpcTransport(serverPort)
             }
+        serverCoroutineContext = serverTransport.coroutineContext
 
-        server =
-            object : KrpcServer(serverConfig, serverTransport!!) {}.apply {
-                registerService<JupyterCompilerDaemonService> { compilerService!! }
-            }
+        val callbackService: KernelCallbackService = callbackClient.withService()
+        val compilerService = initHelper.initialize { DaemonCompilerServiceImpl(callbackService) }
+
+        initHelper.initialize(
+            initialize = {
+                val serverConfig =
+                    rpcServerConfig {
+                        serialization { cbor() }
+                    }
+
+                object : KrpcServer(serverConfig, serverTransport) {}.apply {
+                    registerService<JupyterCompilerDaemonService> { compilerService }
+                }
+            },
+            close = { it.close() },
+        )
 
         logger.debug("Compiler daemon started on port {}", serverPort)
 
@@ -106,44 +127,40 @@ class CompilerDaemon(
             logger.debug("Reported port {} to kernel", serverPort)
         }
 
-        // Add shutdown hook
         Runtime.getRuntime().addShutdownHook(
-            Thread {
-                logger.info("Shutting down server since JVM is shutting down")
-                this@CompilerDaemon.stop()
-                logger.info("Server shut down")
-            },
+            initHelper.initialize(
+                initialize = {
+                    Thread {
+                        logger.info("Shutting down server since JVM is shutting down")
+                        closer.close()
+                        logger.info("Server shut down")
+                    }
+                },
+                close = { Runtime.getRuntime().removeShutdownHook(it) },
+            ),
         )
-    }
-
-    private fun stop() {
-        running = false
-        compilerService?.close()
-        server?.close()
-        serverTransport?.close()
-        clientTransport?.close()
     }
 
     fun blockUntilShutdown() {
         // Start a thread to monitor stdin - exit if stdin closes (parent process died)
-        thread(name = "stdin-monitor") {
+        thread(name = "stdin-monitor", isDaemon = true) {
             try {
                 logger.debug("Started stdin monitor thread")
                 // Read from stdin indefinitely - blocks until stdin closes
-                while (System.`in`.read() != -1 && running) {
+                while (System.`in`.read() != -1) {
                     // Continue reading and discarding input
                 }
                 logger.info("stdin closed, parent process likely terminated - shutting down daemon")
-                stop()
+                closer.close()
                 exitProcess(0)
             } catch (e: Exception) {
                 logger.error("Error in stdin monitor thread: {}", e.message, e)
-                stop()
+                closer.close()
                 exitProcess(1)
             }
         }
 
-        serverTransport?.coroutineContext?.job?.let {
+        serverCoroutineContext?.job?.let {
             runBlocking { it.join() }
         }
     }
