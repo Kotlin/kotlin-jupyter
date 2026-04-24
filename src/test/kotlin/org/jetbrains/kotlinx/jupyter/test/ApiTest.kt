@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 
 class ApiTest : AbstractSingleReplTest() {
-    override fun createRepl() = makeSimpleRepl()
+    override val repl = makeSimpleRepl()
 
     private fun jEval(
         jupyterId: Int,

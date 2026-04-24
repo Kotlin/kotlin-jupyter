@@ -38,7 +38,7 @@ class AnimateTests : AbstractSingleReplTest() {
             )
         }
 
-    override fun createRepl() =
+    override val repl =
         makeReplWithStandardResolver { notebook ->
             object : TestDisplayHandlerWithRendering(notebook) {
                 override fun handleDisplay(

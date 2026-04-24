@@ -43,6 +43,7 @@ import org.jetbrains.kotlinx.jupyter.compiler.CompiledScriptCache
 import org.jetbrains.kotlinx.jupyter.compiler.CompilerServiceFactory
 import org.jetbrains.kotlinx.jupyter.compiler.KernelCallbacksImpl
 import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerParams
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.config.catchAll
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.config.toCellId
@@ -146,6 +147,7 @@ class ReplForJupyterImpl(
     override val compilerMode: ReplCompilerMode,
     extraCompilerArguments: List<String> = emptyList(),
     private val compilerServiceSpiClassloader: ClassLoader,
+    private val forceCompilerServiceProvider: CompilerServiceProvider? = null,
 ) : ReplForJupyter,
     BaseKernelHost,
     UserHandlesProvider,
@@ -238,7 +240,8 @@ class ReplForJupyterImpl(
                     replCompilerMode = compilerMode,
                     extraCompilerArguments = extraCompilerArguments,
                 )
-            CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
+            forceCompilerServiceProvider?.createCompiler(params, callbacks, loggerFactory)
+                ?: CompilerServiceFactory.createCompilerService(params, callbacks, loggerFactory, compilerServiceSpiClassloader)
         }
 
     private val compilerData = runBlocking { compilerService.getCompilerData() }

@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -90,4 +91,6 @@ interface LazilyConstructibleReplComponentsProvider : ReplComponentsProvider {
     fun provideExtraCompilerArguments(): List<String>
 
     fun provideCompilerServiceSpiClassloader(): ClassLoader
+
+    fun provideForceCompilerServiceProvider(): CompilerServiceProvider?
 }

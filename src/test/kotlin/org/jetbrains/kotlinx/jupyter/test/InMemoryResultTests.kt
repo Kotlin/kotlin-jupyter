@@ -38,7 +38,7 @@ class InMemoryResultTests : AbstractSingleReplTest() {
         const val SCREEN_LOCK = "screenLock"
     }
 
-    override fun createRepl() = makeEmbeddedRepl()
+    override val repl = makeEmbeddedRepl()
 
     // Skip tests always for now as they are unstable
     private val skipGraphicsTests = true // GraphicsEnvironment.isHeadless()

@@ -19,7 +19,7 @@ abstract class ReplWithStandardResolverAndRenderingTests(
 ) : AbstractSingleReplTest(compilerServiceType) {
     private val displays get() = repl.notebook.displays.getAll()
 
-    override fun createRepl() =
+    override val repl =
         makeReplWithStandardResolver { notebook ->
             TestDisplayHandlerWithRendering(notebook)
         }

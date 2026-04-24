@@ -14,11 +14,9 @@ import org.junit.jupiter.api.AfterEach
 abstract class AbstractSingleReplTest(
     protected val compilerServiceType: CompilerServiceType = CompilerServiceType.IN_PROCESS,
 ) : AbstractReplTest() {
-    protected abstract fun createRepl(): ReplForJupyter
+    override val forceCompilerServiceProvider get() = compilerServiceType.compilerServiceProvider
 
-    protected val repl: ReplForJupyter by lazy {
-        compilerServiceType.withMode { createRepl() }
-    }
+    protected abstract val repl: ReplForJupyter
 
     @AfterEach
     fun tearDown() {

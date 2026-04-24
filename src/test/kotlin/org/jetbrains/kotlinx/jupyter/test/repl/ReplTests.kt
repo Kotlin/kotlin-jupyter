@@ -57,7 +57,7 @@ import kotlin.script.experimental.api.SourceCode
 abstract class ReplTests(
     compilerServiceType: CompilerServiceType,
 ) : AbstractSingleReplTest(compilerServiceType) {
-    override fun createRepl() = makeSimpleRepl()
+    override val repl = makeSimpleRepl()
 
     @Test
     fun testRepl() {

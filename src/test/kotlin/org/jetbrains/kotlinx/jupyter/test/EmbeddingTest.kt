@@ -114,7 +114,7 @@ val testLibraryDefinition2 =
 abstract class EmbedReplTest(
     compilerServiceType: CompilerServiceType,
 ) : AbstractSingleReplTest(compilerServiceType) {
-    override fun createRepl() = makeEmbeddedRepl()
+    override val repl = makeEmbeddedRepl()
 
     @Test
     fun testSharedStaticVariables() {
@@ -203,7 +203,7 @@ abstract class EmbeddedTestWithHackedDisplayHandler(
 ) : AbstractSingleReplTest(compilerServiceType) {
     private val displayHandler = TestDisplayHandler()
 
-    override fun createRepl() = makeEmbeddedRepl(displayHandler = displayHandler)
+    override val repl = makeEmbeddedRepl(displayHandler = displayHandler)
 
     @Test
     fun testJsResources() {

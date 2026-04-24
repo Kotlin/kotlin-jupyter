@@ -8,6 +8,7 @@ import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesProcessor
 import org.jetbrains.kotlinx.jupyter.libraries.LibrariesScanner
@@ -57,6 +58,7 @@ abstract class LazilyConstructibleReplComponentsProviderImpl : LazilyConstructib
     override val replCompilerMode: ReplCompilerMode by lazy { provideReplCompilerMode() }
     override val extraCompilerArguments: List<String> by lazy { provideExtraCompilerArguments() }
     override val compilerServiceSpiClassloader: ClassLoader by lazy { provideCompilerServiceSpiClassloader() }
+    override val forceCompilerServiceProvider: CompilerServiceProvider? by lazy { provideForceCompilerServiceProvider() }
 
     // TODO: add other methods incl. display handler and socket messages listener
     // Inheritors should be constructed of connection (JupyterConnection)

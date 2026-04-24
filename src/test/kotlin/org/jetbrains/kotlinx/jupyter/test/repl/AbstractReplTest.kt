@@ -6,6 +6,7 @@ import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.libraries.LibraryDefinition
 import org.jetbrains.kotlinx.jupyter.api.libraries.Variable
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultResolutionInfoProviderFactory
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryResolver
 import org.jetbrains.kotlinx.jupyter.libraries.createLibraryHttpUtil
@@ -62,7 +63,10 @@ abstract class AbstractReplTest {
             res!!
         }
 
-    protected fun makeSimpleRepl(): ReplForJupyter = createRepl(httpUtil, scriptClasspath = classpath)
+    protected open val forceCompilerServiceProvider: CompilerServiceProvider? get() = null
+
+    protected fun makeSimpleRepl(): ReplForJupyter =
+        createRepl(httpUtil, scriptClasspath = classpath, forceCompilerServiceProvider = forceCompilerServiceProvider)
 
     protected fun makeReplWithTestResolver(displayHandler: DisplayHandler = NoOpDisplayHandler): ReplForJupyter =
         createRepl(
@@ -71,6 +75,7 @@ abstract class AbstractReplTest {
             homeDir = homeDir,
             libraryResolver = testLibraryResolver,
             displayHandler = displayHandler,
+            forceCompilerServiceProvider = forceCompilerServiceProvider,
         )
 
     protected fun makeReplWithStandardResolver(
@@ -88,6 +93,7 @@ abstract class AbstractReplTest {
                 httpUtil.libraryDescriptorsManager,
             )
         val myHomeDir = homeDir
+        val myForceCompilerServiceProvider = forceCompilerServiceProvider
         val factory =
             object : ReplComponentsProviderBase() {
                 override fun provideResolutionInfoProvider() = standardResolutionInfoProvider
@@ -111,6 +117,8 @@ abstract class AbstractReplTest {
                 override fun provideCommunicationFacility() = CommunicationFacilityMock
 
                 override fun provideDebugPort(): Int? = null
+
+                override fun provideForceCompilerServiceProvider() = myForceCompilerServiceProvider
             }
         return factory.createRepl()
     }
@@ -135,6 +143,7 @@ abstract class AbstractReplTest {
             displayHandler = displayHandler,
             inMemoryReplResultsHolder = DefaultInMemoryReplResultsHolder(),
             libraryResolver = libraryResolver,
+            forceCompilerServiceProvider = forceCompilerServiceProvider,
         )
     }
 
@@ -147,6 +156,7 @@ abstract class AbstractReplTest {
             homeDir = homeDir,
             mavenRepositories = testRepositories,
             libraryResolver = libraryResolver,
+            forceCompilerServiceProvider = forceCompilerServiceProvider,
         )
 
     protected fun makeReplEnablingSingleLibrary(

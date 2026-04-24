@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 abstract class ReplVarsTest(
     compilerServiceType: CompilerServiceType,
 ) : AbstractSingleReplTest(compilerServiceType) {
-    override fun createRepl() = makeSimpleRepl()
+    override val repl = makeSimpleRepl()
 
     private val varState get() = repl.notebook.variablesState
     private val cellVars get() = repl.notebook.cellVariables

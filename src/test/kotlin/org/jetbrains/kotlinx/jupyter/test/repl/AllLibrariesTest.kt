@@ -21,7 +21,7 @@ import kotlin.io.path.nameWithoutExtension
 @Execution(ExecutionMode.SAME_THREAD)
 @EnabledIfSystemProperty(named = "tests.all.libraries", matches = "true")
 class AllLibrariesTest : AbstractSingleReplTest() {
-    override fun createRepl() = makeReplWithStandardResolver()
+    override val repl = makeReplWithStandardResolver()
 
     @ParameterizedTest(name = ARGUMENTS_PLACEHOLDER)
     @MethodSource("libraryNames")

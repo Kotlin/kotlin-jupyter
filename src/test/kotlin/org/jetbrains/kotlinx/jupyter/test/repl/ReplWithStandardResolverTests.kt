@@ -39,7 +39,7 @@ abstract class ReplWithStandardResolverTests(
     private val displays = mutableListOf<Any>()
     private val handler = TestDisplayHandler(displays)
 
-    override fun createRepl() = makeReplWithStandardResolver { handler }
+    override val repl = makeReplWithStandardResolver { handler }
 
     @Test
     fun testResolverRepoOrder() {

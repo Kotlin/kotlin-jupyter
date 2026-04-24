@@ -35,6 +35,7 @@ class ReplFactoryBase(
                 replCompilerMode,
                 extraCompilerArguments,
                 compilerServiceSpiClassloader,
+                forceCompilerServiceProvider,
             )
         }
 }

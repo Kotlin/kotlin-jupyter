@@ -7,6 +7,7 @@ import org.jetbrains.kotlinx.jupyter.api.StandaloneKernelRunMode
 import org.jetbrains.kotlinx.jupyter.api.embedded.InMemoryReplResultsHolder
 import org.jetbrains.kotlinx.jupyter.api.libraries.CommManager
 import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.EmptyResolutionInfoProvider
 import org.jetbrains.kotlinx.jupyter.libraries.LibraryHttpUtil
@@ -40,6 +41,7 @@ fun createRepl(
     inMemoryReplResultsHolder: InMemoryReplResultsHolder = NoOpInMemoryReplResultsHolder,
     replCompilerMode: ReplCompilerMode = ReplCompilerMode.DEFAULT,
     extraCompilerArguments: List<String> = emptyList(),
+    forceCompilerServiceProvider: CompilerServiceProvider? = null,
 ): ReplForJupyter {
     val componentsProvider =
         object : ReplComponentsProviderBase() {
@@ -80,6 +82,8 @@ fun createRepl(
             override fun provideReplCompilerMode(): ReplCompilerMode = replCompilerMode
 
             override fun provideExtraCompilerArguments(): List<String> = extraCompilerArguments
+
+            override fun provideForceCompilerServiceProvider(): CompilerServiceProvider? = forceCompilerServiceProvider
         }
     return componentsProvider.createRepl()
 }

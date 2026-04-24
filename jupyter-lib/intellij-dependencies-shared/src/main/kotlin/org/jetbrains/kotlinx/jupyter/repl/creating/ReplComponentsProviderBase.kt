@@ -12,6 +12,7 @@ import org.jetbrains.kotlinx.jupyter.api.outputs.DisplayHandler
 import org.jetbrains.kotlinx.jupyter.common.HttpClient
 import org.jetbrains.kotlinx.jupyter.common.LibraryDescriptorsManager
 import org.jetbrains.kotlinx.jupyter.common.SimpleHttpClient
+import org.jetbrains.kotlinx.jupyter.compiler.api.CompilerServiceProvider
 import org.jetbrains.kotlinx.jupyter.config.DefaultKernelLoggerFactory
 import org.jetbrains.kotlinx.jupyter.config.defaultRuntimeProperties
 import org.jetbrains.kotlinx.jupyter.libraries.DefaultInfoSwitch
@@ -161,4 +162,6 @@ abstract class ReplComponentsProviderBase : LazilyConstructibleReplComponentsPro
     override fun provideExtraCompilerArguments(): List<String> = emptyList()
 
     override fun provideCompilerServiceSpiClassloader(): ClassLoader = Thread.currentThread().contextClassLoader
+
+    override fun provideForceCompilerServiceProvider(): CompilerServiceProvider? = null
 }

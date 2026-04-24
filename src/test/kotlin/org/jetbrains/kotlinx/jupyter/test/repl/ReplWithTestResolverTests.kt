@@ -31,7 +31,7 @@ abstract class ReplWithTestResolverTests(
     private val displays = mutableListOf<Any>()
     private val displayHandler = TestDisplayHandler(displays)
 
-    override fun createRepl() = makeReplWithTestResolver(displayHandler)
+    override val repl = makeReplWithTestResolver(displayHandler)
 
     @Test
     fun testLetsPlot() {

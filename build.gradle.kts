@@ -68,7 +68,6 @@ dependencies {
     api(projects.intellijDependenciesShared)
     api(projects.intellijCompilerDependencies)
     api(projects.zmqServer)
-    api(projects.kernelCompilerApi)
 
     // Standard dependencies
     implementation(libs.kotlin.stable.reflect)

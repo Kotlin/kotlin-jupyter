@@ -14,7 +14,7 @@ import kotlin.io.path.writeText
 abstract class LibraryLoadingTest(
     compilerServiceType: CompilerServiceType,
 ) : AbstractSingleReplTest(compilerServiceType) {
-    override fun createRepl() = makeSimpleRepl()
+    override val repl = makeSimpleRepl()
 
     private val tempDir = createTempDirectory(this::class.simpleName)
 
