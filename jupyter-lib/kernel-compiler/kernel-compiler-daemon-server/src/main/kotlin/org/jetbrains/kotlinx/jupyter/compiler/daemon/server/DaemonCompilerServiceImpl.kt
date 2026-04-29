@@ -68,6 +68,7 @@ class DaemonCompilerServiceImpl(
         code: String,
         cellId: Int,
         isUserCode: Boolean,
+        cachedScriptHashCodes: List<Int>,
     ): CompileResultRpc =
         withContext(compilerDispatcher) {
             initializedCompiler
@@ -76,6 +77,7 @@ class DaemonCompilerServiceImpl(
                     code = code,
                     cellId = cellId,
                     isUserCode = isUserCode,
+                    cachedScriptHashCodes = cachedScriptHashCodes,
                 ).toRpc()
         }
 

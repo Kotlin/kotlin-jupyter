@@ -185,6 +185,7 @@ class CompilerServiceImpl(
         code: String,
         cellId: Int,
         isUserCode: Boolean,
+        cachedScriptHashCodes: List<Int>,
     ): CompileResult {
         // Clear collectors before compilation
         currentImports.clear()
@@ -211,19 +212,30 @@ class CompilerServiceImpl(
             }
             scriptsList.reverse() // Reverse to get original order
 
-            // Compute hash codes for each script
-            val hashCodes = scriptsList.map { it.hashCode() }
+            val cachedHashCodeSet = cachedScriptHashCodes.toHashSet()
+            val newScripts = ArrayList<KJvmCompiledScript>()
+            val newHashCodes = mutableListOf<Int>()
+            val allHashCodes = mutableListOf<Int>()
+            for (it in scriptsList) {
+                val hashCode = it.hashCode()
+                allHashCodes.add(hashCode)
+                // Only serialize scripts not already cached by the client
+                if (hashCode !in cachedHashCodeSet) {
+                    newScripts.add(it)
+                    newHashCodes.add(hashCode)
+                }
+            }
 
-            // Serialize the list using Java serialization
-            val serializedSnippet = serializeObject(scriptsList)
+            val serializedSnippet = serializeObject(newScripts)
 
             // Capture collected imports and declarations
             val collectedImports = currentImports.toList()
             val collectedDeclarations: List<DeclarationInfo> = lastDeclarations.orEmpty()
 
             CompileResult.Success(
-                serializedCompiledSnippet = serializedSnippet,
-                scriptHashCodes = hashCodes,
+                serializedNewCompiledScripts = serializedSnippet,
+                newScriptHashCodes = newHashCodes,
+                allScriptHashCodes = allHashCodes,
                 imports = collectedImports,
                 declarations = collectedDeclarations,
             )

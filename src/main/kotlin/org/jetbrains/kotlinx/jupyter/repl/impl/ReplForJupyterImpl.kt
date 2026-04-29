@@ -341,6 +341,7 @@ class ReplForJupyterImpl(
                             code = code,
                             cellId = compilingOptions.cellId.value,
                             isUserCode = compilingOptions.isUserCode,
+                            cachedScriptHashCodes = compiledScriptCache.cachedHashCodes(),
                         )
                     }
                 compiledScriptCache.deserializeResult(code, compilingOptions.cellId, result)

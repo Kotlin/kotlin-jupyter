@@ -17,26 +17,26 @@ object CompileResultDeserializer {
         result: CompileResult.Success,
         cache: MutableMap<Int, KJvmCompiledScript>?,
     ): LinkedSnippet<KJvmCompiledScript> {
-        require(result.scriptHashCodes.isNotEmpty()) { "Hash codes list is empty" }
+        require(result.allScriptHashCodes.isNotEmpty()) { "Hash codes list is empty" }
 
-        val deserializedScripts by lazy {
-            deserializeObject<List<KJvmCompiledScript>>(result.serializedCompiledSnippet).also {
-                require(it.size == result.scriptHashCodes.size) {
-                    "Deserialized scripts list size (${it.size}) doesn't match hash codes list size (${result.scriptHashCodes.size})"
-                }
+        val deserializedScriptsByHashCode by lazy {
+            val scripts = deserializeObject<List<KJvmCompiledScript>>(result.serializedNewCompiledScripts)
+            require(scripts.size == result.newScriptHashCodes.size) {
+                "Deserialized scripts count (${scripts.size}) doesn't match newScriptHashCodes count (${result.newScriptHashCodes.size})"
             }
+            result.newScriptHashCodes.zip(scripts).toMap()
         }
 
-        // Convert list back to LinkedSnippet chain
+        // Reconstruct the LinkedSnippet chain using allScriptHashCodes for ordering.
+        // Scripts present in the cache are reused; others are taken from the deserialized map.
         var snippet: LinkedSnippet<KJvmCompiledScript>? = null
-        for ((index, hashCode) in result.scriptHashCodes.withIndex()) {
+        for (hashCode in result.allScriptHashCodes) {
             val script =
-                cache
-                    ?.getOrPut(hashCode) { deserializedScripts[index] }
-                    ?: deserializedScripts[index]
+                cache?.getOrPut(hashCode) { deserializedScriptsByHashCode.getValue(hashCode) }
+                    ?: deserializedScriptsByHashCode.getValue(hashCode)
             snippet = linkedSnippet(previous = snippet, script)
         }
-        return snippet!! // since result.scriptHashCodes is not empty
+        return snippet!! // since result.allScriptHashCodes is not empty
     }
 
     private fun linkedSnippet(

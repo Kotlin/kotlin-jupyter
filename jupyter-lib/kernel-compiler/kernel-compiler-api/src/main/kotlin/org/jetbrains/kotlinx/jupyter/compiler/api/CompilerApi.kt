@@ -19,6 +19,7 @@ interface CompilerService {
         code: String,
         cellId: Int,
         isUserCode: Boolean,
+        cachedScriptHashCodes: List<Int>,
     ): CompileResult
 
     suspend fun complete(
@@ -57,16 +58,17 @@ data class CompilerData(
 
 sealed class CompileResult {
     /**
-     * Successful compilation.
-     * @param serializedCompiledSnippet Java-serialized LinkedSnippet<KJvmCompiledScript>
-     * @param scriptHashCodes Hash codes for each KJvmCompiledScript in the list (in same order)
-     * @param imports List of imports collected during compilation
-     * @param declarations List of declarations collected during compilation
+     * Successful compilation result.
+     *
+     * @property serializedNewCompiledScripts Java-serialized `List<KJvmCompiledScript>` with uncached scripts only
+     * @property newScriptHashCodes Hash codes corresponding to [serializedNewCompiledScripts]
+     * @property allScriptHashCodes Complete chain of hash codes (cached + new), ordered oldest-first
      */
     @Serializable
     class Success(
-        val serializedCompiledSnippet: ByteArray,
-        val scriptHashCodes: List<Int>,
+        val serializedNewCompiledScripts: ByteArray,
+        val newScriptHashCodes: List<Int>,
+        val allScriptHashCodes: List<Int>,
         val imports: List<String>,
         val declarations: List<DeclarationInfo>,
     ) : CompileResult()

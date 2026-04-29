@@ -20,6 +20,7 @@ interface JupyterCompilerDaemonService {
         code: String,
         cellId: Int,
         isUserCode: Boolean,
+        cachedScriptHashCodes: List<Int>,
     ): CompileResultRpc
 
     suspend fun complete(

@@ -14,6 +14,8 @@ internal class CompiledScriptCache {
     // Cache of compiled scripts by their hash code (computed on daemon side)
     private val scriptCache = mutableMapOf<Int, KJvmCompiledScript>()
 
+    fun cachedHashCodes(): List<Int> = scriptCache.keys.toList()
+
     fun deserializeResult(
         originalCode: String,
         cellId: CellId,

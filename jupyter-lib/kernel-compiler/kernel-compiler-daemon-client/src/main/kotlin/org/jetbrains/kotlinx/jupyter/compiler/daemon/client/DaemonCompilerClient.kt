@@ -48,7 +48,8 @@ class DaemonCompilerClient(
         code: String,
         cellId: Int,
         isUserCode: Boolean,
-    ): CompileResult = compilerService.compile(snippetId, code, cellId, isUserCode).fromRpc()
+        cachedScriptHashCodes: List<Int>,
+    ): CompileResult = compilerService.compile(snippetId, code, cellId, isUserCode, cachedScriptHashCodes).fromRpc()
 
     override suspend fun complete(
         code: String,

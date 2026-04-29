@@ -62,6 +62,7 @@ class CompilerServiceImplTest {
                         code = code,
                         cellId = 0,
                         isUserCode = true,
+                        cachedScriptHashCodes = emptyList(),
                     )
                 } catch (e: Exception) {
                     throw AssertionError("Compilation and serialization should succeed, but got: ${e.message}", e)
@@ -71,8 +72,8 @@ class CompilerServiceImplTest {
             assertTrue(result is CompileResult.Success, "Expected successful compilation")
 
             // Verify serialized data is not empty and has reasonable size
-            assertTrue(result.serializedCompiledSnippet.isNotEmpty(), "Serialized snippet should not be empty")
-            assertTrue(result.serializedCompiledSnippet.size > 100, "Serialized snippet should contain actual data")
+            assertTrue(result.serializedNewCompiledScripts.isNotEmpty(), "Serialized snippet should not be empty")
+            assertTrue(result.serializedNewCompiledScripts.size > 100, "Serialized snippet should contain actual data")
 
             // Test deserialization
             val deserializedSnippet = CompileResultDeserializer.deserialize(result, cache = null)
@@ -103,13 +104,14 @@ class CompilerServiceImplTest {
                     code = code,
                     cellId = 1,
                     isUserCode = true,
+                    cachedScriptHashCodes = emptyList(),
                 )
 
             assertTrue(result is CompileResult.Success, "Expected successful compilation")
 
             // Verify serialization
-            assertTrue(result.serializedCompiledSnippet.isNotEmpty())
-            assertTrue(result.serializedCompiledSnippet.size > 100, "Should contain compiled data")
+            assertTrue(result.serializedNewCompiledScripts.isNotEmpty())
+            assertTrue(result.serializedNewCompiledScripts.size > 100, "Should contain compiled data")
 
             // Test deserialization works correctly
             val deserializedSnippet = CompileResultDeserializer.deserialize(result, cache = null)
@@ -130,6 +132,7 @@ class CompilerServiceImplTest {
                     code = code,
                     cellId = 2,
                     isUserCode = true,
+                    cachedScriptHashCodes = emptyList(),
                 )
 
             // Verify compilation failed
@@ -152,6 +155,7 @@ class CompilerServiceImplTest {
                     code = code1,
                     cellId = 3,
                     isUserCode = true,
+                    cachedScriptHashCodes = emptyList(),
                 )
             assertTrue(result1 is CompileResult.Success)
 
@@ -163,12 +167,13 @@ class CompilerServiceImplTest {
                     code = code2,
                     cellId = 4,
                     isUserCode = true,
+                    cachedScriptHashCodes = emptyList(),
                 )
             assertTrue(result2 is CompileResult.Success, "Second compilation should succeed with access to previous snippet")
 
             // Verify both snippets are serialized
-            assertTrue(result1.serializedCompiledSnippet.isNotEmpty())
-            assertTrue(result2.serializedCompiledSnippet.isNotEmpty())
+            assertTrue(result1.serializedNewCompiledScripts.isNotEmpty())
+            assertTrue(result2.serializedNewCompiledScripts.isNotEmpty())
 
             // Test that both can be deserialized
             val snippet1 = CompileResultDeserializer.deserialize(result1, cache = null)
@@ -193,6 +198,7 @@ class CompilerServiceImplTest {
                     code = code,
                     cellId = 5,
                     isUserCode = true,
+                    cachedScriptHashCodes = emptyList(),
                 )
             assertTrue(result is CompileResult.Success)
 
@@ -202,10 +208,10 @@ class CompilerServiceImplTest {
 
             // Verify cache was populated
             assertTrue(cache.isNotEmpty(), "Cache should be populated")
-            assertEquals(cache.size, result.scriptHashCodes.size, "Cache should contain all scripts")
+            assertEquals(cache.size, result.allScriptHashCodes.size, "Cache should contain all scripts")
 
             // Verify hash codes match
-            for (hashcode in result.scriptHashCodes) {
+            for (hashcode in result.allScriptHashCodes) {
                 assertTrue(cache.containsKey(hashcode), "Cache should contain script with hashcode $hashcode")
                 assertNotNull(cache[hashcode], "Cached script should not be null")
             }
