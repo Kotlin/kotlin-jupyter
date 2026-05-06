@@ -35,7 +35,13 @@ class DefaultCompilerArgsConfigurator(
     ): ResultWithDiagnostics<ScriptCompilationConfiguration> {
         annotations.forEach {
             when (it) {
-                is CompilerArgs -> argsList.addAll(it.values)
+                is CompilerArgs -> {
+                    it.values.forEach { arg ->
+                        if (arg !in argsList) {
+                            argsList.add(arg)
+                        }
+                    }
+                }
             }
         }
 
