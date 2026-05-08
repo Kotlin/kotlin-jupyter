@@ -34,5 +34,6 @@ class MessageHandlerImpl(
 
     override fun close() {
         repl.closeIfPossible()
+        executor.close() // in case `processShutdownRequest` was never called or aborted
     }
 }
