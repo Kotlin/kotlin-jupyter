@@ -31,7 +31,14 @@ interface DependencyHandlerScope {
     )
 }
 
-fun RepositoryHandlerScope.mavenCentral() = maven("https://repo.maven.apache.org/maven2/")
+fun RepositoryHandlerScope.mavenCentral() =
+    maven(
+        if (System.getenv("TEAMCITY_VERSION") != null) {
+            "https://cache-redirector.jetbrains.com/maven-central/"
+        } else {
+            "https://repo.maven.apache.org/maven2/"
+        },
+    )
 
 fun RepositoryHandlerScope.google() = maven("https://dl.google.com/dl/android/maven2/")
 

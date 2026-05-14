@@ -26,6 +26,10 @@ val defaultGlobalImports =
 
 val defaultRepositories =
     listOf(
-        "https://repo.maven.apache.org/maven2/",
+        if (System.getenv("TEAMCITY_VERSION") != null) {
+            "https://cache-redirector.jetbrains.com/maven-central/"
+        } else {
+            "https://repo.maven.apache.org/maven2/"
+        },
     ).map(::KernelRepository)
 val defaultRepositoriesCoordinates = defaultRepositories.map { MavenRepositoryCoordinates(it.path) }
