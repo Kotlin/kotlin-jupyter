@@ -5,10 +5,14 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.isAccessible
 
-fun <T> KProperty1<T, *>.isLazy(receiver: T): Boolean {
-    val delegate = getDelegate(receiver) ?: return false
-    return delegate is Lazy<*>
-}
+fun <T> KProperty1<T, *>.isLazy(receiver: T): Boolean =
+    try {
+        asAccessible {
+            it.getDelegate(receiver) is Lazy<*>
+        }
+    } catch (_: Exception) {
+        false
+    }
 
 fun <T : KProperty<*>, R> T.asAccessible(action: (T) -> R): R {
     val wasAccessible = isAccessible
